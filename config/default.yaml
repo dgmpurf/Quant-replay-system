@@ -134,8 +134,18 @@ paper_trading:
   default_slippage_bps: 0
   enable_live_trading: false
   enable_broker_api: false
+  fail_daily_report_on_reconciliation_error: false
   config_version: mvp
   write_artifacts: true
+
+paper_reconciliation:
+  output_dir: outputs/reports/paper_trading/reconciliation
+  duplicate_fill_id_severity: WARN
+  negative_cash_severity: ERROR
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
 
 daily_paper_runner:
   output_dir: outputs/reports/paper_trading/daily

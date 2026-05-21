@@ -10,7 +10,9 @@ from typing import Sequence
 
 import pandas as pd
 
+from quant_replay_system.config import load_settings
 from quant_replay_system.daily_paper_runner import run_daily_paper_trading
+from quant_replay_system.paper_reconciliation import reconcile_paper_fills
 
 
 FILL_COLUMNS = [
@@ -77,6 +79,14 @@ def build_parser() -> argparse.ArgumentParser:
     template.add_argument("--output", required=True, help="Output CSV path")
     template.add_argument("--overwrite", action="store_true", help="Overwrite an existing template")
     template.set_defaults(handler=_handle_template_fills)
+
+    reconcile = subparsers.add_parser("paper-reconcile-fills", help="Reconcile manual fills against decisions")
+    reconcile.add_argument("--decisions", required=True, help="Paper decisions CSV path")
+    reconcile.add_argument("--fills", required=True, help="Manual fills CSV path")
+    reconcile.add_argument("--output-dir", help="Optional reconciliation output directory")
+    reconcile.add_argument("--config", help="Optional config YAML path")
+    reconcile.add_argument("--allow-fail", action="store_true", help="Exit zero even when reconciliation status is FAIL")
+    reconcile.set_defaults(handler=_handle_reconcile_fills)
     return parser
 
 
@@ -183,6 +193,38 @@ def _handle_template_fills(args: argparse.Namespace) -> int:
     output = write_fills_template(args.output, overwrite=bool(args.overwrite))
     print(f"Wrote fills template: {output}")
     print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_reconcile_fills(args: argparse.Namespace) -> int:
+    decisions_path = Path(args.decisions)
+    fills_path = Path(args.fills)
+    if not decisions_path.exists():
+        raise FileNotFoundError(f"Decisions CSV not found: {decisions_path}")
+    if not fills_path.exists():
+        raise FileNotFoundError(f"Fills CSV not found: {fills_path}")
+    settings = load_settings(args.config) if args.config else None
+    if args.output_dir:
+        project_settings = settings or load_settings(Path("config/default.yaml"))
+        settings = project_settings.model_copy(
+            update={
+                "paper_reconciliation": project_settings.paper_reconciliation.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = reconcile_paper_fills(pd.read_csv(decisions_path), pd.read_csv(fills_path), settings=settings)
+    print(f"Reconciliation status: {result.status}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['reconciliation_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL" and not args.allow_fail:
+        return 1
     return 0
 
 

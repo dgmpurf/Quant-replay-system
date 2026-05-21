@@ -13,10 +13,11 @@ The runner makes the daily paper process repeatable:
 1. load candidate output from replay or a candidate CSV,
 2. create a paper decision log,
 3. load existing manual fills if present,
-4. calculate open paper positions,
-5. calculate closed paper trades,
-6. mark positions to local prices,
-7. write a daily summary and report.
+4. reconcile manual fills against the generated decision log,
+5. calculate open paper positions,
+6. calculate closed paper trades,
+7. mark positions to local prices,
+8. write a daily summary and report.
 
 ## Expected Candidate Input
 
@@ -60,6 +61,19 @@ Expected fill columns:
 
 Fills are manual hypothetical records only. They are not broker confirmations.
 
+## Fill Reconciliation
+
+The runner calls paper fill reconciliation before accounting uses manual fills.
+
+If reconciliation status is `FAIL`, the default behavior is to continue writing the daily report but skip accounting with the invalid fills. The daily metadata records reconciliation status, issue counts, and the reconciliation report path.
+
+Set this option to fail fast instead:
+
+```yaml
+paper_trading:
+  fail_daily_report_on_reconciliation_error: true
+```
+
 ## Local Usage
 
 Callable function:
@@ -76,7 +90,7 @@ result = run_daily_paper_trading(
 print(result.daily_summary)
 ```
 
-No CLI is required for MVP v0.1.
+The `paper-daily` CLI command is a local wrapper around this callable runner.
 
 ## Artifact Outputs
 
@@ -91,6 +105,12 @@ outputs/reports/paper_trading/daily/<paper_date>_<journal_id>/
   closed_trades.csv
   daily_summary.csv
   metadata.json
+```
+
+Reconciliation artifacts are written separately under:
+
+```text
+outputs/reports/paper_trading/reconciliation/<reconciliation_id>/
 ```
 
 The daily summary includes:
@@ -125,7 +145,6 @@ The live trading and broker API flags are constrained to false.
 ## Known MVP Limitations
 
 - Uses local CSV/mock data only.
-- Does not implement a CLI yet.
 - Does not update fills interactively.
 - Missing fills files are treated as empty paper fill logs.
 - Corporate actions, dividends, financing, and full exchange fee schedules are not modeled.

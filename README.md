@@ -29,6 +29,7 @@ Included now:
 - Manual paper trading journal for reviewed candidates and hypothetical fills.
 - Daily paper trading runner for local decision logs, fills, and paper reports.
 - Paper trading CLI for daily reports, fills validation, and fills templates.
+- Paper trading fill reconciliation for decision/fill audit checks before daily reports.
 - Baseline pytest setup.
 
 Not included:
@@ -66,8 +67,11 @@ For daily local paper-trading reports from candidate CSVs and manual fills, see 
 
 For local paper-trading CLI commands, see [docs/paper_trading_cli.md](docs/paper_trading_cli.md).
 
+For paper decision/fill reconciliation, see [docs/paper_fill_reconciliation.md](docs/paper_fill_reconciliation.md).
+
 ```powershell
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
+python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv
 ```
@@ -93,6 +97,7 @@ quant-replay-system/
     factor_dataset.md
     manual_paper_trading.md
     parameter_calibration.md
+    paper_fill_reconciliation.md
     paper_trading_cli.md
     portfolio_aware_calibration.md
     portfolio_simulation.md
@@ -110,6 +115,7 @@ quant-replay-system/
       daily_paper_runner.py
       evaluation.py
       execution.py
+      paper_reconciliation.py
       paper_trading.py
       replay.py
       risk.py

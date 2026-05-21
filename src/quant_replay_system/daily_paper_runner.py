@@ -19,15 +19,15 @@ from quant_replay_system.paper_trading import (
     build_closed_trades,
     build_open_positions,
     create_paper_decision_log,
-    validate_paper_fills,
 )
+from quant_replay_system.paper_reconciliation import PaperReconciliationResult, reconcile_paper_fills
 
 
 DAILY_PAPER_LIMITATIONS = [
     *PAPER_TRADING_LIMITATIONS,
     "Daily runner loads local candidate and fill files only.",
     "Missing fills files are treated as empty manual fill logs.",
-    "No command-line interface is implemented yet.",
+    "Manual fills are reconciled before accounting uses them.",
 ]
 
 
@@ -63,6 +63,8 @@ class DailyPaperRunResult:
     fill_count: int
     open_position_count: int
     closed_trade_count: int
+    reconciliation_status: str | None
+    reconciliation_path: Path | None
     artifact_paths: dict[str, Path]
     daily_summary: pd.DataFrame
     warnings: list[str]
@@ -71,6 +73,7 @@ class DailyPaperRunResult:
     fills: pd.DataFrame
     open_positions: pd.DataFrame
     closed_trades: pd.DataFrame
+    reconciliation_result: PaperReconciliationResult | None
     audit_metadata: dict[str, Any]
 
 
@@ -105,14 +108,26 @@ def run_daily_paper_trading(
 
     fills, load_warnings = load_existing_paper_fills(fills_path)
     warnings = list(load_warnings)
-    if not fills.empty:
-        validation = validate_paper_fills(fills, decisions=decisions, settings=settings.paper_trading)
-        if not validation.valid:
-            raise ValueError("; ".join(validation.errors))
-        warnings.extend(validation.warnings)
+    reconciliation_result = reconcile_paper_fills(decisions, fills, settings=settings)
+    reconciliation_path = reconciliation_result.artifact_paths.get("reconciliation_report")
+    if reconciliation_result.warnings:
+        warnings.extend(f"Reconciliation: {warning}" for warning in reconciliation_result.warnings)
+    if reconciliation_result.status == "FAIL":
+        message = (
+            "Paper fill reconciliation failed with "
+            f"{reconciliation_result.error_count} error(s). "
+            f"See {reconciliation_path}."
+        )
+        if settings.paper_trading.fail_daily_report_on_reconciliation_error:
+            raise ValueError(message)
+        warnings.append(message)
+        warnings.append("Accounting skipped because reconciliation did not pass.")
+        accounting_fills = fills.iloc[0:0].copy()
+    else:
+        accounting_fills = fills
     market = load_mark_prices_for_paper_trading(mark_prices, settings)
-    open_positions = build_open_positions(fills, market, mark_date=normalized_date)
-    closed_trades = build_closed_trades(fills)
+    open_positions = build_open_positions(accounting_fills, market, mark_date=normalized_date)
+    closed_trades = build_closed_trades(accounting_fills)
     warnings.extend(_daily_runner_warnings(decisions, fills))
     daily_summary = build_daily_paper_summary(
         paper_date=normalized_date,
@@ -136,6 +151,9 @@ def run_daily_paper_trading(
         "fill_count": len(fills),
         "open_position_count": len(open_positions),
         "closed_trade_count": len(closed_trades),
+        "reconciliation_status": reconciliation_result.status,
+        "reconciliation_report_path": reconciliation_path,
+        "reconciliation_issue_count": reconciliation_result.issue_count,
         "live_trading_enabled": False,
         "broker_api_invoked": False,
         "paper_trading_only": True,
@@ -147,6 +165,8 @@ def run_daily_paper_trading(
         fill_count=len(fills),
         open_position_count=len(open_positions),
         closed_trade_count=len(closed_trades),
+        reconciliation_status=reconciliation_result.status,
+        reconciliation_path=reconciliation_path,
         artifact_paths=paths.as_dict(),
         daily_summary=daily_summary,
         warnings=warnings,
@@ -155,6 +175,7 @@ def run_daily_paper_trading(
         fills=fills,
         open_positions=open_positions,
         closed_trades=closed_trades,
+        reconciliation_result=reconciliation_result,
         audit_metadata=audit_metadata,
     )
     if runner_settings.write_artifacts:
@@ -351,6 +372,13 @@ def build_daily_paper_metadata(result: DailyPaperRunResult, paths: DailyPaperArt
         "fill_count": result.fill_count,
         "open_position_count": result.open_position_count,
         "closed_trade_count": result.closed_trade_count,
+        "reconciliation": {
+            "status": result.reconciliation_status,
+            "report_path": str(result.reconciliation_path) if result.reconciliation_path is not None else "",
+            "issue_count": result.reconciliation_result.issue_count if result.reconciliation_result is not None else 0,
+            "error_count": result.reconciliation_result.error_count if result.reconciliation_result is not None else 0,
+            "warning_count": result.reconciliation_result.warning_count if result.reconciliation_result is not None else 0,
+        },
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
@@ -380,6 +408,8 @@ def _render_daily_paper_report(
                 "artifact_dir": paths.artifact_dir,
                 "decision_count": result.decision_count,
                 "fill_count": result.fill_count,
+                "reconciliation_status": result.reconciliation_status,
+                "reconciliation_report": result.reconciliation_path,
             }
         ),
         "",
@@ -410,6 +440,10 @@ def _render_daily_paper_report(
             result.fills,
             ["fill_id", "decision_id", "symbol", "side", "fill_date", "fill_price", "quantity", "net_cash_flow"],
         ),
+        "",
+        "## Fill Reconciliation",
+        "",
+        _reconciliation_summary(result),
         "",
         "## Open Positions",
         "",
@@ -472,6 +506,34 @@ def _manual_review_summary(decisions: pd.DataFrame) -> str:
         return "_No decisions._"
     counts = decisions["manual_review_status"].value_counts().rename_axis("manual_review_status").reset_index(name="count")
     return _markdown_table(counts, ["manual_review_status", "count"])
+
+
+def _reconciliation_summary(result: DailyPaperRunResult) -> str:
+    if result.reconciliation_result is None:
+        return "_No reconciliation result._"
+    lines = [
+        _dict_table(
+            {
+                "status": result.reconciliation_result.status,
+                "issue_count": result.reconciliation_result.issue_count,
+                "error_count": result.reconciliation_result.error_count,
+                "warning_count": result.reconciliation_result.warning_count,
+                "report_path": result.reconciliation_path,
+            }
+        )
+    ]
+    if not result.reconciliation_result.reconciliation_frame.empty:
+        lines.extend(
+            [
+                "",
+                _markdown_table(
+                    result.reconciliation_result.reconciliation_frame,
+                    ["fill_id", "decision_id", "symbol", "side", "severity", "issue_code", "issue_message"],
+                    max_rows=20,
+                ),
+            ]
+        )
+    return "\n".join(lines)
 
 
 def _sum_numeric(frame: pd.DataFrame, column: str) -> float:

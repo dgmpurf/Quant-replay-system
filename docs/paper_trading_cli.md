@@ -52,6 +52,26 @@ Validation checks:
 
 The command exits with status `0` on success and non-zero on validation failure.
 
+## paper-reconcile-fills
+
+Reconcile a manual fills CSV against a paper decisions CSV and write reconciliation artifacts.
+
+```cmd
+python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs\reports\paper_trading\daily\example\decisions.csv --fills data\paper\fills.csv
+```
+
+Options:
+
+- `--decisions` required paper decisions CSV.
+- `--fills` required manual fills CSV.
+- `--output-dir` optional reconciliation artifact output directory.
+- `--config` optional config YAML path.
+- `--allow-fail` exits with status `0` even if reconciliation status is `FAIL`.
+
+The command checks decision/fill matching, approval status, side, quantity, price, gross notional, cash-flow sign, oversells, negative cash, duplicate fill IDs, and required fill columns.
+
+It exits non-zero on `FAIL` unless `--allow-fail` is passed.
+
 ## paper-template-fills
 
 Write an empty fills CSV template.

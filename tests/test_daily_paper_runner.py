@@ -185,6 +185,9 @@ def _settings(tmp_path: Path):
             "paper_trading": settings.paper_trading.model_copy(
                 update={"output_dir": tmp_path / "paper_trading", "write_artifacts": False}
             ),
+            "paper_reconciliation": settings.paper_reconciliation.model_copy(
+                update={"output_dir": tmp_path / "reconciliation", "write_artifacts": True}
+            ),
         }
     )
 

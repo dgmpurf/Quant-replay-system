@@ -157,8 +157,19 @@ class PaperTradingSettings(BaseModel):
     default_slippage_bps: float = Field(default=0.0, ge=0)
     enable_live_trading: Literal[False] = False
     enable_broker_api: Literal[False] = False
+    fail_daily_report_on_reconciliation_error: bool = False
     config_version: str = "mvp"
     write_artifacts: bool = True
+
+
+class PaperReconciliationSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/paper_trading/reconciliation")
+    duplicate_fill_id_severity: Literal["WARN", "ERROR"] = "WARN"
+    negative_cash_severity: Literal["WARN", "ERROR"] = "ERROR"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
 
 
 class DailyPaperRunnerSettings(BaseModel):
@@ -200,6 +211,7 @@ class Settings(BaseModel):
     portfolio_simulation: PortfolioSimulationSettings = Field(default_factory=PortfolioSimulationSettings)
     walk_forward: WalkForwardSettings = Field(default_factory=WalkForwardSettings)
     paper_trading: PaperTradingSettings = Field(default_factory=PaperTradingSettings)
+    paper_reconciliation: PaperReconciliationSettings = Field(default_factory=PaperReconciliationSettings)
     daily_paper_runner: DailyPaperRunnerSettings = Field(default_factory=DailyPaperRunnerSettings)
     execution: ExecutionSettings
     risk: RiskSettings
