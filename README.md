@@ -15,6 +15,7 @@ Included now:
 - Local CSV mock data.
 - Placeholder modules for data, scoring, replay, execution, evaluation, calibration, and risk.
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
+- Trading calendar and T+1 execution calendar for daily replay.
 - Baseline pytest setup.
 
 Not included:
@@ -32,6 +33,10 @@ python -m pip install -e ".[dev]"
 python -m pytest
 ```
 
+## Development Setup
+
+For a clean Windows CMD setup with a virtual environment, `.env` file, test command, and sample replay command, see [docs/environment_setup.md](docs/environment_setup.md).
+
 ## Project Layout
 
 ```text
@@ -43,9 +48,11 @@ quant-replay-system/
     mock/
       corporate_actions.csv
       prices.csv
+      trading_calendar.csv
       universe_snapshots.csv
   docs/
     data_contract.md
+    execution_calendar.md
   src/
     quant_replay_system/
       calibration.py
@@ -73,6 +80,7 @@ quant-replay-system/
 from pathlib import Path
 
 from quant_replay_system.config import load_settings
+from quant_replay_system.calendar import load_trading_calendar
 from quant_replay_system.data import load_corporate_actions, load_market_data, load_universe_snapshot
 from quant_replay_system.replay import replay_decision_date
 
@@ -80,7 +88,8 @@ settings = load_settings(Path("config/default.yaml"))
 prices = load_market_data(settings.data.mock_prices)
 universe = load_universe_snapshot(settings.data.mock_universe_snapshots)
 actions = load_corporate_actions(settings.data.mock_corporate_actions)
-result = replay_decision_date("2024-01-03", prices, settings, universe, actions)
+calendar = load_trading_calendar(settings.data.mock_trading_calendar)
+result = replay_decision_date("2024-01-03", prices, settings, universe, actions, calendar)
 
 print(result.candidates)
 ```

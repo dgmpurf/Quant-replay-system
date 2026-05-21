@@ -8,6 +8,7 @@ data:
   mock_prices: data/mock/prices.csv
   mock_universe_snapshots: data/mock/universe_snapshots.csv
   mock_corporate_actions: data/mock/corporate_actions.csv
+  mock_trading_calendar: data/mock/trading_calendar.csv
 
 output:
   root: outputs
@@ -24,7 +25,12 @@ scoring:
 execution:
   mode: t_plus_1
   price_field: open
-  slippage_bps: 5.0
+  slippage_bps: 0.0
+  max_exit_delay_trading_days: 5
+  block_buy_on_limit_up: true
+  block_sell_on_limit_down: true
+  default_slippage_bps: 10
+  default_holding_horizon_trading_days: 1
 
 risk:
   max_single_position_pct: 0.20

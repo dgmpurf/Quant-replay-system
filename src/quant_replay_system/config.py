@@ -20,6 +20,7 @@ class DataSettings(BaseModel):
     mock_prices: Path = Path("data/mock/prices.csv")
     mock_universe_snapshots: Path = Path("data/mock/universe_snapshots.csv")
     mock_corporate_actions: Path = Path("data/mock/corporate_actions.csv")
+    mock_trading_calendar: Path = Path("data/mock/trading_calendar.csv")
 
 
 class OutputSettings(BaseModel):
@@ -37,6 +38,11 @@ class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
     slippage_bps: float = 0.0
+    max_exit_delay_trading_days: int = Field(default=5, ge=0)
+    block_buy_on_limit_up: bool = True
+    block_sell_on_limit_down: bool = True
+    default_slippage_bps: float = 10.0
+    default_holding_horizon_trading_days: int = Field(default=1, gt=0)
 
 
 class RiskSettings(BaseModel):

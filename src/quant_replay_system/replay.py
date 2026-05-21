@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from quant_replay_system.calendar import TradingCalendar
 from quant_replay_system.config import Settings
 from quant_replay_system.data import ReplayDataset, build_replay_dataset, decision_time_for_as_of_date, point_in_time_prices
 from quant_replay_system.execution import simulate_t_plus_1_execution
@@ -28,6 +29,7 @@ def replay_decision_date(
     settings: Settings,
     universe_snapshot: pd.DataFrame | None = None,
     corporate_actions: pd.DataFrame | None = None,
+    trading_calendar: TradingCalendar | None = None,
     *,
     exclude_st: bool = True,
     exclude_suspended: bool = True,
@@ -36,7 +38,11 @@ def replay_decision_date(
 
     validate_research_risk_settings(settings.risk)
     decision_timestamp = pd.Timestamp(decision_date).normalize()
-    decision_time = decision_time_for_as_of_date(decision_timestamp)
+    decision_time = (
+        trading_calendar.decision_time_for(decision_timestamp)
+        if trading_calendar is not None
+        else decision_time_for_as_of_date(decision_timestamp)
+    )
 
     dataset = None
     if universe_snapshot is None:
@@ -54,7 +60,13 @@ def replay_decision_date(
         available_prices = dataset.market_data
 
     candidates = score_candidates(available_prices, settings.scoring)
-    executions = simulate_t_plus_1_execution(candidates, prices, decision_timestamp, settings.execution)
+    executions = simulate_t_plus_1_execution(
+        candidates,
+        prices,
+        decision_timestamp,
+        settings.execution,
+        calendar=trading_calendar,
+    )
     return ReplayResult(
         decision_date=decision_timestamp,
         decision_time=decision_time,
