@@ -31,6 +31,7 @@ Included now:
 - Daily paper trading runner for local decision logs, fills, and paper reports.
 - Paper trading CLI for daily reports, fills validation, and fills templates.
 - Paper trading fill reconciliation for decision/fill audit checks before daily reports.
+- Paper trading artifact index for local report and CSV navigation.
 - Baseline pytest setup.
 
 Not included:
@@ -74,11 +75,14 @@ For paper decision/fill reconciliation, see [docs/paper_fill_reconciliation.md](
 
 For the full local paper trading workflow smoke-test example, see [docs/paper_trading_e2e_workflow.md](docs/paper_trading_e2e_workflow.md).
 
+For a consolidated local index of daily, review, and reconciliation artifacts, see [docs/paper_trading_artifact_index.md](docs/paper_trading_artifact_index.md).
+
 ```powershell
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --reviewer-id msj
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
+python -m quant_replay_system.cli paper-index --root outputs/reports/paper_trading
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv
 ```
@@ -105,6 +109,7 @@ quant-replay-system/
     manual_paper_trading.md
     parameter_calibration.md
     paper_fill_reconciliation.md
+    paper_trading_artifact_index.md
     paper_trading_e2e_workflow.md
     paper_trading_cli.md
     paper_trading_review_workflow.md
@@ -124,6 +129,7 @@ quant-replay-system/
       daily_paper_runner.py
       evaluation.py
       execution.py
+      paper_artifact_index.py
       paper_reconciliation.py
       paper_review.py
       paper_trading.py

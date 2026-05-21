@@ -12,6 +12,7 @@ import pandas as pd
 
 from quant_replay_system.config import load_settings
 from quant_replay_system.daily_paper_runner import run_daily_paper_trading
+from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
 from quant_replay_system.paper_review import apply_paper_review_updates
 
@@ -98,6 +99,19 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--allow-pending", action="store_true", help="Allow reviewed decisions to remain PENDING_REVIEW")
     review.add_argument("--config", help="Optional config YAML path")
     review.set_defaults(handler=_handle_review_decisions)
+
+    index = subparsers.add_parser("paper-index", help="Build a local paper trading artifact index")
+    index.add_argument("--root", help="Paper trading artifact root directory")
+    index.add_argument("--output-dir", help="Optional index output directory")
+    index.add_argument("--include-missing-metadata", action="store_true", help="Index folders missing metadata.json")
+    index.add_argument(
+        "--artifact-type",
+        choices=["daily", "review", "reconciliation", "all"],
+        default="all",
+        help="Artifact type to index",
+    )
+    index.add_argument("--config", help="Optional config YAML path")
+    index.set_defaults(handler=_handle_paper_index)
     return parser
 
 
@@ -279,6 +293,31 @@ def _handle_review_decisions(args: argparse.Namespace) -> int:
     print(f"pending_count: {summary.get('pending_count', 0)}")
     print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
     print(f"Report path: {result.artifact_paths['paper_review_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_paper_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {
+        "artifact_type": args.artifact_type,
+        "include_missing_metadata": bool(args.include_missing_metadata),
+    }
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "paper_artifact_index": settings.paper_artifact_index.model_copy(update=updates)
+        }
+    )
+    result = build_paper_artifact_index(settings=settings)
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['paper_artifact_index']}")
+    print(f"artifact_count: {result.artifact_count}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

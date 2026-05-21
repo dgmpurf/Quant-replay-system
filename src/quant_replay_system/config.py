@@ -190,6 +190,17 @@ class DailyPaperRunnerSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class PaperArtifactIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/paper_trading")
+    output_dir: Path = Path("outputs/reports/paper_trading/index")
+    include_missing_metadata: bool = False
+    artifact_type: Literal["daily", "review", "reconciliation", "all"] = "all"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -224,6 +235,7 @@ class Settings(BaseModel):
     paper_reconciliation: PaperReconciliationSettings = Field(default_factory=PaperReconciliationSettings)
     paper_review: PaperReviewSettings = Field(default_factory=PaperReviewSettings)
     daily_paper_runner: DailyPaperRunnerSettings = Field(default_factory=DailyPaperRunnerSettings)
+    paper_artifact_index: PaperArtifactIndexSettings = Field(default_factory=PaperArtifactIndexSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 

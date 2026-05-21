@@ -95,6 +95,24 @@ Options:
 
 The command validates update rows, applies review status and notes, writes `reviewed_decisions.csv`, `review_audit_log.csv`, `review_summary.csv`, `paper_review_report.md`, and `metadata.json`, then prints the review summary.
 
+## paper-index
+
+Build a consolidated local index for daily, review, and reconciliation artifacts.
+
+```cmd
+python -m quant_replay_system.cli paper-index --root outputs\reports\paper_trading
+```
+
+Options:
+
+- `--root` optional paper trading artifact root.
+- `--output-dir` optional index output directory.
+- `--artifact-type` optional `daily`, `review`, `reconciliation`, or `all`.
+- `--include-missing-metadata` includes folders without `metadata.json` as warning rows.
+- `--config` optional config YAML path.
+
+The command writes `paper_artifact_index.md`, `paper_artifact_index.csv`, `paper_artifact_index.json`, and `metadata.json`, then prints the index report path and artifact count.
+
 ## paper-template-fills
 
 Write an empty fills CSV template.

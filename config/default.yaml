@@ -163,6 +163,16 @@ daily_paper_runner:
   enable_live_trading: false
   enable_broker_api: false
 
+paper_artifact_index:
+  root_dir: outputs/reports/paper_trading
+  output_dir: outputs/reports/paper_trading/index
+  include_missing_metadata: false
+  artifact_type: all
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 execution:
   mode: t_plus_1
   price_field: open
