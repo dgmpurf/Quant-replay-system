@@ -20,6 +20,7 @@ Included now:
 - Point-in-time factor dataset builder for research features.
 - Explainable score engine and candidate selector for ranked research candidates.
 - Replay run orchestrator for end-to-end auditable single-date replays.
+- Hardened replay report artifacts with markdown, CSV exports, and metadata JSON.
 - Baseline pytest setup.
 
 Not included:
@@ -58,6 +59,7 @@ quant-replay-system/
     data_contract.md
     execution_calendar.md
     factor_dataset.md
+    report_generation.md
     replay_run_orchestrator.md
     scoring_engine.md
     technical_indicators.md

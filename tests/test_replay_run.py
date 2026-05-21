@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -157,6 +158,124 @@ def test_no_future_factor_data_is_used(tmp_path: Path) -> None:
     assert 9999.0 not in set(result.factor_dataset["close"])
 
 
+def test_replay_report_folder_is_created(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    assert result.artifact_paths["artifact_dir"].exists()
+    assert result.artifact_paths["artifact_dir"].name.startswith("2024-03-01_unit_test_")
+
+
+def test_hardened_report_md_is_written(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    assert result.artifact_paths["report"].name == "report.md"
+    assert result.artifact_paths["report"].exists()
+    assert result.report_path == result.artifact_paths["report"]
+
+
+def test_factor_dataset_csv_is_written(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    assert result.artifact_paths["factor_dataset"].exists()
+
+
+def test_scored_dataset_csv_is_written(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    assert result.artifact_paths["scored_dataset"].exists()
+
+
+def test_candidates_csv_is_written(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    assert result.artifact_paths["candidates"].exists()
+
+
+def test_simulated_trades_csv_is_written(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    assert result.artifact_paths["simulated_trades"].exists()
+
+
+def test_performance_summary_csv_is_written(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    assert result.artifact_paths["performance_summary"].exists()
+
+
+def test_metadata_json_is_written(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert metadata["decision_date"].startswith("2024-03-01")
+    assert metadata["universe_name"] == "unit_test"
+    assert metadata["run_id"] == result.run_id
+    assert "created_at" in metadata
+    assert "output_files" in metadata
+
+
+def test_artifact_naming_is_deterministic_for_same_input(tmp_path: Path) -> None:
+    first = _run_stable_artifacts(tmp_path)
+    second = _run_stable_artifacts(tmp_path)
+
+    assert first.run_id == second.run_id
+    assert first.artifact_paths["artifact_dir"] == second.artifact_paths["artifact_dir"]
+
+
+def test_hardened_report_contains_candidate_table(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+    content = result.artifact_paths["report"].read_text(encoding="utf-8")
+
+    assert "## Candidate Table" in content
+    assert "| rank | symbol | name | final_score | action |" in content
+
+
+def test_hardened_report_contains_performance_summary(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+    content = result.artifact_paths["report"].read_text(encoding="utf-8")
+
+    assert "## Performance Summary" in content
+    assert "number_of_candidates" in content
+
+
+def test_exported_csv_files_are_readable_by_pandas(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    for key in [
+        "factor_dataset",
+        "scored_dataset",
+        "candidates",
+        "simulated_trades",
+        "performance_summary",
+    ]:
+        exported = pd.read_csv(result.artifact_paths[key])
+        assert isinstance(exported, pd.DataFrame)
+
+
+def test_replay_run_result_includes_artifact_paths(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+
+    expected_keys = {
+        "artifact_dir",
+        "report",
+        "factor_dataset",
+        "scored_dataset",
+        "candidates",
+        "simulated_trades",
+        "performance_summary",
+        "metadata",
+    }
+    assert expected_keys == set(result.artifact_paths)
+
+
+def test_artifact_metadata_records_no_live_trading_or_broker(tmp_path: Path) -> None:
+    result = _run_stable_artifacts(tmp_path)
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert metadata["audit_metadata"]["live_trading_enabled"] is False
+    assert metadata["audit_metadata"]["broker_api_invoked"] is False
+
+
 def _run(
     tmp_path: Path,
     *,
@@ -176,6 +295,20 @@ def _run(
         benchmark_data=_make_benchmark_data(),
         trading_calendar=_make_calendar(),
         report_output_path=tmp_path / "replay_report.md",
+    )
+
+
+def _run_stable_artifacts(tmp_path: Path) -> ReplayRunResult:
+    return run_replay(
+        DECISION_DATE,
+        universe_name="unit_test",
+        top_n=2,
+        holding_horizon=2,
+        config=_settings(tmp_path),
+        market_data=_make_market_data(["AAA", "BBB"]),
+        universe_snapshot=_make_universe_snapshot(["AAA", "BBB"]),
+        benchmark_data=_make_benchmark_data(),
+        trading_calendar=_make_calendar(),
     )
 
 

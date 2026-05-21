@@ -59,6 +59,8 @@ replay_run:
   output_dir: outputs/reports
   min_action: PAPER_TRADE
   min_final_score: 70
+  config_version: mvp
+  write_artifacts: true
 
 execution:
   mode: t_plus_1

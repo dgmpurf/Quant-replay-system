@@ -77,6 +77,8 @@ class ReplayRunSettings(BaseModel):
     output_dir: Path = Path("outputs/reports")
     min_action: str = "PAPER_TRADE"
     min_final_score: float | None = 70.0
+    config_version: str = "mvp"
+    write_artifacts: bool = True
 
 
 class ExecutionSettings(BaseModel):

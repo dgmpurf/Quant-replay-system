@@ -14,6 +14,11 @@ from quant_replay_system.config import CandidateSelectionSettings, ExecutionSett
 from quant_replay_system.data import load_corporate_actions, load_market_data, load_universe_snapshot
 from quant_replay_system.execution import simulate_t_plus_1_execution
 from quant_replay_system.factor_dataset import build_factor_dataset
+from quant_replay_system.report_generation import (
+    generate_replay_run_id,
+    resolve_replay_artifact_paths,
+    write_replay_artifacts,
+)
 from quant_replay_system.score_engine import score_factor_dataset
 
 
@@ -22,14 +27,19 @@ class ReplayRunResult:
     decision_date: pd.Timestamp
     decision_time: pd.Timestamp
     universe_name: str
+    top_n: int
+    holding_horizon: int
+    run_id: str
     factor_dataset_row_count: int
     scored_dataset_row_count: int
     selected_candidates: pd.DataFrame
     simulated_trades: pd.DataFrame
     performance_summary: dict[str, Any]
     report_path: Path
+    artifact_paths: dict[str, Path]
     warnings: list[str]
     audit_metadata: dict[str, Any]
+    config_summary: dict[str, Any]
     factor_dataset: pd.DataFrame
     scored_dataset: pd.DataFrame
 
@@ -46,6 +56,7 @@ def run_replay(
     corporate_actions: pd.DataFrame | None = None,
     trading_calendar: TradingCalendar | None = None,
     report_output_path: str | Path | None = None,
+    run_id: str | None = None,
 ) -> ReplayRunResult:
     """Run one end-to-end historical replay for a decision date."""
 
@@ -53,6 +64,13 @@ def run_replay(
     as_of_date = pd.Timestamp(decision_date).normalize()
     effective_top_n = top_n if top_n is not None else settings.replay_run.default_top_n
     effective_horizon = holding_horizon if holding_horizon is not None else settings.replay_run.default_holding_horizon
+    effective_run_id = run_id or generate_replay_run_id(
+        decision_date=as_of_date,
+        universe_name=universe_name,
+        top_n=effective_top_n,
+        holding_horizon=effective_horizon,
+        config_version=settings.replay_run.config_version,
+    )
 
     market = market_data.copy(deep=True) if market_data is not None else load_market_data(settings.data.mock_prices)
     universe = (
@@ -125,39 +143,77 @@ def run_replay(
         simulated_trades=simulated_trades,
         corporate_actions=corporate_actions,
     )
-
-    report_path = _resolve_report_path(
+    config_summary = _config_summary(
         settings=settings,
+        top_n=effective_top_n,
+        holding_horizon=effective_horizon,
+        run_id=effective_run_id,
+    )
+
+    artifact_paths = resolve_replay_artifact_paths(
+        output_dir=settings.replay_run.output_dir,
         decision_date=as_of_date,
         universe_name=universe_name,
+        run_id=effective_run_id,
         report_output_path=report_output_path,
     )
     result = ReplayRunResult(
         decision_date=as_of_date,
         decision_time=decision_time,
         universe_name=universe_name,
+        top_n=effective_top_n,
+        holding_horizon=effective_horizon,
+        run_id=effective_run_id,
         factor_dataset_row_count=len(factor_dataset),
         scored_dataset_row_count=len(scored_dataset),
         selected_candidates=selected_candidates,
         simulated_trades=simulated_trades,
         performance_summary=performance_summary,
-        report_path=report_path,
+        report_path=artifact_paths.report,
+        artifact_paths=artifact_paths.as_dict(),
         warnings=warnings,
         audit_metadata=audit_metadata,
+        config_summary=config_summary,
         factor_dataset=factor_dataset,
         scored_dataset=scored_dataset,
     )
-    write_replay_report(result, report_path)
+    if settings.replay_run.write_artifacts:
+        write_replay_artifacts(result)
     return result
 
 
 def write_replay_report(result: ReplayRunResult, path: str | Path | None = None) -> Path:
     """Write a markdown report for a replay run."""
 
-    report_path = Path(path) if path is not None else result.report_path
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(_render_report(result), encoding="utf-8")
-    return report_path
+    if path is None:
+        write_replay_artifacts(result)
+        return result.report_path
+
+    replacement_paths = dict(result.artifact_paths)
+    replacement_paths["report"] = Path(path)
+    replacement_paths["artifact_dir"] = Path(path).parent
+    patched = ReplayRunResult(
+        decision_date=result.decision_date,
+        decision_time=result.decision_time,
+        universe_name=result.universe_name,
+        top_n=result.top_n,
+        holding_horizon=result.holding_horizon,
+        run_id=result.run_id,
+        factor_dataset_row_count=result.factor_dataset_row_count,
+        scored_dataset_row_count=result.scored_dataset_row_count,
+        selected_candidates=result.selected_candidates,
+        simulated_trades=result.simulated_trades,
+        performance_summary=result.performance_summary,
+        report_path=Path(path),
+        artifact_paths=replacement_paths,
+        warnings=result.warnings,
+        audit_metadata=result.audit_metadata,
+        config_summary=result.config_summary,
+        factor_dataset=result.factor_dataset,
+        scored_dataset=result.scored_dataset,
+    )
+    write_replay_artifacts(patched)
+    return Path(path)
 
 
 def _prepare_candidate_output(selected: pd.DataFrame) -> pd.DataFrame:
@@ -276,6 +332,28 @@ def _audit_metadata(
         "corporate_actions_supplied": corporate_actions is not None,
         "live_trading_enabled": False,
         "broker_api_invoked": False,
+    }
+
+
+def _config_summary(settings: Settings, top_n: int, holding_horizon: int, run_id: str) -> dict[str, Any]:
+    return {
+        "top_n": top_n,
+        "holding_horizon": holding_horizon,
+        "run_id": run_id,
+        "config_version": settings.replay_run.config_version,
+        "min_action": settings.replay_run.min_action,
+        "min_final_score": settings.replay_run.min_final_score,
+        "factor_dataset": settings.factor_dataset.model_dump(),
+        "score_engine_weights": settings.score_engine.weights,
+        "candidate_selection": settings.candidate_selection.model_dump(),
+        "execution": {
+            "mode": settings.execution.mode,
+            "price_field": settings.execution.price_field,
+            "max_exit_delay_trading_days": settings.execution.max_exit_delay_trading_days,
+            "block_buy_on_limit_up": settings.execution.block_buy_on_limit_up,
+            "block_sell_on_limit_down": settings.execution.block_sell_on_limit_down,
+            "default_slippage_bps": settings.execution.default_slippage_bps,
+        },
     }
 
 
