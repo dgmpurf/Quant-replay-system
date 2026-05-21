@@ -19,6 +19,7 @@ Included now:
 - Point-in-time-safe technical indicators for timing research.
 - Point-in-time factor dataset builder for research features.
 - Explainable score engine and candidate selector for ranked research candidates.
+- Replay run orchestrator for end-to-end auditable single-date replays.
 - Baseline pytest setup.
 
 Not included:
@@ -57,6 +58,7 @@ quant-replay-system/
     data_contract.md
     execution_calendar.md
     factor_dataset.md
+    replay_run_orchestrator.md
     scoring_engine.md
     technical_indicators.md
   src/

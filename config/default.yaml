@@ -53,6 +53,13 @@ candidate_selection:
   min_final_score:
   exclude_blocked: true
 
+replay_run:
+  default_top_n: 5
+  default_holding_horizon: 10
+  output_dir: outputs/reports
+  min_action: PAPER_TRADE
+  min_final_score: 70
+
 execution:
   mode: t_plus_1
   price_field: open
