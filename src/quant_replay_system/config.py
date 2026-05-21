@@ -215,6 +215,21 @@ class PaperArtifactHealthSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class DataIngestionSettings(BaseModel):
+    output_dir: Path = Path("data/processed")
+    snapshot_dir: Path = Path("data/snapshots")
+    allow_default_available_time: bool = True
+    allow_default_corporate_action_available_time: bool = False
+    default_source: str = "LOCAL_CSV"
+    default_revision_id: str = "v1"
+    exchange_timezone: str = "Asia/Shanghai"
+    duplicate_key_severity: Literal["WARN", "ERROR"] = "WARN"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -251,6 +266,7 @@ class Settings(BaseModel):
     daily_paper_runner: DailyPaperRunnerSettings = Field(default_factory=DailyPaperRunnerSettings)
     paper_artifact_index: PaperArtifactIndexSettings = Field(default_factory=PaperArtifactIndexSettings)
     paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)
+    data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 

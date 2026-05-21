@@ -11,6 +11,13 @@ from typing import Sequence
 import pandas as pd
 
 from quant_replay_system.config import load_settings
+from quant_replay_system.data_ingestion import (
+    ingest_benchmark_data_csv,
+    ingest_corporate_actions_csv,
+    ingest_market_data_csv,
+    ingest_trading_calendar_csv,
+    ingest_universe_snapshot_csv,
+)
 from quant_replay_system.daily_paper_runner import run_daily_paper_trading
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
@@ -122,6 +129,36 @@ def build_parser() -> argparse.ArgumentParser:
     health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
     health.add_argument("--config", help="Optional config YAML path")
     health.set_defaults(handler=_handle_paper_health_check)
+
+    ingest_market = subparsers.add_parser("ingest-market", help="Ingest local market daily CSV")
+    ingest_market.add_argument("--input", required=True, help="Input market CSV path")
+    ingest_market.add_argument("--output-dir", help="Optional processed market output directory")
+    ingest_market.add_argument("--config", help="Optional config YAML path")
+    ingest_market.set_defaults(handler=_handle_ingest_market)
+
+    ingest_universe = subparsers.add_parser("ingest-universe", help="Ingest local universe snapshot CSV")
+    ingest_universe.add_argument("--input", required=True, help="Input universe CSV path")
+    ingest_universe.add_argument("--output-dir", help="Optional processed universe output directory")
+    ingest_universe.add_argument("--config", help="Optional config YAML path")
+    ingest_universe.set_defaults(handler=_handle_ingest_universe)
+
+    ingest_benchmark = subparsers.add_parser("ingest-benchmark", help="Ingest local benchmark daily CSV")
+    ingest_benchmark.add_argument("--input", required=True, help="Input benchmark CSV path")
+    ingest_benchmark.add_argument("--output-dir", help="Optional processed benchmark output directory")
+    ingest_benchmark.add_argument("--config", help="Optional config YAML path")
+    ingest_benchmark.set_defaults(handler=_handle_ingest_benchmark)
+
+    ingest_actions = subparsers.add_parser("ingest-corporate-actions", help="Ingest local corporate actions CSV")
+    ingest_actions.add_argument("--input", required=True, help="Input corporate actions CSV path")
+    ingest_actions.add_argument("--output-dir", help="Optional processed corporate actions output directory")
+    ingest_actions.add_argument("--config", help="Optional config YAML path")
+    ingest_actions.set_defaults(handler=_handle_ingest_corporate_actions)
+
+    ingest_calendar = subparsers.add_parser("ingest-calendar", help="Ingest local trading calendar CSV")
+    ingest_calendar.add_argument("--input", required=True, help="Input trading calendar CSV path")
+    ingest_calendar.add_argument("--output-dir", help="Optional processed calendar output directory")
+    ingest_calendar.add_argument("--config", help="Optional config YAML path")
+    ingest_calendar.set_defaults(handler=_handle_ingest_calendar)
     return parser
 
 
@@ -367,6 +404,53 @@ def _handle_paper_health_check(args: argparse.Namespace) -> int:
         return 1
     if result.status == "WARN" and args.strict and not args.allow_warn:
         return 1
+    return 0
+
+
+def _handle_ingest_market(args: argparse.Namespace) -> int:
+    return _print_ingestion_result(
+        ingest_market_data_csv(args.input, output_dir=args.output_dir, settings=_optional_settings(args.config))
+    )
+
+
+def _handle_ingest_universe(args: argparse.Namespace) -> int:
+    return _print_ingestion_result(
+        ingest_universe_snapshot_csv(args.input, output_dir=args.output_dir, settings=_optional_settings(args.config))
+    )
+
+
+def _handle_ingest_benchmark(args: argparse.Namespace) -> int:
+    return _print_ingestion_result(
+        ingest_benchmark_data_csv(args.input, output_dir=args.output_dir, settings=_optional_settings(args.config))
+    )
+
+
+def _handle_ingest_corporate_actions(args: argparse.Namespace) -> int:
+    return _print_ingestion_result(
+        ingest_corporate_actions_csv(args.input, output_dir=args.output_dir, settings=_optional_settings(args.config))
+    )
+
+
+def _handle_ingest_calendar(args: argparse.Namespace) -> int:
+    return _print_ingestion_result(
+        ingest_trading_calendar_csv(args.input, output_dir=args.output_dir, settings=_optional_settings(args.config))
+    )
+
+
+def _optional_settings(config_path: str | None):
+    return load_settings(config_path) if config_path else None
+
+
+def _print_ingestion_result(result) -> int:
+    print(f"dataset_type: {result.dataset_type}")
+    print(f"row_count: {result.row_count}")
+    print(f"cleaned_csv: {result.artifact_paths['cleaned_csv']}")
+    print(f"validation_report: {result.artifact_paths['validation_report']}")
+    print(f"metadata: {result.artifact_paths['metadata']}")
+    print(f"warning_count: {result.validation.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
     return 0
 
 

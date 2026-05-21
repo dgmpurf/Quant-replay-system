@@ -186,6 +186,20 @@ paper_artifact_health:
   enable_live_trading: false
   enable_broker_api: false
 
+data_ingestion:
+  output_dir: data/processed
+  snapshot_dir: data/snapshots
+  allow_default_available_time: true
+  allow_default_corporate_action_available_time: false
+  default_source: LOCAL_CSV
+  default_revision_id: v1
+  exchange_timezone: Asia/Shanghai
+  duplicate_key_severity: WARN
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 execution:
   mode: t_plus_1
   price_field: open
