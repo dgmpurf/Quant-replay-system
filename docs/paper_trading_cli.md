@@ -72,6 +72,25 @@ The command checks decision/fill matching, approval status, side, quantity, pric
 
 It exits non-zero on `FAIL` unless `--allow-fail` is passed.
 
+## paper-review-decisions
+
+Apply manual approve/reject/watch updates to a paper decisions CSV and write review artifacts.
+
+```cmd
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs\reports\paper_trading\daily\example\decisions.csv --updates data\paper\review_updates.csv --reviewer-id msj
+```
+
+Options:
+
+- `--decisions` required paper decisions CSV.
+- `--updates` required review updates CSV.
+- `--output-dir` optional review artifact output directory.
+- `--reviewer-id` optional default reviewer ID.
+- `--allow-pending` allows decisions to remain pending review.
+- `--config` optional config YAML path.
+
+The command validates update rows, applies review status and notes, writes `reviewed_decisions.csv`, `review_audit_log.csv`, `review_summary.csv`, `paper_review_report.md`, and `metadata.json`, then prints the review summary.
+
 ## paper-template-fills
 
 Write an empty fills CSV template.

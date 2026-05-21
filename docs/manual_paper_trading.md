@@ -116,6 +116,8 @@ It checks:
 
 For an auditable decision/fill issue report, use paper fill reconciliation before daily reports. See [paper_fill_reconciliation.md](paper_fill_reconciliation.md).
 
+For an auditable approve/reject/watch step before fills are entered, use the paper trading review workflow. See [paper_trading_review_workflow.md](paper_trading_review_workflow.md).
+
 ## Open And Closed Positions
 
 `build_open_positions(...)` aggregates buy and sell fills into current open paper positions using FIFO remaining lots.

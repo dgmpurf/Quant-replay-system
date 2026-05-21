@@ -147,6 +147,14 @@ paper_reconciliation:
   enable_live_trading: false
   enable_broker_api: false
 
+paper_review:
+  output_dir: outputs/reports/paper_trading/reviews
+  allow_pending_reviews: true
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 daily_paper_runner:
   output_dir: outputs/reports/paper_trading/daily
   config_version: mvp

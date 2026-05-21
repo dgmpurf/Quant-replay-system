@@ -29,6 +29,8 @@ The reconciliation verifies:
 - `fill_id` values are unique,
 - required fill columns exist.
 
+Use `reviewed_decisions.csv` from the paper trading review workflow as the preferred decisions input, so reconciliation can enforce the latest manual approval status.
+
 ## Issue Codes
 
 - `UNKNOWN_DECISION_ID`

@@ -35,6 +35,28 @@ python -m pytest
 
 Codex should not silently broaden scope. If a task is documentation-only, Codex should not change source code, tests, or config.
 
+## Validation Reporting Standard
+
+Every Codex task summary must include a validation block:
+
+```text
+Validation:
+- Frontend build: passed / failed / N/A
+- Backend tests: passed / failed
+- Offline benchmarks: passed / failed / N/A
+```
+
+For `quant-replay-system`:
+
+- Frontend build is `N/A` unless a `frontend/` directory exists.
+- Backend tests command is:
+
+```bat
+python -m pytest
+```
+
+- Offline benchmarks are `N/A` unless a benchmark suite is configured.
+
 ## 3. ChatGPT Review Loop
 
 After Codex finishes a task:

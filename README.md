@@ -27,6 +27,7 @@ Included now:
 - Portfolio-aware batch replay and calibration using account-level metrics.
 - Walk-forward validation for train/validation/test parameter checks.
 - Manual paper trading journal for reviewed candidates and hypothetical fills.
+- Paper trading review workflow for local approve/reject/watch audit decisions.
 - Daily paper trading runner for local decision logs, fills, and paper reports.
 - Paper trading CLI for daily reports, fills validation, and fills templates.
 - Paper trading fill reconciliation for decision/fill audit checks before daily reports.
@@ -63,6 +64,8 @@ For train/validation/test calibration checks and overfitting diagnostics, see [d
 
 For reviewed candidate decision logs and manual hypothetical paper fills, see [docs/manual_paper_trading.md](docs/manual_paper_trading.md).
 
+For manual approve/reject/watch review updates before fills, see [docs/paper_trading_review_workflow.md](docs/paper_trading_review_workflow.md).
+
 For daily local paper-trading reports from candidate CSVs and manual fills, see [docs/daily_paper_trading_runner.md](docs/daily_paper_trading_runner.md).
 
 For local paper-trading CLI commands, see [docs/paper_trading_cli.md](docs/paper_trading_cli.md).
@@ -71,6 +74,7 @@ For paper decision/fill reconciliation, see [docs/paper_fill_reconciliation.md](
 
 ```powershell
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --reviewer-id msj
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv
@@ -99,6 +103,7 @@ quant-replay-system/
     parameter_calibration.md
     paper_fill_reconciliation.md
     paper_trading_cli.md
+    paper_trading_review_workflow.md
     portfolio_aware_calibration.md
     portfolio_simulation.md
     report_generation.md
@@ -116,6 +121,7 @@ quant-replay-system/
       evaluation.py
       execution.py
       paper_reconciliation.py
+      paper_review.py
       paper_trading.py
       replay.py
       risk.py

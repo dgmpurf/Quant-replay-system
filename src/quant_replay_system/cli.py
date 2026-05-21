@@ -13,6 +13,7 @@ import pandas as pd
 from quant_replay_system.config import load_settings
 from quant_replay_system.daily_paper_runner import run_daily_paper_trading
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
+from quant_replay_system.paper_review import apply_paper_review_updates
 
 
 FILL_COLUMNS = [
@@ -87,6 +88,15 @@ def build_parser() -> argparse.ArgumentParser:
     reconcile.add_argument("--config", help="Optional config YAML path")
     reconcile.add_argument("--allow-fail", action="store_true", help="Exit zero even when reconciliation status is FAIL")
     reconcile.set_defaults(handler=_handle_reconcile_fills)
+
+    review = subparsers.add_parser("paper-review-decisions", help="Apply manual review updates to paper decisions")
+    review.add_argument("--decisions", required=True, help="Paper decisions CSV path")
+    review.add_argument("--updates", required=True, help="Review updates CSV path")
+    review.add_argument("--output-dir", help="Optional review artifact output directory")
+    review.add_argument("--reviewer-id", help="Default reviewer id for updates without reviewer_id")
+    review.add_argument("--allow-pending", action="store_true", help="Allow reviewed decisions to remain PENDING_REVIEW")
+    review.add_argument("--config", help="Optional config YAML path")
+    review.set_defaults(handler=_handle_review_decisions)
     return parser
 
 
@@ -225,6 +235,46 @@ def _handle_reconcile_fills(args: argparse.Namespace) -> int:
     print("No live trading or broker API was invoked.")
     if result.status == "FAIL" and not args.allow_fail:
         return 1
+    return 0
+
+
+def _handle_review_decisions(args: argparse.Namespace) -> int:
+    decisions_path = Path(args.decisions)
+    updates_path = Path(args.updates)
+    if not decisions_path.exists():
+        raise FileNotFoundError(f"Decisions CSV not found: {decisions_path}")
+    if not updates_path.exists():
+        raise FileNotFoundError(f"Review updates CSV not found: {updates_path}")
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    review_updates = {}
+    if args.output_dir:
+        review_updates["output_dir"] = Path(args.output_dir)
+    if args.allow_pending:
+        review_updates["allow_pending_reviews"] = True
+    if review_updates:
+        settings = settings.model_copy(
+            update={
+                "paper_review": settings.paper_review.model_copy(update=review_updates)
+            }
+        )
+    result = apply_paper_review_updates(
+        pd.read_csv(decisions_path),
+        pd.read_csv(updates_path),
+        reviewer_id=args.reviewer_id,
+        settings=settings,
+    )
+    summary = result.review_summary.iloc[0].to_dict() if not result.review_summary.empty else {}
+    print(f"review_id: {result.review_id}")
+    print(f"total_decisions: {summary.get('total_decisions', 0)}")
+    print(f"approved_count: {summary.get('approved_count', 0)}")
+    print(f"rejected_count: {summary.get('rejected_count', 0)}")
+    print(f"watch_only_count: {summary.get('watch_only_count', 0)}")
+    print(f"pending_count: {summary.get('pending_count', 0)}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['paper_review_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
     return 0
 
 

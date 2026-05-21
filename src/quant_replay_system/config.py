@@ -172,6 +172,15 @@ class PaperReconciliationSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class PaperReviewSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/paper_trading/reviews")
+    allow_pending_reviews: bool = True
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DailyPaperRunnerSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/paper_trading/daily")
     config_version: str = "mvp"
@@ -212,6 +221,7 @@ class Settings(BaseModel):
     walk_forward: WalkForwardSettings = Field(default_factory=WalkForwardSettings)
     paper_trading: PaperTradingSettings = Field(default_factory=PaperTradingSettings)
     paper_reconciliation: PaperReconciliationSettings = Field(default_factory=PaperReconciliationSettings)
+    paper_review: PaperReviewSettings = Field(default_factory=PaperReviewSettings)
     daily_paper_runner: DailyPaperRunnerSettings = Field(default_factory=DailyPaperRunnerSettings)
     execution: ExecutionSettings
     risk: RiskSettings
