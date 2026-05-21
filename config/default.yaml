@@ -173,6 +173,19 @@ paper_artifact_index:
   enable_live_trading: false
   enable_broker_api: false
 
+paper_artifact_health:
+  index_path: outputs/reports/paper_trading/index/paper_artifact_index.csv
+  root_dir: outputs/reports/paper_trading
+  output_dir: outputs/reports/paper_trading/health
+  strict: false
+  empty_csv_severity: WARN
+  missing_no_live_statement_severity: WARN
+  missing_metadata_field_severity: WARN
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 execution:
   mode: t_plus_1
   price_field: open

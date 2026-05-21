@@ -201,6 +201,20 @@ class PaperArtifactIndexSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class PaperArtifactHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/paper_trading/index/paper_artifact_index.csv")
+    root_dir: Path = Path("outputs/reports/paper_trading")
+    output_dir: Path = Path("outputs/reports/paper_trading/health")
+    strict: bool = False
+    empty_csv_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_no_live_statement_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_metadata_field_severity: Literal["WARN", "ERROR"] = "WARN"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -236,6 +250,7 @@ class Settings(BaseModel):
     paper_review: PaperReviewSettings = Field(default_factory=PaperReviewSettings)
     daily_paper_runner: DailyPaperRunnerSettings = Field(default_factory=DailyPaperRunnerSettings)
     paper_artifact_index: PaperArtifactIndexSettings = Field(default_factory=PaperArtifactIndexSettings)
+    paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 

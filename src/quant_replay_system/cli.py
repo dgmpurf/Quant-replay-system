@@ -12,6 +12,7 @@ import pandas as pd
 
 from quant_replay_system.config import load_settings
 from quant_replay_system.daily_paper_runner import run_daily_paper_trading
+from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
 from quant_replay_system.paper_review import apply_paper_review_updates
@@ -112,6 +113,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     index.add_argument("--config", help="Optional config YAML path")
     index.set_defaults(handler=_handle_paper_index)
+
+    health = subparsers.add_parser("paper-health-check", help="Check local paper artifact file health")
+    health.add_argument("--index", help="Paper artifact index CSV path")
+    health.add_argument("--root", help="Paper trading artifact root directory")
+    health.add_argument("--output-dir", help="Optional health-check output directory")
+    health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    health.add_argument("--config", help="Optional config YAML path")
+    health.set_defaults(handler=_handle_paper_health_check)
     return parser
 
 
@@ -321,6 +331,42 @@ def _handle_paper_index(args: argparse.Namespace) -> int:
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_paper_health_check(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "paper_artifact_health": settings.paper_artifact_health.model_copy(update=updates)
+        }
+    )
+    result = check_paper_artifact_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['artifact_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
     return 0
 
 

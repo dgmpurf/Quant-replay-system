@@ -113,6 +113,27 @@ Options:
 
 The command writes `paper_artifact_index.md`, `paper_artifact_index.csv`, `paper_artifact_index.json`, and `metadata.json`, then prints the index report path and artifact count.
 
+## paper-health-check
+
+Validate that paths in a paper artifact index still exist and are readable.
+
+```cmd
+python -m quant_replay_system.cli paper-health-check --index outputs\reports\paper_trading\index\paper_artifact_index.csv
+```
+
+Options:
+
+- `--index` optional paper artifact index CSV path.
+- `--root` optional paper trading root; if supplied without `--index`, artifacts are scanned through the index module.
+- `--output-dir` optional health artifact output directory.
+- `--strict` escalates configurable warnings to errors.
+- `--allow-warn` exits zero on `WARN` in strict mode.
+- `--config` optional config YAML path.
+
+The command writes `artifact_health_report.md`, `artifact_health_issues.csv`, `artifact_health_summary.csv`, and `metadata.json`, then prints status, issue counts, and the report path.
+
+It exits non-zero on `FAIL` by default.
+
 ## paper-template-fills
 
 Write an empty fills CSV template.
