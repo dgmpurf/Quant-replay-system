@@ -21,6 +21,7 @@ Included now:
 - Explainable score engine and candidate selector for ranked research candidates.
 - Replay run orchestrator for end-to-end auditable single-date replays.
 - Hardened replay report artifacts with markdown, CSV exports, and metadata JSON.
+- Batch replay orchestration for multi-date replay runs and aggregate reports.
 - Baseline pytest setup.
 
 Not included:
@@ -42,6 +43,8 @@ python -m pytest
 
 For a clean Windows CMD setup with a virtual environment, `.env` file, test command, and sample replay command, see [docs/environment_setup.md](docs/environment_setup.md).
 
+For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
+
 ## Project Layout
 
 ```text
@@ -56,6 +59,7 @@ quant-replay-system/
       trading_calendar.csv
       universe_snapshots.csv
   docs/
+    batch_replay.md
     data_contract.md
     execution_calendar.md
     factor_dataset.md

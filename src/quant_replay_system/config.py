@@ -81,6 +81,16 @@ class ReplayRunSettings(BaseModel):
     write_artifacts: bool = True
 
 
+class BatchReplaySettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/batch_replays")
+    skip_non_trading_days: bool = True
+    fail_fast: bool = False
+    default_top_n: int = Field(default=5, gt=0)
+    default_holding_horizon: int = Field(default=10, gt=0)
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -107,6 +117,7 @@ class Settings(BaseModel):
     score_engine: ScoreEngineSettings = Field(default_factory=ScoreEngineSettings)
     candidate_selection: CandidateSelectionSettings = Field(default_factory=CandidateSelectionSettings)
     replay_run: ReplayRunSettings = Field(default_factory=ReplayRunSettings)
+    batch_replay: BatchReplaySettings = Field(default_factory=BatchReplaySettings)
     execution: ExecutionSettings
     risk: RiskSettings
 

@@ -62,6 +62,15 @@ replay_run:
   config_version: mvp
   write_artifacts: true
 
+batch_replay:
+  output_dir: outputs/reports/batch_replays
+  skip_non_trading_days: true
+  fail_fast: false
+  default_top_n: 5
+  default_holding_horizon: 10
+  config_version: mvp
+  write_artifacts: true
+
 execution:
   mode: t_plus_1
   price_field: open
