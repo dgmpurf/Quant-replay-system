@@ -103,6 +103,27 @@ class CalibrationSettings(BaseModel):
     write_artifacts: bool = True
 
 
+class PortfolioSimulationSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/portfolio_simulations")
+    initial_cash: float = Field(default=10_000.0, gt=0)
+    max_gross_exposure: float = Field(default=0.60, ge=0, le=1)
+    max_position_weight: float = Field(default=0.20, ge=0, le=1)
+    sizing_method: Literal["equal_weight"] = "equal_weight"
+    round_lots: bool = True
+    lot_size: int = Field(default=100, gt=0)
+    allow_fractional_shares: bool = False
+    reserve_cash_pct: float = Field(default=0.40, ge=0, le=1)
+    commission_bps: float = Field(default=0.0, ge=0)
+    min_commission: float = Field(default=0.0, ge=0)
+    slippage_bps: float = Field(default=0.0, ge=0)
+    tax_bps: float = Field(default=0.0, ge=0)
+    allow_reinvestment: bool = True
+    mark_to_market: bool = True
+    allow_negative_cash: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -131,6 +152,7 @@ class Settings(BaseModel):
     replay_run: ReplayRunSettings = Field(default_factory=ReplayRunSettings)
     batch_replay: BatchReplaySettings = Field(default_factory=BatchReplaySettings)
     calibration: CalibrationSettings = Field(default_factory=CalibrationSettings)
+    portfolio_simulation: PortfolioSimulationSettings = Field(default_factory=PortfolioSimulationSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 

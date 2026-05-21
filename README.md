@@ -23,6 +23,7 @@ Included now:
 - Hardened replay report artifacts with markdown, CSV exports, and metadata JSON.
 - Batch replay orchestration for multi-date replay runs and aggregate reports.
 - Parameter calibration over explicit small grids using batch replay outputs.
+- Portfolio simulation with cash, trade, position, and equity ledgers.
 - Baseline pytest setup.
 
 Not included:
@@ -48,6 +49,8 @@ For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md]
 
 For explainable parameter comparison using batch replay outputs, see [docs/parameter_calibration.md](docs/parameter_calibration.md).
 
+For account-level portfolio ledgers and equity-curve simulation, see [docs/portfolio_simulation.md](docs/portfolio_simulation.md).
+
 ## Project Layout
 
 ```text
@@ -67,6 +70,7 @@ quant-replay-system/
     execution_calendar.md
     factor_dataset.md
     parameter_calibration.md
+    portfolio_simulation.md
     report_generation.md
     replay_run_orchestrator.md
     scoring_engine.md

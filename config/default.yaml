@@ -82,6 +82,26 @@ calibration:
   config_version: mvp
   write_artifacts: true
 
+portfolio_simulation:
+  output_dir: outputs/reports/portfolio_simulations
+  initial_cash: 10000
+  max_gross_exposure: 0.60
+  max_position_weight: 0.20
+  sizing_method: equal_weight
+  round_lots: true
+  lot_size: 100
+  allow_fractional_shares: false
+  reserve_cash_pct: 0.40
+  commission_bps: 0
+  min_commission: 0
+  slippage_bps: 0
+  tax_bps: 0
+  allow_reinvestment: true
+  mark_to_market: true
+  allow_negative_cash: false
+  config_version: mvp
+  write_artifacts: true
+
 execution:
   mode: t_plus_1
   price_field: open
