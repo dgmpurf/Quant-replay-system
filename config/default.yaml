@@ -22,6 +22,37 @@ scoring:
   min_score: 0.0
   max_candidates: 5
 
+factor_dataset:
+  exclude_st: true
+  exclude_suspended: true
+  require_market_data: true
+  include_technical_score: true
+
+score_engine:
+  weights:
+    reality_score: 0.35
+    technical_score: 0.25
+    expectation_score: 0.15
+    liquidity_score: 0.10
+    sentiment_score: 0.05
+    risk_penalty: 0.25
+  reality_score_default: 50
+  sentiment_score_default: 50
+  technical_score_default: 50
+  expectation_score_default: 50
+  liquidity_score_default: 0
+  rsi_overheat_threshold: 80
+  hard_block_st: true
+  hard_block_suspended: true
+  hard_block_missing_market: true
+  hard_block_limit_up: true
+
+candidate_selection:
+  top_n: 5
+  min_action: PAPER_TRADE
+  min_final_score:
+  exclude_blocked: true
+
 execution:
   mode: t_plus_1
   price_field: open

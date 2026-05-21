@@ -17,6 +17,8 @@ Included now:
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
 - Trading calendar and T+1 execution calendar for daily replay.
 - Point-in-time-safe technical indicators for timing research.
+- Point-in-time factor dataset builder for research features.
+- Explainable score engine and candidate selector for ranked research candidates.
 - Baseline pytest setup.
 
 Not included:
@@ -54,6 +56,8 @@ quant-replay-system/
   docs/
     data_contract.md
     execution_calendar.md
+    factor_dataset.md
+    scoring_engine.md
     technical_indicators.md
   src/
     quant_replay_system/

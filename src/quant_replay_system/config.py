@@ -34,6 +34,43 @@ class ScoringSettings(BaseModel):
     max_candidates: int = Field(default=5, gt=0)
 
 
+class FactorDatasetSettings(BaseModel):
+    exclude_st: bool = True
+    exclude_suspended: bool = True
+    require_market_data: bool = True
+    include_technical_score: bool = True
+
+
+class ScoreEngineSettings(BaseModel):
+    weights: Dict[str, float] = Field(
+        default_factory=lambda: {
+            "reality_score": 0.35,
+            "technical_score": 0.25,
+            "expectation_score": 0.15,
+            "liquidity_score": 0.10,
+            "sentiment_score": 0.05,
+            "risk_penalty": 0.25,
+        }
+    )
+    reality_score_default: float = 50.0
+    sentiment_score_default: float = 50.0
+    technical_score_default: float = 50.0
+    expectation_score_default: float = 50.0
+    liquidity_score_default: float = 0.0
+    rsi_overheat_threshold: float = 80.0
+    hard_block_st: bool = True
+    hard_block_suspended: bool = True
+    hard_block_missing_market: bool = True
+    hard_block_limit_up: bool = True
+
+
+class CandidateSelectionSettings(BaseModel):
+    top_n: int = Field(default=5, gt=0)
+    min_action: str = "PAPER_TRADE"
+    min_final_score: float | None = None
+    exclude_blocked: bool = True
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -56,6 +93,9 @@ class Settings(BaseModel):
     data: DataSettings
     output: OutputSettings
     scoring: ScoringSettings
+    factor_dataset: FactorDatasetSettings = Field(default_factory=FactorDatasetSettings)
+    score_engine: ScoreEngineSettings = Field(default_factory=ScoreEngineSettings)
+    candidate_selection: CandidateSelectionSettings = Field(default_factory=CandidateSelectionSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 
