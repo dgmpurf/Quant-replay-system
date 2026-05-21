@@ -91,6 +91,18 @@ class BatchReplaySettings(BaseModel):
     write_artifacts: bool = True
 
 
+class CalibrationSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/calibrations")
+    default_top_n_values: list[int] = Field(default_factory=lambda: [3, 5])
+    default_holding_horizon_values: list[int] = Field(default_factory=lambda: [3, 5])
+    default_min_final_score_values: list[float | None] = Field(default_factory=lambda: [60.0, 70.0])
+    default_min_action: str = "PAPER_TRADE"
+    min_trade_count: int = Field(default=3, ge=0)
+    max_parameter_sets: int = Field(default=40, gt=0)
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -118,6 +130,7 @@ class Settings(BaseModel):
     candidate_selection: CandidateSelectionSettings = Field(default_factory=CandidateSelectionSettings)
     replay_run: ReplayRunSettings = Field(default_factory=ReplayRunSettings)
     batch_replay: BatchReplaySettings = Field(default_factory=BatchReplaySettings)
+    calibration: CalibrationSettings = Field(default_factory=CalibrationSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 

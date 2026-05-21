@@ -71,6 +71,17 @@ batch_replay:
   config_version: mvp
   write_artifacts: true
 
+calibration:
+  output_dir: outputs/reports/calibrations
+  default_top_n_values: [3, 5]
+  default_holding_horizon_values: [3, 5]
+  default_min_final_score_values: [60, 70]
+  default_min_action: PAPER_TRADE
+  min_trade_count: 3
+  max_parameter_sets: 40
+  config_version: mvp
+  write_artifacts: true
+
 execution:
   mode: t_plus_1
   price_field: open

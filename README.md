@@ -22,6 +22,7 @@ Included now:
 - Replay run orchestrator for end-to-end auditable single-date replays.
 - Hardened replay report artifacts with markdown, CSV exports, and metadata JSON.
 - Batch replay orchestration for multi-date replay runs and aggregate reports.
+- Parameter calibration over explicit small grids using batch replay outputs.
 - Baseline pytest setup.
 
 Not included:
@@ -45,6 +46,8 @@ For a clean Windows CMD setup with a virtual environment, `.env` file, test comm
 
 For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
 
+For explainable parameter comparison using batch replay outputs, see [docs/parameter_calibration.md](docs/parameter_calibration.md).
+
 ## Project Layout
 
 ```text
@@ -63,6 +66,7 @@ quant-replay-system/
     data_contract.md
     execution_calendar.md
     factor_dataset.md
+    parameter_calibration.md
     report_generation.md
     replay_run_orchestrator.md
     scoring_engine.md
