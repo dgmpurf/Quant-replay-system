@@ -100,6 +100,34 @@ def test_paper_daily_handles_missing_fills_path_as_warning_not_failure(tmp_path:
     assert "WARNING: Fills file not found" in output.out
 
 
+def test_paper_daily_works_with_reviewed_decisions(tmp_path: Path, capsys) -> None:
+    reviewed_path = _write_reviewed_decisions(tmp_path)
+    code = cli.main(
+        [
+            "paper-daily",
+            "--date",
+            PAPER_DATE,
+            "--reviewed-decisions",
+            str(reviewed_path),
+            "--output-dir",
+            str(tmp_path / "daily"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "reviewed_decisions_used: True" in output.out
+    assert "decision_count: 2" in output.out
+
+
+def test_paper_daily_requires_candidates_or_reviewed_decisions(capsys) -> None:
+    code = cli.main(["paper-daily", "--date", PAPER_DATE])
+    output = capsys.readouterr()
+
+    assert code != 0
+    assert "Either --candidates or --reviewed-decisions is required" in output.err
+
+
 def test_paper_validate_fills_succeeds_on_valid_fills_csv(tmp_path: Path, capsys) -> None:
     fills_path = _write_fills(tmp_path)
     code = cli.main(["paper-validate-fills", "--fills", str(fills_path)])
@@ -200,6 +228,24 @@ def test_cli_does_not_import_or_invoke_broker_live_modules(tmp_path: Path, capsy
 def _write_candidates(tmp_path: Path) -> Path:
     path = tmp_path / "candidates.csv"
     _candidates().to_csv(path, index=False)
+    return path
+
+
+def _write_reviewed_decisions(tmp_path: Path) -> Path:
+    decisions = create_paper_decision_log(
+        _candidates(),
+        decision_date=PAPER_DATE,
+        source_run_id="cli-run",
+        source_report_path="outputs/reports/cli-run/report.md",
+        manual_review_status="PENDING_REVIEW",
+    )
+    decisions["manual_review_status"] = ["APPROVED_FOR_PAPER", "WATCH_ONLY"]
+    decisions["manual_review_notes"] = ["approved", "watch"]
+    decisions["reviewer_id"] = ["cli-reviewer", "cli-reviewer"]
+    decisions["review_reason_code"] = ["SCORE_CONFIRMED", "WATCHLIST_ONLY"]
+    decisions["review_time"] = [pd.Timestamp(PAPER_DATE), pd.Timestamp(PAPER_DATE)]
+    path = tmp_path / "reviewed_decisions.csv"
+    decisions.to_csv(path, index=False)
     return path
 
 

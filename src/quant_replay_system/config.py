@@ -183,6 +183,7 @@ class PaperReviewSettings(BaseModel):
 
 class DailyPaperRunnerSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/paper_trading/daily")
+    error_on_both_candidates_and_reviewed_decisions: bool = False
     config_version: str = "mvp"
     write_artifacts: bool = True
     enable_live_trading: Literal[False] = False

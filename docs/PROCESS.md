@@ -37,26 +37,25 @@ Codex should not silently broaden scope. If a task is documentation-only, Codex 
 
 ## Validation Reporting Standard
 
-Every Codex task summary must include a validation block that lists only validation checks that actually exist in the project and were actually run for the task. Do not include placeholder `N/A` lines for modules or suites that do not exist.
-
-For the current `quant-replay-system` backend-only project, the default validation block is:
+Every Codex task summary must include a validation block that lists only validation checks that actually exist and were actually run.
 
 ```text
 Validation:
 - Backend tests: passed, python -m pytest, <N> passed in <duration>.
 ```
 
-Codex should include additional validation lines only when they are applicable and actually run:
+For `quant-replay-system`:
 
-- Frontend build may be reported only if a frontend module exists and a frontend build command was run.
-- Offline benchmarks may be reported only if a benchmark suite is configured and benchmark checks were run.
-- Any skipped or unavailable validation should be mentioned under known limitations when relevant, not as a `N/A` validation line.
-
-The backend tests command is:
+- The default validation output should include backend tests only.
+- Backend tests command is:
 
 ```bat
 python -m pytest
 ```
+
+- Do not report `Frontend build: N/A` when no frontend exists.
+- Do not report `Offline benchmarks: N/A` when no benchmark suite exists.
+- If a future `frontend/` module or benchmark suite is added, include those validation lines only when they are applicable and were actually run.
 
 ## 3. ChatGPT Review Loop
 

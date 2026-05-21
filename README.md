@@ -75,6 +75,7 @@ For paper decision/fill reconciliation, see [docs/paper_fill_reconciliation.md](
 ```powershell
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --reviewer-id msj
+python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv

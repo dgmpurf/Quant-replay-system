@@ -2,7 +2,7 @@
 
 Daily Paper Trading Runner is a local-only wrapper around the Manual Paper Trading Journal.
 
-It loads reviewed candidates, loads optional manual paper fills, marks paper positions to local price data, and writes one daily paper journal artifact folder.
+It loads either raw candidates or an already-reviewed decisions CSV, loads optional manual paper fills, marks paper positions to local price data, and writes one daily paper journal artifact folder.
 
 It is not live trading. It does not connect to brokers, submit orders, automate order placement, or call broker APIs.
 
@@ -10,16 +10,16 @@ It is not live trading. It does not connect to brokers, submit orders, automate 
 
 The runner makes the daily paper process repeatable:
 
-1. load candidate output from replay or a candidate CSV,
-2. create a paper decision log,
+1. load candidate output from replay or a candidate CSV, or load `reviewed_decisions.csv`,
+2. create a paper decision log from raw candidates, or preserve the reviewed decision log,
 3. load existing manual fills if present,
-4. reconcile manual fills against the generated decision log,
+4. reconcile manual fills against the active decision log,
 5. calculate open paper positions,
 6. calculate closed paper trades,
 7. mark positions to local prices,
 8. write a daily summary and report.
 
-## Expected Candidate Input
+## Raw Candidates Flow
 
 Candidates can be passed as a DataFrame or CSV path.
 
@@ -36,6 +36,27 @@ Useful columns include:
 - `rank` or `candidate_rank`
 
 Optional columns are handled with defaults. A minimal candidate file only needs `symbol`.
+
+When raw candidates are supplied, the runner creates a fresh decision log. Manual review fields default to the candidate row values if present, otherwise to the paper trading defaults.
+
+## Reviewed Decisions Flow
+
+After `paper-review-decisions` writes `reviewed_decisions.csv`, pass that file directly to the daily runner:
+
+```cmd
+python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs\reports\paper_trading\reviews\example\reviewed_decisions.csv --fills data\paper\fills.csv
+```
+
+When reviewed decisions are supplied, the runner:
+
+- uses the reviewed decision log directly,
+- does not overwrite `manual_review_status`,
+- preserves `manual_review_notes`,
+- preserves `reviewer_id`,
+- preserves `review_reason_code`,
+- preserves `review_time`.
+
+If both candidates and reviewed decisions are supplied, reviewed decisions are preferred by default and the runner records a warning that candidates were ignored.
 
 ## Expected Manual Fills Input
 
@@ -65,6 +86,8 @@ Fills are manual hypothetical records only. They are not broker confirmations.
 
 The runner calls paper fill reconciliation before accounting uses manual fills.
 
+Reconciliation uses the active decision log. If `reviewed_decisions.csv` is supplied, fills are checked against those reviewed statuses. Fills for `REJECTED`, `WATCH_ONLY`, or `PENDING_REVIEW` decisions fail reconciliation by default.
+
 If reconciliation status is `FAIL`, the default behavior is to continue writing the daily report but skip accounting with the invalid fills. The daily metadata records reconciliation status, issue counts, and the reconciliation report path.
 
 Set this option to fail fast instead:
@@ -83,7 +106,7 @@ from quant_replay_system.daily_paper_runner import run_daily_paper_trading
 
 result = run_daily_paper_trading(
     "2024-05-20",
-    candidates_path="outputs/reports/replay_runs/example/candidates.csv",
+    reviewed_decisions_path="outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv",
     fills_path="outputs/reports/paper_trading/manual_fills.csv",
 )
 
@@ -134,6 +157,7 @@ The report includes an explicit no-live-trading statement.
 ```yaml
 daily_paper_runner:
   output_dir: outputs/reports/paper_trading/daily
+  error_on_both_candidates_and_reviewed_decisions: false
   config_version: mvp
   write_artifacts: true
   enable_live_trading: false
@@ -141,6 +165,8 @@ daily_paper_runner:
 ```
 
 The live trading and broker API flags are constrained to false.
+
+Set `error_on_both_candidates_and_reviewed_decisions: true` if a mixed raw-candidate/reviewed-decisions input should fail instead of preferring reviewed decisions.
 
 ## Known MVP Limitations
 

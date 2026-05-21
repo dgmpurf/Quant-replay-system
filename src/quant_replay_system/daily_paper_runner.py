@@ -65,6 +65,9 @@ class DailyPaperRunResult:
     closed_trade_count: int
     reconciliation_status: str | None
     reconciliation_path: Path | None
+    reviewed_decisions_used: bool
+    reviewed_decisions_path: Path | None
+    candidate_source_ignored: bool
     artifact_paths: dict[str, Path]
     daily_summary: pd.DataFrame
     warnings: list[str]
@@ -82,6 +85,8 @@ def run_daily_paper_trading(
     *,
     candidates: pd.DataFrame | Any | None = None,
     candidates_path: str | Path | None = None,
+    reviewed_decisions: pd.DataFrame | Any | None = None,
+    reviewed_decisions_path: str | Path | None = None,
     fills_path: str | Path | None = None,
     mark_prices: pd.DataFrame | str | Path | None = None,
     output_dir: str | Path | None = None,
@@ -96,18 +101,37 @@ def run_daily_paper_trading(
         raise ValueError("Daily paper runner cannot enable live trading or broker API access")
 
     normalized_date = _normalize_date(paper_date)
-    candidate_frame = load_candidates_for_paper_trading(candidates=candidates, candidates_path=candidates_path)
-    source_run_id = _first_present(candidate_frame, "source_run_id", "run_id", "replay_run_id")
-    source_report_path = _first_present(candidate_frame, "source_report_path", "report_path")
-    decisions = create_paper_decision_log(
-        candidate_frame,
-        decision_date=normalized_date,
-        source_run_id=source_run_id,
-        source_report_path=source_report_path,
-    )
+    warnings: list[str] = []
+    has_reviewed_input = reviewed_decisions is not None or reviewed_decisions_path is not None
+    has_candidate_input = candidates is not None or candidates_path is not None
+    candidate_source_ignored = False
+    if has_reviewed_input and has_candidate_input:
+        if runner_settings.error_on_both_candidates_and_reviewed_decisions:
+            raise ValueError("Provide either reviewed_decisions or candidates, not both")
+        candidate_source_ignored = True
+        warnings.append("reviewed_decisions provided; candidates input ignored.")
+    if has_reviewed_input:
+        decisions = load_reviewed_decisions_for_paper_trading(
+            reviewed_decisions=reviewed_decisions,
+            reviewed_decisions_path=reviewed_decisions_path,
+        )
+        reviewed_decisions_used = True
+        resolved_reviewed_path = Path(reviewed_decisions_path) if reviewed_decisions_path is not None else None
+    else:
+        candidate_frame = load_candidates_for_paper_trading(candidates=candidates, candidates_path=candidates_path)
+        source_run_id = _first_present(candidate_frame, "source_run_id", "run_id", "replay_run_id")
+        source_report_path = _first_present(candidate_frame, "source_report_path", "report_path")
+        decisions = create_paper_decision_log(
+            candidate_frame,
+            decision_date=normalized_date,
+            source_run_id=source_run_id,
+            source_report_path=source_report_path,
+        )
+        reviewed_decisions_used = False
+        resolved_reviewed_path = None
 
     fills, load_warnings = load_existing_paper_fills(fills_path)
-    warnings = list(load_warnings)
+    warnings.extend(load_warnings)
     reconciliation_result = reconcile_paper_fills(decisions, fills, settings=settings)
     reconciliation_path = reconciliation_result.artifact_paths.get("reconciliation_report")
     if reconciliation_result.warnings:
@@ -154,6 +178,9 @@ def run_daily_paper_trading(
         "reconciliation_status": reconciliation_result.status,
         "reconciliation_report_path": reconciliation_path,
         "reconciliation_issue_count": reconciliation_result.issue_count,
+        "reviewed_decisions_used": reviewed_decisions_used,
+        "reviewed_decisions_path": resolved_reviewed_path,
+        "candidate_source_ignored": candidate_source_ignored,
         "live_trading_enabled": False,
         "broker_api_invoked": False,
         "paper_trading_only": True,
@@ -167,6 +194,9 @@ def run_daily_paper_trading(
         closed_trade_count=len(closed_trades),
         reconciliation_status=reconciliation_result.status,
         reconciliation_path=reconciliation_path,
+        reviewed_decisions_used=reviewed_decisions_used,
+        reviewed_decisions_path=resolved_reviewed_path,
+        candidate_source_ignored=candidate_source_ignored,
         artifact_paths=paths.as_dict(),
         daily_summary=daily_summary,
         warnings=warnings,
@@ -207,6 +237,32 @@ def load_candidates_for_paper_trading(
     if not path.exists():
         raise FileNotFoundError(f"Candidate CSV not found: {path}")
     return pd.read_csv(path)
+
+
+def load_reviewed_decisions_for_paper_trading(
+    *,
+    reviewed_decisions: pd.DataFrame | Any | None = None,
+    reviewed_decisions_path: str | Path | None = None,
+) -> pd.DataFrame:
+    """Load an already-reviewed paper decision log without rewriting review fields."""
+
+    if reviewed_decisions is not None and reviewed_decisions_path is not None:
+        raise ValueError("Provide either reviewed_decisions or reviewed_decisions_path, not both")
+    if isinstance(reviewed_decisions, pd.DataFrame):
+        return _prepare_reviewed_decisions(reviewed_decisions)
+    if reviewed_decisions is not None:
+        for attr in ["reviewed_decisions", "decisions", "decision_log"]:
+            if hasattr(reviewed_decisions, attr):
+                value = getattr(reviewed_decisions, attr)
+                if isinstance(value, pd.DataFrame):
+                    return _prepare_reviewed_decisions(value)
+        raise TypeError("reviewed_decisions must be a DataFrame or object with reviewed_decisions/decisions")
+    if reviewed_decisions_path is None:
+        raise ValueError("reviewed_decisions_path is required when reviewed_decisions is not provided")
+    path = Path(reviewed_decisions_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Reviewed decisions CSV not found: {path}")
+    return _prepare_reviewed_decisions(pd.read_csv(path))
 
 
 def load_existing_paper_fills(fills_path: str | Path | None = None) -> tuple[pd.DataFrame, list[str]]:
@@ -379,6 +435,10 @@ def build_daily_paper_metadata(result: DailyPaperRunResult, paths: DailyPaperArt
             "error_count": result.reconciliation_result.error_count if result.reconciliation_result is not None else 0,
             "warning_count": result.reconciliation_result.warning_count if result.reconciliation_result is not None else 0,
         },
+        "reviewed_decisions_used": result.reviewed_decisions_used,
+        "reviewed_decisions_path": str(result.reviewed_decisions_path) if result.reviewed_decisions_path is not None else "",
+        "candidate_source_ignored": result.candidate_source_ignored,
+        "manual_review_status_summary": _manual_review_counts_dict(result.decisions),
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
@@ -410,6 +470,8 @@ def _render_daily_paper_report(
                 "fill_count": result.fill_count,
                 "reconciliation_status": result.reconciliation_status,
                 "reconciliation_report": result.reconciliation_path,
+                "reviewed_decisions_used": result.reviewed_decisions_used,
+                "reviewed_decisions_path": result.reviewed_decisions_path,
             }
         ),
         "",
@@ -427,6 +489,10 @@ def _render_daily_paper_report(
                 "final_score",
                 "risk_precheck_status",
                 "manual_review_status",
+                "manual_review_notes",
+                "reviewer_id",
+                "review_reason_code",
+                "review_time",
             ],
         ),
         "",
@@ -508,6 +574,13 @@ def _manual_review_summary(decisions: pd.DataFrame) -> str:
     return _markdown_table(counts, ["manual_review_status", "count"])
 
 
+def _manual_review_counts_dict(decisions: pd.DataFrame) -> dict[str, int]:
+    if decisions.empty or "manual_review_status" not in decisions.columns:
+        return {}
+    counts = decisions["manual_review_status"].astype(str).str.upper().str.strip().value_counts()
+    return {str(key): int(value) for key, value in counts.sort_index().items()}
+
+
 def _reconciliation_summary(result: DailyPaperRunResult) -> str:
     if result.reconciliation_result is None:
         return "_No reconciliation result._"
@@ -564,6 +637,33 @@ def _load_project_settings(config: Settings | str | Path | None) -> Settings:
     if isinstance(config, Settings):
         return config
     return load_settings(Path(config))
+
+
+def _prepare_reviewed_decisions(decisions: pd.DataFrame) -> pd.DataFrame:
+    reviewed = decisions.copy(deep=True)
+    required = ["decision_id", "symbol", "manual_review_status"]
+    missing = [column for column in required if column not in reviewed.columns]
+    if missing:
+        raise ValueError(f"Reviewed decisions missing required columns: {', '.join(missing)}")
+    for column in ["decision_date", "planned_buy_date", "planned_sell_date"]:
+        if column in reviewed.columns:
+            reviewed[column] = pd.to_datetime(reviewed[column], errors="coerce").dt.normalize()
+    if "review_time" in reviewed.columns:
+        reviewed["review_time"] = pd.to_datetime(reviewed["review_time"], errors="coerce")
+    for column in [
+        "manual_review_status",
+        "manual_review_notes",
+        "reviewer_id",
+        "review_reason_code",
+        "review_time",
+    ]:
+        if column not in reviewed.columns:
+            reviewed[column] = ""
+    reviewed["manual_review_status"] = reviewed["manual_review_status"].astype(str).str.upper().str.strip()
+    if "candidate_rank" not in reviewed.columns:
+        reviewed["candidate_rank"] = pd.NA
+    sort_columns = [column for column in ["decision_date", "candidate_rank", "symbol"] if column in reviewed.columns]
+    return reviewed.sort_values(sort_columns, na_position="last").reset_index(drop=True)
 
 
 def _metadata_created_at(paper_date: pd.Timestamp) -> str:

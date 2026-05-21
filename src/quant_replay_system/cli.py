@@ -64,7 +64,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     daily = subparsers.add_parser("paper-daily", help="Write a local daily paper trading report")
     daily.add_argument("--date", required=True, help="Paper trading date, e.g. 2024-05-20")
-    daily.add_argument("--candidates", required=True, help="Candidates CSV path")
+    daily.add_argument("--candidates", help="Candidates CSV path")
+    daily.add_argument("--reviewed-decisions", help="Reviewed decisions CSV path")
     daily.add_argument("--fills", help="Optional manual paper fills CSV path")
     daily.add_argument("--mark-prices", help="Optional mark-to-market price CSV path")
     daily.add_argument("--output-dir", help="Optional output directory")
@@ -162,9 +163,12 @@ def write_fills_template(path: str | Path, *, overwrite: bool = False) -> Path:
 
 
 def _handle_paper_daily(args: argparse.Namespace) -> int:
+    if not args.candidates and not args.reviewed_decisions:
+        raise ValueError("Either --candidates or --reviewed-decisions is required")
     result = run_daily_paper_trading(
         args.date,
         candidates_path=args.candidates,
+        reviewed_decisions_path=args.reviewed_decisions,
         fills_path=args.fills,
         mark_prices=args.mark_prices,
         output_dir=args.output_dir,
@@ -177,6 +181,9 @@ def _handle_paper_daily(args: argparse.Namespace) -> int:
     print(f"fill_count: {result.fill_count}")
     print(f"open_position_count: {result.open_position_count}")
     print(f"closed_trade_count: {result.closed_trade_count}")
+    print(f"reviewed_decisions_used: {result.reviewed_decisions_used}")
+    if result.reviewed_decisions_path is not None:
+        print(f"reviewed_decisions_path: {result.reviewed_decisions_path}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

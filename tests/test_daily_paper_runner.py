@@ -9,6 +9,7 @@ from quant_replay_system.daily_paper_runner import (
     DailyPaperRunResult,
     load_candidates_for_paper_trading,
     load_existing_paper_fills,
+    load_reviewed_decisions_for_paper_trading,
     run_daily_paper_trading,
 )
 from quant_replay_system.paper_trading import create_paper_decision_log, record_paper_fill
@@ -157,17 +158,130 @@ def test_load_existing_paper_fills_missing_path_returns_warning(tmp_path: Path) 
     assert warnings
 
 
+def test_runner_accepts_reviewed_decisions_csv(tmp_path: Path) -> None:
+    reviewed_path = _reviewed_decisions_path(tmp_path)
+
+    result = _run(tmp_path, candidates=None, reviewed_decisions_path=reviewed_path)
+
+    assert result.reviewed_decisions_used is True
+    assert result.reviewed_decisions_path == reviewed_path
+    assert result.decision_count == 2
+
+
+def test_reviewed_decision_statuses_are_preserved(tmp_path: Path) -> None:
+    reviewed = _reviewed_decisions()
+
+    result = _run(tmp_path, candidates=None, reviewed_decisions=reviewed)
+
+    assert result.decisions.loc[result.decisions["symbol"] == "AAA", "manual_review_status"].iloc[0] == "APPROVED_FOR_PAPER"
+    assert result.decisions.loc[result.decisions["symbol"] == "BBB", "manual_review_status"].iloc[0] == "REJECTED"
+
+
+def test_reviewed_notes_are_preserved(tmp_path: Path) -> None:
+    result = _run(tmp_path, candidates=None, reviewed_decisions=_reviewed_decisions())
+
+    assert result.decisions.loc[result.decisions["symbol"] == "AAA", "manual_review_notes"].iloc[0] == "approved note"
+    assert result.decisions.loc[result.decisions["symbol"] == "BBB", "manual_review_notes"].iloc[0] == "rejected note"
+
+
+def test_reviewer_reason_and_time_are_preserved(tmp_path: Path) -> None:
+    result = _run(tmp_path, candidates=None, reviewed_decisions=_reviewed_decisions())
+
+    row = result.decisions.loc[result.decisions["symbol"] == "AAA"].iloc[0]
+    assert row["reviewer_id"] == "reviewer-a"
+    assert row["review_reason_code"] == "SCORE_CONFIRMED"
+    assert pd.Timestamp(row["review_time"]) == pd.Timestamp("2024-03-05T16:30:00")
+
+
+def test_approved_reviewed_decision_fill_passes_reconciliation(tmp_path: Path) -> None:
+    reviewed = _reviewed_decisions(statuses=("APPROVED_FOR_PAPER", "WATCH_ONLY"))
+    fills_path = _manual_fills_path(tmp_path, reviewed, decision_index=0)
+
+    result = _run(tmp_path, candidates=None, reviewed_decisions=reviewed, fills_path=fills_path)
+
+    assert result.reconciliation_status == "PASS"
+    assert result.open_position_count == 1
+
+
+def test_rejected_reviewed_decision_fill_fails_reconciliation(tmp_path: Path) -> None:
+    result = _run_with_reviewed_fill_status(tmp_path, "REJECTED")
+
+    assert result.reconciliation_status == "FAIL"
+    assert "DECISION_NOT_APPROVED" in set(result.reconciliation_result.reconciliation_frame["issue_code"])
+
+
+def test_watch_only_reviewed_decision_fill_fails_reconciliation(tmp_path: Path) -> None:
+    result = _run_with_reviewed_fill_status(tmp_path, "WATCH_ONLY")
+
+    assert result.reconciliation_status == "FAIL"
+    assert "DECISION_NOT_APPROVED" in set(result.reconciliation_result.reconciliation_frame["issue_code"])
+
+
+def test_pending_reviewed_decision_fill_fails_reconciliation(tmp_path: Path) -> None:
+    result = _run_with_reviewed_fill_status(tmp_path, "PENDING_REVIEW")
+
+    assert result.reconciliation_status == "FAIL"
+    assert "DECISION_NOT_APPROVED" in set(result.reconciliation_result.reconciliation_frame["issue_code"])
+
+
+def test_both_candidates_and_reviewed_decisions_prefers_reviewed_by_default(tmp_path: Path) -> None:
+    reviewed = _reviewed_decisions(statuses=("APPROVED_FOR_PAPER", "REJECTED"))
+
+    result = _run(tmp_path, candidates=_candidates(), reviewed_decisions=reviewed)
+
+    assert result.reviewed_decisions_used is True
+    assert result.candidate_source_ignored is True
+    assert result.decisions.loc[result.decisions["symbol"] == "BBB", "manual_review_status"].iloc[0] == "REJECTED"
+
+
+def test_warning_emitted_when_candidates_are_ignored(tmp_path: Path) -> None:
+    result = _run(tmp_path, candidates=_candidates(), reviewed_decisions=_reviewed_decisions())
+
+    assert any("candidates input ignored" in warning for warning in result.warnings)
+
+
+def test_metadata_records_reviewed_decisions_path(tmp_path: Path) -> None:
+    reviewed_path = _reviewed_decisions_path(tmp_path)
+    result = _run(tmp_path, candidates=None, reviewed_decisions_path=reviewed_path)
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert metadata["reviewed_decisions_used"] is True
+    assert metadata["reviewed_decisions_path"] == str(reviewed_path)
+
+
+def test_report_includes_manual_review_summary(tmp_path: Path) -> None:
+    result = _run(tmp_path, candidates=None, reviewed_decisions=_reviewed_decisions())
+    content = result.artifact_paths["paper_report"].read_text(encoding="utf-8")
+
+    assert "Manual Review Summary" in content
+    assert "APPROVED_FOR_PAPER" in content
+    assert "REJECTED" in content
+
+
+def test_load_reviewed_decisions_for_paper_trading_reads_csv(tmp_path: Path) -> None:
+    reviewed_path = _reviewed_decisions_path(tmp_path)
+
+    loaded = load_reviewed_decisions_for_paper_trading(reviewed_decisions_path=reviewed_path)
+
+    assert len(loaded) == 2
+    assert "reviewer_id" in loaded.columns
+
+
 def _run(
     tmp_path: Path,
     *,
     candidates: pd.DataFrame | None = None,
     candidates_path: Path | None = None,
+    reviewed_decisions: pd.DataFrame | None = None,
+    reviewed_decisions_path: Path | None = None,
     fills_path: Path | None = None,
 ) -> DailyPaperRunResult:
     return run_daily_paper_trading(
         PAPER_DATE,
-        candidates=_candidates() if candidates is None and candidates_path is None else candidates,
+        candidates=_candidates() if candidates is None and candidates_path is None and reviewed_decisions is None and reviewed_decisions_path is None else candidates,
         candidates_path=candidates_path,
+        reviewed_decisions=reviewed_decisions,
+        reviewed_decisions_path=reviewed_decisions_path,
         fills_path=fills_path,
         mark_prices=_mark_prices(),
         output_dir=tmp_path / "paper_daily",
@@ -223,6 +337,60 @@ def _fills_path(tmp_path: Path, *, round_trip: bool) -> Path:
     path = tmp_path / ("fills_round_trip.csv" if round_trip else "fills_open.csv")
     fills.to_csv(path, index=False)
     return path
+
+
+def _reviewed_decisions_path(tmp_path: Path, statuses: tuple[str, str] = ("APPROVED_FOR_PAPER", "REJECTED")) -> Path:
+    path = tmp_path / "reviewed_decisions.csv"
+    _reviewed_decisions(statuses=statuses).to_csv(path, index=False)
+    return path
+
+
+def _reviewed_decisions(statuses: tuple[str, str] = ("APPROVED_FOR_PAPER", "REJECTED")) -> pd.DataFrame:
+    decisions = create_paper_decision_log(
+        _candidates(),
+        decision_date=PAPER_DATE,
+        source_run_id="run123",
+        source_report_path="outputs/reports/run123/report.md",
+        manual_review_status="PENDING_REVIEW",
+    )
+    decisions["manual_review_status"] = list(statuses)
+    decisions["manual_review_notes"] = ["approved note", "rejected note"]
+    decisions["reviewer_id"] = ["reviewer-a", "reviewer-b"]
+    decisions["review_reason_code"] = ["SCORE_CONFIRMED", "RISK_TOO_HIGH"]
+    decisions["review_time"] = [pd.Timestamp("2024-03-05T16:30:00"), pd.Timestamp("2024-03-05T16:31:00")]
+    return decisions
+
+
+def _manual_fills_path(tmp_path: Path, reviewed: pd.DataFrame, *, decision_index: int = 0) -> Path:
+    decision = reviewed.iloc[decision_index]
+    fills = pd.DataFrame(
+        [
+            {
+                "fill_id": f"manual-{decision['symbol']}",
+                "decision_id": decision["decision_id"],
+                "symbol": decision["symbol"],
+                "side": "BUY",
+                "fill_date": pd.Timestamp("2024-03-05"),
+                "fill_price": 10.0,
+                "quantity": 100,
+                "gross_notional": 1000.0,
+                "fees": 0.0,
+                "slippage": 0.0,
+                "net_cash_flow": -1000.0,
+                "fill_source": "MANUAL",
+                "manual_notes": "",
+            }
+        ]
+    )
+    path = tmp_path / f"fills_{decision['symbol']}.csv"
+    fills.to_csv(path, index=False)
+    return path
+
+
+def _run_with_reviewed_fill_status(tmp_path: Path, status: str) -> DailyPaperRunResult:
+    reviewed = _reviewed_decisions(statuses=(status, "APPROVED_FOR_PAPER"))
+    fills_path = _manual_fills_path(tmp_path, reviewed, decision_index=0)
+    return _run(tmp_path, candidates=None, reviewed_decisions=reviewed, fills_path=fills_path)
 
 
 def _candidates() -> pd.DataFrame:

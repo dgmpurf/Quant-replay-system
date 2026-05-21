@@ -157,6 +157,7 @@ paper_review:
 
 daily_paper_runner:
   output_dir: outputs/reports/paper_trading/daily
+  error_on_both_candidates_and_reviewed_decisions: false
   config_version: mvp
   write_artifacts: true
   enable_live_trading: false

@@ -14,23 +14,27 @@ python -m quant_replay_system.cli <command> ...
 
 ## paper-daily
 
-Generate a daily paper trading report from a candidates CSV and optional manual fills CSV.
+Generate a daily paper trading report from either a candidates CSV or a reviewed decisions CSV, plus optional manual fills CSV.
 
 ```cmd
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs\reports\replay_runs\example\candidates.csv
+python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs\reports\paper_trading\reviews\example\reviewed_decisions.csv --fills data\paper\fills.csv
 ```
 
 Options:
 
 - `--date` required paper date.
-- `--candidates` required candidates CSV.
+- `--candidates` optional candidates CSV.
+- `--reviewed-decisions` optional reviewed decisions CSV.
 - `--fills` optional manual fills CSV.
 - `--mark-prices` optional local mark-to-market price CSV.
 - `--output-dir` optional artifact output directory.
 - `--journal-id` optional explicit journal ID.
 - `--config` optional config YAML path.
 
-The command prints artifact paths, row counts, warnings, and the no-live-trading statement.
+At least one of `--candidates` or `--reviewed-decisions` is required. If both are supplied, reviewed decisions are preferred by default and a warning is printed.
+
+The command prints artifact paths, row counts, reviewed decision usage, warnings, and the no-live-trading statement.
 
 If `--fills` points to a missing file, the command records a warning and continues with an empty fills ledger.
 

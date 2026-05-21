@@ -86,13 +86,23 @@ Options:
 
 The command writes artifacts and prints the review summary plus the no-live-trading statement.
 
+## Daily Runner Integration
+
+Use the generated `reviewed_decisions.csv` as the preferred input to `paper-daily`:
+
+```cmd
+python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs\reports\paper_trading\reviews\example\reviewed_decisions.csv --fills data\paper\fills.csv
+```
+
+`paper-daily` preserves review statuses, notes, reviewer ID, reason code, and review time. If raw candidates are also supplied, reviewed decisions are preferred by default and the runner records a warning.
+
 ## Relationship To Fills And Reconciliation
 
 The intended local workflow is:
 
 1. Generate paper decisions.
 2. Apply manual review updates.
-3. Use reviewed decisions for manual fills.
+3. Use `reviewed_decisions.csv` in `paper-daily`.
 4. Reconcile fills against reviewed decisions.
 5. Generate daily paper reports.
 
