@@ -27,6 +27,7 @@ Included now:
 - Portfolio-aware batch replay and calibration using account-level metrics.
 - Walk-forward validation for train/validation/test parameter checks.
 - Manual paper trading journal for reviewed candidates and hypothetical fills.
+- Daily paper trading runner for local decision logs, fills, and paper reports.
 - Baseline pytest setup.
 
 Not included:
@@ -60,6 +61,8 @@ For train/validation/test calibration checks and overfitting diagnostics, see [d
 
 For reviewed candidate decision logs and manual hypothetical paper fills, see [docs/manual_paper_trading.md](docs/manual_paper_trading.md).
 
+For daily local paper-trading reports from candidate CSVs and manual fills, see [docs/daily_paper_trading_runner.md](docs/daily_paper_trading_runner.md).
+
 ## Project Layout
 
 ```text
@@ -76,6 +79,7 @@ quant-replay-system/
   docs/
     batch_replay.md
     data_contract.md
+    daily_paper_trading_runner.md
     execution_calendar.md
     factor_dataset.md
     manual_paper_trading.md
@@ -92,6 +96,7 @@ quant-replay-system/
       calibration.py
       config.py
       data.py
+      daily_paper_runner.py
       evaluation.py
       execution.py
       paper_trading.py

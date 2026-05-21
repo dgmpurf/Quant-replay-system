@@ -134,6 +134,13 @@ paper_trading:
   config_version: mvp
   write_artifacts: true
 
+daily_paper_runner:
+  output_dir: outputs/reports/paper_trading/daily
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 execution:
   mode: t_plus_1
   price_field: open

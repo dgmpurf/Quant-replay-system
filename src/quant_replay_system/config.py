@@ -158,6 +158,14 @@ class PaperTradingSettings(BaseModel):
     write_artifacts: bool = True
 
 
+class DailyPaperRunnerSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/paper_trading/daily")
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -189,6 +197,7 @@ class Settings(BaseModel):
     portfolio_simulation: PortfolioSimulationSettings = Field(default_factory=PortfolioSimulationSettings)
     walk_forward: WalkForwardSettings = Field(default_factory=WalkForwardSettings)
     paper_trading: PaperTradingSettings = Field(default_factory=PaperTradingSettings)
+    daily_paper_runner: DailyPaperRunnerSettings = Field(default_factory=DailyPaperRunnerSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 
