@@ -11,6 +11,7 @@ from typing import Sequence
 import pandas as pd
 
 from quant_replay_system.config import load_settings
+from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_ingestion import (
     ingest_benchmark_data_csv,
     ingest_corporate_actions_csv,
@@ -159,6 +160,14 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_calendar.add_argument("--output-dir", help="Optional processed calendar output directory")
     ingest_calendar.add_argument("--config", help="Optional config YAML path")
     ingest_calendar.set_defaults(handler=_handle_ingest_calendar)
+
+    quality = subparsers.add_parser("data-quality", help="Run local data quality checks")
+    quality.add_argument("--dataset-type", required=True, help="Dataset type: market, universe, benchmark, corporate_actions, trading_calendar")
+    quality.add_argument("--input", required=True, help="Input canonical/processed CSV path")
+    quality.add_argument("--output-dir", help="Optional data quality output directory")
+    quality.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    quality.add_argument("--config", help="Optional config YAML path")
+    quality.set_defaults(handler=_handle_data_quality)
     return parser
 
 
@@ -435,6 +444,31 @@ def _handle_ingest_calendar(args: argparse.Namespace) -> int:
     return _print_ingestion_result(
         ingest_trading_calendar_csv(args.input, output_dir=args.output_dir, settings=_optional_settings(args.config))
     )
+
+
+def _handle_data_quality(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.strict:
+        settings = settings.model_copy(
+            update={
+                "data_quality": settings.data_quality.model_copy(update={"strict": True})
+            }
+        )
+    result = run_data_quality_checks(
+        args.input,
+        args.dataset_type,
+        output_dir=args.output_dir,
+        settings=settings,
+    )
+    print(f"Data quality status: {result.status}")
+    print(f"dataset_type: {result.dataset_type}")
+    print(f"row_count: {result.row_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"Report path: {result.artifact_paths['data_quality_report']}")
+    print("No live trading or broker API was invoked.")
+    return 1 if result.status == "FAIL" else 0
 
 
 def _optional_settings(config_path: str | None):

@@ -14,6 +14,7 @@ Included now:
 - Local YAML configuration.
 - Local CSV mock data.
 - Local CSV ingestion and processed snapshot builder.
+- Data quality summary reports for processed replay inputs.
 - Placeholder modules for data, scoring, replay, execution, evaluation, calibration, and risk.
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
 - Trading calendar and T+1 execution calendar for daily replay.
@@ -57,6 +58,8 @@ For a clean Windows CMD setup with a virtual environment, `.env` file, test comm
 
 For local CSV ingestion, validation, and processed snapshot manifests, see [docs/data_ingestion.md](docs/data_ingestion.md).
 
+For processed data quality summaries before replay, see [docs/data_quality.md](docs/data_quality.md).
+
 For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
 
 For explainable parameter comparison using batch replay outputs, see [docs/parameter_calibration.md](docs/parameter_calibration.md).
@@ -91,6 +94,7 @@ python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/repo
 python -m quant_replay_system.cli paper-index --root outputs/reports/paper_trading
 python -m quant_replay_system.cli paper-health-check --index outputs/reports/paper_trading/index/paper_artifact_index.csv
 python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --output-dir data/processed/market
+python -m quant_replay_system.cli data-quality --dataset-type market --input data/processed/market/market_cleaned.csv
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv
 ```
@@ -112,6 +116,7 @@ quant-replay-system/
     batch_replay.md
     data_contract.md
     data_ingestion.md
+    data_quality.md
     daily_paper_trading_runner.md
     execution_calendar.md
     factor_dataset.md
@@ -137,6 +142,7 @@ quant-replay-system/
       config.py
       data.py
       data_ingestion.py
+      data_quality.py
       daily_paper_runner.py
       evaluation.py
       execution.py

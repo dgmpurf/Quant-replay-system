@@ -200,6 +200,18 @@ data_ingestion:
   enable_live_trading: false
   enable_broker_api: false
 
+data_quality:
+  output_dir: outputs/reports/data_quality
+  duplicate_key_severity: WARN
+  missing_available_time_severity: ERROR
+  missing_source_revision_severity: WARN
+  suspicious_available_time_severity: WARN
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 execution:
   mode: t_plus_1
   price_field: open

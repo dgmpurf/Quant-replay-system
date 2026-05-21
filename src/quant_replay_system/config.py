@@ -230,6 +230,19 @@ class DataIngestionSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class DataQualitySettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/data_quality")
+    duplicate_key_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_available_time_severity: Literal["WARN", "ERROR"] = "ERROR"
+    missing_source_revision_severity: Literal["WARN", "ERROR"] = "WARN"
+    suspicious_available_time_severity: Literal["INFO", "WARN", "ERROR"] = "WARN"
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -267,6 +280,7 @@ class Settings(BaseModel):
     paper_artifact_index: PaperArtifactIndexSettings = Field(default_factory=PaperArtifactIndexSettings)
     paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)
     data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
+    data_quality: DataQualitySettings = Field(default_factory=DataQualitySettings)
     execution: ExecutionSettings
     risk: RiskSettings
 
