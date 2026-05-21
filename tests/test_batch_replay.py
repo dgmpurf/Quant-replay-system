@@ -178,6 +178,58 @@ def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> Non
         assert replay.audit_metadata["broker_api_invoked"] is False
 
 
+def test_batch_replay_can_run_with_portfolio_simulation_enabled(tmp_path: Path) -> None:
+    result = _run_batch(tmp_path)
+
+    assert result.portfolio_result is not None
+    assert result.portfolio_result.artifact_paths["portfolio_report"].exists()
+
+
+def test_batch_replay_can_run_with_portfolio_simulation_disabled(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    settings = settings.model_copy(
+        update={"batch_replay": settings.batch_replay.model_copy(update={"enable_portfolio_simulation": False})}
+    )
+    result = _run_batch(tmp_path, settings=settings)
+
+    assert result.portfolio_result is None
+    assert result.aggregate_performance["portfolio_simulation_enabled"] is False
+
+
+def test_batch_index_includes_portfolio_metrics_when_enabled(tmp_path: Path) -> None:
+    result = _run_batch(tmp_path)
+
+    assert "portfolio_total_return" in result.batch_index.columns
+    assert result.batch_index["portfolio_simulation_enabled"].all()
+    assert result.batch_index["portfolio_report_path"].notna().all()
+
+
+def test_aggregate_performance_includes_portfolio_metrics_when_enabled(tmp_path: Path) -> None:
+    result = _run_batch(tmp_path)
+
+    assert result.aggregate_performance["portfolio_initial_cash"] == 10_000.0
+    assert result.aggregate_performance["portfolio_final_equity"] is not None
+    assert result.aggregate_performance["portfolio_total_return"] is not None
+
+
+def test_batch_metadata_records_portfolio_simulation_settings(tmp_path: Path) -> None:
+    result = _run_batch(tmp_path)
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert metadata["portfolio_simulation_enabled"] is True
+    assert metadata["config_summary"]["portfolio_simulation"]["enabled"] is True
+    assert metadata["config_summary"]["portfolio_simulation"]["initial_cash"] == 10_000.0
+    assert "portfolio_report" in metadata["portfolio_artifact_paths"]
+
+
+def test_batch_report_contains_portfolio_performance_section(tmp_path: Path) -> None:
+    result = _run_batch(tmp_path)
+    content = result.artifact_paths["batch_report"].read_text(encoding="utf-8")
+
+    assert "## Portfolio Performance Summary" in content
+    assert "portfolio_total_return" in content
+
+
 def _batch_replay_module():
     import quant_replay_system.batch_replay as module
 
@@ -221,6 +273,16 @@ def _settings(tmp_path: Path):
                     "output_dir": tmp_path / "batch_replays",
                     "default_top_n": 2,
                     "default_holding_horizon": 2,
+                    "enable_portfolio_simulation": True,
+                }
+            ),
+            "portfolio_simulation": settings.portfolio_simulation.model_copy(
+                update={
+                    "output_dir": tmp_path / "portfolio_simulations",
+                    "initial_cash": 10_000.0,
+                    "max_gross_exposure": 0.60,
+                    "max_position_weight": 0.20,
+                    "reserve_cash_pct": 0.40,
                 }
             ),
             "candidate_selection": settings.candidate_selection.model_copy(update={"exclude_blocked": True}),

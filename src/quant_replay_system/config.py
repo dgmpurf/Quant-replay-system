@@ -87,6 +87,11 @@ class BatchReplaySettings(BaseModel):
     fail_fast: bool = False
     default_top_n: int = Field(default=5, gt=0)
     default_holding_horizon: int = Field(default=10, gt=0)
+    enable_portfolio_simulation: bool = True
+    portfolio_initial_cash: float = Field(default=10_000.0, gt=0)
+    portfolio_max_gross_exposure: float = Field(default=0.60, ge=0, le=1)
+    portfolio_max_position_weight: float = Field(default=0.20, ge=0, le=1)
+    portfolio_reserve_cash_pct: float = Field(default=0.40, ge=0, le=1)
     config_version: str = "mvp"
     write_artifacts: bool = True
 
@@ -99,6 +104,8 @@ class CalibrationSettings(BaseModel):
     default_min_action: str = "PAPER_TRADE"
     min_trade_count: int = Field(default=3, ge=0)
     max_parameter_sets: int = Field(default=40, gt=0)
+    use_portfolio_metrics: bool = True
+    objective_metric_mode: Literal["trade_level", "portfolio_aware"] = "portfolio_aware"
     config_version: str = "mvp"
     write_artifacts: bool = True
 

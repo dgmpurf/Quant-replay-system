@@ -68,6 +68,11 @@ batch_replay:
   fail_fast: false
   default_top_n: 5
   default_holding_horizon: 10
+  enable_portfolio_simulation: true
+  portfolio_initial_cash: 10000
+  portfolio_max_gross_exposure: 0.60
+  portfolio_max_position_weight: 0.20
+  portfolio_reserve_cash_pct: 0.40
   config_version: mvp
   write_artifacts: true
 
@@ -79,6 +84,8 @@ calibration:
   default_min_action: PAPER_TRADE
   min_trade_count: 3
   max_parameter_sets: 40
+  use_portfolio_metrics: true
+  objective_metric_mode: portfolio_aware
   config_version: mvp
   write_artifacts: true
 

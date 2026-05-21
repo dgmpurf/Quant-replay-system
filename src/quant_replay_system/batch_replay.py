@@ -13,8 +13,9 @@ import numpy as np
 import pandas as pd
 
 from quant_replay_system.calendar import TradingCalendar, load_trading_calendar
-from quant_replay_system.config import BatchReplaySettings, Settings, load_settings
+from quant_replay_system.config import BatchReplaySettings, PortfolioSimulationSettings, Settings, load_settings
 from quant_replay_system.data import load_corporate_actions, load_market_data, load_universe_snapshot
+from quant_replay_system.portfolio_simulation import PortfolioSimulationResult, simulate_portfolio
 from quant_replay_system.report_generation import KNOWN_LIMITATIONS
 from quant_replay_system.replay_run import ReplayRunResult, run_replay
 
@@ -61,6 +62,7 @@ class BatchReplayResult:
     batch_index: pd.DataFrame
     replay_runs_frame: pd.DataFrame
     config_summary: dict[str, Any]
+    portfolio_result: PortfolioSimulationResult | None = None
 
 
 def run_batch_replay(
@@ -140,12 +142,24 @@ def run_batch_replay(
 
     skipped_dates = _skipped_dates_frame(skipped_rows)
     executed_dates = [result.decision_date for result in replay_results]
+    paths = resolve_batch_artifact_paths(batch_settings.output_dir, effective_batch_id)
+    portfolio_result = _run_portfolio_simulation_if_enabled(
+        settings=settings,
+        replay_results=replay_results,
+        market_data=market,
+        trading_calendar=calendar,
+        batch_artifact_dir=paths.artifact_dir,
+    )
+    if portfolio_result is not None:
+        warnings.extend(f"portfolio: {warning}" for warning in portfolio_result.warnings)
+
     aggregate_performance = aggregate_batch_performance(
         replay_results=replay_results,
         requested_count=len(requested_dates) + len(initial_skips),
         skipped_dates=skipped_dates,
+        portfolio_result=portfolio_result,
     )
-    batch_index = build_batch_index(replay_results)
+    batch_index = build_batch_index(replay_results, portfolio_result=portfolio_result)
     replay_runs_frame = build_replay_runs_frame(replay_results)
     config_summary = _batch_config_summary(
         settings=settings,
@@ -153,7 +167,6 @@ def run_batch_replay(
         holding_horizon=effective_horizon,
         batch_id=effective_batch_id,
     )
-    paths = resolve_batch_artifact_paths(batch_settings.output_dir, effective_batch_id)
 
     result = BatchReplayResult(
         batch_id=effective_batch_id,
@@ -170,6 +183,7 @@ def run_batch_replay(
         batch_index=batch_index,
         replay_runs_frame=replay_runs_frame,
         config_summary=config_summary,
+        portfolio_result=portfolio_result,
     )
     if batch_settings.write_artifacts:
         write_batch_replay_report(result)
@@ -216,6 +230,7 @@ def aggregate_batch_performance(
     replay_results: list[ReplayRunResult],
     requested_count: int,
     skipped_dates: pd.DataFrame,
+    portfolio_result: PortfolioSimulationResult | None = None,
 ) -> dict[str, Any]:
     """Aggregate run-level and trade-level performance across replay results."""
 
@@ -226,7 +241,7 @@ def aggregate_batch_performance(
     benchmark_returns = _summary_series(replay_results, "benchmark_return")
     excess_returns = _summary_series(replay_results, "excess_return")
 
-    return {
+    aggregate = {
         "number_of_requested_dates": int(requested_count),
         "number_of_executed_dates": int(len(replay_results)),
         "number_of_skipped_dates": int(skipped_count),
@@ -245,12 +260,20 @@ def aggregate_batch_performance(
         "average_benchmark_return": _none_if_nan(benchmark_returns.mean()) if not benchmark_returns.empty else None,
         "average_excess_return": _none_if_nan(excess_returns.mean()) if not excess_returns.empty else None,
     }
+    aggregate.update(_portfolio_metric_fields(portfolio_result))
+    aggregate.update(_portfolio_artifact_fields(portfolio_result))
+    return aggregate
 
 
-def build_batch_index(replay_results: list[ReplayRunResult]) -> pd.DataFrame:
+def build_batch_index(
+    replay_results: list[ReplayRunResult],
+    portfolio_result: PortfolioSimulationResult | None = None,
+) -> pd.DataFrame:
     """Build one index row per successful replay run."""
 
     rows = []
+    portfolio_fields = _portfolio_metric_fields(portfolio_result)
+    portfolio_paths = _portfolio_artifact_fields(portfolio_result)
     for result in replay_results:
         paths = result.artifact_paths
         performance = result.performance_summary
@@ -270,6 +293,8 @@ def build_batch_index(replay_results: list[ReplayRunResult]) -> pd.DataFrame:
                 "excess_return": performance.get("excess_return"),
                 "status": "COMPLETED",
                 "warning_count": len(result.warnings),
+                **portfolio_fields,
+                **portfolio_paths,
             }
         )
     return _ordered_frame(rows, _batch_index_columns())
@@ -348,6 +373,12 @@ def build_batch_replay_metadata(result: BatchReplayResult, paths: BatchArtifactP
             "skipped_dates": len(result.skipped_decision_dates),
         },
         "aggregate_performance": result.aggregate_performance,
+        "portfolio_simulation_enabled": result.portfolio_result is not None,
+        "portfolio_artifact_paths": (
+            {key: str(path) for key, path in result.portfolio_result.artifact_paths.items()}
+            if result.portfolio_result is not None
+            else {}
+        ),
         "known_limitations": KNOWN_LIMITATIONS,
         "warnings": result.warnings,
         "live_trading_enabled": False,
@@ -395,6 +426,10 @@ def render_batch_replay_report(
         "## Aggregate Performance Summary",
         "",
         _dict_table(result.aggregate_performance),
+        "",
+        "## Portfolio Performance Summary",
+        "",
+        _dict_table(_portfolio_report_summary(result.portfolio_result)),
         "",
         "## Replay Run Table",
         "",
@@ -484,6 +519,13 @@ def _batch_config_summary(
         "skip_non_trading_days": batch_settings.skip_non_trading_days,
         "fail_fast": batch_settings.fail_fast,
         "output_dir": batch_settings.output_dir,
+        "portfolio_simulation": {
+            "enabled": batch_settings.enable_portfolio_simulation,
+            "initial_cash": batch_settings.portfolio_initial_cash,
+            "max_gross_exposure": batch_settings.portfolio_max_gross_exposure,
+            "max_position_weight": batch_settings.portfolio_max_position_weight,
+            "reserve_cash_pct": batch_settings.portfolio_reserve_cash_pct,
+        },
         "replay_run": {
             "min_action": settings.replay_run.min_action,
             "min_final_score": settings.replay_run.min_final_score,
@@ -491,6 +533,76 @@ def _batch_config_summary(
             "write_artifacts": settings.replay_run.write_artifacts,
         },
     }
+
+
+def _run_portfolio_simulation_if_enabled(
+    settings: Settings,
+    replay_results: list[ReplayRunResult],
+    market_data: pd.DataFrame,
+    trading_calendar: TradingCalendar,
+    batch_artifact_dir: Path,
+) -> PortfolioSimulationResult | None:
+    batch_settings = settings.batch_replay
+    if not batch_settings.enable_portfolio_simulation:
+        return None
+
+    portfolio_settings = settings.portfolio_simulation.model_copy(
+        update={
+            "output_dir": batch_artifact_dir / "portfolio_simulations",
+            "initial_cash": batch_settings.portfolio_initial_cash,
+            "max_gross_exposure": batch_settings.portfolio_max_gross_exposure,
+            "max_position_weight": batch_settings.portfolio_max_position_weight,
+            "reserve_cash_pct": batch_settings.portfolio_reserve_cash_pct,
+        }
+    )
+    return simulate_portfolio(
+        replay_results=replay_results,
+        market_data=market_data,
+        trading_calendar=trading_calendar,
+        settings=portfolio_settings,
+        config=settings,
+    )
+
+
+def _portfolio_metric_fields(portfolio_result: PortfolioSimulationResult | None) -> dict[str, Any]:
+    if portfolio_result is None:
+        return {"portfolio_simulation_enabled": False}
+
+    metrics = portfolio_result.portfolio_metrics
+    return {
+        "portfolio_simulation_enabled": True,
+        "portfolio_initial_cash": metrics.get("initial_cash"),
+        "portfolio_final_equity": metrics.get("final_equity"),
+        "portfolio_total_return": metrics.get("total_return"),
+        "portfolio_max_drawdown": metrics.get("max_drawdown"),
+        "portfolio_turnover": metrics.get("turnover"),
+        "portfolio_average_gross_exposure": metrics.get("average_gross_exposure"),
+        "portfolio_max_gross_exposure": metrics.get("max_gross_exposure"),
+        "portfolio_cash_utilization": metrics.get("cash_utilization"),
+        "portfolio_number_of_trades": metrics.get("number_of_trades"),
+        "portfolio_number_of_positions": metrics.get("number_of_positions"),
+        "portfolio_skipped_trades": metrics.get("skipped_trades_due_to_cash_or_lot_rounding"),
+    }
+
+
+def _portfolio_artifact_fields(portfolio_result: PortfolioSimulationResult | None) -> dict[str, Any]:
+    if portfolio_result is None:
+        return {}
+    paths = portfolio_result.artifact_paths
+    return {
+        "portfolio_report_path": paths.get("portfolio_report"),
+        "trade_ledger_path": paths.get("trade_ledger"),
+        "position_ledger_path": paths.get("position_ledger"),
+        "cash_ledger_path": paths.get("cash_ledger"),
+        "equity_curve_path": paths.get("equity_curve"),
+        "portfolio_metrics_path": paths.get("portfolio_metrics"),
+    }
+
+
+def _portfolio_report_summary(portfolio_result: PortfolioSimulationResult | None) -> dict[str, Any]:
+    if portfolio_result is None:
+        return {"portfolio_simulation_enabled": False}
+    return {**_portfolio_metric_fields(portfolio_result), **_portfolio_artifact_fields(portfolio_result)}
 
 
 def _all_trade_returns(replay_results: list[ReplayRunResult]) -> pd.Series:
@@ -542,6 +654,24 @@ def _batch_index_columns() -> list[str]:
         "win_rate",
         "benchmark_return",
         "excess_return",
+        "portfolio_simulation_enabled",
+        "portfolio_initial_cash",
+        "portfolio_final_equity",
+        "portfolio_total_return",
+        "portfolio_max_drawdown",
+        "portfolio_turnover",
+        "portfolio_average_gross_exposure",
+        "portfolio_max_gross_exposure",
+        "portfolio_cash_utilization",
+        "portfolio_number_of_trades",
+        "portfolio_number_of_positions",
+        "portfolio_skipped_trades",
+        "portfolio_report_path",
+        "trade_ledger_path",
+        "position_ledger_path",
+        "cash_ledger_path",
+        "equity_curve_path",
+        "portfolio_metrics_path",
         "status",
         "warning_count",
     ]

@@ -24,6 +24,7 @@ Included now:
 - Batch replay orchestration for multi-date replay runs and aggregate reports.
 - Parameter calibration over explicit small grids using batch replay outputs.
 - Portfolio simulation with cash, trade, position, and equity ledgers.
+- Portfolio-aware batch replay and calibration using account-level metrics.
 - Baseline pytest setup.
 
 Not included:
@@ -51,6 +52,8 @@ For explainable parameter comparison using batch replay outputs, see [docs/param
 
 For account-level portfolio ledgers and equity-curve simulation, see [docs/portfolio_simulation.md](docs/portfolio_simulation.md).
 
+For portfolio-aware batch replay and calibration ranking, see [docs/portfolio_aware_calibration.md](docs/portfolio_aware_calibration.md).
+
 ## Project Layout
 
 ```text
@@ -70,6 +73,7 @@ quant-replay-system/
     execution_calendar.md
     factor_dataset.md
     parameter_calibration.md
+    portfolio_aware_calibration.md
     portfolio_simulation.md
     report_generation.md
     replay_run_orchestrator.md

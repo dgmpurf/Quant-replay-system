@@ -112,6 +112,108 @@ def test_missing_benchmark_or_excess_fields_are_handled_gracefully() -> None:
     assert pd.notna(ranked.iloc[0]["objective_score"])
 
 
+def test_calibration_uses_portfolio_metrics_when_enabled(tmp_path: Path) -> None:
+    result = _run_calibration(tmp_path)
+
+    assert "portfolio_objective_score" in result.ranked_results.columns
+    assert (result.ranked_results["objective_metric_mode_used"] == "portfolio_aware").all()
+    assert result.ranked_results["portfolio_total_return"].notna().all()
+
+
+def test_calibration_falls_back_when_portfolio_metrics_are_unavailable() -> None:
+    ranked = rank_calibration_results(
+        [_parameter_sets()[0]],
+        [_fake_batch_result("no-portfolio")],
+        CalibrationSettings(use_portfolio_metrics=True, objective_metric_mode="portfolio_aware", min_trade_count=1),
+    )
+
+    assert ranked.iloc[0]["objective_metric_mode_used"] == "trade_level_fallback"
+    assert ranked.iloc[0]["portfolio_objective_score"] == ranked.iloc[0]["objective_score"]
+
+
+def test_best_parameter_set_can_change_when_portfolio_metrics_are_enabled() -> None:
+    parameter_sets = _parameter_sets()
+    trade_first = rank_calibration_results(
+        parameter_sets,
+        [
+            _fake_batch_result("trade-strong", average_return=0.05, win_rate=0.8, total_trades=4),
+            _fake_batch_result("trade-weak", average_return=-0.01, win_rate=0.4, total_trades=4),
+        ],
+        CalibrationSettings(use_portfolio_metrics=False, objective_metric_mode="trade_level", min_trade_count=1),
+    )
+    portfolio_first = rank_calibration_results(
+        parameter_sets,
+        [
+            _fake_batch_result(
+                "portfolio-weak",
+                average_return=0.05,
+                win_rate=0.8,
+                total_trades=4,
+                portfolio_total_return=-0.08,
+                portfolio_max_drawdown=-0.20,
+                portfolio_turnover=3.0,
+                portfolio_cash_utilization=0.20,
+                portfolio_number_of_trades=4,
+            ),
+            _fake_batch_result(
+                "portfolio-strong",
+                average_return=-0.01,
+                win_rate=0.4,
+                total_trades=4,
+                portfolio_total_return=0.04,
+                portfolio_max_drawdown=-0.02,
+                portfolio_turnover=0.5,
+                portfolio_cash_utilization=0.60,
+                portfolio_number_of_trades=4,
+            ),
+        ],
+        CalibrationSettings(use_portfolio_metrics=True, objective_metric_mode="portfolio_aware", min_trade_count=1),
+    )
+
+    assert trade_first.iloc[0]["parameter_set_id"] == parameter_sets[0].parameter_set_id
+    assert portfolio_first.iloc[0]["parameter_set_id"] == parameter_sets[1].parameter_set_id
+
+
+def test_portfolio_aware_ranking_is_deterministic() -> None:
+    parameter_sets = _parameter_sets()
+    batches = [
+        _fake_batch_result("one", portfolio_total_return=0.01, portfolio_number_of_trades=3),
+        _fake_batch_result("two", portfolio_total_return=0.02, portfolio_number_of_trades=3),
+    ]
+    first = rank_calibration_results(parameter_sets, batches, CalibrationSettings(min_trade_count=1))
+    second = rank_calibration_results(parameter_sets, batches, CalibrationSettings(min_trade_count=1))
+
+    assert_frame_equal(first, second)
+
+
+def test_high_drawdown_is_penalized() -> None:
+    ranked = rank_calibration_results(
+        _parameter_sets(),
+        [
+            _fake_batch_result("low-dd", portfolio_total_return=0.02, portfolio_max_drawdown=-0.02),
+            _fake_batch_result("high-dd", portfolio_total_return=0.02, portfolio_max_drawdown=-0.25),
+        ],
+        CalibrationSettings(min_trade_count=1),
+    )
+
+    assert ranked.iloc[0]["batch_id"] == "low-dd"
+    assert ranked.iloc[0]["normalized_max_drawdown_penalty"] < ranked.iloc[1]["normalized_max_drawdown_penalty"]
+
+
+def test_high_turnover_is_penalized() -> None:
+    ranked = rank_calibration_results(
+        _parameter_sets(),
+        [
+            _fake_batch_result("low-turnover", portfolio_total_return=0.02, portfolio_turnover=0.5),
+            _fake_batch_result("high-turnover", portfolio_total_return=0.02, portfolio_turnover=5.0),
+        ],
+        CalibrationSettings(min_trade_count=1),
+    )
+
+    assert ranked.iloc[0]["batch_id"] == "low-turnover"
+    assert ranked.iloc[0]["normalized_turnover_penalty"] < ranked.iloc[1]["normalized_turnover_penalty"]
+
+
 def test_calibration_artifacts_folder_is_created(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
 
@@ -124,6 +226,7 @@ def test_ranked_results_csv_is_written_and_readable(tmp_path: Path) -> None:
 
     exported = pd.read_csv(result.artifact_paths["ranked_results"])
     assert len(exported) == len(result.parameter_sets)
+    assert "portfolio_objective_score" in exported.columns
 
 
 def test_parameter_sets_csv_is_written_and_readable(tmp_path: Path) -> None:
@@ -145,6 +248,7 @@ def test_aggregate_metrics_csv_is_written_and_readable(tmp_path: Path) -> None:
 
     exported = pd.read_csv(result.artifact_paths["aggregate_metrics"])
     assert "objective_score" in exported.columns
+    assert "portfolio_objective_score" in exported.columns
 
 
 def test_metadata_json_is_written(tmp_path: Path) -> None:
@@ -154,6 +258,8 @@ def test_metadata_json_is_written(tmp_path: Path) -> None:
     assert metadata["calibration_id"] == result.calibration_id
     assert metadata["live_trading_enabled"] is False
     assert metadata["broker_api_invoked"] is False
+    assert metadata["use_portfolio_metrics"] is True
+    assert metadata["objective_metric_mode"] == "portfolio_aware"
 
 
 def test_calibration_report_md_is_written(tmp_path: Path) -> None:
@@ -258,6 +364,11 @@ def _fake_batch_result(
     worst_return: float | None = -0.01,
     average_excess_return: float | None = 0.005,
     total_trades: int = 3,
+    portfolio_total_return: float | None = None,
+    portfolio_max_drawdown: float | None = None,
+    portfolio_turnover: float | None = None,
+    portfolio_cash_utilization: float | None = None,
+    portfolio_number_of_trades: int | None = None,
 ) -> SimpleNamespace:
     aggregate = {
         "number_of_requested_dates": 2,
@@ -276,6 +387,24 @@ def _fake_batch_result(
         "average_benchmark_return": 0.001,
         "average_excess_return": average_excess_return,
     }
+    if portfolio_total_return is not None:
+        aggregate.update(
+            {
+                "portfolio_initial_cash": 10_000.0,
+                "portfolio_final_equity": 10_000.0 * (1.0 + portfolio_total_return),
+                "portfolio_total_return": portfolio_total_return,
+                "portfolio_max_drawdown": -0.02 if portfolio_max_drawdown is None else portfolio_max_drawdown,
+                "portfolio_turnover": 1.0 if portfolio_turnover is None else portfolio_turnover,
+                "portfolio_average_gross_exposure": 0.40,
+                "portfolio_max_gross_exposure": 0.60,
+                "portfolio_cash_utilization": 0.50 if portfolio_cash_utilization is None else portfolio_cash_utilization,
+                "portfolio_number_of_trades": (
+                    total_trades if portfolio_number_of_trades is None else portfolio_number_of_trades
+                ),
+                "portfolio_number_of_positions": max(1, total_trades // 2),
+                "portfolio_skipped_trades": 0,
+            }
+        )
     return SimpleNamespace(
         batch_id=batch_id,
         aggregate_performance=aggregate,
@@ -303,13 +432,25 @@ def _settings(tmp_path: Path):
                     "output_dir": tmp_path / "batch_replays",
                     "default_top_n": 2,
                     "default_holding_horizon": 2,
+                    "enable_portfolio_simulation": True,
                 }
             ),
             "calibration": settings.calibration.model_copy(
                 update={
                     "output_dir": tmp_path / "calibrations",
                     "min_trade_count": 1,
+                    "use_portfolio_metrics": True,
+                    "objective_metric_mode": "portfolio_aware",
                     "write_artifacts": True,
+                }
+            ),
+            "portfolio_simulation": settings.portfolio_simulation.model_copy(
+                update={
+                    "output_dir": tmp_path / "portfolio_simulations",
+                    "initial_cash": 10_000.0,
+                    "max_gross_exposure": 0.60,
+                    "max_position_weight": 0.20,
+                    "reserve_cash_pct": 0.40,
                 }
             ),
             "candidate_selection": settings.candidate_selection.model_copy(update={"exclude_blocked": True}),

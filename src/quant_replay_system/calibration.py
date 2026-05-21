@@ -322,6 +322,9 @@ def run_parameter_calibration(
             batch_results.append(_failed_batch_result(parameter_set, normalized_dates, universe_name, str(exc)))
 
     ranked_results = rank_calibration_results(effective_parameter_sets, batch_results, calibration_settings)
+    if calibration_settings.use_portfolio_metrics and "objective_metric_mode_used" in ranked_results.columns:
+        if not (ranked_results["objective_metric_mode_used"] == "portfolio_aware").any():
+            warnings.append("Portfolio metrics requested but unavailable; used trade-level objective fallback.")
     best_parameter_set = _best_parameter_set(effective_parameter_sets, ranked_results)
     parameter_sets_frame = build_parameter_sets_frame(effective_parameter_sets)
     batch_runs_frame = build_calibration_batch_runs_frame(effective_parameter_sets, batch_results)
@@ -412,6 +415,33 @@ def rank_calibration_results(
             - 0.10 * variance_penalty
             - 0.05 * low_trade_penalty
         )
+        portfolio_available = _has_portfolio_metrics(aggregate)
+        normalized_portfolio_total_return = _return_to_score(aggregate.get("portfolio_total_return"))
+        normalized_cash_utilization = _fraction_to_score(aggregate.get("portfolio_cash_utilization"))
+        normalized_max_drawdown_penalty = _drawdown_penalty(aggregate.get("portfolio_max_drawdown"))
+        normalized_turnover_penalty = _turnover_penalty(aggregate.get("portfolio_turnover"))
+        portfolio_low_trade_penalty = _low_trade_count_penalty(
+            aggregate.get("portfolio_number_of_trades", aggregate.get("total_simulated_trades")),
+            cfg.min_trade_count,
+        )
+        portfolio_objective_score = (
+            _clip_score(
+                0.35 * normalized_portfolio_total_return
+                - 0.20 * normalized_max_drawdown_penalty
+                + 0.15 * normalized_win_rate
+                + 0.10 * normalized_cash_utilization
+                - 0.10 * normalized_turnover_penalty
+                - 0.10 * portfolio_low_trade_penalty
+            )
+            if portfolio_available
+            else objective_score
+        )
+        use_portfolio = (
+            cfg.use_portfolio_metrics
+            and cfg.objective_metric_mode == "portfolio_aware"
+            and portfolio_available
+        )
+        ranking_score = portfolio_objective_score if use_portfolio else objective_score
 
         rows.append(
             {
@@ -436,6 +466,17 @@ def rank_calibration_results(
                 "best_return": aggregate.get("best_return"),
                 "worst_return": aggregate.get("worst_return"),
                 "average_excess_return": aggregate.get("average_excess_return"),
+                "portfolio_initial_cash": aggregate.get("portfolio_initial_cash"),
+                "portfolio_final_equity": aggregate.get("portfolio_final_equity"),
+                "portfolio_total_return": aggregate.get("portfolio_total_return"),
+                "portfolio_max_drawdown": aggregate.get("portfolio_max_drawdown"),
+                "portfolio_turnover": aggregate.get("portfolio_turnover"),
+                "portfolio_average_gross_exposure": aggregate.get("portfolio_average_gross_exposure"),
+                "portfolio_max_gross_exposure": aggregate.get("portfolio_max_gross_exposure"),
+                "portfolio_cash_utilization": aggregate.get("portfolio_cash_utilization"),
+                "portfolio_number_of_trades": aggregate.get("portfolio_number_of_trades"),
+                "portfolio_number_of_positions": aggregate.get("portfolio_number_of_positions"),
+                "portfolio_skipped_trades": aggregate.get("portfolio_skipped_trades"),
                 "max_drawdown_proxy": _max_drawdown_proxy(run_returns),
                 "stability_score": stability_score,
                 "penalty_for_low_trade_count": low_trade_penalty,
@@ -444,7 +485,15 @@ def rank_calibration_results(
                 "normalized_average_return": normalized_average_return,
                 "normalized_win_rate": normalized_win_rate,
                 "normalized_average_excess_return": normalized_excess_return,
+                "normalized_portfolio_total_return": normalized_portfolio_total_return,
+                "normalized_max_drawdown_penalty": normalized_max_drawdown_penalty,
+                "normalized_cash_utilization": normalized_cash_utilization,
+                "normalized_turnover_penalty": normalized_turnover_penalty,
+                "portfolio_low_trade_count_penalty": portfolio_low_trade_penalty,
                 "objective_score": objective_score,
+                "portfolio_objective_score": portfolio_objective_score,
+                "ranking_score": ranking_score,
+                "objective_metric_mode_used": "portfolio_aware" if use_portfolio else "trade_level_fallback",
                 "warning_count": len(getattr(batch_result, "warnings", [])),
             }
         )
@@ -453,7 +502,7 @@ def rank_calibration_results(
     if ranked.empty:
         return ranked
     return ranked.sort_values(
-        ["objective_score", "stability_score", "parameter_set_id"],
+        ["ranking_score", "stability_score", "parameter_set_id"],
         ascending=[False, False, True],
     ).reset_index(drop=True)
 
@@ -489,6 +538,18 @@ def build_calibration_batch_runs_frame(
                 "average_return": aggregate.get("average_return"),
                 "win_rate": aggregate.get("win_rate"),
                 "average_excess_return": aggregate.get("average_excess_return"),
+                "portfolio_total_return": aggregate.get("portfolio_total_return"),
+                "portfolio_max_drawdown": aggregate.get("portfolio_max_drawdown"),
+                "portfolio_turnover": aggregate.get("portfolio_turnover"),
+                "portfolio_cash_utilization": aggregate.get("portfolio_cash_utilization"),
+                "portfolio_number_of_trades": aggregate.get("portfolio_number_of_trades"),
+                "portfolio_report_path": aggregate.get("portfolio_report_path")
+                or artifact_paths.get("portfolio_report_path"),
+                "trade_ledger_path": aggregate.get("trade_ledger_path") or artifact_paths.get("trade_ledger_path"),
+                "position_ledger_path": aggregate.get("position_ledger_path") or artifact_paths.get("position_ledger_path"),
+                "cash_ledger_path": aggregate.get("cash_ledger_path") or artifact_paths.get("cash_ledger_path"),
+                "equity_curve_path": aggregate.get("equity_curve_path") or artifact_paths.get("equity_curve_path"),
+                "portfolio_metrics_path": aggregate.get("portfolio_metrics_path") or artifact_paths.get("portfolio_metrics_path"),
                 "status": "FAILED" if aggregate.get("number_of_failed_dates", 0) else "COMPLETED",
                 "warning_count": len(getattr(batch_result, "warnings", [])),
             }
@@ -543,6 +604,16 @@ def build_calibration_metadata(result: CalibrationResult, paths: CalibrationArti
         "test_dates": result.test_dates,
         "parameter_sets": [parameter_set.as_dict() for parameter_set in result.parameter_sets],
         "best_parameter_set": None if result.best_parameter_set is None else result.best_parameter_set.as_dict(),
+        "use_portfolio_metrics": (
+            bool(result.ranked_results["objective_metric_mode_used"].eq("portfolio_aware").any())
+            if "objective_metric_mode_used" in result.ranked_results.columns and not result.ranked_results.empty
+            else False
+        ),
+        "objective_metric_mode": (
+            result.ranked_results.iloc[0]["objective_metric_mode_used"]
+            if "objective_metric_mode_used" in result.ranked_results.columns and not result.ranked_results.empty
+            else "trade_level_fallback"
+        ),
         "output_files": output_files,
         "row_counts": {
             "parameter_sets": len(result.parameter_sets_frame),
@@ -593,6 +664,13 @@ def render_calibration_report(
             "- 0.10 * normalized_variance_penalty - 0.05 * low_trade_count_penalty`"
         ),
         "",
+        (
+            "`portfolio_objective_score = 0.35 * normalized_portfolio_total_return "
+            "- 0.20 * normalized_max_drawdown_penalty + 0.15 * normalized_win_rate "
+            "+ 0.10 * normalized_cash_utilization - 0.10 * normalized_turnover_penalty "
+            "- 0.10 * low_trade_count_penalty`"
+        ),
+        "",
         "## Ranked Results",
         "",
         _markdown_table(
@@ -601,6 +679,9 @@ def render_calibration_report(
                 "parameter_set_id",
                 "label",
                 "objective_score",
+                "portfolio_objective_score",
+                "ranking_score",
+                "objective_metric_mode_used",
                 "stability_score",
                 "total_trades",
                 "average_return",
@@ -608,6 +689,23 @@ def render_calibration_report(
                 "average_excess_return",
                 "penalty_for_low_trade_count",
                 "penalty_for_high_variance",
+            ],
+        ),
+        "",
+        "## Trade-Level vs Portfolio-Level Ranking",
+        "",
+        _markdown_table(
+            result.ranked_results,
+            [
+                "parameter_set_id",
+                "objective_score",
+                "portfolio_objective_score",
+                "ranking_score",
+                "portfolio_total_return",
+                "portfolio_max_drawdown",
+                "portfolio_turnover",
+                "portfolio_cash_utilization",
+                "objective_metric_mode_used",
             ],
         ),
         "",
@@ -667,6 +765,9 @@ def _settings_for_parameter_set(
         update={
             "skip_non_trading_days": parameter_set.skip_non_trading_days,
             "fail_fast": parameter_set.fail_fast,
+            "enable_portfolio_simulation": (
+                settings.calibration.use_portfolio_metrics or settings.batch_replay.enable_portfolio_simulation
+            ),
             "config_version": version,
             "output_dir": paths.artifact_dir / "batch_replays",
         }
@@ -826,10 +927,28 @@ def _return_to_score(value: Any) -> float:
     return _clip_score(50.0 + float(value) * 500.0)
 
 
+def _fraction_to_score(value: Any) -> float:
+    if value is None or pd.isna(value):
+        return 50.0
+    return _clip_score(float(value) * 100.0)
+
+
 def _win_rate_to_score(value: Any) -> float:
     if value is None or pd.isna(value):
         return 50.0
     return _clip_score(float(value) * 100.0)
+
+
+def _drawdown_penalty(value: Any) -> float:
+    if value is None or pd.isna(value):
+        return 0.0
+    return _clip_score(abs(min(0.0, float(value))) * 500.0)
+
+
+def _turnover_penalty(value: Any) -> float:
+    if value is None or pd.isna(value):
+        return 0.0
+    return _clip_score(max(0.0, float(value)) * 50.0)
 
 
 def _worst_return_penalty(value: Any) -> float:
@@ -862,6 +981,11 @@ def _max_drawdown_proxy(run_returns: pd.Series) -> float | None:
     return float(drawdowns.min())
 
 
+def _has_portfolio_metrics(aggregate: dict[str, Any]) -> bool:
+    value = aggregate.get("portfolio_total_return")
+    return value is not None and not pd.isna(value)
+
+
 def _clip_score(value: Any) -> float:
     if value is None or pd.isna(value):
         return 0.0
@@ -891,6 +1015,17 @@ def _ranked_columns() -> list[str]:
         "best_return",
         "worst_return",
         "average_excess_return",
+        "portfolio_initial_cash",
+        "portfolio_final_equity",
+        "portfolio_total_return",
+        "portfolio_max_drawdown",
+        "portfolio_turnover",
+        "portfolio_average_gross_exposure",
+        "portfolio_max_gross_exposure",
+        "portfolio_cash_utilization",
+        "portfolio_number_of_trades",
+        "portfolio_number_of_positions",
+        "portfolio_skipped_trades",
         "max_drawdown_proxy",
         "stability_score",
         "penalty_for_low_trade_count",
@@ -899,7 +1034,15 @@ def _ranked_columns() -> list[str]:
         "normalized_average_return",
         "normalized_win_rate",
         "normalized_average_excess_return",
+        "normalized_portfolio_total_return",
+        "normalized_max_drawdown_penalty",
+        "normalized_cash_utilization",
+        "normalized_turnover_penalty",
+        "portfolio_low_trade_count_penalty",
         "objective_score",
+        "portfolio_objective_score",
+        "ranking_score",
+        "objective_metric_mode_used",
         "warning_count",
     ]
 
@@ -938,6 +1081,17 @@ def _batch_run_columns() -> list[str]:
         "average_return",
         "win_rate",
         "average_excess_return",
+        "portfolio_total_return",
+        "portfolio_max_drawdown",
+        "portfolio_turnover",
+        "portfolio_cash_utilization",
+        "portfolio_number_of_trades",
+        "portfolio_report_path",
+        "trade_ledger_path",
+        "position_ledger_path",
+        "cash_ledger_path",
+        "equity_curve_path",
+        "portfolio_metrics_path",
         "status",
         "warning_count",
     ]
@@ -947,6 +1101,9 @@ def _aggregate_metric_columns() -> list[str]:
     return [
         "parameter_set_id",
         "objective_score",
+        "portfolio_objective_score",
+        "ranking_score",
+        "objective_metric_mode_used",
         "stability_score",
         "total_trades",
         "average_return",
@@ -955,6 +1112,11 @@ def _aggregate_metric_columns() -> list[str]:
         "best_return",
         "worst_return",
         "average_excess_return",
+        "portfolio_total_return",
+        "portfolio_max_drawdown",
+        "portfolio_turnover",
+        "portfolio_cash_utilization",
+        "portfolio_number_of_trades",
         "max_drawdown_proxy",
         "penalty_for_low_trade_count",
         "penalty_for_high_variance",
