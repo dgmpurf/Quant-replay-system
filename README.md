@@ -72,6 +72,8 @@ For local paper-trading CLI commands, see [docs/paper_trading_cli.md](docs/paper
 
 For paper decision/fill reconciliation, see [docs/paper_fill_reconciliation.md](docs/paper_fill_reconciliation.md).
 
+For the full local paper trading workflow smoke-test example, see [docs/paper_trading_e2e_workflow.md](docs/paper_trading_e2e_workflow.md).
+
 ```powershell
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --reviewer-id msj
@@ -103,6 +105,7 @@ quant-replay-system/
     manual_paper_trading.md
     parameter_calibration.md
     paper_fill_reconciliation.md
+    paper_trading_e2e_workflow.md
     paper_trading_cli.md
     paper_trading_review_workflow.md
     portfolio_aware_calibration.md

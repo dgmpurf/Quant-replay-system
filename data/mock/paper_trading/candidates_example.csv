@@ -1,0 +1,4 @@
+decision_date,symbol,name,action,final_score,risk_precheck_status,risk_precheck_reason,rank,source_run_id,source_report_path
+2024-05-20,AAA,AAA Example ETF,PAPER_TRADE,82.5,PASS,eligible,1,paper-e2e-example,outputs/reports/example/report.md
+2024-05-20,BBB,BBB Example ETF,PAPER_TRADE,72.0,PASS,eligible,2,paper-e2e-example,outputs/reports/example/report.md
+2024-05-20,CCC,CCC Example ETF,OBSERVE,66.0,PASS,watch,3,paper-e2e-example,outputs/reports/example/report.md

@@ -1,0 +1,2 @@
+fill_id,decision_id,symbol,side,fill_date,fill_price,quantity,gross_notional,fees,slippage,net_cash_flow,fill_source,manual_notes
+fill-aaa-example,66c77e9f2d5a,AAA,BUY,2024-05-20,10.0,100,1000.0,0.0,0.0,-1000.0,MANUAL,Manual hypothetical approved fill

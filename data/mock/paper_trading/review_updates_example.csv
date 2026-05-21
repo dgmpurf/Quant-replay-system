@@ -1,0 +1,4 @@
+decision_id,manual_review_status,manual_review_notes,reviewer_id,review_reason_code
+66c77e9f2d5a,APPROVED_FOR_PAPER,Score and liquidity confirmed,example-reviewer,SCORE_CONFIRMED
+53bd62559499,REJECTED,Risk too high for paper test,example-reviewer,RISK_TOO_HIGH
+f40275f7c9cb,WATCH_ONLY,Watchlist only,example-reviewer,WATCHLIST_ONLY
