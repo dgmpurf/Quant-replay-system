@@ -19,7 +19,7 @@ from quant_replay_system.paper_trading import (
     build_closed_trades,
     build_open_positions,
     create_paper_decision_log,
-    generate_paper_trading_report,
+    validate_paper_fills,
 )
 
 
@@ -105,6 +105,11 @@ def run_daily_paper_trading(
 
     fills, load_warnings = load_existing_paper_fills(fills_path)
     warnings = list(load_warnings)
+    if not fills.empty:
+        validation = validate_paper_fills(fills, decisions=decisions, settings=settings.paper_trading)
+        if not validation.valid:
+            raise ValueError("; ".join(validation.errors))
+        warnings.extend(validation.warnings)
     market = load_mark_prices_for_paper_trading(mark_prices, settings)
     open_positions = build_open_positions(fills, market, mark_date=normalized_date)
     closed_trades = build_closed_trades(fills)
@@ -330,18 +335,7 @@ def write_daily_paper_artifacts(
     metadata = build_daily_paper_metadata(result, paths)
     paths.metadata.write_text(json.dumps(_json_safe(metadata), indent=2, sort_keys=True), encoding="utf-8")
 
-    # Reuse the journal report renderer while writing to the daily runner folder.
-    journal = generate_paper_trading_report(
-        decisions=result.decisions,
-        fills=result.fills,
-        market_data=pd.DataFrame(),
-        mark_date=result.paper_date,
-        settings=(paper_settings or PaperTradingSettings()).model_copy(
-            update={"write_artifacts": False, "output_dir": paths.artifact_dir.parent}
-        ),
-        journal_id=result.journal_id,
-    )
-    report_content = _render_daily_paper_report(result, paths, metadata, journal)
+    report_content = _render_daily_paper_report(result, paths, metadata)
     paths.paper_report.write_text(report_content, encoding="utf-8")
     return paths.paper_report
 
@@ -371,7 +365,6 @@ def _render_daily_paper_report(
     result: DailyPaperRunResult,
     paths: DailyPaperArtifactPaths,
     metadata: dict[str, Any],
-    journal: Any,
 ) -> str:
     lines = [
         f"# Daily Paper Trading Report: {result.paper_date.date()}",
@@ -458,8 +451,7 @@ def _render_daily_paper_report(
         "\n".join(f"- {item}" for item in metadata["known_limitations"]),
         "",
     ]
-    if hasattr(journal, "audit_metadata"):
-        lines.extend(["## Paper Journal Audit", "", _dict_table(journal.audit_metadata), ""])
+    lines.extend(["## Paper Journal Audit", "", _dict_table(result.audit_metadata), ""])
     return "\n".join(str(line) for line in lines)
 
 

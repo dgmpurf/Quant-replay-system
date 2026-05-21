@@ -127,6 +127,9 @@ paper_trading:
   default_lot_size: 100
   round_lots: true
   allow_fractional_shares: false
+  allow_short_selling: false
+  require_approved_decision_for_fills: true
+  prevent_negative_cash: true
   default_fee_bps: 0
   default_slippage_bps: 0
   enable_live_trading: false

@@ -7,7 +7,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -67,6 +67,14 @@ class PaperTradeFill:
     net_cash_flow: float
     fill_source: str
     manual_notes: str
+
+
+@dataclass(frozen=True)
+class PaperFillValidationResult:
+    valid: bool
+    row_count: int
+    errors: list[str]
+    warnings: list[str]
 
 
 @dataclass(frozen=True)
@@ -170,6 +178,9 @@ def create_paper_decision_log(
         symbol = str(row.get("symbol", "")).strip()
         if not symbol:
             raise ValueError("Candidate rows must include symbol")
+        row_review_status = str(row.get("manual_review_status", manual_review_status))
+        if row_review_status not in MANUAL_REVIEW_STATUSES:
+            raise ValueError(f"Unsupported manual_review_status: {row_review_status}")
         decision_payload = {
             "decision_date": _json_safe(row_decision_date),
             "symbol": symbol,
@@ -196,8 +207,8 @@ def create_paper_decision_log(
                 "planned_holding_horizon": _int_or_none(row.get("planned_holding_horizon", planned_holding_horizon)),
                 "planned_buy_date": buy_date,
                 "planned_sell_date": sell_date,
-                "manual_review_status": manual_review_status,
-                "manual_review_notes": manual_review_notes,
+                "manual_review_status": row_review_status,
+                "manual_review_notes": str(row.get("manual_review_notes", manual_review_notes)),
                 "created_at": created_at,
             }
         )
@@ -226,12 +237,16 @@ def record_paper_fill(
     cfg = _coerce_paper_settings(settings)
     existing = _prepare_fills(fills)
     decision_row = _decision_by_id(decisions, decision_id)
+    _assert_decision_can_fill(decision_row, cfg)
     resolved_symbol = str(symbol or decision_row.get("symbol", "")).strip()
     normalized_side = str(side).upper().strip()
     if normalized_side not in {"BUY", "SELL"}:
         raise ValueError("side must be BUY or SELL")
     if not resolved_symbol:
         raise ValueError("symbol is required")
+    decision_symbol = str(decision_row.get("symbol", "")).strip()
+    if decision_symbol and resolved_symbol != decision_symbol:
+        raise ValueError(f"Fill symbol {resolved_symbol} does not match decision symbol {decision_symbol}")
 
     normalized_quantity = _normalize_quantity(float(quantity), cfg)
     normalized_price = float(fill_price)
@@ -246,6 +261,16 @@ def record_paper_fill(
         if normalized_side == "BUY"
         else gross_notional - fee_value - slippage_value
     )
+    if normalized_side == "BUY" and cfg.prevent_negative_cash:
+        cash_after_fill = _current_paper_cash(existing, cfg) + net_cash_flow
+        if cash_after_fill < -1e-9:
+            raise ValueError("BUY fill would make paper cash negative")
+    if normalized_side == "SELL" and not cfg.allow_short_selling:
+        available_quantity = _available_quantity(existing, resolved_symbol)
+        if normalized_quantity > available_quantity + 1e-9:
+            raise ValueError(
+                f"SELL quantity {normalized_quantity:g} exceeds available paper position {available_quantity:g}"
+            )
     fill_payload = {
         "decision_id": decision_id,
         "symbol": resolved_symbol,
@@ -270,8 +295,13 @@ def record_paper_fill(
         "manual_notes": manual_notes,
     }
     if existing.empty:
-        return _finalize_fills(pd.DataFrame([row]))
-    return _finalize_fills(pd.concat([existing, pd.DataFrame([row])], ignore_index=True))
+        combined = _finalize_fills(pd.DataFrame([row]))
+    else:
+        combined = _finalize_fills(pd.concat([existing, pd.DataFrame([row])], ignore_index=True))
+    validation = validate_paper_fills(combined, decisions=decisions, settings=cfg)
+    if not validation.valid:
+        raise ValueError("; ".join(validation.errors))
+    return combined
 
 
 def build_open_positions(
@@ -314,10 +344,14 @@ def build_open_positions(
     return _finalize_open_positions(pd.DataFrame(rows))
 
 
-def build_closed_trades(fills: pd.DataFrame) -> pd.DataFrame:
+def build_closed_trades(
+    fills: pd.DataFrame,
+    settings: PaperTradingSettings | dict[str, Any] | None = None,
+) -> pd.DataFrame:
     """Build closed paper trades by matching manual sells against prior buys."""
 
     prepared = _prepare_fills(fills)
+    cfg = _coerce_paper_settings(settings)
     lots: dict[str, list[dict[str, Any]]] = {}
     rows = []
     for fill in prepared.sort_values(["fill_date", "fill_id"]).to_dict("records"):
@@ -345,6 +379,7 @@ def build_closed_trades(fills: pd.DataFrame) -> pd.DataFrame:
                 continue
             realized_pnl = (exit_proceeds_per_share - float(lot["entry_cost_per_share"])) * matched
             cost_basis = float(lot["entry_cost_per_share"]) * matched
+            holding_calendar_days = max(0, (pd.Timestamp(fill["fill_date"]) - pd.Timestamp(lot["open_date"])).days)
             rows.append(
                 {
                     "symbol": symbol,
@@ -355,12 +390,15 @@ def build_closed_trades(fills: pd.DataFrame) -> pd.DataFrame:
                     "quantity": matched,
                     "realized_pnl": realized_pnl,
                     "realized_return_pct": realized_pnl / cost_basis if cost_basis else 0.0,
-                    "holding_days": max(0, (pd.Timestamp(fill["fill_date"]) - pd.Timestamp(lot["open_date"])).days),
+                    "holding_calendar_days": holding_calendar_days,
+                    "holding_days": holding_calendar_days,
                     "exit_reason": str(fill.get("manual_notes") or "PAPER_SELL"),
                 }
             )
             lot["remaining_quantity"] = float(lot["remaining_quantity"]) - matched
             remaining -= matched
+        if remaining > 1e-9 and not cfg.allow_short_selling:
+            raise ValueError(f"SELL quantity exceeds available paper position for {symbol}")
     return _finalize_closed_trades(pd.DataFrame(rows))
 
 
@@ -420,6 +458,9 @@ def generate_paper_trading_report(
 
     prepared_decisions = _finalize_decisions(decisions)
     prepared_fills = _prepare_fills(fills)
+    fill_validation = validate_paper_fills(prepared_fills, decisions=prepared_decisions, settings=paper_settings)
+    if not fill_validation.valid:
+        raise ValueError("; ".join(fill_validation.errors))
     market = (
         _prepare_market_data(market_data)
         if market_data is not None
@@ -427,7 +468,7 @@ def generate_paper_trading_report(
     )
     effective_mark_date = _timestamp_or_nat(mark_date) if mark_date is not None else _latest_date(prepared_decisions, prepared_fills)
     open_positions = build_open_positions(prepared_fills, market, mark_date=effective_mark_date)
-    closed_trades = build_closed_trades(prepared_fills)
+    closed_trades = build_closed_trades(prepared_fills, settings=paper_settings)
     daily_summary = build_daily_summary(
         open_positions=open_positions,
         closed_trades=closed_trades,
@@ -516,22 +557,109 @@ def build_daily_summary(
     )
 
 
+def validate_paper_fills(
+    fills: pd.DataFrame,
+    decisions: pd.DataFrame | None = None,
+    settings: PaperTradingSettings | dict[str, Any] | None = None,
+) -> PaperFillValidationResult:
+    """Validate manual hypothetical paper fills against accounting guardrails."""
+
+    cfg = _coerce_paper_settings(settings)
+    errors: list[str] = []
+    warnings: list[str] = []
+    if fills is None:
+        fills = _empty_fills()
+    missing = [column for column in _fill_columns() if column not in fills.columns]
+    if missing:
+        return PaperFillValidationResult(
+            valid=False,
+            row_count=0 if fills is None else len(fills),
+            errors=[f"Missing required fill columns: {', '.join(missing)}"],
+            warnings=[],
+        )
+
+    prepared = _prepare_fills(fills)
+    if prepared.empty:
+        return PaperFillValidationResult(valid=True, row_count=0, errors=[], warnings=["No paper fills to validate."])
+
+    sides = prepared["side"].astype(str).str.upper().str.strip()
+    invalid_sides = prepared.loc[~sides.isin({"BUY", "SELL"})]
+    if not invalid_sides.empty:
+        errors.append(f"Invalid side values at rows: {_row_numbers(invalid_sides.index)}")
+
+    quantity = pd.to_numeric(prepared["quantity"], errors="coerce")
+    invalid_quantity = prepared.loc[quantity.isna() | (quantity <= 0)]
+    if not invalid_quantity.empty:
+        errors.append(f"Non-positive quantity at rows: {_row_numbers(invalid_quantity.index)}")
+
+    fill_price = pd.to_numeric(prepared["fill_price"], errors="coerce")
+    invalid_price = prepared.loc[fill_price.isna() | (fill_price <= 0)]
+    if not invalid_price.empty:
+        errors.append(f"Non-positive fill_price at rows: {_row_numbers(invalid_price.index)}")
+
+    gross_notional = pd.to_numeric(prepared["gross_notional"], errors="coerce")
+    expected_gross = quantity * fill_price
+    gross_mismatch = prepared.loc[
+        gross_notional.isna() | ((gross_notional - expected_gross).abs() > np.maximum(0.01, expected_gross.abs() * 0.0001))
+    ]
+    if not gross_mismatch.empty:
+        errors.append(f"Mismatched gross_notional at rows: {_row_numbers(gross_mismatch.index)}")
+
+    net_cash_flow = pd.to_numeric(prepared["net_cash_flow"], errors="coerce")
+    buy_wrong_sign = prepared.loc[(sides == "BUY") & (net_cash_flow >= 0)]
+    sell_wrong_sign = prepared.loc[(sides == "SELL") & (net_cash_flow <= 0)]
+    if not buy_wrong_sign.empty:
+        errors.append(f"BUY net_cash_flow must be negative at rows: {_row_numbers(buy_wrong_sign.index)}")
+    if not sell_wrong_sign.empty:
+        errors.append(f"SELL net_cash_flow must be positive at rows: {_row_numbers(sell_wrong_sign.index)}")
+
+    if decisions is not None:
+        decision_frame = _finalize_decisions(decisions)
+        decision_ids = set(str(value) for value in decision_frame["decision_id"].dropna())
+        decision_by_id = {
+            str(row["decision_id"]): row
+            for row in decision_frame.to_dict("records")
+            if row.get("decision_id") is not None and not pd.isna(row.get("decision_id"))
+        }
+        missing_decisions = prepared.loc[~prepared["decision_id"].astype(str).isin(decision_ids)]
+        if not missing_decisions.empty:
+            errors.append(f"Unknown decision_id at rows: {_row_numbers(missing_decisions.index)}")
+        for idx, fill in prepared.to_dict("index").items():
+            decision = decision_by_id.get(str(fill.get("decision_id")))
+            if decision is None:
+                continue
+            decision_symbol = str(decision.get("symbol", "")).strip()
+            if decision_symbol and str(fill.get("symbol", "")).strip() != decision_symbol:
+                errors.append(f"Fill symbol does not match decision symbol at row: {idx + 2}")
+            status = str(decision.get("manual_review_status", "")).strip()
+            if cfg.require_approved_decision_for_fills and status != "APPROVED_FOR_PAPER":
+                errors.append(f"Fill decision is not APPROVED_FOR_PAPER at row: {idx + 2}")
+
+    if not cfg.allow_short_selling:
+        oversell_errors = _oversell_errors(prepared)
+        errors.extend(oversell_errors)
+
+    if cfg.prevent_negative_cash:
+        cash_errors = _negative_cash_errors(prepared, cfg)
+        errors.extend(cash_errors)
+
+    return PaperFillValidationResult(valid=not errors, row_count=len(prepared), errors=errors, warnings=warnings)
+
+
 def generate_paper_journal_id(
     *,
     decisions: pd.DataFrame,
     fills: pd.DataFrame | None = None,
     settings: PaperTradingSettings | dict[str, Any] | None = None,
 ) -> str:
-    """Generate a deterministic paper journal id."""
+    """Generate a deterministic paper journal id independent of fill activity."""
 
     cfg = _coerce_paper_settings(settings)
     decision_frame = _finalize_decisions(decisions)
-    fill_frame = _prepare_fills(fills)
     payload = {
         "decision_dates": _unique_dates(decision_frame, "decision_date"),
         "source_run_ids": sorted(str(value) for value in decision_frame.get("source_run_id", pd.Series(dtype="object")).dropna().unique()),
         "symbols": sorted(str(value) for value in decision_frame.get("symbol", pd.Series(dtype="object")).dropna().unique()),
-        "fill_ids": sorted(str(value) for value in fill_frame.get("fill_id", pd.Series(dtype="object")).dropna().unique()),
         "config_version": cfg.config_version,
     }
     return _hash_payload(payload, length=10)
@@ -708,27 +836,100 @@ def render_paper_trading_report(
 
 def _position_state_from_fills(fills: pd.DataFrame) -> dict[str, dict[str, Any]]:
     prepared = _prepare_fills(fills)
+    remaining_lots = _fifo_remaining_lots(prepared)
     states: dict[str, dict[str, Any]] = {}
-    for fill in prepared.sort_values(["fill_date", "fill_id"]).to_dict("records"):
+    for symbol, lots in remaining_lots.items():
+        active_lots = [lot for lot in lots if float(lot["remaining_quantity"]) > 1e-9]
+        if not active_lots:
+            continue
+        quantity = sum(float(lot["remaining_quantity"]) for lot in active_lots)
+        total_cost = sum(float(lot["remaining_quantity"]) * float(lot["entry_cost_per_share"]) for lot in active_lots)
+        states[symbol] = {
+            "quantity": quantity,
+            "total_cost": total_cost,
+            "open_date": min(pd.Timestamp(lot["open_date"]) for lot in active_lots),
+        }
+    return states
+
+
+def _fifo_remaining_lots(fills: pd.DataFrame) -> dict[str, list[dict[str, Any]]]:
+    lots: dict[str, list[dict[str, Any]]] = {}
+    for fill in _prepare_fills(fills).sort_values(["fill_date", "fill_id"]).to_dict("records"):
         symbol = str(fill["symbol"])
         quantity = float(fill["quantity"])
-        state = states.setdefault(
-            symbol,
-            {"quantity": 0.0, "total_cost": 0.0, "open_date": fill["fill_date"]},
-        )
         if str(fill["side"]).upper() == "BUY":
-            state["total_cost"] = float(state["total_cost"]) + abs(float(fill["net_cash_flow"]))
-            state["quantity"] = float(state["quantity"]) + quantity
-            state["open_date"] = min(pd.Timestamp(state["open_date"]), pd.Timestamp(fill["fill_date"]))
+            entry_cost_per_share = abs(float(fill["net_cash_flow"])) / quantity if quantity else float(fill["fill_price"])
+            lots.setdefault(symbol, []).append(
+                {
+                    "open_date": fill["fill_date"],
+                    "entry_price": float(fill["fill_price"]),
+                    "entry_cost_per_share": entry_cost_per_share,
+                    "remaining_quantity": quantity,
+                }
+            )
+            continue
+
+        remaining = quantity
+        for lot in lots.get(symbol, []):
+            if remaining <= 1e-9:
+                break
+            matched = min(float(lot["remaining_quantity"]), remaining)
+            lot["remaining_quantity"] = float(lot["remaining_quantity"]) - matched
+            remaining -= matched
+    return lots
+
+
+def _available_quantity(fills: pd.DataFrame, symbol: str) -> float:
+    lots = _fifo_remaining_lots(fills).get(str(symbol), [])
+    return float(sum(float(lot["remaining_quantity"]) for lot in lots))
+
+
+def _current_paper_cash(fills: pd.DataFrame, settings: PaperTradingSettings) -> float:
+    prepared = _prepare_fills(fills)
+    if prepared.empty:
+        return float(settings.initial_paper_cash)
+    return float(settings.initial_paper_cash) + float(pd.to_numeric(prepared["net_cash_flow"], errors="coerce").fillna(0.0).sum())
+
+
+def _assert_decision_can_fill(decision_row: dict[str, Any], settings: PaperTradingSettings) -> None:
+    if not settings.require_approved_decision_for_fills:
+        return
+    status = str(decision_row.get("manual_review_status", "")).strip()
+    if status != "APPROVED_FOR_PAPER":
+        raise ValueError("Paper fills require manual_review_status == APPROVED_FOR_PAPER")
+
+
+def _oversell_errors(fills: pd.DataFrame) -> list[str]:
+    errors = []
+    positions: dict[str, float] = {}
+    for idx, fill in _prepare_fills(fills).sort_values(["fill_date", "fill_id"]).to_dict("index").items():
+        symbol = str(fill["symbol"])
+        side = str(fill["side"]).upper()
+        quantity = float(fill["quantity"])
+        if side == "BUY":
+            positions[symbol] = positions.get(symbol, 0.0) + quantity
+            continue
+        if side != "SELL":
+            continue
+        available = positions.get(symbol, 0.0)
+        if quantity > available + 1e-9:
+            errors.append(
+                f"SELL quantity {quantity:g} exceeds available paper position {available:g} at row: {idx + 2}"
+            )
+            positions[symbol] = available
         else:
-            current_quantity = float(state["quantity"])
-            if current_quantity <= 0:
-                continue
-            average_cost = float(state["total_cost"]) / current_quantity
-            matched = min(current_quantity, quantity)
-            state["quantity"] = current_quantity - matched
-            state["total_cost"] = max(0.0, float(state["total_cost"]) - average_cost * matched)
-    return states
+            positions[symbol] = available - quantity
+    return errors
+
+
+def _negative_cash_errors(fills: pd.DataFrame, settings: PaperTradingSettings) -> list[str]:
+    errors = []
+    cash = float(settings.initial_paper_cash)
+    for idx, fill in _prepare_fills(fills).sort_values(["fill_date", "fill_id"]).to_dict("index").items():
+        cash += float(fill["net_cash_flow"])
+        if cash < -1e-9:
+            errors.append(f"Paper cash would become negative at row: {idx + 2}")
+    return errors
 
 
 def _candidates_to_frame(candidates: pd.DataFrame | str | Path | Any) -> pd.DataFrame:
@@ -985,6 +1186,7 @@ def _closed_trade_columns() -> list[str]:
         "quantity",
         "realized_pnl",
         "realized_return_pct",
+        "holding_calendar_days",
         "holding_days",
         "exit_reason",
     ]
@@ -1074,6 +1276,10 @@ def _int_or_none(value: Any) -> int | None:
     except (TypeError, ValueError):
         pass
     return int(value)
+
+
+def _row_numbers(index: pd.Index) -> str:
+    return ", ".join(str(int(value) + 2) for value in index)
 
 
 def _coerce_paper_settings(settings: PaperTradingSettings | dict[str, Any] | None) -> PaperTradingSettings:

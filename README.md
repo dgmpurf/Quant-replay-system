@@ -28,6 +28,7 @@ Included now:
 - Walk-forward validation for train/validation/test parameter checks.
 - Manual paper trading journal for reviewed candidates and hypothetical fills.
 - Daily paper trading runner for local decision logs, fills, and paper reports.
+- Paper trading CLI for daily reports, fills validation, and fills templates.
 - Baseline pytest setup.
 
 Not included:
@@ -63,6 +64,14 @@ For reviewed candidate decision logs and manual hypothetical paper fills, see [d
 
 For daily local paper-trading reports from candidate CSVs and manual fills, see [docs/daily_paper_trading_runner.md](docs/daily_paper_trading_runner.md).
 
+For local paper-trading CLI commands, see [docs/paper_trading_cli.md](docs/paper_trading_cli.md).
+
+```powershell
+python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
+python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
+python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv
+```
+
 ## Project Layout
 
 ```text
@@ -84,6 +93,7 @@ quant-replay-system/
     factor_dataset.md
     manual_paper_trading.md
     parameter_calibration.md
+    paper_trading_cli.md
     portfolio_aware_calibration.md
     portfolio_simulation.md
     report_generation.md
@@ -94,6 +104,7 @@ quant-replay-system/
   src/
     quant_replay_system/
       calibration.py
+      cli.py
       config.py
       data.py
       daily_paper_runner.py

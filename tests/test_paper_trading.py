@@ -12,9 +12,11 @@ from quant_replay_system.paper_trading import (
     build_daily_summary,
     build_open_positions,
     create_paper_decision_log,
+    generate_paper_journal_id,
     generate_paper_trading_report,
     mark_to_market_paper_positions,
     record_paper_fill,
+    validate_paper_fills,
 )
 
 
@@ -40,7 +42,7 @@ def test_manual_review_status_defaults_to_pending_review() -> None:
 
 
 def test_record_paper_fill_creates_fill_records() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _buy_fill(decisions, price=10.0, quantity=100)
 
     assert len(fills) == 1
@@ -49,7 +51,7 @@ def test_record_paper_fill_creates_fill_records() -> None:
 
 
 def test_buy_fills_create_open_positions() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _buy_fill(decisions, price=10.0, quantity=100)
     positions = build_open_positions(fills, _market_data(), mark_date="2024-03-05")
 
@@ -59,7 +61,7 @@ def test_buy_fills_create_open_positions() -> None:
 
 
 def test_sell_fills_close_or_reduce_positions() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _buy_fill(decisions, price=10.0, quantity=200)
     fills = record_paper_fill(
         decisions,
@@ -77,21 +79,21 @@ def test_sell_fills_close_or_reduce_positions() -> None:
 
 
 def test_lot_size_rounding_is_respected_if_enabled() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _buy_fill(decisions, price=10.0, quantity=150)
 
     assert fills.iloc[0]["quantity"] == pytest.approx(100.0)
 
 
 def test_fractional_shares_are_rejected_by_default() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
 
     with pytest.raises(ValueError, match="fractional"):
         _buy_fill(decisions, price=10.0, quantity=100.5)
 
 
 def test_open_positions_calculate_market_value_correctly() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _buy_fill(decisions, price=10.0, quantity=100)
     positions = build_open_positions(fills, _market_data(), mark_date="2024-03-05")
 
@@ -101,7 +103,7 @@ def test_open_positions_calculate_market_value_correctly() -> None:
 
 
 def test_closed_trades_calculate_realized_pnl_correctly() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _round_trip_fills(decisions)
     closed = build_closed_trades(fills)
 
@@ -111,7 +113,7 @@ def test_closed_trades_calculate_realized_pnl_correctly() -> None:
 
 
 def test_paper_cash_updates_correctly() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _round_trip_fills(decisions)
     summary = build_daily_summary(
         open_positions=build_open_positions(fills, _market_data(), mark_date="2024-03-06"),
@@ -189,13 +191,165 @@ def test_no_broker_or_live_trading_integration_is_invoked(tmp_path: Path) -> Non
 
 
 def test_mark_to_market_updates_existing_positions() -> None:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _buy_fill(decisions, price=10.0, quantity=100)
     positions = build_open_positions(fills, _market_data(), mark_date="2024-03-04")
     marked = mark_to_market_paper_positions(positions, _market_data(), mark_date="2024-03-05")
 
     assert marked.iloc[0]["last_mark_price"] == pytest.approx(12.0)
     assert marked.iloc[0]["market_value"] == pytest.approx(1200.0)
+
+
+def test_over_selling_is_rejected() -> None:
+    decisions = _approved_decisions()
+    fills = _buy_fill(decisions, price=10.0, quantity=100)
+
+    with pytest.raises(ValueError, match="exceeds available"):
+        record_paper_fill(
+            decisions,
+            fills,
+            decision_id=decisions.iloc[0]["decision_id"],
+            side="SELL",
+            fill_date="2024-03-06",
+            fill_price=12.0,
+            quantity=200,
+            settings=_settings(),
+        )
+
+
+def test_over_selling_does_not_create_phantom_cash() -> None:
+    decisions = _approved_decisions()
+    fills = _buy_fill(decisions, price=10.0, quantity=100)
+    original_cash = 10_000.0 + fills["net_cash_flow"].sum()
+
+    try:
+        record_paper_fill(
+            decisions,
+            fills,
+            decision_id=decisions.iloc[0]["decision_id"],
+            side="SELL",
+            fill_date="2024-03-06",
+            fill_price=12.0,
+            quantity=200,
+            settings=_settings(),
+        )
+    except ValueError:
+        pass
+
+    assert 10_000.0 + fills["net_cash_flow"].sum() == pytest.approx(original_cash)
+
+
+def test_multiple_buys_partial_sell_keeps_fifo_cost_basis() -> None:
+    decisions = _approved_decisions()
+    fills = _buy_fill(decisions, price=10.0, quantity=100)
+    fills = record_paper_fill(
+        decisions,
+        fills,
+        decision_id=decisions.iloc[0]["decision_id"],
+        side="BUY",
+        fill_date="2024-03-05",
+        fill_price=20.0,
+        quantity=100,
+        settings=_settings(),
+    )
+    fills = record_paper_fill(
+        decisions,
+        fills,
+        decision_id=decisions.iloc[0]["decision_id"],
+        side="SELL",
+        fill_date="2024-03-06",
+        fill_price=15.0,
+        quantity=100,
+        settings=_settings(),
+    )
+    positions = build_open_positions(fills, _market_data(), mark_date="2024-03-06")
+
+    assert positions.iloc[0]["quantity"] == pytest.approx(100.0)
+    assert positions.iloc[0]["average_cost"] == pytest.approx(20.0)
+
+
+def test_validate_paper_fills_catches_invalid_side() -> None:
+    fills = _round_trip_fills(_approved_decisions())
+    fills.loc[0, "side"] = "SHORT"
+    result = validate_paper_fills(fills, decisions=_approved_decisions(), settings=_settings())
+
+    assert not result.valid
+    assert any("Invalid side" in error for error in result.errors)
+
+
+def test_validate_paper_fills_catches_non_positive_quantity() -> None:
+    fills = _round_trip_fills(_approved_decisions())
+    fills.loc[0, "quantity"] = 0
+    result = validate_paper_fills(fills, decisions=_approved_decisions(), settings=_settings())
+
+    assert not result.valid
+    assert any("Non-positive quantity" in error for error in result.errors)
+
+
+def test_validate_paper_fills_catches_non_positive_fill_price() -> None:
+    fills = _round_trip_fills(_approved_decisions())
+    fills.loc[0, "fill_price"] = -1
+    result = validate_paper_fills(fills, decisions=_approved_decisions(), settings=_settings())
+
+    assert not result.valid
+    assert any("Non-positive fill_price" in error for error in result.errors)
+
+
+def test_validate_paper_fills_catches_mismatched_gross_notional() -> None:
+    fills = _round_trip_fills(_approved_decisions())
+    fills.loc[0, "gross_notional"] = 1
+    result = validate_paper_fills(fills, decisions=_approved_decisions(), settings=_settings())
+
+    assert not result.valid
+    assert any("gross_notional" in error for error in result.errors)
+
+
+def test_validate_paper_fills_catches_wrong_net_cash_flow_sign() -> None:
+    fills = _round_trip_fills(_approved_decisions())
+    fills.loc[0, "net_cash_flow"] = 100
+    result = validate_paper_fills(fills, decisions=_approved_decisions(), settings=_settings())
+
+    assert not result.valid
+    assert any("BUY net_cash_flow" in error for error in result.errors)
+
+
+def test_fill_for_rejected_decision_is_rejected_by_default() -> None:
+    decisions = _review_decisions("REJECTED")
+
+    with pytest.raises(ValueError, match="APPROVED_FOR_PAPER"):
+        _buy_fill(decisions, price=10.0, quantity=100)
+
+
+def test_fill_for_pending_review_decision_is_rejected_by_default() -> None:
+    decisions = _decisions()
+
+    with pytest.raises(ValueError, match="APPROVED_FOR_PAPER"):
+        _buy_fill(decisions, price=10.0, quantity=100)
+
+
+def test_approved_decision_can_record_fill() -> None:
+    decisions = _approved_decisions()
+    fills = _buy_fill(decisions, price=10.0, quantity=100)
+
+    assert len(fills) == 1
+
+
+def test_journal_id_remains_stable_before_and_after_fills_are_added() -> None:
+    decisions = _approved_decisions()
+    fills = _round_trip_fills(decisions)
+
+    assert generate_paper_journal_id(decisions=decisions, settings=_settings()) == generate_paper_journal_id(
+        decisions=decisions,
+        fills=fills,
+        settings=_settings(),
+    )
+
+
+def test_holding_calendar_days_is_present_in_closed_trades() -> None:
+    closed = build_closed_trades(_round_trip_fills(_approved_decisions()), settings=_settings())
+
+    assert "holding_calendar_days" in closed.columns
+    assert closed.iloc[0]["holding_calendar_days"] == 2
 
 
 def test_generate_paper_trading_report_returns_structured_journal(tmp_path: Path) -> None:
@@ -207,7 +361,7 @@ def test_generate_paper_trading_report_returns_structured_journal(tmp_path: Path
 
 
 def _journal(tmp_path: Path | None = None) -> PaperTradeJournal:
-    decisions = _decisions()
+    decisions = _approved_decisions()
     fills = _round_trip_fills(decisions)
     return generate_paper_trading_report(
         decisions=decisions,
@@ -227,6 +381,23 @@ def _decisions() -> pd.DataFrame:
         planned_holding_horizon=5,
         planned_buy_date="2024-03-04",
         planned_sell_date="2024-03-08",
+    )
+
+
+def _approved_decisions() -> pd.DataFrame:
+    return _review_decisions("APPROVED_FOR_PAPER")
+
+
+def _review_decisions(status: str) -> pd.DataFrame:
+    return create_paper_decision_log(
+        _candidates(),
+        decision_date="2024-03-01",
+        source_run_id="replay123",
+        source_report_path="outputs/reports/replay123/report.md",
+        planned_holding_horizon=5,
+        planned_buy_date="2024-03-04",
+        planned_sell_date="2024-03-08",
+        manual_review_status=status,
     )
 
 

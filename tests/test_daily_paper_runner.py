@@ -195,6 +195,7 @@ def _fills_path(tmp_path: Path, *, round_trip: bool) -> Path:
         decision_date=PAPER_DATE,
         source_run_id="run123",
         source_report_path="outputs/reports/run123/report.md",
+        manual_review_status="APPROVED_FOR_PAPER",
     )
     fills = record_paper_fill(
         decisions,
@@ -236,6 +237,7 @@ def _candidates() -> pd.DataFrame:
                 "rank": 1,
                 "source_run_id": "run123",
                 "source_report_path": "outputs/reports/run123/report.md",
+                "manual_review_status": "APPROVED_FOR_PAPER",
             },
             {
                 "decision_date": pd.Timestamp(PAPER_DATE),
@@ -249,6 +251,7 @@ def _candidates() -> pd.DataFrame:
                 "rank": 2,
                 "source_run_id": "run123",
                 "source_report_path": "outputs/reports/run123/report.md",
+                "manual_review_status": "APPROVED_FOR_PAPER",
             },
         ]
     )

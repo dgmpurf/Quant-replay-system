@@ -150,6 +150,9 @@ class PaperTradingSettings(BaseModel):
     default_lot_size: int = Field(default=100, gt=0)
     round_lots: bool = True
     allow_fractional_shares: bool = False
+    allow_short_selling: bool = False
+    require_approved_decision_for_fills: bool = True
+    prevent_negative_cash: bool = True
     default_fee_bps: float = Field(default=0.0, ge=0)
     default_slippage_bps: float = Field(default=0.0, ge=0)
     enable_live_trading: Literal[False] = False
