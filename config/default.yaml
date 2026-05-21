@@ -109,6 +109,18 @@ portfolio_simulation:
   config_version: mvp
   write_artifacts: true
 
+walk_forward:
+  output_dir: outputs/reports/walk_forward
+  require_validation: true
+  require_test: false
+  overfit_warning_threshold: 0.50
+  severe_overfit_threshold: 0.75
+  min_train_dates: 3
+  min_validation_dates: 1
+  min_test_dates: 0
+  config_version: mvp
+  write_artifacts: true
+
 execution:
   mode: t_plus_1
   price_field: open

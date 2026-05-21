@@ -25,6 +25,7 @@ Included now:
 - Parameter calibration over explicit small grids using batch replay outputs.
 - Portfolio simulation with cash, trade, position, and equity ledgers.
 - Portfolio-aware batch replay and calibration using account-level metrics.
+- Walk-forward validation for train/validation/test parameter checks.
 - Baseline pytest setup.
 
 Not included:
@@ -54,6 +55,8 @@ For account-level portfolio ledgers and equity-curve simulation, see [docs/portf
 
 For portfolio-aware batch replay and calibration ranking, see [docs/portfolio_aware_calibration.md](docs/portfolio_aware_calibration.md).
 
+For train/validation/test calibration checks and overfitting diagnostics, see [docs/walk_forward_validation.md](docs/walk_forward_validation.md).
+
 ## Project Layout
 
 ```text
@@ -79,6 +82,7 @@ quant-replay-system/
     replay_run_orchestrator.md
     scoring_engine.md
     technical_indicators.md
+    walk_forward_validation.md
   src/
     quant_replay_system/
       calibration.py
@@ -89,6 +93,7 @@ quant-replay-system/
       replay.py
       risk.py
       scoring.py
+      walk_forward.py
   tests/
 ```
 

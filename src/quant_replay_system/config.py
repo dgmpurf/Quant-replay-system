@@ -131,6 +131,19 @@ class PortfolioSimulationSettings(BaseModel):
     write_artifacts: bool = True
 
 
+class WalkForwardSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/walk_forward")
+    require_validation: bool = True
+    require_test: bool = False
+    overfit_warning_threshold: float = Field(default=0.50, ge=0, le=1)
+    severe_overfit_threshold: float = Field(default=0.75, ge=0, le=1)
+    min_train_dates: int = Field(default=3, ge=0)
+    min_validation_dates: int = Field(default=1, ge=0)
+    min_test_dates: int = Field(default=0, ge=0)
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -160,6 +173,7 @@ class Settings(BaseModel):
     batch_replay: BatchReplaySettings = Field(default_factory=BatchReplaySettings)
     calibration: CalibrationSettings = Field(default_factory=CalibrationSettings)
     portfolio_simulation: PortfolioSimulationSettings = Field(default_factory=PortfolioSimulationSettings)
+    walk_forward: WalkForwardSettings = Field(default_factory=WalkForwardSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 
