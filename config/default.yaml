@@ -121,6 +121,19 @@ walk_forward:
   config_version: mvp
   write_artifacts: true
 
+paper_trading:
+  output_dir: outputs/reports/paper_trading
+  initial_paper_cash: 10000
+  default_lot_size: 100
+  round_lots: true
+  allow_fractional_shares: false
+  default_fee_bps: 0
+  default_slippage_bps: 0
+  enable_live_trading: false
+  enable_broker_api: false
+  config_version: mvp
+  write_artifacts: true
+
 execution:
   mode: t_plus_1
   price_field: open

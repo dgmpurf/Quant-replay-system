@@ -26,6 +26,7 @@ Included now:
 - Portfolio simulation with cash, trade, position, and equity ledgers.
 - Portfolio-aware batch replay and calibration using account-level metrics.
 - Walk-forward validation for train/validation/test parameter checks.
+- Manual paper trading journal for reviewed candidates and hypothetical fills.
 - Baseline pytest setup.
 
 Not included:
@@ -57,6 +58,8 @@ For portfolio-aware batch replay and calibration ranking, see [docs/portfolio_aw
 
 For train/validation/test calibration checks and overfitting diagnostics, see [docs/walk_forward_validation.md](docs/walk_forward_validation.md).
 
+For reviewed candidate decision logs and manual hypothetical paper fills, see [docs/manual_paper_trading.md](docs/manual_paper_trading.md).
+
 ## Project Layout
 
 ```text
@@ -75,6 +78,7 @@ quant-replay-system/
     data_contract.md
     execution_calendar.md
     factor_dataset.md
+    manual_paper_trading.md
     parameter_calibration.md
     portfolio_aware_calibration.md
     portfolio_simulation.md
@@ -90,6 +94,7 @@ quant-replay-system/
       data.py
       evaluation.py
       execution.py
+      paper_trading.py
       replay.py
       risk.py
       scoring.py

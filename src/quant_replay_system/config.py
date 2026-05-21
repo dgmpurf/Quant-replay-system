@@ -144,6 +144,20 @@ class WalkForwardSettings(BaseModel):
     write_artifacts: bool = True
 
 
+class PaperTradingSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/paper_trading")
+    initial_paper_cash: float = Field(default=10_000.0, gt=0)
+    default_lot_size: int = Field(default=100, gt=0)
+    round_lots: bool = True
+    allow_fractional_shares: bool = False
+    default_fee_bps: float = Field(default=0.0, ge=0)
+    default_slippage_bps: float = Field(default=0.0, ge=0)
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -174,6 +188,7 @@ class Settings(BaseModel):
     calibration: CalibrationSettings = Field(default_factory=CalibrationSettings)
     portfolio_simulation: PortfolioSimulationSettings = Field(default_factory=PortfolioSimulationSettings)
     walk_forward: WalkForwardSettings = Field(default_factory=WalkForwardSettings)
+    paper_trading: PaperTradingSettings = Field(default_factory=PaperTradingSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 
