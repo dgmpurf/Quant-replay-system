@@ -1,0 +1,63 @@
+"""Configuration loading for the replay system."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Dict, Literal
+
+import yaml
+from pydantic import BaseModel, Field
+
+
+class ProjectSettings(BaseModel):
+    name: str
+    timezone: str = "Asia/Shanghai"
+    market: str = "China A-share"
+
+
+class DataSettings(BaseModel):
+    root: Path = Path("data")
+    mock_prices: Path = Path("data/mock/prices.csv")
+    mock_universe_snapshots: Path = Path("data/mock/universe_snapshots.csv")
+    mock_corporate_actions: Path = Path("data/mock/corporate_actions.csv")
+
+
+class OutputSettings(BaseModel):
+    root: Path = Path("outputs")
+    reports: Path = Path("outputs/reports")
+
+
+class ScoringSettings(BaseModel):
+    weights: Dict[str, float] = Field(default_factory=dict)
+    min_score: float = 0.0
+    max_candidates: int = Field(default=5, gt=0)
+
+
+class ExecutionSettings(BaseModel):
+    mode: Literal["t_plus_1"] = "t_plus_1"
+    price_field: str = "open"
+    slippage_bps: float = 0.0
+
+
+class RiskSettings(BaseModel):
+    max_single_position_pct: float = Field(default=0.20, gt=0, le=1)
+    max_drawdown_stop_pct: float = Field(default=0.12, gt=0, le=1)
+    allow_live_trading: Literal[False] = False
+
+
+class Settings(BaseModel):
+    project: ProjectSettings
+    data: DataSettings
+    output: OutputSettings
+    scoring: ScoringSettings
+    execution: ExecutionSettings
+    risk: RiskSettings
+
+
+def load_settings(path: str | Path) -> Settings:
+    """Load YAML settings and validate MVP safety constraints."""
+
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        payload = yaml.safe_load(file) or {}
+    return Settings(**payload)

@@ -1,0 +1,7 @@
+as_of_date,symbol,name,instrument_type,exchange,listed_date,delisted_date,is_active,is_st,is_suspended,industry,min_lot,t_plus_rule,available_time,revision_id,source
+2024-01-03,000001.SZ,Example Inactive,stock,SZSE,1991-04-03,2023-12-31,false,false,false,Bank,100,t_plus_1,2024-01-03 09:00:00,r1,mock
+2024-01-03,510300.SH,CSI 300 ETF,ETF,SSE,2012-05-28,,true,false,false,Broad Market,100,t_plus_1,2024-01-03 09:00:00,r1,mock
+2024-01-03,510500.SH,CSI 500 ETF,ETF,SSE,2013-03-15,,true,false,false,Broad Market,100,t_plus_1,2024-01-03 09:00:00,r1,mock
+2024-01-03,512800.SH,Bank ETF,ETF,SSE,2017-08-03,,true,false,true,Financials,100,t_plus_1,2024-01-03 09:00:00,r1,mock
+2024-01-03,600519.SH,Kweichow Moutai,stock,SSE,2001-08-27,,true,true,false,Consumer Staples,100,t_plus_1,2024-01-03 09:00:00,r1,mock
+2024-01-04,688999.SH,Future Listing,stock,SSE,2024-01-04,,true,false,false,Technology,100,t_plus_1,2024-01-04 09:00:00,r1,mock

@@ -1,0 +1,4 @@
+symbol,action_type,ex_date,record_date,cash_dividend,split_ratio,rights_issue,event_time,publish_time,ingest_time,available_time,revision_id,source
+510300.SH,cash_dividend,2024-01-02,2024-01-01,0.01,1.0,false,2024-01-02 08:00:00,2024-01-02 08:05:00,2024-01-02 08:10:00,2024-01-02 08:10:00,r1,mock
+510300.SH,cash_dividend,2024-01-03,2024-01-02,0.02,1.0,false,2024-01-03 14:00:00,2024-01-03 16:00:00,2024-01-03 16:05:00,2024-01-03 16:05:00,r1,mock
+510500.SH,split,2024-01-04,2024-01-03,0.0,1.1,false,2024-01-04 08:00:00,2024-01-04 08:05:00,2024-01-04 08:10:00,2024-01-04 08:10:00,r1,mock

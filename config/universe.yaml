@@ -1,0 +1,13 @@
+universe:
+  - symbol: 510300.SH
+    name: CSI 300 ETF
+    asset_type: ETF
+  - symbol: 510500.SH
+    name: CSI 500 ETF
+    asset_type: ETF
+  - symbol: 512800.SH
+    name: Bank ETF
+    asset_type: ETF
+  - symbol: 600519.SH
+    name: Kweichow Moutai
+    asset_type: stock
