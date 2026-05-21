@@ -16,6 +16,7 @@ Included now:
 - Placeholder modules for data, scoring, replay, execution, evaluation, calibration, and risk.
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
 - Trading calendar and T+1 execution calendar for daily replay.
+- Point-in-time-safe technical indicators for timing research.
 - Baseline pytest setup.
 
 Not included:
@@ -53,6 +54,7 @@ quant-replay-system/
   docs/
     data_contract.md
     execution_calendar.md
+    technical_indicators.md
   src/
     quant_replay_system/
       calibration.py
