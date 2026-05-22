@@ -36,6 +36,7 @@ Included now:
 - Walk-forward validation for train/validation/test parameter checks.
 - Manual paper trading journal for reviewed candidates and hypothetical fills.
 - Paper trading review workflow for local approve/reject/watch audit decisions.
+- Paper trading review template health check before applying edited review updates.
 - Daily paper trading runner for local decision logs, fills, and paper reports.
 - Paper trading CLI for daily reports, fills validation, and fills templates.
 - Paper trading fill reconciliation for decision/fill audit checks before daily reports.
@@ -84,6 +85,8 @@ For handing a healthy current-candidate `candidates.csv` into daily paper tradin
 
 For creating manual review update templates from paper decisions, see [docs/current_to_paper_review_handoff.md](docs/current_to_paper_review_handoff.md).
 
+For validating edited paper review templates before applying them, see [docs/paper_review_template_health.md](docs/paper_review_template_health.md).
+
 For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
 
 For explainable parameter comparison using batch replay outputs, see [docs/parameter_calibration.md](docs/parameter_calibration.md).
@@ -125,6 +128,7 @@ python -m quant_replay_system.cli current-candidates-index --root outputs/report
 python -m quant_replay_system.cli current-candidates-health --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv
 python -m quant_replay_system.cli current-to-paper --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv --decision-date 2024-05-20
 python -m quant_replay_system.cli current-to-paper-review --handoff-dir outputs/reports/current_to_paper_handoff/example
+python -m quant_replay_system.cli paper-review-template-health --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --decisions outputs/reports/paper_trading/daily/example/decisions.csv
 python -m quant_replay_system.cli replay-run --date 2024-01-03 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli batch-replay --dates 2024-01-03,2024-01-04 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
@@ -142,6 +146,7 @@ python -m quant_replay_system.cli current-candidates-health --index outputs/repo
 python -m quant_replay_system.cli current-to-paper --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv --decision-date 2024-05-20 --universe etf_core
 python -m quant_replay_system.cli current-to-paper-review --handoff-dir outputs/reports/current_to_paper_handoff/example --reviewer-id msj
 # Manually edit outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv
+python -m quant_replay_system.cli paper-review-template-health --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --decisions outputs/reports/paper_trading/daily/example/decisions.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --reviewer-id msj
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
@@ -177,6 +182,7 @@ quant-replay-system/
     manual_paper_trading.md
     parameter_calibration.md
     paper_fill_reconciliation.md
+    paper_review_template_health.md
     paper_trading_artifact_health_check.md
     paper_trading_artifact_index.md
     paper_trading_e2e_workflow.md

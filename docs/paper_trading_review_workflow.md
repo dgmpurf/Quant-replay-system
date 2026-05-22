@@ -101,10 +101,12 @@ python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decis
 The intended local workflow is:
 
 1. Generate paper decisions.
-2. Apply manual review updates.
-3. Use `reviewed_decisions.csv` in `paper-daily`.
-4. Reconcile fills against reviewed decisions.
-5. Generate daily paper reports.
+2. Create and manually edit a review update template.
+3. Run `paper-review-template-health` to validate the edited template.
+4. Apply manual review updates.
+5. Use `reviewed_decisions.csv` in `paper-daily`.
+6. Reconcile fills against reviewed decisions.
+7. Generate daily paper reports.
 
 Fills against `REJECTED`, `WATCH_ONLY`, or `PENDING_REVIEW` decisions fail reconciliation by default.
 

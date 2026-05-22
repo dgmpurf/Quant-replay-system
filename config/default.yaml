@@ -211,6 +211,25 @@ paper_review:
   enable_live_trading: false
   enable_broker_api: false
 
+paper_review_template_health:
+  output_dir: outputs/reports/paper_trading/review_template_health
+  duplicate_update_severity: ERROR
+  invalid_reason_code_severity: WARN
+  missing_reviewer_severity: WARN
+  blank_status_severity: ERROR
+  approve_non_pass_risk_severity: WARN
+  low_score_approval_threshold: 70
+  low_score_approval_severity: WARN
+  high_score_threshold: 80
+  rejected_high_score_severity: INFO
+  watch_high_score_severity: INFO
+  require_decisions_for_id_validation: false
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 daily_paper_runner:
   output_dir: outputs/reports/paper_trading/daily
   error_on_both_candidates_and_reviewed_decisions: false

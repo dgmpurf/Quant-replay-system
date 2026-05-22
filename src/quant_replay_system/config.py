@@ -242,6 +242,26 @@ class PaperReviewSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class PaperReviewTemplateHealthSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/paper_trading/review_template_health")
+    duplicate_update_severity: Literal["WARN", "ERROR"] = "ERROR"
+    invalid_reason_code_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_reviewer_severity: Literal["INFO", "WARN", "ERROR"] = "WARN"
+    blank_status_severity: Literal["WARN", "ERROR"] = "ERROR"
+    approve_non_pass_risk_severity: Literal["WARN", "ERROR"] = "WARN"
+    low_score_approval_threshold: float = 70.0
+    low_score_approval_severity: Literal["INFO", "WARN", "ERROR"] = "WARN"
+    high_score_threshold: float = 80.0
+    rejected_high_score_severity: Literal["INFO", "WARN"] = "INFO"
+    watch_high_score_severity: Literal["INFO", "WARN"] = "INFO"
+    require_decisions_for_id_validation: bool = False
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DailyPaperRunnerSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/paper_trading/daily")
     error_on_both_candidates_and_reviewed_decisions: bool = False
@@ -368,6 +388,7 @@ class Settings(BaseModel):
     paper_trading: PaperTradingSettings = Field(default_factory=PaperTradingSettings)
     paper_reconciliation: PaperReconciliationSettings = Field(default_factory=PaperReconciliationSettings)
     paper_review: PaperReviewSettings = Field(default_factory=PaperReviewSettings)
+    paper_review_template_health: PaperReviewTemplateHealthSettings = Field(default_factory=PaperReviewTemplateHealthSettings)
     daily_paper_runner: DailyPaperRunnerSettings = Field(default_factory=DailyPaperRunnerSettings)
     paper_artifact_index: PaperArtifactIndexSettings = Field(default_factory=PaperArtifactIndexSettings)
     paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)

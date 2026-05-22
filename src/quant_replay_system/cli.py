@@ -31,6 +31,7 @@ from quant_replay_system.paper_artifact_health import check_paper_artifact_healt
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
 from quant_replay_system.paper_review import apply_paper_review_updates
+from quant_replay_system.paper_review_template_health import check_review_template_health
 from quant_replay_system.replay_run import run_replay
 from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
 from quant_replay_system.snapshot_quality_preflight import SnapshotQualityPreflightError
@@ -229,6 +230,18 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--allow-pending", action="store_true", help="Allow reviewed decisions to remain PENDING_REVIEW")
     review.add_argument("--config", help="Optional config YAML path")
     review.set_defaults(handler=_handle_review_decisions)
+
+    review_health = subparsers.add_parser(
+        "paper-review-template-health",
+        help="Health check an edited paper review update template before applying it",
+    )
+    review_health.add_argument("--updates", required=True, help="Review updates template CSV path")
+    review_health.add_argument("--decisions", help="Optional matching paper decisions CSV path")
+    review_health.add_argument("--output-dir", help="Optional review template health output directory")
+    review_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    review_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    review_health.add_argument("--config", help="Optional config YAML path")
+    review_health.set_defaults(handler=_handle_review_template_health)
 
     index = subparsers.add_parser("paper-index", help="Build a local paper trading artifact index")
     index.add_argument("--root", help="Paper trading artifact root directory")
@@ -762,6 +775,44 @@ def _handle_review_decisions(args: argparse.Namespace) -> int:
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_review_template_health(args: argparse.Namespace) -> int:
+    updates_path = Path(args.updates)
+    if not updates_path.exists():
+        raise FileNotFoundError(f"Review updates CSV not found: {updates_path}")
+    decisions_path = Path(args.decisions) if args.decisions else None
+    if decisions_path is not None and not decisions_path.exists():
+        raise FileNotFoundError(f"Decisions CSV not found: {decisions_path}")
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    health_updates = {}
+    if args.output_dir:
+        health_updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "paper_review_template_health": settings.paper_review_template_health.model_copy(update=health_updates)
+        }
+    )
+    result = check_review_template_health(
+        pd.read_csv(updates_path),
+        decisions=pd.read_csv(decisions_path) if decisions_path is not None else None,
+        settings=settings,
+    )
+    print(f"Review template health status: {result.status}")
+    print(f"update_row_count: {result.update_row_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['review_template_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
     return 0
 
 

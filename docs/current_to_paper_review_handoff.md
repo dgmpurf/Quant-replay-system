@@ -11,6 +11,7 @@ It is local-only. It does not connect to brokers, place orders, automate executi
 This helper writes `review_updates_template.csv` so the user can edit review decisions before running:
 
 ```cmd
+python -m quant_replay_system.cli paper-review-template-health --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv --decisions outputs\reports\paper_trading\daily\example\decisions.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs\reports\paper_trading\daily\example\decisions.csv --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv
 ```
 
@@ -21,6 +22,7 @@ current-candidates
   -> current-to-paper
   -> current-to-paper-review
   -> manually edit review_updates_template.csv
+  -> paper-review-template-health
   -> paper-review-decisions
   -> paper-daily --reviewed-decisions
   -> paper-reconcile-fills
