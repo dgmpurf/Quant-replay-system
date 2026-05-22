@@ -309,6 +309,40 @@ def test_pipeline_akshare_optional_uses_fake_module_when_real_data_allowed(
     assert processed["symbol"].astype(str).tolist() == ["510300", "510300"]
 
 
+def test_pipeline_akshare_universe_passes_request_fields_to_fake_module(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    fake_akshare = _fake_akshare_module()
+    monkeypatch.setitem(sys.modules, "akshare", fake_akshare)
+
+    result = run_data_source_ingestion_pipeline(
+        [
+            {
+                "dataset_type": "universe",
+                "source": "AKSHARE_OPTIONAL",
+                "allow_real_data": True,
+                "as_of_date": "2024-05-20",
+                "market_type": "stock",
+            }
+        ],
+        config=_settings(tmp_path, allow_real_data=True),
+        run_data_quality=False,
+        build_snapshot_manifest=False,
+    )
+
+    assert result.status == "PASS"
+    assert result.dataset_results[0].source == "AKSHARE_OPTIONAL"
+    assert result.dataset_results[0].source_result is not None
+    assert result.dataset_results[0].source_result.audit_metadata["request"]["as_of_date"] == "2024-05-20"
+    assert result.dataset_results[0].source_result.audit_metadata["request"]["market_type"] == "stock"
+    assert result.processed_paths["universe"].exists()
+    processed = pd.read_csv(result.processed_paths["universe"])
+    assert pd.to_datetime(processed["as_of_date"]).dt.date.eq(pd.Timestamp("2024-05-20").date()).all()
+    assert processed["instrument_type"].eq("STOCK").all()
+    assert fake_akshare.universe_calls == [{"function": "stock_info_a_code_name"}]
+
+
 def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> None:
     input_path = tmp_path / "market.csv"
     _market_frame().to_csv(input_path, index=False)
@@ -494,6 +528,7 @@ def _calendar_frame() -> pd.DataFrame:
 
 def _fake_akshare_module() -> ModuleType:
     module = ModuleType("akshare")
+    module.universe_calls = []
 
     def fund_etf_hist_em(**kwargs):
         _ = kwargs
@@ -521,4 +556,15 @@ def _fake_akshare_module() -> ModuleType:
         )
 
     module.fund_etf_hist_em = fund_etf_hist_em
+
+    def stock_info_a_code_name():
+        module.universe_calls.append({"function": "stock_info_a_code_name"})
+        return pd.DataFrame(
+            [
+                {"code": "600000", "name": "PF Bank", "industry": "Banking", "listed_date": "1999-11-10"},
+                {"code": "000001", "name": "Ping An Bank", "industry": "Banking", "listed_date": "1991-04-03"},
+            ]
+        )
+
+    module.stock_info_a_code_name = stock_info_a_code_name
     return module

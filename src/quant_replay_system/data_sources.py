@@ -36,6 +36,8 @@ class DataSourceRequest:
     symbol: str | None = None
     start_date: str | None = None
     end_date: str | None = None
+    as_of_date: str | None = None
+    market_type: str | None = None
     params: dict[str, Any] = field(default_factory=dict)
 
 
@@ -145,13 +147,15 @@ class OptionalAkshareDataSourceAdapter(BaseDataSourceAdapter):
     ) -> tuple[pd.DataFrame, dict[str, Any], list[str]]:
         _enforce_real_data_guardrails(self, request, settings)
         _ = project_settings
-        if request.dataset_type not in {"market", "benchmark", "trading_calendar"}:
+        if request.dataset_type not in {"market", "benchmark", "trading_calendar", "universe"}:
             raise NotImplementedError(
                 f"AKSHARE_OPTIONAL does not support dataset_type={request.dataset_type!r} in v0.1. "
-                "Supported dataset types: market, benchmark, trading_calendar."
+                "Supported dataset types: market, benchmark, trading_calendar, universe."
             )
         akshare = _import_akshare()
-        if request.dataset_type == "trading_calendar":
+        if request.dataset_type == "universe":
+            frame, adapter_metadata = _fetch_akshare_universe(akshare, request)
+        elif request.dataset_type == "trading_calendar":
             frame, adapter_metadata = _fetch_akshare_trading_calendar(akshare, request)
         else:
             frame, adapter_metadata = _fetch_akshare_market_like(akshare, request)
@@ -229,6 +233,70 @@ def _fetch_akshare_trading_calendar(
         "end_date": request.end_date,
     }
     return frame, adapter_metadata
+
+
+def _fetch_akshare_universe(
+    akshare,
+    request: DataSourceRequest,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    as_of_date = _resolve_akshare_as_of_date(request)
+    market_type = _normalize_akshare_market_type(request.market_type or request.params.get("market_type") or "all")
+    frames: list[pd.DataFrame] = []
+    function_names: list[str] = []
+    for instrument_type, function_name in _akshare_universe_function_specs(request, market_type):
+        function = getattr(akshare, function_name, None)
+        if function is None:
+            raise RuntimeError(f"akshare function not available: {function_name}")
+        raw = function()
+        frame = pd.DataFrame(raw)
+        frame["_akshare_instrument_type"] = instrument_type
+        frame["_akshare_function"] = function_name
+        frames.append(frame)
+        function_names.append(function_name)
+    combined = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    normalized = _normalize_akshare_universe_frame(
+        combined,
+        as_of_date=as_of_date,
+        market_type=market_type,
+        source=request.source,
+        revision_id=request.revision_id,
+    )
+    adapter_metadata = {
+        "adapter": request.source,
+        "adapter_status": "SUCCESS",
+        "akshare_functions": function_names,
+        "as_of_date": as_of_date,
+        "market_type": market_type,
+    }
+    return normalized, adapter_metadata
+
+
+def _akshare_universe_function_specs(request: DataSourceRequest, market_type: str) -> list[tuple[str, str]]:
+    configured = request.params.get("akshare_function")
+    if configured:
+        instrument_type = "UNKNOWN" if market_type == "all" else market_type.upper()
+        return [(instrument_type, str(configured))]
+    if market_type == "stock":
+        return [("STOCK", "stock_info_a_code_name")]
+    if market_type == "etf":
+        return [("ETF", "fund_etf_spot_em")]
+    if market_type == "all":
+        return [("STOCK", "stock_info_a_code_name"), ("ETF", "fund_etf_spot_em")]
+    raise ValueError("AKSHARE_OPTIONAL universe market_type must be one of: stock, etf, all")
+
+
+def _normalize_akshare_market_type(value: Any) -> str:
+    normalized = str(value or "all").strip().lower()
+    aliases = {
+        "stocks": "stock",
+        "a_share": "stock",
+        "ashare": "stock",
+        "a-share": "stock",
+        "fund": "etf",
+        "fund_etf": "etf",
+        "etfs": "etf",
+    }
+    return aliases.get(normalized, normalized)
 
 
 def _akshare_market_function_name(request: DataSourceRequest) -> str:
@@ -379,6 +447,124 @@ def _normalize_akshare_calendar_frame(
     return output.reset_index(drop=True)
 
 
+def _normalize_akshare_universe_frame(
+    frame: pd.DataFrame,
+    *,
+    as_of_date: str,
+    market_type: str,
+    source: str,
+    revision_id: str | None,
+) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(columns=_UNIVERSE_COLUMNS)
+    normalized = frame.rename(
+        columns={column: _AKSHARE_UNIVERSE_COLUMN_ALIASES.get(str(column), column) for column in frame.columns}
+    ).copy()
+    if "symbol" not in normalized.columns:
+        raise ValueError("AKSHARE_OPTIONAL universe data did not include a symbol/code column")
+    normalized["symbol"] = normalized["symbol"].astype(str).str.strip().str.upper()
+    normalized = normalized.loc[normalized["symbol"].ne("")].copy()
+    normalized["name"] = _string_series(normalized, "name", normalized["symbol"]).replace("", pd.NA).fillna(normalized["symbol"])
+    as_of = pd.Timestamp(as_of_date).normalize()
+    output = pd.DataFrame(index=normalized.index)
+    output["as_of_date"] = as_of
+    output["symbol"] = normalized["symbol"]
+    output["name"] = normalized["name"].astype(str)
+    output["instrument_type"] = [
+        _infer_universe_instrument_type(symbol, row_type, market_type)
+        for symbol, row_type in zip(
+            output["symbol"],
+            _string_series(normalized, "_akshare_instrument_type", ""),
+        )
+    ]
+    output["exchange"] = [
+        _infer_exchange(symbol, exchange)
+        for symbol, exchange in zip(output["symbol"], _string_series(normalized, "exchange", ""))
+    ]
+    output["listed_date"] = _date_or_blank(normalized, "listed_date")
+    output["delisted_date"] = _date_or_blank(normalized, "delisted_date")
+    output["is_active"] = _bool_series(normalized, "is_active", default=True)
+    output["is_st"] = _bool_series(normalized, "is_st", default=False) | output["name"].str.upper().str.contains("ST", na=False)
+    output["is_suspended"] = _bool_series(normalized, "is_suspended", default=False)
+    output["industry"] = _string_series(normalized, "industry", "UNKNOWN").replace("", "UNKNOWN")
+    min_lot = pd.to_numeric(normalized.get("min_lot", pd.Series(100, index=normalized.index)), errors="coerce")
+    output["min_lot"] = min_lot.where(min_lot > 0, 100).fillna(100).astype(int)
+    output["t_plus_rule"] = _string_series(normalized, "t_plus_rule", "T+1").replace("", "T+1")
+    available = pd.to_datetime(normalized.get("available_time", pd.Series(pd.NaT, index=normalized.index)), errors="coerce")
+    output["available_time"] = available.fillna(as_of + pd.Timedelta(hours=8))
+    output["revision_id"] = revision_id or "v1"
+    output["source"] = source
+    return output[_UNIVERSE_COLUMNS].sort_values(["as_of_date", "symbol"]).reset_index(drop=True)
+
+
+def _resolve_akshare_as_of_date(request: DataSourceRequest) -> str:
+    value = request.as_of_date or request.params.get("as_of_date") or request.end_date or request.start_date
+    if value is None:
+        value = pd.Timestamp.today().normalize()
+    return pd.Timestamp(value).strftime("%Y-%m-%d")
+
+
+def _string_series(frame: pd.DataFrame, column: str, default: Any) -> pd.Series:
+    if column in frame.columns:
+        return frame[column].fillna("").astype(str).str.strip()
+    if isinstance(default, pd.Series):
+        return default.reindex(frame.index).fillna("").astype(str).str.strip()
+    return pd.Series(default, index=frame.index).astype(str)
+
+
+def _date_or_blank(frame: pd.DataFrame, column: str) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series("", index=frame.index)
+    parsed = pd.to_datetime(frame[column].replace("", pd.NA), errors="coerce")
+    return parsed.dt.normalize()
+
+
+def _bool_series(frame: pd.DataFrame, column: str, *, default: bool) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series(default, index=frame.index)
+    normalized = frame[column].astype(str).str.strip().str.lower()
+    true_values = {"true", "1", "yes", "y", "active", "\u662f"}
+    false_values = {"false", "0", "no", "n", "inactive", "\u5426"}
+    return normalized.map(lambda value: True if value in true_values else False if value in false_values else default)
+
+
+def _infer_universe_instrument_type(symbol: str, source_type: str, market_type: str) -> str:
+    normalized_type = str(source_type or "").strip().upper()
+    if normalized_type in {"STOCK", "ETF"}:
+        return normalized_type
+    if market_type in {"stock", "etf"}:
+        return market_type.upper()
+    code = str(symbol).split(".", 1)[0]
+    if code.startswith(("1", "5")):
+        return "ETF"
+    if code:
+        return "STOCK"
+    return "UNKNOWN"
+
+
+def _infer_exchange(symbol: str, exchange: str) -> str:
+    normalized_exchange = str(exchange or "").strip().upper()
+    if normalized_exchange in {"SSE", "SH", "SHSE", "SHANGHAI"}:
+        return "SSE"
+    if normalized_exchange in {"SZSE", "SZ", "SHENZHEN"}:
+        return "SZSE"
+    if normalized_exchange in {"BSE", "BJ", "BEIJING"}:
+        return "BSE"
+    upper_symbol = str(symbol).strip().upper()
+    if upper_symbol.endswith(".SH"):
+        return "SSE"
+    if upper_symbol.endswith(".SZ"):
+        return "SZSE"
+    code = upper_symbol.split(".", 1)[0]
+    if code.startswith(("5", "6", "9")):
+        return "SSE"
+    if code.startswith(("0", "1", "2", "3")):
+        return "SZSE"
+    if code.startswith(("4", "8")):
+        return "BSE"
+    return "UNKNOWN"
+
+
 def _akshare_date(value: str | None) -> str:
     if value is None:
         return ""
@@ -411,6 +597,63 @@ _AKSHARE_CALENDAR_COLUMN_ALIASES = {
     "\u65e5\u671f": "trade_date",
     "calendarDate": "trade_date",
     "isOpen": "is_trading_day",
+}
+
+
+_UNIVERSE_COLUMNS = [
+    "as_of_date",
+    "symbol",
+    "name",
+    "instrument_type",
+    "exchange",
+    "listed_date",
+    "delisted_date",
+    "is_active",
+    "is_st",
+    "is_suspended",
+    "industry",
+    "min_lot",
+    "t_plus_rule",
+    "available_time",
+    "revision_id",
+    "source",
+]
+
+
+_AKSHARE_UNIVERSE_COLUMN_ALIASES = {
+    "symbol": "symbol",
+    "code": "symbol",
+    "\u4ee3\u7801": "symbol",
+    "\u8bc1\u5238\u4ee3\u7801": "symbol",
+    "\u80a1\u7968\u4ee3\u7801": "symbol",
+    "\u57fa\u91d1\u4ee3\u7801": "symbol",
+    "name": "name",
+    "\u540d\u79f0": "name",
+    "\u7b80\u79f0": "name",
+    "\u8bc1\u5238\u7b80\u79f0": "name",
+    "\u80a1\u7968\u7b80\u79f0": "name",
+    "\u57fa\u91d1\u7b80\u79f0": "name",
+    "instrument_type": "instrument_type",
+    "asset_type": "instrument_type",
+    "exchange": "exchange",
+    "\u4ea4\u6613\u6240": "exchange",
+    "listed_date": "listed_date",
+    "\u4e0a\u5e02\u65e5\u671f": "listed_date",
+    "\u80a1\u7968\u4e0a\u5e02\u65e5\u671f": "listed_date",
+    "\u57fa\u91d1\u4e0a\u5e02\u65e5\u671f": "listed_date",
+    "delisted_date": "delisted_date",
+    "\u9000\u5e02\u65e5\u671f": "delisted_date",
+    "is_active": "is_active",
+    "is_st": "is_st",
+    "is_suspended": "is_suspended",
+    "\u662f\u5426ST": "is_st",
+    "\u662f\u5426\u505c\u724c": "is_suspended",
+    "industry": "industry",
+    "\u884c\u4e1a": "industry",
+    "\u6240\u5c5e\u884c\u4e1a": "industry",
+    "min_lot": "min_lot",
+    "t_plus_rule": "t_plus_rule",
+    "available_time": "available_time",
 }
 
 
@@ -510,6 +753,8 @@ def generate_data_source_run_id(
         "symbol": request.symbol or "",
         "start_date": request.start_date or "",
         "end_date": request.end_date or "",
+        "as_of_date": request.as_of_date or "",
+        "market_type": request.market_type or "",
         "params": request.params,
         "adapter_input_path": str((adapter_metadata or {}).get("input_path", "")),
         "config_version": settings.config_version,
@@ -556,6 +801,8 @@ def build_data_source_metadata(result: DataSourceResult, paths: DataSourceArtifa
         "symbol": result.audit_metadata.get("request", {}).get("symbol", ""),
         "start_date": result.audit_metadata.get("request", {}).get("start_date", ""),
         "end_date": result.audit_metadata.get("request", {}).get("end_date", ""),
+        "as_of_date": result.audit_metadata.get("request", {}).get("as_of_date", ""),
+        "market_type": result.audit_metadata.get("request", {}).get("market_type", ""),
         "allow_real_data": bool(result.audit_metadata.get("request", {}).get("allow_real_data", False)),
         "adapter_status": result.audit_metadata.get("adapter_status", ""),
         "created_at": "1970-01-01T00:00:00+00:00",
@@ -591,6 +838,8 @@ def _normalize_request(request: DataSourceRequest, settings: DataSourceSettings)
         symbol=request.symbol,
         start_date=request.start_date,
         end_date=request.end_date,
+        as_of_date=request.as_of_date,
+        market_type=request.market_type,
         params=dict(request.params or {}),
     )
 
@@ -666,6 +915,8 @@ def _request_metadata(request: DataSourceRequest) -> dict[str, Any]:
         "symbol": request.symbol or "",
         "start_date": request.start_date or "",
         "end_date": request.end_date or "",
+        "as_of_date": request.as_of_date or "",
+        "market_type": request.market_type or "",
         "params": request.params,
     }
 

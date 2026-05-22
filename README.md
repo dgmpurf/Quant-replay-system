@@ -123,7 +123,7 @@ For a one-page local workflow status dashboard and next manual action, see [docs
 
 For local-safe raw data source adapters before ingestion, see [docs/data_sources.md](docs/data_sources.md).
 
-`AKSHARE_OPTIONAL` is available for guarded manual local fetches only; it requires `--allow-real-data`, is never called by automated tests, and should be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
+`AKSHARE_OPTIONAL` is available for guarded manual local market, benchmark, trading-calendar, and universe snapshot fetches; it requires `--allow-real-data`, is never called by automated tests, and should be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
 
 For the guarded Windows CMD workflow from manual AKShare fetch to current candidates, see [docs/akshare_manual_workflow.md](docs/akshare_manual_workflow.md).
 

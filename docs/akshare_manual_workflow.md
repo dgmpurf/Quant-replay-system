@@ -74,7 +74,8 @@ For v0.1, AKShare support is intentionally limited:
 - `market` supports ETF-like symbols such as `510300` through the default ETF daily-history path.
 - `benchmark` uses the default AKShare index daily-history path.
 - `trading_calendar` uses the default AKShare trading-calendar path.
-- `universe` and `corporate_actions` are not implemented for AKShare yet.
+- `universe` supports guarded stock/ETF symbol snapshot fetches with conservative default fields.
+- `corporate_actions` are not implemented for AKShare yet.
 
 ## Step 2: Run The Raw File Through Data Pipeline
 
@@ -104,7 +105,7 @@ Market data alone is not enough for a full current-candidates run. A complete sn
 - `universe`
 - `trading_calendar`
 
-The current AKShare adapter can help with market and trading-calendar data, but the universe snapshot still needs to come from another local source, such as a reviewed local CSV.
+The current AKShare adapter can help with market, universe, and trading-calendar data. Universe fields may be incomplete depending on AKShare source coverage, so always review the data-quality output before using it for current candidates.
 
 ## Step 3: Prepare Required Snapshot Inputs
 
@@ -122,10 +123,22 @@ Then run the printed raw calendar file through the pipeline:
 python -m quant_replay_system.cli data-pipeline --dataset-type trading_calendar --source LOCAL_CSV --input "data\raw\AKSHARE_OPTIONAL\trading_calendar\<run_id>\raw_data.csv"
 ```
 
-For universe data, use a curated local CSV that matches the canonical universe schema:
+For universe data, run the guarded AKShare universe snapshot command:
 
 ```cmd
-python -m quant_replay_system.cli data-pipeline --dataset-type universe --source LOCAL_CSV --input "data\raw\LOCAL_CSV\universe\universe_snapshot.csv"
+python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type universe --as-of-date 2024-05-20 --market-type all --allow-real-data
+```
+
+Then run the printed raw universe file through the pipeline:
+
+```cmd
+python -m quant_replay_system.cli data-pipeline --dataset-type universe --source LOCAL_CSV --input "data\raw\AKSHARE_OPTIONAL\universe\<run_id>\raw_data.csv"
+```
+
+If AKShare universe coverage is not sufficient for your research universe, use a reviewed local universe CSV instead:
+
+```cmd
+python -m quant_replay_system.cli data-pipeline --dataset-type universe --source LOCAL_CSV --input "data\local\universe_snapshot.csv"
 ```
 
 ## Step 4: Build A Multi-Dataset Snapshot Manifest
@@ -145,7 +158,7 @@ Create a local JSON manifest outside generated raw-data folders, for example:
     {
       "dataset_type": "universe",
       "source": "LOCAL_CSV",
-      "input_path": "data/raw/LOCAL_CSV/universe/universe_snapshot.csv"
+      "input_path": "data/raw/AKSHARE_OPTIONAL/universe/<universe_run_id>/raw_data.csv"
     },
     {
       "dataset_type": "trading_calendar",
@@ -210,8 +223,10 @@ Raw and processed data should stay local and untracked:
 
 ```text
 data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv
+data\raw\AKSHARE_OPTIONAL\universe\<run_id>\raw_data.csv
 data\raw\AKSHARE_OPTIONAL\trading_calendar\<run_id>\raw_data.csv
 data\processed\market\<pipeline_id>\raw_data_cleaned.csv
+data\processed\universe\<pipeline_id>\raw_data_cleaned.csv
 data\processed\trading_calendar\<pipeline_id>\raw_data_cleaned.csv
 outputs\reports\data_pipeline\<pipeline_id>\snapshot_manifest.json
 outputs\reports\snapshot_quality\<snapshot_id>_<quality_gate_id>\snapshot_quality_gate_report.md
@@ -249,6 +264,7 @@ Automated tests should never depend on this path.
 Check:
 
 - symbol format,
+- `--market-type` for universe snapshots,
 - date range,
 - whether the instrument existed during the requested period,
 - whether AKShare changed the underlying function or returned columns.
@@ -280,7 +296,8 @@ Open the generated snapshot quality report. Required dataset failures should blo
 
 - AKShare is manual-only and disabled by default.
 - The adapter does not provide a full production data downloader.
-- Universe and corporate action AKShare fetches are not implemented yet.
+- Universe snapshot support is MVP-level and may rely on defaulted fields such as `industry=UNKNOWN`, `min_lot=100`, and `t_plus_rule=T+1`.
+- Corporate action AKShare fetches are not implemented yet.
 - Function selection for market data is simple and may need manual refinement later.
 - Data quality checks summarize issues; they do not repair data.
 - Mock data and small examples are not strategy-quality validation.

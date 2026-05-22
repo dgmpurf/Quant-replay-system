@@ -318,6 +318,8 @@ def build_parser() -> argparse.ArgumentParser:
     data_source.add_argument("--symbol", help="Optional symbol for future real-data adapters")
     data_source.add_argument("--start-date", help="Optional start date for future real-data adapters")
     data_source.add_argument("--end-date", help="Optional end date for future real-data adapters")
+    data_source.add_argument("--as-of-date", help="Optional universe snapshot as-of date for real-data adapters")
+    data_source.add_argument("--market-type", help="Optional universe market type, e.g. stock, etf, or all")
     data_source.add_argument("--config", help="Optional config YAML path")
     data_source.set_defaults(handler=_handle_data_source_fetch)
 
@@ -330,6 +332,11 @@ def build_parser() -> argparse.ArgumentParser:
     data_pipeline.add_argument("--skip-data-quality", action="store_true", help="Skip data quality checks")
     data_pipeline.add_argument("--skip-snapshot-manifest", action="store_true", help="Skip snapshot manifest generation")
     data_pipeline.add_argument("--allow-real-data", action="store_true", help="Explicit manual opt-in for real/network data adapters")
+    data_pipeline.add_argument("--symbol", help="Optional symbol for single dataset real-data mode")
+    data_pipeline.add_argument("--start-date", help="Optional start date for single dataset real-data mode")
+    data_pipeline.add_argument("--end-date", help="Optional end date for single dataset real-data mode")
+    data_pipeline.add_argument("--as-of-date", help="Optional universe snapshot as-of date for single dataset real-data mode")
+    data_pipeline.add_argument("--market-type", help="Optional universe market type for single dataset real-data mode")
     data_pipeline.add_argument("--config", help="Optional config YAML path")
     data_pipeline.set_defaults(handler=_handle_data_pipeline)
 
@@ -1135,6 +1142,8 @@ def _handle_data_source_fetch(args: argparse.Namespace) -> int:
         symbol=args.symbol,
         start_date=args.start_date,
         end_date=args.end_date,
+        as_of_date=args.as_of_date,
+        market_type=args.market_type,
     )
     result = run_data_source_fetch(request, settings=settings)
     print(f"source: {result.source}")
@@ -1172,6 +1181,11 @@ def _handle_data_pipeline(args: argparse.Namespace) -> int:
                 "source": args.source or settings.data_sources.default_source,
                 "input_path": args.input,
                 "allow_real_data": bool(args.allow_real_data),
+                "symbol": args.symbol,
+                "start_date": args.start_date,
+                "end_date": args.end_date,
+                "as_of_date": args.as_of_date,
+                "market_type": args.market_type,
             }
         ]
     result = run_data_source_ingestion_pipeline(

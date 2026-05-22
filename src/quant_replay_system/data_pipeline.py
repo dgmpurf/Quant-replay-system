@@ -45,6 +45,8 @@ class DataPipelineDatasetRequest:
     symbol: str | None = None
     start_date: str | None = None
     end_date: str | None = None
+    as_of_date: str | None = None
+    market_type: str | None = None
     params: dict[str, Any] = field(default_factory=dict)
 
 
@@ -238,6 +240,8 @@ def run_single_dataset_pipeline(
             symbol=request.symbol,
             start_date=request.start_date,
             end_date=request.end_date,
+            as_of_date=request.as_of_date,
+            market_type=request.market_type,
             params=request.params,
         ),
         settings=_settings_for_data_source(project_settings, cfg),
@@ -526,6 +530,8 @@ def generate_data_pipeline_id(
                 "symbol": request.symbol or "",
                 "start_date": request.start_date or "",
                 "end_date": request.end_date or "",
+                "as_of_date": request.as_of_date or "",
+                "market_type": request.market_type or "",
                 "params": request.params,
             }
             for request in requests
@@ -654,6 +660,8 @@ def _coerce_dataset_request(
             symbol=value.symbol,
             start_date=value.start_date,
             end_date=value.end_date,
+            as_of_date=value.as_of_date,
+            market_type=value.market_type,
             params=dict(value.params or {}),
         )
     if isinstance(value, DataSourceRequest):
@@ -667,6 +675,8 @@ def _coerce_dataset_request(
             symbol=value.symbol,
             start_date=value.start_date,
             end_date=value.end_date,
+            as_of_date=value.as_of_date,
+            market_type=value.market_type,
             params=dict(value.params or {}),
         )
     if isinstance(value, dict):
@@ -682,6 +692,8 @@ def _coerce_dataset_request(
             symbol=value.get("symbol"),
             start_date=value.get("start_date"),
             end_date=value.get("end_date"),
+            as_of_date=value.get("as_of_date"),
+            market_type=value.get("market_type"),
             params=dict(value.get("params") or {}),
         )
     raise TypeError("Dataset requests must be dict, DataPipelineDatasetRequest, or DataSourceRequest")

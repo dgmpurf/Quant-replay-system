@@ -48,6 +48,7 @@ Supported v0.1 dataset types:
 - `market`
 - `benchmark`
 - `trading_calendar`
+- `universe`
 
 Unsupported dataset types return a clear not-implemented error.
 
@@ -66,6 +67,8 @@ For `market`, the adapter chooses an AKShare daily-history function by default:
 For `benchmark`, the adapter uses `stock_zh_index_daily` by default and filters dates locally.
 
 For `trading_calendar`, the adapter uses `tool_trade_date_hist_sina` by default and writes trading-day rows with standard MVP session times.
+
+For `universe`, the adapter can fetch stock and ETF symbol/name lists through isolated AKShare helper paths and normalize them into the canonical universe snapshot columns. Use `--as-of-date` to pin the snapshot date and `--market-type stock`, `--market-type etf`, or `--market-type all` to choose the scope. If AKShare does not provide optional fields, the adapter fills conservative MVP defaults such as `min_lot=100`, `t_plus_rule=T+1`, `is_active=true`, and `industry=UNKNOWN`.
 
 The adapter normalizes returned frames into raw CSVs that are compatible with the existing ingestion path where possible. Users should still run `data-pipeline`, `data-quality`, and `snapshot-quality` before using the data for current candidates or replay.
 
@@ -136,6 +139,12 @@ Manual AKShare trading calendar fetch:
 python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type trading_calendar --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
 ```
 
+Manual AKShare universe snapshot fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type universe --as-of-date 2024-05-20 --market-type all --allow-real-data
+```
+
 The command prints raw artifact paths, row count, and:
 
 ```text
@@ -160,6 +169,14 @@ python -m quant_replay_system.cli data-pipeline --dataset-type market --source L
 python -m quant_replay_system.cli data-quality --dataset-type market --input data\processed\market\<pipeline_id>\raw_data_cleaned.csv
 ```
 
+For a manual AKShare universe snapshot:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type universe --as-of-date 2024-05-20 --market-type all --allow-real-data
+python -m quant_replay_system.cli data-pipeline --dataset-type universe --source LOCAL_CSV --input data\raw\AKSHARE_OPTIONAL\universe\<run_id>\raw_data.csv
+python -m quant_replay_system.cli data-quality --dataset-type universe --input data\processed\universe\<pipeline_id>\raw_data_cleaned.csv
+```
+
 You can still run the underlying commands manually:
 
 ```cmd
@@ -173,7 +190,8 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 
 - `AKSHARE_OPTIONAL` is a guarded MVP adapter, not a production data downloader.
 - AKShare function selection is simple and may need manual `params` or later source-specific mapping.
-- Universe and corporate action AKShare fetches are not implemented in v0.1.
+- Universe snapshot support fills conservative defaults when AKShare does not provide optional fields; review data quality before current-candidate use.
+- Corporate action AKShare fetches are not implemented in v0.1.
 - Data source adapters still only write raw artifacts; use `data-pipeline` for ingestion handoff.
 - It uses local/mock CSV data only in automated tests.
 - It is not live trading and never invokes broker APIs.
