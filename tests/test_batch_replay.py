@@ -13,8 +13,24 @@ from quant_replay_system.config import load_settings
 DECISION_DATES = [pd.Timestamp("2024-03-01"), pd.Timestamp("2024-03-02"), pd.Timestamp("2024-03-04")]
 
 
-def test_run_batch_replay_returns_structured_result(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+@pytest.fixture(scope="module")
+def batch_result_bundle(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, BatchReplayResult]:
+    tmp_path = tmp_path_factory.mktemp("batch_result")
+    return tmp_path, _run_batch(tmp_path)
+
+
+@pytest.fixture(scope="module")
+def batch_result(batch_result_bundle: tuple[Path, BatchReplayResult]) -> BatchReplayResult:
+    return batch_result_bundle[1]
+
+
+@pytest.fixture(scope="module")
+def batch_tmp_path(batch_result_bundle: tuple[Path, BatchReplayResult]) -> Path:
+    return batch_result_bundle[0]
+
+
+def test_run_batch_replay_returns_structured_result(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     assert isinstance(result, BatchReplayResult)
     assert result.universe_name == "batch_test"
@@ -23,16 +39,16 @@ def test_run_batch_replay_returns_structured_result(tmp_path: Path) -> None:
     assert isinstance(result.aggregate_performance, dict)
 
 
-def test_multiple_decision_dates_collect_replay_results(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_multiple_decision_dates_collect_replay_results(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     assert result.executed_decision_dates == [pd.Timestamp("2024-03-01"), pd.Timestamp("2024-03-04")]
     assert len(result.replay_results) == 2
     assert set(result.batch_index["decision_date"]) == set(result.executed_decision_dates)
 
 
-def test_non_trading_dates_are_skipped_by_default(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_non_trading_dates_are_skipped_by_default(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     skipped = result.skipped_decision_dates
     assert len(skipped) == 1
@@ -73,56 +89,56 @@ def test_fail_fast_true_raises_on_date_failure(tmp_path: Path, monkeypatch: pyte
 
 
 @pytest.mark.slow
-def test_batch_artifact_folder_is_created(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_batch_artifact_folder_is_created(batch_result: BatchReplayResult, batch_tmp_path: Path) -> None:
+    result = batch_result
 
     assert result.artifact_paths["artifact_dir"].exists()
-    assert result.artifact_paths["artifact_dir"].parent == tmp_path / "batch_replays"
+    assert result.artifact_paths["artifact_dir"].parent == batch_tmp_path / "batch_replays"
 
 
 @pytest.mark.slow
-def test_batch_report_md_is_written(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_batch_report_md_is_written(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     assert result.artifact_paths["batch_report"].exists()
     assert result.artifact_paths["batch_report"].name == "batch_report.md"
 
 
 @pytest.mark.slow
-def test_batch_index_csv_is_written_and_readable(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_batch_index_csv_is_written_and_readable(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     exported = pd.read_csv(result.artifact_paths["batch_index"])
     assert len(exported) == len(result.replay_results)
 
 
 @pytest.mark.slow
-def test_aggregate_performance_csv_is_written_and_readable(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_aggregate_performance_csv_is_written_and_readable(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     exported = pd.read_csv(result.artifact_paths["aggregate_performance"])
     assert exported.iloc[0]["number_of_executed_dates"] == len(result.replay_results)
 
 
 @pytest.mark.slow
-def test_replay_runs_csv_is_written_and_readable(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_replay_runs_csv_is_written_and_readable(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     exported = pd.read_csv(result.artifact_paths["replay_runs"])
     assert len(exported) == len(result.replay_results)
 
 
 @pytest.mark.slow
-def test_skipped_dates_csv_is_written_when_dates_are_skipped(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_skipped_dates_csv_is_written_when_dates_are_skipped(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     exported = pd.read_csv(result.artifact_paths["skipped_dates"])
     assert exported.iloc[0]["reason"] == "NON_TRADING_DAY"
 
 
 @pytest.mark.slow
-def test_metadata_json_is_written(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_metadata_json_is_written(batch_result: BatchReplayResult) -> None:
+    result = batch_result
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
 
     assert metadata["batch_id"] == result.batch_id
@@ -140,8 +156,8 @@ def test_batch_id_is_deterministic_for_same_inputs(tmp_path: Path) -> None:
     assert first.artifact_paths["artifact_dir"] == second.artifact_paths["artifact_dir"]
 
 
-def test_aggregate_performance_calculations_are_correct_on_mock_results(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_aggregate_performance_calculations_are_correct_on_mock_results(batch_result: BatchReplayResult) -> None:
+    result = batch_result
     expected_equal_weight = pd.Series(
         [
             replay.performance_summary["total_equal_weight_return"]
@@ -176,8 +192,8 @@ def test_batch_output_is_deterministic_for_same_inputs(tmp_path: Path) -> None:
     assert_frame_equal(first.skipped_decision_dates, second.skipped_decision_dates)
 
 
-def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_no_live_trading_or_broker_integration_is_invoked(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
     assert metadata["live_trading_enabled"] is False
@@ -187,8 +203,8 @@ def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> Non
         assert replay.audit_metadata["broker_api_invoked"] is False
 
 
-def test_batch_replay_can_run_with_portfolio_simulation_enabled(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_batch_replay_can_run_with_portfolio_simulation_enabled(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     assert result.portfolio_result is not None
     assert result.portfolio_result.artifact_paths["portfolio_report"].exists()
@@ -205,24 +221,24 @@ def test_batch_replay_can_run_with_portfolio_simulation_disabled(tmp_path: Path)
     assert result.aggregate_performance["portfolio_simulation_enabled"] is False
 
 
-def test_batch_index_includes_portfolio_metrics_when_enabled(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_batch_index_includes_portfolio_metrics_when_enabled(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     assert "portfolio_total_return" in result.batch_index.columns
     assert result.batch_index["portfolio_simulation_enabled"].all()
     assert result.batch_index["portfolio_report_path"].notna().all()
 
 
-def test_aggregate_performance_includes_portfolio_metrics_when_enabled(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_aggregate_performance_includes_portfolio_metrics_when_enabled(batch_result: BatchReplayResult) -> None:
+    result = batch_result
 
     assert result.aggregate_performance["portfolio_initial_cash"] == 10_000.0
     assert result.aggregate_performance["portfolio_final_equity"] is not None
     assert result.aggregate_performance["portfolio_total_return"] is not None
 
 
-def test_batch_metadata_records_portfolio_simulation_settings(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_batch_metadata_records_portfolio_simulation_settings(batch_result: BatchReplayResult) -> None:
+    result = batch_result
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
 
     assert metadata["portfolio_simulation_enabled"] is True
@@ -232,8 +248,8 @@ def test_batch_metadata_records_portfolio_simulation_settings(tmp_path: Path) ->
 
 
 @pytest.mark.slow
-def test_batch_report_contains_portfolio_performance_section(tmp_path: Path) -> None:
-    result = _run_batch(tmp_path)
+def test_batch_report_contains_portfolio_performance_section(batch_result: BatchReplayResult) -> None:
+    result = batch_result
     content = result.artifact_paths["batch_report"].read_text(encoding="utf-8")
 
     assert "## Portfolio Performance Summary" in content

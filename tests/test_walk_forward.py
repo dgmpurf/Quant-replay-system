@@ -22,6 +22,22 @@ VALIDATION_DATES = [pd.Timestamp("2024-03-04")]
 TEST_DATES = [pd.Timestamp("2024-03-05")]
 
 
+@pytest.fixture(scope="module")
+def walk_forward_result_bundle(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, WalkForwardResult]:
+    tmp_path = tmp_path_factory.mktemp("walk_forward_result")
+    return tmp_path, _run_walk_forward(tmp_path)
+
+
+@pytest.fixture(scope="module")
+def walk_forward_result(walk_forward_result_bundle: tuple[Path, WalkForwardResult]) -> WalkForwardResult:
+    return walk_forward_result_bundle[1]
+
+
+@pytest.fixture(scope="module")
+def walk_forward_tmp_path(walk_forward_result_bundle: tuple[Path, WalkForwardResult]) -> Path:
+    return walk_forward_result_bundle[0]
+
+
 def test_explicit_train_validation_test_split_creation() -> None:
     split = build_walk_forward_splits(
         train_dates=TRAIN_DATES,
@@ -43,8 +59,8 @@ def test_explicit_split_dates_must_be_disjoint() -> None:
         )
 
 
-def test_run_walk_forward_validation_returns_structured_result(tmp_path: Path) -> None:
-    result = _run_walk_forward(tmp_path)
+def test_run_walk_forward_validation_returns_structured_result(walk_forward_result: WalkForwardResult) -> None:
+    result = walk_forward_result
 
     assert isinstance(result, WalkForwardResult)
     assert result.train_dates == TRAIN_DATES
@@ -117,24 +133,24 @@ def test_low_trade_count_increases_overfit_risk() -> None:
 
 
 @pytest.mark.slow
-def test_artifact_folder_is_created(tmp_path: Path) -> None:
-    result = _run_walk_forward(tmp_path)
+def test_artifact_folder_is_created(walk_forward_result: WalkForwardResult, walk_forward_tmp_path: Path) -> None:
+    result = walk_forward_result
 
     assert result.artifact_paths["artifact_dir"].exists()
-    assert result.artifact_paths["artifact_dir"].parent == tmp_path / "walk_forward"
+    assert result.artifact_paths["artifact_dir"].parent == walk_forward_tmp_path / "walk_forward"
 
 
 @pytest.mark.slow
-def test_walk_forward_report_is_written(tmp_path: Path) -> None:
-    result = _run_walk_forward(tmp_path)
+def test_walk_forward_report_is_written(walk_forward_result: WalkForwardResult) -> None:
+    result = walk_forward_result
 
     assert result.artifact_paths["walk_forward_report"].exists()
     assert result.artifact_paths["walk_forward_report"].name == "walk_forward_report.md"
 
 
 @pytest.mark.slow
-def test_diagnostics_csv_is_written_and_readable_by_pandas(tmp_path: Path) -> None:
-    result = _run_walk_forward(tmp_path)
+def test_diagnostics_csv_is_written_and_readable_by_pandas(walk_forward_result: WalkForwardResult) -> None:
+    result = walk_forward_result
 
     exported = pd.read_csv(result.artifact_paths["diagnostics"])
     assert "objective_decay" in exported.columns
@@ -142,16 +158,16 @@ def test_diagnostics_csv_is_written_and_readable_by_pandas(tmp_path: Path) -> No
 
 
 @pytest.mark.slow
-def test_selected_parameter_set_json_is_written(tmp_path: Path) -> None:
-    result = _run_walk_forward(tmp_path)
+def test_selected_parameter_set_json_is_written(walk_forward_result: WalkForwardResult) -> None:
+    result = walk_forward_result
     payload = json.loads(result.artifact_paths["selected_parameter_set"].read_text(encoding="utf-8"))
 
     assert payload["parameter_set_id"] == result.selected_parameter_set.parameter_set_id
 
 
 @pytest.mark.slow
-def test_metadata_json_is_written(tmp_path: Path) -> None:
-    result = _run_walk_forward(tmp_path)
+def test_metadata_json_is_written(walk_forward_result: WalkForwardResult) -> None:
+    result = walk_forward_result
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
 
     assert metadata["walk_forward_id"] == result.walk_forward_id
@@ -178,8 +194,8 @@ def test_output_is_deterministic_for_same_inputs(tmp_path: Path) -> None:
     assert_frame_equal(first.train_calibration_result.ranked_results, second.train_calibration_result.ranked_results)
 
 
-def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> None:
-    result = _run_walk_forward(tmp_path)
+def test_no_live_trading_or_broker_integration_is_invoked(walk_forward_result: WalkForwardResult) -> None:
+    result = walk_forward_result
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
 
     assert metadata["live_trading_enabled"] is False
@@ -193,8 +209,8 @@ def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> Non
                 assert replay.audit_metadata["broker_api_invoked"] is False
 
 
-def test_point_in_time_and_replay_contracts_are_not_bypassed(tmp_path: Path) -> None:
-    result = _run_walk_forward(tmp_path)
+def test_point_in_time_and_replay_contracts_are_not_bypassed(walk_forward_result: WalkForwardResult) -> None:
+    result = walk_forward_result
 
     for calibration in [result.train_calibration_result, result.validation_result, result.test_result]:
         if calibration is None:

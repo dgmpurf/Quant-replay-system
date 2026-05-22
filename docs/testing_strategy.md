@@ -36,6 +36,12 @@ Keep lightweight correctness tests out of `slow`, especially tests for:
 - no-live-trading and no-broker safety metadata,
 - narrow regression checks that run quickly.
 
+## Shared Fixture Convention
+
+When several tests inspect different fields or artifacts from the same expensive local workflow, prefer a module-scoped pytest fixture that runs the workflow once and returns the result plus its temporary artifact root.
+
+Use this pattern only when the tests read from the result and do not mutate it. Keep determinism tests meaningful by still running the workflow twice inside the determinism test.
+
 ## Recommended Commands
 
 Run the full backend suite before commits, checkpoints, and tags:

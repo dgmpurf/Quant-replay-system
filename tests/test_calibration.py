@@ -21,6 +21,22 @@ from quant_replay_system.config import CalibrationSettings, load_settings
 DECISION_DATES = [pd.Timestamp("2024-03-01"), pd.Timestamp("2024-03-02")]
 
 
+@pytest.fixture(scope="module")
+def calibration_result_bundle(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, CalibrationResult]:
+    tmp_path = tmp_path_factory.mktemp("calibration_result")
+    return tmp_path, _run_calibration(tmp_path)
+
+
+@pytest.fixture(scope="module")
+def calibration_result(calibration_result_bundle: tuple[Path, CalibrationResult]) -> CalibrationResult:
+    return calibration_result_bundle[1]
+
+
+@pytest.fixture(scope="module")
+def calibration_tmp_path(calibration_result_bundle: tuple[Path, CalibrationResult]) -> Path:
+    return calibration_result_bundle[0]
+
+
 def test_parameter_grid_generation_works() -> None:
     grid = build_parameter_grid(
         top_n_values=[1, 2],
@@ -36,13 +52,11 @@ def test_parameter_grid_generation_works() -> None:
     assert all(item.weight_profile == "baseline" for item in grid)
 
 
-def test_calibration_runs_multiple_parameter_sets(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
-
-    assert isinstance(result, CalibrationResult)
-    assert len(result.parameter_sets) == 2
-    assert len(result.batch_results) == 2
-    assert len(result.ranked_results) == 2
+def test_calibration_runs_multiple_parameter_sets(calibration_result: CalibrationResult) -> None:
+    assert isinstance(calibration_result, CalibrationResult)
+    assert len(calibration_result.parameter_sets) == 2
+    assert len(calibration_result.batch_results) == 2
+    assert len(calibration_result.ranked_results) == 2
 
 
 def test_calibration_calls_batch_replay_for_each_parameter_set(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -113,8 +127,8 @@ def test_missing_benchmark_or_excess_fields_are_handled_gracefully() -> None:
     assert pd.notna(ranked.iloc[0]["objective_score"])
 
 
-def test_calibration_uses_portfolio_metrics_when_enabled(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_calibration_uses_portfolio_metrics_when_enabled(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
 
     assert "portfolio_objective_score" in result.ranked_results.columns
     assert (result.ranked_results["objective_metric_mode_used"] == "portfolio_aware").all()
@@ -216,16 +230,19 @@ def test_high_turnover_is_penalized() -> None:
 
 
 @pytest.mark.slow
-def test_calibration_artifacts_folder_is_created(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_calibration_artifacts_folder_is_created(
+    calibration_result: CalibrationResult,
+    calibration_tmp_path: Path,
+) -> None:
+    result = calibration_result
 
     assert result.artifact_paths["artifact_dir"].exists()
-    assert result.artifact_paths["artifact_dir"].parent == tmp_path / "calibrations"
+    assert result.artifact_paths["artifact_dir"].parent == calibration_tmp_path / "calibrations"
 
 
 @pytest.mark.slow
-def test_ranked_results_csv_is_written_and_readable(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_ranked_results_csv_is_written_and_readable(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
 
     exported = pd.read_csv(result.artifact_paths["ranked_results"])
     assert len(exported) == len(result.parameter_sets)
@@ -233,24 +250,24 @@ def test_ranked_results_csv_is_written_and_readable(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow
-def test_parameter_sets_csv_is_written_and_readable(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_parameter_sets_csv_is_written_and_readable(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
 
     exported = pd.read_csv(result.artifact_paths["parameter_sets"])
     assert len(exported) == len(result.parameter_sets)
 
 
 @pytest.mark.slow
-def test_batch_runs_csv_is_written_and_readable(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_batch_runs_csv_is_written_and_readable(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
 
     exported = pd.read_csv(result.artifact_paths["batch_runs"])
     assert len(exported) == len(result.batch_results)
 
 
 @pytest.mark.slow
-def test_aggregate_metrics_csv_is_written_and_readable(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_aggregate_metrics_csv_is_written_and_readable(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
 
     exported = pd.read_csv(result.artifact_paths["aggregate_metrics"])
     assert "objective_score" in exported.columns
@@ -258,8 +275,8 @@ def test_aggregate_metrics_csv_is_written_and_readable(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow
-def test_metadata_json_is_written(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_metadata_json_is_written(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
 
     assert metadata["calibration_id"] == result.calibration_id
@@ -270,16 +287,16 @@ def test_metadata_json_is_written(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow
-def test_calibration_report_md_is_written(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_calibration_report_md_is_written(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
 
     assert result.artifact_paths["calibration_report"].exists()
     assert result.artifact_paths["calibration_report"].name == "calibration_report.md"
 
 
 @pytest.mark.slow
-def test_report_includes_best_parameter_set(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_report_includes_best_parameter_set(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
     content = result.artifact_paths["calibration_report"].read_text(encoding="utf-8")
 
     assert "## Best Parameter Set" in content
@@ -300,8 +317,8 @@ def test_calibration_output_is_deterministic_for_same_inputs(tmp_path: Path) -> 
     assert_frame_equal(first.batch_runs_frame, second.batch_runs_frame)
 
 
-def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_no_live_trading_or_broker_integration_is_invoked(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
 
     assert metadata["live_trading_enabled"] is False
@@ -312,8 +329,8 @@ def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> Non
             assert replay.audit_metadata["broker_api_invoked"] is False
 
 
-def test_point_in_time_and_replay_contracts_are_not_bypassed(tmp_path: Path) -> None:
-    result = _run_calibration(tmp_path)
+def test_point_in_time_and_replay_contracts_are_not_bypassed(calibration_result: CalibrationResult) -> None:
+    result = calibration_result
 
     for batch in result.batch_results:
         for replay in batch.replay_results:
