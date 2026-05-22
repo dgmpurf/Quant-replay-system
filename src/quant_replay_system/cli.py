@@ -10,6 +10,8 @@ from typing import Sequence
 
 import pandas as pd
 
+from quant_replay_system.batch_replay import run_batch_replay
+from quant_replay_system.calibration import run_parameter_calibration
 from quant_replay_system.config import load_settings
 from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_ingestion import (
@@ -24,7 +26,10 @@ from quant_replay_system.paper_artifact_health import check_paper_artifact_healt
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
 from quant_replay_system.paper_review import apply_paper_review_updates
+from quant_replay_system.replay_run import run_replay
 from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
+from quant_replay_system.snapshot_quality_preflight import SnapshotQualityPreflightError
+from quant_replay_system.walk_forward import run_walk_forward_validation
 
 
 FILL_COLUMNS = [
@@ -72,6 +77,52 @@ def build_parser() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser(prog="python -m quant_replay_system.cli")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    replay = subparsers.add_parser(
+        "replay-run",
+        aliases=["replay"],
+        help="Run a local single-date replay workflow",
+    )
+    replay.add_argument("--date", required=True, help="Decision date, e.g. 2024-01-03")
+    replay.add_argument("--universe", default="default", help="Universe name")
+    replay.add_argument("--top", type=int, help="Candidate count override")
+    replay.add_argument("--horizon", type=int, help="Holding horizon in trading days")
+    replay.add_argument("--output-dir", help="Optional replay output directory")
+    replay.add_argument("--config", help="Optional config YAML path")
+    _add_snapshot_preflight_arguments(replay)
+    replay.set_defaults(handler=_handle_replay_run)
+
+    batch = subparsers.add_parser("batch-replay", help="Run local batch replay over decision dates")
+    batch.add_argument("--dates", nargs="+", required=True, help="Decision dates, comma-separated or space-separated")
+    batch.add_argument("--universe", default="default", help="Universe name")
+    batch.add_argument("--top", type=int, help="Candidate count override")
+    batch.add_argument("--horizon", type=int, help="Holding horizon in trading days")
+    batch.add_argument("--output-dir", help="Optional batch replay output directory")
+    batch.add_argument("--config", help="Optional config YAML path")
+    _add_snapshot_preflight_arguments(batch)
+    batch.set_defaults(handler=_handle_batch_replay)
+
+    calibrate = subparsers.add_parser(
+        "parameter-calibration",
+        aliases=["calibrate"],
+        help="Run local parameter calibration over decision dates",
+    )
+    calibrate.add_argument("--dates", nargs="+", required=True, help="Decision dates, comma-separated or space-separated")
+    calibrate.add_argument("--universe", default="default", help="Universe name")
+    calibrate.add_argument("--output-dir", help="Optional calibration output directory")
+    calibrate.add_argument("--config", help="Optional config YAML path")
+    _add_snapshot_preflight_arguments(calibrate)
+    calibrate.set_defaults(handler=_handle_parameter_calibration)
+
+    walk_forward = subparsers.add_parser("walk-forward", help="Run local walk-forward validation")
+    walk_forward.add_argument("--train-dates", nargs="+", required=True, help="Train dates, comma-separated or space-separated")
+    walk_forward.add_argument("--validation-dates", nargs="+", required=True, help="Validation dates, comma-separated or space-separated")
+    walk_forward.add_argument("--test-dates", nargs="*", default=[], help="Optional test dates, comma-separated or space-separated")
+    walk_forward.add_argument("--universe", default="default", help="Universe name")
+    walk_forward.add_argument("--output-dir", help="Optional walk-forward output directory")
+    walk_forward.add_argument("--config", help="Optional config YAML path")
+    _add_snapshot_preflight_arguments(walk_forward)
+    walk_forward.set_defaults(handler=_handle_walk_forward)
 
     daily = subparsers.add_parser("paper-daily", help="Write a local daily paper trading report")
     daily.add_argument("--date", required=True, help="Paper trading date, e.g. 2024-05-20")
@@ -239,6 +290,110 @@ def write_fills_template(path: str | Path, *, overwrite: bool = False) -> Path:
     output.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(columns=FILL_COLUMNS).to_csv(output, index=False)
     return output
+
+
+def _handle_replay_run(args: argparse.Namespace) -> int:
+    settings = _workflow_settings_from_args(args, "replay_run")
+    try:
+        result = run_replay(
+            args.date,
+            universe_name=args.universe,
+            top_n=args.top,
+            holding_horizon=args.horizon,
+            config=settings,
+            snapshot_manifest_path=args.snapshot_manifest,
+        )
+    except SnapshotQualityPreflightError as exc:
+        return _print_snapshot_preflight_error(exc)
+
+    print(f"run_id: {result.run_id}")
+    print(f"decision_date: {result.decision_date.date()}")
+    print(f"report_path: {result.report_path}")
+    print(f"candidate_count: {result.performance_summary.get('number_of_candidates')}")
+    print(f"simulated_buy_count: {result.performance_summary.get('number_of_simulated_buys')}")
+    _print_snapshot_preflight_summary(result.audit_metadata)
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_batch_replay(args: argparse.Namespace) -> int:
+    settings = _workflow_settings_from_args(args, "batch_replay")
+    try:
+        result = run_batch_replay(
+            _parse_date_values(args.dates),
+            universe_name=args.universe,
+            top_n=args.top,
+            holding_horizon=args.horizon,
+            config=settings,
+            snapshot_manifest_path=args.snapshot_manifest,
+        )
+    except SnapshotQualityPreflightError as exc:
+        return _print_snapshot_preflight_error(exc)
+
+    print(f"batch_id: {result.batch_id}")
+    print(f"batch_report_path: {result.artifact_paths['batch_report']}")
+    print(f"executed_date_count: {len(result.executed_decision_dates)}")
+    print(f"skipped_date_count: {len(result.skipped_decision_dates)}")
+    _print_snapshot_preflight_summary(result.snapshot_quality_preflight or {})
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_parameter_calibration(args: argparse.Namespace) -> int:
+    settings = _workflow_settings_from_args(args, "calibration")
+    try:
+        result = run_parameter_calibration(
+            _parse_date_values(args.dates),
+            universe_name=args.universe,
+            config=settings,
+            snapshot_manifest_path=args.snapshot_manifest,
+        )
+    except SnapshotQualityPreflightError as exc:
+        return _print_snapshot_preflight_error(exc)
+
+    print(f"calibration_id: {result.calibration_id}")
+    print(f"calibration_report_path: {result.artifact_paths['calibration_report']}")
+    print(f"parameter_set_count: {len(result.parameter_sets)}")
+    print(
+        "best_parameter_set: "
+        f"{result.best_parameter_set.parameter_set_id if result.best_parameter_set is not None else ''}"
+    )
+    _print_snapshot_preflight_summary(result.snapshot_quality_preflight or {})
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_walk_forward(args: argparse.Namespace) -> int:
+    settings = _workflow_settings_from_args(args, "walk_forward")
+    try:
+        result = run_walk_forward_validation(
+            train_dates=_parse_date_values(args.train_dates),
+            validation_dates=_parse_date_values(args.validation_dates),
+            test_dates=_parse_date_values(args.test_dates),
+            universe_name=args.universe,
+            config=settings,
+            snapshot_manifest_path=args.snapshot_manifest,
+        )
+    except SnapshotQualityPreflightError as exc:
+        return _print_snapshot_preflight_error(exc)
+
+    print(f"walk_forward_id: {result.walk_forward_id}")
+    print(f"walk_forward_report_path: {result.artifact_paths['walk_forward_report']}")
+    print(
+        "selected_parameter_set: "
+        f"{result.selected_parameter_set.parameter_set_id if result.selected_parameter_set is not None else ''}"
+    )
+    _print_snapshot_preflight_summary(result.snapshot_quality_preflight or {})
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
 
 
 def _handle_paper_daily(args: argparse.Namespace) -> int:
@@ -508,6 +663,117 @@ def _handle_snapshot_quality(args: argparse.Namespace) -> int:
     if result.status == "WARN" and args.strict and not args.allow_warn:
         return 1
     return 0
+
+
+def _add_snapshot_preflight_arguments(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_argument_group("snapshot quality preflight")
+    group.add_argument("--snapshot-manifest", help="Snapshot manifest JSON path")
+
+    enable_group = group.add_mutually_exclusive_group()
+    enable_group.add_argument(
+        "--enable-snapshot-preflight",
+        action="store_true",
+        help="Enable snapshot quality preflight for this workflow",
+    )
+    enable_group.add_argument(
+        "--disable-snapshot-preflight",
+        action="store_true",
+        help="Force snapshot quality preflight off for this workflow",
+    )
+
+    fail_group = group.add_mutually_exclusive_group()
+    fail_group.add_argument(
+        "--block-on-fail",
+        dest="snapshot_block_on_fail",
+        action="store_true",
+        default=None,
+        help="Exit non-zero when snapshot preflight status is FAIL",
+    )
+    fail_group.add_argument(
+        "--allow-fail",
+        dest="snapshot_block_on_fail",
+        action="store_false",
+        help="Allow workflow to continue when snapshot preflight status is FAIL",
+    )
+
+    warn_group = group.add_mutually_exclusive_group()
+    warn_group.add_argument(
+        "--block-on-warn",
+        dest="snapshot_block_on_warn",
+        action="store_true",
+        default=None,
+        help="Exit non-zero when snapshot preflight status is WARN",
+    )
+    warn_group.add_argument(
+        "--allow-warn",
+        dest="snapshot_block_on_warn",
+        action="store_false",
+        help="Allow workflow to continue when snapshot preflight status is WARN",
+    )
+
+
+def _workflow_settings_from_args(args: argparse.Namespace, section_name: str):
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        current_section = getattr(settings, section_name)
+        settings = settings.model_copy(
+            update={section_name: current_section.model_copy(update={"output_dir": Path(args.output_dir)})}
+        )
+    return _apply_snapshot_preflight_args(settings, args)
+
+
+def _apply_snapshot_preflight_args(settings, args: argparse.Namespace):
+    updates = {}
+    if args.snapshot_manifest:
+        updates["manifest_path"] = Path(args.snapshot_manifest)
+        updates["enabled"] = True
+    if args.enable_snapshot_preflight:
+        updates["enabled"] = True
+    if args.disable_snapshot_preflight:
+        updates["enabled"] = False
+    if args.snapshot_block_on_fail is not None:
+        updates["block_on_fail"] = bool(args.snapshot_block_on_fail)
+    if args.snapshot_block_on_warn is not None:
+        updates["block_on_warn"] = bool(args.snapshot_block_on_warn)
+    if not updates:
+        return settings
+    return settings.model_copy(
+        update={
+            "snapshot_quality_preflight": settings.snapshot_quality_preflight.model_copy(update=updates)
+        }
+    )
+
+
+def _parse_date_values(values: Sequence[str] | None) -> list[str]:
+    if not values:
+        return []
+    dates: list[str] = []
+    for value in values:
+        parts = [part.strip() for part in str(value).split(",")]
+        dates.extend(part for part in parts if part)
+    return dates
+
+
+def _print_snapshot_preflight_summary(metadata: dict) -> None:
+    if not metadata.get("snapshot_quality_preflight_enabled"):
+        return
+    print(f"Snapshot quality status: {metadata.get('snapshot_quality_status')}")
+    report_path = metadata.get("snapshot_quality_report_path")
+    if report_path:
+        print(f"Snapshot quality report path: {report_path}")
+    gate_id = metadata.get("snapshot_quality_gate_id")
+    if gate_id:
+        print(f"Snapshot quality gate id: {gate_id}")
+    for warning in metadata.get("snapshot_quality_warnings") or []:
+        print(f"WARNING: {warning}")
+
+
+def _print_snapshot_preflight_error(exc: SnapshotQualityPreflightError) -> int:
+    if exc.preflight_result is not None:
+        _print_snapshot_preflight_summary(exc.preflight_result.metadata_fields())
+    print(f"ERROR: {exc}", file=sys.stderr)
+    print("No live trading or broker API was invoked.")
+    return 1
 
 
 def _optional_settings(config_path: str | None):

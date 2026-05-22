@@ -16,6 +16,7 @@ Included now:
 - Local CSV ingestion and processed snapshot builder.
 - Data quality summary reports for processed replay inputs.
 - Snapshot quality gate for full processed snapshot manifests.
+- Optional snapshot quality preflight for replay-like workflows.
 - Placeholder modules for data, scoring, replay, execution, evaluation, calibration, and risk.
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
 - Trading calendar and T+1 execution calendar for daily replay.
@@ -57,11 +58,17 @@ python -m pytest
 
 For a clean Windows CMD setup with a virtual environment, `.env` file, test command, and sample replay command, see [docs/environment_setup.md](docs/environment_setup.md).
 
+For the standard reusable Codex prompt structure for future tasks, see [docs/CODEX_PROMPT_STANDARD.md](docs/CODEX_PROMPT_STANDARD.md).
+
 For local CSV ingestion, validation, and processed snapshot manifests, see [docs/data_ingestion.md](docs/data_ingestion.md).
 
 For processed data quality summaries before replay, see [docs/data_quality.md](docs/data_quality.md).
 
 For full-snapshot PASS/WARN/FAIL quality gates before replay, see [docs/snapshot_quality_gate.md](docs/snapshot_quality_gate.md).
+
+For optional snapshot quality preflight checks inside replay, batch, calibration, and walk-forward flows, see [docs/snapshot_quality_preflight.md](docs/snapshot_quality_preflight.md).
+
+For CLI flags that enable snapshot preflight on replay-like workflows, see [docs/snapshot_quality_preflight_cli.md](docs/snapshot_quality_preflight_cli.md).
 
 For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
 
@@ -99,6 +106,8 @@ python -m quant_replay_system.cli paper-health-check --index outputs/reports/pap
 python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --output-dir data/processed/market
 python -m quant_replay_system.cli data-quality --dataset-type market --input data/processed/market/market_cleaned.csv
 python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
+python -m quant_replay_system.cli replay-run --date 2024-01-03 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
+python -m quant_replay_system.cli batch-replay --dates 2024-01-03,2024-01-04 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv
 ```
@@ -117,6 +126,7 @@ quant-replay-system/
       trading_calendar.csv
       universe_snapshots.csv
   docs/
+    CODEX_PROMPT_STANDARD.md
     batch_replay.md
     data_contract.md
     data_ingestion.md
@@ -138,6 +148,8 @@ quant-replay-system/
     replay_run_orchestrator.md
     scoring_engine.md
     snapshot_quality_gate.md
+    snapshot_quality_preflight.md
+    snapshot_quality_preflight_cli.md
     technical_indicators.md
     walk_forward_validation.md
   src/
@@ -160,6 +172,7 @@ quant-replay-system/
       risk.py
       scoring.py
       snapshot_quality_gate.py
+      snapshot_quality_preflight.py
       walk_forward.py
   tests/
 ```

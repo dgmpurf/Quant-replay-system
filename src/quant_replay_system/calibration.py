@@ -16,6 +16,10 @@ from quant_replay_system.batch_replay import BatchReplayResult, run_batch_replay
 from quant_replay_system.calendar import TradingCalendar
 from quant_replay_system.config import CalibrationSettings, Settings, load_settings
 from quant_replay_system.report_generation import KNOWN_LIMITATIONS
+from quant_replay_system.snapshot_quality_preflight import (
+    disable_snapshot_quality_preflight,
+    run_snapshot_quality_preflight,
+)
 
 
 SCORE_WEIGHT_KEYS = [
@@ -162,6 +166,7 @@ class CalibrationResult:
     train_dates: list[pd.Timestamp]
     validation_dates: list[pd.Timestamp]
     test_dates: list[pd.Timestamp]
+    snapshot_quality_preflight: dict[str, Any] | None = None
 
 
 def default_calibration_plan() -> CalibrationPlan:
@@ -262,11 +267,18 @@ def run_parameter_calibration(
     train_dates: Iterable[str | pd.Timestamp] | None = None,
     validation_dates: Iterable[str | pd.Timestamp] | None = None,
     test_dates: Iterable[str | pd.Timestamp] | None = None,
+    snapshot_manifest_path: str | Path | None = None,
 ) -> CalibrationResult:
     """Run batch replay for each parameter set and rank the results."""
 
     settings = _load_calibration_settings(config)
-    calibration_settings = settings.calibration
+    preflight = run_snapshot_quality_preflight(
+        settings,
+        snapshot_manifest_path=snapshot_manifest_path,
+        context="run_parameter_calibration",
+    )
+    run_settings = disable_snapshot_quality_preflight(settings) if preflight.enabled else settings
+    calibration_settings = run_settings.calibration
     normalized_dates = _normalize_date_list([decision_dates] if isinstance(decision_dates, (str, pd.Timestamp)) else decision_dates)
     train = _normalize_date_list(train_dates or [])
     validation = _normalize_date_list(validation_dates or [])
@@ -297,9 +309,9 @@ def run_parameter_calibration(
     paths = resolve_calibration_artifact_paths(calibration_settings.output_dir, effective_calibration_id)
 
     batch_results: list[BatchReplayResult] = []
-    warnings: list[str] = []
+    warnings: list[str] = list(preflight.warnings or [])
     for parameter_set in effective_parameter_sets:
-        parameter_settings = _settings_for_parameter_set(settings, parameter_set, paths)
+        parameter_settings = _settings_for_parameter_set(run_settings, parameter_set, paths)
         try:
             batch_result = run_batch_replay(
                 decision_dates=normalized_dates,
@@ -330,6 +342,7 @@ def run_parameter_calibration(
     batch_runs_frame = build_calibration_batch_runs_frame(effective_parameter_sets, batch_results)
     aggregate_metrics = build_aggregate_metrics_frame(ranked_results)
 
+    preflight_metadata = preflight.metadata_fields()
     result = CalibrationResult(
         calibration_id=effective_calibration_id,
         parameter_sets=effective_parameter_sets,
@@ -347,6 +360,7 @@ def run_parameter_calibration(
         train_dates=train,
         validation_dates=validation,
         test_dates=test,
+        snapshot_quality_preflight=preflight_metadata,
     )
     if calibration_settings.write_artifacts:
         write_calibration_report(result)
@@ -623,6 +637,8 @@ def build_calibration_metadata(result: CalibrationResult, paths: CalibrationArti
         },
         "known_limitations": result.known_limitations,
         "warnings": result.warnings,
+        "snapshot_quality_preflight": result.snapshot_quality_preflight or {},
+        **(result.snapshot_quality_preflight or {}),
         "live_trading_enabled": False,
         "broker_api_invoked": False,
         "contract_note": "Calibration calls batch replay and does not bypass point-in-time or execution contracts.",
@@ -651,6 +667,10 @@ def render_calibration_report(
                 "split_name": result.split_name,
             }
         ),
+        "",
+        "## Snapshot Quality Preflight",
+        "",
+        _dict_table(result.snapshot_quality_preflight or {"snapshot_quality_preflight_enabled": False}),
         "",
         "## Best Parameter Set",
         "",

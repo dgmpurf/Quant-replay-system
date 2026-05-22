@@ -231,6 +231,16 @@ snapshot_quality_gate:
   enable_live_trading: false
   enable_broker_api: false
 
+snapshot_quality_preflight:
+  enabled: false
+  manifest_path:
+  block_on_fail: true
+  block_on_warn: false
+  attach_report_paths: true
+  config_version: mvp
+  enable_live_trading: false
+  enable_broker_api: false
+
 execution:
   mode: t_plus_1
   price_field: open

@@ -24,7 +24,7 @@ SNAPSHOT_QUALITY_LIMITATIONS = [
     "Does not call market data APIs or require API tokens.",
     "Does not connect to brokers, place orders, or automate execution.",
     "Runs quality checks and reports gate status; it does not repair data.",
-    "Not yet wired into replay orchestration as a hard preflight.",
+    "Can be used as an optional preflight; downstream workflows must enable it explicitly.",
 ]
 
 GATE_SUMMARY_COLUMNS = [

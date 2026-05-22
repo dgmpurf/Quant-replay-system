@@ -20,6 +20,10 @@ from quant_replay_system.calibration import (
 )
 from quant_replay_system.calendar import TradingCalendar
 from quant_replay_system.config import Settings, WalkForwardSettings, load_settings
+from quant_replay_system.snapshot_quality_preflight import (
+    disable_snapshot_quality_preflight,
+    run_snapshot_quality_preflight,
+)
 
 
 WALK_FORWARD_LIMITATIONS = [
@@ -99,6 +103,7 @@ class WalkForwardResult:
     artifact_paths: dict[str, Path]
     warnings: list[str]
     known_limitations: list[str]
+    snapshot_quality_preflight: dict[str, Any] | None = None
 
 
 def build_walk_forward_splits(
@@ -137,11 +142,18 @@ def run_walk_forward_validation(
     trading_calendar: TradingCalendar | None = None,
     walk_forward_id: str | None = None,
     split_name: str = "explicit",
+    snapshot_manifest_path: str | Path | None = None,
 ) -> WalkForwardResult:
     """Run train calibration, validate selected params, and optionally test them."""
 
     settings = _load_settings(config)
-    wf_settings = settings.walk_forward
+    preflight = run_snapshot_quality_preflight(
+        settings,
+        snapshot_manifest_path=snapshot_manifest_path,
+        context="run_walk_forward_validation",
+    )
+    run_settings = disable_snapshot_quality_preflight(settings) if preflight.enabled else settings
+    wf_settings = run_settings.walk_forward
     split = build_walk_forward_splits(
         train_dates=train_dates,
         validation_dates=validation_dates,
@@ -158,9 +170,9 @@ def run_walk_forward_validation(
         config_version=wf_settings.config_version,
     )
     paths = resolve_walk_forward_artifact_paths(wf_settings.output_dir, effective_id)
-    run_settings = settings.model_copy(
+    run_settings = run_settings.model_copy(
         update={
-            "calibration": settings.calibration.model_copy(update={"output_dir": paths.artifact_dir / "calibrations"})
+            "calibration": run_settings.calibration.model_copy(update={"output_dir": paths.artifact_dir / "calibrations"})
         }
     )
 
@@ -180,7 +192,8 @@ def run_walk_forward_validation(
         test_dates=split.test_dates,
     )
     selected = train_result.best_parameter_set
-    warnings = list(train_result.warnings)
+    warnings = list(preflight.warnings or [])
+    warnings.extend(train_result.warnings)
 
     validation_result: CalibrationResult | None = None
     if selected is not None and split.validation_dates:
@@ -229,6 +242,7 @@ def run_walk_forward_validation(
         min_trade_count=run_settings.calibration.min_trade_count,
     )
 
+    preflight_metadata = preflight.metadata_fields()
     result = WalkForwardResult(
         walk_forward_id=effective_id,
         train_dates=split.train_dates,
@@ -242,6 +256,7 @@ def run_walk_forward_validation(
         artifact_paths=paths.as_dict(),
         warnings=warnings,
         known_limitations=WALK_FORWARD_LIMITATIONS,
+        snapshot_quality_preflight=preflight_metadata,
     )
     if wf_settings.write_artifacts:
         write_walk_forward_report(result)
@@ -404,6 +419,8 @@ def build_walk_forward_metadata(result: WalkForwardResult, paths: WalkForwardArt
         "output_files": output_files,
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
+        "snapshot_quality_preflight": result.snapshot_quality_preflight or {},
+        **(result.snapshot_quality_preflight or {}),
         "live_trading_enabled": False,
         "broker_api_invoked": False,
         "contract_note": "Walk-forward validation calls calibration and does not bypass point-in-time or replay contracts.",
@@ -432,6 +449,10 @@ def render_walk_forward_report(
                 "test_dates": len(result.test_dates),
             }
         ),
+        "",
+        "## Snapshot Quality Preflight",
+        "",
+        _dict_table(result.snapshot_quality_preflight or {"snapshot_quality_preflight_enabled": False}),
         "",
         "## Date Split Summary",
         "",

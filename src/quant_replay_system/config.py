@@ -258,6 +258,17 @@ class SnapshotQualityGateSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class SnapshotQualityPreflightSettings(BaseModel):
+    enabled: bool = False
+    manifest_path: Path | None = None
+    block_on_fail: bool = True
+    block_on_warn: bool = False
+    attach_report_paths: bool = True
+    config_version: str = "mvp"
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -297,6 +308,7 @@ class Settings(BaseModel):
     data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
     data_quality: DataQualitySettings = Field(default_factory=DataQualitySettings)
     snapshot_quality_gate: SnapshotQualityGateSettings = Field(default_factory=SnapshotQualityGateSettings)
+    snapshot_quality_preflight: SnapshotQualityPreflightSettings = Field(default_factory=SnapshotQualityPreflightSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 

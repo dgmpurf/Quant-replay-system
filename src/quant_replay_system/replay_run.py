@@ -20,6 +20,7 @@ from quant_replay_system.report_generation import (
     write_replay_artifacts,
 )
 from quant_replay_system.score_engine import score_factor_dataset
+from quant_replay_system.snapshot_quality_preflight import run_snapshot_quality_preflight
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,7 @@ def run_replay(
     trading_calendar: TradingCalendar | None = None,
     report_output_path: str | Path | None = None,
     run_id: str | None = None,
+    snapshot_manifest_path: str | Path | None = None,
 ) -> ReplayRunResult:
     """Run one end-to-end historical replay for a decision date."""
 
@@ -71,6 +73,11 @@ def run_replay(
         holding_horizon=effective_horizon,
         config_version=settings.replay_run.config_version,
     )
+    preflight = run_snapshot_quality_preflight(
+        settings,
+        snapshot_manifest_path=snapshot_manifest_path,
+        context="run_replay",
+    )
 
     market = market_data.copy(deep=True) if market_data is not None else load_market_data(settings.data.mock_prices)
     universe = (
@@ -83,7 +90,7 @@ def run_replay(
         corporate_actions = load_corporate_actions(settings.data.mock_corporate_actions)
 
     decision_time = calendar.decision_time_for(as_of_date)
-    warnings: list[str] = []
+    warnings: list[str] = list(preflight.warnings or [])
 
     factor_dataset = build_factor_dataset(
         decision_date=as_of_date,
@@ -143,12 +150,14 @@ def run_replay(
         simulated_trades=simulated_trades,
         corporate_actions=corporate_actions,
     )
+    audit_metadata.update(preflight.metadata_fields())
     config_summary = _config_summary(
         settings=settings,
         top_n=effective_top_n,
         holding_horizon=effective_horizon,
         run_id=effective_run_id,
     )
+    config_summary["snapshot_quality_preflight"] = preflight.metadata_fields()
 
     artifact_paths = resolve_replay_artifact_paths(
         output_dir=settings.replay_run.output_dir,

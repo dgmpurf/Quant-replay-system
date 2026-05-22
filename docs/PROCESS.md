@@ -2,6 +2,23 @@
 
 This document defines the development workflow for `quant-replay-system` when working iteratively with Codex and ChatGPT guidance.
 
+## Codex Prompt Standard
+
+Future Codex development prompts should follow [CODEX_PROMPT_STANDARD.md](CODEX_PROMPT_STANDARD.md).
+
+That document defines the standard prompt structure for scoped implementation tasks, documentation-only tasks, hardening/bugfixes, integrations, CLI work, artifact/reporting work, data ingestion/quality work, and paper trading workflow work.
+
+Codex should use the standard as the task interpretation baseline:
+
+- read relevant files first,
+- do not assume previous chat context,
+- preserve point-in-time and T+1 contracts unless explicitly instructed,
+- keep safety constraints explicit,
+- run validation,
+- return the required summary fields.
+
+Codex's Next Recommended Task should be sent back to ChatGPT after each task, but ChatGPT decides the final next step, including whether to continue, repair, checkpoint, push, or tag.
+
 ## 1. Project Development Principle
 
 - Build one module at a time.

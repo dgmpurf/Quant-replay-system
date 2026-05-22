@@ -18,6 +18,10 @@ from quant_replay_system.data import load_corporate_actions, load_market_data, l
 from quant_replay_system.portfolio_simulation import PortfolioSimulationResult, simulate_portfolio
 from quant_replay_system.report_generation import KNOWN_LIMITATIONS
 from quant_replay_system.replay_run import ReplayRunResult, run_replay
+from quant_replay_system.snapshot_quality_preflight import (
+    disable_snapshot_quality_preflight,
+    run_snapshot_quality_preflight,
+)
 
 
 @dataclass(frozen=True)
@@ -63,6 +67,7 @@ class BatchReplayResult:
     replay_runs_frame: pd.DataFrame
     config_summary: dict[str, Any]
     portfolio_result: PortfolioSimulationResult | None = None
+    snapshot_quality_preflight: dict[str, Any] | None = None
 
 
 def run_batch_replay(
@@ -77,11 +82,18 @@ def run_batch_replay(
     corporate_actions: pd.DataFrame | None = None,
     trading_calendar: TradingCalendar | None = None,
     batch_id: str | None = None,
+    snapshot_manifest_path: str | Path | None = None,
 ) -> BatchReplayResult:
     """Run auditable single-date replay orchestration over many decision dates."""
 
     settings = _load_batch_settings(config)
-    batch_settings = settings.batch_replay
+    preflight = run_snapshot_quality_preflight(
+        settings,
+        snapshot_manifest_path=snapshot_manifest_path,
+        context="run_batch_replay",
+    )
+    run_settings = disable_snapshot_quality_preflight(settings) if preflight.enabled else settings
+    batch_settings = run_settings.batch_replay
     requested_dates, initial_skips = _normalize_decision_dates(decision_dates, fail_fast=batch_settings.fail_fast)
     effective_top_n = top_n if top_n is not None else batch_settings.default_top_n
     effective_horizon = holding_horizon if holding_horizon is not None else batch_settings.default_holding_horizon
@@ -93,20 +105,20 @@ def run_batch_replay(
         config_version=batch_settings.config_version,
     )
 
-    market = market_data.copy(deep=True) if market_data is not None else load_market_data(settings.data.mock_prices)
+    market = market_data.copy(deep=True) if market_data is not None else load_market_data(run_settings.data.mock_prices)
     universe = (
         universe_snapshot.copy(deep=True)
         if universe_snapshot is not None
-        else load_universe_snapshot(settings.data.mock_universe_snapshots)
+        else load_universe_snapshot(run_settings.data.mock_universe_snapshots)
     )
-    calendar = trading_calendar if trading_calendar is not None else load_trading_calendar(settings.data.mock_trading_calendar)
+    calendar = trading_calendar if trading_calendar is not None else load_trading_calendar(run_settings.data.mock_trading_calendar)
     actions = corporate_actions
-    if actions is None and settings.data.mock_corporate_actions.exists():
-        actions = load_corporate_actions(settings.data.mock_corporate_actions)
+    if actions is None and run_settings.data.mock_corporate_actions.exists():
+        actions = load_corporate_actions(run_settings.data.mock_corporate_actions)
 
     skipped_rows = list(initial_skips)
     replay_results: list[ReplayRunResult] = []
-    warnings: list[str] = []
+    warnings: list[str] = list(preflight.warnings or [])
 
     for decision_date in requested_dates:
         try:
@@ -125,7 +137,7 @@ def run_batch_replay(
                 universe_name=universe_name,
                 top_n=effective_top_n,
                 holding_horizon=effective_horizon,
-                config=settings,
+                config=run_settings,
                 market_data=market,
                 universe_snapshot=universe,
                 benchmark_data=benchmark_data,
@@ -144,7 +156,7 @@ def run_batch_replay(
     executed_dates = [result.decision_date for result in replay_results]
     paths = resolve_batch_artifact_paths(batch_settings.output_dir, effective_batch_id)
     portfolio_result = _run_portfolio_simulation_if_enabled(
-        settings=settings,
+        settings=run_settings,
         replay_results=replay_results,
         market_data=market,
         trading_calendar=calendar,
@@ -161,12 +173,14 @@ def run_batch_replay(
     )
     batch_index = build_batch_index(replay_results, portfolio_result=portfolio_result)
     replay_runs_frame = build_replay_runs_frame(replay_results)
+    preflight_metadata = preflight.metadata_fields()
     config_summary = _batch_config_summary(
-        settings=settings,
+        settings=run_settings,
         top_n=effective_top_n,
         holding_horizon=effective_horizon,
         batch_id=effective_batch_id,
     )
+    config_summary["snapshot_quality_preflight"] = preflight_metadata
 
     result = BatchReplayResult(
         batch_id=effective_batch_id,
@@ -184,6 +198,7 @@ def run_batch_replay(
         replay_runs_frame=replay_runs_frame,
         config_summary=config_summary,
         portfolio_result=portfolio_result,
+        snapshot_quality_preflight=preflight_metadata,
     )
     if batch_settings.write_artifacts:
         write_batch_replay_report(result)
@@ -379,6 +394,8 @@ def build_batch_replay_metadata(result: BatchReplayResult, paths: BatchArtifactP
             if result.portfolio_result is not None
             else {}
         ),
+        "snapshot_quality_preflight": result.snapshot_quality_preflight or {},
+        **(result.snapshot_quality_preflight or {}),
         "known_limitations": KNOWN_LIMITATIONS,
         "warnings": result.warnings,
         "live_trading_enabled": False,
@@ -418,6 +435,10 @@ def render_batch_replay_report(
         "## Config Summary",
         "",
         _dict_table(result.config_summary),
+        "",
+        "## Snapshot Quality Preflight",
+        "",
+        _dict_table(result.snapshot_quality_preflight or {"snapshot_quality_preflight_enabled": False}),
         "",
         "## Date Execution Summary",
         "",

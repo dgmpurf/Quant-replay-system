@@ -15,6 +15,7 @@
 ## Engineering Rules
 
 - Python 3.10+ only.
+- For development tasks, follow `docs/CODEX_PROMPT_STANDARD.md` when interpreting task prompts.
 - Prefer simple, auditable modules over clever abstractions.
 - Keep all replay logic point-in-time: a decision date must not read data from the future.
 - Use local CSV/mock data until a data ingestion layer is explicitly added.
