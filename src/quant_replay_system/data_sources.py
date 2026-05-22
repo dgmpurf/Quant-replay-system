@@ -254,7 +254,8 @@ def _fetch_akshare_universe(
         frames.append(frame)
         function_names.append(function_name)
     combined = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
-    normalized = _normalize_akshare_universe_frame(
+    raw_columns = [str(column) for column in combined.columns]
+    normalized, mapping_warnings = _normalize_akshare_universe_frame(
         combined,
         as_of_date=as_of_date,
         market_type=market_type,
@@ -267,6 +268,10 @@ def _fetch_akshare_universe(
         "akshare_functions": function_names,
         "as_of_date": as_of_date,
         "market_type": market_type,
+        "raw_columns": raw_columns,
+        "normalized_columns": list(normalized.columns),
+        "mapping_warnings": mapping_warnings,
+        "row_count": len(normalized),
     }
     return normalized, adapter_metadata
 
@@ -454,47 +459,145 @@ def _normalize_akshare_universe_frame(
     market_type: str,
     source: str,
     revision_id: str | None,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, list[str]]:
+    mapping_warnings: list[str] = []
     if frame.empty:
-        return pd.DataFrame(columns=_UNIVERSE_COLUMNS)
-    normalized = frame.rename(
-        columns={column: _AKSHARE_UNIVERSE_COLUMN_ALIASES.get(str(column), column) for column in frame.columns}
-    ).copy()
-    if "symbol" not in normalized.columns:
-        raise ValueError("AKSHARE_OPTIONAL universe data did not include a symbol/code column")
-    normalized["symbol"] = normalized["symbol"].astype(str).str.strip().str.upper()
-    normalized = normalized.loc[normalized["symbol"].ne("")].copy()
-    normalized["name"] = _string_series(normalized, "name", normalized["symbol"]).replace("", pd.NA).fillna(normalized["symbol"])
+        return pd.DataFrame(columns=_UNIVERSE_COLUMNS), mapping_warnings
+
+    symbol = normalize_symbol_series(
+        get_first_series(
+            frame,
+            _UNIVERSE_FIELD_CANDIDATES["symbol"],
+            conceptual_field="symbol",
+            mapping_warnings=mapping_warnings,
+        )
+    )
+    if symbol.eq("").all():
+        raise _akshare_universe_mapping_error(frame, ["symbol"])
+
+    valid_mask = symbol.ne("")
+    source_frame = frame.loc[valid_mask].copy()
+    symbol = symbol.loc[valid_mask]
+    if source_frame.empty:
+        raise _akshare_universe_mapping_error(frame, ["symbol"])
+
+    name = normalize_text_series(
+        get_first_series(
+            source_frame,
+            _UNIVERSE_FIELD_CANDIDATES["name"],
+            conceptual_field="name",
+            default=symbol,
+            mapping_warnings=mapping_warnings,
+        )
+    ).replace("", pd.NA).fillna(symbol)
     as_of = pd.Timestamp(as_of_date).normalize()
-    output = pd.DataFrame(index=normalized.index)
+    output = pd.DataFrame(index=source_frame.index)
     output["as_of_date"] = as_of
-    output["symbol"] = normalized["symbol"]
-    output["name"] = normalized["name"].astype(str)
+    output["symbol"] = symbol
+    output["name"] = name.astype(str)
+    instrument_type = normalize_text_series(
+        get_first_series(
+            source_frame,
+            _UNIVERSE_FIELD_CANDIDATES["instrument_type"],
+            conceptual_field="instrument_type",
+            default="",
+            mapping_warnings=mapping_warnings,
+        )
+    )
     output["instrument_type"] = [
         _infer_universe_instrument_type(symbol, row_type, market_type)
-        for symbol, row_type in zip(
-            output["symbol"],
-            _string_series(normalized, "_akshare_instrument_type", ""),
-        )
+        for symbol, row_type in zip(output["symbol"], instrument_type)
     ]
+    exchange = normalize_text_series(
+        get_first_series(
+            source_frame,
+            _UNIVERSE_FIELD_CANDIDATES["exchange"],
+            conceptual_field="exchange",
+            default="",
+            mapping_warnings=mapping_warnings,
+        )
+    )
     output["exchange"] = [
         _infer_exchange(symbol, exchange)
-        for symbol, exchange in zip(output["symbol"], _string_series(normalized, "exchange", ""))
+        for symbol, exchange in zip(output["symbol"], exchange)
     ]
-    output["listed_date"] = _date_or_blank(normalized, "listed_date")
-    output["delisted_date"] = _date_or_blank(normalized, "delisted_date")
-    output["is_active"] = _bool_series(normalized, "is_active", default=True)
-    output["is_st"] = _bool_series(normalized, "is_st", default=False) | output["name"].str.upper().str.contains("ST", na=False)
-    output["is_suspended"] = _bool_series(normalized, "is_suspended", default=False)
-    output["industry"] = _string_series(normalized, "industry", "UNKNOWN").replace("", "UNKNOWN")
-    min_lot = pd.to_numeric(normalized.get("min_lot", pd.Series(100, index=normalized.index)), errors="coerce")
+    output["listed_date"] = _date_or_blank(
+        source_frame,
+        _UNIVERSE_FIELD_CANDIDATES["listed_date"],
+        conceptual_field="listed_date",
+        mapping_warnings=mapping_warnings,
+    )
+    output["delisted_date"] = _date_or_blank(
+        source_frame,
+        _UNIVERSE_FIELD_CANDIDATES["delisted_date"],
+        conceptual_field="delisted_date",
+        mapping_warnings=mapping_warnings,
+    )
+    output["is_active"] = _bool_series(
+        source_frame,
+        _UNIVERSE_FIELD_CANDIDATES["is_active"],
+        default=True,
+        conceptual_field="is_active",
+        mapping_warnings=mapping_warnings,
+    )
+    raw_st = _bool_series(
+        source_frame,
+        _UNIVERSE_FIELD_CANDIDATES["is_st"],
+        default=False,
+        conceptual_field="is_st",
+        mapping_warnings=mapping_warnings,
+    )
+    output["is_st"] = raw_st | output["name"].str.upper().str.contains("ST", na=False)
+    output["is_suspended"] = _bool_series(
+        source_frame,
+        _UNIVERSE_FIELD_CANDIDATES["is_suspended"],
+        default=False,
+        conceptual_field="is_suspended",
+        mapping_warnings=mapping_warnings,
+    )
+    output["industry"] = normalize_text_series(
+        get_first_series(
+            source_frame,
+            _UNIVERSE_FIELD_CANDIDATES["industry"],
+            conceptual_field="industry",
+            default="UNKNOWN",
+            mapping_warnings=mapping_warnings,
+        )
+    ).replace("", "UNKNOWN")
+    min_lot = pd.to_numeric(
+        get_first_series(
+            source_frame,
+            _UNIVERSE_FIELD_CANDIDATES["min_lot"],
+            conceptual_field="min_lot",
+            default=100,
+            mapping_warnings=mapping_warnings,
+        ),
+        errors="coerce",
+    )
     output["min_lot"] = min_lot.where(min_lot > 0, 100).fillna(100).astype(int)
-    output["t_plus_rule"] = _string_series(normalized, "t_plus_rule", "T+1").replace("", "T+1")
-    available = pd.to_datetime(normalized.get("available_time", pd.Series(pd.NaT, index=normalized.index)), errors="coerce")
+    output["t_plus_rule"] = normalize_text_series(
+        get_first_series(
+            source_frame,
+            _UNIVERSE_FIELD_CANDIDATES["t_plus_rule"],
+            conceptual_field="t_plus_rule",
+            default="T+1",
+            mapping_warnings=mapping_warnings,
+        )
+    ).replace("", "T+1")
+    available = pd.to_datetime(
+        get_first_series(
+            source_frame,
+            _UNIVERSE_FIELD_CANDIDATES["available_time"],
+            conceptual_field="available_time",
+            default=pd.NaT,
+            mapping_warnings=mapping_warnings,
+        ),
+        errors="coerce",
+    )
     output["available_time"] = available.fillna(as_of + pd.Timedelta(hours=8))
     output["revision_id"] = revision_id or "v1"
     output["source"] = source
-    return output[_UNIVERSE_COLUMNS].sort_values(["as_of_date", "symbol"]).reset_index(drop=True)
+    return output[_UNIVERSE_COLUMNS].sort_values(["as_of_date", "symbol"]).reset_index(drop=True), mapping_warnings
 
 
 def _resolve_akshare_as_of_date(request: DataSourceRequest) -> str:
@@ -504,28 +607,105 @@ def _resolve_akshare_as_of_date(request: DataSourceRequest) -> str:
     return pd.Timestamp(value).strftime("%Y-%m-%d")
 
 
-def _string_series(frame: pd.DataFrame, column: str, default: Any) -> pd.Series:
-    if column in frame.columns:
-        return frame[column].fillna("").astype(str).str.strip()
+def get_first_series(
+    frame: pd.DataFrame,
+    candidate_columns: list[str] | tuple[str, ...],
+    *,
+    conceptual_field: str,
+    default: Any = "",
+    mapping_warnings: list[str] | None = None,
+) -> pd.Series:
+    """Return the first Series matching any candidate column, tolerating duplicate names."""
+
+    for candidate in candidate_columns:
+        matches = [index for index, column in enumerate(frame.columns) if str(column) == candidate]
+        if matches:
+            if len(matches) > 1 and mapping_warnings is not None:
+                mapping_warnings.append(
+                    f"Duplicate AKShare universe columns for {conceptual_field}: {candidate}; using first occurrence."
+                )
+            return _ensure_series(frame.iloc[:, matches[0]], frame.index)
     if isinstance(default, pd.Series):
-        return default.reindex(frame.index).fillna("").astype(str).str.strip()
-    return pd.Series(default, index=frame.index).astype(str)
+        return default.reindex(frame.index)
+    return pd.Series(default, index=frame.index)
 
 
-def _date_or_blank(frame: pd.DataFrame, column: str) -> pd.Series:
-    if column not in frame.columns:
-        return pd.Series("", index=frame.index)
-    parsed = pd.to_datetime(frame[column].replace("", pd.NA), errors="coerce")
+def normalize_text_series(series: pd.Series | pd.DataFrame) -> pd.Series:
+    """Normalize a pandas text column as a Series before using .str accessors."""
+
+    return _ensure_series(series).fillna("").astype(str).str.strip()
+
+
+def normalize_symbol_series(series: pd.Series | pd.DataFrame) -> pd.Series:
+    """Normalize AKShare symbol/code values to uppercase strings."""
+
+    return (
+        normalize_text_series(series)
+        .str.replace(r"\.0$", "", regex=True)
+        .str.upper()
+    )
+
+
+def _ensure_series(value: pd.Series | pd.DataFrame, index: pd.Index | None = None) -> pd.Series:
+    if isinstance(value, pd.DataFrame):
+        if value.shape[1] == 0:
+            return pd.Series("", index=index)
+        return value.iloc[:, 0]
+    if index is not None:
+        return value.reindex(index)
+    return value
+
+
+def _date_or_blank(
+    frame: pd.DataFrame,
+    candidate_columns: list[str] | tuple[str, ...],
+    *,
+    conceptual_field: str,
+    mapping_warnings: list[str] | None = None,
+) -> pd.Series:
+    raw = get_first_series(
+        frame,
+        candidate_columns,
+        conceptual_field=conceptual_field,
+        default="",
+        mapping_warnings=mapping_warnings,
+    )
+    parsed = pd.to_datetime(raw.replace("", pd.NA), errors="coerce")
     return parsed.dt.normalize()
 
 
-def _bool_series(frame: pd.DataFrame, column: str, *, default: bool) -> pd.Series:
-    if column not in frame.columns:
-        return pd.Series(default, index=frame.index)
-    normalized = frame[column].astype(str).str.strip().str.lower()
+def _bool_series(
+    frame: pd.DataFrame,
+    candidate_columns: list[str] | tuple[str, ...],
+    *,
+    default: bool,
+    conceptual_field: str,
+    mapping_warnings: list[str] | None = None,
+) -> pd.Series:
+    raw = get_first_series(
+        frame,
+        candidate_columns,
+        conceptual_field=conceptual_field,
+        default=default,
+        mapping_warnings=mapping_warnings,
+    )
+    normalized = normalize_text_series(raw).str.lower()
     true_values = {"true", "1", "yes", "y", "active", "\u662f"}
     false_values = {"false", "0", "no", "n", "inactive", "\u5426"}
     return normalized.map(lambda value: True if value in true_values else False if value in false_values else default)
+
+
+def _akshare_universe_mapping_error(frame: pd.DataFrame, missing_fields: list[str]) -> ValueError:
+    raw_columns = [str(column) for column in frame.columns]
+    return ValueError(
+        "AKSHARE_OPTIONAL universe mapping failed; "
+        "dataset_type=universe; "
+        f"raw_shape={frame.shape}; "
+        f"raw_columns={raw_columns}; "
+        f"missing_required_conceptual_fields={missing_fields}; "
+        "suggested_action=save the raw AKShare output if available, update the universe field mapping, "
+        "or use a reviewed LOCAL_CSV universe snapshot fallback."
+    )
 
 
 def _infer_universe_instrument_type(symbol: str, source_type: str, market_type: str) -> str:
@@ -654,6 +834,42 @@ _AKSHARE_UNIVERSE_COLUMN_ALIASES = {
     "min_lot": "min_lot",
     "t_plus_rule": "t_plus_rule",
     "available_time": "available_time",
+}
+
+
+_UNIVERSE_FIELD_CANDIDATES = {
+    "symbol": (
+        "symbol",
+        "code",
+        "\u4ee3\u7801",
+        "\u8bc1\u5238\u4ee3\u7801",
+        "\u80a1\u7968\u4ee3\u7801",
+        "\u57fa\u91d1\u4ee3\u7801",
+    ),
+    "name": (
+        "name",
+        "\u540d\u79f0",
+        "\u7b80\u79f0",
+        "\u8bc1\u5238\u7b80\u79f0",
+        "\u80a1\u7968\u7b80\u79f0",
+        "\u57fa\u91d1\u7b80\u79f0",
+    ),
+    "instrument_type": ("_akshare_instrument_type", "instrument_type", "asset_type"),
+    "exchange": ("exchange", "\u4ea4\u6613\u6240"),
+    "listed_date": (
+        "listed_date",
+        "\u4e0a\u5e02\u65e5\u671f",
+        "\u80a1\u7968\u4e0a\u5e02\u65e5\u671f",
+        "\u57fa\u91d1\u4e0a\u5e02\u65e5\u671f",
+    ),
+    "delisted_date": ("delisted_date", "\u9000\u5e02\u65e5\u671f"),
+    "is_active": ("is_active",),
+    "is_st": ("is_st", "\u662f\u5426ST"),
+    "is_suspended": ("is_suspended", "\u662f\u5426\u505c\u724c"),
+    "industry": ("industry", "\u884c\u4e1a", "\u6240\u5c5e\u884c\u4e1a"),
+    "min_lot": ("min_lot",),
+    "t_plus_rule": ("t_plus_rule",),
+    "available_time": ("available_time",),
 }
 
 
@@ -793,6 +1009,7 @@ def write_raw_data_source_artifacts(result: DataSourceResult) -> dict[str, Path]
 def build_data_source_metadata(result: DataSourceResult, paths: DataSourceArtifactPaths) -> dict[str, Any]:
     """Build metadata.json content for a data source fetch."""
 
+    adapter_metadata = result.audit_metadata.get("adapter_metadata", {})
     return {
         "source": result.source,
         "dataset_type": result.dataset_type,
@@ -805,6 +1022,9 @@ def build_data_source_metadata(result: DataSourceResult, paths: DataSourceArtifa
         "market_type": result.audit_metadata.get("request", {}).get("market_type", ""),
         "allow_real_data": bool(result.audit_metadata.get("request", {}).get("allow_real_data", False)),
         "adapter_status": result.audit_metadata.get("adapter_status", ""),
+        "raw_columns": adapter_metadata.get("raw_columns", []),
+        "normalized_columns": adapter_metadata.get("normalized_columns", []),
+        "mapping_warnings": adapter_metadata.get("mapping_warnings", []),
         "created_at": "1970-01-01T00:00:00+00:00",
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
         "warnings": result.warnings,

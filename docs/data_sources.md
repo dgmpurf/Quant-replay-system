@@ -68,7 +68,9 @@ For `benchmark`, the adapter uses `stock_zh_index_daily` by default and filters 
 
 For `trading_calendar`, the adapter uses `tool_trade_date_hist_sina` by default and writes trading-day rows with standard MVP session times.
 
-For `universe`, the adapter can fetch stock and ETF symbol/name lists through isolated AKShare helper paths and normalize them into the canonical universe snapshot columns. Use `--as-of-date` to pin the snapshot date and `--market-type stock`, `--market-type etf`, or `--market-type all` to choose the scope. If AKShare does not provide optional fields, the adapter fills conservative MVP defaults such as `min_lot=100`, `t_plus_rule=T+1`, `is_active=true`, and `industry=UNKNOWN`.
+For `universe`, the adapter can fetch stock and ETF symbol/name lists through isolated AKShare helper paths and normalize them into the canonical universe snapshot columns. Use `--as-of-date` to pin the snapshot date and `--market-type stock`, `--market-type etf`, or `--market-type all` to choose the scope. Universe field mapping is best-effort because AKShare raw columns can vary by endpoint and version. The adapter accepts common Chinese and English columns such as `代码`, `股票代码`, `symbol`, `code`, `名称`, `股票简称`, `所属行业`, `行业`, `上市日期`, and `交易所`. If AKShare does not provide optional fields, the adapter fills conservative MVP defaults such as `min_lot=100`, `t_plus_rule=T+1`, `is_active=true`, and `industry=UNKNOWN`.
+
+If universe mapping fails, the error includes `dataset_type`, raw DataFrame shape, raw column names, missing conceptual fields, and a suggestion to update the mapping or use a reviewed `LOCAL_CSV` fallback. Successful universe metadata includes `raw_columns`, `normalized_columns`, `mapping_warnings`, `row_count`, and `adapter_status`.
 
 The adapter normalizes returned frames into raw CSVs that are compatible with the existing ingestion path where possible. Users should still run `data-pipeline`, `data-quality`, and `snapshot-quality` before using the data for current candidates or replay.
 
@@ -106,6 +108,8 @@ Rules:
 - No API keys or tokens are required or printed.
 - `.env` is not modified.
 - Broker/live trading integrations are not invoked.
+
+Network availability, VPN/proxy configuration, and upstream endpoint changes can affect AKShare manual fetches. When an upstream request fails or returns unexpected columns, retry later, narrow the request, review the printed diagnostics, or save/use a local CSV through `LOCAL_CSV`.
 
 ## CLI Usage
 
@@ -191,6 +195,7 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 - `AKSHARE_OPTIONAL` is a guarded MVP adapter, not a production data downloader.
 - AKShare function selection is simple and may need manual `params` or later source-specific mapping.
 - Universe snapshot support fills conservative defaults when AKShare does not provide optional fields; review data quality before current-candidate use.
+- Universe field mapping is best-effort and may need updates when AKShare changes raw output columns.
 - Corporate action AKShare fetches are not implemented in v0.1.
 - Data source adapters still only write raw artifacts; use `data-pipeline` for ingestion handoff.
 - It uses local/mock CSV data only in automated tests.

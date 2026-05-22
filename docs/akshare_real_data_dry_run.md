@@ -73,6 +73,8 @@ data\raw\AKSHARE_OPTIONAL\universe\<universe_run_id>\raw_data.csv
 
 Universe fields can be incomplete depending on AKShare source coverage. The adapter fills conservative MVP defaults, but you should still review data-quality results before using the snapshot.
 
+Universe mapping is best-effort. AKShare raw columns can vary by endpoint and installed version, so the adapter records `raw_columns`, `normalized_columns`, and `mapping_warnings` in metadata. If mapping fails, the error reports the raw DataFrame shape, raw column names, and missing conceptual fields without printing secrets or environment variables.
+
 ## 5. Fetch AKShare Trading Calendar
 
 If the AKShare trading-calendar path is supported in your environment, fetch it manually:
@@ -229,6 +231,19 @@ python -m pip install akshare
 
 AKShare function names and columns can change. If a fetch fails, check the command output, confirm the AKShare function still exists, and use a reviewed local CSV through `LOCAL_CSV` until the adapter mapping is updated.
 
+For universe mapping failures, capture the diagnostic details:
+
+- `dataset_type`
+- raw DataFrame shape
+- raw column names
+- missing required conceptual fields
+
+Then update the AKShare universe mapping or prepare a canonical local universe CSV and run it through `data-pipeline`.
+
+### Network, VPN, or proxy failure
+
+AKShare upstream endpoints can fail with network errors such as disconnected remote responses. VPN, proxy, firewall, or regional routing can also affect requests. Retry later, narrow the date range, change networks if appropriate, or use previously saved local CSV files through `LOCAL_CSV`.
+
 ### Symbol format issues
 
 For market data, ETF-like symbols such as `510300` use the default ETF history path. Other A-share symbols may require a different AKShare function or symbol format.
@@ -257,6 +272,7 @@ Open the linked report and inspect the component with warnings. A WARN can be ac
 
 - AKShare real-data usage is manual-only and disabled by default.
 - Universe snapshot fields may rely on conservative defaults when AKShare does not provide them.
+- Universe field mapping is best-effort because AKShare raw columns can vary by endpoint and version.
 - Trading-calendar endpoint availability can vary by AKShare version.
 - The workflow does not repair vendor data.
 - The dry run is not strategy-quality validation.

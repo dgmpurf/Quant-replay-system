@@ -34,7 +34,7 @@ def test_local_csv_adapter_copies_and_loads_local_csv(tmp_path: Path) -> None:
     assert result.dataset_type == "market"
     assert result.row_count == 2
     assert result.artifact_paths["raw_data"].exists()
-    exported = pd.read_csv(result.artifact_paths["raw_data"])
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str, "name": str})
     assert list(exported["symbol"]) == ["AAA", "BBB"]
 
 
@@ -47,7 +47,7 @@ def test_mock_adapter_uses_configured_mock_data(tmp_path: Path) -> None:
     assert result.source == "MOCK"
     assert result.row_count > 0
     assert result.artifact_paths["raw_data"].exists()
-    exported = pd.read_csv(result.artifact_paths["raw_data"])
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
     assert "symbol" in exported.columns
 
 
@@ -216,7 +216,7 @@ def test_akshare_success_path_with_fake_module_writes_raw_artifacts(tmp_path: Pa
     assert fake_akshare.calls[0]["symbol"] == "510300"
     assert fake_akshare.calls[0]["start_date"] == "20240101"
     assert result.artifact_paths["raw_data"].exists()
-    exported = pd.read_csv(result.artifact_paths["raw_data"])
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
     assert {"symbol", "trade_date", "open", "close", "available_time"}.issubset(exported.columns)
     assert exported["source"].eq("AKSHARE_OPTIONAL").all()
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
@@ -250,7 +250,7 @@ def test_akshare_universe_success_path_writes_canonical_raw_artifacts(tmp_path: 
         "stock_info_a_code_name",
         "fund_etf_spot_em",
     }
-    exported = pd.read_csv(result.artifact_paths["raw_data"])
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
     assert list(exported.columns) == _UNIVERSE_COLUMNS
     assert pd.to_datetime(exported["as_of_date"]).dt.date.eq(pd.Timestamp("2024-05-20").date()).all()
     assert set(exported["instrument_type"]) == {"STOCK", "ETF"}
@@ -287,7 +287,7 @@ def test_akshare_universe_defaults_missing_optional_fields(tmp_path: Path, monke
         settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
     )
 
-    exported = pd.read_csv(result.artifact_paths["raw_data"])
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
 
     assert exported.loc[0, "exchange"] == "SSE"
     assert exported.loc[0, "industry"] == "UNKNOWN"
@@ -296,6 +296,245 @@ def test_akshare_universe_defaults_missing_optional_fields(tmp_path: Path, monke
     assert bool(exported.loc[0, "is_suspended"]) is False
     assert exported.loc[0, "min_lot"] == 100
     assert exported.loc[0, "t_plus_rule"] == "T+1"
+
+
+def test_akshare_universe_chinese_columns_are_mapped(tmp_path: Path, monkeypatch) -> None:
+    module = _fake_akshare_universe_module(
+        pd.DataFrame(
+            [
+                {
+                    "\u4ee3\u7801": "600000",
+                    "\u540d\u79f0": "\u6d66\u53d1\u94f6\u884c",
+                    "\u6240\u5c5e\u884c\u4e1a": "Banking",
+                    "\u4e0a\u5e02\u65e5\u671f": "1999-11-10",
+                    "\u4ea4\u6613\u6240": "SH",
+                }
+            ]
+        )
+    )
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="universe",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            as_of_date="2024-05-20",
+            market_type="stock",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert exported.loc[0, "symbol"] == "600000"
+    assert exported.loc[0, "name"] == "\u6d66\u53d1\u94f6\u884c"
+    assert exported.loc[0, "industry"] == "Banking"
+    assert exported.loc[0, "exchange"] == "SSE"
+    assert exported.loc[0, "listed_date"].startswith("1999-11-10")
+
+
+def test_akshare_universe_english_columns_are_mapped(tmp_path: Path, monkeypatch) -> None:
+    module = _fake_akshare_universe_module(
+        pd.DataFrame(
+            [
+                {
+                    "symbol": "000001",
+                    "name": "Ping An Bank",
+                    "industry": "Banking",
+                    "listed_date": "1991-04-03",
+                    "exchange": "SZ",
+                }
+            ]
+        )
+    )
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="universe",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            as_of_date="2024-05-20",
+            market_type="stock",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert exported.loc[0, "symbol"] == "000001"
+    assert exported.loc[0, "name"] == "Ping An Bank"
+    assert exported.loc[0, "exchange"] == "SZSE"
+    assert exported.loc[0, "industry"] == "Banking"
+
+
+def test_akshare_universe_duplicate_columns_do_not_trigger_dataframe_str_error(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    duplicate_frame = pd.DataFrame(
+        [["600000", "SHOULD_NOT_BE_USED", "PF Bank"]],
+        columns=["code", "code", "name"],
+    )
+    module = _fake_akshare_universe_module(duplicate_frame)
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="universe",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            as_of_date="2024-05-20",
+            market_type="stock",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert exported.loc[0, "symbol"] == "600000"
+    assert exported.loc[0, "name"] == "PF Bank"
+    assert any("Duplicate AKShare universe columns for symbol" in warning for warning in metadata["mapping_warnings"])
+    assert metadata["raw_columns"].count("code") == 2
+
+
+def test_akshare_universe_missing_symbol_column_raises_diagnostics(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module = _fake_akshare_universe_module(pd.DataFrame([{"name": "No Code"}]))
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    with pytest.raises(ValueError) as exc_info:
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="AKSHARE_OPTIONAL",
+                dataset_type="universe",
+                output_dir=tmp_path / "raw",
+                allow_real_data=True,
+                as_of_date="2024-05-20",
+                market_type="stock",
+            ),
+            settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+        )
+
+    message = str(exc_info.value)
+    assert "dataset_type=universe" in message
+    assert "raw_shape=(1, 3)" in message
+    assert "raw_columns=['name', '_akshare_instrument_type', '_akshare_function']" in message
+    assert "missing_required_conceptual_fields=['symbol']" in message
+    assert "LOCAL_CSV universe snapshot fallback" in message
+
+
+def test_akshare_universe_missing_name_defaults_to_symbol(tmp_path: Path, monkeypatch) -> None:
+    module = _fake_akshare_universe_module(pd.DataFrame([{"code": "600000"}]))
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="universe",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            as_of_date="2024-05-20",
+            market_type="stock",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str, "name": str})
+
+    assert exported.loc[0, "symbol"] == "600000"
+    assert exported.loc[0, "name"] == "600000"
+
+
+def test_akshare_universe_st_detection_from_name(tmp_path: Path, monkeypatch) -> None:
+    module = _fake_akshare_universe_module(pd.DataFrame([{"code": "000001", "name": "*ST Example"}]))
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="universe",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            as_of_date="2024-05-20",
+            market_type="stock",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert bool(exported.loc[0, "is_st"]) is True
+
+
+def test_akshare_universe_exchange_inference_from_symbol_prefix(tmp_path: Path, monkeypatch) -> None:
+    module = _fake_akshare_universe_module(
+        pd.DataFrame(
+            [
+                {"code": "600000", "name": "SSE Stock"},
+                {"code": "000001", "name": "SZSE Stock"},
+                {"code": "833000", "name": "BSE Stock"},
+            ]
+        )
+    )
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="universe",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            as_of_date="2024-05-20",
+            market_type="stock",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert dict(zip(exported["symbol"], exported["exchange"])) == {
+        "000001": "SZSE",
+        "600000": "SSE",
+        "833000": "BSE",
+    }
+
+
+def test_akshare_universe_metadata_includes_columns_and_mapping_warnings(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    duplicate_frame = pd.DataFrame([["600000", "PF Bank"]], columns=["code", "code"])
+    module = _fake_akshare_universe_module(duplicate_frame)
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="universe",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            as_of_date="2024-05-20",
+            market_type="stock",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    adapter_metadata = metadata["audit_metadata"]["adapter_metadata"]
+
+    assert metadata["raw_columns"] == ["code", "code", "_akshare_instrument_type", "_akshare_function"]
+    assert metadata["normalized_columns"] == _UNIVERSE_COLUMNS
+    assert metadata["mapping_warnings"] == adapter_metadata["mapping_warnings"]
+    assert adapter_metadata["row_count"] == 1
+    assert adapter_metadata["adapter_status"] == "SUCCESS"
 
 
 def test_metadata_json_is_written(tmp_path: Path) -> None:
@@ -624,6 +863,18 @@ def _fake_akshare_module() -> ModuleType:
 
     module.stock_info_a_code_name = stock_info_a_code_name
     module.fund_etf_spot_em = fund_etf_spot_em
+    return module
+
+
+def _fake_akshare_universe_module(frame: pd.DataFrame) -> ModuleType:
+    module = ModuleType("akshare")
+    module.universe_calls = []
+
+    def stock_info_a_code_name():
+        module.universe_calls.append({"function": "stock_info_a_code_name"})
+        return frame.copy()
+
+    module.stock_info_a_code_name = stock_info_a_code_name
     return module
 
 
