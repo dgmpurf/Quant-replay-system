@@ -19,6 +19,7 @@ from quant_replay_system.current_candidates import generate_current_candidates
 from quant_replay_system.current_to_paper_handoff import run_current_to_paper_handoff
 from quant_replay_system.current_to_paper_review_handoff import run_current_to_paper_review_handoff
 from quant_replay_system.data_quality import run_data_quality_checks
+from quant_replay_system.data_sources import DataSourceRequest, run_data_source_fetch
 from quant_replay_system.data_ingestion import (
     ingest_benchmark_data_csv,
     ingest_corporate_actions_csv,
@@ -283,6 +284,19 @@ def build_parser() -> argparse.ArgumentParser:
     workflow_status.add_argument("--strict", action="store_true", help="Exit non-zero when workflow status is WARN")
     workflow_status.add_argument("--config", help="Optional config YAML path")
     workflow_status.set_defaults(handler=_handle_paper_workflow_status)
+
+    data_source = subparsers.add_parser("data-source-fetch", help="Fetch or load raw local market data source files")
+    data_source.add_argument("--source", required=True, help="Data source adapter, e.g. LOCAL_CSV, MOCK, AKSHARE_OPTIONAL")
+    data_source.add_argument("--dataset-type", required=True, help="Dataset type: market, universe, benchmark, corporate_actions, trading_calendar")
+    data_source.add_argument("--input", help="Input CSV path for LOCAL_CSV")
+    data_source.add_argument("--output-dir", help="Optional raw output root directory")
+    data_source.add_argument("--revision-id", help="Revision id for raw artifacts")
+    data_source.add_argument("--allow-real-data", action="store_true", help="Explicit manual opt-in for real/network data adapters")
+    data_source.add_argument("--symbol", help="Optional symbol for future real-data adapters")
+    data_source.add_argument("--start-date", help="Optional start date for future real-data adapters")
+    data_source.add_argument("--end-date", help="Optional end date for future real-data adapters")
+    data_source.add_argument("--config", help="Optional config YAML path")
+    data_source.set_defaults(handler=_handle_data_source_fetch)
 
     ingest_market = subparsers.add_parser("ingest-market", help="Ingest local market daily CSV")
     ingest_market.add_argument("--input", required=True, help="Input market CSV path")
@@ -973,6 +987,32 @@ def _handle_paper_workflow_status(args: argparse.Namespace) -> int:
         return 1
     if result.status == "WARN" and args.strict:
         return 1
+    return 0
+
+
+def _handle_data_source_fetch(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    request = DataSourceRequest(
+        source=args.source,
+        dataset_type=args.dataset_type,
+        input_path=args.input,
+        output_dir=args.output_dir,
+        revision_id=args.revision_id,
+        allow_real_data=bool(args.allow_real_data),
+        symbol=args.symbol,
+        start_date=args.start_date,
+        end_date=args.end_date,
+    )
+    result = run_data_source_fetch(request, settings=settings)
+    print(f"source: {result.source}")
+    print(f"dataset_type: {result.dataset_type}")
+    print(f"run_id: {result.run_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"raw_data: {result.artifact_paths['raw_data']}")
+    print(f"metadata: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
     return 0
 
 

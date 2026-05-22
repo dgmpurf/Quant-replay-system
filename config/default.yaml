@@ -275,6 +275,19 @@ paper_workflow_status:
   enable_live_trading: false
   enable_broker_api: false
 
+data_sources:
+  default_source: LOCAL_CSV
+  raw_output_dir: data/raw
+  allow_network_sources: false
+  allow_real_data_fetch: false
+  require_manual_real_data_flag: true
+  default_revision_id: v1
+  default_source_name: LOCAL_CSV
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_ingestion:
   output_dir: data/processed
   snapshot_dir: data/snapshots

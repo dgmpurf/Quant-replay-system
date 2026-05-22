@@ -311,6 +311,20 @@ class PaperWorkflowStatusSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class DataSourceSettings(BaseModel):
+    default_source: str = "LOCAL_CSV"
+    raw_output_dir: Path = Path("data/raw")
+    allow_network_sources: bool = False
+    allow_real_data_fetch: bool = False
+    require_manual_real_data_flag: bool = True
+    default_revision_id: str = "v1"
+    default_source_name: str = "LOCAL_CSV"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataIngestionSettings(BaseModel):
     output_dir: Path = Path("data/processed")
     snapshot_dir: Path = Path("data/snapshots")
@@ -408,6 +422,7 @@ class Settings(BaseModel):
     paper_artifact_index: PaperArtifactIndexSettings = Field(default_factory=PaperArtifactIndexSettings)
     paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)
     paper_workflow_status: PaperWorkflowStatusSettings = Field(default_factory=PaperWorkflowStatusSettings)
+    data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
     data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
     data_quality: DataQualitySettings = Field(default_factory=DataQualitySettings)
     snapshot_quality_gate: SnapshotQualityGateSettings = Field(default_factory=SnapshotQualityGateSettings)
