@@ -133,6 +133,8 @@ For the local data preparation workflow status dashboard, see [docs/data_prepara
 
 For the unified local research workflow dashboard, see [docs/local_research_dashboard.md](docs/local_research_dashboard.md).
 
+For the end-to-end local research workflow smoke-test path, see [docs/local_research_workflow_e2e.md](docs/local_research_workflow_e2e.md).
+
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
@@ -231,6 +233,8 @@ python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decis
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli research-status --root outputs/reports --decision-date 2024-05-20 --universe etf_core
 ```
+
+The automated smoke-test version of this flow is documented in [docs/local_research_workflow_e2e.md](docs/local_research_workflow_e2e.md) and covered by `tests/test_local_research_workflow_e2e.py`.
 
 ## Project Layout
 
