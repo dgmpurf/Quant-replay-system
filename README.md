@@ -120,6 +120,8 @@ For local-safe raw data source adapters before ingestion, see [docs/data_sources
 
 For the local data source to ingestion and quality handoff pipeline, see [docs/data_pipeline.md](docs/data_pipeline.md).
 
+For the end-to-end local data preparation smoke-test workflow, see [docs/data_preparation_e2e.md](docs/data_preparation_e2e.md).
+
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
@@ -175,6 +177,16 @@ python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/exa
 python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 ```
 
+## Local Data Preparation E2E Workflow
+
+```powershell
+python -m quant_replay_system.cli data-pipeline --manifest data/mock/data_pipeline_manifest.json
+python -m quant_replay_system.cli snapshot-quality --manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
+python -m quant_replay_system.cli current-candidates --date 2024-01-08 --universe etf_core --top 5 --snapshot-manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
+python -m quant_replay_system.cli current-to-paper --candidates outputs/reports/current_candidates/<run_folder>/candidates.csv --paper-date 2024-01-08
+# Continue with the manual paper workflow: current-to-paper-review, paper-review-decisions, paper-daily, and paper-reconcile-fills.
+```
+
 ## Project Layout
 
 ```text
@@ -185,6 +197,7 @@ quant-replay-system/
   data/
     mock/
       corporate_actions.csv
+      data_pipeline_manifest.json
       prices.csv
       trading_calendar.csv
       universe_snapshots.csv
@@ -199,6 +212,7 @@ quant-replay-system/
     data_contract.md
     data_ingestion.md
     data_pipeline.md
+    data_preparation_e2e.md
     data_quality.md
     data_sources.md
     daily_paper_trading_runner.md

@@ -1,0 +1,19 @@
+{
+  "datasets": [
+    {
+      "dataset_type": "market",
+      "source": "LOCAL_CSV",
+      "input_path": "data/mock/prices.csv"
+    },
+    {
+      "dataset_type": "universe",
+      "source": "LOCAL_CSV",
+      "input_path": "data/mock/universe_snapshots.csv"
+    },
+    {
+      "dataset_type": "trading_calendar",
+      "source": "LOCAL_CSV",
+      "input_path": "data/mock/trading_calendar.csv"
+    }
+  ]
+}
