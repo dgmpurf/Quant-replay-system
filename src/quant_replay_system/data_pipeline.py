@@ -42,6 +42,9 @@ class DataPipelineDatasetRequest:
     revision_id: str | None = None
     source_name: str | None = None
     allow_real_data: bool = False
+    symbol: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
     params: dict[str, Any] = field(default_factory=dict)
 
 
@@ -232,6 +235,9 @@ def run_single_dataset_pipeline(
             output_dir=cfg.raw_output_dir,
             revision_id=request.revision_id,
             allow_real_data=bool(request.allow_real_data or cfg.allow_real_data),
+            symbol=request.symbol,
+            start_date=request.start_date,
+            end_date=request.end_date,
             params=request.params,
         ),
         settings=_settings_for_data_source(project_settings, cfg),
@@ -517,6 +523,9 @@ def generate_data_pipeline_id(
                 "revision_id": request.revision_id or "",
                 "source_name": request.source_name or "",
                 "allow_real_data": bool(request.allow_real_data),
+                "symbol": request.symbol or "",
+                "start_date": request.start_date or "",
+                "end_date": request.end_date or "",
                 "params": request.params,
             }
             for request in requests
@@ -578,9 +587,16 @@ def _ingestion_function(dataset_type: str):
 
 
 def _settings_for_data_source(project_settings: Settings, pipeline_settings: DataPipelineSettings) -> Settings:
+    real_data_updates = {}
+    if pipeline_settings.allow_real_data:
+        real_data_updates = {
+            "allow_network_sources": True,
+            "allow_real_data_fetch": True,
+        }
     data_source_settings = project_settings.data_sources.model_copy(
         update={
             "raw_output_dir": pipeline_settings.raw_output_dir,
+            **real_data_updates,
         }
     )
     return project_settings.model_copy(update={"data_sources": data_source_settings})
@@ -635,6 +651,9 @@ def _coerce_dataset_request(
             revision_id=value.revision_id,
             source_name=value.source_name,
             allow_real_data=bool(value.allow_real_data or settings.allow_real_data),
+            symbol=value.symbol,
+            start_date=value.start_date,
+            end_date=value.end_date,
             params=dict(value.params or {}),
         )
     if isinstance(value, DataSourceRequest):
@@ -645,6 +664,9 @@ def _coerce_dataset_request(
             revision_id=value.revision_id,
             source_name=None,
             allow_real_data=bool(value.allow_real_data or settings.allow_real_data),
+            symbol=value.symbol,
+            start_date=value.start_date,
+            end_date=value.end_date,
             params=dict(value.params or {}),
         )
     if isinstance(value, dict):
@@ -657,6 +679,9 @@ def _coerce_dataset_request(
             revision_id=value.get("revision_id"),
             source_name=value.get("source_name"),
             allow_real_data=bool(value.get("allow_real_data", False) or settings.allow_real_data),
+            symbol=value.get("symbol"),
+            start_date=value.get("start_date"),
+            end_date=value.get("end_date"),
             params=dict(value.get("params") or {}),
         )
     raise TypeError("Dataset requests must be dict, DataPipelineDatasetRequest, or DataSourceRequest")

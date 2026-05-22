@@ -123,6 +123,8 @@ For a one-page local workflow status dashboard and next manual action, see [docs
 
 For local-safe raw data source adapters before ingestion, see [docs/data_sources.md](docs/data_sources.md).
 
+`AKSHARE_OPTIONAL` is available for guarded manual local fetches only; it requires `--allow-real-data`, is never called by automated tests, and should be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
+
 For the local data source to ingestion and quality handoff pipeline, see [docs/data_pipeline.md](docs/data_pipeline.md).
 
 For the end-to-end local data preparation smoke-test workflow, see [docs/data_preparation_e2e.md](docs/data_preparation_e2e.md).

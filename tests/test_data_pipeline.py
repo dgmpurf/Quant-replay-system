@@ -1,5 +1,7 @@
 import json
+import sys
 from pathlib import Path
+from types import ModuleType
 
 import pandas as pd
 import pytest
@@ -276,6 +278,37 @@ def test_cli_blocks_real_source_unless_allow_real_data_is_passed(tmp_path: Path,
     assert "requires explicit --allow-real-data" in output.err
 
 
+def test_pipeline_akshare_optional_uses_fake_module_when_real_data_allowed(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setitem(sys.modules, "akshare", _fake_akshare_module())
+
+    result = run_data_source_ingestion_pipeline(
+        [
+            {
+                "dataset_type": "market",
+                "source": "AKSHARE_OPTIONAL",
+                "allow_real_data": True,
+                "symbol": "510300",
+                "start_date": "2024-01-01",
+                "end_date": "2024-01-03",
+            }
+        ],
+        config=_settings(tmp_path, allow_real_data=True),
+        run_data_quality=False,
+        build_snapshot_manifest=False,
+    )
+
+    assert result.status == "PASS"
+    assert result.dataset_results[0].source == "AKSHARE_OPTIONAL"
+    assert result.dataset_results[0].source_result is not None
+    assert result.dataset_results[0].source_result.audit_metadata["real_data_allowed"] is True
+    assert result.processed_paths["market"].exists()
+    processed = pd.read_csv(result.processed_paths["market"])
+    assert processed["symbol"].astype(str).tolist() == ["510300", "510300"]
+
+
 def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> None:
     input_path = tmp_path / "market.csv"
     _market_frame().to_csv(input_path, index=False)
@@ -457,3 +490,35 @@ def _calendar_frame() -> pd.DataFrame:
             },
         ]
     )
+
+
+def _fake_akshare_module() -> ModuleType:
+    module = ModuleType("akshare")
+
+    def fund_etf_hist_em(**kwargs):
+        _ = kwargs
+        return pd.DataFrame(
+            [
+                {
+                    "date": "2024-01-02",
+                    "open": 10.0,
+                    "high": 10.5,
+                    "low": 9.8,
+                    "close": 10.2,
+                    "volume": 1000,
+                    "amount": 10200,
+                },
+                {
+                    "date": "2024-01-03",
+                    "open": 10.2,
+                    "high": 10.8,
+                    "low": 10.1,
+                    "close": 10.6,
+                    "volume": 1100,
+                    "amount": 11660,
+                },
+            ]
+        )
+
+    module.fund_etf_hist_em = fund_etf_hist_em
+    return module

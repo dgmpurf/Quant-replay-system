@@ -128,7 +128,11 @@ class MockDataSourceAdapter(BaseDataSourceAdapter):
 
 
 class OptionalAkshareDataSourceAdapter(BaseDataSourceAdapter):
-    """Manual-only placeholder for future AkShare-style data source fetching."""
+    """Manual-only AKShare data source adapter.
+
+    The adapter intentionally imports akshare only after all real-data guardrails
+    pass so automated tests can assert the blocked path stays fully offline.
+    """
 
     source = "AKSHARE_OPTIONAL"
     is_real_data_source = True
@@ -141,16 +145,273 @@ class OptionalAkshareDataSourceAdapter(BaseDataSourceAdapter):
     ) -> tuple[pd.DataFrame, dict[str, Any], list[str]]:
         _enforce_real_data_guardrails(self, request, settings)
         _ = project_settings
-        try:
-            import akshare  # type: ignore  # noqa: F401
-        except ImportError as exc:
-            raise RuntimeError(
-                "AKSHARE_OPTIONAL requires akshare to be installed and must be run manually with "
-                "--allow-real-data plus config data_sources.allow_real_data_fetch=true."
-            ) from exc
-        raise NotImplementedError(
-            "AKSHARE_OPTIONAL is registered for future manual use but does not fetch data in v0.1."
+        if request.dataset_type not in {"market", "benchmark", "trading_calendar"}:
+            raise NotImplementedError(
+                f"AKSHARE_OPTIONAL does not support dataset_type={request.dataset_type!r} in v0.1. "
+                "Supported dataset types: market, benchmark, trading_calendar."
+            )
+        akshare = _import_akshare()
+        if request.dataset_type == "trading_calendar":
+            frame, adapter_metadata = _fetch_akshare_trading_calendar(akshare, request)
+        else:
+            frame, adapter_metadata = _fetch_akshare_market_like(akshare, request)
+        return frame, adapter_metadata, [
+            "AKSHARE_OPTIONAL is manual-only and should be passed through ingestion and data quality before use."
+        ]
+
+
+def _import_akshare():
+    try:
+        import akshare  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(
+            "AKSHARE_OPTIONAL requires akshare to be installed for manual real-data fetches. "
+            "Install it in your local environment with: python -m pip install akshare"
+        ) from exc
+    return akshare
+
+
+def _fetch_akshare_market_like(
+    akshare,
+    request: DataSourceRequest,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    if not request.symbol:
+        raise ValueError("AKSHARE_OPTIONAL market/benchmark fetch requires --symbol")
+    if not request.start_date or not request.end_date:
+        raise ValueError("AKSHARE_OPTIONAL market/benchmark fetch requires --start-date and --end-date")
+    function_name = _akshare_market_function_name(request)
+    function = getattr(akshare, function_name, None)
+    if function is None:
+        raise RuntimeError(f"akshare function not available: {function_name}")
+    kwargs = _akshare_market_kwargs(request, function_name)
+    raw = function(**kwargs)
+    frame = _normalize_akshare_market_frame(
+        pd.DataFrame(raw),
+        symbol=request.symbol,
+        dataset_type=request.dataset_type,
+        start_date=request.start_date,
+        end_date=request.end_date,
+        source=request.source,
+        revision_id=request.revision_id,
+    )
+    adapter_metadata = {
+        "adapter": request.source,
+        "adapter_status": "SUCCESS",
+        "akshare_function": function_name,
+        "symbol": request.symbol,
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+    }
+    return frame, adapter_metadata
+
+
+def _fetch_akshare_trading_calendar(
+    akshare,
+    request: DataSourceRequest,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    if not request.start_date or not request.end_date:
+        raise ValueError("AKSHARE_OPTIONAL trading_calendar fetch requires --start-date and --end-date")
+    function_name = str(request.params.get("akshare_function") or "tool_trade_date_hist_sina")
+    function = getattr(akshare, function_name, None)
+    if function is None:
+        raise RuntimeError(f"akshare function not available: {function_name}")
+    raw = function()
+    frame = _normalize_akshare_calendar_frame(
+        pd.DataFrame(raw),
+        start_date=request.start_date,
+        end_date=request.end_date,
+    )
+    adapter_metadata = {
+        "adapter": request.source,
+        "adapter_status": "SUCCESS",
+        "akshare_function": function_name,
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+    }
+    return frame, adapter_metadata
+
+
+def _akshare_market_function_name(request: DataSourceRequest) -> str:
+    configured = request.params.get("akshare_function")
+    if configured:
+        return str(configured)
+    if request.dataset_type == "benchmark":
+        return "stock_zh_index_daily"
+    asset_type = str(request.params.get("asset_type") or "").strip().upper()
+    symbol = str(request.symbol or "")
+    if asset_type == "ETF" or symbol.startswith(("1", "5")):
+        return "fund_etf_hist_em"
+    return "stock_zh_a_hist"
+
+
+def _akshare_market_kwargs(request: DataSourceRequest, function_name: str) -> dict[str, Any]:
+    if function_name == "stock_zh_index_daily":
+        return {"symbol": request.symbol}
+    kwargs = {
+        "symbol": request.symbol,
+        "period": request.params.get("period", "daily"),
+        "start_date": _akshare_date(request.start_date),
+        "end_date": _akshare_date(request.end_date),
+    }
+    if function_name in {"fund_etf_hist_em", "stock_zh_a_hist"}:
+        kwargs["adjust"] = request.params.get("adjust", "")
+    return kwargs
+
+
+def _normalize_akshare_market_frame(
+    frame: pd.DataFrame,
+    *,
+    symbol: str,
+    dataset_type: str,
+    start_date: str,
+    end_date: str,
+    source: str,
+    revision_id: str | None,
+) -> pd.DataFrame:
+    if frame.empty:
+        return _canonical_market_frame(pd.DataFrame(), symbol=symbol, source=source, revision_id=revision_id)
+    normalized = frame.rename(
+        columns={column: _AKSHARE_MARKET_COLUMN_ALIASES.get(str(column), column) for column in frame.columns}
+    )
+    if "trade_date" not in normalized.columns:
+        raise ValueError("AKSHARE_OPTIONAL market data did not include a date/trade_date column")
+    normalized["trade_date"] = pd.to_datetime(normalized["trade_date"], errors="coerce")
+    start = pd.Timestamp(start_date)
+    end = pd.Timestamp(end_date)
+    normalized = normalized.loc[
+        normalized["trade_date"].notna()
+        & (normalized["trade_date"] >= start)
+        & (normalized["trade_date"] <= end)
+    ].copy()
+    normalized["symbol"] = symbol
+    normalized = normalized.sort_values(["symbol", "trade_date"]).reset_index(drop=True)
+    return _canonical_market_frame(normalized, symbol=symbol, source=source, revision_id=revision_id)
+
+
+def _canonical_market_frame(
+    frame: pd.DataFrame,
+    *,
+    symbol: str,
+    source: str,
+    revision_id: str | None,
+) -> pd.DataFrame:
+    output = pd.DataFrame(index=frame.index)
+    output["symbol"] = frame.get("symbol", symbol)
+    output["trade_date"] = pd.to_datetime(frame.get("trade_date", pd.Series(dtype="datetime64[ns]")), errors="coerce")
+    for column in ["open", "high", "low", "close", "volume", "amount"]:
+        output[column] = pd.to_numeric(frame.get(column, pd.Series(0, index=frame.index)), errors="coerce").fillna(0)
+    pre_close = pd.to_numeric(frame.get("pre_close", pd.Series(index=frame.index, dtype="float64")), errors="coerce")
+    if pre_close.isna().all() and not output.empty:
+        pre_close = output.groupby("symbol")["close"].shift(1)
+    output["pre_close"] = pre_close.fillna(output["open"]).fillna(output["close"]).fillna(0)
+    output["adj_factor"] = pd.to_numeric(frame.get("adj_factor", pd.Series(1.0, index=frame.index)), errors="coerce").fillna(1.0)
+    output["is_suspended"] = frame.get("is_suspended", False)
+    output["limit_up"] = pd.to_numeric(frame.get("limit_up", output["pre_close"] * 1.10), errors="coerce").fillna(output["pre_close"] * 1.10)
+    output["limit_down"] = pd.to_numeric(frame.get("limit_down", output["pre_close"] * 0.90), errors="coerce").fillna(output["pre_close"] * 0.90)
+    trade_dates = pd.to_datetime(output["trade_date"], errors="coerce")
+    output["event_time"] = trade_dates + pd.Timedelta(hours=15)
+    output["publish_time"] = trade_dates + pd.Timedelta(hours=15, minutes=20)
+    output["ingest_time"] = trade_dates + pd.Timedelta(hours=15, minutes=30)
+    output["available_time"] = trade_dates + pd.Timedelta(hours=15, minutes=30)
+    output["revision_id"] = revision_id or "v1"
+    output["source"] = source
+    return output[
+        [
+            "symbol",
+            "trade_date",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "amount",
+            "pre_close",
+            "adj_factor",
+            "is_suspended",
+            "limit_up",
+            "limit_down",
+            "event_time",
+            "publish_time",
+            "ingest_time",
+            "available_time",
+            "revision_id",
+            "source",
+        ]
+    ]
+
+
+def _normalize_akshare_calendar_frame(
+    frame: pd.DataFrame,
+    *,
+    start_date: str,
+    end_date: str,
+) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(
+            columns=["trade_date", "is_trading_day", "session_open", "session_close", "decision_time", "reason"]
         )
+    normalized = frame.rename(
+        columns={column: _AKSHARE_CALENDAR_COLUMN_ALIASES.get(str(column), column) for column in frame.columns}
+    )
+    if "trade_date" not in normalized.columns:
+        first_column = normalized.columns[0]
+        normalized = normalized.rename(columns={first_column: "trade_date"})
+    normalized["trade_date"] = pd.to_datetime(normalized["trade_date"], errors="coerce")
+    start = pd.Timestamp(start_date)
+    end = pd.Timestamp(end_date)
+    normalized = normalized.loc[
+        normalized["trade_date"].notna()
+        & (normalized["trade_date"] >= start)
+        & (normalized["trade_date"] <= end)
+    ].copy()
+    if "is_trading_day" not in normalized.columns:
+        normalized["is_trading_day"] = True
+    output = pd.DataFrame(
+        {
+            "trade_date": normalized["trade_date"],
+            "is_trading_day": normalized["is_trading_day"].astype(bool),
+            "session_open": "09:30",
+            "session_close": "15:00",
+            "decision_time": "15:30",
+            "reason": "akshare_trading_day",
+        }
+    )
+    return output.reset_index(drop=True)
+
+
+def _akshare_date(value: str | None) -> str:
+    if value is None:
+        return ""
+    return pd.Timestamp(value).strftime("%Y%m%d")
+
+
+_AKSHARE_MARKET_COLUMN_ALIASES = {
+    "\u65e5\u671f": "trade_date",
+    "date": "trade_date",
+    "trade_date": "trade_date",
+    "\u5f00\u76d8": "open",
+    "open": "open",
+    "\u6700\u9ad8": "high",
+    "high": "high",
+    "\u6700\u4f4e": "low",
+    "low": "low",
+    "\u6536\u76d8": "close",
+    "close": "close",
+    "\u6210\u4ea4\u91cf": "volume",
+    "volume": "volume",
+    "\u6210\u4ea4\u989d": "amount",
+    "amount": "amount",
+    "\u524d\u6536\u76d8": "pre_close",
+    "pre_close": "pre_close",
+}
+
+
+_AKSHARE_CALENDAR_COLUMN_ALIASES = {
+    "trade_date": "trade_date",
+    "\u65e5\u671f": "trade_date",
+    "calendarDate": "trade_date",
+    "isOpen": "is_trading_day",
+}
 
 
 def list_data_source_adapters(*, include_real: bool = True) -> list[str]:
@@ -207,9 +468,12 @@ def run_data_source_fetch(
         "row_count": len(frame),
         "revision_id": normalized_request.revision_id,
         "adapter_metadata": adapter_metadata,
+        "adapter_status": adapter_metadata.get("adapter_status", "SUCCESS"),
         "request": _request_metadata(normalized_request),
         "live_trading_enabled": False,
         "broker_api_invoked": False,
+        "no_live_trading": True,
+        "no_broker_api": True,
         "real_data_allowed": bool(normalized_request.allow_real_data),
         "network_api_calls_used_in_tests": False,
         "data_source_fetch_only": True,
@@ -289,6 +553,11 @@ def build_data_source_metadata(result: DataSourceResult, paths: DataSourceArtifa
         "dataset_type": result.dataset_type,
         "run_id": result.run_id,
         "row_count": result.row_count,
+        "symbol": result.audit_metadata.get("request", {}).get("symbol", ""),
+        "start_date": result.audit_metadata.get("request", {}).get("start_date", ""),
+        "end_date": result.audit_metadata.get("request", {}).get("end_date", ""),
+        "allow_real_data": bool(result.audit_metadata.get("request", {}).get("allow_real_data", False)),
+        "adapter_status": result.audit_metadata.get("adapter_status", ""),
         "created_at": "1970-01-01T00:00:00+00:00",
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
         "warnings": result.warnings,

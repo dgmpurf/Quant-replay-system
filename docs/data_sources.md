@@ -39,9 +39,35 @@ Dataset mapping:
 
 ### AKSHARE_OPTIONAL
 
-`AKSHARE_OPTIONAL` is registered as a manual-only placeholder for future real-data work.
+`AKSHARE_OPTIONAL` is a guarded manual-only adapter for local AKShare fetches.
 
-It is disabled by default, imports `akshare` lazily, and must not be used in automated tests. A manual run must explicitly allow real data and set config guardrails before any future implementation can fetch data.
+It is disabled by default, imports `akshare` lazily only after guardrails pass, and must not be used for real network calls in automated tests.
+
+Supported v0.1 dataset types:
+
+- `market`
+- `benchmark`
+- `trading_calendar`
+
+Unsupported dataset types return a clear not-implemented error.
+
+Manual market and benchmark fetches require:
+
+- `--symbol`
+- `--start-date`
+- `--end-date`
+- `--allow-real-data`
+
+For `market`, the adapter chooses an AKShare daily-history function by default:
+
+- ETF-like symbols, such as `510300`, use `fund_etf_hist_em`.
+- Other symbols use `stock_zh_a_hist`.
+
+For `benchmark`, the adapter uses `stock_zh_index_daily` by default and filters dates locally.
+
+For `trading_calendar`, the adapter uses `tool_trade_date_hist_sina` by default and writes trading-day rows with standard MVP session times.
+
+The adapter normalizes returned frames into raw CSVs that are compatible with the existing ingestion path where possible. Users should still run `data-pipeline`, `data-quality`, and `snapshot-quality` before using the data for current candidates or replay.
 
 ## Dataset Types
 
@@ -71,6 +97,7 @@ Rules:
 - Real/network adapters are disabled by default.
 - CLI real-data runs require `--allow-real-data`.
 - Automated tests must use `LOCAL_CSV` or `MOCK`.
+- Automated tests may monkeypatch a fake `akshare` module, but they must not call real AKShare or network APIs.
 - No API keys or tokens are required or printed.
 - `.env` is not modified.
 - Broker/live trading integrations are not invoked.
@@ -95,10 +122,16 @@ Use a custom raw output root:
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type universe --input data\mock\universe_snapshots.csv --output-dir data\raw
 ```
 
-Real-data adapters are blocked unless explicitly and manually allowed:
+Manual AKShare market fetch:
 
 ```cmd
-python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type market --allow-real-data
+python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type market --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
+Manual AKShare trading calendar fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type trading_calendar --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
 ```
 
 The command prints raw artifact paths, row count, and:
@@ -115,6 +148,14 @@ No live trading or broker API was invoked.
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data\mock\prices.csv
 ```
 
+For a manual AKShare fetch, run the raw output through the same local quality path:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type market --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv
+python -m quant_replay_system.cli data-quality --dataset-type market --input data\processed\market\<pipeline_id>\raw_data_cleaned.csv
+```
+
 You can still run the underlying commands manually:
 
 ```cmd
@@ -126,9 +167,9 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 
 ## Known MVP Limitations
 
-- Only `LOCAL_CSV` and `MOCK` fetch local data in v0.1.
-- `AKSHARE_OPTIONAL` is a guarded placeholder, not a production data downloader.
-- No source-specific symbol mapping is implemented.
+- `AKSHARE_OPTIONAL` is a guarded MVP adapter, not a production data downloader.
+- AKShare function selection is simple and may need manual `params` or later source-specific mapping.
+- Universe and corporate action AKShare fetches are not implemented in v0.1.
 - Data source adapters still only write raw artifacts; use `data-pipeline` for ingestion handoff.
 - It uses local/mock CSV data only in automated tests.
 - It is not live trading and never invokes broker APIs.

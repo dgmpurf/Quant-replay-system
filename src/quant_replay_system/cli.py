@@ -1114,6 +1114,17 @@ def _handle_research_status(args: argparse.Namespace) -> int:
 
 def _handle_data_source_fetch(args: argparse.Namespace) -> int:
     settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.allow_real_data:
+        settings = settings.model_copy(
+            update={
+                "data_sources": settings.data_sources.model_copy(
+                    update={
+                        "allow_network_sources": True,
+                        "allow_real_data_fetch": True,
+                    }
+                )
+            }
+        )
     request = DataSourceRequest(
         source=args.source,
         dataset_type=args.dataset_type,

@@ -1,5 +1,7 @@
 import builtins
 import json
+import sys
+from types import ModuleType
 from pathlib import Path
 
 import pandas as pd
@@ -100,6 +102,81 @@ def test_real_adapter_with_allow_flag_is_still_disabled_by_config(tmp_path: Path
             DataSourceRequest(source="AKSHARE_OPTIONAL", dataset_type="market", allow_real_data=True),
             settings=_settings(tmp_path),
         )
+
+
+def test_akshare_missing_installation_returns_clear_error_in_real_path(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    original_import = builtins.__import__
+    monkeypatch.delitem(sys.modules, "akshare", raising=False)
+
+    def guarded_import(name, *args, **kwargs):
+        if name == "akshare":
+            raise ImportError("akshare unavailable in offline test")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(RuntimeError, match="python -m pip install akshare"):
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="AKSHARE_OPTIONAL",
+                dataset_type="market",
+                allow_real_data=True,
+                symbol="510300",
+                start_date="2024-01-01",
+                end_date="2024-01-03",
+            ),
+            settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+        )
+
+
+def test_akshare_unsupported_dataset_returns_not_implemented(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "akshare", _fake_akshare_module())
+
+    with pytest.raises(NotImplementedError, match="does not support dataset_type"):
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="AKSHARE_OPTIONAL",
+                dataset_type="universe",
+                allow_real_data=True,
+            ),
+            settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+        )
+
+
+def test_akshare_success_path_with_fake_module_writes_raw_artifacts(tmp_path: Path, monkeypatch) -> None:
+    fake_akshare = _fake_akshare_module()
+    monkeypatch.setitem(sys.modules, "akshare", fake_akshare)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="510300",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    assert result.source == "AKSHARE_OPTIONAL"
+    assert result.row_count == 2
+    assert fake_akshare.calls[0]["symbol"] == "510300"
+    assert fake_akshare.calls[0]["start_date"] == "20240101"
+    assert result.artifact_paths["raw_data"].exists()
+    exported = pd.read_csv(result.artifact_paths["raw_data"])
+    assert {"symbol", "trade_date", "open", "close", "available_time"}.issubset(exported.columns)
+    assert exported["source"].eq("AKSHARE_OPTIONAL").all()
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    assert metadata["adapter_status"] == "SUCCESS"
+    assert metadata["symbol"] == "510300"
+    assert metadata["allow_real_data"] is True
+    assert metadata["live_trading_enabled"] is False
+    assert metadata["broker_api_invoked"] is False
 
 
 def test_metadata_json_is_written(tmp_path: Path) -> None:
@@ -214,6 +291,40 @@ def test_cli_blocks_real_source_without_allow_real_data(tmp_path: Path, capsys) 
     assert "requires explicit --allow-real-data" in output.err
 
 
+def test_cli_allows_akshare_with_allow_real_data_using_fake_module(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setitem(sys.modules, "akshare", _fake_akshare_module())
+
+    code = cli.main(
+        [
+            "data-source-fetch",
+            "--source",
+            "AKSHARE_OPTIONAL",
+            "--dataset-type",
+            "market",
+            "--symbol",
+            "510300",
+            "--start-date",
+            "2024-01-01",
+            "--end-date",
+            "2024-01-03",
+            "--allow-real-data",
+            "--output-dir",
+            str(tmp_path / "raw"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "source: AKSHARE_OPTIONAL" in output.out
+    assert "row_count: 2" in output.out
+    assert "No live trading or broker API was invoked." in output.out
+    raw_line = next(line for line in output.out.splitlines() if line.startswith("raw_data:"))
+    raw_path = Path(raw_line.split(":", 1)[1].strip())
+    assert raw_path.exists()
+    exported = pd.read_csv(raw_path)
+    assert len(exported) == 2
+
+
 def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> None:
     input_path = tmp_path / "market.csv"
     _market_frame().to_csv(input_path, index=False)
@@ -285,3 +396,36 @@ def _universe_frame() -> pd.DataFrame:
             }
         ]
     )
+
+
+def _fake_akshare_module() -> ModuleType:
+    module = ModuleType("akshare")
+    module.calls = []
+
+    def fund_etf_hist_em(**kwargs):
+        module.calls.append(kwargs)
+        return pd.DataFrame(
+            [
+                {
+                    "date": "2024-01-02",
+                    "open": 10.0,
+                    "high": 10.5,
+                    "low": 9.8,
+                    "close": 10.2,
+                    "volume": 1000,
+                    "amount": 10200,
+                },
+                {
+                    "date": "2024-01-03",
+                    "open": 10.2,
+                    "high": 10.8,
+                    "low": 10.1,
+                    "close": 10.6,
+                    "volume": 1100,
+                    "amount": 11660,
+                },
+            ]
+        )
+
+    module.fund_etf_hist_em = fund_etf_hist_em
+    return module
