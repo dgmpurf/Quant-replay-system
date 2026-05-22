@@ -342,6 +342,32 @@ class DataPipelineSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class DataPreparationArtifactIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports")
+    output_dir: Path = Path("outputs/reports/data_preparation/index")
+    include_missing_metadata: bool = False
+    artifact_type: Literal["data_pipeline", "data_quality", "snapshot_quality", "current_candidates", "all"] = "all"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class DataPreparationArtifactHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/data_preparation/index/data_preparation_artifact_index.csv")
+    root_dir: Path = Path("outputs/reports")
+    output_dir: Path = Path("outputs/reports/data_preparation/health")
+    strict: bool = False
+    empty_candidates_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_no_live_statement_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_metadata_field_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_optional_field_severity: Literal["INFO", "WARN", "ERROR"] = "WARN"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataIngestionSettings(BaseModel):
     output_dir: Path = Path("data/processed")
     snapshot_dir: Path = Path("data/snapshots")
@@ -441,6 +467,8 @@ class Settings(BaseModel):
     paper_workflow_status: PaperWorkflowStatusSettings = Field(default_factory=PaperWorkflowStatusSettings)
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
+    data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)
+    data_preparation_artifact_health: DataPreparationArtifactHealthSettings = Field(default_factory=DataPreparationArtifactHealthSettings)
     data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
     data_quality: DataQualitySettings = Field(default_factory=DataQualitySettings)
     snapshot_quality_gate: SnapshotQualityGateSettings = Field(default_factory=SnapshotQualityGateSettings)

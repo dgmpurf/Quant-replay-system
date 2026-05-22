@@ -18,6 +18,8 @@ from quant_replay_system.current_candidate_artifact_index import build_current_c
 from quant_replay_system.current_candidates import generate_current_candidates
 from quant_replay_system.current_to_paper_handoff import run_current_to_paper_handoff
 from quant_replay_system.current_to_paper_review_handoff import run_current_to_paper_review_handoff
+from quant_replay_system.data_preparation_artifact_health import check_data_preparation_artifact_health
+from quant_replay_system.data_preparation_artifact_index import build_data_preparation_artifact_index
 from quant_replay_system.data_pipeline import (
     load_data_pipeline_manifest,
     run_data_source_ingestion_pipeline,
@@ -313,6 +315,34 @@ def build_parser() -> argparse.ArgumentParser:
     data_pipeline.add_argument("--allow-real-data", action="store_true", help="Explicit manual opt-in for real/network data adapters")
     data_pipeline.add_argument("--config", help="Optional config YAML path")
     data_pipeline.set_defaults(handler=_handle_data_pipeline)
+
+    data_prep_index = subparsers.add_parser(
+        "data-prep-index",
+        help="Build a local index of data preparation artifacts",
+    )
+    data_prep_index.add_argument("--root", help="Reports root directory")
+    data_prep_index.add_argument("--output-dir", help="Optional index output directory")
+    data_prep_index.add_argument("--include-missing-metadata", action="store_true", help="Index folders missing metadata.json")
+    data_prep_index.add_argument(
+        "--artifact-type",
+        choices=["data_pipeline", "data_quality", "snapshot_quality", "current_candidates", "all"],
+        default="all",
+        help="Data preparation artifact type to index",
+    )
+    data_prep_index.add_argument("--config", help="Optional config YAML path")
+    data_prep_index.set_defaults(handler=_handle_data_prep_index)
+
+    data_prep_health = subparsers.add_parser(
+        "data-prep-health",
+        help="Check indexed local data preparation artifact health",
+    )
+    data_prep_health.add_argument("--index", help="Data preparation artifact index CSV path")
+    data_prep_health.add_argument("--root", help="Reports root directory to scan if no index is provided")
+    data_prep_health.add_argument("--output-dir", help="Optional health-check output directory")
+    data_prep_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    data_prep_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    data_prep_health.add_argument("--config", help="Optional config YAML path")
+    data_prep_health.set_defaults(handler=_handle_data_prep_health)
 
     ingest_market = subparsers.add_parser("ingest-market", help="Ingest local market daily CSV")
     ingest_market.add_argument("--input", required=True, help="Input market CSV path")
@@ -1075,6 +1105,67 @@ def _handle_data_pipeline(args: argparse.Namespace) -> int:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
     return 1 if result.status == "FAIL" else 0
+
+
+def _handle_data_prep_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {
+        "artifact_type": args.artifact_type,
+        "include_missing_metadata": bool(args.include_missing_metadata),
+    }
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "data_preparation_artifact_index": settings.data_preparation_artifact_index.model_copy(update=updates)
+        }
+    )
+    result = build_data_preparation_artifact_index(settings=settings)
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['data_preparation_artifact_index']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_data_prep_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "data_preparation_artifact_health": settings.data_preparation_artifact_health.model_copy(update=updates)
+        }
+    )
+    result = check_data_preparation_artifact_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['data_preparation_artifact_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
 
 
 def _handle_ingest_market(args: argparse.Namespace) -> int:

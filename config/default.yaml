@@ -304,6 +304,30 @@ data_pipeline:
   enable_live_trading: false
   enable_broker_api: false
 
+data_preparation_artifact_index:
+  root_dir: outputs/reports
+  output_dir: outputs/reports/data_preparation/index
+  include_missing_metadata: false
+  artifact_type: all
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+data_preparation_artifact_health:
+  index_path: outputs/reports/data_preparation/index/data_preparation_artifact_index.csv
+  root_dir: outputs/reports
+  output_dir: outputs/reports/data_preparation/health
+  strict: false
+  empty_candidates_severity: WARN
+  missing_no_live_statement_severity: WARN
+  missing_metadata_field_severity: WARN
+  missing_optional_field_severity: WARN
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_ingestion:
   output_dir: data/processed
   snapshot_dir: data/snapshots
