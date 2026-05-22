@@ -125,6 +125,8 @@ For local-safe raw data source adapters before ingestion, see [docs/data_sources
 
 `AKSHARE_OPTIONAL` is available for guarded manual local fetches only; it requires `--allow-real-data`, is never called by automated tests, and should be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
 
+For the guarded Windows CMD workflow from manual AKShare fetch to current candidates, see [docs/akshare_manual_workflow.md](docs/akshare_manual_workflow.md).
+
 For the local data source to ingestion and quality handoff pipeline, see [docs/data_pipeline.md](docs/data_pipeline.md).
 
 For the end-to-end local data preparation smoke-test workflow, see [docs/data_preparation_e2e.md](docs/data_preparation_e2e.md).
@@ -264,6 +266,7 @@ quant-replay-system/
       universe_snapshots.csv
   docs/
     CODEX_PROMPT_STANDARD.md
+    akshare_manual_workflow.md
     batch_replay.md
     current_candidate_artifact_health.md
     current_candidate_artifact_index.md

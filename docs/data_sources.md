@@ -69,6 +69,8 @@ For `trading_calendar`, the adapter uses `tool_trade_date_hist_sina` by default 
 
 The adapter normalizes returned frames into raw CSVs that are compatible with the existing ingestion path where possible. Users should still run `data-pipeline`, `data-quality`, and `snapshot-quality` before using the data for current candidates or replay.
 
+For the guarded manual command sequence from AKShare fetch to current candidates, see [akshare_manual_workflow.md](akshare_manual_workflow.md).
+
 ## Dataset Types
 
 Supported `dataset_type` values are:
@@ -139,6 +141,8 @@ The command prints raw artifact paths, row count, and:
 ```text
 No live trading or broker API was invoked.
 ```
+
+For a full Windows CMD example that carries AKShare output through `data-pipeline`, `data-quality`, `snapshot-quality`, and `current-candidates`, see [akshare_manual_workflow.md](akshare_manual_workflow.md).
 
 ## Relationship To Data Ingestion
 
