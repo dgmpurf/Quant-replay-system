@@ -18,6 +18,7 @@ Included now:
 - Snapshot quality gate for full processed snapshot manifests.
 - Optional snapshot quality preflight for replay-like workflows.
 - Current/as-of-date candidate generation from local snapshots for paper-trading review.
+- Current candidate artifact index and health check for local candidate run navigation.
 - Placeholder modules for data, scoring, replay, execution, evaluation, calibration, and risk.
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
 - Trading calendar and T+1 execution calendar for daily replay.
@@ -73,6 +74,10 @@ For CLI flags that enable snapshot preflight on replay-like workflows, see [docs
 
 For current/as-of-date candidate generation from local snapshots, see [docs/current_candidate_generation.md](docs/current_candidate_generation.md).
 
+For indexing generated current-candidate runs, see [docs/current_candidate_artifact_index.md](docs/current_candidate_artifact_index.md).
+
+For checking generated current-candidate artifact health, see [docs/current_candidate_artifact_health.md](docs/current_candidate_artifact_health.md).
+
 For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
 
 For explainable parameter comparison using batch replay outputs, see [docs/parameter_calibration.md](docs/parameter_calibration.md).
@@ -110,6 +115,8 @@ python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --ou
 python -m quant_replay_system.cli data-quality --dataset-type market --input data/processed/market/market_cleaned.csv
 python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
+python -m quant_replay_system.cli current-candidates-index --root outputs/reports/current_candidates
+python -m quant_replay_system.cli current-candidates-health --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv
 python -m quant_replay_system.cli replay-run --date 2024-01-03 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli batch-replay --dates 2024-01-03,2024-01-04 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
@@ -122,6 +129,8 @@ python -m quant_replay_system.cli paper-template-fills --output data/paper/fills
 python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --output-dir data/processed/market
 python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
+python -m quant_replay_system.cli current-candidates-index --root outputs/reports/current_candidates
+python -m quant_replay_system.cli current-candidates-health --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/current_candidates/example/candidates.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --reviewer-id msj
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
@@ -144,6 +153,8 @@ quant-replay-system/
   docs/
     CODEX_PROMPT_STANDARD.md
     batch_replay.md
+    current_candidate_artifact_health.md
+    current_candidate_artifact_index.md
     current_candidate_generation.md
     data_contract.md
     data_ingestion.md
@@ -174,6 +185,8 @@ quant-replay-system/
       calibration.py
       cli.py
       config.py
+      current_candidate_artifact_health.py
+      current_candidate_artifact_index.py
       current_candidates.py
       data.py
       data_ingestion.py

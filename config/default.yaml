@@ -64,6 +64,28 @@ current_candidates:
   enable_live_trading: false
   enable_broker_api: false
 
+current_candidate_artifact_index:
+  root_dir: outputs/reports/current_candidates
+  output_dir: outputs/reports/current_candidates/index
+  include_missing_metadata: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+current_candidate_artifact_health:
+  index_path: outputs/reports/current_candidates/index/current_candidate_artifact_index.csv
+  root_dir: outputs/reports/current_candidates
+  output_dir: outputs/reports/current_candidates/health
+  strict: false
+  empty_candidates_severity: WARN
+  missing_no_live_statement_severity: WARN
+  missing_metadata_field_severity: WARN
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 replay_run:
   default_top_n: 5
   default_holding_horizon: 10

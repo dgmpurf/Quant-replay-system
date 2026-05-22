@@ -13,6 +13,8 @@ import pandas as pd
 from quant_replay_system.batch_replay import run_batch_replay
 from quant_replay_system.calibration import run_parameter_calibration
 from quant_replay_system.config import load_settings
+from quant_replay_system.current_candidate_artifact_health import check_current_candidate_artifact_health
+from quant_replay_system.current_candidate_artifact_index import build_current_candidate_artifact_index
 from quant_replay_system.current_candidates import generate_current_candidates
 from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_ingestion import (
@@ -136,6 +138,28 @@ def build_parser() -> argparse.ArgumentParser:
     current_candidates.add_argument("--config", help="Optional config YAML path")
     _add_snapshot_preflight_arguments(current_candidates)
     current_candidates.set_defaults(handler=_handle_current_candidates)
+
+    current_index = subparsers.add_parser(
+        "current-candidates-index",
+        help="Build a local index of current-candidate artifact folders",
+    )
+    current_index.add_argument("--root", help="Current-candidate artifact root directory")
+    current_index.add_argument("--output-dir", help="Optional index output directory")
+    current_index.add_argument("--include-missing-metadata", action="store_true", help="Index folders missing metadata.json")
+    current_index.add_argument("--config", help="Optional config YAML path")
+    current_index.set_defaults(handler=_handle_current_candidates_index)
+
+    current_health = subparsers.add_parser(
+        "current-candidates-health",
+        help="Check local current-candidate artifact file health",
+    )
+    current_health.add_argument("--index", help="Current-candidate artifact index CSV path")
+    current_health.add_argument("--root", help="Current-candidate artifact root directory")
+    current_health.add_argument("--output-dir", help="Optional health-check output directory")
+    current_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    current_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    current_health.add_argument("--config", help="Optional config YAML path")
+    current_health.set_defaults(handler=_handle_current_candidates_health)
 
     daily = subparsers.add_parser("paper-daily", help="Write a local daily paper trading report")
     daily.add_argument("--date", required=True, help="Paper trading date, e.g. 2024-05-20")
@@ -437,6 +461,64 @@ def _handle_current_candidates(args: argparse.Namespace) -> int:
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_current_candidates_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"include_missing_metadata": bool(args.include_missing_metadata)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "current_candidate_artifact_index": settings.current_candidate_artifact_index.model_copy(update=updates)
+        }
+    )
+    result = build_current_candidate_artifact_index(settings=settings)
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['current_candidate_artifact_index']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_current_candidates_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "current_candidate_artifact_health": settings.current_candidate_artifact_health.model_copy(update=updates)
+        }
+    )
+    result = check_current_candidate_artifact_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['current_candidate_artifact_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
     return 0
 
 

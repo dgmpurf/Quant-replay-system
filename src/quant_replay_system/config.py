@@ -83,6 +83,30 @@ class CurrentCandidateSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class CurrentCandidateArtifactIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/current_candidates")
+    output_dir: Path = Path("outputs/reports/current_candidates/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class CurrentCandidateArtifactHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/current_candidates/index/current_candidate_artifact_index.csv")
+    root_dir: Path = Path("outputs/reports/current_candidates")
+    output_dir: Path = Path("outputs/reports/current_candidates/health")
+    strict: bool = False
+    empty_candidates_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_no_live_statement_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_metadata_field_severity: Literal["WARN", "ERROR"] = "WARN"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ReplayRunSettings(BaseModel):
     default_top_n: int = Field(default=5, gt=0)
     default_holding_horizon: int = Field(default=10, gt=0)
@@ -307,6 +331,8 @@ class Settings(BaseModel):
     score_engine: ScoreEngineSettings = Field(default_factory=ScoreEngineSettings)
     candidate_selection: CandidateSelectionSettings = Field(default_factory=CandidateSelectionSettings)
     current_candidates: CurrentCandidateSettings = Field(default_factory=CurrentCandidateSettings)
+    current_candidate_artifact_index: CurrentCandidateArtifactIndexSettings = Field(default_factory=CurrentCandidateArtifactIndexSettings)
+    current_candidate_artifact_health: CurrentCandidateArtifactHealthSettings = Field(default_factory=CurrentCandidateArtifactHealthSettings)
     replay_run: ReplayRunSettings = Field(default_factory=ReplayRunSettings)
     batch_replay: BatchReplaySettings = Field(default_factory=BatchReplaySettings)
     calibration: CalibrationSettings = Field(default_factory=CalibrationSettings)
