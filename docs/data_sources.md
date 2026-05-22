@@ -72,7 +72,7 @@ For `universe`, the adapter can fetch stock and ETF symbol/name lists through is
 
 The adapter normalizes returned frames into raw CSVs that are compatible with the existing ingestion path where possible. Users should still run `data-pipeline`, `data-quality`, and `snapshot-quality` before using the data for current candidates or replay.
 
-For the guarded manual command sequence from AKShare fetch to current candidates, see [akshare_manual_workflow.md](akshare_manual_workflow.md).
+For the guarded manual command sequence from AKShare fetch to current candidates, see [akshare_manual_workflow.md](akshare_manual_workflow.md). For a shorter universe + market dry-run checklist with a copyable manifest template, see [akshare_real_data_dry_run.md](akshare_real_data_dry_run.md).
 
 ## Dataset Types
 
@@ -151,7 +151,7 @@ The command prints raw artifact paths, row count, and:
 No live trading or broker API was invoked.
 ```
 
-For a full Windows CMD example that carries AKShare output through `data-pipeline`, `data-quality`, `snapshot-quality`, and `current-candidates`, see [akshare_manual_workflow.md](akshare_manual_workflow.md).
+For a full Windows CMD example that carries AKShare output through `data-pipeline`, `data-quality`, `snapshot-quality`, and `current-candidates`, see [akshare_manual_workflow.md](akshare_manual_workflow.md). For the universe + market real-data dry-run checklist, see [akshare_real_data_dry_run.md](akshare_real_data_dry_run.md).
 
 ## Relationship To Data Ingestion
 

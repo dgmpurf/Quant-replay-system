@@ -127,6 +127,8 @@ For local-safe raw data source adapters before ingestion, see [docs/data_sources
 
 For the guarded Windows CMD workflow from manual AKShare fetch to current candidates, see [docs/akshare_manual_workflow.md](docs/akshare_manual_workflow.md).
 
+For the AKShare universe + market real-data dry-run checklist, see [docs/akshare_real_data_dry_run.md](docs/akshare_real_data_dry_run.md).
+
 For the local data source to ingestion and quality handoff pipeline, see [docs/data_pipeline.md](docs/data_pipeline.md).
 
 For the end-to-end local data preparation smoke-test workflow, see [docs/data_preparation_e2e.md](docs/data_preparation_e2e.md).
@@ -267,6 +269,7 @@ quant-replay-system/
   docs/
     CODEX_PROMPT_STANDARD.md
     akshare_manual_workflow.md
+    akshare_real_data_dry_run.md
     batch_replay.md
     current_candidate_artifact_health.md
     current_candidate_artifact_index.md

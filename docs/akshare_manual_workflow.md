@@ -21,6 +21,8 @@ AKShare manual fetch
 
 Do not treat raw AKShare data as complete, clean, or replay-ready until data quality and snapshot quality have been reviewed.
 
+For a concise universe + market dry-run checklist with a local manifest template, see [akshare_real_data_dry_run.md](akshare_real_data_dry_run.md).
+
 ## Safety Guarantees
 
 - `AKSHARE_OPTIONAL` requires explicit `--allow-real-data`.
