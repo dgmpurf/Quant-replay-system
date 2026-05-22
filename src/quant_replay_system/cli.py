@@ -35,6 +35,7 @@ from quant_replay_system.data_ingestion import (
     ingest_universe_snapshot_csv,
 )
 from quant_replay_system.daily_paper_runner import run_daily_paper_trading
+from quant_replay_system.local_research_dashboard import run_local_research_dashboard
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
@@ -291,6 +292,21 @@ def build_parser() -> argparse.ArgumentParser:
     workflow_status.add_argument("--strict", action="store_true", help="Exit non-zero when workflow status is WARN")
     workflow_status.add_argument("--config", help="Optional config YAML path")
     workflow_status.set_defaults(handler=_handle_paper_workflow_status)
+
+    research_status = subparsers.add_parser(
+        "research-status",
+        help="Build a unified local research workflow dashboard",
+    )
+    research_status.add_argument("--root", help="Reports root directory")
+    research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
+    research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
+    research_status.add_argument("--paper-trading-root", help="Paper trading artifact root directory")
+    research_status.add_argument("--decision-date", help="Optional decision date filter")
+    research_status.add_argument("--universe", help="Optional universe name filter")
+    research_status.add_argument("--output-dir", help="Optional unified dashboard output directory")
+    research_status.add_argument("--strict", action="store_true", help="Exit non-zero when dashboard status is WARN")
+    research_status.add_argument("--config", help="Optional config YAML path")
+    research_status.set_defaults(handler=_handle_research_status)
 
     data_source = subparsers.add_parser("data-source-fetch", help="Fetch or load raw local market data source files")
     data_source.add_argument("--source", required=True, help="Data source adapter, e.g. LOCAL_CSV, MOCK, AKSHARE_OPTIONAL")
@@ -1043,6 +1059,49 @@ def _handle_paper_workflow_status(args: argparse.Namespace) -> int:
     print(f"latest_decision_date: {result.latest_decision_date}")
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['paper_workflow_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
+    return 0
+
+
+def _handle_research_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.data_preparation_root:
+        updates["data_preparation_root"] = Path(args.data_preparation_root)
+    if args.current_candidates_root:
+        updates["current_candidates_root"] = Path(args.current_candidates_root)
+    if args.paper_trading_root:
+        updates["paper_trading_root"] = Path(args.paper_trading_root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "local_research_dashboard": settings.local_research_dashboard.model_copy(update=updates)
+        }
+    )
+    result = run_local_research_dashboard(
+        root=args.root,
+        data_preparation_root=args.data_preparation_root,
+        current_candidates_root=args.current_candidates_root,
+        paper_trading_root=args.paper_trading_root,
+        decision_date=args.decision_date,
+        universe_name=args.universe,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    print(f"Research status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_decision_date: {result.latest_decision_date}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['local_research_dashboard']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

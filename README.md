@@ -45,6 +45,7 @@ Included now:
 - Paper trading artifact index for local report and CSV navigation.
 - Paper trading artifact health check for stale or unreadable local files.
 - Paper trading workflow status dashboard for latest stage and next manual action.
+- Unified local research workflow dashboard from data preparation through paper trading.
 - Baseline pytest setup.
 
 Not included:
@@ -130,6 +131,8 @@ For checking indexed data preparation artifact health, see [docs/data_preparatio
 
 For the local data preparation workflow status dashboard, see [docs/data_preparation_workflow_status.md](docs/data_preparation_workflow_status.md).
 
+For the unified local research workflow dashboard, see [docs/local_research_dashboard.md](docs/local_research_dashboard.md).
+
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
@@ -152,6 +155,7 @@ python -m quant_replay_system.cli paper-review-template-health --updates outputs
 python -m quant_replay_system.cli data-prep-index --root outputs/reports
 python -m quant_replay_system.cli data-prep-health --index outputs/reports/data_preparation/index/data_preparation_artifact_index.csv
 python -m quant_replay_system.cli data-prep-status --root outputs/reports
+python -m quant_replay_system.cli research-status --root outputs/reports
 python -m quant_replay_system.cli replay-run --date 2024-01-03 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli batch-replay --dates 2024-01-03,2024-01-04 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
@@ -176,6 +180,7 @@ python -m quant_replay_system.cli paper-review-decisions --decisions outputs/rep
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-workflow-status --root outputs/reports --decision-date 2024-05-20 --universe etf_core
+python -m quant_replay_system.cli research-status --root outputs/reports --decision-date 2024-05-20 --universe etf_core
 ```
 
 ## Local Data Source Workflow
@@ -210,6 +215,21 @@ python -m quant_replay_system.cli data-prep-status --root outputs/reports
 python -m quant_replay_system.cli snapshot-quality --manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
 python -m quant_replay_system.cli current-candidates --date 2024-01-08 --universe etf_core --snapshot-manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
 python -m quant_replay_system.cli current-to-paper --candidates outputs/reports/current_candidates/<run_folder>/candidates.csv --paper-date 2024-01-08
+```
+
+## Unified Local Research Workflow
+
+```powershell
+python -m quant_replay_system.cli data-pipeline --manifest data/mock/data_pipeline_manifest.json
+python -m quant_replay_system.cli data-prep-status --root outputs/reports
+python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --snapshot-manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
+python -m quant_replay_system.cli current-to-paper --candidates outputs/reports/current_candidates/<run_folder>/candidates.csv --paper-date 2024-05-20
+python -m quant_replay_system.cli current-to-paper-review --handoff-dir outputs/reports/current_to_paper_handoff/example
+# Manually edit review_updates_template.csv.
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --health-check
+python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv
+python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
+python -m quant_replay_system.cli research-status --root outputs/reports --decision-date 2024-05-20 --universe etf_core
 ```
 
 ## Project Layout

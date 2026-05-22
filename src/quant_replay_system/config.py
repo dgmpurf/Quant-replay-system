@@ -382,6 +382,19 @@ class DataPreparationWorkflowStatusSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class LocalResearchDashboardSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports")
+    data_preparation_root: Path = Path("outputs/reports/data_preparation")
+    current_candidates_root: Path = Path("outputs/reports/current_candidates")
+    paper_trading_root: Path = Path("outputs/reports/paper_trading")
+    output_dir: Path = Path("outputs/reports/local_research_dashboard")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataIngestionSettings(BaseModel):
     output_dir: Path = Path("data/processed")
     snapshot_dir: Path = Path("data/snapshots")
@@ -484,6 +497,7 @@ class Settings(BaseModel):
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)
     data_preparation_artifact_health: DataPreparationArtifactHealthSettings = Field(default_factory=DataPreparationArtifactHealthSettings)
     data_preparation_workflow_status: DataPreparationWorkflowStatusSettings = Field(default_factory=DataPreparationWorkflowStatusSettings)
+    local_research_dashboard: LocalResearchDashboardSettings = Field(default_factory=LocalResearchDashboardSettings)
     data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
     data_quality: DataQualitySettings = Field(default_factory=DataQualitySettings)
     snapshot_quality_gate: SnapshotQualityGateSettings = Field(default_factory=SnapshotQualityGateSettings)

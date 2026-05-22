@@ -1,0 +1,554 @@
+import json
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+from quant_replay_system import cli
+from quant_replay_system.local_research_dashboard import (
+    LocalResearchDashboardResult,
+    infer_local_research_next_action,
+    infer_local_research_workflow_stage,
+    run_local_research_dashboard,
+)
+
+
+DECISION_DATE = "2024-05-20"
+UNIVERSE = "etf_core"
+
+
+def test_dashboard_handles_no_artifacts(tmp_path: Path) -> None:
+    result = run_local_research_dashboard(root=_reports_root(tmp_path), output_dir=tmp_path / "dashboard")
+
+    assert isinstance(result, LocalResearchDashboardResult)
+    assert result.workflow_stage == "NO_DATA"
+    assert result.status == "WARN"
+    assert result.next_manual_action == "Run data-pipeline."
+
+
+def test_dashboard_detects_data_preparation_workflow_status_artifact(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _data_preparation_status(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.data_preparation_status == "PASS"
+    assert result.workflow_stage == "DATA_PREPARATION_READY"
+
+
+def test_dashboard_detects_current_candidate_artifacts(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.current_candidate_status == "READY"
+    assert result.latest_decision_date == DECISION_DATE
+    assert result.workflow_stage == "CURRENT_CANDIDATES_READY"
+
+
+def test_dashboard_detects_current_candidate_health_artifacts(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidate_health(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.current_candidate_health_status == "PASS"
+    assert result.workflow_stage == "CURRENT_CANDIDATES_HEALTH_READY"
+
+
+def test_dashboard_detects_current_to_paper_handoff_artifacts(tmp_path: Path) -> None:
+    root = _workflow_to_paper_handoff(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.current_to_paper_status == "READY"
+    assert result.workflow_stage == "PAPER_HANDOFF_READY"
+
+
+def test_dashboard_detects_current_to_paper_review_artifacts(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.current_to_paper_review_status == "READY"
+    assert result.workflow_stage == "REVIEW_TEMPLATE_READY"
+
+
+def test_dashboard_detects_paper_workflow_status_artifacts(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _paper_workflow_status(root, status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.paper_workflow_status == "PASS"
+    assert result.workflow_stage == "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
+
+
+def test_dashboard_infers_next_action_when_no_data_exists(tmp_path: Path) -> None:
+    result = run_local_research_dashboard(root=_reports_root(tmp_path), output_dir=tmp_path / "dashboard")
+
+    assert result.next_manual_action == "Run data-pipeline."
+
+
+def test_dashboard_infers_next_action_after_data_preparation(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _data_preparation_status(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.next_manual_action == "Run current-candidates."
+
+
+def test_dashboard_infers_next_action_after_current_candidates(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.next_manual_action == "Run current-candidates-index."
+    assert infer_local_research_workflow_stage(result.dashboard_frame) == "CURRENT_CANDIDATES_READY"
+    assert infer_local_research_next_action(result.dashboard_frame) == "Run current-candidates-index."
+
+
+def test_dashboard_infers_next_action_after_paper_handoff(tmp_path: Path) -> None:
+    root = _workflow_to_paper_handoff(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.next_manual_action == "Run current-to-paper-review."
+
+
+def test_dashboard_infers_next_action_when_review_template_needs_editing(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.next_manual_action == "Manually edit review_updates_template.csv."
+
+
+def test_dashboard_marks_needs_attention_when_health_or_reconciliation_fails(tmp_path: Path) -> None:
+    root = _workflow_to_daily(_reports_root(tmp_path))
+    _reconciliation(root, status="FAIL", errors=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_NEEDS_ATTENTION"
+    assert result.status == "FAIL"
+    assert result.next_manual_action == "Review warnings/errors."
+
+
+def test_dashboard_writes_markdown_report(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.artifact_paths["local_research_dashboard"].exists()
+    content = result.artifact_paths["local_research_dashboard"].read_text(encoding="utf-8")
+    assert "# Unified Local Research Workflow Dashboard" in content
+
+
+def test_dashboard_writes_dashboard_csv_readable_by_pandas(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_dashboard_csv"])
+
+    assert "workflow_area" in exported.columns
+    assert "CURRENT_CANDIDATES" in set(exported["component"])
+
+
+def test_dashboard_writes_summary_csv_readable_by_pandas(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"])
+
+    assert exported.iloc[0]["workflow_stage"] == "CURRENT_CANDIDATES_READY"
+
+
+def test_dashboard_writes_metadata_json(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert metadata["dashboard_id"] == result.dashboard_id
+    assert metadata["live_trading_enabled"] is False
+    assert metadata["broker_api_invoked"] is False
+    assert metadata["network_api_calls_used_in_tests"] is False
+
+
+def test_cli_research_status_works(tmp_path: Path, capsys) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "Research status:" in output.out
+    assert "Report path:" in output.out
+
+
+def test_cli_prints_next_manual_action(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "next_manual_action: Run data-pipeline." in output.out
+
+
+def test_cli_prints_no_live_trading_statement(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "No live trading or broker API was invoked." in output.out
+
+
+def test_dashboard_output_is_deterministic(tmp_path: Path) -> None:
+    root = _workflow_complete(_reports_root(tmp_path))
+
+    first = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    second = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert first.dashboard_id == second.dashboard_id
+    assert first.dashboard_frame.to_dict("records") == second.dashboard_frame.to_dict("records")
+    assert first.summary_frame.to_dict("records") == second.summary_frame.to_dict("records")
+
+
+def test_dashboard_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> None:
+    root = _workflow_complete(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.audit_metadata["live_trading_enabled"] is False
+    assert result.audit_metadata["broker_api_invoked"] is False
+    assert result.audit_metadata["local_research_dashboard_only"] is True
+    assert not any("broker" in module_name.lower() for module_name in sys.modules)
+
+
+def test_dashboard_no_real_network_api_calls_are_used(tmp_path: Path) -> None:
+    root = _workflow_complete(_reports_root(tmp_path))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.status == "PASS"
+    assert result.audit_metadata["network_api_calls_used_in_tests"] is False
+
+
+def _reports_root(tmp_path: Path) -> Path:
+    root = tmp_path / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _workflow_to_current_candidates(root: Path) -> Path:
+    _data_preparation_status(root)
+    _snapshot_quality(root)
+    _current_candidate(root)
+    return root
+
+
+def _workflow_to_current_candidate_health(root: Path) -> Path:
+    _workflow_to_current_candidates(root)
+    _current_candidate_health(root, status="PASS")
+    return root
+
+
+def _workflow_to_paper_handoff(root: Path) -> Path:
+    _workflow_to_current_candidate_health(root)
+    _current_to_paper_handoff(root)
+    return root
+
+
+def _workflow_to_review_template(root: Path) -> Path:
+    _workflow_to_paper_handoff(root)
+    _review_template(root)
+    return root
+
+
+def _workflow_to_review(root: Path) -> Path:
+    _workflow_to_review_template(root)
+    _review_template_health(root, status="PASS")
+    _paper_review(root)
+    return root
+
+
+def _workflow_to_daily(root: Path) -> Path:
+    _workflow_to_review(root)
+    _daily_paper(root)
+    return root
+
+
+def _workflow_complete(root: Path) -> Path:
+    _workflow_to_daily(root)
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(root, status="PASS")
+    return root
+
+
+def _data_preparation_status(root: Path) -> Path:
+    folder = root / "data_preparation" / "workflow_status" / "data-prep-status-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "data_preparation_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "workflow_status_id": "data-prep-status-a",
+            "created_at": f"{DECISION_DATE}T09:00:00",
+            "status": "PASS",
+            "workflow_stage": "DATA_PREP_WORKFLOW_COMPLETE",
+            "latest_decision_date": DECISION_DATE,
+            "latest_pipeline_id": "pipeline-a",
+            "latest_snapshot_id": "snapshot-a",
+            "next_manual_action": "Proceed to current-to-paper.",
+            "output_files": {"data_preparation_workflow_status_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _snapshot_quality(root: Path, *, status: str = "PASS") -> Path:
+    folder = root / "snapshot_quality" / "snapshot-a_gate-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "snapshot_quality_gate_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "snapshot_id": "snapshot-a",
+            "quality_gate_id": "gate-a",
+            "created_at": f"{DECISION_DATE}T09:10:00",
+            "status": status,
+            "warning_count": 1 if status == "WARN" else 0,
+            "error_count": 1 if status == "FAIL" else 0,
+            "output_files": {"snapshot_quality_gate_report": str(report)},
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _current_candidate(root: Path, *, run_id: str = "run-a") -> Path:
+    folder = root / "current_candidates" / f"{DECISION_DATE}_{UNIVERSE}_{run_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "current_candidates_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "run_id": run_id,
+            "decision_date": DECISION_DATE,
+            "universe_name": UNIVERSE,
+            "created_at": f"{DECISION_DATE}T15:30:00",
+            "row_counts": {"factor_dataset": 2, "scored_dataset": 2, "candidates": 1},
+            "output_files": {
+                "current_candidates_report": str(report),
+                "candidates": str(folder / "candidates.csv"),
+                "factor_dataset": str(folder / "factor_dataset.csv"),
+                "scored_dataset": str(folder / "scored_dataset.csv"),
+            },
+            "snapshot_quality": {"status": "PASS", "report_path": str(root / "snapshot_quality" / "snapshot-a_gate-a" / "snapshot_quality_gate_report.md")},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _current_candidate_health(root: Path, *, status: str = "PASS", errors: int = 0, warnings: int = 0) -> Path:
+    folder = root / "current_candidates" / "health" / "cch-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "current_candidate_artifact_health_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "health_check_id": "cch-a",
+            "created_at": f"{DECISION_DATE}T15:40:00",
+            "status": status,
+            "issue_count": errors + warnings,
+            "error_count": errors,
+            "warning_count": warnings,
+            "output_files": {"current_candidate_artifact_health_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _current_to_paper_handoff(root: Path) -> Path:
+    folder = root / "current_to_paper_handoff" / "handoff-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "handoff_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "handoff_metadata.json",
+        {
+            "handoff_id": "handoff-a",
+            "created_at": f"{DECISION_DATE}T15:45:00",
+            "selected_decision_date": DECISION_DATE,
+            "selected_universe_name": UNIVERSE,
+            "selected_run_id": "run-a",
+            "paper_journal_id": "journal-a",
+            "output_files": {"handoff_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _review_template(root: Path) -> Path:
+    folder = root / "current_to_paper_review_handoff" / "review-template-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "review_handoff_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "review_handoff_id": "review-template-a",
+            "created_at": f"{DECISION_DATE}T15:50:00",
+            "decision_count": 1,
+            "output_files": {
+                "review_handoff_report": str(report),
+                "review_updates_template": str(folder / "review_updates_template.csv"),
+            },
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _review_template_health(root: Path, *, status: str = "PASS", errors: int = 0, warnings: int = 0) -> Path:
+    folder = root / "paper_trading" / "review_template_health" / "template-health-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "review_template_health_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "health_check_id": "template-health-a",
+            "created_at": f"{DECISION_DATE}T15:55:00",
+            "status": status,
+            "issue_count": errors + warnings,
+            "error_count": errors,
+            "warning_count": warnings,
+            "output_files": {"review_template_health_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _paper_review(root: Path) -> Path:
+    folder = root / "paper_trading" / "reviews" / "review-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "paper_review_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "review_id": "review-a",
+            "created_at": f"{DECISION_DATE}T16:00:00",
+            "output_files": {
+                "paper_review_report": str(report),
+                "reviewed_decisions": str(folder / "reviewed_decisions.csv"),
+            },
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "paper_trading_only": True,
+        },
+    )
+    return folder
+
+
+def _daily_paper(root: Path) -> Path:
+    folder = root / "paper_trading" / "daily" / f"{DECISION_DATE}_journal-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "paper_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "paper_date": DECISION_DATE,
+            "journal_id": "journal-a",
+            "created_at": f"{DECISION_DATE}T16:05:00",
+            "reviewed_decisions_used": True,
+            "reconciliation": {"status": "", "issue_count": 0, "error_count": 0, "warning_count": 0},
+            "output_files": {"paper_report": str(report), "decisions": str(folder / "decisions.csv")},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "paper_trading_only": True,
+        },
+    )
+    return folder
+
+
+def _reconciliation(root: Path, *, status: str = "PASS", errors: int = 0, warnings: int = 0) -> Path:
+    folder = root / "paper_trading" / "reconciliation" / "recon-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "reconciliation_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "reconciliation_id": "recon-a",
+            "created_at": f"{DECISION_DATE}T16:10:00",
+            "status": status,
+            "issue_count": errors + warnings,
+            "error_count": errors,
+            "warning_count": warnings,
+            "output_files": {"reconciliation_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "paper_trading_only": True,
+        },
+    )
+    return folder
+
+
+def _paper_workflow_status(root: Path, *, status: str = "PASS") -> Path:
+    folder = root / "paper_trading" / "workflow_status" / "paper-workflow-status-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "paper_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "workflow_status_id": "paper-workflow-status-a",
+            "created_at": f"{DECISION_DATE}T16:15:00",
+            "status": status,
+            "workflow_stage": "WORKFLOW_COMPLETE" if status == "PASS" else "WORKFLOW_NEEDS_ATTENTION",
+            "latest_decision_date": DECISION_DATE,
+            "next_manual_action": "Review completed workflow artifacts.",
+            "output_files": {"paper_workflow_status_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
