@@ -119,6 +119,19 @@ class CurrentToPaperHandoffSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class CurrentToPaperReviewHandoffSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/current_to_paper_review_handoff")
+    default_reviewer_id: str = ""
+    default_manual_review_status: Literal["PENDING_REVIEW"] = "PENDING_REVIEW"
+    include_suggested_status: bool = True
+    auto_approve_above_score: float | None = None
+    auto_reject_below_score: float | None = None
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ReplayRunSettings(BaseModel):
     default_top_n: int = Field(default=5, gt=0)
     default_holding_horizon: int = Field(default=10, gt=0)
@@ -346,6 +359,7 @@ class Settings(BaseModel):
     current_candidate_artifact_index: CurrentCandidateArtifactIndexSettings = Field(default_factory=CurrentCandidateArtifactIndexSettings)
     current_candidate_artifact_health: CurrentCandidateArtifactHealthSettings = Field(default_factory=CurrentCandidateArtifactHealthSettings)
     current_to_paper_handoff: CurrentToPaperHandoffSettings = Field(default_factory=CurrentToPaperHandoffSettings)
+    current_to_paper_review_handoff: CurrentToPaperReviewHandoffSettings = Field(default_factory=CurrentToPaperReviewHandoffSettings)
     replay_run: ReplayRunSettings = Field(default_factory=ReplayRunSettings)
     batch_replay: BatchReplaySettings = Field(default_factory=BatchReplaySettings)
     calibration: CalibrationSettings = Field(default_factory=CalibrationSettings)

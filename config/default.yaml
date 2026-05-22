@@ -97,6 +97,18 @@ current_to_paper_handoff:
   enable_live_trading: false
   enable_broker_api: false
 
+current_to_paper_review_handoff:
+  output_dir: outputs/reports/current_to_paper_review_handoff
+  default_reviewer_id: ""
+  default_manual_review_status: PENDING_REVIEW
+  include_suggested_status: true
+  auto_approve_above_score:
+  auto_reject_below_score:
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 replay_run:
   default_top_n: 5
   default_holding_horizon: 10

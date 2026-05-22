@@ -17,6 +17,7 @@ from quant_replay_system.current_candidate_artifact_health import check_current_
 from quant_replay_system.current_candidate_artifact_index import build_current_candidate_artifact_index
 from quant_replay_system.current_candidates import generate_current_candidates
 from quant_replay_system.current_to_paper_handoff import run_current_to_paper_handoff
+from quant_replay_system.current_to_paper_review_handoff import run_current_to_paper_review_handoff
 from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_ingestion import (
     ingest_benchmark_data_csv,
@@ -180,6 +181,17 @@ def build_parser() -> argparse.ArgumentParser:
     current_to_paper.add_argument("--skip-health-check", action="store_true", help="Skip current-candidate artifact health check")
     current_to_paper.add_argument("--config", help="Optional config YAML path")
     current_to_paper.set_defaults(handler=_handle_current_to_paper)
+
+    current_to_paper_review = subparsers.add_parser(
+        "current-to-paper-review",
+        help="Create a manual paper review update template from paper decisions",
+    )
+    current_to_paper_review.add_argument("--decisions", help="Paper decisions CSV path")
+    current_to_paper_review.add_argument("--handoff-dir", help="Current-to-paper or daily paper artifact directory")
+    current_to_paper_review.add_argument("--output-dir", help="Optional review handoff output directory")
+    current_to_paper_review.add_argument("--reviewer-id", help="Default reviewer id for template rows")
+    current_to_paper_review.add_argument("--config", help="Optional config YAML path")
+    current_to_paper_review.set_defaults(handler=_handle_current_to_paper_review)
 
     daily = subparsers.add_parser("paper-daily", help="Write a local daily paper trading report")
     daily.add_argument("--date", required=True, help="Paper trading date, e.g. 2024-05-20")
@@ -594,6 +606,36 @@ def _handle_current_to_paper(args: argparse.Namespace) -> int:
     print(f"paper_journal_id: {result.paper_journal_id}")
     print(f"paper_report_path: {result.paper_artifact_paths['paper_report']}")
     print(f"handoff_report_path: {result.handoff_artifact_paths['handoff_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_current_to_paper_review(args: argparse.Namespace) -> int:
+    if not args.decisions and not args.handoff_dir:
+        raise ValueError("Provide --decisions or --handoff-dir")
+    if args.decisions and args.handoff_dir:
+        raise ValueError("Provide either --decisions or --handoff-dir, not both")
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "current_to_paper_review_handoff": settings.current_to_paper_review_handoff.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = run_current_to_paper_review_handoff(
+        decisions_path=args.decisions,
+        handoff_artifact_dir=args.handoff_dir,
+        reviewer_id=args.reviewer_id,
+        config=settings,
+    )
+    print(f"review_handoff_id: {result.review_handoff_id}")
+    print(f"decision_count: {result.decision_count}")
+    print(f"template_path: {result.template_path}")
+    print(f"report_path: {result.report_path}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

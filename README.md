@@ -20,6 +20,7 @@ Included now:
 - Current/as-of-date candidate generation from local snapshots for paper-trading review.
 - Current candidate artifact index and health check for local candidate run navigation.
 - Current-candidate to paper-trading handoff helper for healthy local candidate artifacts.
+- Current-candidate to paper-review handoff helper for manual review update templates.
 - Placeholder modules for data, scoring, replay, execution, evaluation, calibration, and risk.
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
 - Trading calendar and T+1 execution calendar for daily replay.
@@ -81,6 +82,8 @@ For checking generated current-candidate artifact health, see [docs/current_cand
 
 For handing a healthy current-candidate `candidates.csv` into daily paper trading, see [docs/current_to_paper_handoff.md](docs/current_to_paper_handoff.md).
 
+For creating manual review update templates from paper decisions, see [docs/current_to_paper_review_handoff.md](docs/current_to_paper_review_handoff.md).
+
 For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
 
 For explainable parameter comparison using batch replay outputs, see [docs/parameter_calibration.md](docs/parameter_calibration.md).
@@ -121,6 +124,7 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 python -m quant_replay_system.cli current-candidates-index --root outputs/reports/current_candidates
 python -m quant_replay_system.cli current-candidates-health --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv
 python -m quant_replay_system.cli current-to-paper --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv --decision-date 2024-05-20
+python -m quant_replay_system.cli current-to-paper-review --handoff-dir outputs/reports/current_to_paper_handoff/example
 python -m quant_replay_system.cli replay-run --date 2024-01-03 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli batch-replay --dates 2024-01-03,2024-01-04 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
@@ -136,7 +140,9 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 python -m quant_replay_system.cli current-candidates-index --root outputs/reports/current_candidates
 python -m quant_replay_system.cli current-candidates-health --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv
 python -m quant_replay_system.cli current-to-paper --index outputs/reports/current_candidates/index/current_candidate_artifact_index.csv --decision-date 2024-05-20 --universe etf_core
-python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --reviewer-id msj
+python -m quant_replay_system.cli current-to-paper-review --handoff-dir outputs/reports/current_to_paper_handoff/example --reviewer-id msj
+# Manually edit outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --reviewer-id msj
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 ```
@@ -161,6 +167,7 @@ quant-replay-system/
     current_candidate_artifact_index.md
     current_candidate_generation.md
     current_to_paper_handoff.md
+    current_to_paper_review_handoff.md
     data_contract.md
     data_ingestion.md
     data_quality.md
@@ -194,6 +201,7 @@ quant-replay-system/
       current_candidate_artifact_index.py
       current_candidates.py
       current_to_paper_handoff.py
+      current_to_paper_review_handoff.py
       data.py
       data_ingestion.py
       data_quality.py
