@@ -212,6 +212,25 @@ data_quality:
   enable_live_trading: false
   enable_broker_api: false
 
+snapshot_quality_gate:
+  output_dir: outputs/reports/snapshot_quality
+  required_datasets:
+    - market
+    - universe
+    - trading_calendar
+  optional_datasets:
+    - benchmark
+    - corporate_actions
+  fail_on_required_dataset_warn: false
+  fail_on_optional_dataset_fail: false
+  allow_missing_optional_datasets: true
+  missing_optional_dataset_severity: INFO
+  block_replay_on_fail: true
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 execution:
   mode: t_plus_1
   price_field: open

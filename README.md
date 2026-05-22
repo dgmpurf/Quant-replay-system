@@ -15,6 +15,7 @@ Included now:
 - Local CSV mock data.
 - Local CSV ingestion and processed snapshot builder.
 - Data quality summary reports for processed replay inputs.
+- Snapshot quality gate for full processed snapshot manifests.
 - Placeholder modules for data, scoring, replay, execution, evaluation, calibration, and risk.
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
 - Trading calendar and T+1 execution calendar for daily replay.
@@ -60,6 +61,8 @@ For local CSV ingestion, validation, and processed snapshot manifests, see [docs
 
 For processed data quality summaries before replay, see [docs/data_quality.md](docs/data_quality.md).
 
+For full-snapshot PASS/WARN/FAIL quality gates before replay, see [docs/snapshot_quality_gate.md](docs/snapshot_quality_gate.md).
+
 For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
 
 For explainable parameter comparison using batch replay outputs, see [docs/parameter_calibration.md](docs/parameter_calibration.md).
@@ -95,6 +98,7 @@ python -m quant_replay_system.cli paper-index --root outputs/reports/paper_tradi
 python -m quant_replay_system.cli paper-health-check --index outputs/reports/paper_trading/index/paper_artifact_index.csv
 python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --output-dir data/processed/market
 python -m quant_replay_system.cli data-quality --dataset-type market --input data/processed/market/market_cleaned.csv
+python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv
 ```
@@ -133,6 +137,7 @@ quant-replay-system/
     report_generation.md
     replay_run_orchestrator.md
     scoring_engine.md
+    snapshot_quality_gate.md
     technical_indicators.md
     walk_forward_validation.md
   src/
@@ -154,6 +159,7 @@ quant-replay-system/
       replay.py
       risk.py
       scoring.py
+      snapshot_quality_gate.py
       walk_forward.py
   tests/
 ```

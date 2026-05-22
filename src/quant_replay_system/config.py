@@ -243,6 +243,21 @@ class DataQualitySettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class SnapshotQualityGateSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/snapshot_quality")
+    required_datasets: list[str] = Field(default_factory=lambda: ["market", "universe", "trading_calendar"])
+    optional_datasets: list[str] = Field(default_factory=lambda: ["benchmark", "corporate_actions"])
+    fail_on_required_dataset_warn: bool = False
+    fail_on_optional_dataset_fail: bool = False
+    allow_missing_optional_datasets: bool = True
+    missing_optional_dataset_severity: Literal["INFO", "WARN"] = "INFO"
+    block_replay_on_fail: bool = True
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ExecutionSettings(BaseModel):
     mode: Literal["t_plus_1"] = "t_plus_1"
     price_field: str = "open"
@@ -281,6 +296,7 @@ class Settings(BaseModel):
     paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)
     data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
     data_quality: DataQualitySettings = Field(default_factory=DataQualitySettings)
+    snapshot_quality_gate: SnapshotQualityGateSettings = Field(default_factory=SnapshotQualityGateSettings)
     execution: ExecutionSettings
     risk: RiskSettings
 

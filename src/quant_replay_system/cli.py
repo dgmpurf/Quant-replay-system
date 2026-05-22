@@ -24,6 +24,7 @@ from quant_replay_system.paper_artifact_health import check_paper_artifact_healt
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
 from quant_replay_system.paper_review import apply_paper_review_updates
+from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
 
 
 FILL_COLUMNS = [
@@ -168,6 +169,14 @@ def build_parser() -> argparse.ArgumentParser:
     quality.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
     quality.add_argument("--config", help="Optional config YAML path")
     quality.set_defaults(handler=_handle_data_quality)
+
+    snapshot_quality = subparsers.add_parser("snapshot-quality", help="Run snapshot-level data quality gate")
+    snapshot_quality.add_argument("--manifest", required=True, help="Snapshot manifest JSON path")
+    snapshot_quality.add_argument("--output-dir", help="Optional snapshot quality output directory")
+    snapshot_quality.add_argument("--strict", action="store_true", help="Exit non-zero on WARN and escalate required warnings")
+    snapshot_quality.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN")
+    snapshot_quality.add_argument("--config", help="Optional config YAML path")
+    snapshot_quality.set_defaults(handler=_handle_snapshot_quality)
     return parser
 
 
@@ -469,6 +478,36 @@ def _handle_data_quality(args: argparse.Namespace) -> int:
     print(f"Report path: {result.artifact_paths['data_quality_report']}")
     print("No live trading or broker API was invoked.")
     return 1 if result.status == "FAIL" else 0
+
+
+def _handle_snapshot_quality(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.strict:
+        settings = settings.model_copy(
+            update={
+                "snapshot_quality_gate": settings.snapshot_quality_gate.model_copy(
+                    update={"fail_on_required_dataset_warn": True}
+                )
+            }
+        )
+    result = run_snapshot_quality_gate(
+        args.manifest,
+        output_dir=args.output_dir,
+        settings=settings,
+    )
+    print(f"Snapshot quality status: {result.status}")
+    print(f"snapshot_id: {result.snapshot_id}")
+    print(f"failed_required_datasets: {', '.join(result.failed_required_datasets)}")
+    print(f"failed_optional_datasets: {', '.join(result.failed_optional_datasets)}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"Report path: {result.artifact_paths['snapshot_quality_gate_report']}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
 
 
 def _optional_settings(config_path: str | None):
