@@ -85,6 +85,7 @@ def test_ranked_results_are_sorted_by_objective_score_descending() -> None:
     assert ranked.iloc[0]["batch_id"] == "strong"
 
 
+@pytest.mark.slow
 def test_best_parameter_set_is_deterministic(tmp_path: Path) -> None:
     first = _run_calibration(tmp_path)
     second = _run_calibration(tmp_path)
@@ -214,6 +215,7 @@ def test_high_turnover_is_penalized() -> None:
     assert ranked.iloc[0]["normalized_turnover_penalty"] < ranked.iloc[1]["normalized_turnover_penalty"]
 
 
+@pytest.mark.slow
 def test_calibration_artifacts_folder_is_created(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
 
@@ -221,6 +223,7 @@ def test_calibration_artifacts_folder_is_created(tmp_path: Path) -> None:
     assert result.artifact_paths["artifact_dir"].parent == tmp_path / "calibrations"
 
 
+@pytest.mark.slow
 def test_ranked_results_csv_is_written_and_readable(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
 
@@ -229,6 +232,7 @@ def test_ranked_results_csv_is_written_and_readable(tmp_path: Path) -> None:
     assert "portfolio_objective_score" in exported.columns
 
 
+@pytest.mark.slow
 def test_parameter_sets_csv_is_written_and_readable(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
 
@@ -236,6 +240,7 @@ def test_parameter_sets_csv_is_written_and_readable(tmp_path: Path) -> None:
     assert len(exported) == len(result.parameter_sets)
 
 
+@pytest.mark.slow
 def test_batch_runs_csv_is_written_and_readable(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
 
@@ -243,6 +248,7 @@ def test_batch_runs_csv_is_written_and_readable(tmp_path: Path) -> None:
     assert len(exported) == len(result.batch_results)
 
 
+@pytest.mark.slow
 def test_aggregate_metrics_csv_is_written_and_readable(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
 
@@ -251,6 +257,7 @@ def test_aggregate_metrics_csv_is_written_and_readable(tmp_path: Path) -> None:
     assert "portfolio_objective_score" in exported.columns
 
 
+@pytest.mark.slow
 def test_metadata_json_is_written(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
@@ -262,6 +269,7 @@ def test_metadata_json_is_written(tmp_path: Path) -> None:
     assert metadata["objective_metric_mode"] == "portfolio_aware"
 
 
+@pytest.mark.slow
 def test_calibration_report_md_is_written(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
 
@@ -269,6 +277,7 @@ def test_calibration_report_md_is_written(tmp_path: Path) -> None:
     assert result.artifact_paths["calibration_report"].name == "calibration_report.md"
 
 
+@pytest.mark.slow
 def test_report_includes_best_parameter_set(tmp_path: Path) -> None:
     result = _run_calibration(tmp_path)
     content = result.artifact_paths["calibration_report"].read_text(encoding="utf-8")
@@ -279,6 +288,7 @@ def test_report_includes_best_parameter_set(tmp_path: Path) -> None:
     assert result.best_parameter_set.parameter_set_id in content
 
 
+@pytest.mark.slow
 def test_calibration_output_is_deterministic_for_same_inputs(tmp_path: Path) -> None:
     first = _run_calibration(tmp_path)
     second = _run_calibration(tmp_path)

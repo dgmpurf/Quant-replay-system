@@ -14,7 +14,7 @@ from quant_replay_system.paper_artifact_health import (
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 
 def test_health_check_passes_for_valid_artifact_index(tmp_path: Path) -> None:

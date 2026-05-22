@@ -116,6 +116,7 @@ def test_low_trade_count_increases_overfit_risk() -> None:
     assert few_trades.overfit_risk_score > enough_trades.overfit_risk_score
 
 
+@pytest.mark.slow
 def test_artifact_folder_is_created(tmp_path: Path) -> None:
     result = _run_walk_forward(tmp_path)
 
@@ -123,6 +124,7 @@ def test_artifact_folder_is_created(tmp_path: Path) -> None:
     assert result.artifact_paths["artifact_dir"].parent == tmp_path / "walk_forward"
 
 
+@pytest.mark.slow
 def test_walk_forward_report_is_written(tmp_path: Path) -> None:
     result = _run_walk_forward(tmp_path)
 
@@ -130,6 +132,7 @@ def test_walk_forward_report_is_written(tmp_path: Path) -> None:
     assert result.artifact_paths["walk_forward_report"].name == "walk_forward_report.md"
 
 
+@pytest.mark.slow
 def test_diagnostics_csv_is_written_and_readable_by_pandas(tmp_path: Path) -> None:
     result = _run_walk_forward(tmp_path)
 
@@ -138,6 +141,7 @@ def test_diagnostics_csv_is_written_and_readable_by_pandas(tmp_path: Path) -> No
     assert "overfit_risk_score" in exported.columns
 
 
+@pytest.mark.slow
 def test_selected_parameter_set_json_is_written(tmp_path: Path) -> None:
     result = _run_walk_forward(tmp_path)
     payload = json.loads(result.artifact_paths["selected_parameter_set"].read_text(encoding="utf-8"))
@@ -145,6 +149,7 @@ def test_selected_parameter_set_json_is_written(tmp_path: Path) -> None:
     assert payload["parameter_set_id"] == result.selected_parameter_set.parameter_set_id
 
 
+@pytest.mark.slow
 def test_metadata_json_is_written(tmp_path: Path) -> None:
     result = _run_walk_forward(tmp_path)
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
@@ -154,6 +159,7 @@ def test_metadata_json_is_written(tmp_path: Path) -> None:
     assert metadata["broker_api_invoked"] is False
 
 
+@pytest.mark.slow
 def test_deterministic_walk_forward_id_for_same_inputs(tmp_path: Path) -> None:
     first = _run_walk_forward(tmp_path)
     second = _run_walk_forward(tmp_path)
@@ -162,6 +168,7 @@ def test_deterministic_walk_forward_id_for_same_inputs(tmp_path: Path) -> None:
     assert first.artifact_paths["artifact_dir"] == second.artifact_paths["artifact_dir"]
 
 
+@pytest.mark.slow
 def test_output_is_deterministic_for_same_inputs(tmp_path: Path) -> None:
     first = _run_walk_forward(tmp_path)
     second = _run_walk_forward(tmp_path)

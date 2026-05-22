@@ -12,7 +12,7 @@ from quant_replay_system.paper_artifact_index import (
 )
 
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 
 def test_artifact_index_scans_daily_artifacts(tmp_path: Path) -> None:

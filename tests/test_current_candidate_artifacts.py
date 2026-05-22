@@ -16,7 +16,7 @@ from quant_replay_system.current_candidate_artifact_index import (
 )
 
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 
 def test_current_candidate_artifact_index_scans_valid_artifact_folders(tmp_path: Path) -> None:

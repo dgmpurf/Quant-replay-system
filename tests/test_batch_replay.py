@@ -72,6 +72,7 @@ def test_fail_fast_true_raises_on_date_failure(tmp_path: Path, monkeypatch: pyte
         _run_batch(tmp_path, settings=settings, decision_dates=[pd.Timestamp("2024-03-01")])
 
 
+@pytest.mark.slow
 def test_batch_artifact_folder_is_created(tmp_path: Path) -> None:
     result = _run_batch(tmp_path)
 
@@ -79,6 +80,7 @@ def test_batch_artifact_folder_is_created(tmp_path: Path) -> None:
     assert result.artifact_paths["artifact_dir"].parent == tmp_path / "batch_replays"
 
 
+@pytest.mark.slow
 def test_batch_report_md_is_written(tmp_path: Path) -> None:
     result = _run_batch(tmp_path)
 
@@ -86,6 +88,7 @@ def test_batch_report_md_is_written(tmp_path: Path) -> None:
     assert result.artifact_paths["batch_report"].name == "batch_report.md"
 
 
+@pytest.mark.slow
 def test_batch_index_csv_is_written_and_readable(tmp_path: Path) -> None:
     result = _run_batch(tmp_path)
 
@@ -93,6 +96,7 @@ def test_batch_index_csv_is_written_and_readable(tmp_path: Path) -> None:
     assert len(exported) == len(result.replay_results)
 
 
+@pytest.mark.slow
 def test_aggregate_performance_csv_is_written_and_readable(tmp_path: Path) -> None:
     result = _run_batch(tmp_path)
 
@@ -100,6 +104,7 @@ def test_aggregate_performance_csv_is_written_and_readable(tmp_path: Path) -> No
     assert exported.iloc[0]["number_of_executed_dates"] == len(result.replay_results)
 
 
+@pytest.mark.slow
 def test_replay_runs_csv_is_written_and_readable(tmp_path: Path) -> None:
     result = _run_batch(tmp_path)
 
@@ -107,6 +112,7 @@ def test_replay_runs_csv_is_written_and_readable(tmp_path: Path) -> None:
     assert len(exported) == len(result.replay_results)
 
 
+@pytest.mark.slow
 def test_skipped_dates_csv_is_written_when_dates_are_skipped(tmp_path: Path) -> None:
     result = _run_batch(tmp_path)
 
@@ -114,6 +120,7 @@ def test_skipped_dates_csv_is_written_when_dates_are_skipped(tmp_path: Path) -> 
     assert exported.iloc[0]["reason"] == "NON_TRADING_DAY"
 
 
+@pytest.mark.slow
 def test_metadata_json_is_written(tmp_path: Path) -> None:
     result = _run_batch(tmp_path)
     metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
@@ -124,6 +131,7 @@ def test_metadata_json_is_written(tmp_path: Path) -> None:
     assert metadata["broker_api_invoked"] is False
 
 
+@pytest.mark.slow
 def test_batch_id_is_deterministic_for_same_inputs(tmp_path: Path) -> None:
     first = _run_batch(tmp_path)
     second = _run_batch(tmp_path)
@@ -157,6 +165,7 @@ def test_aggregate_performance_calculations_are_correct_on_mock_results(tmp_path
     assert recomputed["average_equal_weight_return_by_run"] == pytest.approx(expected_equal_weight)
 
 
+@pytest.mark.slow
 def test_batch_output_is_deterministic_for_same_inputs(tmp_path: Path) -> None:
     first = _run_batch(tmp_path)
     second = _run_batch(tmp_path)
@@ -222,6 +231,7 @@ def test_batch_metadata_records_portfolio_simulation_settings(tmp_path: Path) ->
     assert "portfolio_report" in metadata["portfolio_artifact_paths"]
 
 
+@pytest.mark.slow
 def test_batch_report_contains_portfolio_performance_section(tmp_path: Path) -> None:
     result = _run_batch(tmp_path)
     content = result.artifact_paths["batch_report"].read_text(encoding="utf-8")

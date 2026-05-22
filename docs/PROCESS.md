@@ -85,6 +85,7 @@ The project supports pytest markers for fast development and workflow-specific v
 ```bat
 python -m pytest
 python -m pytest -m "not slow"
+python -m pytest -m "slow"
 python -m pytest -m "e2e"
 python -m pytest --durations=30
 ```

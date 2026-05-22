@@ -15,7 +15,7 @@ from quant_replay_system.data_preparation_artifact_index import (
 )
 
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 
 def test_data_prep_index_scans_data_pipeline_artifacts(tmp_path: Path) -> None:
