@@ -53,6 +53,17 @@ candidate_selection:
   min_final_score:
   exclude_blocked: true
 
+current_candidates:
+  output_dir: outputs/reports/current_candidates
+  default_top_n: 10
+  min_final_score: 70
+  min_action: PAPER_TRADE
+  enable_snapshot_quality_preflight: true
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 replay_run:
   default_top_n: 5
   default_holding_horizon: 10

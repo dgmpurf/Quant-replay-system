@@ -25,6 +25,7 @@ The following local workflow commands support snapshot preflight flags:
 - `parameter-calibration`
 - `calibrate` alias for `parameter-calibration`
 - `walk-forward`
+- `current-candidates`
 
 These commands are thin wrappers over existing Python workflow functions. They use local config and mock/local CSV data only.
 
@@ -116,6 +117,12 @@ Walk-forward validation:
 python -m quant_replay_system.cli walk-forward --train-dates 2024-01-03 --validation-dates 2024-01-04 --snapshot-manifest data\snapshots\example_snapshot_manifest.json
 ```
 
+Current candidate generation:
+
+```cmd
+python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest data\snapshots\example_snapshot_manifest.json
+```
+
 Disable preflight explicitly:
 
 ```cmd
@@ -156,6 +163,6 @@ Use `--snapshot-manifest` on replay-like commands when you want the gate checked
 - CLI wrappers expose common workflow arguments only, not every function parameter.
 - Commands use local config and mock/local CSV data only.
 - Large calibration grids can still take time; keep MVP grids small.
-- Current-candidate generation does not have a CLI command yet.
+- Current-candidate generation produces candidate artifacts only; it does not simulate T+1 execution or future returns.
 - Preflight checks snapshot/file quality but does not repair data.
 - No live trading or broker API integration is invoked.

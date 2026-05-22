@@ -13,6 +13,7 @@ import pandas as pd
 from quant_replay_system.batch_replay import run_batch_replay
 from quant_replay_system.calibration import run_parameter_calibration
 from quant_replay_system.config import load_settings
+from quant_replay_system.current_candidates import generate_current_candidates
 from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_ingestion import (
     ingest_benchmark_data_csv,
@@ -123,6 +124,18 @@ def build_parser() -> argparse.ArgumentParser:
     walk_forward.add_argument("--config", help="Optional config YAML path")
     _add_snapshot_preflight_arguments(walk_forward)
     walk_forward.set_defaults(handler=_handle_walk_forward)
+
+    current_candidates = subparsers.add_parser(
+        "current-candidates",
+        help="Generate local current/as-of-date candidates from point-in-time data",
+    )
+    current_candidates.add_argument("--date", required=True, help="Decision date, e.g. 2024-05-20")
+    current_candidates.add_argument("--universe", required=True, help="Universe name")
+    current_candidates.add_argument("--top", type=int, help="Candidate count override")
+    current_candidates.add_argument("--output-dir", help="Optional current-candidate output directory")
+    current_candidates.add_argument("--config", help="Optional config YAML path")
+    _add_snapshot_preflight_arguments(current_candidates)
+    current_candidates.set_defaults(handler=_handle_current_candidates)
 
     daily = subparsers.add_parser("paper-daily", help="Write a local daily paper trading report")
     daily.add_argument("--date", required=True, help="Paper trading date, e.g. 2024-05-20")
@@ -390,6 +403,37 @@ def _handle_walk_forward(args: argparse.Namespace) -> int:
         f"{result.selected_parameter_set.parameter_set_id if result.selected_parameter_set is not None else ''}"
     )
     _print_snapshot_preflight_summary(result.snapshot_quality_preflight or {})
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_current_candidates(args: argparse.Namespace) -> int:
+    settings = _workflow_settings_from_args(args, "current_candidates")
+    preflight_override = None
+    if args.enable_snapshot_preflight:
+        preflight_override = True
+    if args.disable_snapshot_preflight:
+        preflight_override = False
+    try:
+        result = generate_current_candidates(
+            args.date,
+            universe_name=args.universe,
+            top_n=args.top,
+            config=settings,
+            snapshot_manifest_path=args.snapshot_manifest,
+            enable_snapshot_preflight=preflight_override,
+        )
+    except SnapshotQualityPreflightError as exc:
+        return _print_snapshot_preflight_error(exc)
+
+    print(f"current_candidate_run_id: {result.run_id}")
+    print(f"decision_date: {result.decision_date.date()}")
+    print(f"candidate_count: {result.candidate_count}")
+    print(f"candidates_path: {result.artifact_paths['candidates']}")
+    print(f"report_path: {result.artifact_paths['current_candidates_report']}")
+    _print_snapshot_preflight_summary(result.audit_metadata)
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

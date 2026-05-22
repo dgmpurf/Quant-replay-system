@@ -56,6 +56,7 @@ Supported entry points:
 - `run_batch_replay(..., snapshot_manifest_path=...)`
 - `run_parameter_calibration(..., snapshot_manifest_path=...)`
 - `run_walk_forward_validation(..., snapshot_manifest_path=...)`
+- `generate_current_candidates(..., snapshot_manifest_path=...)`
 
 Batch replay runs preflight once per batch, then disables nested preflight for per-date `run_replay` calls.
 
@@ -123,6 +124,6 @@ Preflight is a checkpoint before replay-like workflows consume data. It helps en
 - Preflight is disabled by default and must be explicitly enabled.
 - It checks snapshot structure and file-level quality, but does not repair data.
 - It does not yet enforce coverage between universe symbols and market rows.
-- It does not yet provide a current candidate generation command.
+- Current candidate generation uses preflight only when enabled or when a manifest path is supplied with current-candidate preflight enabled.
 - It uses local CSV/mock data only.
 - It never invokes live trading or broker APIs.

@@ -71,6 +71,18 @@ class CandidateSelectionSettings(BaseModel):
     exclude_blocked: bool = True
 
 
+class CurrentCandidateSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/current_candidates")
+    default_top_n: int = Field(default=10, gt=0)
+    min_final_score: float | None = 70.0
+    min_action: str = "PAPER_TRADE"
+    enable_snapshot_quality_preflight: bool = True
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ReplayRunSettings(BaseModel):
     default_top_n: int = Field(default=5, gt=0)
     default_holding_horizon: int = Field(default=10, gt=0)
@@ -294,6 +306,7 @@ class Settings(BaseModel):
     factor_dataset: FactorDatasetSettings = Field(default_factory=FactorDatasetSettings)
     score_engine: ScoreEngineSettings = Field(default_factory=ScoreEngineSettings)
     candidate_selection: CandidateSelectionSettings = Field(default_factory=CandidateSelectionSettings)
+    current_candidates: CurrentCandidateSettings = Field(default_factory=CurrentCandidateSettings)
     replay_run: ReplayRunSettings = Field(default_factory=ReplayRunSettings)
     batch_replay: BatchReplaySettings = Field(default_factory=BatchReplaySettings)
     calibration: CalibrationSettings = Field(default_factory=CalibrationSettings)

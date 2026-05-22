@@ -17,6 +17,7 @@ Included now:
 - Data quality summary reports for processed replay inputs.
 - Snapshot quality gate for full processed snapshot manifests.
 - Optional snapshot quality preflight for replay-like workflows.
+- Current/as-of-date candidate generation from local snapshots for paper-trading review.
 - Placeholder modules for data, scoring, replay, execution, evaluation, calibration, and risk.
 - Point-in-time data contract for market data, universe snapshots, and corporate actions.
 - Trading calendar and T+1 execution calendar for daily replay.
@@ -70,6 +71,8 @@ For optional snapshot quality preflight checks inside replay, batch, calibration
 
 For CLI flags that enable snapshot preflight on replay-like workflows, see [docs/snapshot_quality_preflight_cli.md](docs/snapshot_quality_preflight_cli.md).
 
+For current/as-of-date candidate generation from local snapshots, see [docs/current_candidate_generation.md](docs/current_candidate_generation.md).
+
 For multi-date replay runs and batch-level artifacts, see [docs/batch_replay.md](docs/batch_replay.md).
 
 For explainable parameter comparison using batch replay outputs, see [docs/parameter_calibration.md](docs/parameter_calibration.md).
@@ -106,10 +109,23 @@ python -m quant_replay_system.cli paper-health-check --index outputs/reports/pap
 python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --output-dir data/processed/market
 python -m quant_replay_system.cli data-quality --dataset-type market --input data/processed/market/market_cleaned.csv
 python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
+python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli replay-run --date 2024-01-03 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli batch-replay --dates 2024-01-03,2024-01-04 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-template-fills --output data/paper/fills_template.csv
+```
+
+## Current Candidate To Paper Workflow
+
+```powershell
+python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --output-dir data/processed/market
+python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
+python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
+python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/current_candidates/example/candidates.csv
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --reviewer-id msj
+python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
+python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 ```
 
 ## Project Layout
@@ -128,6 +144,7 @@ quant-replay-system/
   docs/
     CODEX_PROMPT_STANDARD.md
     batch_replay.md
+    current_candidate_generation.md
     data_contract.md
     data_ingestion.md
     data_quality.md
@@ -157,6 +174,7 @@ quant-replay-system/
       calibration.py
       cli.py
       config.py
+      current_candidates.py
       data.py
       data_ingestion.py
       data_quality.py
