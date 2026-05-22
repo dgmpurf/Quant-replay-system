@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from quant_replay_system import cli
 from quant_replay_system.config import PaperArtifactHealthSettings
@@ -11,6 +12,9 @@ from quant_replay_system.paper_artifact_health import (
     summarize_artifact_health,
 )
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
+
+
+pytestmark = pytest.mark.integration
 
 
 def test_health_check_passes_for_valid_artifact_index(tmp_path: Path) -> None:

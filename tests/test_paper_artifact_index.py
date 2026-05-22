@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from quant_replay_system import cli
 from quant_replay_system.paper_artifact_index import (
@@ -9,6 +10,9 @@ from quant_replay_system.paper_artifact_index import (
     load_paper_artifact_metadata,
     scan_paper_trading_artifacts,
 )
+
+
+pytestmark = pytest.mark.integration
 
 
 def test_artifact_index_scans_daily_artifacts(tmp_path: Path) -> None:

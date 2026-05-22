@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from quant_replay_system import cli
 from quant_replay_system.config import CurrentCandidateArtifactHealthSettings
@@ -13,6 +14,9 @@ from quant_replay_system.current_candidate_artifact_index import (
     load_current_candidate_metadata,
     scan_current_candidate_artifacts,
 )
+
+
+pytestmark = pytest.mark.integration
 
 
 def test_current_candidate_artifact_index_scans_valid_artifact_folders(tmp_path: Path) -> None:

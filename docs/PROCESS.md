@@ -36,13 +36,14 @@ For each scoped task, Codex should:
 2. Inspect relevant existing files before editing.
 3. Modify only files needed for the task.
 4. Add or update focused tests.
-5. Run:
+5. During development, run relevant focused tests for the changed area.
+6. Before reporting a completed implementation, run:
 
 ```bat
 python -m pytest
 ```
 
-6. Return:
+7. Return:
 
 - files changed
 - tests added
@@ -51,6 +52,8 @@ python -m pytest
 - next recommended task
 
 Codex should not silently broaden scope. If a task is documentation-only, Codex should not change source code, tests, or config.
+
+For test tiering commands and marker usage, see [testing_strategy.md](testing_strategy.md).
 
 ## Validation Reporting Standard
 
@@ -73,6 +76,22 @@ python -m pytest
 - Do not report `Frontend build: N/A` when no frontend exists.
 - Do not report `Offline benchmarks: N/A` when no benchmark suite exists.
 - If a future `frontend/` module or benchmark suite is added, include those validation lines only when they are applicable and were actually run.
+- Future Codex summaries should report full backend tests unless the task explicitly only performs a narrower validation pass.
+
+## Test Suite Tiering
+
+The project supports pytest markers for fast development and workflow-specific validation:
+
+```bat
+python -m pytest
+python -m pytest -m "not slow"
+python -m pytest -m "e2e"
+python -m pytest --durations=30
+```
+
+During development, run relevant focused tests first. Before any checkpoint, commit, or tag, run the full `python -m pytest` suite.
+
+If the full suite exceeds 60 seconds, run `python -m pytest --durations=30` and report the slowest tests so future work can decide whether to split, mark, or optimize them.
 
 ## 3. ChatGPT Review Loop
 

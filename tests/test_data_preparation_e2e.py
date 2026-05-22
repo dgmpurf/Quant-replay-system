@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from quant_replay_system.config import load_settings
 from quant_replay_system.current_candidates import generate_current_candidates
@@ -10,6 +11,9 @@ from quant_replay_system.data_pipeline import (
     run_data_source_ingestion_pipeline,
 )
 from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
+
+
+pytestmark = [pytest.mark.e2e, pytest.mark.slow]
 
 
 def test_data_preparation_e2e_pipeline_snapshot_quality_to_current_candidates(tmp_path: Path) -> None:

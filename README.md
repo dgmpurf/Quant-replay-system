@@ -67,6 +67,8 @@ python -m pytest
 
 For a clean Windows CMD setup with a virtual environment, `.env` file, test command, and sample replay command, see [docs/environment_setup.md](docs/environment_setup.md).
 
+For quick, full, E2E, and duration-profiled test commands, see [docs/testing_strategy.md](docs/testing_strategy.md).
+
 For the standard reusable Codex prompt structure for future tasks, see [docs/CODEX_PROMPT_STANDARD.md](docs/CODEX_PROMPT_STANDARD.md).
 
 For local CSV ingestion, validation, and processed snapshot manifests, see [docs/data_ingestion.md](docs/data_ingestion.md).
@@ -297,6 +299,7 @@ quant-replay-system/
     snapshot_quality_preflight.md
     snapshot_quality_preflight_cli.md
     technical_indicators.md
+    testing_strategy.md
     walk_forward_validation.md
   src/
     quant_replay_system/

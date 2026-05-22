@@ -2,11 +2,15 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from quant_replay_system import cli
 
 
 PAPER_DATE = "2024-03-05"
+
+
+pytestmark = [pytest.mark.e2e, pytest.mark.slow]
 
 
 def test_manual_paper_trading_e2e_cli_workflow(tmp_path: Path, capsys) -> None:

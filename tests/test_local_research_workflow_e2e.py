@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 import yaml
 
 from quant_replay_system import cli
@@ -11,6 +12,9 @@ from quant_replay_system.config import load_settings
 
 DECISION_DATE = "2024-01-08"
 UNIVERSE = "etf_core"
+
+
+pytestmark = [pytest.mark.e2e, pytest.mark.slow]
 
 
 def test_unified_local_research_workflow_e2e_cli_smoke(tmp_path: Path, capsys) -> None:

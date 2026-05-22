@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 from quant_replay_system import cli
 from quant_replay_system.config import DataPreparationArtifactHealthSettings
@@ -12,6 +13,9 @@ from quant_replay_system.data_preparation_artifact_index import (
     build_data_preparation_artifact_index,
     load_data_preparation_metadata,
 )
+
+
+pytestmark = pytest.mark.integration
 
 
 def test_data_prep_index_scans_data_pipeline_artifacts(tmp_path: Path) -> None:

@@ -29,3 +29,9 @@ minversion = "7.0"
 addopts = "-ra"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+  "unit: fast isolated tests with narrow module scope",
+  "integration: multi-module tests or artifact/report workflow checks",
+  "e2e: end-to-end workflow smoke tests",
+  "slow: tests that write many artifacts, run long workflows, or are expected to be slower",
+]
