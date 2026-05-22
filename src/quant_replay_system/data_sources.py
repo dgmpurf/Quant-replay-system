@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -158,7 +160,7 @@ class OptionalAkshareDataSourceAdapter(BaseDataSourceAdapter):
         elif request.dataset_type == "trading_calendar":
             frame, adapter_metadata = _fetch_akshare_trading_calendar(akshare, request)
         else:
-            frame, adapter_metadata = _fetch_akshare_market_like(akshare, request)
+            frame, adapter_metadata = _fetch_akshare_market_like(akshare, request, settings)
         return frame, adapter_metadata, [
             "AKSHARE_OPTIONAL is manual-only and should be passed through ingestion and data quality before use."
         ]
@@ -178,17 +180,23 @@ def _import_akshare():
 def _fetch_akshare_market_like(
     akshare,
     request: DataSourceRequest,
+    settings: DataSourceSettings,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     if not request.symbol:
         raise ValueError("AKSHARE_OPTIONAL market/benchmark fetch requires --symbol")
     if not request.start_date or not request.end_date:
         raise ValueError("AKSHARE_OPTIONAL market/benchmark fetch requires --start-date and --end-date")
-    function_name = _akshare_market_function_name(request)
-    function = getattr(akshare, function_name, None)
-    if function is None:
-        raise RuntimeError(f"akshare function not available: {function_name}")
-    kwargs = _akshare_market_kwargs(request, function_name)
-    raw = function(**kwargs)
+    inferred_symbol_type = (
+        "INDEX"
+        if request.dataset_type == "benchmark"
+        else infer_akshare_market_symbol_type(request.symbol)
+    )
+    raw, routing_metadata = fetch_akshare_market_data_with_fallback(
+        akshare,
+        request,
+        inferred_symbol_type=inferred_symbol_type,
+        settings=settings,
+    )
     frame = _normalize_akshare_market_frame(
         pd.DataFrame(raw),
         symbol=request.symbol,
@@ -201,12 +209,147 @@ def _fetch_akshare_market_like(
     adapter_metadata = {
         "adapter": request.source,
         "adapter_status": "SUCCESS",
-        "akshare_function": function_name,
         "symbol": request.symbol,
         "start_date": request.start_date,
         "end_date": request.end_date,
+        "inferred_symbol_type": inferred_symbol_type,
+        "attempted_functions": routing_metadata["attempted_functions"],
+        "successful_function": routing_metadata["successful_function"],
+        "failed_attempts": routing_metadata["failed_attempts"],
+        "mapping_warnings": [],
+        "row_count": len(frame),
     }
     return frame, adapter_metadata
+
+
+def infer_akshare_market_symbol_type(symbol: str | None) -> str:
+    """Infer the MVP AKShare market route from a China market symbol."""
+
+    code = str(symbol or "").strip().upper().split(".", 1)[0]
+    if code in {"000300", "000905", "000852"}:
+        return "INDEX"
+    if len(code) == 6 and code.startswith(("510", "511", "512", "513", "515", "516", "159")):
+        return "ETF"
+    if len(code) == 6 and code.startswith(("000", "001", "002", "003", "300", "600", "601", "603", "605", "688")):
+        return "STOCK"
+    return "UNKNOWN"
+
+
+def fetch_akshare_stock_market_data(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return _call_akshare_market_function(akshare, request, "stock_zh_a_hist")
+
+
+def fetch_akshare_etf_market_data(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return _call_akshare_market_function(akshare, request, "fund_etf_hist_em")
+
+
+def fetch_akshare_index_market_data(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return _call_akshare_market_function(akshare, request, "stock_zh_index_daily")
+
+
+def fetch_akshare_market_data_with_fallback(
+    akshare,
+    request: DataSourceRequest,
+    *,
+    inferred_symbol_type: str,
+    settings: DataSourceSettings,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    attempted_functions: list[str] = []
+    failed_attempts: list[dict[str, str]] = []
+    max_attempts = max(1, int(settings.akshare_market_retry_count) + 1)
+    function_names = _akshare_market_function_candidates(request, inferred_symbol_type)
+    for function_name in function_names:
+        attempted_functions.append(function_name)
+        for attempt_number in range(max_attempts):
+            try:
+                raw = _fetch_akshare_market_function_by_name(akshare, request, function_name)
+                return pd.DataFrame(raw), {
+                    "attempted_functions": attempted_functions,
+                    "successful_function": function_name,
+                    "failed_attempts": failed_attempts,
+                }
+            except Exception as exc:
+                failed_attempts.append(
+                    {
+                        "function": function_name,
+                        "attempt": str(attempt_number + 1),
+                        "exception_type": type(exc).__name__,
+                        "message": _safe_exception_message(exc),
+                    }
+                )
+                if attempt_number < max_attempts - 1 and settings.akshare_market_retry_sleep_seconds > 0:
+                    time.sleep(float(settings.akshare_market_retry_sleep_seconds))
+    raise _akshare_market_fetch_error(
+        request,
+        inferred_symbol_type=inferred_symbol_type,
+        attempted_functions=attempted_functions,
+        failed_attempts=failed_attempts,
+    )
+
+
+def _fetch_akshare_market_function_by_name(
+    akshare,
+    request: DataSourceRequest,
+    function_name: str,
+) -> pd.DataFrame:
+    if function_name == "stock_zh_a_hist":
+        return fetch_akshare_stock_market_data(akshare, request)
+    if function_name == "fund_etf_hist_em":
+        return fetch_akshare_etf_market_data(akshare, request)
+    if function_name == "stock_zh_index_daily":
+        return fetch_akshare_index_market_data(akshare, request)
+    return _call_akshare_market_function(akshare, request, function_name)
+
+
+def _call_akshare_market_function(akshare, request: DataSourceRequest, function_name: str) -> pd.DataFrame:
+    function = getattr(akshare, function_name, None)
+    if function is None:
+        raise RuntimeError(f"akshare function not available: {function_name}")
+    kwargs = _akshare_market_kwargs(request, function_name)
+    return pd.DataFrame(function(**kwargs))
+
+
+def _akshare_market_function_candidates(request: DataSourceRequest, inferred_symbol_type: str) -> list[str]:
+    configured = request.params.get("akshare_function")
+    if configured:
+        return [str(configured)]
+    if request.dataset_type == "benchmark" or inferred_symbol_type == "INDEX":
+        return ["stock_zh_index_daily"]
+    if inferred_symbol_type == "ETF":
+        return ["fund_etf_hist_em", "stock_zh_a_hist"]
+    if inferred_symbol_type == "STOCK":
+        return ["stock_zh_a_hist"]
+    return ["stock_zh_a_hist", "fund_etf_hist_em", "stock_zh_index_daily"]
+
+
+def _akshare_market_fetch_error(
+    request: DataSourceRequest,
+    *,
+    inferred_symbol_type: str,
+    attempted_functions: list[str],
+    failed_attempts: list[dict[str, str]],
+) -> RuntimeError:
+    return RuntimeError(
+        "AKSHARE_OPTIONAL market fetch failed; "
+        f"dataset_type={request.dataset_type}; "
+        f"symbol={request.symbol}; "
+        f"inferred_symbol_type={inferred_symbol_type}; "
+        f"start_date={request.start_date}; "
+        f"end_date={request.end_date}; "
+        f"attempted_functions={attempted_functions}; "
+        f"failures={failed_attempts}; "
+        "suggested_action=retry later, switch VPN/network/proxy if appropriate, "
+        "try a reviewed LOCAL_CSV fallback, or check whether AKShare endpoint signatures changed."
+    )
+
+
+def _safe_exception_message(exc: Exception) -> str:
+    message = str(exc)
+    return re.sub(
+        r"(?i)(api[_-]?key|token|secret|password)\s*[:=]\s*[^,\s;]+",
+        lambda match: f"{match.group(1)}=<redacted>",
+        message,
+    )
 
 
 def _fetch_akshare_trading_calendar(
@@ -1022,6 +1165,10 @@ def build_data_source_metadata(result: DataSourceResult, paths: DataSourceArtifa
         "market_type": result.audit_metadata.get("request", {}).get("market_type", ""),
         "allow_real_data": bool(result.audit_metadata.get("request", {}).get("allow_real_data", False)),
         "adapter_status": result.audit_metadata.get("adapter_status", ""),
+        "inferred_symbol_type": adapter_metadata.get("inferred_symbol_type", ""),
+        "attempted_functions": adapter_metadata.get("attempted_functions", []),
+        "successful_function": adapter_metadata.get("successful_function", ""),
+        "failure_reason": adapter_metadata.get("failure_reason", ""),
         "raw_columns": adapter_metadata.get("raw_columns", []),
         "normalized_columns": adapter_metadata.get("normalized_columns", []),
         "mapping_warnings": adapter_metadata.get("mapping_warnings", []),

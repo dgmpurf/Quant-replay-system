@@ -281,6 +281,8 @@ data_sources:
   allow_network_sources: false
   allow_real_data_fetch: false
   require_manual_real_data_flag: true
+  akshare_market_retry_count: 1
+  akshare_market_retry_sleep_seconds: 0
   default_revision_id: v1
   default_source_name: LOCAL_CSV
   config_version: mvp

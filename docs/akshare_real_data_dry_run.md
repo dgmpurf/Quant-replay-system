@@ -51,11 +51,19 @@ Example ETF market fetch:
 python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type market --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
 ```
 
+Example A-share stock market fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
 Copy the printed `raw_data` path. It should look like:
 
 ```text
 data\raw\AKSHARE_OPTIONAL\market\<market_run_id>\raw_data.csv
 ```
+
+Market routing is best-effort. ETF-like symbols such as `510300` and `159xxx` try ETF/fund history first and can fall back to stock-style history. Stock-like symbols such as `000001` use the stock history path. Successful metadata records `inferred_symbol_type`, `attempted_functions`, and `successful_function`.
 
 ## 4. Fetch AKShare Universe Snapshot
 
@@ -244,9 +252,20 @@ Then update the AKShare universe mapping or prepare a canonical local universe C
 
 AKShare upstream endpoints can fail with network errors such as disconnected remote responses. VPN, proxy, firewall, or regional routing can also affect requests. Retry later, narrow the date range, change networks if appropriate, or use previously saved local CSV files through `LOCAL_CSV`.
 
+For market fetch failures, inspect the diagnostic message:
+
+- `dataset_type`
+- `symbol`
+- `inferred_symbol_type`
+- `start_date` / `end_date`
+- `attempted_functions`
+- exception classes and safe exception messages
+
+If an ETF endpoint fails while a stock endpoint works, try again later, check VPN/proxy/network behavior, or use a locally saved CSV through `LOCAL_CSV`.
+
 ### Symbol format issues
 
-For market data, ETF-like symbols such as `510300` use the default ETF history path. Other A-share symbols may require a different AKShare function or symbol format.
+For market data, ETF-like symbols such as `510300` and `159xxx` route to ETF/fund history first. Stock-like symbols such as `000001`, `300xxx`, `600xxx`, `601xxx`, `603xxx`, `605xxx`, and `688xxx` route to stock history. Known index-like codes such as `000300`, `000905`, and `000852` can use index-style routing. Other symbols may require a different AKShare function or symbol format.
 
 ### Empty raw_data.csv
 
@@ -271,6 +290,7 @@ Open the linked report and inspect the component with warnings. A WARN can be ac
 ## Known MVP Limitations
 
 - AKShare real-data usage is manual-only and disabled by default.
+- Market symbol routing and fallback are best-effort; upstream endpoint instability can still require retry or `LOCAL_CSV` fallback.
 - Universe snapshot fields may rely on conservative defaults when AKShare does not provide them.
 - Universe field mapping is best-effort because AKShare raw columns can vary by endpoint and version.
 - Trading-calendar endpoint availability can vary by AKShare version.

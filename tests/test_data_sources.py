@@ -12,6 +12,7 @@ from quant_replay_system.config import DataSourceSettings
 from quant_replay_system.data_sources import (
     DataSourceRequest,
     get_data_source_adapter,
+    infer_akshare_market_symbol_type,
     list_data_source_adapters,
     run_data_source_fetch,
 )
@@ -194,6 +195,14 @@ def test_akshare_universe_missing_installation_returns_clear_error(tmp_path: Pat
         )
 
 
+def test_infer_akshare_market_symbol_type_etf_and_stock_and_index() -> None:
+    assert infer_akshare_market_symbol_type("510300") == "ETF"
+    assert infer_akshare_market_symbol_type("159915") == "ETF"
+    assert infer_akshare_market_symbol_type("000001") == "STOCK"
+    assert infer_akshare_market_symbol_type("000300") == "INDEX"
+    assert infer_akshare_market_symbol_type("ABC") == "UNKNOWN"
+
+
 def test_akshare_success_path_with_fake_module_writes_raw_artifacts(tmp_path: Path, monkeypatch) -> None:
     fake_akshare = _fake_akshare_module()
     monkeypatch.setitem(sys.modules, "akshare", fake_akshare)
@@ -223,8 +232,159 @@ def test_akshare_success_path_with_fake_module_writes_raw_artifacts(tmp_path: Pa
     assert metadata["adapter_status"] == "SUCCESS"
     assert metadata["symbol"] == "510300"
     assert metadata["allow_real_data"] is True
+    assert metadata["inferred_symbol_type"] == "ETF"
+    assert metadata["attempted_functions"] == ["fund_etf_hist_em"]
+    assert metadata["successful_function"] == "fund_etf_hist_em"
     assert metadata["live_trading_enabled"] is False
     assert metadata["broker_api_invoked"] is False
+
+
+def test_akshare_stock_market_success_uses_stock_route(tmp_path: Path, monkeypatch) -> None:
+    fake_akshare = _fake_akshare_module()
+    monkeypatch.setitem(sys.modules, "akshare", fake_akshare)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert result.row_count == 2
+    assert exported["symbol"].eq("000001").all()
+    assert fake_akshare.calls[0]["function"] == "stock_zh_a_hist"
+    assert metadata["inferred_symbol_type"] == "STOCK"
+    assert metadata["attempted_functions"] == ["stock_zh_a_hist"]
+    assert metadata["successful_function"] == "stock_zh_a_hist"
+
+
+def test_akshare_etf_market_success_uses_etf_route(tmp_path: Path, monkeypatch) -> None:
+    fake_akshare = _fake_akshare_module()
+    monkeypatch.setitem(sys.modules, "akshare", fake_akshare)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="159915",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.row_count == 2
+    assert fake_akshare.calls[0]["function"] == "fund_etf_hist_em"
+    assert metadata["inferred_symbol_type"] == "ETF"
+    assert metadata["attempted_functions"] == ["fund_etf_hist_em"]
+    assert metadata["successful_function"] == "fund_etf_hist_em"
+
+
+def test_akshare_etf_primary_failure_tries_fallback(tmp_path: Path, monkeypatch) -> None:
+    module = ModuleType("akshare")
+    module.calls = []
+
+    def fund_etf_hist_em(**kwargs):
+        module.calls.append({"function": "fund_etf_hist_em", **kwargs})
+        raise ConnectionError("RemoteDisconnected('Remote end closed connection without response')")
+
+    def stock_zh_a_hist(**kwargs):
+        module.calls.append({"function": "stock_zh_a_hist", **kwargs})
+        return _akshare_market_rows()
+
+    module.fund_etf_hist_em = fund_etf_hist_em
+    module.stock_zh_a_hist = stock_zh_a_hist
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="510300",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(
+            tmp_path,
+            allow_network_sources=True,
+            allow_real_data_fetch=True,
+            akshare_market_retry_count=0,
+        ),
+    )
+
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert [call["function"] for call in module.calls] == ["fund_etf_hist_em", "stock_zh_a_hist"]
+    assert result.row_count == 2
+    assert metadata["attempted_functions"] == ["fund_etf_hist_em", "stock_zh_a_hist"]
+    assert metadata["successful_function"] == "stock_zh_a_hist"
+    assert metadata["audit_metadata"]["adapter_metadata"]["failed_attempts"][0]["exception_type"] == "ConnectionError"
+
+
+def test_akshare_market_all_failures_produce_clear_diagnostic_without_secrets(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module = ModuleType("akshare")
+
+    def fund_etf_hist_em(**kwargs):
+        _ = kwargs
+        raise ConnectionError("RemoteDisconnected token=abc123")
+
+    def stock_zh_a_hist(**kwargs):
+        _ = kwargs
+        raise RuntimeError("endpoint changed api_key=secret123")
+
+    module.fund_etf_hist_em = fund_etf_hist_em
+    module.stock_zh_a_hist = stock_zh_a_hist
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="AKSHARE_OPTIONAL",
+                dataset_type="market",
+                output_dir=tmp_path / "raw",
+                allow_real_data=True,
+                symbol="510300",
+                start_date="2024-01-01",
+                end_date="2024-01-03",
+            ),
+            settings=_settings(
+                tmp_path,
+                allow_network_sources=True,
+                allow_real_data_fetch=True,
+                akshare_market_retry_count=0,
+            ),
+        )
+
+    message = str(exc_info.value)
+    assert "dataset_type=market" in message
+    assert "symbol=510300" in message
+    assert "inferred_symbol_type=ETF" in message
+    assert "attempted_functions=['fund_etf_hist_em', 'stock_zh_a_hist']" in message
+    assert "ConnectionError" in message
+    assert "RuntimeError" in message
+    assert "token=<redacted>" in message
+    assert "api_key=<redacted>" in message
+    assert "abc123" not in message
+    assert "secret123" not in message
+    assert "LOCAL_CSV fallback" in message
 
 
 def test_akshare_universe_success_path_writes_canonical_raw_artifacts(tmp_path: Path, monkeypatch) -> None:
@@ -818,31 +978,15 @@ def _fake_akshare_module() -> ModuleType:
     module.universe_calls = []
 
     def fund_etf_hist_em(**kwargs):
-        module.calls.append(kwargs)
-        return pd.DataFrame(
-            [
-                {
-                    "date": "2024-01-02",
-                    "open": 10.0,
-                    "high": 10.5,
-                    "low": 9.8,
-                    "close": 10.2,
-                    "volume": 1000,
-                    "amount": 10200,
-                },
-                {
-                    "date": "2024-01-03",
-                    "open": 10.2,
-                    "high": 10.8,
-                    "low": 10.1,
-                    "close": 10.6,
-                    "volume": 1100,
-                    "amount": 11660,
-                },
-            ]
-        )
+        module.calls.append({"function": "fund_etf_hist_em", **kwargs})
+        return _akshare_market_rows()
+
+    def stock_zh_a_hist(**kwargs):
+        module.calls.append({"function": "stock_zh_a_hist", **kwargs})
+        return _akshare_market_rows()
 
     module.fund_etf_hist_em = fund_etf_hist_em
+    module.stock_zh_a_hist = stock_zh_a_hist
 
     def stock_info_a_code_name():
         module.universe_calls.append({"function": "stock_info_a_code_name"})
@@ -864,6 +1008,31 @@ def _fake_akshare_module() -> ModuleType:
     module.stock_info_a_code_name = stock_info_a_code_name
     module.fund_etf_spot_em = fund_etf_spot_em
     return module
+
+
+def _akshare_market_rows() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "date": "2024-01-02",
+                "open": 10.0,
+                "high": 10.5,
+                "low": 9.8,
+                "close": 10.2,
+                "volume": 1000,
+                "amount": 10200,
+            },
+            {
+                "date": "2024-01-03",
+                "open": 10.2,
+                "high": 10.8,
+                "low": 10.1,
+                "close": 10.6,
+                "volume": 1100,
+                "amount": 11660,
+            },
+        ]
+    )
 
 
 def _fake_akshare_universe_module(frame: pd.DataFrame) -> ModuleType:

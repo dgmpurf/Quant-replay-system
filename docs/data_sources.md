@@ -59,10 +59,14 @@ Manual market and benchmark fetches require:
 - `--end-date`
 - `--allow-real-data`
 
-For `market`, the adapter chooses an AKShare daily-history function by default:
+For `market`, the adapter infers the symbol route and chooses AKShare history functions by default:
 
-- ETF-like symbols, such as `510300`, use `fund_etf_hist_em`.
-- Other symbols use `stock_zh_a_hist`.
+- ETF-like symbols, such as `510300`, `512xxx`, `515xxx`, `516xxx`, and `159xxx`, try `fund_etf_hist_em` first and can fall back to `stock_zh_a_hist`.
+- Stock-like symbols, such as `000001`, `300xxx`, `600xxx`, `601xxx`, `603xxx`, `605xxx`, and `688xxx`, use `stock_zh_a_hist`.
+- Index-like known codes, such as `000300`, `000905`, and `000852`, use `stock_zh_index_daily` when requested through market-style routing.
+- Unknown symbols try a small bounded fallback list and report diagnostics if every attempt fails.
+
+Successful market metadata includes `inferred_symbol_type`, `attempted_functions`, `successful_function`, `row_count`, `adapter_status`, and `mapping_warnings`. If every market fetch attempt fails, the diagnostic error includes the dataset type, symbol, inferred type, date range, attempted functions, exception classes, safe exception messages, and suggested actions. Safe messages redact obvious secret-like values.
 
 For `benchmark`, the adapter uses `stock_zh_index_daily` by default and filters dates locally.
 
@@ -97,6 +101,8 @@ data_sources:
   allow_network_sources: false
   allow_real_data_fetch: false
   require_manual_real_data_flag: true
+  akshare_market_retry_count: 1
+  akshare_market_retry_sleep_seconds: 0
 ```
 
 Rules:
@@ -135,6 +141,12 @@ Manual AKShare market fetch:
 
 ```cmd
 python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type market --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
+Manual AKShare stock market fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
 ```
 
 Manual AKShare trading calendar fetch:
@@ -193,7 +205,7 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 ## Known MVP Limitations
 
 - `AKSHARE_OPTIONAL` is a guarded MVP adapter, not a production data downloader.
-- AKShare function selection is simple and may need manual `params` or later source-specific mapping.
+- AKShare market routing is best-effort and may need manual `params` or later source-specific mapping when upstream endpoints change.
 - Universe snapshot support fills conservative defaults when AKShare does not provide optional fields; review data quality before current-candidate use.
 - Universe field mapping is best-effort and may need updates when AKShare changes raw output columns.
 - Corporate action AKShare fetches are not implemented in v0.1.
