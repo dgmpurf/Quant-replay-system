@@ -299,6 +299,18 @@ class PaperArtifactHealthSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class PaperWorkflowStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports")
+    current_candidates_root: Path = Path("outputs/reports/current_candidates")
+    paper_trading_root: Path = Path("outputs/reports/paper_trading")
+    output_dir: Path = Path("outputs/reports/paper_trading/workflow_status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataIngestionSettings(BaseModel):
     output_dir: Path = Path("data/processed")
     snapshot_dir: Path = Path("data/snapshots")
@@ -395,6 +407,7 @@ class Settings(BaseModel):
     daily_paper_runner: DailyPaperRunnerSettings = Field(default_factory=DailyPaperRunnerSettings)
     paper_artifact_index: PaperArtifactIndexSettings = Field(default_factory=PaperArtifactIndexSettings)
     paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)
+    paper_workflow_status: PaperWorkflowStatusSettings = Field(default_factory=PaperWorkflowStatusSettings)
     data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
     data_quality: DataQualitySettings = Field(default_factory=DataQualitySettings)
     snapshot_quality_gate: SnapshotQualityGateSettings = Field(default_factory=SnapshotQualityGateSettings)

@@ -264,6 +264,17 @@ paper_artifact_health:
   enable_live_trading: false
   enable_broker_api: false
 
+paper_workflow_status:
+  root_dir: outputs/reports
+  current_candidates_root: outputs/reports/current_candidates
+  paper_trading_root: outputs/reports/paper_trading
+  output_dir: outputs/reports/paper_trading/workflow_status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_ingestion:
   output_dir: data/processed
   snapshot_dir: data/snapshots

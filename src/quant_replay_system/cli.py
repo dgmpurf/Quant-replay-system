@@ -32,6 +32,7 @@ from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
 from quant_replay_system.paper_review import apply_paper_review_updates
 from quant_replay_system.paper_review_template_health import check_review_template_health
+from quant_replay_system.paper_workflow_status import run_paper_workflow_status
 from quant_replay_system.replay_run import run_replay
 from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
 from quant_replay_system.snapshot_quality_preflight import SnapshotQualityPreflightError
@@ -268,6 +269,20 @@ def build_parser() -> argparse.ArgumentParser:
     health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
     health.add_argument("--config", help="Optional config YAML path")
     health.set_defaults(handler=_handle_paper_health_check)
+
+    workflow_status = subparsers.add_parser(
+        "paper-workflow-status",
+        help="Build a local paper trading workflow status dashboard",
+    )
+    workflow_status.add_argument("--root", help="Reports root directory")
+    workflow_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
+    workflow_status.add_argument("--paper-trading-root", help="Paper trading artifact root directory")
+    workflow_status.add_argument("--decision-date", help="Optional decision date filter")
+    workflow_status.add_argument("--universe", help="Optional universe name filter")
+    workflow_status.add_argument("--output-dir", help="Optional workflow status output directory")
+    workflow_status.add_argument("--strict", action="store_true", help="Exit non-zero when workflow status is WARN")
+    workflow_status.add_argument("--config", help="Optional config YAML path")
+    workflow_status.set_defaults(handler=_handle_paper_workflow_status)
 
     ingest_market = subparsers.add_parser("ingest-market", help="Ingest local market daily CSV")
     ingest_market.add_argument("--input", required=True, help="Input market CSV path")
@@ -917,6 +932,46 @@ def _handle_paper_health_check(args: argparse.Namespace) -> int:
     if result.status == "FAIL":
         return 1
     if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_paper_workflow_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.current_candidates_root:
+        updates["current_candidates_root"] = Path(args.current_candidates_root)
+    if args.paper_trading_root:
+        updates["paper_trading_root"] = Path(args.paper_trading_root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "paper_workflow_status": settings.paper_workflow_status.model_copy(update=updates)
+        }
+    )
+    result = run_paper_workflow_status(
+        root=args.root,
+        current_candidates_root=args.current_candidates_root,
+        paper_trading_root=args.paper_trading_root,
+        decision_date=args.decision_date,
+        universe_name=args.universe,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    print(f"Workflow status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_decision_date: {result.latest_decision_date}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['paper_workflow_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
         return 1
     return 0
 

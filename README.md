@@ -42,6 +42,7 @@ Included now:
 - Paper trading fill reconciliation for decision/fill audit checks before daily reports.
 - Paper trading artifact index for local report and CSV navigation.
 - Paper trading artifact health check for stale or unreadable local files.
+- Paper trading workflow status dashboard for latest stage and next manual action.
 - Baseline pytest setup.
 
 Not included:
@@ -113,6 +114,8 @@ For a consolidated local index of daily, review, and reconciliation artifacts, s
 
 For checking indexed artifact paths and metadata health, see [docs/paper_trading_artifact_health_check.md](docs/paper_trading_artifact_health_check.md).
 
+For a one-page local workflow status dashboard and next manual action, see [docs/paper_trading_workflow_status.md](docs/paper_trading_workflow_status.md).
+
 ```powershell
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --health-check --reviewer-id msj
@@ -120,6 +123,7 @@ python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decis
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-index --root outputs/reports/paper_trading
 python -m quant_replay_system.cli paper-health-check --index outputs/reports/paper_trading/index/paper_artifact_index.csv
+python -m quant_replay_system.cli paper-workflow-status --root outputs/reports
 python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --output-dir data/processed/market
 python -m quant_replay_system.cli data-quality --dataset-type market --input data/processed/market/market_cleaned.csv
 python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
@@ -150,6 +154,7 @@ python -m quant_replay_system.cli paper-review-template-health --updates outputs
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --health-check --reviewer-id msj
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
+python -m quant_replay_system.cli paper-workflow-status --root outputs/reports --decision-date 2024-05-20 --universe etf_core
 ```
 
 ## Project Layout
@@ -186,6 +191,7 @@ quant-replay-system/
     paper_trading_artifact_health_check.md
     paper_trading_artifact_index.md
     paper_trading_e2e_workflow.md
+    paper_trading_workflow_status.md
     paper_trading_cli.md
     paper_trading_review_workflow.md
     portfolio_aware_calibration.md
