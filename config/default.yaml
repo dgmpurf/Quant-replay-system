@@ -86,6 +86,17 @@ current_candidate_artifact_health:
   enable_live_trading: false
   enable_broker_api: false
 
+current_to_paper_handoff:
+  output_dir: outputs/reports/current_to_paper_handoff
+  require_health_pass: true
+  allow_health_warn: false
+  prefer_latest: true
+  default_paper_date_from_decision_date: true
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 replay_run:
   default_top_n: 5
   default_holding_horizon: 10

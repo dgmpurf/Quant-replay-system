@@ -107,6 +107,18 @@ class CurrentCandidateArtifactHealthSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class CurrentToPaperHandoffSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/current_to_paper_handoff")
+    require_health_pass: bool = True
+    allow_health_warn: bool = False
+    prefer_latest: bool = True
+    default_paper_date_from_decision_date: bool = True
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class ReplayRunSettings(BaseModel):
     default_top_n: int = Field(default=5, gt=0)
     default_holding_horizon: int = Field(default=10, gt=0)
@@ -333,6 +345,7 @@ class Settings(BaseModel):
     current_candidates: CurrentCandidateSettings = Field(default_factory=CurrentCandidateSettings)
     current_candidate_artifact_index: CurrentCandidateArtifactIndexSettings = Field(default_factory=CurrentCandidateArtifactIndexSettings)
     current_candidate_artifact_health: CurrentCandidateArtifactHealthSettings = Field(default_factory=CurrentCandidateArtifactHealthSettings)
+    current_to_paper_handoff: CurrentToPaperHandoffSettings = Field(default_factory=CurrentToPaperHandoffSettings)
     replay_run: ReplayRunSettings = Field(default_factory=ReplayRunSettings)
     batch_replay: BatchReplaySettings = Field(default_factory=BatchReplaySettings)
     calibration: CalibrationSettings = Field(default_factory=CalibrationSettings)

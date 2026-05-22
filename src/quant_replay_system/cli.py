@@ -16,6 +16,7 @@ from quant_replay_system.config import load_settings
 from quant_replay_system.current_candidate_artifact_health import check_current_candidate_artifact_health
 from quant_replay_system.current_candidate_artifact_index import build_current_candidate_artifact_index
 from quant_replay_system.current_candidates import generate_current_candidates
+from quant_replay_system.current_to_paper_handoff import run_current_to_paper_handoff
 from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_ingestion import (
     ingest_benchmark_data_csv,
@@ -160,6 +161,25 @@ def build_parser() -> argparse.ArgumentParser:
     current_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
     current_health.add_argument("--config", help="Optional config YAML path")
     current_health.set_defaults(handler=_handle_current_candidates_health)
+
+    current_to_paper = subparsers.add_parser(
+        "current-to-paper",
+        help="Select a current-candidate artifact and launch local daily paper trading",
+    )
+    current_to_paper.add_argument("--index", help="Current-candidate artifact index CSV path")
+    current_to_paper.add_argument("--root", help="Current-candidate artifact root directory")
+    current_to_paper.add_argument("--candidates", help="Explicit candidates.csv path")
+    current_to_paper.add_argument("--decision-date", help="Filter current-candidate artifacts by decision date")
+    current_to_paper.add_argument("--paper-date", help="Paper trading date. Defaults to selected decision date.")
+    current_to_paper.add_argument("--universe", help="Filter current-candidate artifacts by universe name")
+    current_to_paper.add_argument("--run-id", help="Filter current-candidate artifacts by run id")
+    current_to_paper.add_argument("--fills", help="Optional manual paper fills CSV path")
+    current_to_paper.add_argument("--output-dir", help="Optional handoff output directory")
+    current_to_paper.add_argument("--journal-id", help="Optional explicit daily paper journal id")
+    current_to_paper.add_argument("--allow-health-warn", action="store_true", help="Allow WARN health status artifacts")
+    current_to_paper.add_argument("--skip-health-check", action="store_true", help="Skip current-candidate artifact health check")
+    current_to_paper.add_argument("--config", help="Optional config YAML path")
+    current_to_paper.set_defaults(handler=_handle_current_to_paper)
 
     daily = subparsers.add_parser("paper-daily", help="Write a local daily paper trading report")
     daily.add_argument("--date", required=True, help="Paper trading date, e.g. 2024-05-20")
@@ -519,6 +539,64 @@ def _handle_current_candidates_health(args: argparse.Namespace) -> int:
         return 1
     if result.status == "WARN" and args.strict and not args.allow_warn:
         return 1
+    return 0
+
+
+def _handle_current_to_paper(args: argparse.Namespace) -> int:
+    if not args.candidates and not args.index and not args.root:
+        raise ValueError("Provide --candidates, --index, or --root")
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    handoff_updates = {}
+    if args.output_dir:
+        output_dir = Path(args.output_dir)
+        handoff_updates["output_dir"] = output_dir
+        settings = settings.model_copy(
+            update={
+                "daily_paper_runner": settings.daily_paper_runner.model_copy(
+                    update={"output_dir": output_dir / "paper_daily"}
+                ),
+                "paper_reconciliation": settings.paper_reconciliation.model_copy(
+                    update={"output_dir": output_dir / "reconciliation"}
+                ),
+                "current_candidate_artifact_health": settings.current_candidate_artifact_health.model_copy(
+                    update={"output_dir": output_dir / "current_candidate_health"}
+                ),
+            }
+        )
+    if args.allow_health_warn:
+        handoff_updates["allow_health_warn"] = True
+    if handoff_updates:
+        settings = settings.model_copy(
+            update={
+                "current_to_paper_handoff": settings.current_to_paper_handoff.model_copy(
+                    update=handoff_updates
+                )
+            }
+        )
+    result = run_current_to_paper_handoff(
+        paper_date=args.paper_date,
+        current_candidate_index_path=args.index,
+        current_candidate_root=args.root,
+        candidates_path=args.candidates,
+        decision_date=args.decision_date,
+        universe_name=args.universe,
+        run_id=args.run_id,
+        fills_path=args.fills,
+        journal_id=args.journal_id,
+        allow_health_warn=args.allow_health_warn,
+        skip_health_check=args.skip_health_check,
+        config=settings,
+    )
+    print(f"handoff_id: {result.handoff_id}")
+    print(f"selected_candidates_path: {result.selected_candidates_path}")
+    if result.health_status:
+        print(f"health_status: {result.health_status}")
+    print(f"paper_journal_id: {result.paper_journal_id}")
+    print(f"paper_report_path: {result.paper_artifact_paths['paper_report']}")
+    print(f"handoff_report_path: {result.handoff_artifact_paths['handoff_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
     return 0
 
 
