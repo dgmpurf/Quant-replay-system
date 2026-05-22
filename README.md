@@ -135,6 +135,8 @@ For the unified local research workflow dashboard, see [docs/local_research_dash
 
 For the end-to-end local research workflow smoke-test path, see [docs/local_research_workflow_e2e.md](docs/local_research_workflow_e2e.md).
 
+For the v0.39.0 local research workflow checkpoint summary, see [docs/release_checkpoint_v0.39.0.md](docs/release_checkpoint_v0.39.0.md).
+
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
@@ -235,6 +237,12 @@ python -m quant_replay_system.cli research-status --root outputs/reports --decis
 ```
 
 The automated smoke-test version of this flow is documented in [docs/local_research_workflow_e2e.md](docs/local_research_workflow_e2e.md) and covered by `tests/test_local_research_workflow_e2e.py`.
+
+## Local Research Workflow Checkpoint
+
+`v0.39.0` marks the first complete local-only research workflow checkpoint, covering local data preparation, snapshot quality, current candidates, paper review, paper reporting, fill reconciliation, and the unified `research-status` dashboard.
+
+See [docs/release_checkpoint_v0.39.0.md](docs/release_checkpoint_v0.39.0.md) for the milestone summary, local command sequence, safety guarantees, known limitations, and recommended tag.
 
 ## Project Layout
 

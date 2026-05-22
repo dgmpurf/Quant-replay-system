@@ -132,6 +132,12 @@ git push origin vX.Y.Z
 
 Before tagging, run tests and review `git status --short`.
 
+## Milestone Checkpoint Documents
+
+After major E2E workflow milestones, create a concise checkpoint document under `docs/release_checkpoint_<version>.md`.
+
+The checkpoint should summarize completed capabilities, the local command sequence, safety constraints, known limitations, validation expectations, and the recommended tag. These documents support the ChatGPT/user checkpoint decision and do not replace `python -m pytest`, `git status --short`, or secret/cache tracking checks.
+
 ## 6. Pro Extended Usage Rules
 
 Pro Extended is not needed for:
