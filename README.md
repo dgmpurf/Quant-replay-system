@@ -18,6 +18,7 @@ Included now:
 - Snapshot quality gate for full processed snapshot manifests.
 - Optional snapshot quality preflight for replay-like workflows.
 - Data preparation artifact index and health check for pipeline, quality, snapshot, and current-candidate outputs.
+- Data preparation workflow status dashboard for the latest local data-prep stage and next manual action.
 - Current/as-of-date candidate generation from local snapshots for paper-trading review.
 - Current candidate artifact index and health check for local candidate run navigation.
 - Current-candidate to paper-trading handoff helper for healthy local candidate artifacts.
@@ -127,6 +128,8 @@ For indexing local data preparation artifacts, see [docs/data_preparation_artifa
 
 For checking indexed data preparation artifact health, see [docs/data_preparation_artifact_health.md](docs/data_preparation_artifact_health.md).
 
+For the local data preparation workflow status dashboard, see [docs/data_preparation_workflow_status.md](docs/data_preparation_workflow_status.md).
+
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
@@ -148,6 +151,7 @@ python -m quant_replay_system.cli current-to-paper-review --handoff-dir outputs/
 python -m quant_replay_system.cli paper-review-template-health --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --decisions outputs/reports/paper_trading/daily/example/decisions.csv
 python -m quant_replay_system.cli data-prep-index --root outputs/reports
 python -m quant_replay_system.cli data-prep-health --index outputs/reports/data_preparation/index/data_preparation_artifact_index.csv
+python -m quant_replay_system.cli data-prep-status --root outputs/reports
 python -m quant_replay_system.cli replay-run --date 2024-01-03 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli batch-replay --dates 2024-01-03,2024-01-04 --horizon 2 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli paper-validate-fills --fills data/paper/fills.csv
@@ -188,12 +192,24 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 
 ```powershell
 python -m quant_replay_system.cli data-pipeline --manifest data/mock/data_pipeline_manifest.json
+python -m quant_replay_system.cli data-prep-status --root outputs/reports
 python -m quant_replay_system.cli snapshot-quality --manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
 python -m quant_replay_system.cli current-candidates --date 2024-01-08 --universe etf_core --top 5 --snapshot-manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
 python -m quant_replay_system.cli data-prep-index --root outputs/reports
 python -m quant_replay_system.cli data-prep-health --index outputs/reports/data_preparation/index/data_preparation_artifact_index.csv
+python -m quant_replay_system.cli data-prep-status --root outputs/reports --decision-date 2024-01-08 --universe etf_core
 python -m quant_replay_system.cli current-to-paper --candidates outputs/reports/current_candidates/<run_folder>/candidates.csv --paper-date 2024-01-08
 # Continue with the manual paper workflow: current-to-paper-review, paper-review-decisions, paper-daily, and paper-reconcile-fills.
+```
+
+## Data Preparation Status Workflow
+
+```powershell
+python -m quant_replay_system.cli data-pipeline --manifest data/mock/data_pipeline_manifest.json
+python -m quant_replay_system.cli data-prep-status --root outputs/reports
+python -m quant_replay_system.cli snapshot-quality --manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
+python -m quant_replay_system.cli current-candidates --date 2024-01-08 --universe etf_core --snapshot-manifest outputs/reports/data_pipeline/<pipeline_id>/snapshot_manifest.json
+python -m quant_replay_system.cli current-to-paper --candidates outputs/reports/current_candidates/<run_folder>/candidates.csv --paper-date 2024-01-08
 ```
 
 ## Project Layout
@@ -224,6 +240,7 @@ quant-replay-system/
     data_preparation_artifact_health.md
     data_preparation_artifact_index.md
     data_preparation_e2e.md
+    data_preparation_workflow_status.md
     data_quality.md
     data_sources.md
     daily_paper_trading_runner.md
@@ -264,6 +281,7 @@ quant-replay-system/
       data_pipeline.py
       data_preparation_artifact_health.py
       data_preparation_artifact_index.py
+      data_preparation_workflow_status.py
       data_quality.py
       data_sources.py
       daily_paper_runner.py

@@ -328,6 +328,19 @@ data_preparation_artifact_health:
   enable_live_trading: false
   enable_broker_api: false
 
+data_preparation_workflow_status:
+  root_dir: outputs/reports
+  data_pipeline_root: outputs/reports/data_pipeline
+  data_quality_root: outputs/reports/data_quality
+  snapshot_quality_root: outputs/reports/snapshot_quality
+  current_candidates_root: outputs/reports/current_candidates
+  output_dir: outputs/reports/data_preparation/workflow_status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_ingestion:
   output_dir: data/processed
   snapshot_dir: data/snapshots

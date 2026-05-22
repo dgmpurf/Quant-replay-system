@@ -20,6 +20,7 @@ from quant_replay_system.current_to_paper_handoff import run_current_to_paper_ha
 from quant_replay_system.current_to_paper_review_handoff import run_current_to_paper_review_handoff
 from quant_replay_system.data_preparation_artifact_health import check_data_preparation_artifact_health
 from quant_replay_system.data_preparation_artifact_index import build_data_preparation_artifact_index
+from quant_replay_system.data_preparation_workflow_status import run_data_preparation_workflow_status
 from quant_replay_system.data_pipeline import (
     load_data_pipeline_manifest,
     run_data_source_ingestion_pipeline,
@@ -343,6 +344,22 @@ def build_parser() -> argparse.ArgumentParser:
     data_prep_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
     data_prep_health.add_argument("--config", help="Optional config YAML path")
     data_prep_health.set_defaults(handler=_handle_data_prep_health)
+
+    data_prep_status = subparsers.add_parser(
+        "data-prep-status",
+        help="Build a local data preparation workflow status dashboard",
+    )
+    data_prep_status.add_argument("--root", help="Reports root directory")
+    data_prep_status.add_argument("--data-pipeline-root", help="Data pipeline artifact root directory")
+    data_prep_status.add_argument("--data-quality-root", help="Data quality artifact root directory")
+    data_prep_status.add_argument("--snapshot-quality-root", help="Snapshot quality artifact root directory")
+    data_prep_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
+    data_prep_status.add_argument("--decision-date", help="Optional current-candidate decision date filter")
+    data_prep_status.add_argument("--universe", help="Optional current-candidate universe filter")
+    data_prep_status.add_argument("--output-dir", help="Optional workflow status output directory")
+    data_prep_status.add_argument("--strict", action="store_true", help="Exit non-zero when workflow status is WARN")
+    data_prep_status.add_argument("--config", help="Optional config YAML path")
+    data_prep_status.set_defaults(handler=_handle_data_prep_status)
 
     ingest_market = subparsers.add_parser("ingest-market", help="Ingest local market daily CSV")
     ingest_market.add_argument("--input", required=True, help="Input market CSV path")
@@ -1164,6 +1181,54 @@ def _handle_data_prep_health(args: argparse.Namespace) -> int:
     if result.status == "FAIL":
         return 1
     if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_data_prep_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.data_pipeline_root:
+        updates["data_pipeline_root"] = Path(args.data_pipeline_root)
+    if args.data_quality_root:
+        updates["data_quality_root"] = Path(args.data_quality_root)
+    if args.snapshot_quality_root:
+        updates["snapshot_quality_root"] = Path(args.snapshot_quality_root)
+    if args.current_candidates_root:
+        updates["current_candidates_root"] = Path(args.current_candidates_root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "data_preparation_workflow_status": settings.data_preparation_workflow_status.model_copy(update=updates)
+        }
+    )
+    result = run_data_preparation_workflow_status(
+        root=args.root,
+        data_pipeline_root=args.data_pipeline_root,
+        data_quality_root=args.data_quality_root,
+        snapshot_quality_root=args.snapshot_quality_root,
+        current_candidates_root=args.current_candidates_root,
+        decision_date=args.decision_date,
+        universe_name=args.universe,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    print(f"Workflow status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_pipeline_id: {result.latest_pipeline_id}")
+    print(f"latest_snapshot_id: {result.latest_snapshot_id}")
+    print(f"latest_decision_date: {result.latest_decision_date}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['data_preparation_workflow_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
         return 1
     return 0
 
