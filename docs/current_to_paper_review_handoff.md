@@ -12,7 +12,7 @@ This helper writes `review_updates_template.csv` so the user can edit review dec
 
 ```cmd
 python -m quant_replay_system.cli paper-review-template-health --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv --decisions outputs\reports\paper_trading\daily\example\decisions.csv
-python -m quant_replay_system.cli paper-review-decisions --decisions outputs\reports\paper_trading\daily\example\decisions.csv --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs\reports\paper_trading\daily\example\decisions.csv --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv --health-check
 ```
 
 ## Workflow Connection
@@ -22,8 +22,7 @@ current-candidates
   -> current-to-paper
   -> current-to-paper-review
   -> manually edit review_updates_template.csv
-  -> paper-review-template-health
-  -> paper-review-decisions
+  -> paper-review-decisions --health-check
   -> paper-daily --reviewed-decisions
   -> paper-reconcile-fills
 ```

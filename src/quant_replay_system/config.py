@@ -236,6 +236,9 @@ class PaperReconciliationSettings(BaseModel):
 class PaperReviewSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/paper_trading/reviews")
     allow_pending_reviews: bool = True
+    enable_template_health_check: bool = False
+    require_template_health_pass: bool = False
+    allow_template_health_warn: bool = True
     config_version: str = "mvp"
     write_artifacts: bool = True
     enable_live_trading: Literal[False] = False

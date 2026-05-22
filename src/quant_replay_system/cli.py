@@ -228,6 +228,10 @@ def build_parser() -> argparse.ArgumentParser:
     review.add_argument("--output-dir", help="Optional review artifact output directory")
     review.add_argument("--reviewer-id", help="Default reviewer id for updates without reviewer_id")
     review.add_argument("--allow-pending", action="store_true", help="Allow reviewed decisions to remain PENDING_REVIEW")
+    review.add_argument("--health-check", action="store_true", help="Run review template health check before applying updates")
+    review.add_argument("--require-template-health-pass", action="store_true", help="Require template health status PASS before applying updates")
+    review.add_argument("--allow-template-health-warn", action="store_true", help="Allow review updates when template health status is WARN")
+    review.add_argument("--template-health-output-dir", help="Optional review template health output directory")
     review.add_argument("--config", help="Optional config YAML path")
     review.set_defaults(handler=_handle_review_decisions)
 
@@ -751,17 +755,57 @@ def _handle_review_decisions(args: argparse.Namespace) -> int:
         review_updates["output_dir"] = Path(args.output_dir)
     if args.allow_pending:
         review_updates["allow_pending_reviews"] = True
+    if args.health_check:
+        review_updates["enable_template_health_check"] = True
+    if args.require_template_health_pass:
+        review_updates["enable_template_health_check"] = True
+        review_updates["require_template_health_pass"] = True
+    if args.allow_template_health_warn:
+        review_updates["allow_template_health_warn"] = True
     if review_updates:
         settings = settings.model_copy(
             update={
                 "paper_review": settings.paper_review.model_copy(update=review_updates)
             }
         )
+    if args.template_health_output_dir:
+        settings = settings.model_copy(
+            update={
+                "paper_review_template_health": settings.paper_review_template_health.model_copy(
+                    update={"output_dir": Path(args.template_health_output_dir)}
+                )
+            }
+        )
+    decisions_frame = pd.read_csv(decisions_path)
+    updates_frame = pd.read_csv(updates_path)
+    template_health_metadata = None
+    if settings.paper_review.enable_template_health_check:
+        health_result = check_review_template_health(
+            updates_frame,
+            decisions=decisions_frame,
+            settings=settings,
+        )
+        template_health_metadata = _template_health_metadata(health_result)
+        print(f"Template health status: {health_result.status}")
+        print(f"Template health report path: {health_result.artifact_paths['review_template_health_report']}")
+        print(f"Template health issue_count: {health_result.issue_count}")
+        print(f"Template health error_count: {health_result.error_count}")
+        print(f"Template health warning_count: {health_result.warning_count}")
+        if health_result.status == "FAIL":
+            print("No live trading or broker API was invoked.")
+            return 1
+        if health_result.status == "WARN" and settings.paper_review.require_template_health_pass:
+            print("No live trading or broker API was invoked.")
+            return 1
+        if health_result.status == "WARN" and not settings.paper_review.allow_template_health_warn:
+            print("No live trading or broker API was invoked.")
+            return 1
     result = apply_paper_review_updates(
-        pd.read_csv(decisions_path),
-        pd.read_csv(updates_path),
+        decisions_frame,
+        updates_frame,
         reviewer_id=args.reviewer_id,
         settings=settings,
+        template_health_metadata=template_health_metadata,
     )
     summary = result.review_summary.iloc[0].to_dict() if not result.review_summary.empty else {}
     print(f"review_id: {result.review_id}")
@@ -1071,6 +1115,17 @@ def _print_snapshot_preflight_error(exc: SnapshotQualityPreflightError) -> int:
     print(f"ERROR: {exc}", file=sys.stderr)
     print("No live trading or broker API was invoked.")
     return 1
+
+
+def _template_health_metadata(result) -> dict:
+    return {
+        "template_health_status": result.status,
+        "template_health_report_path": str(result.artifact_paths["review_template_health_report"]),
+        "template_health_issue_count": result.issue_count,
+        "template_health_error_count": result.error_count,
+        "template_health_warning_count": result.warning_count,
+        "template_health_check_id": result.health_check_id,
+    }
 
 
 def _optional_settings(config_path: str | None):

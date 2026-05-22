@@ -77,7 +77,9 @@ The CLI exits non-zero on `FAIL` by default. With `--strict`, `WARN` also exits 
 
 ## CLI Usage
 
-Health check an update template:
+### Standalone Health Check
+
+Health check an update template without applying it:
 
 ```cmd
 python -m quant_replay_system.cli paper-review-template-health --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv
@@ -107,6 +109,38 @@ The CLI prints:
 No live trading or broker API was invoked.
 ```
 
+### Integrated paper-review-decisions Preflight
+
+`paper-review-decisions` can run the same health check before applying updates:
+
+```cmd
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs\reports\paper_trading\daily\example\decisions.csv --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv --health-check
+```
+
+Behavior:
+
+- Without `--health-check`, existing `paper-review-decisions` behavior is unchanged.
+- With `--health-check`, the template is checked before any review status changes are applied.
+- `FAIL` blocks update application and exits non-zero.
+- `WARN` continues by default.
+- `--require-template-health-pass` requires `PASS`; both `WARN` and `FAIL` block update application.
+- `--allow-template-health-warn` explicitly allows `WARN` to continue.
+- `--template-health-output-dir` writes health artifacts to a chosen folder.
+
+Strict preflight example:
+
+```cmd
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs\reports\paper_trading\daily\example\decisions.csv --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv --health-check --require-template-health-pass
+```
+
+When the integrated preflight runs, paper review metadata includes:
+
+- `template_health_status`
+- `template_health_report_path`
+- `template_health_issue_count`
+- `template_health_error_count`
+- `template_health_warning_count`
+
 ## Artifact Outputs
 
 Default output folder:
@@ -131,12 +165,11 @@ Recommended local flow:
 ```text
 current-to-paper-review
   -> manually edit review_updates_template.csv
-  -> paper-review-template-health
-  -> paper-review-decisions
+  -> paper-review-decisions --health-check
   -> paper-daily --reviewed-decisions
 ```
 
-This health check does not automatically block `paper-review-decisions`; it gives a local validation step the user can run before applying updates.
+Use standalone `paper-review-template-health` when you want to inspect a template before applying it. Use integrated `paper-review-decisions --health-check` for the normal apply step.
 
 ## Known MVP Limitations
 

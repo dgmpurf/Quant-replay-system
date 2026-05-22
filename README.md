@@ -115,7 +115,7 @@ For checking indexed artifact paths and metadata health, see [docs/paper_trading
 
 ```powershell
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
-python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --reviewer-id msj
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --health-check --reviewer-id msj
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-index --root outputs/reports/paper_trading
@@ -147,7 +147,7 @@ python -m quant_replay_system.cli current-to-paper --index outputs/reports/curre
 python -m quant_replay_system.cli current-to-paper-review --handoff-dir outputs/reports/current_to_paper_handoff/example --reviewer-id msj
 # Manually edit outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv
 python -m quant_replay_system.cli paper-review-template-health --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --decisions outputs/reports/paper_trading/daily/example/decisions.csv
-python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --reviewer-id msj
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates outputs/reports/current_to_paper_review_handoff/example/review_updates_template.csv --health-check --reviewer-id msj
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs/reports/paper_trading/daily/example/decisions.csv --fills data/paper/fills.csv
 ```

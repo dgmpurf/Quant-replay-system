@@ -107,6 +107,7 @@ def apply_paper_review_updates(
     reviewer_id: str | None = None,
     review_time: str | pd.Timestamp | None = None,
     settings: Settings | PaperReviewSettings | dict[str, Any] | None = None,
+    template_health_metadata: dict[str, Any] | None = None,
 ) -> PaperReviewResult:
     """Apply manual review updates to paper decisions and write optional artifacts."""
 
@@ -169,6 +170,8 @@ def apply_paper_review_updates(
         "broker_api_invoked": False,
         "paper_trading_only": True,
     }
+    if template_health_metadata is not None:
+        audit_metadata["template_health"] = dict(template_health_metadata)
     result = PaperReviewResult(
         review_id=review_id,
         reviewed_decisions=reviewed,
@@ -361,7 +364,7 @@ def write_paper_review_artifacts(result: PaperReviewResult) -> dict[str, Path]:
 def build_paper_review_metadata(result: PaperReviewResult, paths: PaperReviewArtifactPaths) -> dict[str, Any]:
     """Build metadata for a paper review run."""
 
-    return {
+    metadata = {
         "review_id": result.review_id,
         "created_at": _metadata_created_at(result.audit_metadata.get("review_time")),
         "row_counts": {
@@ -378,6 +381,9 @@ def build_paper_review_metadata(result: PaperReviewResult, paths: PaperReviewArt
         "paper_trading_only": True,
         "no_live_trading_statement": "No broker or live trading integration was invoked.",
     }
+    if result.audit_metadata.get("template_health"):
+        metadata["template_health"] = result.audit_metadata["template_health"]
+    return metadata
 
 
 def render_paper_review_report(
@@ -418,6 +424,10 @@ def render_paper_review_report(
                 "watch_only_rate",
             ],
         ),
+        "",
+        "## Template Health Preflight",
+        "",
+        _template_health_section(result.audit_metadata.get("template_health")),
         "",
         "## Review Audit Log",
         "",
@@ -691,6 +701,20 @@ def _warnings_section(warnings: list[str]) -> str:
     if not warnings:
         return "- None"
     return "\n".join(f"- {warning}" for warning in warnings)
+
+
+def _template_health_section(template_health: Any) -> str:
+    if not isinstance(template_health, dict) or not template_health:
+        return "- Not run"
+    return _dict_table(
+        {
+            "template_health_status": template_health.get("template_health_status", ""),
+            "template_health_report_path": template_health.get("template_health_report_path", ""),
+            "template_health_issue_count": template_health.get("template_health_issue_count", 0),
+            "template_health_error_count": template_health.get("template_health_error_count", 0),
+            "template_health_warning_count": template_health.get("template_health_warning_count", 0),
+        }
+    )
 
 
 def _format_markdown_value(value: Any) -> str:

@@ -207,6 +207,220 @@ def test_cli_paper_review_decisions_works(tmp_path: Path, capsys) -> None:
     assert "No live trading or broker API was invoked." in output.out
 
 
+def test_cli_paper_review_decisions_unchanged_without_health_check(tmp_path: Path, capsys) -> None:
+    decisions_path, updates_path = _write_decisions_and_updates(tmp_path)
+
+    code = cli.main(
+        [
+            "paper-review-decisions",
+            "--decisions",
+            str(decisions_path),
+            "--updates",
+            str(updates_path),
+            "--reviewer-id",
+            "cli-reviewer",
+            "--output-dir",
+            str(tmp_path / "reviews"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "Template health status:" not in output.out
+    assert "approved_count: 1" in output.out
+
+
+def test_cli_paper_review_decisions_runs_health_check_when_requested(tmp_path: Path, capsys) -> None:
+    decisions_path, updates_path = _write_pass_health_decisions_and_updates(tmp_path)
+
+    code = cli.main(
+        [
+            "paper-review-decisions",
+            "--decisions",
+            str(decisions_path),
+            "--updates",
+            str(updates_path),
+            "--health-check",
+            "--output-dir",
+            str(tmp_path / "reviews"),
+            "--template-health-output-dir",
+            str(tmp_path / "template_health"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "Template health status: PASS" in output.out
+    assert "Template health report path:" in output.out
+
+
+def test_cli_paper_review_decisions_health_fail_blocks_updates(tmp_path: Path, capsys) -> None:
+    decisions_path, updates_path = _write_pass_health_decisions_and_updates(tmp_path)
+    decisions_before = pd.read_csv(decisions_path)
+    updates = pd.read_csv(updates_path)
+    updates.loc[0, "manual_review_status"] = "BAD_STATUS"
+    updates.to_csv(updates_path, index=False)
+
+    code = cli.main(
+        [
+            "paper-review-decisions",
+            "--decisions",
+            str(decisions_path),
+            "--updates",
+            str(updates_path),
+            "--health-check",
+            "--output-dir",
+            str(tmp_path / "reviews"),
+            "--template-health-output-dir",
+            str(tmp_path / "template_health"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 1
+    assert "Template health status: FAIL" in output.out
+    assert not list((tmp_path / "reviews").glob("*/reviewed_decisions.csv"))
+    pd.testing.assert_frame_equal(pd.read_csv(decisions_path), decisions_before)
+
+
+def test_cli_paper_review_decisions_health_warn_continues_by_default(tmp_path: Path, capsys) -> None:
+    decisions_path, updates_path = _write_pass_health_decisions_and_updates(tmp_path)
+    updates = pd.read_csv(updates_path)
+    updates.loc[0, "reviewer_id"] = ""
+    updates.to_csv(updates_path, index=False)
+
+    code = cli.main(
+        [
+            "paper-review-decisions",
+            "--decisions",
+            str(decisions_path),
+            "--updates",
+            str(updates_path),
+            "--health-check",
+            "--reviewer-id",
+            "cli-reviewer",
+            "--output-dir",
+            str(tmp_path / "reviews"),
+            "--template-health-output-dir",
+            str(tmp_path / "template_health"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "Template health status: WARN" in output.out
+    assert "approved_count: 1" in output.out
+
+
+def test_cli_paper_review_decisions_health_warn_continues_with_allow_warn(tmp_path: Path, capsys) -> None:
+    decisions_path, updates_path = _write_pass_health_decisions_and_updates(tmp_path)
+    updates = pd.read_csv(updates_path)
+    updates.loc[0, "reviewer_id"] = ""
+    updates.to_csv(updates_path, index=False)
+
+    code = cli.main(
+        [
+            "paper-review-decisions",
+            "--decisions",
+            str(decisions_path),
+            "--updates",
+            str(updates_path),
+            "--health-check",
+            "--allow-template-health-warn",
+            "--reviewer-id",
+            "cli-reviewer",
+            "--output-dir",
+            str(tmp_path / "reviews"),
+            "--template-health-output-dir",
+            str(tmp_path / "template_health"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "Template health status: WARN" in output.out
+
+
+def test_cli_paper_review_decisions_health_warn_blocks_when_pass_required(tmp_path: Path, capsys) -> None:
+    decisions_path, updates_path = _write_pass_health_decisions_and_updates(tmp_path)
+    updates = pd.read_csv(updates_path)
+    updates.loc[0, "reviewer_id"] = ""
+    updates.to_csv(updates_path, index=False)
+
+    code = cli.main(
+        [
+            "paper-review-decisions",
+            "--decisions",
+            str(decisions_path),
+            "--updates",
+            str(updates_path),
+            "--health-check",
+            "--require-template-health-pass",
+            "--reviewer-id",
+            "cli-reviewer",
+            "--output-dir",
+            str(tmp_path / "reviews"),
+            "--template-health-output-dir",
+            str(tmp_path / "template_health"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 1
+    assert "Template health status: WARN" in output.out
+    assert not list((tmp_path / "reviews").glob("*/reviewed_decisions.csv"))
+
+
+def test_cli_paper_review_decisions_health_pass_allows_updates(tmp_path: Path, capsys) -> None:
+    decisions_path, updates_path = _write_pass_health_decisions_and_updates(tmp_path)
+
+    code = cli.main(
+        [
+            "paper-review-decisions",
+            "--decisions",
+            str(decisions_path),
+            "--updates",
+            str(updates_path),
+            "--health-check",
+            "--require-template-health-pass",
+            "--output-dir",
+            str(tmp_path / "reviews"),
+            "--template-health-output-dir",
+            str(tmp_path / "template_health"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "Template health status: PASS" in output.out
+    assert "approved_count: 1" in output.out
+
+
+def test_cli_paper_review_decisions_health_metadata_is_written(tmp_path: Path) -> None:
+    decisions_path, updates_path = _write_pass_health_decisions_and_updates(tmp_path)
+
+    code = cli.main(
+        [
+            "paper-review-decisions",
+            "--decisions",
+            str(decisions_path),
+            "--updates",
+            str(updates_path),
+            "--health-check",
+            "--output-dir",
+            str(tmp_path / "reviews"),
+            "--template-health-output-dir",
+            str(tmp_path / "template_health"),
+        ]
+    )
+    metadata_path = next((tmp_path / "reviews").glob("*/metadata.json"))
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+
+    assert code == 0
+    assert metadata["template_health"]["template_health_status"] == "PASS"
+    assert "template_health_report_path" in metadata["template_health"]
+
+
 def test_cli_exits_nonzero_on_invalid_updates(tmp_path: Path, capsys) -> None:
     decisions_path, updates_path = _write_decisions_and_updates(tmp_path)
     updates = pd.read_csv(updates_path)
@@ -278,6 +492,17 @@ def _review_result(tmp_path: Path) -> PaperReviewResult:
 def _write_decisions_and_updates(tmp_path: Path) -> tuple[Path, Path]:
     decisions = _decisions()
     updates = _updates(decisions, [(0, "APPROVED_FOR_PAPER", "SCORE_CONFIRMED")])
+    decisions_path = tmp_path / "decisions.csv"
+    updates_path = tmp_path / "review_updates.csv"
+    decisions.to_csv(decisions_path, index=False)
+    updates.to_csv(updates_path, index=False)
+    return decisions_path, updates_path
+
+
+def _write_pass_health_decisions_and_updates(tmp_path: Path) -> tuple[Path, Path]:
+    decisions = _decisions()
+    updates = _updates(decisions, [(0, "APPROVED_FOR_PAPER", "SCORE_CONFIRMED")])
+    updates["reviewer_id"] = "cli-reviewer"
     decisions_path = tmp_path / "decisions.csv"
     updates_path = tmp_path / "review_updates.csv"
     decisions.to_csv(decisions_path, index=False)

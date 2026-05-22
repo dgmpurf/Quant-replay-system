@@ -82,9 +82,19 @@ Options:
 - `--output-dir` optional review artifact output directory.
 - `--reviewer-id` optional default reviewer ID.
 - `--allow-pending` allows decisions to remain `PENDING_REVIEW`.
+- `--health-check` runs review template health preflight before applying updates.
+- `--require-template-health-pass` blocks update application unless template health status is `PASS`.
+- `--allow-template-health-warn` explicitly allows `WARN` health status to continue.
+- `--template-health-output-dir` optional health artifact output directory.
 - `--config` optional config YAML path.
 
-The command writes artifacts and prints the review summary plus the no-live-trading statement.
+The command writes artifacts and prints the review summary plus the no-live-trading statement. When `--health-check` is used, it prints template health status and report path before applying updates.
+
+Recommended preflight apply command:
+
+```cmd
+python -m quant_replay_system.cli paper-review-decisions --decisions outputs\reports\paper_trading\daily\example\decisions.csv --updates outputs\reports\current_to_paper_review_handoff\example\review_updates_template.csv --health-check --reviewer-id msj
+```
 
 ## Daily Runner Integration
 
@@ -102,11 +112,10 @@ The intended local workflow is:
 
 1. Generate paper decisions.
 2. Create and manually edit a review update template.
-3. Run `paper-review-template-health` to validate the edited template.
-4. Apply manual review updates.
-5. Use `reviewed_decisions.csv` in `paper-daily`.
-6. Reconcile fills against reviewed decisions.
-7. Generate daily paper reports.
+3. Run health preflight and apply updates with `paper-review-decisions --health-check`.
+4. Use `reviewed_decisions.csv` in `paper-daily`.
+5. Reconcile fills against reviewed decisions.
+6. Generate daily paper reports.
 
 Fills against `REJECTED`, `WATCH_ONLY`, or `PENDING_REVIEW` decisions fail reconciliation by default.
 
