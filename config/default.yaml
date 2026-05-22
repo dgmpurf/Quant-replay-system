@@ -288,6 +288,22 @@ data_sources:
   enable_live_trading: false
   enable_broker_api: false
 
+data_pipeline:
+  output_dir: outputs/reports/data_pipeline
+  raw_output_dir: data/raw
+  processed_output_dir: data/processed
+  snapshot_output_dir: data/snapshots
+  run_data_quality: true
+  build_snapshot_manifest: true
+  fail_on_ingestion_error: true
+  fail_on_data_quality_fail: false
+  allow_data_quality_warn: true
+  allow_real_data: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_ingestion:
   output_dir: data/processed
   snapshot_dir: data/snapshots

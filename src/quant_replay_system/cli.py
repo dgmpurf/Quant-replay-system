@@ -18,6 +18,10 @@ from quant_replay_system.current_candidate_artifact_index import build_current_c
 from quant_replay_system.current_candidates import generate_current_candidates
 from quant_replay_system.current_to_paper_handoff import run_current_to_paper_handoff
 from quant_replay_system.current_to_paper_review_handoff import run_current_to_paper_review_handoff
+from quant_replay_system.data_pipeline import (
+    load_data_pipeline_manifest,
+    run_data_source_ingestion_pipeline,
+)
 from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_sources import DataSourceRequest, run_data_source_fetch
 from quant_replay_system.data_ingestion import (
@@ -297,6 +301,18 @@ def build_parser() -> argparse.ArgumentParser:
     data_source.add_argument("--end-date", help="Optional end date for future real-data adapters")
     data_source.add_argument("--config", help="Optional config YAML path")
     data_source.set_defaults(handler=_handle_data_source_fetch)
+
+    data_pipeline = subparsers.add_parser("data-pipeline", help="Run local data source -> ingestion -> quality pipeline")
+    data_pipeline.add_argument("--dataset-type", help="Dataset type for single dataset mode")
+    data_pipeline.add_argument("--source", help="Data source adapter for single dataset mode")
+    data_pipeline.add_argument("--input", help="Input CSV path for single dataset LOCAL_CSV mode")
+    data_pipeline.add_argument("--manifest", help="Local JSON manifest for multi-dataset mode")
+    data_pipeline.add_argument("--output-dir", help="Optional pipeline report output directory")
+    data_pipeline.add_argument("--skip-data-quality", action="store_true", help="Skip data quality checks")
+    data_pipeline.add_argument("--skip-snapshot-manifest", action="store_true", help="Skip snapshot manifest generation")
+    data_pipeline.add_argument("--allow-real-data", action="store_true", help="Explicit manual opt-in for real/network data adapters")
+    data_pipeline.add_argument("--config", help="Optional config YAML path")
+    data_pipeline.set_defaults(handler=_handle_data_pipeline)
 
     ingest_market = subparsers.add_parser("ingest-market", help="Ingest local market daily CSV")
     ingest_market.add_argument("--input", required=True, help="Input market CSV path")
@@ -1014,6 +1030,51 @@ def _handle_data_source_fetch(args: argparse.Namespace) -> int:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
     return 0
+
+
+def _handle_data_pipeline(args: argparse.Namespace) -> int:
+    if args.manifest and args.dataset_type:
+        raise ValueError("Use either --manifest or --dataset-type, not both")
+    if not args.manifest and not args.dataset_type:
+        raise ValueError("data-pipeline requires --dataset-type for single mode or --manifest for multi-dataset mode")
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    pipeline_updates = {"allow_real_data": bool(args.allow_real_data)}
+    if args.output_dir:
+        pipeline_updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "data_pipeline": settings.data_pipeline.model_copy(update=pipeline_updates)
+        }
+    )
+    if args.manifest:
+        datasets = load_data_pipeline_manifest(args.manifest)
+    else:
+        datasets = [
+            {
+                "dataset_type": args.dataset_type,
+                "source": args.source or settings.data_sources.default_source,
+                "input_path": args.input,
+                "allow_real_data": bool(args.allow_real_data),
+            }
+        ]
+    result = run_data_source_ingestion_pipeline(
+        datasets,
+        config=settings,
+        output_dir=args.output_dir,
+        run_data_quality=not args.skip_data_quality,
+        build_snapshot_manifest=not args.skip_snapshot_manifest,
+    )
+    print(f"Data pipeline status: {result.status}")
+    print(f"pipeline_id: {result.pipeline_id}")
+    for dataset_type, path in sorted(result.processed_paths.items()):
+        print(f"processed_{dataset_type}: {path}")
+    print(f"Report path: {result.artifact_paths['data_pipeline_report']}")
+    if result.snapshot_manifest_path is not None:
+        print(f"Snapshot manifest path: {result.snapshot_manifest_path}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 1 if result.status == "FAIL" else 0
 
 
 def _handle_ingest_market(args: argparse.Namespace) -> int:

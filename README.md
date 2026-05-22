@@ -118,8 +118,11 @@ For a one-page local workflow status dashboard and next manual action, see [docs
 
 For local-safe raw data source adapters before ingestion, see [docs/data_sources.md](docs/data_sources.md).
 
+For the local data source to ingestion and quality handoff pipeline, see [docs/data_pipeline.md](docs/data_pipeline.md).
+
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
+python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --health-check --reviewer-id msj
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decisions outputs/reports/paper_trading/reviews/example/reviewed_decisions.csv --fills data/paper/fills.csv
@@ -146,6 +149,7 @@ python -m quant_replay_system.cli paper-template-fills --output data/paper/fills
 
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/raw/market.csv
+python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/raw/market.csv
 python -m quant_replay_system.cli ingest-market --input data/raw/market.csv --output-dir data/processed/market
 python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest data/snapshots/example_snapshot_manifest.json
@@ -165,8 +169,8 @@ python -m quant_replay_system.cli paper-workflow-status --root outputs/reports -
 
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
-python -m quant_replay_system.cli ingest-market --input data/raw/LOCAL_CSV/market/example/raw_data.csv --output-dir data/processed/market
-python -m quant_replay_system.cli data-quality --dataset-type market --input data/processed/market/raw_data_cleaned.csv
+python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
+python -m quant_replay_system.cli data-quality --dataset-type market --input data/processed/market/<pipeline_id>/raw_data_cleaned.csv
 python -m quant_replay_system.cli snapshot-quality --manifest data/snapshots/example_snapshot_manifest.json
 python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --snapshot-manifest data/snapshots/example_snapshot_manifest.json
 ```
@@ -194,6 +198,7 @@ quant-replay-system/
     current_to_paper_review_handoff.md
     data_contract.md
     data_ingestion.md
+    data_pipeline.md
     data_quality.md
     data_sources.md
     daily_paper_trading_runner.md
@@ -231,6 +236,7 @@ quant-replay-system/
       current_to_paper_review_handoff.py
       data.py
       data_ingestion.py
+      data_pipeline.py
       data_quality.py
       data_sources.py
       daily_paper_runner.py

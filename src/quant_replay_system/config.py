@@ -325,6 +325,23 @@ class DataSourceSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class DataPipelineSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/data_pipeline")
+    raw_output_dir: Path = Path("data/raw")
+    processed_output_dir: Path = Path("data/processed")
+    snapshot_output_dir: Path = Path("data/snapshots")
+    run_data_quality: bool = True
+    build_snapshot_manifest: bool = True
+    fail_on_ingestion_error: bool = True
+    fail_on_data_quality_fail: bool = False
+    allow_data_quality_warn: bool = True
+    allow_real_data: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataIngestionSettings(BaseModel):
     output_dir: Path = Path("data/processed")
     snapshot_dir: Path = Path("data/snapshots")
@@ -423,6 +440,7 @@ class Settings(BaseModel):
     paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)
     paper_workflow_status: PaperWorkflowStatusSettings = Field(default_factory=PaperWorkflowStatusSettings)
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
+    data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
     data_ingestion: DataIngestionSettings = Field(default_factory=DataIngestionSettings)
     data_quality: DataQualitySettings = Field(default_factory=DataQualitySettings)
     snapshot_quality_gate: SnapshotQualityGateSettings = Field(default_factory=SnapshotQualityGateSettings)

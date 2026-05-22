@@ -109,7 +109,13 @@ No live trading or broker API was invoked.
 
 ## Relationship To Data Ingestion
 
-`data-source-fetch` writes raw local artifacts. Next, run the existing ingestion commands to normalize and validate canonical point-in-time schemas:
+`data-source-fetch` writes raw local artifacts. The recommended handoff is now `data-pipeline`, which runs source fetch, ingestion, optional data quality, and optional snapshot manifest generation in one local workflow:
+
+```cmd
+python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data\mock\prices.csv
+```
+
+You can still run the underlying commands manually:
 
 ```cmd
 python -m quant_replay_system.cli ingest-market --input data\raw\LOCAL_CSV\market\...\raw_data.csv --output-dir data\processed\market
@@ -123,7 +129,6 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 - Only `LOCAL_CSV` and `MOCK` fetch local data in v0.1.
 - `AKSHARE_OPTIONAL` is a guarded placeholder, not a production data downloader.
 - No source-specific symbol mapping is implemented.
-- No automatic ingestion handoff is performed yet.
-- No snapshot manifest is created by the data source adapter itself.
+- Data source adapters still only write raw artifacts; use `data-pipeline` for ingestion handoff.
 - It uses local/mock CSV data only in automated tests.
 - It is not live trading and never invokes broker APIs.
