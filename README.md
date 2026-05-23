@@ -131,7 +131,7 @@ For checking local source and upstream route availability before import, see [do
 
 For caching successful canonical daily market bars and querying them into local pipeline inputs, see [docs/market_data_cache.md](docs/market_data_cache.md).
 
-For comparing overlapping cached market bars across sources such as AKShare and BaoStock, use `market-cache-compare`; see [docs/market_data_cache.md#compare-sources](docs/market_data_cache.md#compare-sources).
+For comparing overlapping cached market bars across sources such as AKShare and BaoStock, including likely volume/amount unit or source-semantic diagnostics, use `market-cache-compare`; see [docs/market_data_cache.md#compare-sources](docs/market_data_cache.md#compare-sources).
 
 `AKSHARE_OPTIONAL` is available for guarded manual local market, benchmark, trading-calendar, and universe snapshot fetches; it requires `--allow-real-data`, is never called by automated tests, tries non-Eastmoney Sina/Tencent market routes before Eastmoney where supported, includes stock/ETF/index routing diagnostics plus a manual-only `curl_cffi` Eastmoney kline fallback, and should be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
 

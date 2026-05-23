@@ -23,7 +23,7 @@ data-pipeline -> data-quality -> snapshot-quality -> current-candidates
 
 Before importing from optional real-data routes, run `data-source-health` to verify route availability and fallback behavior. Successful market outputs can be ingested into the [local market data cache](market_data_cache.md) to reduce repeated public endpoint calls. Health checks and cache hits are diagnostics only; they do not replace data quality or snapshot quality.
 
-When multiple sources overlap in the cache, run `market-cache-compare` before using combined rows. The comparison highlights OHLC, volume, amount, adjustment, and coverage differences without declaring either source as truth.
+When multiple sources overlap in the cache, run `market-cache-compare` before using combined rows. The comparison highlights OHLC, volume, amount, adjustment, coverage, and likely unit/semantic differences without declaring either source as truth.
 
 ## Source Categories
 
@@ -90,6 +90,8 @@ python -m quant_replay_system.cli data-source-fetch --source BAOSTOCK_OPTIONAL -
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 ```
+
+If prices match but volume or amount differ, review the comparison diagnostics before deciding whether a source-specific normalization rule is justified. Stable ratios can suggest a unit scale, while unstable ratios usually point to source semantics, adjustment, or field-definition differences. Do not auto-correct cached data from diagnostics alone.
 
 ### Tushare Optional API Route
 
@@ -215,4 +217,4 @@ Do not use raw vendor output directly for replay, current candidates, or paper w
 - JQData/RQData routes are strategy candidates, not implemented workflow defaults.
 - Raw data quality is source-dependent and must always be checked locally.
 - Sina/Tencent/Eastmoney AKShare routes can differ in adjustment, amount, volume, and date coverage semantics; compare and quality-check outputs before research use.
-- Cache comparison is diagnostic only; it does not resolve which source should be trusted.
+- Cache comparison is diagnostic only; it does not resolve which source should be trusted or mutate cached data.

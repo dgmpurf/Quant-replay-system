@@ -103,6 +103,9 @@ Row-level comparison fields include:
 - source and upstream source for each side
 - OHLC, volume, amount, `pre_close`, and `adj_factor` values for each side
 - absolute differences and percentage differences
+- source A/source B volume and amount ratios
+- `amount / (close * volume)` ratios for each side
+- unit/semantic diagnostic flags and reasons
 - `row_match_status`: `MATCHED`, `SOURCE_A_ONLY`, or `SOURCE_B_ONLY`
 - `tolerance_status`: `PASS`, `WARN`, or `FAIL`
 
@@ -114,14 +117,19 @@ market_data_comparison:
   price_pct_tolerance: 0.001
   volume_pct_tolerance: 0.05
   amount_pct_tolerance: 0.05
+  unit_ratio_stability_tolerance: 0.05
+  unit_ratio_far_from_one_tolerance: 0.05
 ```
 
 Interpretation:
 
 - Large price differences may indicate adjustment or ex-rights handling mismatch.
 - Large volume or amount differences may indicate unit differences or source-specific semantics.
+- Stable volume or amount ratios far from `1.0` can indicate a likely source-specific unit scale.
+- Matched prices with unstable volume/amount ratios are treated as source semantics differences, not an automatic correction opportunity.
 - Source-only rows indicate coverage gaps.
 - The report does not declare either source as truth.
+- The comparison never rewrites cached rows. Any source-specific normalization rule must be added explicitly after review.
 
 ## Status
 

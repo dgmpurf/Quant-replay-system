@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -45,6 +46,21 @@ for _column in COMPARISON_VALUE_COLUMNS:
         ]
     )
 
+MARKET_COMPARISON_DIAGNOSTIC_COLUMNS = [
+    "volume_ratio_a_to_b",
+    "amount_ratio_a_to_b",
+    "close_times_volume_a",
+    "close_times_volume_b",
+    "amount_to_close_volume_ratio_a",
+    "amount_to_close_volume_ratio_b",
+    "likely_volume_unit_mismatch",
+    "likely_amount_unit_mismatch",
+    "likely_adjustment_or_semantic_mismatch",
+    "diagnostic_reason",
+]
+
+MARKET_COMPARISON_COLUMNS.extend(MARKET_COMPARISON_DIAGNOSTIC_COLUMNS)
+
 
 MARKET_COMPARISON_SUMMARY_COLUMNS = [
     "comparison_id",
@@ -61,6 +77,15 @@ MARKET_COMPARISON_SUMMARY_COLUMNS = [
     "max_close_diff_pct",
     "max_volume_diff_pct",
     "max_amount_diff_pct",
+    "median_volume_ratio",
+    "median_amount_ratio",
+    "median_amount_to_close_volume_ratio_a",
+    "median_amount_to_close_volume_ratio_b",
+    "stable_volume_ratio_detected",
+    "stable_amount_ratio_detected",
+    "suspected_volume_scale_factor",
+    "suspected_amount_scale_factor",
+    "diagnostic_classification",
     "pass_count",
     "warn_count",
     "fail_count",
@@ -194,6 +219,7 @@ def run_market_source_comparison(
         source_b=normalized_source_b,
         start_date=start_date or "",
         end_date=end_date or "",
+        settings=comparison_settings,
     )
     status = str(summary_frame.iloc[0]["status"]) if not summary_frame.empty else "PASS"
     artifact_paths = resolve_market_source_comparison_artifact_paths(
@@ -298,6 +324,7 @@ def build_market_source_comparison_frame(
         merged[column] = merged[column].fillna("")
     for metric in COMPARISON_VALUE_COLUMNS:
         _add_metric_diff_columns(merged, metric)
+    _add_unit_diagnostic_columns(merged, comparison_settings)
     statuses = merged.apply(lambda row: _tolerance_status(row, comparison_settings), axis=1)
     merged["tolerance_status"] = [status for status, _reason in statuses]
     merged["tolerance_reason"] = [reason for _status, reason in statuses]
@@ -317,7 +344,9 @@ def summarize_market_source_comparison(
     source_b: str,
     start_date: str,
     end_date: str,
+    settings: MarketDataComparisonSettings | dict[str, Any] | None = None,
 ) -> pd.DataFrame:
+    comparison_settings = _coerce_comparison_settings(settings)
     frame = comparison_frame.copy(deep=True)
     if frame.empty:
         matched = source_a_only = source_b_only = pass_count = warn_count = fail_count = 0
@@ -332,6 +361,7 @@ def summarize_market_source_comparison(
         max_close = _max_abs_numeric(frame.get("close_diff_pct", pd.Series(dtype="float64")))
         max_volume = _max_abs_numeric(frame.get("volume_diff_pct", pd.Series(dtype="float64")))
         max_amount = _max_abs_numeric(frame.get("amount_diff_pct", pd.Series(dtype="float64")))
+    unit_summary = _summarize_unit_diagnostics(frame, comparison_settings)
     status = "FAIL" if fail_count else "WARN" if warn_count else "PASS"
     return pd.DataFrame(
         [
@@ -350,6 +380,7 @@ def summarize_market_source_comparison(
                 "max_close_diff_pct": max_close,
                 "max_volume_diff_pct": max_volume,
                 "max_amount_diff_pct": max_amount,
+                **unit_summary,
                 "pass_count": pass_count,
                 "warn_count": warn_count,
                 "fail_count": fail_count,
@@ -409,12 +440,26 @@ def render_market_source_comparison_report(result: MarketDataComparisonResult) -
         f"- max_close_diff_pct: {summary.get('max_close_diff_pct', 0)}",
         f"- max_volume_diff_pct: {summary.get('max_volume_diff_pct', 0)}",
         f"- max_amount_diff_pct: {summary.get('max_amount_diff_pct', 0)}",
+        f"- diagnostic_classification: {summary.get('diagnostic_classification', 'NO_UNIT_MISMATCH')}",
+        f"- median_volume_ratio: {summary.get('median_volume_ratio', '')}",
+        f"- median_amount_ratio: {summary.get('median_amount_ratio', '')}",
+        f"- suspected_volume_scale_factor: {summary.get('suspected_volume_scale_factor', '')}",
+        f"- suspected_amount_scale_factor: {summary.get('suspected_amount_scale_factor', '')}",
         "",
         "No live trading or broker API was invoked.",
         "",
         "## Summary",
         "",
         result.summary_frame.to_markdown(index=False) if not result.summary_frame.empty else "No comparison rows.",
+        "",
+        "## Unit And Semantic Diagnostics",
+        "",
+        "- `volume_ratio_a_to_b` and `amount_ratio_a_to_b` are source A divided by source B.",
+        "- Stable ratios far from 1.0 can indicate a possible source-specific unit scale.",
+        "- Unstable ratios with matched prices are reported as source semantics differences, not corrected automatically.",
+        "- Diagnostics do not choose a trusted source or mutate cached data.",
+        "",
+        _render_top_difference_rows(result.comparison_frame),
         "",
         "## Interpretation Notes",
         "",
@@ -467,6 +512,8 @@ def generate_market_source_comparison_id(
         "price_pct_tolerance": settings.price_pct_tolerance,
         "volume_pct_tolerance": settings.volume_pct_tolerance,
         "amount_pct_tolerance": settings.amount_pct_tolerance,
+        "unit_ratio_stability_tolerance": settings.unit_ratio_stability_tolerance,
+        "unit_ratio_far_from_one_tolerance": settings.unit_ratio_far_from_one_tolerance,
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()[:12]
@@ -507,6 +554,34 @@ def _add_metric_diff_columns(frame: pd.DataFrame, metric: str) -> None:
     frame[f"{metric}_diff_pct"] = [_diff_pct(a, b) for a, b in zip(left, right)]
 
 
+def _add_unit_diagnostic_columns(frame: pd.DataFrame, settings: MarketDataComparisonSettings) -> None:
+    volume_a = pd.to_numeric(frame.get("volume_a", pd.Series(index=frame.index, dtype="float64")), errors="coerce")
+    volume_b = pd.to_numeric(frame.get("volume_b", pd.Series(index=frame.index, dtype="float64")), errors="coerce")
+    amount_a = pd.to_numeric(frame.get("amount_a", pd.Series(index=frame.index, dtype="float64")), errors="coerce")
+    amount_b = pd.to_numeric(frame.get("amount_b", pd.Series(index=frame.index, dtype="float64")), errors="coerce")
+    close_a = pd.to_numeric(frame.get("close_a", pd.Series(index=frame.index, dtype="float64")), errors="coerce")
+    close_b = pd.to_numeric(frame.get("close_b", pd.Series(index=frame.index, dtype="float64")), errors="coerce")
+
+    frame["volume_ratio_a_to_b"] = [_safe_ratio(a, b) for a, b in zip(volume_a, volume_b)]
+    frame["amount_ratio_a_to_b"] = [_safe_ratio(a, b) for a, b in zip(amount_a, amount_b)]
+    frame["close_times_volume_a"] = close_a * volume_a
+    frame["close_times_volume_b"] = close_b * volume_b
+    frame["amount_to_close_volume_ratio_a"] = [
+        _safe_ratio(amount, close_volume) for amount, close_volume in zip(amount_a, frame["close_times_volume_a"])
+    ]
+    frame["amount_to_close_volume_ratio_b"] = [
+        _safe_ratio(amount, close_volume) for amount, close_volume in zip(amount_b, frame["close_times_volume_b"])
+    ]
+
+    diagnostics = frame.apply(lambda row: _row_unit_diagnostics(row, settings), axis=1)
+    frame["likely_volume_unit_mismatch"] = [item["likely_volume_unit_mismatch"] for item in diagnostics]
+    frame["likely_amount_unit_mismatch"] = [item["likely_amount_unit_mismatch"] for item in diagnostics]
+    frame["likely_adjustment_or_semantic_mismatch"] = [
+        item["likely_adjustment_or_semantic_mismatch"] for item in diagnostics
+    ]
+    frame["diagnostic_reason"] = [item["diagnostic_reason"] for item in diagnostics]
+
+
 def _tolerance_status(row: pd.Series, settings: MarketDataComparisonSettings) -> tuple[str, str]:
     match_status = str(row.get("row_match_status", ""))
     if match_status == "SOURCE_A_ONLY":
@@ -535,6 +610,134 @@ def _tolerance_status(row: pd.Series, settings: MarketDataComparisonSettings) ->
     return "PASS", "All compared values are within tolerance."
 
 
+def _row_unit_diagnostics(row: pd.Series, settings: MarketDataComparisonSettings) -> dict[str, Any]:
+    match_status = str(row.get("row_match_status", ""))
+    if match_status != "MATCHED":
+        return {
+            "likely_volume_unit_mismatch": False,
+            "likely_amount_unit_mismatch": False,
+            "likely_adjustment_or_semantic_mismatch": False,
+            "diagnostic_reason": "Source-only row; unit diagnostics require both sources.",
+        }
+
+    close_abs_diff = abs(_float_or_zero(row.get("close_diff")))
+    close_pct_diff = abs(_float_or_zero(row.get("close_diff_pct")))
+    close_matches = close_abs_diff <= settings.price_abs_tolerance or close_pct_diff <= settings.price_pct_tolerance
+    volume_ratio = _float_or_nan(row.get("volume_ratio_a_to_b"))
+    amount_ratio = _float_or_nan(row.get("amount_ratio_a_to_b"))
+    amount_semantic_ratio = _safe_ratio(
+        row.get("amount_to_close_volume_ratio_a"),
+        row.get("amount_to_close_volume_ratio_b"),
+    )
+    volume_far = _ratio_far_from_one(volume_ratio, settings)
+    amount_far = _ratio_far_from_one(amount_ratio, settings)
+    semantic_far = _ratio_far_from_one(amount_semantic_ratio, settings)
+    likely_volume = close_matches and volume_far
+    likely_amount = close_matches and amount_far
+    likely_semantic = (not close_matches and (volume_far or amount_far)) or semantic_far
+
+    reasons: list[str] = []
+    if close_matches and (likely_volume or likely_amount):
+        reasons.append("Close prices match while size fields differ.")
+    if likely_volume:
+        reasons.append(f"Volume ratio A/B={_format_diagnostic_float(volume_ratio)} is far from 1.0.")
+    if likely_amount:
+        reasons.append(f"Amount ratio A/B={_format_diagnostic_float(amount_ratio)} is far from 1.0.")
+    if semantic_far:
+        reasons.append(
+            "Amount divided by close*volume differs between sources "
+            f"(ratio A/B={_format_diagnostic_float(amount_semantic_ratio)})."
+        )
+    if not reasons:
+        reasons.append("No unit or semantic mismatch detected.")
+
+    return {
+        "likely_volume_unit_mismatch": bool(likely_volume),
+        "likely_amount_unit_mismatch": bool(likely_amount),
+        "likely_adjustment_or_semantic_mismatch": bool(likely_semantic),
+        "diagnostic_reason": " ".join(reasons),
+    }
+
+
+def _summarize_unit_diagnostics(
+    frame: pd.DataFrame,
+    settings: MarketDataComparisonSettings,
+) -> dict[str, Any]:
+    defaults = {
+        "median_volume_ratio": float("nan"),
+        "median_amount_ratio": float("nan"),
+        "median_amount_to_close_volume_ratio_a": float("nan"),
+        "median_amount_to_close_volume_ratio_b": float("nan"),
+        "stable_volume_ratio_detected": False,
+        "stable_amount_ratio_detected": False,
+        "suspected_volume_scale_factor": float("nan"),
+        "suspected_amount_scale_factor": float("nan"),
+        "diagnostic_classification": "INSUFFICIENT_OVERLAP",
+    }
+    if frame.empty or "row_match_status" not in frame.columns:
+        return defaults
+
+    matched = frame.loc[frame["row_match_status"] == "MATCHED"].copy()
+    if matched.empty:
+        return defaults
+
+    median_volume_ratio = _median_finite(matched.get("volume_ratio_a_to_b", pd.Series(dtype="float64")))
+    median_amount_ratio = _median_finite(matched.get("amount_ratio_a_to_b", pd.Series(dtype="float64")))
+    median_amount_to_close_volume_ratio_a = _median_finite(
+        matched.get("amount_to_close_volume_ratio_a", pd.Series(dtype="float64"))
+    )
+    median_amount_to_close_volume_ratio_b = _median_finite(
+        matched.get("amount_to_close_volume_ratio_b", pd.Series(dtype="float64"))
+    )
+    stable_volume_ratio = _stable_ratio_detected(
+        matched.get("volume_ratio_a_to_b", pd.Series(dtype="float64")),
+        settings,
+    )
+    stable_amount_ratio = _stable_ratio_detected(
+        matched.get("amount_ratio_a_to_b", pd.Series(dtype="float64")),
+        settings,
+    )
+    volume_far = _ratio_far_from_one(median_volume_ratio, settings)
+    amount_far = _ratio_far_from_one(median_amount_ratio, settings)
+    usable_volume_scale = stable_volume_ratio and volume_far and _is_positive_finite(median_volume_ratio)
+    usable_amount_scale = stable_amount_ratio and amount_far and _is_positive_finite(median_amount_ratio)
+    suspected_volume_scale_factor = median_volume_ratio if usable_volume_scale else float("nan")
+    suspected_amount_scale_factor = median_amount_ratio if usable_amount_scale else float("nan")
+    close_match_share = _share_close_matches(matched, settings)
+    volume_mismatch_rows = int(
+        matched.get("likely_volume_unit_mismatch", pd.Series(dtype="bool")).fillna(False).astype(bool).sum()
+    )
+    amount_mismatch_rows = int(
+        matched.get("likely_amount_unit_mismatch", pd.Series(dtype="bool")).fillna(False).astype(bool).sum()
+    )
+    volume_or_amount_mismatch = volume_mismatch_rows > 0 or amount_mismatch_rows > 0
+
+    if not volume_or_amount_mismatch:
+        classification = "NO_UNIT_MISMATCH"
+    elif close_match_share >= 0.80 and usable_volume_scale and usable_amount_scale:
+        classification = "PRICE_MATCH_VOLUME_AMOUNT_MISMATCH"
+    elif close_match_share >= 0.80 and usable_volume_scale:
+        classification = "VOLUME_UNIT_MISMATCH"
+    elif close_match_share >= 0.80 and usable_amount_scale:
+        classification = "AMOUNT_UNIT_MISMATCH"
+    elif close_match_share >= 0.80:
+        classification = "SOURCE_SEMANTICS_DIFFER"
+    else:
+        classification = "SOURCE_SEMANTICS_DIFFER"
+
+    return {
+        "median_volume_ratio": median_volume_ratio,
+        "median_amount_ratio": median_amount_ratio,
+        "median_amount_to_close_volume_ratio_a": median_amount_to_close_volume_ratio_a,
+        "median_amount_to_close_volume_ratio_b": median_amount_to_close_volume_ratio_b,
+        "stable_volume_ratio_detected": bool(stable_volume_ratio and volume_far),
+        "stable_amount_ratio_detected": bool(stable_amount_ratio and amount_far),
+        "suspected_volume_scale_factor": suspected_volume_scale_factor,
+        "suspected_amount_scale_factor": suspected_amount_scale_factor,
+        "diagnostic_classification": classification,
+    }
+
+
 def _diff_pct(left: Any, right: Any) -> float:
     if pd.isna(left) or pd.isna(right):
         return float("nan")
@@ -545,6 +748,115 @@ def _diff_pct(left: Any, right: Any) -> float:
     if denominator == 0:
         return 0.0 if diff == 0 else float("inf")
     return diff / denominator
+
+
+def _safe_ratio(left: Any, right: Any) -> float:
+    a = _float_or_nan(left)
+    b = _float_or_nan(right)
+    if not math.isfinite(a) or not math.isfinite(b):
+        return float("nan")
+    if b == 0:
+        return 1.0 if a == 0 else float("inf")
+    return a / b
+
+
+def _float_or_nan(value: Any) -> float:
+    try:
+        if pd.isna(value):
+            return float("nan")
+    except (TypeError, ValueError):
+        pass
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return float("nan")
+
+
+def _ratio_far_from_one(value: Any, settings: MarketDataComparisonSettings) -> bool:
+    ratio = _float_or_nan(value)
+    return math.isfinite(ratio) and abs(ratio - 1.0) > settings.unit_ratio_far_from_one_tolerance
+
+
+def _is_positive_finite(value: Any) -> bool:
+    parsed = _float_or_nan(value)
+    return math.isfinite(parsed) and parsed > 0
+
+
+def _median_finite(series: pd.Series) -> float:
+    values = _finite_float_values(series)
+    if not values:
+        return float("nan")
+    return float(pd.Series(values, dtype="float64").median())
+
+
+def _stable_ratio_detected(series: pd.Series, settings: MarketDataComparisonSettings) -> bool:
+    values = _finite_float_values(series)
+    if len(values) < 2:
+        return False
+    median = float(pd.Series(values, dtype="float64").median())
+    if abs(median) < 1e-12:
+        return max(abs(value - median) for value in values) <= settings.unit_ratio_stability_tolerance
+    relative_deviations = [abs(value - median) / abs(median) for value in values]
+    return max(relative_deviations) <= settings.unit_ratio_stability_tolerance
+
+
+def _finite_float_values(series: pd.Series) -> list[float]:
+    values: list[float] = []
+    for value in pd.to_numeric(series, errors="coerce"):
+        try:
+            parsed = float(value)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(parsed):
+            values.append(parsed)
+    return values
+
+
+def _share_close_matches(frame: pd.DataFrame, settings: MarketDataComparisonSettings) -> float:
+    if frame.empty:
+        return 0.0
+    matches = []
+    for _index, row in frame.iterrows():
+        abs_diff = abs(_float_or_zero(row.get("close_diff")))
+        pct_diff = abs(_float_or_zero(row.get("close_diff_pct")))
+        matches.append(abs_diff <= settings.price_abs_tolerance or pct_diff <= settings.price_pct_tolerance)
+    return sum(1 for item in matches if item) / len(matches)
+
+
+def _format_diagnostic_float(value: Any) -> str:
+    parsed = _float_or_nan(value)
+    if not math.isfinite(parsed):
+        return "n/a"
+    return f"{parsed:.6g}"
+
+
+def _render_top_difference_rows(frame: pd.DataFrame, limit: int = 10) -> str:
+    if frame.empty:
+        return "No comparison rows."
+    matched = frame.loc[frame["row_match_status"] == "MATCHED"].copy()
+    if matched.empty:
+        return "No matched rows for unit diagnostics."
+    matched["_largest_size_diff_pct"] = matched[["volume_diff_pct", "amount_diff_pct"]].apply(
+        lambda row: max(
+            abs(_float_or_zero(row.get("volume_diff_pct"))),
+            abs(_float_or_zero(row.get("amount_diff_pct"))),
+        ),
+        axis=1,
+    )
+    columns = [
+        "symbol",
+        "trade_date",
+        "upstream_source_a",
+        "upstream_source_b",
+        "close_diff_pct",
+        "volume_diff_pct",
+        "amount_diff_pct",
+        "volume_ratio_a_to_b",
+        "amount_ratio_a_to_b",
+        "diagnostic_reason",
+    ]
+    rows = matched.sort_values("_largest_size_diff_pct", ascending=False).head(limit)
+    return rows[columns].to_markdown(index=False)
 
 
 def _comparison_warnings(frame: pd.DataFrame) -> list[str]:

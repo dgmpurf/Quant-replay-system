@@ -364,6 +364,8 @@ class MarketDataComparisonSettings(BaseModel):
     price_pct_tolerance: float = Field(default=0.001, ge=0)
     volume_pct_tolerance: float = Field(default=0.05, ge=0)
     amount_pct_tolerance: float = Field(default=0.05, ge=0)
+    unit_ratio_stability_tolerance: float = Field(default=0.05, ge=0)
+    unit_ratio_far_from_one_tolerance: float = Field(default=0.05, ge=0)
     config_version: str = "mvp"
     write_artifacts: bool = True
     enable_live_trading: Literal[False] = False

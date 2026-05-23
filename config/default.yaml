@@ -329,6 +329,8 @@ market_data_comparison:
   price_pct_tolerance: 0.001
   volume_pct_tolerance: 0.05
   amount_pct_tolerance: 0.05
+  unit_ratio_stability_tolerance: 0.05
+  unit_ratio_far_from_one_tolerance: 0.05
   config_version: mvp
   write_artifacts: true
   enable_live_trading: false
