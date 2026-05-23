@@ -21,6 +21,8 @@ Every raw data path, regardless of source, must still pass:
 data-pipeline -> data-quality -> snapshot-quality -> current-candidates
 ```
 
+Before importing from optional real-data routes, run `data-source-health` to verify route availability and fallback behavior. The health check is a local diagnostic only; it does not replace data quality or snapshot quality.
+
 ## Source Categories
 
 ### Permanent Local Safety Path
@@ -150,11 +152,10 @@ Constraints:
 
 Recommended next source-related tasks:
 
-1. Data Source Health Check.
-2. Local Market Data Cache.
-3. BaoStock Optional Adapter.
-4. Tushare Optional Adapter if cost and permission are acceptable.
-5. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
+1. Local Market Data Cache.
+2. BaoStock Optional Adapter.
+3. Tushare Optional Adapter if cost and permission are acceptable.
+4. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
 
 ## Required Data Preparation Path
 

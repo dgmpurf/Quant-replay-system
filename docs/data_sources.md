@@ -16,6 +16,8 @@ The adapter layer gives each future source a consistent contract without mixing 
 
 For the broader source roadmap across AKShare upstream routes, BaoStock, Tushare, JQData/RQData, institutional vendors, and permanent `LOCAL_CSV` fallback, see [data_source_strategy.md](data_source_strategy.md).
 
+Before importing real or reviewed local data, use the local [data source health check](data_source_health.md) to verify route availability, row counts, upstream fallback behavior, and safe diagnostics.
+
 ## Supported Adapters
 
 ### LOCAL_CSV
@@ -199,6 +201,18 @@ Rules:
 Network availability, VPN/proxy configuration, and upstream endpoint changes can affect AKShare manual fetches. Eastmoney kline requests can fail even when `https://push2his.eastmoney.com` itself returns an HTTP response. Verify local proxy listener ports with `netstat` before setting proxy variables; do not assume ports such as `7890` or `10808` are active. When an upstream request fails or returns unexpected columns, retry later, narrow the request, review the printed diagnostics, or save/use a local CSV through `LOCAL_CSV`.
 
 ## CLI Usage
+
+Check source route health before import:
+
+```cmd
+python -m quant_replay_system.cli data-source-health --source AKSHARE_OPTIONAL --dataset-type market --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
+For `LOCAL_CSV`, health checks verify the file is readable:
+
+```cmd
+python -m quant_replay_system.cli data-source-health --source LOCAL_CSV --dataset-type market --input data\raw\manual_market.csv
+```
 
 Load a local CSV into raw artifacts:
 

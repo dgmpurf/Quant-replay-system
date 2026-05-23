@@ -102,6 +102,7 @@ Safe verification examples include local-only commands such as:
 
 ```bat
 python -m quant_replay_system.cli data-pipeline
+python -m quant_replay_system.cli data-source-health
 python -m quant_replay_system.cli snapshot-quality
 python -m quant_replay_system.cli current-candidates
 python -m quant_replay_system.cli universe-overlay

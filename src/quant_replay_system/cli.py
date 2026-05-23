@@ -26,6 +26,7 @@ from quant_replay_system.data_pipeline import (
     run_data_source_ingestion_pipeline,
 )
 from quant_replay_system.data_quality import run_data_quality_checks
+from quant_replay_system.data_source_health import run_data_source_health_check
 from quant_replay_system.data_sources import DataSourceRequest, run_data_source_fetch
 from quant_replay_system.data_ingestion import (
     ingest_benchmark_data_csv,
@@ -329,6 +330,40 @@ def build_parser() -> argparse.ArgumentParser:
     data_source.add_argument("--market-type", help="Optional universe market type, e.g. stock, etf, or all")
     data_source.add_argument("--config", help="Optional config YAML path")
     data_source.set_defaults(handler=_handle_data_source_fetch)
+
+    data_source_health = subparsers.add_parser(
+        "data-source-health",
+        help="Check local data source availability and fallback route health",
+    )
+    data_source_health.add_argument(
+        "--source",
+        required=True,
+        help="Data source adapter, e.g. LOCAL_CSV, MOCK, AKSHARE_OPTIONAL",
+    )
+    data_source_health.add_argument(
+        "--dataset-type",
+        required=True,
+        help="Dataset type, e.g. market, universe, benchmark, or trading_calendar",
+    )
+    data_source_health.add_argument("--input", help="Input CSV path for LOCAL_CSV")
+    data_source_health.add_argument("--symbol", help="Market symbol for real-data route checks")
+    data_source_health.add_argument("--start-date", help="Optional start date for real-data route checks")
+    data_source_health.add_argument("--end-date", help="Optional end date for real-data route checks")
+    data_source_health.add_argument("--as-of-date", help="Optional as-of date for snapshot-like checks")
+    data_source_health.add_argument("--market-type", help="Optional market type for universe-like checks")
+    data_source_health.add_argument(
+        "--requested-upstream",
+        choices=["TENCENT", "SINA", "EASTMONEY"],
+        help="Optional single AKShare upstream route to probe",
+    )
+    data_source_health.add_argument(
+        "--allow-real-data",
+        action="store_true",
+        help="Explicit manual opt-in for real/network data health checks",
+    )
+    data_source_health.add_argument("--output-dir", help="Optional health artifact output directory")
+    data_source_health.add_argument("--config", help="Optional config YAML path")
+    data_source_health.set_defaults(handler=_handle_data_source_health)
 
     universe_overlay = subparsers.add_parser(
         "universe-overlay",
@@ -1181,6 +1216,50 @@ def _handle_data_source_fetch(args: argparse.Namespace) -> int:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
     return 0
+
+
+def _handle_data_source_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "data_source_health": settings.data_source_health.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = run_data_source_health_check(
+        source=args.source,
+        dataset_type=args.dataset_type,
+        input_path=args.input,
+        allow_real_data=bool(args.allow_real_data),
+        symbol=args.symbol,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        requested_upstream=args.requested_upstream,
+        as_of_date=args.as_of_date,
+        market_type=args.market_type,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    first_pass = result.health_frame[result.health_frame["status"] == "PASS"]
+    selected = first_pass.iloc[0].to_dict() if not first_pass.empty else {}
+    print(f"Data source health status: {result.status}")
+    print(f"health_check_id: {result.health_check_id}")
+    print(f"check_count: {len(result.health_frame)}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"row_count: {selected.get('row_count', 0)}")
+    print(f"successful_upstream: {selected.get('successful_upstream', '')}")
+    print(f"successful_function: {selected.get('successful_function', '')}")
+    print(f"Report path: {result.artifact_paths['data_source_health_report']}")
+    print(f"Results CSV path: {result.artifact_paths['data_source_health_results']}")
+    print(f"Summary CSV path: {result.artifact_paths['data_source_health_summary']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 1 if result.status == "FAIL" else 0
 
 
 def _handle_universe_overlay(args: argparse.Namespace) -> int:

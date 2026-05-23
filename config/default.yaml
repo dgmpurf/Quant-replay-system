@@ -304,6 +304,15 @@ data_sources:
   enable_live_trading: false
   enable_broker_api: false
 
+data_source_health:
+  output_dir: outputs/reports/data_source_health
+  check_individual_akshare_upstreams: true
+  fail_empty_result: true
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_pipeline:
   output_dir: outputs/reports/data_pipeline
   raw_output_dir: data/raw

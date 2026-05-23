@@ -337,6 +337,16 @@ class DataSourceSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class DataSourceHealthSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/data_source_health")
+    check_individual_akshare_upstreams: bool = True
+    fail_empty_result: bool = True
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataPipelineSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/data_pipeline")
     raw_output_dir: Path = Path("data/raw")
@@ -515,6 +525,7 @@ class Settings(BaseModel):
     paper_artifact_health: PaperArtifactHealthSettings = Field(default_factory=PaperArtifactHealthSettings)
     paper_workflow_status: PaperWorkflowStatusSettings = Field(default_factory=PaperWorkflowStatusSettings)
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
+    data_source_health: DataSourceHealthSettings = Field(default_factory=DataSourceHealthSettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
     universe_overlay: UniverseOverlaySettings = Field(default_factory=UniverseOverlaySettings)
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)
