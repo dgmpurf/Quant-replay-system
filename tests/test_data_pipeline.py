@@ -10,6 +10,7 @@ from quant_replay_system import cli
 from quant_replay_system.config import DataPipelineSettings, load_settings
 from quant_replay_system.data_pipeline import (
     DataPipelineDatasetRequest,
+    load_data_pipeline_manifest,
     run_data_source_ingestion_pipeline,
 )
 
@@ -195,7 +196,7 @@ def test_multi_dataset_manifest_mode_builds_snapshot_manifest(tmp_path: Path) ->
     manifest = _pipeline_manifest(tmp_path)
 
     result = run_data_source_ingestion_pipeline(
-        _load_manifest_requests(manifest),
+        load_data_pipeline_manifest(manifest),
         config=_settings(tmp_path),
     )
 
@@ -207,7 +208,7 @@ def test_multi_dataset_manifest_mode_builds_snapshot_manifest(tmp_path: Path) ->
 def test_snapshot_manifest_includes_required_dataset_paths(tmp_path: Path) -> None:
     manifest = _pipeline_manifest(tmp_path)
 
-    result = run_data_source_ingestion_pipeline(_load_manifest_requests(manifest), config=_settings(tmp_path))
+    result = run_data_source_ingestion_pipeline(load_data_pipeline_manifest(manifest), config=_settings(tmp_path))
     payload = json.loads(result.snapshot_manifest_path.read_text(encoding="utf-8"))
 
     assert Path(payload["processed_files"]["market"]).exists()
@@ -301,6 +302,32 @@ def test_cli_data_pipeline_works_in_manifest_mode(tmp_path: Path, monkeypatch, c
     assert code == 0
     assert "Data pipeline status: PASS" in output.out
     assert "Snapshot manifest path:" in output.out
+
+
+def test_data_pipeline_manifest_loads_valid_utf8_json(tmp_path: Path) -> None:
+    manifest = _pipeline_manifest(tmp_path)
+
+    requests = load_data_pipeline_manifest(manifest)
+
+    assert [request.dataset_type for request in requests] == ["market", "universe", "trading_calendar"]
+
+
+def test_data_pipeline_manifest_loads_utf8_bom_json(tmp_path: Path) -> None:
+    manifest = _pipeline_manifest(tmp_path)
+    text = manifest.read_text(encoding="utf-8")
+    manifest.write_text(text, encoding="utf-8-sig")
+
+    requests = load_data_pipeline_manifest(manifest)
+
+    assert [request.dataset_type for request in requests] == ["market", "universe", "trading_calendar"]
+
+
+def test_data_pipeline_manifest_invalid_json_still_fails_clearly(tmp_path: Path) -> None:
+    manifest = tmp_path / "invalid_manifest.json"
+    manifest.write_text("{not valid json", encoding="utf-8-sig")
+
+    with pytest.raises(json.JSONDecodeError):
+        load_data_pipeline_manifest(manifest)
 
 
 def test_cli_blocks_real_source_unless_allow_real_data_is_passed(tmp_path: Path, capsys) -> None:
@@ -460,10 +487,6 @@ def _settings(tmp_path: Path, **overrides) -> DataPipelineSettings:
 def _project_settings(tmp_path: Path):
     settings = load_settings(Path("config/default.yaml"))
     return settings.model_copy(update={"data_pipeline": _settings(tmp_path)})
-
-
-def _load_manifest_requests(path: Path) -> list[dict]:
-    return json.loads(path.read_text(encoding="utf-8"))["datasets"]
 
 
 def _pipeline_manifest(tmp_path: Path) -> Path:

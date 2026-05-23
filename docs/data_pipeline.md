@@ -173,6 +173,8 @@ Run a multi-dataset manifest:
 python -m quant_replay_system.cli data-pipeline --manifest data\mock\data_pipeline_manifest.json
 ```
 
+Manifest files may be UTF-8 or UTF-8 with BOM. This keeps local Windows tooling such as PowerShell and Notepad from breaking dry-run manifests, while invalid JSON still fails during manifest loading.
+
 Skip snapshot manifest creation:
 
 ```cmd

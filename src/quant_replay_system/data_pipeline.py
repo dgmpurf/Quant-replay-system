@@ -343,7 +343,7 @@ def load_data_pipeline_manifest(path: str | Path) -> list[DataPipelineDatasetReq
     manifest_path = Path(path)
     if not manifest_path.exists():
         raise FileNotFoundError(f"Data pipeline manifest not found: {manifest_path}")
-    payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    payload = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
     if "datasets" not in payload or not isinstance(payload["datasets"], list):
         raise ValueError("Data pipeline manifest must contain a 'datasets' list")
     return [_coerce_dataset_request(item, DataPipelineSettings()) for item in payload["datasets"]]
