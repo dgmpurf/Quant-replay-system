@@ -23,6 +23,8 @@ data-pipeline -> data-quality -> snapshot-quality -> current-candidates
 
 Before importing from optional real-data routes, run `data-source-health` to verify route availability and fallback behavior. Successful market outputs can be ingested into the [local market data cache](market_data_cache.md) to reduce repeated public endpoint calls. Health checks and cache hits are diagnostics only; they do not replace data quality or snapshot quality.
 
+When multiple sources overlap in the cache, run `market-cache-compare` before using combined rows. The comparison highlights OHLC, volume, amount, adjustment, and coverage differences without declaring either source as truth.
+
 ## Source Categories
 
 ### Permanent Local Safety Path
@@ -86,6 +88,7 @@ Recommended use:
 python -m quant_replay_system.cli data-source-health --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
 python -m quant_replay_system.cli data-source-fetch --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\metadata.json
+python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 ```
 
 ### Tushare Optional API Route
@@ -161,7 +164,7 @@ Constraints:
 
 Recommended next source-related tasks:
 
-1. BaoStock local dry-run coverage expansion and cross-source comparison against AKShare cache rows.
+1. BaoStock local dry-run coverage expansion for more representative stock symbols.
 2. Tushare permissioned dry-run if cost and account permissions are acceptable.
 3. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
 
@@ -178,6 +181,7 @@ For market data, successful canonical daily bars may then be cached locally:
 
 ```cmd
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
+python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data\raw\manual_cache\510300_market.csv
 ```
 
@@ -211,3 +215,4 @@ Do not use raw vendor output directly for replay, current candidates, or paper w
 - JQData/RQData routes are strategy candidates, not implemented workflow defaults.
 - Raw data quality is source-dependent and must always be checked locally.
 - Sina/Tencent/Eastmoney AKShare routes can differ in adjustment, amount, volume, and date coverage semantics; compare and quality-check outputs before research use.
+- Cache comparison is diagnostic only; it does not resolve which source should be trusted.

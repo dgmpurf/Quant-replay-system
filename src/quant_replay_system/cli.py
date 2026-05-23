@@ -42,6 +42,7 @@ from quant_replay_system.market_data_cache import (
     query_market_cache,
     summarize_market_cache_status,
 )
+from quant_replay_system.market_data_comparison import run_market_source_comparison
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
@@ -401,6 +402,20 @@ def build_parser() -> argparse.ArgumentParser:
     market_cache_status.add_argument("--output-dir", help="Optional market cache report output directory")
     market_cache_status.add_argument("--config", help="Optional config YAML path")
     market_cache_status.set_defaults(handler=_handle_market_cache_status)
+
+    market_cache_compare = subparsers.add_parser(
+        "market-cache-compare",
+        help="Compare cached market bars between two local data sources",
+    )
+    market_cache_compare.add_argument("--symbol", required=True, help="Symbol to compare, e.g. 000001")
+    market_cache_compare.add_argument("--source-a", required=True, help="First source, e.g. AKSHARE_OPTIONAL")
+    market_cache_compare.add_argument("--source-b", required=True, help="Second source, e.g. BAOSTOCK_OPTIONAL")
+    market_cache_compare.add_argument("--start-date", help="Optional inclusive start date")
+    market_cache_compare.add_argument("--end-date", help="Optional inclusive end date")
+    market_cache_compare.add_argument("--cache-path", help="Optional market cache CSV path")
+    market_cache_compare.add_argument("--output-dir", help="Optional comparison report output directory")
+    market_cache_compare.add_argument("--config", help="Optional config YAML path")
+    market_cache_compare.set_defaults(handler=_handle_market_cache_compare)
 
     universe_overlay = subparsers.add_parser(
         "universe-overlay",
@@ -1365,6 +1380,51 @@ def _handle_market_cache_status(args: argparse.Namespace) -> int:
     print(f"source_counts: {summary.get('source_counts', '{}')}")
     print(f"upstream_counts: {summary.get('upstream_counts', '{}')}")
     print(f"Report path: {result.artifact_paths['market_cache_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_cache_compare(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "market_data_comparison": settings.market_data_comparison.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = run_market_source_comparison(
+        symbol=args.symbol,
+        source_a=args.source_a,
+        source_b=args.source_b,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        cache_path=args.cache_path,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Market cache comparison status: {result.status}")
+    print(f"comparison_id: {result.comparison_id}")
+    print(f"cache_path: {result.cache_path}")
+    print(f"symbol: {result.symbol}")
+    print(f"source_a: {result.source_a}")
+    print(f"source_b: {result.source_b}")
+    print(f"matched_row_count: {summary.get('matched_row_count', 0)}")
+    print(f"source_a_only_count: {summary.get('source_a_only_count', 0)}")
+    print(f"source_b_only_count: {summary.get('source_b_only_count', 0)}")
+    print(f"max_close_diff_pct: {summary.get('max_close_diff_pct', 0)}")
+    print(f"max_volume_diff_pct: {summary.get('max_volume_diff_pct', 0)}")
+    print(f"max_amount_diff_pct: {summary.get('max_amount_diff_pct', 0)}")
+    print(f"pass_count: {summary.get('pass_count', 0)}")
+    print(f"warn_count: {summary.get('warn_count', 0)}")
+    print(f"fail_count: {summary.get('fail_count', 0)}")
+    print(f"Report path: {result.artifact_paths['market_data_comparison_report']}")
+    print(f"Rows CSV path: {result.artifact_paths['market_data_comparison_rows']}")
+    print(f"Summary CSV path: {result.artifact_paths['market_data_comparison_summary']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

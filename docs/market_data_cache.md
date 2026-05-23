@@ -88,6 +88,41 @@ python -m quant_replay_system.cli data-pipeline --dataset-type market --source L
 
 For current candidates, use a manifest with market, universe, and trading-calendar paths.
 
+## Compare Sources
+
+When the cache contains the same symbol/date from multiple sources, compare them before relying on combined cached data:
+
+```cmd
+python -m quant_replay_system.cli market-cache-compare --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
+```
+
+The comparison performs a full outer join on `symbol + trade_date`, so it reports both overlapping dates and source-only coverage gaps.
+
+Row-level comparison fields include:
+
+- source and upstream source for each side
+- OHLC, volume, amount, `pre_close`, and `adj_factor` values for each side
+- absolute differences and percentage differences
+- `row_match_status`: `MATCHED`, `SOURCE_A_ONLY`, or `SOURCE_B_ONLY`
+- `tolerance_status`: `PASS`, `WARN`, or `FAIL`
+
+Default tolerances:
+
+```yaml
+market_data_comparison:
+  price_abs_tolerance: 0.0001
+  price_pct_tolerance: 0.001
+  volume_pct_tolerance: 0.05
+  amount_pct_tolerance: 0.05
+```
+
+Interpretation:
+
+- Large price differences may indicate adjustment or ex-rights handling mismatch.
+- Large volume or amount differences may indicate unit differences or source-specific semantics.
+- Source-only rows indicate coverage gaps.
+- The report does not declare either source as truth.
+
 ## Status
 
 Summarize the cache:
@@ -123,12 +158,26 @@ Files:
 
 Metadata includes no-live-trading and no-broker-api audit fields.
 
+Source comparison reports are written under:
+
+```text
+outputs/reports/market_data_comparison/<comparison_id>/
+```
+
+Files:
+
+- `market_data_comparison_report.md`
+- `market_data_comparison_rows.csv`
+- `market_data_comparison_summary.csv`
+- `metadata.json`
+
 ## Recommended Workflow
 
 ```text
 data-source-health
 -> data-source-fetch
 -> market-cache-ingest
+-> market-cache-compare
 -> market-cache-query
 -> data-pipeline
 -> data-quality
@@ -144,6 +193,7 @@ For AKShare, run health checks first so the route report identifies whether Tenc
 - Automated tests use local/fake CSV data only.
 - Cached files are ignored by Git.
 - Cache outputs are not trading recommendations.
+- Source comparison reports are diagnostics only and do not certify data quality.
 - No live trading is implemented.
 - No broker API is invoked.
 - No automated order placement is added.

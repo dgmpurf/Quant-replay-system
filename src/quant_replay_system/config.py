@@ -358,6 +358,18 @@ class MarketDataCacheSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketDataComparisonSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/market_data_comparison")
+    price_abs_tolerance: float = Field(default=0.0001, ge=0)
+    price_pct_tolerance: float = Field(default=0.001, ge=0)
+    volume_pct_tolerance: float = Field(default=0.05, ge=0)
+    amount_pct_tolerance: float = Field(default=0.05, ge=0)
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataPipelineSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/data_pipeline")
     raw_output_dir: Path = Path("data/raw")
@@ -538,6 +550,7 @@ class Settings(BaseModel):
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
     data_source_health: DataSourceHealthSettings = Field(default_factory=DataSourceHealthSettings)
     market_data_cache: MarketDataCacheSettings = Field(default_factory=MarketDataCacheSettings)
+    market_data_comparison: MarketDataComparisonSettings = Field(default_factory=MarketDataComparisonSettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
     universe_overlay: UniverseOverlaySettings = Field(default_factory=UniverseOverlaySettings)
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)
