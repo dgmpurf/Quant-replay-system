@@ -205,6 +205,50 @@ def test_akshare_health_all_routes_fail_with_recommended_fallback(
     assert "stock_zh_a_hist_tx" in configured["safe_error_message"]
 
 
+def test_baostock_health_blocks_without_allow_real_data_without_importing_baostock(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delitem(sys.modules, "baostock", raising=False)
+
+    result = run_data_source_health_check(
+        source="BAOSTOCK_OPTIONAL",
+        dataset_type="market",
+        symbol="000001",
+        start_date="2024-01-01",
+        end_date="2024-01-03",
+        output_dir=tmp_path / "health",
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "WARN"
+    assert set(result.health_frame["error_type"]) == {"BLOCKED_REAL_DATA"}
+    assert "baostock" not in sys.modules
+
+
+def test_baostock_health_fake_market_passes(tmp_path: Path, monkeypatch) -> None:
+    module = _fake_baostock_module()
+    monkeypatch.setitem(sys.modules, "baostock", module)
+
+    result = run_data_source_health_check(
+        source="BAOSTOCK_OPTIONAL",
+        dataset_type="market",
+        symbol="000001",
+        start_date="2024-01-01",
+        end_date="2024-01-03",
+        allow_real_data=True,
+        output_dir=tmp_path / "health",
+        config=_settings(tmp_path, allow_real=True),
+    )
+
+    row = result.health_frame.iloc[0]
+    assert result.status == "PASS"
+    assert row["successful_upstream"] == "BAOSTOCK"
+    assert row["successful_function"] == "query_history_k_data_plus"
+    assert int(row["row_count"]) == 2
+    assert module.calls[1]["code"] == "sz.000001"
+
+
 def test_data_source_health_writes_artifacts_readable_by_pandas(tmp_path: Path) -> None:
     input_path = tmp_path / "market.csv"
     _market_frame().to_csv(input_path, index=False)
@@ -354,6 +398,70 @@ def _fake_akshare_module() -> ModuleType:
     module.stock_zh_a_hist = stock_zh_a_hist
     module.fund_etf_hist_sina = fund_etf_hist_sina
     module.fund_etf_hist_em = fund_etf_hist_em
+    return module
+
+
+def _fake_baostock_module() -> ModuleType:
+    module = ModuleType("baostock")
+    module.calls = []
+
+    class SuccessResult:
+        error_code = "0"
+        error_msg = "success"
+
+    class QueryResult(SuccessResult):
+        fields = [
+            "date",
+            "code",
+            "open",
+            "high",
+            "low",
+            "close",
+            "preclose",
+            "volume",
+            "amount",
+            "tradestatus",
+        ]
+
+        def __init__(self, code: str) -> None:
+            self._rows = [
+                ["2024-01-02", code, "10.0", "10.5", "9.8", "10.2", "9.9", "1000", "10200", "1"],
+                ["2024-01-03", code, "10.2", "10.8", "10.1", "10.6", "10.2", "1100", "11660", "1"],
+            ]
+            self._index = -1
+
+        def next(self) -> bool:
+            self._index += 1
+            return self._index < len(self._rows)
+
+        def get_row_data(self) -> list[str]:
+            return self._rows[self._index]
+
+    def login():
+        module.calls.append({"function": "login"})
+        return SuccessResult()
+
+    def logout():
+        module.calls.append({"function": "logout"})
+        return SuccessResult()
+
+    def query_history_k_data_plus(code, fields, start_date, end_date, frequency, adjustflag):
+        module.calls.append(
+            {
+                "function": "query_history_k_data_plus",
+                "code": code,
+                "fields": fields,
+                "start_date": start_date,
+                "end_date": end_date,
+                "frequency": frequency,
+                "adjustflag": adjustflag,
+            }
+        )
+        return QueryResult(code)
+
+    module.login = login
+    module.logout = logout
+    module.query_history_k_data_plus = query_history_k_data_plus
     return module
 
 

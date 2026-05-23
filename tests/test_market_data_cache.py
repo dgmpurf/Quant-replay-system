@@ -148,6 +148,24 @@ def test_metadata_contains_no_live_trading_flags(tmp_path: Path) -> None:
     assert set(cached["successful_function"]) == {"fund_etf_hist_sina"}
 
 
+def test_baostock_canonical_output_can_be_ingested_into_market_cache(tmp_path: Path) -> None:
+    input_path = tmp_path / "baostock_raw_data.csv"
+    metadata_path = tmp_path / "metadata.json"
+    frame = _market_frame().iloc[[0, 1]].copy()
+    frame["source"] = "BAOSTOCK_OPTIONAL"
+    frame.to_csv(input_path, index=False)
+    _metadata("BAOSTOCK", "query_history_k_data_plus", source="BAOSTOCK_OPTIONAL").write_text_to(metadata_path)
+
+    result = ingest_market_cache_csv(input_path, metadata_path=metadata_path, config=_settings(tmp_path))
+    cached = pd.read_csv(result.cache_path, dtype={"symbol": str})
+
+    assert result.status == "PASS"
+    assert result.cache_row_count == 2
+    assert set(cached["source"]) == {"BAOSTOCK_OPTIONAL"}
+    assert set(cached["upstream_source"]) == {"BAOSTOCK"}
+    assert set(cached["successful_function"]) == {"query_history_k_data_plus"}
+
+
 def test_cli_market_cache_ingest_query_and_status_work(tmp_path: Path, capsys) -> None:
     input_path = tmp_path / "raw_data.csv"
     query_path = tmp_path / "query.csv"
@@ -275,13 +293,14 @@ def _market_frame() -> pd.DataFrame:
 
 
 class _Metadata:
-    def __init__(self, upstream_source: str, successful_function: str) -> None:
+    def __init__(self, upstream_source: str, successful_function: str, *, source: str = "AKSHARE_OPTIONAL") -> None:
         self.upstream_source = upstream_source
         self.successful_function = successful_function
+        self.source = source
 
     def write_text_to(self, path: Path) -> None:
         payload = {
-            "source": "AKSHARE_OPTIONAL",
+            "source": self.source,
             "dataset_type": "market",
             "upstream_source": self.upstream_source,
             "successful_function": self.successful_function,
@@ -292,5 +311,5 @@ class _Metadata:
         path.write_text(json.dumps(payload), encoding="utf-8")
 
 
-def _metadata(upstream_source: str, successful_function: str) -> _Metadata:
-    return _Metadata(upstream_source, successful_function)
+def _metadata(upstream_source: str, successful_function: str, *, source: str = "AKSHARE_OPTIONAL") -> _Metadata:
+    return _Metadata(upstream_source, successful_function, source=source)

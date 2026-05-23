@@ -65,19 +65,28 @@ Recommended next AKShare engineering work:
 
 ### BaoStock Free Historical Backup
 
-BaoStock is a candidate free backup source for historical market data.
+BaoStock is now available as a guarded optional free backup source for historical market data.
 
-Potential role:
+Current role:
 
-- daily stock/index historical market backup,
+- daily historical market backup through `BAOSTOCK_OPTIONAL`,
 - local research data preparation,
 - cross-checking AKShare market history.
 
 Known considerations:
 
 - coverage and fields may differ from AKShare/Tushare,
-- login/session handling must be manual-safe and test-mocked,
+- login/session handling is manual-safe and test-mocked,
+- v0.1 is market-only; universe and trading calendar are not implemented,
 - automated tests must never call real BaoStock/network.
+
+Recommended use:
+
+```cmd
+python -m quant_replay_system.cli data-source-health --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+python -m quant_replay_system.cli data-source-fetch --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+python -m quant_replay_system.cli market-cache-ingest --input data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\metadata.json
+```
 
 ### Tushare Optional API Route
 
@@ -152,8 +161,8 @@ Constraints:
 
 Recommended next source-related tasks:
 
-1. BaoStock Optional Adapter.
-2. Tushare Optional Adapter if cost and permission are acceptable.
+1. BaoStock local dry-run coverage expansion and cross-source comparison against AKShare cache rows.
+2. Tushare permissioned dry-run if cost and account permissions are acceptable.
 3. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
 
 ## Required Data Preparation Path
@@ -198,7 +207,7 @@ Do not use raw vendor output directly for replay, current candidates, or paper w
 - Current AKShare market history can fail because Eastmoney kline endpoints are unstable in this environment.
 - Existing optional adapters are safe manual MVPs, not production data downloaders.
 - Cross-vendor reconciliation is not yet implemented.
-- Local market data caching is not yet implemented.
-- BaoStock/JQData/RQData routes are strategy candidates, not implemented workflow defaults.
+- BaoStock is implemented as a guarded optional market-only adapter; it is not a workflow default.
+- JQData/RQData routes are strategy candidates, not implemented workflow defaults.
 - Raw data quality is source-dependent and must always be checked locally.
 - Sina/Tencent/Eastmoney AKShare routes can differ in adjustment, amount, volume, and date coverage semantics; compare and quality-check outputs before research use.

@@ -704,6 +704,10 @@ def _recommended_fallback(
         if failed:
             return "Retry later, check VPN/proxy/upstream changes, or use reviewed LOCAL_CSV fallback."
         return "Review row count and upstream, then run data-pipeline and quality gates."
+    if source == "BAOSTOCK_OPTIONAL":
+        if failed:
+            return "Retry BaoStock later, try AKShare Tencent/Sina, or use reviewed LOCAL_CSV fallback."
+        return "Review BaoStock row count, then cache or run data-pipeline and quality gates."
     if source == "LOCAL_CSV":
         return "Check that the local CSV path exists and is readable."
     if source == "MOCK":

@@ -22,7 +22,7 @@ from quant_replay_system.data import (
 
 
 SUPPORTED_DATASET_TYPES = {"market", "universe", "benchmark", "corporate_actions", "trading_calendar"}
-REAL_DATA_SOURCES = {"AKSHARE_OPTIONAL", "TUSHARE_OPTIONAL"}
+REAL_DATA_SOURCES = {"AKSHARE_OPTIONAL", "TUSHARE_OPTIONAL", "BAOSTOCK_OPTIONAL"}
 
 DATA_SOURCE_LIMITATIONS = [
     "LOCAL_CSV and MOCK adapters use local files only.",
@@ -211,6 +211,32 @@ class OptionalTushareDataSourceAdapter(BaseDataSourceAdapter):
         ]
 
 
+class OptionalBaostockDataSourceAdapter(BaseDataSourceAdapter):
+    """Manual-only BaoStock data source adapter for free historical market bars."""
+
+    source = "BAOSTOCK_OPTIONAL"
+    is_real_data_source = True
+
+    def fetch(
+        self,
+        request: DataSourceRequest,
+        settings: DataSourceSettings,
+        project_settings: Settings,
+    ) -> tuple[pd.DataFrame, dict[str, Any], list[str]]:
+        _enforce_real_data_guardrails(self, request, settings)
+        _ = project_settings
+        if request.dataset_type != "market":
+            raise NotImplementedError(
+                f"BAOSTOCK_OPTIONAL does not support dataset_type={request.dataset_type!r} in v0.1. "
+                "Supported dataset types: market."
+            )
+        baostock = _import_baostock()
+        frame, adapter_metadata = _fetch_baostock_market_data(baostock, request)
+        return frame, adapter_metadata, [
+            "BAOSTOCK_OPTIONAL is manual-only and should be passed through ingestion and data quality before use."
+        ]
+
+
 def _import_akshare():
     try:
         import akshare  # type: ignore
@@ -231,6 +257,17 @@ def _import_tushare():
             "Install it in your local environment with: python -m pip install tushare"
         ) from exc
     return tushare
+
+
+def _import_baostock():
+    try:
+        import baostock  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(
+            "BAOSTOCK_OPTIONAL requires baostock to be installed for manual real-data fetches. "
+            "Install it in your local environment with: python -m pip install baostock"
+        ) from exc
+    return baostock
 
 
 def _resolve_tushare_token() -> str:
@@ -413,6 +450,223 @@ def _redact_tushare_token(exc: Exception, token: str) -> Exception:
     if token:
         message = message.replace(token, "<redacted>")
     return RuntimeError(message)
+
+
+def _fetch_baostock_market_data(
+    baostock,
+    request: DataSourceRequest,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    if not request.symbol:
+        raise ValueError("BAOSTOCK_OPTIONAL market fetch requires --symbol")
+    if not request.start_date or not request.end_date:
+        raise ValueError("BAOSTOCK_OPTIONAL market fetch requires --start-date and --end-date")
+
+    canonical_symbol = from_baostock_code(request.symbol)
+    baostock_code = to_baostock_code(request.symbol)
+    fields = str(
+        request.params.get("baostock_fields")
+        or "date,code,open,high,low,close,preclose,volume,amount,adjustflag,turn,tradestatus,pctChg,isST"
+    )
+    frequency = str(request.params.get("frequency") or "d")
+    adjustflag = str(request.params.get("adjustflag") or "3")
+    mapping_warnings: list[str] = []
+    login_called = False
+    try:
+        login_result = baostock.login()
+        login_called = True
+        _require_baostock_success(login_result, operation="login")
+        query_result = baostock.query_history_k_data_plus(
+            baostock_code,
+            fields,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            frequency=frequency,
+            adjustflag=adjustflag,
+        )
+        _require_baostock_success(query_result, operation="query_history_k_data_plus")
+        raw = _baostock_query_result_to_frame(query_result)
+    except Exception as exc:
+        raise RuntimeError(
+            "BAOSTOCK_OPTIONAL market fetch failed; "
+            f"symbol={request.symbol}; "
+            f"baostock_code={baostock_code}; "
+            f"start_date={request.start_date}; "
+            f"end_date={request.end_date}; "
+            f"attempted_functions=['query_history_k_data_plus']; "
+            f"exception_type={type(exc).__name__}; "
+            f"message={_safe_exception_message(exc)}; "
+            "suggested_action=retry later, use AKShare/Tencent/Sina if available, or use reviewed LOCAL_CSV fallback."
+        ) from exc
+    finally:
+        if login_called:
+            try:
+                baostock.logout()
+            except Exception as exc:  # pragma: no cover - defensive only
+                mapping_warnings.append(f"BaoStock logout warning: {_safe_exception_message(exc)}")
+
+    frame = _normalize_baostock_market_output(
+        pd.DataFrame(raw),
+        symbol=canonical_symbol,
+        start_date=request.start_date,
+        end_date=request.end_date,
+        source=request.source,
+        revision_id=request.revision_id,
+    )
+    adapter_metadata = {
+        "adapter": request.source,
+        "adapter_status": "SUCCESS",
+        "symbol": canonical_symbol,
+        "baostock_code": baostock_code,
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+        "attempted_functions": ["query_history_k_data_plus"],
+        "attempted_upstreams": ["BAOSTOCK"],
+        "successful_function": "query_history_k_data_plus",
+        "upstream_source": "BAOSTOCK",
+        "fallback_used": False,
+        "row_count": len(frame),
+        "mapping_warnings": mapping_warnings,
+        "raw_columns": [str(column) for column in pd.DataFrame(raw).columns],
+        "normalized_columns": list(frame.columns),
+    }
+    return frame, adapter_metadata
+
+
+def infer_baostock_exchange_prefix(symbol: str | None) -> str:
+    """Infer BaoStock exchange prefix while preserving six-digit China symbols."""
+
+    text = str(symbol or "").strip().lower()
+    if text.startswith(("sz.", "sh.", "bj.")):
+        return text.split(".", 1)[0]
+    if "." in text:
+        code, suffix = text.split(".", 1)
+        if suffix in {"sz", "sh", "bj"}:
+            return suffix
+        text = code
+    if text.startswith(("sz", "sh", "bj")) and len(text) > 2 and text[2:].isdigit():
+        return text[:2]
+    code = _baostock_symbol_code(symbol)
+    if code.startswith(("000", "001", "002", "003", "300", "159")):
+        return "sz"
+    if code.startswith(("600", "601", "603", "605", "688", "510", "511", "512", "513", "515", "516")):
+        return "sh"
+    raise ValueError(f"Unable to infer BaoStock exchange prefix for symbol={symbol!r}")
+
+
+def to_baostock_code(symbol: str | None) -> str:
+    code = _baostock_symbol_code(symbol)
+    if not code:
+        raise ValueError("BaoStock symbol cannot be empty")
+    prefix = infer_baostock_exchange_prefix(symbol)
+    return f"{prefix}.{code}"
+
+
+def from_baostock_code(symbol: str | None) -> str:
+    text = str(symbol or "").strip().upper()
+    if not text:
+        return ""
+    if "." in text:
+        first, second = text.split(".", 1)
+        if first in {"SZ", "SH", "BJ"}:
+            return normalize_symbol_value(second)
+        if second in {"SZ", "SH", "BJ"}:
+            return normalize_symbol_value(first)
+    if text.startswith(("SZ", "SH", "BJ")) and len(text) > 2 and text[2:].isdigit():
+        return normalize_symbol_value(text[2:])
+    return normalize_symbol_value(text)
+
+
+def _baostock_symbol_code(symbol: str | None) -> str:
+    text = str(symbol or "").strip().upper()
+    if not text:
+        return ""
+    if text.startswith(("SZ.", "SH.", "BJ.")):
+        text = text.split(".", 1)[1]
+    elif "." in text:
+        first, second = text.split(".", 1)
+        if second in {"SZ", "SH", "BJ"}:
+            text = first
+        elif first in {"SZ", "SH", "BJ"}:
+            text = second
+    elif text.startswith(("SZ", "SH", "BJ")) and len(text) > 2 and text[2:].isdigit():
+        text = text[2:]
+    if re_match := re.match(r"^(\d+)\.0+$", text):
+        text = re_match.group(1)
+    if text.isdigit() and 0 < len(text) <= 6:
+        return text.zfill(6)
+    return text
+
+
+def _require_baostock_success(result: Any, *, operation: str) -> None:
+    code = str(getattr(result, "error_code", "0") or "0")
+    message = str(getattr(result, "error_msg", "") or "")
+    if code != "0":
+        raise RuntimeError(
+            f"BaoStock {operation} failed; error_code={code}; message={_safe_exception_message(RuntimeError(message))}"
+        )
+
+
+def _baostock_query_result_to_frame(query_result: Any) -> pd.DataFrame:
+    if isinstance(query_result, pd.DataFrame):
+        return query_result.copy(deep=True)
+    get_data = getattr(query_result, "get_data", None)
+    if callable(get_data):
+        return pd.DataFrame(get_data())
+    fields = list(getattr(query_result, "fields", []) or [])
+    next_row = getattr(query_result, "next", None)
+    get_row_data = getattr(query_result, "get_row_data", None)
+    if not callable(next_row) or not callable(get_row_data):
+        raise RuntimeError("BaoStock query result did not expose next/get_row_data methods")
+    rows: list[Any] = []
+    while bool(next_row()):
+        rows.append(get_row_data())
+    if rows and isinstance(rows[0], dict):
+        return pd.DataFrame(rows)
+    return pd.DataFrame(rows, columns=fields)
+
+
+def _normalize_baostock_market_output(
+    frame: pd.DataFrame,
+    *,
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    source: str,
+    revision_id: str | None,
+) -> pd.DataFrame:
+    if frame.empty:
+        return _canonical_market_frame(pd.DataFrame(), symbol=symbol, source=source, revision_id=revision_id)
+    normalized = frame.rename(
+        columns={
+            "date": "trade_date",
+            "code": "baostock_code",
+            "preclose": "pre_close",
+            "pre_close": "pre_close",
+        }
+    ).copy()
+    if "trade_date" not in normalized.columns:
+        raise ValueError("BAOSTOCK_OPTIONAL market data did not include date/trade_date")
+    normalized["trade_date"] = pd.to_datetime(normalized["trade_date"], errors="coerce")
+    start = pd.Timestamp(start_date)
+    end = pd.Timestamp(end_date)
+    normalized = normalized.loc[
+        normalized["trade_date"].notna()
+        & (normalized["trade_date"] >= start)
+        & (normalized["trade_date"] <= end)
+    ].copy()
+    if "baostock_code" in normalized.columns:
+        normalized["symbol"] = normalized["baostock_code"].map(from_baostock_code)
+        normalized["symbol"] = normalized["symbol"].replace("", pd.NA).fillna(symbol)
+    else:
+        normalized["symbol"] = symbol
+    if "tradestatus" in normalized.columns:
+        status = normalized["tradestatus"].fillna("").astype(str).str.strip().str.lower()
+        normalized["is_suspended"] = status.isin({"0", "false", "suspended", "停牌"})
+    else:
+        normalized["is_suspended"] = False
+    normalized["adj_factor"] = 1.0
+    normalized = normalized.sort_values(["symbol", "trade_date"]).reset_index(drop=True)
+    return _canonical_market_frame(normalized, symbol=symbol, source=source, revision_id=revision_id)
 
 
 def _fetch_akshare_market_like(
@@ -1844,6 +2098,7 @@ def build_data_source_metadata(result: DataSourceResult, paths: DataSourceArtifa
         "allow_real_data": bool(result.audit_metadata.get("request", {}).get("allow_real_data", False)),
         "adapter_status": result.audit_metadata.get("adapter_status", ""),
         "inferred_symbol_type": adapter_metadata.get("inferred_symbol_type", ""),
+        "baostock_code": adapter_metadata.get("baostock_code", ""),
         "attempted_functions": adapter_metadata.get("attempted_functions", []),
         "attempted_upstreams": adapter_metadata.get("attempted_upstreams", []),
         "successful_function": adapter_metadata.get("successful_function", ""),
@@ -1872,6 +2127,7 @@ def _adapter_registry() -> dict[str, BaseDataSourceAdapter]:
         "MOCK": MockDataSourceAdapter(),
         "AKSHARE_OPTIONAL": OptionalAkshareDataSourceAdapter(),
         "TUSHARE_OPTIONAL": OptionalTushareDataSourceAdapter(),
+        "BAOSTOCK_OPTIONAL": OptionalBaostockDataSourceAdapter(),
     }
 
 

@@ -11,6 +11,7 @@ Supported MVP checks:
 - `LOCAL_CSV`: verifies the CSV path exists, is readable by pandas, and reports row count.
 - `MOCK`: verifies the configured mock dataset can be loaded.
 - `AKSHARE_OPTIONAL` market routes: checks the configured AKShare fallback route and, by default, individual upstream probes such as Tencent, Sina, and Eastmoney where supported by the symbol type.
+- `BAOSTOCK_OPTIONAL` market route: checks guarded BaoStock login/query/logout behavior and whether `query_history_k_data_plus` can return canonical market rows.
 
 The health result records:
 
@@ -47,6 +48,27 @@ python -m quant_replay_system.cli data-source-health --source AKSHARE_OPTIONAL -
 
 Without `--allow-real-data`, AKShare health returns a blocked WARN result and does not import or call AKShare.
 
+## BaoStock Route Semantics
+
+BaoStock health checks are manual-only and market-only in v0.1. The check uses the same guarded fetch path as `data-source-fetch`, including lazy import and no-live-trading/no-broker guardrails.
+
+Example:
+
+```cmd
+python -m quant_replay_system.cli data-source-health --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
+Without `--allow-real-data`, BaoStock health returns a blocked WARN result and does not import or call BaoStock.
+
+If BaoStock succeeds, the health result reports:
+
+- `successful_upstream=BAOSTOCK`
+- `successful_function=query_history_k_data_plus`
+- row count and latency
+- raw artifact and metadata paths
+
+If BaoStock fails, use the safe diagnostic message to decide whether to retry later, use AKShare Tencent/Sina routes, or fall back to reviewed `LOCAL_CSV`.
+
 ## LOCAL_CSV Example
 
 ```cmd
@@ -80,14 +102,14 @@ Run health checks before importing real or manually reviewed data:
 data-source-health -> data-source-fetch -> market-cache-ingest -> market-cache-query -> data-pipeline -> data-quality -> snapshot-quality -> current-candidates
 ```
 
-If a route fails, use the recommended fallback from the report. For AKShare market data, Eastmoney instability should trigger Sina/Tencent fallback or reviewed `LOCAL_CSV` fallback.
+If a route fails, use the recommended fallback from the report. For AKShare market data, Eastmoney instability should trigger Sina/Tencent fallback or reviewed `LOCAL_CSV` fallback. For BaoStock failures, retry later, use AKShare routes that are healthy, or use reviewed `LOCAL_CSV`.
 
 For market data that succeeds, use [market_data_cache.md](market_data_cache.md) to cache the canonical `raw_data.csv` locally before building repeatable pipeline inputs.
 
 ## Safety
 
 - Real network checks are manual-only.
-- `--allow-real-data` is required for AKShare real checks.
+- `--allow-real-data` is required for AKShare and BaoStock real checks.
 - Automated tests use fake/local data only.
 - No live trading is implemented.
 - No broker API is invoked.
@@ -100,4 +122,4 @@ For market data that succeeds, use [market_data_cache.md](market_data_cache.md) 
 - Different upstreams can differ in adjustment, amount, volume, and date coverage semantics.
 - A PASS health check is not data quality certification.
 - All raw outputs still need `data-pipeline`, `data-quality`, and `snapshot-quality`.
-- Future adapters such as BaoStock, Tushare, JQData, or RQData should plug into the same local health-check pattern.
+- Tushare, JQData, or RQData adapters should continue to plug into the same local health-check pattern.

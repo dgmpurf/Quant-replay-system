@@ -42,6 +42,12 @@ Ingest a successful raw market file:
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
 ```
 
+BaoStock market output uses the same canonical raw market schema and can be cached the same way:
+
+```cmd
+python -m quant_replay_system.cli market-cache-ingest --input data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\metadata.json
+```
+
 The optional metadata file fills cache provenance fields such as:
 
 - `upstream_source`
@@ -130,7 +136,7 @@ data-source-health
 -> current-candidates
 ```
 
-For AKShare, run health checks first so the route report identifies whether Tencent, Sina, or Eastmoney is usable. If an upstream fails, use a successful fallback route or reviewed `LOCAL_CSV`.
+For AKShare, run health checks first so the route report identifies whether Tencent, Sina, or Eastmoney is usable. For BaoStock, run `data-source-health` first to confirm the market route is available. If an upstream fails, use a successful fallback route or reviewed `LOCAL_CSV`.
 
 ## Safety
 
@@ -148,4 +154,5 @@ For AKShare, run health checks first so the route report identifies whether Tenc
 - Cache deduplication is schema-light and designed for canonical daily bars.
 - The cache does not merge or validate universe/trading-calendar data.
 - Upstream sources can differ in adjustment, amount, volume, and date coverage semantics.
+- BaoStock, AKShare, and Tushare may represent adjustment and amount semantics differently; compare sources before relying on cross-source cache rows.
 - Cached market data must still be reviewed through data quality and snapshot quality before research use.

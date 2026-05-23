@@ -93,6 +93,51 @@ For the guarded manual command sequence from AKShare fetch to current candidates
 
 If a real-data universe output is stock-only and market data contains ETFs such as `510300`, merge reviewed ETF rows through [universe_overlay.md](universe_overlay.md) before running `data-pipeline`.
 
+### BAOSTOCK_OPTIONAL
+
+`BAOSTOCK_OPTIONAL` is a guarded manual-only adapter for local BaoStock historical market fetches.
+
+It is disabled by default, imports `baostock` lazily only after guardrails pass, and must not be used for real network calls in automated tests.
+
+Supported v0.1 dataset types:
+
+- `market`
+
+Unsupported dataset types return a clear not-implemented error.
+
+Manual BaoStock market fetches require:
+
+- `--symbol`
+- `--start-date`
+- `--end-date`
+- `--allow-real-data`
+- `baostock` installed in the local virtual environment
+
+Install BaoStock manually only for local real-data dry runs:
+
+```cmd
+python -m pip install baostock
+```
+
+Example:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
+BaoStock symbol conversion preserves canonical six-digit project symbols in output while using BaoStock exchange-prefixed codes for the request. Examples:
+
+- `000001` -> `sz.000001`
+- `600000` -> `sh.600000`
+- `510300` -> `sh.510300`
+- `159915` -> `sz.159915`
+
+BaoStock `query_history_k_data_plus` rows are normalized into canonical market columns where possible. The adapter maps `date`, `code`, and `preclose` to `trade_date`, canonical `symbol`, and `pre_close`; it fills `adj_factor=1.0`, derives `is_suspended` from `tradestatus` when available, and uses conservative MVP defaults for unavailable fields such as limit prices and availability timestamps.
+
+Successful metadata includes `baostock_code`, `upstream_source=BAOSTOCK`, `successful_function=query_history_k_data_plus`, `row_count`, `adapter_status`, and no-live-trading/no-broker audit fields. Metadata does not contain secrets.
+
+The raw BaoStock output should still go through `market-cache-ingest` when useful, then `data-pipeline`, `data-quality`, and `snapshot-quality` before current-candidate generation or replay.
+
 ### TUSHARE_OPTIONAL
 
 `TUSHARE_OPTIONAL` is a guarded manual-only adapter for local Tushare fetches.
@@ -193,7 +238,7 @@ Rules:
 - Real/network adapters are disabled by default.
 - CLI real-data runs require `--allow-real-data`.
 - Automated tests must use `LOCAL_CSV` or `MOCK`.
-- Automated tests may monkeypatch fake `akshare` or `tushare` modules, but they must not call real AKShare, Tushare, or network APIs.
+- Automated tests may monkeypatch fake `akshare`, `baostock`, or `tushare` modules, but they must not call real AKShare, BaoStock, Tushare, or network APIs.
 - AKShare requires no token; Tushare requires `TUSHARE_TOKEN` for manual real-data fetches, but the token is never printed or written to metadata.
 - `.env` is not modified.
 - Broker/live trading integrations are not invoked.
@@ -256,6 +301,12 @@ Manual AKShare universe snapshot fetch:
 python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type universe --as-of-date 2024-05-20 --market-type all --allow-real-data
 ```
 
+Manual BaoStock market fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
 Manual Tushare market fetch:
 
 ```cmd
@@ -314,6 +365,15 @@ python -m quant_replay_system.cli data-pipeline --dataset-type market --source L
 python -m quant_replay_system.cli data-quality --dataset-type market --input data\processed\market\<pipeline_id>\raw_data_cleaned.csv
 ```
 
+For a manual BaoStock market fetch, use the same local handoff path:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+python -m quant_replay_system.cli market-cache-ingest --input data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\metadata.json
+python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\raw_data.csv
+python -m quant_replay_system.cli data-quality --dataset-type market --input data\processed\market\<pipeline_id>\raw_data_cleaned.csv
+```
+
 You can still run the underlying commands manually:
 
 ```cmd
@@ -326,8 +386,10 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 ## Known MVP Limitations
 
 - `AKSHARE_OPTIONAL` is a guarded MVP adapter, not a production data downloader.
+- `BAOSTOCK_OPTIONAL` is a guarded MVP market-only adapter, not a production data downloader.
 - `TUSHARE_OPTIONAL` is a guarded MVP adapter and requires a local token; it is not a production data downloader.
 - AKShare market routing now attempts non-Eastmoney Sina/Tencent routes first where supported, but route coverage and field semantics can differ by upstream source.
+- BaoStock field coverage, adjustment semantics, and available instruments can differ from AKShare/Tushare; review data quality before use.
 - Adjustment/factor semantics can differ between Sina, Tencent, and Eastmoney; always run data-quality and snapshot-quality before current candidates.
 - AKShare market routing is best-effort and may need manual `params` or later source-specific mapping when upstream endpoints change.
 - The `curl_cffi` fallback is manual-only and may still fail when Eastmoney kline, TLS, VPN, or proxy behavior is unstable.

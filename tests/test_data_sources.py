@@ -11,10 +11,13 @@ from quant_replay_system import cli
 from quant_replay_system.config import DataSourceSettings
 from quant_replay_system.data_sources import (
     DataSourceRequest,
+    from_baostock_code,
     get_data_source_adapter,
     infer_akshare_market_symbol_type,
+    infer_baostock_exchange_prefix,
     list_data_source_adapters,
     run_data_source_fetch,
+    to_baostock_code,
 )
 
 
@@ -368,6 +371,152 @@ def test_tushare_trading_calendar_success_writes_raw_artifacts(tmp_path: Path, m
     assert {"trade_date", "is_trading_day", "session_open", "session_close", "decision_time", "reason"}.issubset(exported.columns)
     assert metadata["token_present"] is True
     assert "fake_token" not in json.dumps(metadata)
+
+
+def test_baostock_adapter_is_registered() -> None:
+    adapters = list_data_source_adapters()
+
+    assert "BAOSTOCK_OPTIONAL" in adapters
+    assert "BAOSTOCK_OPTIONAL" not in list_data_source_adapters(include_real=False)
+
+
+def test_baostock_adapter_blocks_without_allow_real_data(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="requires explicit --allow-real-data"):
+        run_data_source_fetch(
+            DataSourceRequest(source="BAOSTOCK_OPTIONAL", dataset_type="market", symbol="000001"),
+            settings=_settings(tmp_path),
+        )
+
+
+def test_baostock_adapter_does_not_import_when_blocked(tmp_path: Path, monkeypatch) -> None:
+    original_import = builtins.__import__
+
+    def guarded_import(name, *args, **kwargs):
+        if name == "baostock":
+            raise AssertionError("baostock should not be imported when real data is blocked")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(ValueError, match="requires explicit --allow-real-data"):
+        run_data_source_fetch(
+            DataSourceRequest(source="BAOSTOCK_OPTIONAL", dataset_type="market", symbol="000001"),
+            settings=_settings(tmp_path),
+        )
+
+
+def test_baostock_missing_installation_returns_clear_error(tmp_path: Path, monkeypatch) -> None:
+    original_import = builtins.__import__
+    monkeypatch.delitem(sys.modules, "baostock", raising=False)
+
+    def guarded_import(name, *args, **kwargs):
+        if name == "baostock":
+            raise ImportError("baostock unavailable in offline test")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(RuntimeError, match="python -m pip install baostock"):
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="BAOSTOCK_OPTIONAL",
+                dataset_type="market",
+                allow_real_data=True,
+                symbol="000001",
+                start_date="2024-01-01",
+                end_date="2024-01-03",
+            ),
+            settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+        )
+
+
+def test_baostock_symbol_conversion_preserves_six_digit_codes() -> None:
+    assert infer_baostock_exchange_prefix("000001") == "sz"
+    assert infer_baostock_exchange_prefix("600000") == "sh"
+    assert infer_baostock_exchange_prefix("510300") == "sh"
+    assert to_baostock_code("000001") == "sz.000001"
+    assert to_baostock_code("600000") == "sh.600000"
+    assert to_baostock_code("510300") == "sh.510300"
+    assert from_baostock_code("sz.000001") == "000001"
+    assert from_baostock_code("600000.SH") == "600000"
+
+
+def test_baostock_market_success_writes_canonical_raw_artifacts(tmp_path: Path, monkeypatch) -> None:
+    fake_baostock = _fake_baostock_module()
+    monkeypatch.setitem(sys.modules, "baostock", fake_baostock)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="BAOSTOCK_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.source == "BAOSTOCK_OPTIONAL"
+    assert result.row_count == 2
+    assert list(exported.columns) == _canonical_market_columns()
+    assert exported["symbol"].tolist() == ["000001", "000001"]
+    assert exported["source"].eq("BAOSTOCK_OPTIONAL").all()
+    assert metadata["baostock_code"] == "sz.000001"
+    assert metadata["upstream_source"] == "BAOSTOCK"
+    assert metadata["successful_function"] == "query_history_k_data_plus"
+    assert metadata["attempted_upstreams"] == ["BAOSTOCK"]
+    assert metadata["allow_real_data"] is True
+    assert metadata["live_trading_enabled"] is False
+    assert metadata["broker_api_invoked"] is False
+    assert fake_baostock.calls[0]["function"] == "login"
+    assert fake_baostock.calls[1]["function"] == "query_history_k_data_plus"
+    assert fake_baostock.calls[1]["code"] == "sz.000001"
+    assert fake_baostock.calls[-1]["function"] == "logout"
+
+
+def test_baostock_market_success_preserves_etf_symbol(tmp_path: Path, monkeypatch) -> None:
+    fake_baostock = _fake_baostock_module(symbol_code="sh.510300")
+    monkeypatch.setitem(sys.modules, "baostock", fake_baostock)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="BAOSTOCK_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="510300",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.row_count == 2
+    assert exported["symbol"].tolist() == ["510300", "510300"]
+    assert metadata["baostock_code"] == "sh.510300"
+    assert fake_baostock.calls[1]["code"] == "sh.510300"
+
+
+def test_baostock_unsupported_dataset_returns_not_implemented(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setitem(sys.modules, "baostock", _fake_baostock_module())
+
+    with pytest.raises(NotImplementedError, match="Supported dataset types: market"):
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="BAOSTOCK_OPTIONAL",
+                dataset_type="universe",
+                allow_real_data=True,
+            ),
+            settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+        )
 
 
 def test_infer_akshare_market_symbol_type_etf_and_stock_and_index() -> None:
@@ -1450,6 +1599,39 @@ def test_cli_allows_tushare_with_fake_client_and_token(tmp_path: Path, monkeypat
     assert "fake_token" not in output.err
 
 
+def test_cli_allows_baostock_with_fake_client(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setitem(sys.modules, "baostock", _fake_baostock_module())
+
+    code = cli.main(
+        [
+            "data-source-fetch",
+            "--source",
+            "BAOSTOCK_OPTIONAL",
+            "--dataset-type",
+            "market",
+            "--symbol",
+            "000001",
+            "--start-date",
+            "2024-01-01",
+            "--end-date",
+            "2024-01-03",
+            "--allow-real-data",
+            "--output-dir",
+            str(tmp_path / "raw"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "source: BAOSTOCK_OPTIONAL" in output.out
+    assert "row_count: 2" in output.out
+    assert "No live trading or broker API was invoked." in output.out
+    raw_line = next(line for line in output.out.splitlines() if line.startswith("raw_data:"))
+    raw_path = Path(raw_line.split(":", 1)[1].strip())
+    exported = pd.read_csv(raw_path, dtype={"symbol": str})
+    assert exported["symbol"].tolist() == ["000001", "000001"]
+
+
 def test_cli_allows_akshare_with_allow_real_data_using_fake_module(tmp_path: Path, monkeypatch, capsys) -> None:
     monkeypatch.setitem(sys.modules, "akshare", _fake_akshare_module())
 
@@ -1841,6 +2023,105 @@ def _fake_tushare_module() -> ModuleType:
         return FakeProClient()
 
     module.pro_api = pro_api
+    return module
+
+
+def _fake_baostock_module(symbol_code: str = "sz.000001") -> ModuleType:
+    module = ModuleType("baostock")
+    module.calls = []
+
+    class FakeResult:
+        def __init__(self, code: str) -> None:
+            self.error_code = "0"
+            self.error_msg = "success"
+            self.fields = [
+                "date",
+                "code",
+                "open",
+                "high",
+                "low",
+                "close",
+                "preclose",
+                "volume",
+                "amount",
+                "adjustflag",
+                "turn",
+                "tradestatus",
+                "pctChg",
+                "isST",
+            ]
+            self._rows = [
+                [
+                    "2024-01-02",
+                    code,
+                    "10.0",
+                    "10.5",
+                    "9.8",
+                    "10.2",
+                    "9.9",
+                    "1000",
+                    "10200",
+                    "3",
+                    "1.0",
+                    "1",
+                    "1.0",
+                    "0",
+                ],
+                [
+                    "2024-01-03",
+                    code,
+                    "10.2",
+                    "10.8",
+                    "10.1",
+                    "10.6",
+                    "10.2",
+                    "1100",
+                    "11660",
+                    "3",
+                    "1.1",
+                    "1",
+                    "1.2",
+                    "0",
+                ],
+            ]
+            self._index = -1
+
+        def next(self) -> bool:
+            self._index += 1
+            return self._index < len(self._rows)
+
+        def get_row_data(self) -> list[str]:
+            return self._rows[self._index]
+
+    class SuccessResult:
+        error_code = "0"
+        error_msg = "success"
+
+    def login():
+        module.calls.append({"function": "login"})
+        return SuccessResult()
+
+    def logout():
+        module.calls.append({"function": "logout"})
+        return SuccessResult()
+
+    def query_history_k_data_plus(code, fields, start_date, end_date, frequency, adjustflag):
+        module.calls.append(
+            {
+                "function": "query_history_k_data_plus",
+                "code": code,
+                "fields": fields,
+                "start_date": start_date,
+                "end_date": end_date,
+                "frequency": frequency,
+                "adjustflag": adjustflag,
+            }
+        )
+        return FakeResult(code if code else symbol_code)
+
+    module.login = login
+    module.logout = logout
+    module.query_history_k_data_plus = query_history_k_data_plus
     return module
 
 
