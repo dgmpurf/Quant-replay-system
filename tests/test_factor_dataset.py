@@ -66,6 +66,70 @@ def test_future_universe_rows_are_not_used() -> None:
     assert "FUT" not in set(result["symbol"])
 
 
+def test_missing_listed_date_does_not_exclude_factor_dataset_symbol() -> None:
+    universe = _make_universe_snapshot()
+    universe.loc[universe["symbol"] == "AAA", "listed_date"] = pd.NaT
+
+    result = build_factor_dataset(DECISION_DATE, _make_market_data(["AAA"]), universe, _make_calendar())
+
+    assert list(result["symbol"]) == ["AAA"]
+
+
+def test_future_listed_date_excludes_factor_dataset_symbol() -> None:
+    universe = _make_universe_snapshot()
+    universe.loc[universe["symbol"] == "AAA", "listed_date"] = DECISION_DATE + pd.Timedelta(days=1)
+
+    result = build_factor_dataset(DECISION_DATE, _make_market_data(["AAA"]), universe, _make_calendar())
+
+    assert "AAA" not in set(result["symbol"])
+
+
+def test_delisted_date_on_or_before_decision_excludes_factor_dataset_symbol() -> None:
+    universe = _make_universe_snapshot()
+    universe.loc[universe["symbol"] == "AAA", "delisted_date"] = DECISION_DATE
+    universe.loc[universe["symbol"] == "BBB", "delisted_date"] = DECISION_DATE - pd.Timedelta(days=1)
+
+    result = build_factor_dataset(DECISION_DATE, _make_market_data(["AAA", "BBB"]), universe, _make_calendar())
+
+    assert set(result["symbol"]).isdisjoint({"AAA", "BBB"})
+
+
+def test_invalid_non_empty_listed_date_raises_clear_factor_dataset_error() -> None:
+    universe = _make_universe_snapshot()
+    universe["listed_date"] = universe["listed_date"].astype("object")
+    universe.loc[universe["symbol"] == "AAA", "listed_date"] = "not-a-date"
+
+    with pytest.raises(ValueError, match="listed_date contains invalid non-empty universe dates"):
+        build_factor_dataset(DECISION_DATE, _make_market_data(["AAA"]), universe, _make_calendar())
+
+
+def test_factor_dataset_joins_etf_market_and_universe_symbol() -> None:
+    universe = pd.DataFrame(
+        [
+            _universe_row("510300", "CSI 300 ETF", is_active=True, is_st=False, is_suspended=False),
+        ]
+    )
+
+    result = build_factor_dataset(DECISION_DATE, _make_market_data(["510300"]), universe, _make_calendar())
+
+    assert result["symbol"].tolist() == ["510300"]
+    assert result.loc[0, "instrument_type"] == "ETF"
+    assert bool(result.loc[0, "market_data_available"]) is True
+
+
+def test_factor_dataset_normalizes_stripped_numeric_symbols_before_join() -> None:
+    market = _make_market_data(["000001"])
+    universe = pd.DataFrame(
+        [
+            _universe_row("1", "Ping An Bank", is_active=True, is_st=False, is_suspended=False),
+        ]
+    )
+
+    result = build_factor_dataset(DECISION_DATE, market, universe, _make_calendar())
+
+    assert result["symbol"].tolist() == ["000001"]
+
+
 def test_technical_indicator_columns_exist() -> None:
     result = build_factor_dataset(DECISION_DATE, _make_market_data(["AAA"]), _make_universe_snapshot(), _make_calendar())
 

@@ -209,9 +209,13 @@ def _merge_universe_and_features(
         & merged["limit_down"].notna()
     )
 
-    precheck = merged.apply(_risk_precheck, axis=1, result_type="expand")
-    merged["risk_precheck_status"] = precheck[0]
-    merged["risk_precheck_reason"] = precheck[1]
+    if merged.empty:
+        merged["risk_precheck_status"] = pd.Series(dtype="object")
+        merged["risk_precheck_reason"] = pd.Series(dtype="object")
+    else:
+        precheck = merged.apply(_risk_precheck, axis=1, result_type="expand")
+        merged["risk_precheck_status"] = precheck[0]
+        merged["risk_precheck_reason"] = precheck[1]
     merged["data_revision_id"] = merged.apply(_join_revision_ids, axis=1)
     merged["source"] = merged.apply(_join_sources, axis=1)
 

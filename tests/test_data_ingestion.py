@@ -100,6 +100,49 @@ def test_universe_snapshot_ingestion_succeeds(tmp_path: Path) -> None:
     assert set(result.cleaned_data["symbol"]) == {"AAA", "BBB", "CCC"}
 
 
+def test_market_ingestion_preserves_numeric_leading_zero_symbol(tmp_path: Path) -> None:
+    path = tmp_path / "market.csv"
+    frame = _market_frame().iloc[[0]].copy()
+    frame["symbol"] = "000001"
+    frame.to_csv(path, index=False)
+
+    result = ingest_market_data_csv(path, settings=_settings(tmp_path))
+
+    assert result.cleaned_data["symbol"].tolist() == ["000001"]
+
+
+def test_market_ingestion_pads_numeric_symbol_when_source_csv_was_stripped(tmp_path: Path) -> None:
+    path = tmp_path / "market.csv"
+    frame = _market_frame().iloc[[0]].copy()
+    frame["symbol"] = 1
+    frame.to_csv(path, index=False)
+
+    result = ingest_market_data_csv(path, settings=_settings(tmp_path))
+
+    assert result.cleaned_data["symbol"].tolist() == ["000001"]
+
+
+def test_universe_ingestion_preserves_leading_zero_and_etf_symbols(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = pd.DataFrame(
+        [
+            _reviewed_universe_row("000001", "Ping An Bank", "STOCK"),
+            _reviewed_universe_row("510300", "CSI 300 ETF", "ETF"),
+            _reviewed_universe_row("159915", "ChiNext ETF", "ETF"),
+        ]
+    )
+    frame.to_csv(path, index=False)
+
+    result = ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+    assert result.cleaned_data["symbol"].tolist() == ["000001", "159915", "510300"]
+    assert dict(zip(result.cleaned_data["symbol"], result.cleaned_data["instrument_type"])) == {
+        "000001": "STOCK",
+        "159915": "ETF",
+        "510300": "ETF",
+    }
+
+
 def test_universe_ingestion_succeeds_with_listed_date_blank(tmp_path: Path) -> None:
     path = tmp_path / "universe.csv"
     frame = _universe_frame()
@@ -439,6 +482,27 @@ def _universe_frame() -> pd.DataFrame:
             },
         ]
     )
+
+
+def _reviewed_universe_row(symbol: str, name: str, instrument_type: str) -> dict:
+    return {
+        "as_of_date": "2024-05-20",
+        "symbol": symbol,
+        "name": name,
+        "instrument_type": instrument_type,
+        "exchange": "SSE" if symbol.startswith("5") else "SZSE",
+        "listed_date": "",
+        "delisted_date": "",
+        "is_active": True,
+        "is_st": False,
+        "is_suspended": False,
+        "industry": instrument_type,
+        "min_lot": 100,
+        "t_plus_rule": "T+1",
+        "available_time": "2024-05-20 08:00:00",
+        "revision_id": "v1",
+        "source": "TEST",
+    }
 
 
 def _corporate_actions_frame() -> pd.DataFrame:

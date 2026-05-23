@@ -94,6 +94,14 @@ During development, run relevant focused tests first. Before any checkpoint, com
 
 If the full suite exceeds 60 seconds, run `python -m pytest --durations=30` and report the slowest tests so future work can decide whether to split, mark, or optimize them.
 
+## Local CLI Verification And Artifact Diagnostics
+
+When a task explicitly asks for local workflow verification, and the required inputs already exist or can be created under ignored local paths, Codex should run the relevant local CLI commands itself instead of leaving manual stitching to the user.
+
+Safe verification examples include local-only commands such as `universe-overlay`, `data-pipeline`, `snapshot-quality`, `current-candidates`, and status dashboards using ignored `data/raw`, `data/processed`, and `outputs` artifacts. Codex should inspect the generated CSV/JSON/Markdown artifacts, report important paths and row counts, and then run `git status --short` plus tracked-file safety checks.
+
+Codex must still avoid real network/API calls unless explicitly allowed, must not modify `.env`, must not print secrets, and must not run `git add`, `git commit`, or `git push`.
+
 ## 3. ChatGPT Review Loop
 
 After Codex finishes a task:

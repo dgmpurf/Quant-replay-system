@@ -30,6 +30,8 @@ The minimum dataset set for `current-candidates` is:
 - `universe`
 - `trading_calendar`
 
+If your universe file is stock-only and the reviewed market file contains ETF symbols such as `510300`, add a reviewed ETF universe overlay before running `data-pipeline`.
+
 ## Required Market CSV Columns
 
 The market fallback CSV should use the canonical market schema:
@@ -93,6 +95,22 @@ python -c "import pandas as pd; p=r'<MARKET_RAW_DATA_CSV>'; df=pd.read_csv(p); c
 ```
 
 Fix unexplained missing columns, duplicate rows, non-positive prices, negative volume/amount, OHLC inconsistencies, or invalid timestamps before continuing.
+
+## Add ETF Universe Coverage When Needed
+
+Copy and review the example ETF overlay:
+
+```cmd
+copy docs\examples\etf_universe_overlay_example.csv data\raw\manual_overlays\etf_universe_overlay.csv
+```
+
+Edit the local overlay as needed, then merge it into the base universe:
+
+```cmd
+python -m quant_replay_system.cli universe-overlay --base-universe "<UNIVERSE_RAW_DATA_CSV>" --overlay data\raw\manual_overlays\etf_universe_overlay.csv
+```
+
+Use the printed `merged_universe_path` as `<UNIVERSE_RAW_DATA_CSV>` in the local manifest. See [universe_overlay.md](universe_overlay.md) for validation rules and artifact details.
 
 ## Create A Local Manifest
 

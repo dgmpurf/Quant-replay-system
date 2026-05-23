@@ -14,6 +14,11 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.config import DataSourceSettings, Settings, load_settings
+from quant_replay_system.data import (
+    normalize_symbol_series as normalize_contract_symbol_series,
+    normalize_symbol_value,
+    read_csv_preserve_symbol_columns,
+)
 
 
 SUPPORTED_DATASET_TYPES = {"market", "universe", "benchmark", "corporate_actions", "trading_calendar"}
@@ -105,7 +110,7 @@ class LocalCsvDataSourceAdapter(BaseDataSourceAdapter):
         input_path = Path(request.input_path)
         if not input_path.exists():
             raise FileNotFoundError(f"Local CSV input not found: {input_path}")
-        frame = pd.read_csv(input_path)
+        frame = read_csv_preserve_symbol_columns(input_path)
         return frame, {"input_path": input_path, "adapter": self.source}, []
 
 
@@ -125,7 +130,7 @@ class MockDataSourceAdapter(BaseDataSourceAdapter):
         mock_path = _mock_path_for_dataset(request.dataset_type, project_settings)
         if not mock_path.exists():
             raise FileNotFoundError(f"Mock CSV not found for {request.dataset_type}: {mock_path}")
-        frame = pd.read_csv(mock_path)
+        frame = read_csv_preserve_symbol_columns(mock_path)
         warnings: list[str] = []
         if request.dataset_type == "benchmark":
             warnings.append("MOCK benchmark uses the configured mock market price file.")
@@ -276,7 +281,7 @@ def _fetch_tushare_market_like(client, request: DataSourceRequest, *, token: str
     )
     frame = _normalize_tushare_market_frame(
         pd.DataFrame(raw),
-        symbol=request.symbol,
+        symbol=normalize_symbol_value(request.symbol) if request.symbol is not None else None,
         dataset_type=request.dataset_type,
         start_date=request.start_date,
         end_date=request.end_date,
@@ -426,7 +431,7 @@ def _fetch_akshare_market_like(
     )
     frame = _normalize_akshare_market_frame(
         pd.DataFrame(raw),
-        symbol=request.symbol,
+        symbol=normalize_symbol_value(request.symbol) if request.symbol is not None else None,
         dataset_type=request.dataset_type,
         start_date=request.start_date,
         end_date=request.end_date,
@@ -875,7 +880,8 @@ def _canonical_market_frame(
     revision_id: str | None,
 ) -> pd.DataFrame:
     output = pd.DataFrame(index=frame.index)
-    output["symbol"] = frame.get("symbol", symbol)
+    raw_symbol = frame["symbol"] if "symbol" in frame.columns else pd.Series(symbol, index=frame.index)
+    output["symbol"] = normalize_contract_symbol_series(raw_symbol)
     output["trade_date"] = pd.to_datetime(frame.get("trade_date", pd.Series(dtype="datetime64[ns]")), errors="coerce")
     for column in ["open", "high", "low", "close", "volume", "amount"]:
         output[column] = pd.to_numeric(frame.get(column, pd.Series(0, index=frame.index)), errors="coerce").fillna(0)
@@ -1272,11 +1278,7 @@ def normalize_text_series(series: pd.Series | pd.DataFrame) -> pd.Series:
 def normalize_symbol_series(series: pd.Series | pd.DataFrame) -> pd.Series:
     """Normalize AKShare symbol/code values to uppercase strings."""
 
-    return (
-        normalize_text_series(series)
-        .str.replace(r"\.0$", "", regex=True)
-        .str.upper()
-    )
+    return normalize_contract_symbol_series(_ensure_series(series))
 
 
 def _ensure_series(value: pd.Series | pd.DataFrame, index: pd.Index | None = None) -> pd.Series:
@@ -1701,7 +1703,7 @@ def _normalize_request(request: DataSourceRequest, settings: DataSourceSettings)
         output_dir=Path(request.output_dir) if request.output_dir is not None else None,
         revision_id=request.revision_id or settings.default_revision_id,
         allow_real_data=bool(request.allow_real_data),
-        symbol=request.symbol,
+        symbol=normalize_symbol_value(request.symbol) if request.symbol is not None else None,
         start_date=request.start_date,
         end_date=request.end_date,
         as_of_date=request.as_of_date,

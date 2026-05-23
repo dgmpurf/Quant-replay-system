@@ -133,6 +133,8 @@ For the AKShare universe + market real-data dry-run checklist, see [docs/akshare
 
 For using a manually reviewed market CSV when AKShare market history is unstable, see [docs/local_csv_market_fallback_workflow.md](docs/local_csv_market_fallback_workflow.md).
 
+For merging reviewed ETF rows into a stock-only universe snapshot before `data-pipeline`, see [docs/universe_overlay.md](docs/universe_overlay.md).
+
 For the local data source to ingestion and quality handoff pipeline, see [docs/data_pipeline.md](docs/data_pipeline.md).
 
 For the end-to-end local data preparation smoke-test workflow, see [docs/data_preparation_e2e.md](docs/data_preparation_e2e.md).
@@ -151,6 +153,7 @@ For the v0.39.0 local research workflow checkpoint summary, see [docs/release_ch
 
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
+python -m quant_replay_system.cli universe-overlay --base-universe data/raw/AKSHARE_OPTIONAL/universe/<run_id>/raw_data.csv --overlay data/raw/manual_overlays/etf_universe_overlay.csv
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv
 python -m quant_replay_system.cli paper-review-decisions --decisions outputs/reports/paper_trading/daily/example/decisions.csv --updates data/paper/review_updates.csv --health-check --reviewer-id msj

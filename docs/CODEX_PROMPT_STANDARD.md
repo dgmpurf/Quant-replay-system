@@ -31,6 +31,7 @@ Use this document when drafting future Codex prompts for:
 - Every task must avoid secrets, `.env` changes, token printing, and real network/API calls in tests.
 - Every task should use mock or local CSV data unless the prompt explicitly says otherwise.
 - Every task should record known limitations and the next recommended task.
+- When a task explicitly asks for local CLI verification, Codex should perform safe local dry-runs itself when required inputs exist or can be created under ignored local paths. It should inspect generated artifacts, report paths and row counts, and run git safety checks instead of leaving those local verification steps to the user.
 
 ## Standard Codex Prompt Template
 

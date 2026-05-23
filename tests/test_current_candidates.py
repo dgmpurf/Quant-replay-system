@@ -142,6 +142,58 @@ def test_snapshot_preflight_runs_when_snapshot_manifest_is_provided(tmp_path: Pa
     assert result.snapshot_quality_report_path.exists()
 
 
+def test_current_candidates_run_with_processed_universe_missing_listed_date(tmp_path: Path) -> None:
+    manifest = _write_manifest(tmp_path, missing_listed_date=True)
+
+    result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="unit_test",
+        top_n=2,
+        config=_settings(tmp_path),
+        snapshot_manifest_path=manifest,
+    )
+
+    assert result.factor_dataset_row_count > 0
+    assert set(result.factor_dataset["symbol"]) == {"AAA", "BBB"}
+
+
+def test_current_candidates_can_build_factor_dataset_for_etf_symbol(tmp_path: Path) -> None:
+    result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="etf_core",
+        top_n=2,
+        config=_settings(tmp_path),
+        market_data=_make_market_data(["510300"]),
+        universe_snapshot=_make_universe_snapshot(["510300"]),
+        benchmark_data=_make_benchmark_data(),
+        trading_calendar=_make_calendar(),
+    )
+
+    assert result.factor_dataset_row_count == 1
+    assert result.factor_dataset["symbol"].tolist() == ["510300"]
+    assert result.audit_metadata["market_universe_intersection_count"] == 1
+
+
+def test_current_candidates_empty_factor_dataset_reports_symbol_diagnostics(tmp_path: Path) -> None:
+    result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="etf_core",
+        top_n=2,
+        config=_settings(tmp_path),
+        market_data=_make_market_data(["510300"]),
+        universe_snapshot=_make_universe_snapshot(["000001"]),
+        benchmark_data=None,
+        trading_calendar=_make_calendar(),
+    )
+
+    assert result.factor_dataset_row_count == 0
+    assert result.audit_metadata["market_symbol_count"] == 1
+    assert result.audit_metadata["universe_symbol_count"] == 1
+    assert result.audit_metadata["market_universe_intersection_count"] == 0
+    assert result.audit_metadata["missing_market_symbols_sample"] == ["510300"]
+    assert any("Factor dataset is empty" in warning for warning in result.warnings)
+
+
 def test_snapshot_preflight_fail_blocks_when_configured(tmp_path: Path) -> None:
     manifest = _write_manifest(tmp_path, bad_market=True)
 
@@ -448,7 +500,13 @@ def _make_benchmark_data() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _write_manifest(tmp_path: Path, *, bad_market: bool = False, bad_benchmark: bool = False) -> Path:
+def _write_manifest(
+    tmp_path: Path,
+    *,
+    bad_market: bool = False,
+    bad_benchmark: bool = False,
+    missing_listed_date: bool = False,
+) -> Path:
     data_dir = tmp_path / "snapshot"
     data_dir.mkdir(parents=True, exist_ok=True)
     market = _make_market_data(["AAA", "BBB"]).copy()
@@ -457,7 +515,10 @@ def _write_manifest(tmp_path: Path, *, bad_market: bool = False, bad_benchmark: 
     market_path = data_dir / "market.csv"
     market.to_csv(market_path, index=False)
     universe_path = data_dir / "universe.csv"
-    _make_universe_snapshot(["AAA", "BBB"]).to_csv(universe_path, index=False)
+    universe = _make_universe_snapshot(["AAA", "BBB"])
+    if missing_listed_date:
+        universe["listed_date"] = pd.NaT
+    universe.to_csv(universe_path, index=False)
     calendar_path = data_dir / "trading_calendar.csv"
     _make_calendar().frame.to_csv(calendar_path, index=False)
     benchmark_path = data_dir / "benchmark.csv"

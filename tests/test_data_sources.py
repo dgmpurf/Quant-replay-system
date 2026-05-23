@@ -1116,6 +1116,20 @@ def test_raw_data_csv_is_written_and_readable(tmp_path: Path) -> None:
     assert "symbol" in exported.columns
 
 
+def test_local_csv_data_source_reads_symbol_columns_as_strings(tmp_path: Path) -> None:
+    input_path = tmp_path / "market.csv"
+    frame = _market_frame().iloc[[0]].copy()
+    frame["symbol"] = "000001"
+    frame.to_csv(input_path, index=False)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(source="LOCAL_CSV", dataset_type="market", input_path=input_path),
+        settings=_settings(tmp_path),
+    )
+
+    assert result.raw_data["symbol"].tolist() == ["000001"]
+
+
 def test_run_id_is_deterministic_for_same_request(tmp_path: Path) -> None:
     input_path = tmp_path / "market.csv"
     _market_frame().to_csv(input_path, index=False)

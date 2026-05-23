@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -68,6 +69,16 @@ CORPORATE_ACTION_SCHEMA = [
 
 MARKET_TIMESTAMP_COLUMNS = ["event_time", "publish_time", "ingest_time", "available_time"]
 CORPORATE_ACTION_TIMESTAMP_COLUMNS = ["event_time", "publish_time", "ingest_time", "available_time"]
+MISSING_DATE_TOKENS = {"", "nan", "nat", "none", "null", "-", "--"}
+SYMBOL_STRING_COLUMNS = {
+    "symbol",
+    "code",
+    "ts_code",
+    "证券代码",
+    "股票代码",
+    "基金代码",
+    "代码",
+}
 
 
 @dataclass(frozen=True)
@@ -109,7 +120,7 @@ def load_universe_snapshot(path: str | Path) -> pd.DataFrame:
         required_columns=UNIVERSE_SNAPSHOT_SCHEMA,
         datetime_columns=["available_time"],
         date_columns=["as_of_date", "listed_date", "delisted_date"],
-        nullable_date_columns=["delisted_date"],
+        nullable_date_columns=["listed_date", "delisted_date"],
         bool_columns=["is_active", "is_st", "is_suspended"],
     )
     return frame.sort_values(["as_of_date", "symbol", "available_time", "revision_id"]).reset_index(drop=True)
@@ -177,11 +188,15 @@ def build_replay_dataset(
     as_of_timestamp = _normalize_timestamp(as_of_date).normalize()
     decision_timestamp = _normalize_timestamp(decision_time)
 
+    market_data = normalize_symbol_column(market_data)
+    universe_snapshot = normalize_symbol_column(universe_snapshot)
+
     market = filter_available_records(market_data, decision_timestamp)
     market = market.loc[market["trade_date"] <= as_of_timestamp].copy()
     market = _latest_revisions(market, ["symbol", "trade_date"])
 
     universe = filter_available_records(universe_snapshot, decision_timestamp)
+    universe = normalize_optional_universe_dates_for_eligibility(universe)
     universe = universe.loc[universe["as_of_date"] <= as_of_timestamp].copy()
     universe = _latest_revisions(universe, ["symbol", "as_of_date"])
     universe = (
@@ -192,7 +207,7 @@ def build_replay_dataset(
 
     active_mask = (
         universe["is_active"]
-        & (universe["listed_date"] <= as_of_timestamp)
+        & optional_date_before_or_equal(universe["listed_date"], as_of_timestamp, missing_is_valid=True)
         & (universe["delisted_date"].isna() | (universe["delisted_date"] > as_of_timestamp))
     )
     if exclude_st:
@@ -207,6 +222,7 @@ def build_replay_dataset(
     if corporate_actions is None:
         actions = pd.DataFrame(columns=CORPORATE_ACTION_SCHEMA)
     else:
+        corporate_actions = normalize_symbol_column(corporate_actions)
         actions = filter_available_records(corporate_actions, decision_timestamp)
         actions = actions.loc[
             (actions["symbol"].isin(eligible_symbols)) & (actions["ex_date"] <= as_of_timestamp)
@@ -244,8 +260,9 @@ def _read_contract_csv(
     nullable_date_columns: Iterable[str],
     bool_columns: Iterable[str],
 ) -> pd.DataFrame:
-    frame = pd.read_csv(path)
+    frame = read_csv_preserve_symbol_columns(path)
     _require_columns(frame, required_columns)
+    frame = normalize_symbol_column(frame)
 
     for column in datetime_columns:
         frame[column] = _parse_timestamp_series(frame[column])
@@ -254,7 +271,10 @@ def _read_contract_csv(
 
     nullable_dates = set(nullable_date_columns)
     for column in date_columns:
-        frame[column] = _parse_timestamp_series(frame[column]).dt.normalize()
+        if column in nullable_dates:
+            frame[column] = parse_optional_universe_date(frame[column], column)
+        else:
+            frame[column] = _parse_timestamp_series(frame[column]).dt.normalize()
         if column not in nullable_dates and frame[column].isna().any():
             raise ValueError(f"{column} contains missing or invalid dates")
 
@@ -263,6 +283,99 @@ def _read_contract_csv(
 
     _validate_available_time(frame)
     return frame
+
+
+def read_csv_preserve_symbol_columns(path: str | Path, **kwargs) -> pd.DataFrame:
+    """Read CSVs with symbol-like columns as strings so leading zeros survive."""
+
+    dtype = dict(kwargs.pop("dtype", {}) or {})
+    for column in SYMBOL_STRING_COLUMNS:
+        dtype.setdefault(column, str)
+    return pd.read_csv(path, dtype=dtype, **kwargs)
+
+
+def normalize_symbol_column(frame: pd.DataFrame, column: str = "symbol") -> pd.DataFrame:
+    """Normalize a symbol column without mutating the input frame."""
+
+    output = frame.copy(deep=True)
+    if column in output.columns:
+        output[column] = normalize_symbol_series(output[column])
+    return output
+
+
+def normalize_symbol_series(series: pd.Series) -> pd.Series:
+    """Normalize China market symbol values while preserving significant zeros."""
+
+    return series.map(normalize_symbol_value)
+
+
+def normalize_symbol_value(value: object) -> str:
+    """Return a stable string symbol, padding numeric China symbols to six digits."""
+
+    if _is_missing_date_token(value):
+        return ""
+    text = str(value).strip().upper()
+    if not text:
+        return ""
+    if re_match := re.match(r"^(\d+)\.0+$", text):
+        text = re_match.group(1)
+    if "." in text:
+        code, suffix = text.split(".", 1)
+        if code.isdigit() and 0 < len(code) <= 6 and suffix and not suffix.isdigit():
+            return f"{code.zfill(6)}.{suffix}"
+        return text
+    if text.isdigit() and 0 < len(text) <= 6:
+        return text.zfill(6)
+    return text
+
+
+def normalize_optional_universe_dates_for_eligibility(frame: pd.DataFrame) -> pd.DataFrame:
+    """Normalize optional universe date columns before point-in-time eligibility checks."""
+
+    output = frame.copy()
+    for column in ["listed_date", "delisted_date"]:
+        if column in output.columns:
+            output[column] = parse_optional_universe_date(output[column], column)
+    return output
+
+
+def optional_date_before_or_equal(
+    series: pd.Series,
+    timestamp: str | pd.Timestamp,
+    *,
+    missing_is_valid: bool = False,
+) -> pd.Series:
+    """Return a mask for optional dates at or before a timestamp."""
+
+    parsed = parse_optional_universe_date(series, getattr(series, "name", "optional_date"))
+    mask = parsed <= _normalize_timestamp(timestamp).normalize()
+    if missing_is_valid:
+        mask = mask | parsed.isna()
+    return mask.fillna(False)
+
+
+def parse_optional_universe_date(series: pd.Series, column: str) -> pd.Series:
+    """Parse an optional universe date column and reject invalid non-empty tokens."""
+
+    missing = series.map(_is_missing_date_token)
+    parse_input = series.where(~missing, pd.NA)
+    parsed = _parse_timestamp_series(parse_input).dt.normalize()
+    invalid = parsed.isna() & ~missing
+    if invalid.any():
+        examples = sorted({str(value) for value in series.loc[invalid].head(5)})
+        raise ValueError(f"{column} contains invalid non-empty universe dates: {examples}")
+    return parsed
+
+
+def _is_missing_date_token(value: object) -> bool:
+    if value is None:
+        return True
+    try:
+        if pd.isna(value):
+            return True
+    except (TypeError, ValueError):
+        pass
+    return str(value).strip().lower() in MISSING_DATE_TOKENS
 
 
 def _require_columns(frame: pd.DataFrame, required_columns: Iterable[str]) -> None:

@@ -34,6 +34,17 @@ decision_date, symbol
 
 Default config excludes inactive, ST, and suspended symbols. ST and suspended symbols can be included explicitly for research diagnostics.
 
+Universe listing dates are handled conservatively:
+
+- missing `listed_date` means the listing date is unknown, not automatically invalid,
+- present `listed_date` values after the decision date keep the symbol ineligible,
+- present `delisted_date` values on or before the decision date keep the symbol ineligible,
+- `is_active`, ST/suspension flags, `available_time`, `as_of_date`, and revision ordering still apply.
+
+Invalid non-empty optional universe dates should have been rejected by ingestion. If such a value appears in already-processed data, the factor path raises a clear optional-date validation error instead of continuing ambiguously.
+
+Symbols are normalized before market/universe eligibility joins. Leading zeros are significant and preserved: `000001`, `510300`, and `159915` are treated as string identifiers, not numbers. A market symbol must have matching universe coverage after normalization. For example, ETF market data for `510300` requires a universe row with `symbol=510300`, normally with `instrument_type=ETF`; a stock-only universe will leave the factor dataset empty for that ETF.
+
 ## Main Columns
 
 Universe columns include:
@@ -86,3 +97,5 @@ factor_dataset:
 - No machine learning or final score is included.
 - Relative strength assumes one benchmark series aligned by `trade_date`.
 - Rolling indicator windows count available rows, consistent with Technical Indicators v0.1.
+- Missing universe `listed_date` values are treated as unknown listing dates; this supports vendor snapshots with incomplete listing-date coverage, but users should still review universe quality before research use.
+- ETF rows are preserved when present, but missing ETF universe coverage is not inferred from market data.

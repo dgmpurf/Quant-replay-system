@@ -31,6 +31,12 @@ The current-candidate workflow reuses the same core modules as replay:
 
 Unlike `run_replay(...)`, it does not simulate T+1 buys, exits, or future returns. It only produces candidate artifacts for review.
 
+Universe eligibility follows the factor dataset and replay data contract. `listed_date` and `delisted_date` may be missing in vendor universe snapshots. A missing `listed_date` is treated as an unknown listing date and does not reject an otherwise active symbol by itself. Present parseable dates remain active filters: future `listed_date` values and `delisted_date` values on or before the decision date make the symbol ineligible. `available_time`, `as_of_date`, source revisions, `is_active`, ST, and suspension rules remain point-in-time safe.
+
+Current-candidate generation requires market and universe symbols to overlap after normalization. Symbol values are treated as strings because leading zeros are significant: `000001` is not the same as `1` in source files, and ETF symbols such as `510300` / `159915` must be present in the universe snapshot when the market data is for those ETFs. If the factor dataset is empty, metadata includes coverage diagnostics such as market symbol count, universe symbol count, market/universe intersection count, a sample of missing market symbols, and universe instrument-type counts.
+
+When a vendor universe is stock-only, use the reviewed [universe overlay workflow](universe_overlay.md) to merge ETF rows before running `data-pipeline` and `current-candidates`.
+
 ## Snapshot Quality Preflight
 
 If `snapshot_manifest_path` is supplied, snapshot preflight runs by default according to current-candidate settings:
@@ -162,4 +168,7 @@ python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decis
 - Does not place orders or call broker APIs.
 - Does not simulate future returns; replay remains the workflow for execution/performance simulation.
 - Snapshot preflight checks file quality, but it does not repair data.
+- Missing universe `listed_date` values are supported as unknown listing dates, but incomplete vendor universe coverage should still be reviewed before paper-trading research use.
+- If a market symbol is absent from the universe snapshot, the point-in-time factor dataset will be empty for that symbol. ETF workflows need ETF universe coverage, not stock-only universe coverage.
+- A reviewed ETF overlay can add ETF universe coverage, but the project does not infer or auto-approve ETF rows.
 - Candidate scoring remains explainable MVP scoring, not machine learning.

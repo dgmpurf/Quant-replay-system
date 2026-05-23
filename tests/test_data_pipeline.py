@@ -61,6 +61,30 @@ def test_universe_pipeline_succeeds_with_akshare_like_missing_listed_date(tmp_pa
     assert "delisted_date" in processed.columns
 
 
+def test_universe_pipeline_preserves_reviewed_etf_rows_and_leading_zeros(tmp_path: Path) -> None:
+    input_path = tmp_path / "universe.csv"
+    frame = pd.DataFrame(
+        [
+            _reviewed_universe_row("000001", "Ping An Bank", "STOCK"),
+            _reviewed_universe_row("510300", "CSI 300 ETF", "ETF"),
+            _reviewed_universe_row("159915", "ChiNext ETF", "ETF"),
+        ]
+    )
+    frame.to_csv(input_path, index=False)
+
+    result = run_data_source_ingestion_pipeline(
+        [DataPipelineDatasetRequest(dataset_type="universe", source="LOCAL_CSV", input_path=input_path)],
+        config=_settings(tmp_path),
+        run_data_quality=False,
+    )
+
+    assert result.status == "PASS"
+    processed = pd.read_csv(result.processed_paths["universe"], dtype={"symbol": str})
+    assert processed["symbol"].tolist() == ["000001", "159915", "510300"]
+    assert processed.loc[processed["symbol"] == "510300", "instrument_type"].iloc[0] == "ETF"
+    assert processed.loc[processed["symbol"] == "159915", "instrument_type"].iloc[0] == "ETF"
+
+
 def test_single_trading_calendar_dataset_pipeline_succeeds(tmp_path: Path) -> None:
     input_path = tmp_path / "calendar.csv"
     _calendar_frame().to_csv(input_path, index=False)
@@ -556,6 +580,27 @@ def _universe_frame() -> pd.DataFrame:
             },
         ]
     )
+
+
+def _reviewed_universe_row(symbol: str, name: str, instrument_type: str) -> dict:
+    return {
+        "as_of_date": "2024-05-20",
+        "symbol": symbol,
+        "name": name,
+        "instrument_type": instrument_type,
+        "exchange": "SSE" if symbol.startswith("5") else "SZSE",
+        "listed_date": "",
+        "delisted_date": "",
+        "is_active": True,
+        "is_st": False,
+        "is_suspended": False,
+        "industry": instrument_type,
+        "min_lot": 100,
+        "t_plus_rule": "T+1",
+        "available_time": "2024-05-20 08:00:00",
+        "revision_id": "v1",
+        "source": "TEST",
+    }
 
 
 def _calendar_frame() -> pd.DataFrame:

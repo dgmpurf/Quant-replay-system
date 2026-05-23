@@ -43,6 +43,16 @@ The matching ingestion function is selected automatically.
 
 For `universe` inputs, the pipeline inherits ingestion's optional date handling: `listed_date` and `delisted_date` may be missing, including AKShare-style blank/`NaN`/`NaT`/`--` values. Non-empty invalid dates are still rejected, and parseable `listed_date` / `delisted_date` values still go through universe date-order checks.
 
+The pipeline also preserves symbol columns as strings. Six-digit China symbols such as `000001`, `510300`, and `159915` must remain six-character strings through raw and processed files. If market data is for an ETF, the universe input must include the same ETF symbol, for example `symbol=510300` with `instrument_type=ETF`; otherwise the downstream factor dataset will be empty for that symbol even when market and snapshot quality checks pass.
+
+If your base universe is stock-only, create a reviewed ETF overlay first:
+
+```cmd
+python -m quant_replay_system.cli universe-overlay --base-universe data\raw\AKSHARE_OPTIONAL\universe\<run_id>\raw_data.csv --overlay data\raw\manual_overlays\etf_universe_overlay.csv
+```
+
+Then use the merged `data\raw\LOCAL_CSV\universe_overlay\<overlay_run_id>\raw_data.csv` path as the manifest's `universe` input.
+
 ## Manifest Mode
 
 Manifest mode runs multiple datasets in one pipeline.
@@ -182,6 +192,8 @@ It does not change point-in-time filtering, trading calendar logic, T+1 executio
 - No real API calls are used in automated tests.
 - The pipeline does not repair failed source data.
 - AKShare universe output may not include complete `listed_date` coverage; missing optional universe dates are allowed, but invalid non-empty values still fail ingestion.
+- Market/universe joins require exact normalized symbol overlap. A market ETF such as `510300` needs matching universe coverage; the pipeline does not create missing universe rows.
+- Use [universe_overlay.md](universe_overlay.md) to merge reviewed ETF rows into a stock-only universe before the pipeline.
 - Snapshot manifest creation is limited to datasets processed in the same run.
 - It does not merge with or update an existing snapshot manifest.
 - It is not live trading and never invokes broker APIs.

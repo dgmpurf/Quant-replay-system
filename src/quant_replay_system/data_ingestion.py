@@ -16,6 +16,8 @@ from quant_replay_system.data import (
     CORPORATE_ACTION_SCHEMA,
     MARKET_DATA_SCHEMA,
     UNIVERSE_SNAPSHOT_SCHEMA,
+    normalize_symbol_series,
+    read_csv_preserve_symbol_columns,
 )
 
 
@@ -249,7 +251,7 @@ def normalize_symbol_column(frame: pd.DataFrame, column: str = "symbol") -> pd.D
 
     output = frame.copy(deep=True)
     if column in output.columns:
-        output[column] = output[column].astype(str).str.strip().str.upper()
+        output[column] = normalize_symbol_series(output[column])
     return output
 
 
@@ -470,7 +472,7 @@ def _ingest_csv(
     input_path = Path(path)
     if not input_path.exists():
         raise FileNotFoundError(f"Input CSV not found: {input_path}")
-    raw = pd.read_csv(input_path, keep_default_na=False)
+    raw = read_csv_preserve_symbol_columns(input_path, keep_default_na=False)
     prepared, validation = _prepare_frame(
         raw,
         dataset_type=dataset_type,

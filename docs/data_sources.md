@@ -25,6 +25,8 @@ data/raw/LOCAL_CSV/<dataset_type>/<run_id>/raw_data.csv
 data/raw/LOCAL_CSV/<dataset_type>/<run_id>/metadata.json
 ```
 
+Symbol-like columns are read as strings so leading zeros survive the adapter handoff. Reviewed local CSVs should keep China symbols as six-character strings, for example `000001`, `510300`, and `159915`.
+
 ### MOCK
 
 `MOCK` loads the configured mock files under `data/mock/`.
@@ -77,11 +79,15 @@ For `trading_calendar`, the adapter uses `tool_trade_date_hist_sina` by default 
 
 For `universe`, the adapter can fetch stock and ETF symbol/name lists through isolated AKShare helper paths and normalize them into the canonical universe snapshot columns. Use `--as-of-date` to pin the snapshot date and `--market-type stock`, `--market-type etf`, or `--market-type all` to choose the scope. Universe field mapping is best-effort because AKShare raw columns can vary by endpoint and version. The adapter accepts common Chinese and English columns such as `代码`, `股票代码`, `symbol`, `code`, `名称`, `股票简称`, `所属行业`, `行业`, `上市日期`, and `交易所`. If AKShare does not provide optional fields, the adapter fills conservative MVP defaults such as `min_lot=100`, `t_plus_rule=T+1`, `is_active=true`, and `industry=UNKNOWN`.
 
+ETF coverage is source-dependent. If you plan to run current candidates for market symbol `510300`, the resulting universe raw/processed files must contain a matching `510300` row, usually with `instrument_type=ETF`. A stock-only universe can pass data quality and snapshot quality yet still produce an empty factor dataset for ETF market data because there is no joinable universe row.
+
 If universe mapping fails, the error includes `dataset_type`, raw DataFrame shape, raw column names, missing conceptual fields, and a suggestion to update the mapping or use a reviewed `LOCAL_CSV` fallback. Successful universe metadata includes `raw_columns`, `normalized_columns`, `mapping_warnings`, `row_count`, and `adapter_status`.
 
 The adapter normalizes returned frames into raw CSVs that are compatible with the existing ingestion path where possible. Users should still run `data-pipeline`, `data-quality`, and `snapshot-quality` before using the data for current candidates or replay.
 
 For the guarded manual command sequence from AKShare fetch to current candidates, see [akshare_manual_workflow.md](akshare_manual_workflow.md). For a shorter universe + market dry-run checklist with a copyable manifest template, see [akshare_real_data_dry_run.md](akshare_real_data_dry_run.md). If AKShare market history remains unstable, use a reviewed market CSV with the fallback workflow in [local_csv_market_fallback_workflow.md](local_csv_market_fallback_workflow.md).
+
+If a real-data universe output is stock-only and market data contains ETFs such as `510300`, merge reviewed ETF rows through [universe_overlay.md](universe_overlay.md) before running `data-pipeline`.
 
 ### TUSHARE_OPTIONAL
 
@@ -299,6 +305,8 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 - Tushare field coverage and permissions depend on the user's Tushare account and point balance; review data quality before use.
 - Universe snapshot support fills conservative defaults when AKShare does not provide optional fields; review data quality before current-candidate use.
 - Universe field mapping is best-effort and may need updates when AKShare changes raw output columns.
+- Symbol normalization preserves leading zeros and exchange suffixes where present, but it does not invent missing ETF universe coverage.
+- Use the reviewed universe overlay workflow when ETF market symbols need to be added to a stock-only universe snapshot.
 - Corporate action AKShare fetches are not implemented in v0.1.
 - Data source adapters still only write raw artifacts; use `data-pipeline` for ingestion handoff.
 - It uses local/mock CSV data only in automated tests.

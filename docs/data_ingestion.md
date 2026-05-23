@@ -49,7 +49,22 @@ delisted_date, is_active, is_st, is_suspended, industry, min_lot,
 t_plus_rule, available_time, revision_id, source
 ```
 
-For universe snapshots, `listed_date` and `delisted_date` are optional date fields. Missing values such as blank strings, `NaN`, `NaT`, `None`, `null`, `-`, and `--` are accepted and preserved as missing dates in the canonical output. Non-empty invalid values, such as `not-a-date`, still fail ingestion. When dates are present and parseable, ingestion still rejects `listed_date` after `as_of_date` and `delisted_date` before `listed_date`.
+For universe snapshots, `listed_date` and `delisted_date` are optional date fields. Missing values such as blank strings, `NaN`, `NaT`, `None`, `null`, `-`, and `--` are accepted and preserved as missing dates in the canonical output. Non-empty invalid values, such as `not-a-date`, still fail ingestion. When dates are present and parseable, ingestion still rejects `listed_date` after `as_of_date` and `delisted_date` before `listed_date`. Downstream eligibility treats a missing `listed_date` as an unknown listing date rather than rejecting the symbol solely for missing listing-date coverage.
+
+## Symbol Normalization
+
+Symbol columns are read as strings. Leading zeros are significant and must be preserved across raw input, ingestion, processed CSVs, factor datasets, and current-candidate generation.
+
+Examples:
+
+- `000001` remains `000001`, not `1`.
+- `510300` remains `510300`.
+- `159915` remains `159915`.
+- Tushare-style symbols such as `000001.SZ` preserve the exchange suffix.
+
+If a reviewed CSV was previously saved with stripped numeric symbols, ingestion pads six-digit China market symbols where it can do so safely. This is a recovery guard, not a substitute for reviewing the source file.
+
+Universe snapshots may include both stock and ETF rows. If a market file contains ETF `510300`, the universe snapshot must also include a matching `symbol=510300` row, usually with `instrument_type=ETF`, or downstream factor datasets will have no joinable row for that ETF.
 
 Corporate actions use:
 
@@ -188,8 +203,9 @@ That keeps the replay engine insulated from source-specific quirks and protects 
 
 - No network data fetching.
 - No API token handling.
-- No vendor-specific symbol mapping beyond uppercase/strip normalization.
+- No full vendor-specific symbol master mapping beyond conservative string preservation, six-digit symbol padding, and suffix preservation.
 - AKShare-style universe exports can have incomplete listing-date coverage; missing `listed_date` / `delisted_date` values are allowed, but invalid non-empty values are rejected.
+- ETF current-candidate workflows require ETF symbols to be present in the universe snapshot; ingestion preserves ETF rows but does not invent missing universe coverage.
 - No corporate action adjustment engine.
 - No timezone-aware timestamp storage yet.
 - Duplicate handling is validation-only; it does not automatically resolve revisions.

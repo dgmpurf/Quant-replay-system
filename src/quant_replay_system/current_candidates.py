@@ -15,7 +15,7 @@ import pandas as pd
 from quant_replay_system.calendar import TradingCalendar, load_trading_calendar
 from quant_replay_system.candidate_selection import select_candidates
 from quant_replay_system.config import CandidateSelectionSettings, Settings, load_settings
-from quant_replay_system.data import load_market_data, load_universe_snapshot
+from quant_replay_system.data import load_market_data, load_universe_snapshot, normalize_symbol_series
 from quant_replay_system.factor_dataset import build_factor_dataset
 from quant_replay_system.score_engine import score_factor_dataset
 from quant_replay_system.snapshot_quality_gate import load_snapshot_manifest
@@ -134,6 +134,9 @@ def generate_current_candidates(
         benchmark_data=benchmark,
         config=settings.factor_dataset,
     )
+    input_diagnostics = build_current_candidate_input_diagnostics(market, universe)
+    if factor_dataset.empty:
+        warnings.append(_empty_factor_dataset_warning(input_diagnostics))
     scored_dataset = score_factor_dataset(factor_dataset, settings.score_engine)
     selection_config = CandidateSelectionSettings(
         top_n=effective_top_n,
@@ -167,6 +170,7 @@ def generate_current_candidates(
         factor_dataset=factor_dataset,
         scored_dataset=scored_dataset,
         candidates=candidates,
+        input_diagnostics=input_diagnostics,
     )
     audit_metadata.update(preflight.metadata_fields())
     config_summary = _config_summary(settings, effective_top_n, effective_run_id)
@@ -511,6 +515,7 @@ def _audit_metadata(
     factor_dataset: pd.DataFrame,
     scored_dataset: pd.DataFrame,
     candidates: pd.DataFrame,
+    input_diagnostics: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "decision_date": decision_date,
@@ -525,7 +530,50 @@ def _audit_metadata(
         "live_trading_enabled": False,
         "broker_api_invoked": False,
         "current_candidate_generation_only": True,
+        **(input_diagnostics or {}),
     }
+
+
+def build_current_candidate_input_diagnostics(
+    market_data: pd.DataFrame,
+    universe_snapshot: pd.DataFrame,
+) -> dict[str, Any]:
+    """Summarize market/universe symbol coverage for empty factor-dataset diagnostics."""
+
+    market_symbols = _normalized_symbol_set(market_data)
+    universe_symbols = _normalized_symbol_set(universe_snapshot)
+    intersection = sorted(market_symbols & universe_symbols)
+    missing = sorted(market_symbols - universe_symbols)
+    instrument_counts: dict[str, int] = {}
+    if "instrument_type" in universe_snapshot.columns:
+        instrument_counts = {
+            str(key): int(value)
+            for key, value in universe_snapshot["instrument_type"].astype(str).value_counts(dropna=False).sort_index().items()
+        }
+    return {
+        "market_symbol_count": len(market_symbols),
+        "universe_symbol_count": len(universe_symbols),
+        "market_universe_intersection_count": len(intersection),
+        "missing_market_symbols_sample": missing[:10],
+        "universe_instrument_type_counts": instrument_counts,
+    }
+
+
+def _normalized_symbol_set(frame: pd.DataFrame) -> set[str]:
+    if "symbol" not in frame.columns or frame.empty:
+        return set()
+    return {symbol for symbol in normalize_symbol_series(frame["symbol"]) if symbol}
+
+
+def _empty_factor_dataset_warning(diagnostics: dict[str, Any]) -> str:
+    return (
+        "Factor dataset is empty after point-in-time market/universe eligibility filtering. "
+        f"market_symbol_count={diagnostics.get('market_symbol_count', 0)}, "
+        f"universe_symbol_count={diagnostics.get('universe_symbol_count', 0)}, "
+        f"market_universe_intersection_count={diagnostics.get('market_universe_intersection_count', 0)}, "
+        f"missing_market_symbols_sample={diagnostics.get('missing_market_symbols_sample', [])}, "
+        f"universe_instrument_type_counts={diagnostics.get('universe_instrument_type_counts', {})}."
+    )
 
 
 def _config_summary(settings: Settings, top_n: int, run_id: str) -> dict[str, Any]:

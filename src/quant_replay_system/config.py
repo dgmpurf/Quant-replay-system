@@ -346,6 +346,16 @@ class DataPipelineSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class UniverseOverlaySettings(BaseModel):
+    output_dir: Path = Path("data/raw/LOCAL_CSV/universe_overlay")
+    allow_override_existing: bool = False
+    duplicate_overlay_symbol_severity: Literal["ERROR"] = "ERROR"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataPreparationArtifactIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports")
     output_dir: Path = Path("outputs/reports/data_preparation/index")
@@ -498,6 +508,7 @@ class Settings(BaseModel):
     paper_workflow_status: PaperWorkflowStatusSettings = Field(default_factory=PaperWorkflowStatusSettings)
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
+    universe_overlay: UniverseOverlaySettings = Field(default_factory=UniverseOverlaySettings)
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)
     data_preparation_artifact_health: DataPreparationArtifactHealthSettings = Field(default_factory=DataPreparationArtifactHealthSettings)
     data_preparation_workflow_status: DataPreparationWorkflowStatusSettings = Field(default_factory=DataPreparationWorkflowStatusSettings)

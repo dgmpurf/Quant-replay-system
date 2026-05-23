@@ -308,6 +308,15 @@ data_pipeline:
   enable_live_trading: false
   enable_broker_api: false
 
+universe_overlay:
+  output_dir: data/raw/LOCAL_CSV/universe_overlay
+  allow_override_existing: false
+  duplicate_overlay_symbol_severity: ERROR
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_preparation_artifact_index:
   root_dir: outputs/reports
   output_dir: outputs/reports/data_preparation/index

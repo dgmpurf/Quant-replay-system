@@ -45,6 +45,7 @@ from quant_replay_system.paper_workflow_status import run_paper_workflow_status
 from quant_replay_system.replay_run import run_replay
 from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
 from quant_replay_system.snapshot_quality_preflight import SnapshotQualityPreflightError
+from quant_replay_system.universe_overlay import run_universe_overlay
 from quant_replay_system.walk_forward import run_walk_forward_validation
 
 
@@ -322,6 +323,21 @@ def build_parser() -> argparse.ArgumentParser:
     data_source.add_argument("--market-type", help="Optional universe market type, e.g. stock, etf, or all")
     data_source.add_argument("--config", help="Optional config YAML path")
     data_source.set_defaults(handler=_handle_data_source_fetch)
+
+    universe_overlay = subparsers.add_parser(
+        "universe-overlay",
+        help="Merge reviewed ETF universe overlay rows into a local universe snapshot",
+    )
+    universe_overlay.add_argument("--base-universe", required=True, help="Base canonical universe CSV path")
+    universe_overlay.add_argument("--overlay", required=True, help="Reviewed ETF overlay CSV path")
+    universe_overlay.add_argument("--output-dir", help="Optional universe overlay raw output root")
+    universe_overlay.add_argument(
+        "--allow-override-existing",
+        action="store_true",
+        help="Allow reviewed overlay rows to replace existing base universe symbols",
+    )
+    universe_overlay.add_argument("--config", help="Optional config YAML path")
+    universe_overlay.set_defaults(handler=_handle_universe_overlay)
 
     data_pipeline = subparsers.add_parser("data-pipeline", help="Run local data source -> ingestion -> quality pipeline")
     data_pipeline.add_argument("--dataset-type", help="Dataset type for single dataset mode")
@@ -1152,6 +1168,34 @@ def _handle_data_source_fetch(args: argparse.Namespace) -> int:
     print(f"row_count: {result.row_count}")
     print(f"raw_data: {result.artifact_paths['raw_data']}")
     print(f"metadata: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_universe_overlay(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"allow_override_existing": bool(args.allow_override_existing)}
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "universe_overlay": settings.universe_overlay.model_copy(update=updates)
+        }
+    )
+    result = run_universe_overlay(
+        args.base_universe,
+        args.overlay,
+        output_dir=args.output_dir,
+        allow_override_existing=bool(args.allow_override_existing),
+        settings=settings,
+    )
+    print(f"overlay_run_id: {result.overlay_run_id}")
+    print(f"merged_universe_path: {result.artifact_paths['raw_data']}")
+    print(f"added_symbol_count: {result.added_symbol_count}")
+    print(f"overridden_symbol_count: {result.overridden_symbol_count}")
+    print(f"report_path: {result.artifact_paths['universe_overlay_report']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
