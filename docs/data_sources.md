@@ -81,7 +81,7 @@ If universe mapping fails, the error includes `dataset_type`, raw DataFrame shap
 
 The adapter normalizes returned frames into raw CSVs that are compatible with the existing ingestion path where possible. Users should still run `data-pipeline`, `data-quality`, and `snapshot-quality` before using the data for current candidates or replay.
 
-For the guarded manual command sequence from AKShare fetch to current candidates, see [akshare_manual_workflow.md](akshare_manual_workflow.md). For a shorter universe + market dry-run checklist with a copyable manifest template, see [akshare_real_data_dry_run.md](akshare_real_data_dry_run.md).
+For the guarded manual command sequence from AKShare fetch to current candidates, see [akshare_manual_workflow.md](akshare_manual_workflow.md). For a shorter universe + market dry-run checklist with a copyable manifest template, see [akshare_real_data_dry_run.md](akshare_real_data_dry_run.md). If AKShare market history remains unstable, use a reviewed market CSV with the fallback workflow in [local_csv_market_fallback_workflow.md](local_csv_market_fallback_workflow.md).
 
 ### TUSHARE_OPTIONAL
 

@@ -1,0 +1,19 @@
+{
+  "datasets": [
+    {
+      "dataset_type": "market",
+      "source": "LOCAL_CSV",
+      "input_path": "<MARKET_RAW_DATA_CSV>"
+    },
+    {
+      "dataset_type": "universe",
+      "source": "LOCAL_CSV",
+      "input_path": "<UNIVERSE_RAW_DATA_CSV>"
+    },
+    {
+      "dataset_type": "trading_calendar",
+      "source": "LOCAL_CSV",
+      "input_path": "<TRADING_CALENDAR_RAW_DATA_CSV>"
+    }
+  ]
+}
