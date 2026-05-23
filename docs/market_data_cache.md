@@ -127,6 +127,7 @@ Interpretation:
 - Large volume or amount differences may indicate unit differences or source-specific semantics.
 - Stable volume or amount ratios far from `1.0` can indicate a likely source-specific unit scale.
 - Matched prices with unstable volume/amount ratios are treated as source semantics differences, not an automatic correction opportunity.
+- AKShare/Tencent `stock_zh_a_hist_tx` volume is source-specific: the raw field named `amount` is mapped to canonical volume in shares, while real turnover amount remains unavailable unless another raw amount field is present.
 - Source-only rows indicate coverage gaps.
 - The report does not declare either source as truth.
 - The comparison never rewrites cached rows. Any source-specific normalization rule must be added explicitly after review.

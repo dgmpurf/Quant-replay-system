@@ -75,6 +75,14 @@ For `market`, the adapter infers the symbol route and uses configurable AKShare 
 
 Successful market metadata includes `inferred_symbol_type`, `attempted_functions`, `attempted_upstreams`, `successful_function`, `upstream_source`, `fallback_used`, `row_count`, `adapter_status`, and `mapping_warnings`. If every market fetch attempt fails, the diagnostic error includes the dataset type, symbol, inferred type, date range, attempted functions, upstream source, exception classes, safe exception messages, and suggested actions. Safe messages redact obvious secret-like values.
 
+Tencent `stock_zh_a_hist_tx` returns a compact daily kline frame where AKShare names the sixth field `amount`, but local diagnostics show that field behaves like trading volume in hands rather than turnover amount. The adapter handles this source-specific mapping by converting that field into canonical `volume` in shares and adding mapping warnings:
+
+- `TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES`
+- `TENCENT_AMOUNT_FIELD_INTERPRETED_AS_VOLUME_HANDS`
+- `TENCENT_TURNOVER_AMOUNT_FIELD_UNAVAILABLE`
+
+This fixes the Tencent volume handoff but does not invent turnover amount. For amount-sensitive workflows, compare Tencent against another source such as Sina or BaoStock before using cached rows.
+
 The `curl_cffi` fallback is a recovery attempt, not a guarantee. If Eastmoney closes the kline connection, VPN/proxy routing is unstable, or the upstream endpoint is unavailable, both AKShare and `curl_cffi` can fail. In that case, use a reviewed local CSV through `LOCAL_CSV`.
 
 For `benchmark`, the adapter uses `stock_zh_index_daily` by default and filters dates locally.

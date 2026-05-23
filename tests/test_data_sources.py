@@ -19,6 +19,7 @@ from quant_replay_system.data_sources import (
     run_data_source_fetch,
     to_baostock_code,
 )
+from quant_replay_system.market_data_cache import ingest_market_cache_csv
 
 
 def test_local_csv_adapter_copies_and_loads_local_csv(tmp_path: Path) -> None:
@@ -597,6 +598,194 @@ def test_akshare_stock_market_success_uses_stock_route(tmp_path: Path, monkeypat
     assert metadata["successful_function"] == "stock_zh_a_hist_tx"
     assert metadata["upstream_source"] == "TENCENT"
     assert metadata["fallback_used"] is False
+
+
+def test_akshare_tencent_amount_field_maps_to_volume_shares(tmp_path: Path, monkeypatch) -> None:
+    module = ModuleType("akshare")
+    module.calls = []
+
+    def stock_zh_a_hist_tx(**kwargs):
+        module.calls.append({"function": "stock_zh_a_hist_tx", **kwargs})
+        return pd.DataFrame(
+            [
+                {"date": "2024-01-02", "open": 10.0, "close": 10.2, "high": 10.5, "low": 9.8, "amount": 1000},
+                {"date": "2024-01-03", "open": 10.2, "close": 10.6, "high": 10.8, "low": 10.1, "amount": 1100},
+            ]
+        )
+
+    module.stock_zh_a_hist_tx = stock_zh_a_hist_tx
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert exported["symbol"].tolist() == ["000001", "000001"]
+    assert exported["volume"].tolist() == [100000, 110000]
+    assert exported["amount"].tolist() == [0, 0]
+    assert "TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES" in metadata["mapping_warnings"]
+    assert "TENCENT_AMOUNT_FIELD_INTERPRETED_AS_VOLUME_HANDS" in metadata["mapping_warnings"]
+    assert "TENCENT_TURNOVER_AMOUNT_FIELD_UNAVAILABLE" in metadata["mapping_warnings"]
+
+
+def test_akshare_tencent_volume_column_maps_nonzero_volume(tmp_path: Path, monkeypatch) -> None:
+    module = ModuleType("akshare")
+
+    def stock_zh_a_hist_tx(**kwargs):
+        return pd.DataFrame(
+            [
+                {
+                    "date": "2024-01-02",
+                    "open": 10.0,
+                    "close": 10.2,
+                    "high": 10.5,
+                    "low": 9.8,
+                    "volume": 100000,
+                    "turnover": 1020000,
+                }
+            ]
+        )
+
+    module.stock_zh_a_hist_tx = stock_zh_a_hist_tx
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert int(exported.iloc[0]["volume"]) == 100000
+    assert int(exported.iloc[0]["amount"]) == 1020000
+    assert metadata["mapping_warnings"] == []
+
+
+def test_akshare_tencent_chinese_hands_volume_maps_nonzero_volume(tmp_path: Path, monkeypatch) -> None:
+    module = ModuleType("akshare")
+
+    def stock_zh_a_hist_tx(**kwargs):
+        return pd.DataFrame(
+            [
+                {
+                    "\u65e5\u671f": "2024-01-02",
+                    "\u5f00\u76d8": 10.0,
+                    "\u6536\u76d8": 10.2,
+                    "\u6700\u9ad8": 10.5,
+                    "\u6700\u4f4e": 9.8,
+                    "\u6210\u4ea4\u91cf(\u624b)": 1000,
+                    "\u6210\u4ea4\u989d": 1020000,
+                }
+            ]
+        )
+
+    module.stock_zh_a_hist_tx = stock_zh_a_hist_tx
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert int(exported.iloc[0]["volume"]) == 100000
+    assert int(exported.iloc[0]["amount"]) == 1020000
+    assert "TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES" in metadata["mapping_warnings"]
+
+
+def test_akshare_tencent_missing_volume_adds_mapping_warning(tmp_path: Path, monkeypatch) -> None:
+    module = ModuleType("akshare")
+
+    def stock_zh_a_hist_tx(**kwargs):
+        return pd.DataFrame(
+            [
+                {"date": "2024-01-02", "open": 10.0, "close": 10.2, "high": 10.5, "low": 9.8},
+            ]
+        )
+
+    module.stock_zh_a_hist_tx = stock_zh_a_hist_tx
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert int(exported.iloc[0]["volume"]) == 0
+    assert "TENCENT_VOLUME_FIELD_UNAVAILABLE" in metadata["mapping_warnings"]
+
+
+def test_akshare_tencent_corrected_volume_survives_market_cache_ingest(tmp_path: Path, monkeypatch) -> None:
+    module = ModuleType("akshare")
+
+    def stock_zh_a_hist_tx(**kwargs):
+        return pd.DataFrame(
+            [
+                {"date": "2024-01-02", "open": 10.0, "close": 10.2, "high": 10.5, "low": 9.8, "amount": 1000},
+            ]
+        )
+
+    module.stock_zh_a_hist_tx = stock_zh_a_hist_tx
+    monkeypatch.setitem(sys.modules, "akshare", module)
+
+    fetch_result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+    cache_result = ingest_market_cache_csv(
+        fetch_result.artifact_paths["raw_data"],
+        metadata_path=fetch_result.artifact_paths["metadata"],
+        config={"market_data_cache": {"cache_path": tmp_path / "cache" / "daily_bars.csv"}},
+    )
+
+    assert int(cache_result.cache_frame.iloc[0]["volume"]) == 100000
+    assert cache_result.cache_frame.iloc[0]["symbol"] == "000001"
 
 
 def test_akshare_etf_market_success_uses_etf_route(tmp_path: Path, monkeypatch) -> None:

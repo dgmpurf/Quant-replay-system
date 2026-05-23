@@ -689,9 +689,15 @@ def _fetch_akshare_market_like(
         inferred_symbol_type=inferred_symbol_type,
         settings=settings,
     )
+    raw_frame = pd.DataFrame(raw)
+    prepared_raw, mapping_warnings = _prepare_akshare_market_frame_for_normalization(
+        raw_frame,
+        function_name=routing_metadata["successful_function"],
+        upstream_source=routing_metadata.get("upstream_source", ""),
+    )
     canonical_symbol = _akshare_canonical_output_symbol(request.symbol)
     frame = _normalize_akshare_market_frame(
-        pd.DataFrame(raw),
+        prepared_raw,
         symbol=canonical_symbol,
         dataset_type=request.dataset_type,
         start_date=request.start_date,
@@ -712,7 +718,9 @@ def _fetch_akshare_market_like(
         "upstream_source": routing_metadata.get("upstream_source", ""),
         "fallback_used": routing_metadata["fallback_used"],
         "failed_attempts": routing_metadata["failed_attempts"],
-        "mapping_warnings": [],
+        "mapping_warnings": mapping_warnings,
+        "raw_columns": [str(column) for column in raw_frame.columns],
+        "normalized_columns": list(frame.columns),
         "row_count": len(frame),
     }
     return frame, adapter_metadata
@@ -1297,6 +1305,65 @@ def _normalize_akshare_market_frame(
     return _canonical_market_frame(normalized, symbol=symbol, source=source, revision_id=revision_id)
 
 
+def _prepare_akshare_market_frame_for_normalization(
+    frame: pd.DataFrame,
+    *,
+    function_name: str,
+    upstream_source: str,
+) -> tuple[pd.DataFrame, list[str]]:
+    """Apply source-specific raw field fixes before generic AKShare normalization."""
+
+    if frame.empty:
+        return frame.copy(), []
+    if str(function_name).strip() == "stock_zh_a_hist_tx" or str(upstream_source).strip().upper() == "TENCENT":
+        return _prepare_tencent_stock_market_frame(frame)
+    return frame.copy(), []
+
+
+def _prepare_tencent_stock_market_frame(frame: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    prepared = frame.copy()
+    warnings: list[str] = []
+    volume_source = _first_existing_column(
+        prepared,
+        [
+            "volume",
+            "vol",
+            "\u6210\u4ea4\u80a1\u6570",
+            "\u6210\u4ea4\u91cf",
+            "\u6210\u4ea4\u91cf(\u624b)",
+            "amount",
+        ],
+    )
+    if volume_source is None:
+        warnings.append("TENCENT_VOLUME_FIELD_UNAVAILABLE")
+        return prepared, warnings
+
+    volume_values = pd.to_numeric(prepared[volume_source], errors="coerce")
+    if str(volume_source) in {"amount", "\u6210\u4ea4\u91cf(\u624b)"}:
+        prepared["volume"] = volume_values * 100
+        warnings.append("TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES")
+        if str(volume_source) == "amount":
+            warnings.append("TENCENT_AMOUNT_FIELD_INTERPRETED_AS_VOLUME_HANDS")
+            if _first_existing_column(prepared, ["\u6210\u4ea4\u989d", "\u6210\u4ea4\u91d1\u989d", "turnover", "value"]) is None:
+                prepared["amount"] = pd.NA
+                warnings.append("TENCENT_TURNOVER_AMOUNT_FIELD_UNAVAILABLE")
+            else:
+                prepared = prepared.drop(columns=["amount"])
+    else:
+        prepared["volume"] = volume_values
+    if str(volume_source) != "volume" and str(volume_source) != "amount" and volume_source in prepared.columns:
+        prepared = prepared.drop(columns=[volume_source])
+    return prepared, warnings
+
+
+def _first_existing_column(frame: pd.DataFrame, candidates: list[str]) -> str | None:
+    columns = {str(column): str(column) for column in frame.columns}
+    for candidate in candidates:
+        if candidate in columns:
+            return columns[candidate]
+    return None
+
+
 def _canonical_market_frame(
     frame: pd.DataFrame,
     *,
@@ -1836,10 +1903,13 @@ _AKSHARE_MARKET_COLUMN_ALIASES = {
     "close": "close",
     "\u6210\u4ea4\u91cf": "volume",
     "\u6210\u4ea4\u91cf(\u624b)": "volume",
+    "\u6210\u4ea4\u80a1\u6570": "volume",
     "volume": "volume",
     "vol": "volume",
     "\u6210\u4ea4\u989d": "amount",
     "\u6210\u4ea4\u91d1\u989d": "amount",
+    "turnover": "amount",
+    "value": "amount",
     "amount": "amount",
     "\u524d\u6536\u76d8": "pre_close",
     "\u524d\u6536\u76d8\u4ef7": "pre_close",
