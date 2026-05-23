@@ -140,6 +140,30 @@ def test_comparison_no_longer_reports_zero_volume_ratio_when_tencent_volume_matc
     assert result.summary_frame.iloc[0]["median_volume_ratio"] == 1.0
 
 
+def test_comparison_can_pass_when_tencent_raw_turnover_matches_baostock(tmp_path: Path) -> None:
+    cache_path = _write_cache(
+        tmp_path,
+        [
+            _cache_row("AKSHARE_OPTIONAL", "TENCENT", "2024-01-02", volume=100000, amount=1020000),
+            _cache_row("BAOSTOCK_OPTIONAL", "BAOSTOCK", "2024-01-02", volume=100000, amount=1020000),
+        ],
+    )
+
+    result = run_market_source_comparison(
+        symbol="000001",
+        source_a="AKSHARE_OPTIONAL",
+        source_b="BAOSTOCK_OPTIONAL",
+        cache_path=cache_path,
+        config=_settings(tmp_path),
+    )
+    row = result.comparison_frame.iloc[0]
+
+    assert result.status == "PASS"
+    assert float(row["volume_ratio_a_to_b"]) == 1.0
+    assert float(row["amount_ratio_a_to_b"]) == 1.0
+    assert result.summary_frame.iloc[0]["diagnostic_classification"] == "NO_UNIT_MISMATCH"
+
+
 def test_comparison_detects_stable_amount_scale_factor(tmp_path: Path) -> None:
     cache_path = _write_cache(
         tmp_path,

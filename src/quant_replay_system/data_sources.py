@@ -782,6 +782,13 @@ def fetch_akshare_stock_market_data(akshare, request: DataSourceRequest) -> pd.D
 
 
 def fetch_akshare_stock_market_tencent(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    if getattr(akshare, "__file__", None):
+        try:
+            raw = fetch_tencent_stock_market_raw(request)
+            if not raw.empty:
+                return raw
+        except Exception:
+            pass
     return _call_akshare_market_function(akshare, request, "stock_zh_a_hist_tx")
 
 
@@ -879,6 +886,111 @@ def normalize_eastmoney_kline_payload(payload: dict[str, Any], *, symbol: str) -
     return pd.DataFrame(records, columns=["date", "symbol", "open", "high", "low", "close", "volume", "amount"])
 
 
+def fetch_tencent_stock_market_raw(request: DataSourceRequest) -> pd.DataFrame:
+    """Fetch Tencent stock daily kline rows without AKShare's six-column truncation."""
+
+    http_get = _import_requests_get()
+    symbol = _akshare_prefixed_symbol(request.symbol, inferred_symbol_type="STOCK")
+    start_date = _akshare_date(request.start_date)
+    end_date = _akshare_date(request.end_date)
+    adjust = str(request.params.get("adjust", ""))
+    start_year = int(start_date[:4])
+    end_year = int(end_date[:4])
+    frames: list[pd.DataFrame] = []
+    url = "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get"
+    for year in range(start_year, end_year + 1):
+        params = {
+            "_var": f"kline_day{adjust}{year}",
+            "param": f"{symbol},day,{year}-01-01,{year + 1}-12-31,640,{adjust}",
+            "r": "0.8205512681390605",
+        }
+        response = http_get(url, params=params, timeout=15)
+        if hasattr(response, "raise_for_status"):
+            response.raise_for_status()
+        payload = _parse_tencent_kline_payload(getattr(response, "text", ""))
+        rows = _extract_tencent_kline_rows(payload, symbol=symbol)
+        if rows:
+            frames.append(normalize_tencent_raw_market_output(rows, symbol=symbol))
+    if not frames:
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "symbol",
+                "open",
+                "close",
+                "high",
+                "low",
+                "tencent_volume_hands",
+                "tencent_turnover_amount_10k_yuan",
+            ]
+        )
+    output = pd.concat(frames, ignore_index=True)
+    output["date"] = pd.to_datetime(output["date"], errors="coerce")
+    start = pd.to_datetime(start_date, format="%Y%m%d", errors="coerce")
+    end = pd.to_datetime(end_date, format="%Y%m%d", errors="coerce")
+    output = output.loc[output["date"].notna() & (output["date"] >= start) & (output["date"] <= end)].copy()
+    output["date"] = output["date"].dt.strftime("%Y-%m-%d")
+    return output.drop_duplicates().sort_values("date").reset_index(drop=True)
+
+
+def normalize_tencent_raw_market_output(raw_rows: list[Any], *, symbol: str) -> pd.DataFrame:
+    """Normalize raw Tencent kline arrays, preserving volume and turnover fields."""
+
+    records: list[dict[str, Any]] = []
+    for row in raw_rows:
+        if isinstance(row, dict):
+            records.append(
+                {
+                    "date": _first_mapping_value(row, ["date", "trade_date"]),
+                    "symbol": symbol,
+                    "open": _first_mapping_value(row, ["open"]),
+                    "close": _first_mapping_value(row, ["close"]),
+                    "high": _first_mapping_value(row, ["high"]),
+                    "low": _first_mapping_value(row, ["low"]),
+                    "tencent_volume_hands": _first_mapping_value(row, ["volume_hands", "amount", "volume"]),
+                    "tencent_turnover_amount_10k_yuan": _first_mapping_value(
+                        row, ["turnover_amount_10k_yuan", "amount_10k_yuan", "turnover"]
+                    ),
+                }
+            )
+            continue
+        values = list(row) if isinstance(row, (list, tuple)) else str(row).split(",")
+        if len(values) < 6:
+            raise ValueError("Tencent raw kline row had fewer than 6 fields")
+        records.append(
+            {
+                "date": values[0],
+                "symbol": symbol,
+                "open": values[1],
+                "close": values[2],
+                "high": values[3],
+                "low": values[4],
+                "tencent_volume_hands": values[5],
+                "tencent_turnover_amount_10k_yuan": values[8] if len(values) > 8 else pd.NA,
+            }
+        )
+    return pd.DataFrame(
+        records,
+        columns=[
+            "date",
+            "symbol",
+            "open",
+            "close",
+            "high",
+            "low",
+            "tencent_volume_hands",
+            "tencent_turnover_amount_10k_yuan",
+        ],
+    )
+
+
+def _first_mapping_value(row: dict[str, Any], keys: list[str]) -> Any:
+    for key in keys:
+        if key in row:
+            return row[key]
+    return None
+
+
 def fetch_akshare_market_data_with_fallback(
     akshare,
     request: DataSourceRequest,
@@ -964,12 +1076,54 @@ def _fetch_akshare_market_function_by_name(
     return _call_akshare_market_function(akshare, request, function_name)
 
 
+def _parse_tencent_kline_payload(text: str) -> dict[str, Any]:
+    json_text = str(text or "")
+    marker_index = json_text.find("={")
+    if marker_index >= 0:
+        json_text = json_text[marker_index + 1 :]
+    try:
+        return json.loads(json_text)
+    except json.JSONDecodeError:
+        try:
+            import demjson  # type: ignore
+        except ImportError:
+            try:
+                import demjson3 as demjson  # type: ignore
+            except ImportError as exc:
+                raise RuntimeError(
+                    "Parsing Tencent raw kline response requires JSON-compatible text or demjson/demjson3."
+                ) from exc
+        return demjson.decode(json_text)
+
+
+def _extract_tencent_kline_rows(payload: dict[str, Any], *, symbol: str) -> list[Any]:
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, dict):
+        raise ValueError("Tencent raw kline payload did not include a data object")
+    symbol_payload = data.get(symbol)
+    if not isinstance(symbol_payload, dict):
+        raise ValueError(f"Tencent raw kline payload did not include symbol data for {symbol}")
+    for key in ["day", "hfqday", "qfqday"]:
+        rows = symbol_payload.get(key)
+        if rows:
+            return list(rows)
+    return []
+
+
 def _call_akshare_market_function(akshare, request: DataSourceRequest, function_name: str) -> pd.DataFrame:
     function = getattr(akshare, function_name, None)
     if function is None:
         raise RuntimeError(f"akshare function not available: {function_name}")
     kwargs = _akshare_market_kwargs(request, function_name)
     return pd.DataFrame(function(**kwargs))
+
+
+def _import_requests_get():
+    try:
+        import requests
+    except ImportError as exc:
+        raise RuntimeError("Tencent raw kline fetch requires requests. Install it with: python -m pip install requests") from exc
+    return requests.get
 
 
 def _import_curl_cffi_requests():
@@ -1323,6 +1477,24 @@ def _prepare_akshare_market_frame_for_normalization(
 def _prepare_tencent_stock_market_frame(frame: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
     prepared = frame.copy()
     warnings: list[str] = []
+    raw_hands_column = _first_existing_column(prepared, ["tencent_volume_hands"])
+    raw_turnover_column = _first_existing_column(prepared, ["tencent_turnover_amount_10k_yuan"])
+    if raw_hands_column is not None:
+        prepared["volume"] = pd.to_numeric(prepared[raw_hands_column], errors="coerce") * 100
+        warnings.append("TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES")
+        raw_turnover_values = (
+            pd.to_numeric(prepared[raw_turnover_column], errors="coerce")
+            if raw_turnover_column is not None
+            else pd.Series(dtype="float64")
+        )
+        if raw_turnover_column is not None and raw_turnover_values.notna().any():
+            prepared["amount"] = raw_turnover_values * 10000
+            warnings.append("TENCENT_AMOUNT_CONVERTED_FROM_WAN_YUAN_TO_YUAN")
+        else:
+            prepared["amount"] = pd.NA
+            warnings.append("TENCENT_TURNOVER_AMOUNT_FIELD_UNAVAILABLE")
+        return prepared, warnings
+
     volume_source = _first_existing_column(
         prepared,
         [

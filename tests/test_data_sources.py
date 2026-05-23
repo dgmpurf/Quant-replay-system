@@ -7,6 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+import quant_replay_system.data_sources as data_sources
 from quant_replay_system import cli
 from quant_replay_system.config import DataSourceSettings
 from quant_replay_system.data_sources import (
@@ -16,6 +17,7 @@ from quant_replay_system.data_sources import (
     infer_akshare_market_symbol_type,
     infer_baostock_exchange_prefix,
     list_data_source_adapters,
+    normalize_tencent_raw_market_output,
     run_data_source_fetch,
     to_baostock_code,
 )
@@ -636,6 +638,129 @@ def test_akshare_tencent_amount_field_maps_to_volume_shares(tmp_path: Path, monk
     assert exported["amount"].tolist() == [0, 0]
     assert "TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES" in metadata["mapping_warnings"]
     assert "TENCENT_AMOUNT_FIELD_INTERPRETED_AS_VOLUME_HANDS" in metadata["mapping_warnings"]
+    assert "TENCENT_TURNOVER_AMOUNT_FIELD_UNAVAILABLE" in metadata["mapping_warnings"]
+
+
+def test_tencent_raw_list_maps_volume_and_turnover_amount() -> None:
+    raw = [
+        ["2024-01-02", "7.83", "7.65", "7.86", "7.65", "1158366.00", {}, "0.60", "107574.23", ""]
+    ]
+
+    normalized = normalize_tencent_raw_market_output(raw, symbol="sz000001")
+    prepared, warnings = data_sources._prepare_tencent_stock_market_frame(normalized)
+
+    assert float(prepared.iloc[0]["volume"]) == 115836600
+    assert float(prepared.iloc[0]["amount"]) == 1075742300
+    assert "TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES" in warnings
+    assert "TENCENT_AMOUNT_CONVERTED_FROM_WAN_YUAN_TO_YUAN" in warnings
+
+
+def test_fetch_tencent_stock_market_raw_parses_fake_payload(monkeypatch) -> None:
+    class FakeResponse:
+        text = (
+            'kline_day2024={"data":{"sz000001":{"day":[["2024-01-02","7.83","7.65",'
+            '"7.86","7.65","1158366.00",{},"0.60","107574.23",""]]}}}'
+        )
+
+        def raise_for_status(self) -> None:
+            return None
+
+    def fake_get(url, params, timeout):
+        assert "proxy.finance.qq.com" in url
+        assert params["param"].startswith("sz000001,day,2024-01-01")
+        assert timeout == 15
+        return FakeResponse()
+
+    monkeypatch.setattr(data_sources, "_import_requests_get", lambda: fake_get)
+
+    frame = data_sources.fetch_tencent_stock_market_raw(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+            allow_real_data=True,
+        )
+    )
+
+    assert frame.iloc[0]["date"] == "2024-01-02"
+    assert frame.iloc[0]["tencent_volume_hands"] == "1158366.00"
+    assert frame.iloc[0]["tencent_turnover_amount_10k_yuan"] == "107574.23"
+
+
+def test_akshare_tencent_raw_turnover_path_maps_amount_yuan(tmp_path: Path, monkeypatch) -> None:
+    module = ModuleType("akshare")
+    module.__file__ = "fake-akshare.py"
+
+    def stock_zh_a_hist_tx(**kwargs):
+        raise AssertionError("AKShare truncated DataFrame path should not be called when raw path succeeds")
+
+    def fake_raw(request):
+        return normalize_tencent_raw_market_output(
+            [
+                ["2024-01-02", "7.83", "7.65", "7.86", "7.65", "1158366.00", {}, "0.60", "107574.23", ""]
+            ],
+            symbol="sz000001",
+        )
+
+    module.stock_zh_a_hist_tx = stock_zh_a_hist_tx
+    monkeypatch.setitem(sys.modules, "akshare", module)
+    monkeypatch.setattr(data_sources, "fetch_tencent_stock_market_raw", fake_raw)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert exported.iloc[0]["symbol"] == "000001"
+    assert float(exported.iloc[0]["volume"]) == 115836600
+    assert float(exported.iloc[0]["amount"]) == 1075742300
+    assert "TENCENT_AMOUNT_CONVERTED_FROM_WAN_YUAN_TO_YUAN" in metadata["mapping_warnings"]
+    assert "TENCENT_TURNOVER_AMOUNT_FIELD_UNAVAILABLE" not in metadata["mapping_warnings"]
+
+
+def test_akshare_tencent_raw_missing_turnover_keeps_amount_unavailable(tmp_path: Path, monkeypatch) -> None:
+    module = ModuleType("akshare")
+    module.__file__ = "fake-akshare.py"
+
+    def fake_raw(request):
+        return normalize_tencent_raw_market_output(
+            [["2024-01-02", "7.83", "7.65", "7.86", "7.65", "1158366.00"]],
+            symbol="sz000001",
+        )
+
+    module.stock_zh_a_hist_tx = lambda **kwargs: pd.DataFrame()
+    monkeypatch.setitem(sys.modules, "akshare", module)
+    monkeypatch.setattr(data_sources, "fetch_tencent_stock_market_raw", fake_raw)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert float(exported.iloc[0]["volume"]) == 115836600
+    assert float(exported.iloc[0]["amount"]) == 0
     assert "TENCENT_TURNOVER_AMOUNT_FIELD_UNAVAILABLE" in metadata["mapping_warnings"]
 
 

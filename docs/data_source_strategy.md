@@ -93,7 +93,7 @@ python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-
 
 If prices match but volume or amount differ, review the comparison diagnostics before deciding whether a source-specific normalization rule is justified. Stable ratios can suggest a unit scale, while unstable ratios usually point to source semantics, adjustment, or field-definition differences. Do not auto-correct cached data from diagnostics alone.
 
-AKShare/Tencent market history has a known source-specific field semantic: `stock_zh_a_hist_tx` exposes the sixth kline field as `amount`, but local comparison against BaoStock indicates it is trading volume in hands. The adapter maps it to canonical volume in shares and records mapping warnings; it does not fabricate turnover amount. Continue to compare Tencent against BaoStock/Sina when amount or liquidity features depend on turnover value.
+AKShare/Tencent market history has a known source-specific field semantic: `stock_zh_a_hist_tx` exposes the sixth kline field as `amount`, and AKShare documents that field's unit as `手`. The adapter maps that field to canonical volume in shares and records mapping warnings. For real manual runs, it also tries a guarded raw Tencent kline path before AKShare's truncated DataFrame path; if the raw turnover field is present, it maps turnover amount from `万元` into canonical yuan. If raw turnover is unavailable, the adapter leaves amount unavailable rather than fabricating it. Continue to compare Tencent against BaoStock/Sina when amount or liquidity features depend on turnover value.
 
 ### Tushare Optional API Route
 

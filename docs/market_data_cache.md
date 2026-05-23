@@ -127,7 +127,8 @@ Interpretation:
 - Large volume or amount differences may indicate unit differences or source-specific semantics.
 - Stable volume or amount ratios far from `1.0` can indicate a likely source-specific unit scale.
 - Matched prices with unstable volume/amount ratios are treated as source semantics differences, not an automatic correction opportunity.
-- AKShare/Tencent `stock_zh_a_hist_tx` volume is source-specific: the raw field named `amount` is mapped to canonical volume in shares, while real turnover amount remains unavailable unless another raw amount field is present.
+- AKShare/Tencent `stock_zh_a_hist_tx` volume is source-specific: AKShare's DataFrame field named `amount` has unit `手`, so it is mapped to canonical volume in shares.
+- For real manual Tencent runs, the adapter attempts a guarded raw Tencent response path before using AKShare's truncated DataFrame. If the verified raw turnover field is present, `turnover_amount_10k_yuan` is mapped to canonical `amount` in yuan; otherwise amount remains unavailable and is reported through mapping warnings.
 - Source-only rows indicate coverage gaps.
 - The report does not declare either source as truth.
 - The comparison never rewrites cached rows. Any source-specific normalization rule must be added explicitly after review.
