@@ -47,6 +47,8 @@ Default warning cases include:
 
 With `--strict`, configurable warnings are treated as errors.
 
+Downstream dashboards can classify warning actionability. For example, a current-candidate health warning from an older dry run can be shown as a stale artifact warning when its `run_id` does not match the active current-candidate run. The health check still preserves the raw warning rows.
+
 ## CLI Usage
 
 Health check using an existing index CSV:

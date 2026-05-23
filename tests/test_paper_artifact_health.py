@@ -76,6 +76,54 @@ def test_empty_required_csv_produces_configured_warning(tmp_path: Path) -> None:
     assert result.status == "WARN"
     issue = _issue_row(result.health_frame, "CSV_EMPTY", "decisions_path")
     assert issue["severity"] == "WARN"
+    assert issue["actionability"] == "ACTIONABLE_WARNING"
+
+
+def test_empty_fills_in_watch_only_demo_is_expected_demo_warning(tmp_path: Path) -> None:
+    root = tmp_path / "paper_trading"
+    _daily_artifact(root)
+    folder = root / "daily" / "2024-05-20_daily-a"
+    fills = folder / "fills.csv"
+    reviewed = folder / "reviewed_decisions.csv"
+    fills.write_text("fill_id,symbol\n", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "decision_id": "d1",
+                "symbol": "510300",
+                "manual_review_status": "WATCH_ONLY",
+            }
+        ]
+    ).to_csv(reviewed, index=False)
+    metadata_path = folder / "metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata.update(
+        {
+            "reviewed_decisions_used": True,
+            "reviewed_decisions_path": str(reviewed),
+            "fill_count": 0,
+            "open_position_count": 0,
+            "closed_trade_count": 0,
+        }
+    )
+    metadata["output_files"]["reviewed_decisions"] = str(reviewed)
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    index = build_paper_artifact_index(root=root, output_dir=tmp_path / "index")
+
+    result = check_paper_artifact_health(
+        index_path=index.artifact_paths["paper_artifact_index_csv"],
+        output_dir=tmp_path / "health",
+    )
+
+    issue = _issue_row(result.health_frame, "CSV_EMPTY", "fills_path")
+    summary = result.summary_frame.iloc[0].to_dict()
+    health_metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.status == "WARN"
+    assert issue["actionability"] == "EXPECTED_DEMO_WARNING"
+    assert summary["expected_demo_warning_count"] == 1
+    assert summary["actionable_warning_count"] == 0
+    assert health_metadata["expected_demo_warning_count"] == 1
 
 
 def test_missing_no_live_trading_statement_uses_configured_severity(tmp_path: Path) -> None:

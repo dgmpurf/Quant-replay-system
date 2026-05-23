@@ -288,6 +288,7 @@ def test_dashboard_prefers_review_artifacts_linked_from_latest_daily_reviewed_de
     assert result.review_template_health_status == "PASS"
     assert result.workflow_stage != "REVIEW_TEMPLATE_HEALTH_WARN"
     assert "stale_warning_count" in by_component["REVIEW_TEMPLATE_HEALTH"]["notes"]
+    assert int(result.summary_frame.iloc[0]["stale_warning_count"]) > 0
 
 
 def test_dashboard_active_linked_review_health_warn_drives_stage(tmp_path: Path) -> None:
@@ -314,6 +315,7 @@ def test_dashboard_active_linked_review_health_warn_drives_stage(tmp_path: Path)
 
     assert result.review_template_health_status == "WARN"
     assert result.workflow_stage == "REVIEW_TEMPLATE_HEALTH_WARN"
+    assert int(result.summary_frame.iloc[0]["actionable_warning_count"]) > 0
 
 
 def test_dashboard_reports_missing_health_when_active_link_has_no_template_health(tmp_path: Path) -> None:
@@ -328,6 +330,69 @@ def test_dashboard_reports_missing_health_when_active_link_has_no_template_healt
     assert by_component["PAPER_REVIEW"]["latest_artifact_id"] == "review-active"
     assert by_component["REVIEW_TEMPLATE_HEALTH"]["status"] == "MISSING"
     assert "No template health artifact linked" in by_component["REVIEW_TEMPLATE_HEALTH"]["notes"]
+    assert int(result.summary_frame.iloc[0]["blocking_error_count"]) > 0
+
+
+def test_dashboard_expected_demo_empty_fills_warning_changes_next_action(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, status="PASS")
+    active_review = _paper_review(
+        root,
+        template_health={
+            "template_health_check_id": "template-health-a",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "template-health-a" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    _daily_paper(root, reviewed_decisions_path=active_review / "reviewed_decisions.csv")
+    _reconciliation(root, status="PASS")
+    _paper_artifact_index(root)
+    _paper_artifact_health_with_issues(
+        root,
+        status="WARN",
+        issues=[
+            {
+                "artifact_type": "DAILY",
+                "artifact_id": "journal-a",
+                "path_field": "fills_path",
+                "path_value": str(root / "paper_trading" / "daily" / f"{DECISION_DATE}_journal-a" / "fills.csv"),
+                "severity": "WARN",
+                "issue_code": "CSV_EMPTY",
+                "issue_message": "Required CSV artifact has no rows.",
+                "suggested_action": "Confirm whether an empty artifact is expected.",
+            }
+        ],
+    )
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    by_component = {row["component"]: row for row in result.status_frame.to_dict("records")}
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.status == "WARN"
+    assert result.next_manual_action != "Review warnings/errors in workflow status and health reports."
+    assert "Demo workflow validated" in result.next_manual_action
+    assert by_component["PAPER_ARTIFACT_HEALTH"]["warning_classification"] == "EXPECTED_DEMO_WARNING"
+    assert summary["expected_demo_warning_count"] == 1
+    assert summary["actionable_warning_count"] == 0
+    assert summary["blocking_error_count"] == 0
+
+
+def test_dashboard_unreadable_active_artifact_remains_blocking_error(tmp_path: Path) -> None:
+    root = _workflow_to_daily(_reports_root(tmp_path))
+    _reconciliation(root, status="PASS")
+    _paper_artifact_index(root)
+    _paper_artifact_health(root, status="FAIL")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+
+    assert result.workflow_stage == "WORKFLOW_NEEDS_ATTENTION"
+    assert result.next_manual_action == "Review warnings/errors in workflow status and health reports."
+    assert int(result.summary_frame.iloc[0]["blocking_error_count"]) > 0
 
 
 def _reports_root(tmp_path: Path) -> Path:
@@ -631,6 +696,42 @@ def _paper_artifact_health(root: Path, *, status: str = "PASS") -> Path:
             "error_count": 1 if status == "FAIL" else 0,
             "warning_count": 1 if status == "WARN" else 0,
             "output_files": {"artifact_health_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "paper_trading_only": True,
+        },
+    )
+    return folder
+
+
+def _paper_artifact_health_with_issues(
+    root: Path,
+    *,
+    status: str,
+    issues: list[dict],
+) -> Path:
+    folder = root / "paper_trading" / "health" / "paper-health-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "artifact_health_report.md"
+    issues_path = folder / "artifact_health_issues.csv"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    pd.DataFrame(issues).to_csv(issues_path, index=False)
+    error_count = sum(1 for issue in issues if issue.get("severity") == "ERROR")
+    warning_count = sum(1 for issue in issues if issue.get("severity") == "WARN")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "health_check_id": "paper-health-a",
+            "created_at": f"{DECISION_DATE}T16:41:00",
+            "status": status,
+            "issue_count": len(issues),
+            "error_count": error_count,
+            "warning_count": warning_count,
+            "output_files": {
+                "artifact_health_report": str(report),
+                "artifact_health_issues": str(issues_path),
+            },
             "warnings": [],
             "live_trading_enabled": False,
             "broker_api_invoked": False,

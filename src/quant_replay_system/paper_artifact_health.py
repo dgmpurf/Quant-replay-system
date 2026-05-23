@@ -27,10 +27,16 @@ HEALTH_COLUMNS = [
     "path_field",
     "path_value",
     "severity",
+    "actionability",
     "issue_code",
     "issue_message",
     "suggested_action",
 ]
+
+EXPECTED_DEMO_WARNING = "EXPECTED_DEMO_WARNING"
+STALE_ARTIFACT_WARNING = "STALE_ARTIFACT_WARNING"
+ACTIONABLE_WARNING = "ACTIONABLE_WARNING"
+BLOCKING_ERROR = "BLOCKING_ERROR"
 
 ISSUE_CODES = {
     "MISSING_PATH_VALUE",
@@ -139,6 +145,7 @@ def check_paper_artifact_health(
     health_frame = build_artifact_health_frame(index_frame, base_dir=base_dir, settings=health_settings)
     if load_issues:
         health_frame = _finalize_health_frame(pd.concat([pd.DataFrame(load_issues), health_frame], ignore_index=True))
+        health_frame = classify_paper_artifact_health_actionability(health_frame, index_frame)
     summary_frame = summarize_artifact_health(health_frame, checked_artifact_count=checked_count)
     status = str(summary_frame.iloc[0]["status"]) if not summary_frame.empty else "PASS"
     health_check_id = generate_health_check_id(
@@ -246,7 +253,30 @@ def build_artifact_health_frame(
             resolved = _check_path(row, path_field, base_path, issues, required=False)
             _check_file_content(row, path_field, resolved, cfg, issues)
 
-    return _finalize_health_frame(pd.DataFrame(issues))
+    health_frame = _finalize_health_frame(pd.DataFrame(issues))
+    return classify_paper_artifact_health_actionability(health_frame, index_frame)
+
+
+def classify_paper_artifact_health_actionability(
+    health_frame: pd.DataFrame,
+    index_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """Classify health issues by whether they are expected demo warnings or actionable."""
+
+    frame = _finalize_health_frame(health_frame)
+    if frame.empty:
+        return frame
+    index_frame = _prepare_index_frame(index_df)
+    metadata_by_artifact = _metadata_by_artifact(index_frame)
+    records = []
+    for row in frame.to_dict("records"):
+        row = dict(row)
+        if _string_or_empty(row.get("actionability")):
+            records.append(row)
+            continue
+        row["actionability"] = _issue_actionability(row, metadata_by_artifact)
+        records.append(row)
+    return _finalize_health_frame(pd.DataFrame(records))
 
 
 def summarize_artifact_health(
@@ -261,6 +291,10 @@ def summarize_artifact_health(
     error_count = int((frame["severity"] == "ERROR").sum()) if not frame.empty else 0
     warning_count = int((frame["severity"] == "WARN").sum()) if not frame.empty else 0
     info_count = int((frame["severity"] == "INFO").sum()) if not frame.empty else 0
+    expected_demo_warning_count = int((frame["actionability"] == EXPECTED_DEMO_WARNING).sum()) if not frame.empty else 0
+    stale_warning_count = int((frame["actionability"] == STALE_ARTIFACT_WARNING).sum()) if not frame.empty else 0
+    actionable_warning_count = int((frame["actionability"] == ACTIONABLE_WARNING).sum()) if not frame.empty else 0
+    blocking_error_count = int((frame["actionability"] == BLOCKING_ERROR).sum()) if not frame.empty else 0
     status = "FAIL" if error_count else "WARN" if warning_count else "PASS"
     rows = [
         {
@@ -269,6 +303,11 @@ def summarize_artifact_health(
             "issue_count": issue_count,
             "error_count": error_count,
             "warning_count": warning_count,
+            "total_warning_count": warning_count,
+            "expected_demo_warning_count": expected_demo_warning_count,
+            "stale_warning_count": stale_warning_count,
+            "actionable_warning_count": actionable_warning_count,
+            "blocking_error_count": blocking_error_count,
             "info_count": info_count,
         }
     ]
@@ -281,6 +320,11 @@ def summarize_artifact_health(
                     "issue_count": len(group),
                     "error_count": int((group["severity"] == "ERROR").sum()),
                     "warning_count": int((group["severity"] == "WARN").sum()),
+                    "total_warning_count": int((group["severity"] == "WARN").sum()),
+                    "expected_demo_warning_count": int((group["actionability"] == EXPECTED_DEMO_WARNING).sum()),
+                    "stale_warning_count": int((group["actionability"] == STALE_ARTIFACT_WARNING).sum()),
+                    "actionable_warning_count": int((group["actionability"] == ACTIONABLE_WARNING).sum()),
+                    "blocking_error_count": int((group["actionability"] == BLOCKING_ERROR).sum()),
                     "info_count": int((group["severity"] == "INFO").sum()),
                     "issue_code": issue_code,
                 }
@@ -336,6 +380,7 @@ def build_paper_artifact_health_metadata(
 ) -> dict[str, Any]:
     """Build metadata for health-check artifacts."""
 
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
     return {
         "health_check_id": result.health_check_id,
         "created_at": "1970-01-01T00:00:00+00:00",
@@ -344,6 +389,11 @@ def build_paper_artifact_health_metadata(
         "issue_count": result.issue_count,
         "error_count": result.error_count,
         "warning_count": result.warning_count,
+        "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
+        "expected_demo_warning_count": _int_or_zero(summary.get("expected_demo_warning_count")),
+        "stale_warning_count": _int_or_zero(summary.get("stale_warning_count")),
+        "actionable_warning_count": _int_or_zero(summary.get("actionable_warning_count")),
+        "blocking_error_count": _int_or_zero(summary.get("blocking_error_count")),
         "config_summary": {
             "index_source": result.audit_metadata.get("index_source", ""),
             "strict": bool(result.audit_metadata.get("strict", False)),
@@ -381,6 +431,11 @@ def render_paper_artifact_health_report(
                 "issue_count",
                 "error_count",
                 "warning_count",
+                "total_warning_count",
+                "expected_demo_warning_count",
+                "stale_warning_count",
+                "actionable_warning_count",
+                "blocking_error_count",
                 "info_count",
                 "issue_code",
             ],
@@ -395,6 +450,7 @@ def render_paper_artifact_health_report(
                 "artifact_id",
                 "path_field",
                 "severity",
+                "actionability",
                 "issue_code",
                 "issue_message",
                 "suggested_action",
@@ -759,6 +815,7 @@ def _issue(
     issue_message: str,
     suggested_action: str,
     path_value: Any | None = None,
+    actionability: str | None = None,
 ) -> dict[str, Any]:
     if issue_code not in ISSUE_CODES:
         raise ValueError(f"Unsupported artifact health issue_code: {issue_code}")
@@ -768,10 +825,95 @@ def _issue(
         "path_field": path_field,
         "path_value": _string_or_empty(path_value if path_value is not None else row.get(path_field, "")),
         "severity": str(severity).upper(),
+        "actionability": _string_or_empty(actionability),
         "issue_code": issue_code,
         "issue_message": issue_message,
         "suggested_action": suggested_action,
     }
+
+
+def _issue_actionability(
+    issue: dict[str, Any],
+    metadata_by_artifact: dict[tuple[str, str], dict[str, Any]],
+) -> str:
+    severity = _string_or_empty(issue.get("severity")).upper()
+    if severity == "ERROR":
+        return BLOCKING_ERROR
+    if severity != "WARN":
+        return ""
+    artifact_key = (_string_or_empty(issue.get("artifact_type")).upper(), _string_or_empty(issue.get("artifact_id")))
+    metadata = metadata_by_artifact.get(artifact_key, {})
+    if _is_expected_demo_empty_fills_issue(issue, metadata):
+        return EXPECTED_DEMO_WARNING
+    return ACTIONABLE_WARNING
+
+
+def _is_expected_demo_empty_fills_issue(issue: dict[str, Any], metadata: dict[str, Any]) -> bool:
+    if _string_or_empty(issue.get("artifact_type")).upper() != "DAILY":
+        return False
+    if _string_or_empty(issue.get("path_field")) != "fills_path":
+        return False
+    if _string_or_empty(issue.get("issue_code")) != "CSV_EMPTY":
+        return False
+    if metadata.get("reviewed_decisions_used") is not True:
+        return False
+    if _int_or_zero(metadata.get("fill_count")) != 0:
+        return False
+    if _int_or_zero(metadata.get("open_position_count")) != 0:
+        return False
+    if _int_or_zero(metadata.get("closed_trade_count")) != 0:
+        return False
+    return _reviewed_decisions_are_watch_only(metadata)
+
+
+def _reviewed_decisions_are_watch_only(metadata: dict[str, Any]) -> bool:
+    reviewed_path = _string_or_empty(metadata.get("reviewed_decisions_path"))
+    output_files = metadata.get("output_files") if isinstance(metadata.get("output_files"), dict) else {}
+    reviewed_path = reviewed_path or _string_or_empty(output_files.get("reviewed_decisions"))
+    if not reviewed_path:
+        return False
+    path = _resolve_path(reviewed_path, None)
+    if not path.exists():
+        return False
+    try:
+        frame = pd.read_csv(path, dtype=str).fillna("")
+    except Exception:
+        return False
+    if frame.empty or "manual_review_status" not in frame.columns:
+        return False
+    statuses = {str(value).strip().upper() for value in frame["manual_review_status"] if str(value).strip()}
+    if not statuses or statuses != {"WATCH_ONLY"}:
+        return False
+    return not frame.astype(str).apply(lambda series: series.str.contains("APPROVED_FOR_PAPER", na=False)).any().any()
+
+
+def _metadata_by_artifact(index_frame: pd.DataFrame) -> dict[tuple[str, str], dict[str, Any]]:
+    metadata_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    for row in index_frame.to_dict("records"):
+        artifact_type = _artifact_type(row)
+        artifact_id = _string_or_empty(row.get("artifact_id"))
+        metadata_path = _string_or_empty(row.get("metadata_path"))
+        if not artifact_type or not artifact_id or not metadata_path:
+            continue
+        path = _resolve_path(metadata_path, None)
+        if not path.exists():
+            continue
+        try:
+            metadata = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if isinstance(metadata, dict):
+            metadata_by_key[(artifact_type, artifact_id)] = metadata
+    return metadata_by_key
+
+
+def _default_actionability(severity: Any) -> str:
+    normalized = _string_or_empty(severity).upper()
+    if normalized == "ERROR":
+        return BLOCKING_ERROR
+    if normalized == "WARN":
+        return ACTIONABLE_WARNING
+    return ""
 
 
 def _finalize_health_frame(frame: pd.DataFrame) -> pd.DataFrame:
@@ -782,7 +924,7 @@ def _finalize_health_frame(frame: pd.DataFrame) -> pd.DataFrame:
     if health.empty:
         return health[HEALTH_COLUMNS]
     return health[HEALTH_COLUMNS].sort_values(
-        ["severity", "artifact_type", "artifact_id", "issue_code", "path_field"],
+        ["severity", "actionability", "artifact_type", "artifact_id", "issue_code", "path_field"],
         na_position="last",
     ).reset_index(drop=True)
 
@@ -904,6 +1046,15 @@ def _present(value: Any) -> bool:
 
 def _string_or_empty(value: Any) -> str:
     return str(value).strip() if _present(value) else ""
+
+
+def _int_or_zero(value: Any) -> int:
+    if not _present(value):
+        return 0
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _json_safe(value: Any) -> Any:

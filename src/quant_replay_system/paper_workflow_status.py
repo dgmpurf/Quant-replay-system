@@ -31,6 +31,12 @@ STATUS_COLUMNS = [
     "issue_count",
     "warning_count",
     "error_count",
+    "total_warning_count",
+    "expected_demo_warning_count",
+    "stale_warning_count",
+    "actionable_warning_count",
+    "blocking_error_count",
+    "warning_classification",
     "next_action",
     "notes",
 ]
@@ -48,8 +54,27 @@ SUMMARY_COLUMNS = [
     "reconciliation_status",
     "artifact_index_status",
     "artifact_health_status",
+    "total_warning_count",
+    "expected_demo_warning_count",
+    "stale_warning_count",
+    "actionable_warning_count",
+    "blocking_error_count",
     "next_manual_action",
 ]
+
+EXPECTED_DEMO_WARNING = "EXPECTED_DEMO_WARNING"
+STALE_ARTIFACT_WARNING = "STALE_ARTIFACT_WARNING"
+ACTIONABLE_WARNING = "ACTIONABLE_WARNING"
+BLOCKING_ERROR = "BLOCKING_ERROR"
+
+DEMO_WORKFLOW_NEXT_ACTION = (
+    "Demo workflow validated; no fills were supplied. Proceed to paper-reconcile-fills only if you want "
+    "to test fills, or return to data-source strategy."
+)
+
+STALE_ONLY_NEXT_ACTION = (
+    "Active workflow chain is not blocked; stale warning artifacts remain indexed for audit."
+)
 
 COMPONENTS = [
     "CURRENT_CANDIDATES",
@@ -262,7 +287,8 @@ def build_paper_workflow_status_frame(
         latest["next_action"] = _component_next_action(component, latest.get("status", ""))
         rows.append(latest)
     _ = decision_date, universe_name
-    return _finalize_status_frame(pd.DataFrame(rows))
+    status_frame = _finalize_status_frame(pd.DataFrame(rows))
+    return _classify_paper_workflow_actionability(status_frame)
 
 
 def _active_reviewed_paper_chain(frame: pd.DataFrame) -> dict[str, dict[str, Any]]:
@@ -406,6 +432,307 @@ def _annotate_stale_component_warnings(selected: dict[str, Any], component_rows:
     return annotated
 
 
+def _classify_paper_workflow_actionability(status_frame: pd.DataFrame) -> pd.DataFrame:
+    frame = _finalize_status_frame(status_frame)
+    if frame.empty:
+        return frame
+    context = _paper_warning_context(frame)
+    records = []
+    for row in frame.to_dict("records"):
+        classified = dict(row)
+        counts = _component_warning_actionability(classified, context)
+        classified.update(counts)
+        classified["warning_classification"] = _classification_label(counts)
+        records.append(classified)
+    return _finalize_status_frame(pd.DataFrame(records))
+
+
+def _paper_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
+    by_component = {row["component"]: row for row in frame.to_dict("records")}
+    daily = by_component.get("DAILY_PAPER", {})
+    current = by_component.get("CURRENT_CANDIDATES", {})
+    review = by_component.get("PAPER_REVIEW", {})
+    reconciliation = by_component.get("RECONCILIATION", {})
+    daily_metadata = _metadata_for_row(daily)
+    active_ids = {
+        ("DAILY", _string_or_empty(daily.get("latest_artifact_id"))),
+        ("REVIEW", _string_or_empty(review.get("latest_artifact_id"))),
+        ("RECONCILIATION", _string_or_empty(reconciliation.get("latest_artifact_id"))),
+    }
+    return {
+        "active_daily_id": _string_or_empty(daily.get("latest_artifact_id")),
+        "active_current_run_id": _string_or_empty(current.get("latest_artifact_id")),
+        "active_paper_artifact_ids": {item for item in active_ids if item[1]},
+        "watch_only_no_fills_demo": _is_watch_only_no_fills_daily(daily_metadata),
+    }
+
+
+def _component_warning_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int]:
+    component = _string_or_empty(row.get("component"))
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    stale_warning_count = _parse_note_count(row.get("notes"), "stale_warning_count")
+    blocking_error_count = error_count
+    if _string_or_empty(row.get("status")) == "FAIL":
+        blocking_error_count = max(blocking_error_count, 1)
+    if _string_or_empty(row.get("status")) == "MISSING" and "linked to active" in _string_or_empty(row.get("notes")):
+        blocking_error_count = max(blocking_error_count, 1)
+
+    if component == "PAPER_ARTIFACT_HEALTH":
+        issue_counts = _paper_artifact_health_issue_actionability(row, context)
+        if issue_counts is not None:
+            return issue_counts | {
+                "total_warning_count": issue_counts["expected_demo_warning_count"]
+                + issue_counts["stale_warning_count"]
+                + issue_counts["actionable_warning_count"],
+            }
+        metadata_counts = _metadata_actionability_counts(row)
+        if metadata_counts is not None:
+            return metadata_counts
+
+    if component == "CURRENT_CANDIDATE_HEALTH":
+        issue_counts = _current_candidate_health_issue_actionability(row, context)
+        if issue_counts is not None:
+            return issue_counts | {
+                "total_warning_count": issue_counts["expected_demo_warning_count"]
+                + issue_counts["stale_warning_count"]
+                + issue_counts["actionable_warning_count"],
+            }
+        metadata_counts = _metadata_actionability_counts(row)
+        if metadata_counts is not None:
+            return metadata_counts
+
+    expected_demo_warning_count = _expected_demo_warning_count(row, context, warning_count)
+    actionable_warning_count = max(warning_count - expected_demo_warning_count, 0)
+    if _string_or_empty(row.get("status")) == "WARN" and warning_count == 0 and stale_warning_count == 0:
+        actionable_warning_count = max(actionable_warning_count, 1)
+    return {
+        "total_warning_count": warning_count + stale_warning_count,
+        "expected_demo_warning_count": expected_demo_warning_count,
+        "stale_warning_count": stale_warning_count,
+        "actionable_warning_count": actionable_warning_count,
+        "blocking_error_count": blocking_error_count,
+    }
+
+
+def _expected_demo_warning_count(row: dict[str, Any], context: dict[str, Any], warning_count: int) -> int:
+    component = _string_or_empty(row.get("component"))
+    if warning_count <= 0:
+        return 0
+    if component == "CURRENT_CANDIDATES" and _current_candidate_is_demo(row):
+        return warning_count
+    if component == "CURRENT_TO_PAPER_HANDOFF" and _handoff_targets_active_watch_only_demo(row, context):
+        return warning_count
+    if component == "DAILY_PAPER" and context.get("watch_only_no_fills_demo"):
+        return warning_count
+    return 0
+
+
+def _current_candidate_is_demo(row: dict[str, Any]) -> bool:
+    metadata = _metadata_for_row(row)
+    audit = metadata.get("audit_metadata") if isinstance(metadata.get("audit_metadata"), dict) else {}
+    return (
+        metadata.get("demo_mode") is True
+        or audit.get("demo_mode") is True
+        or _string_or_empty(metadata.get("selection_profile")).lower() == "demo"
+        or _string_or_empty(audit.get("selection_profile")).lower() == "demo"
+    )
+
+
+def _handoff_targets_active_watch_only_demo(row: dict[str, Any], context: dict[str, Any]) -> bool:
+    if not context.get("watch_only_no_fills_demo"):
+        return False
+    active_daily_id = _string_or_empty(context.get("active_daily_id"))
+    if not active_daily_id:
+        return False
+    metadata = _metadata_for_row(row)
+    audit = metadata.get("audit_metadata") if isinstance(metadata.get("audit_metadata"), dict) else {}
+    paper_journal_id = _string_or_empty(metadata.get("paper_journal_id")) or _string_or_empty(audit.get("paper_journal_id"))
+    return paper_journal_id == active_daily_id
+
+
+def _paper_artifact_health_issue_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int] | None:
+    issues = _load_issue_frame_from_metadata(row, "artifact_health_issues")
+    if issues is None:
+        return None
+    counts = _empty_actionability_counts()
+    active_ids = context.get("active_paper_artifact_ids", set())
+    active_daily_id = _string_or_empty(context.get("active_daily_id"))
+    for issue in issues.to_dict("records"):
+        severity = _string_or_empty(issue.get("severity")).upper()
+        if severity == "ERROR":
+            counts["blocking_error_count"] += 1
+            continue
+        if severity != "WARN":
+            continue
+        artifact_type = _string_or_empty(issue.get("artifact_type")).upper()
+        artifact_id = _string_or_empty(issue.get("artifact_id"))
+        actionability = _string_or_empty(issue.get("actionability")).upper()
+        if actionability == EXPECTED_DEMO_WARNING:
+            counts["expected_demo_warning_count"] += 1
+        elif actionability == STALE_ARTIFACT_WARNING:
+            counts["stale_warning_count"] += 1
+        elif _is_expected_demo_fills_issue(issue, active_daily_id, bool(context.get("watch_only_no_fills_demo"))):
+            counts["expected_demo_warning_count"] += 1
+        elif active_ids and (artifact_type, artifact_id) not in active_ids:
+            counts["stale_warning_count"] += 1
+        else:
+            counts["actionable_warning_count"] += 1
+    return counts
+
+
+def _current_candidate_health_issue_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int] | None:
+    issues = _load_issue_frame_from_metadata(row, "current_candidate_artifact_health_issues")
+    if issues is None:
+        return None
+    counts = _empty_actionability_counts()
+    active_run_id = _string_or_empty(context.get("active_current_run_id"))
+    for issue in issues.to_dict("records"):
+        severity = _string_or_empty(issue.get("severity")).upper()
+        if severity == "ERROR":
+            counts["blocking_error_count"] += 1
+            continue
+        if severity != "WARN":
+            continue
+        run_id = _string_or_empty(issue.get("run_id"))
+        actionability = _string_or_empty(issue.get("actionability")).upper()
+        if actionability == STALE_ARTIFACT_WARNING:
+            counts["stale_warning_count"] += 1
+        elif active_run_id and run_id and run_id != active_run_id:
+            counts["stale_warning_count"] += 1
+        else:
+            counts["actionable_warning_count"] += 1
+    return counts
+
+
+def _load_issue_frame_from_metadata(row: dict[str, Any], output_key: str) -> pd.DataFrame | None:
+    metadata = _metadata_for_row(row)
+    output_files = _output_files(metadata)
+    issue_path = _string_or_empty(output_files.get(output_key))
+    if not issue_path:
+        return None
+    path = Path(issue_path)
+    if not path.exists():
+        return None
+    try:
+        return pd.read_csv(path, dtype=str).fillna("")
+    except Exception:
+        return None
+
+
+def _metadata_actionability_counts(row: dict[str, Any]) -> dict[str, int] | None:
+    metadata = _metadata_for_row(row)
+    if not metadata:
+        return None
+    if not any(key in metadata for key in _actionability_count_keys()):
+        return None
+    return {
+        "total_warning_count": _int_or_zero(metadata.get("total_warning_count")),
+        "expected_demo_warning_count": _int_or_zero(metadata.get("expected_demo_warning_count")),
+        "stale_warning_count": _int_or_zero(metadata.get("stale_warning_count")),
+        "actionable_warning_count": _int_or_zero(metadata.get("actionable_warning_count")),
+        "blocking_error_count": _int_or_zero(metadata.get("blocking_error_count")),
+    }
+
+
+def _is_expected_demo_fills_issue(issue: dict[str, Any], active_daily_id: str, is_demo: bool) -> bool:
+    return (
+        is_demo
+        and _string_or_empty(issue.get("artifact_type")).upper() == "DAILY"
+        and _string_or_empty(issue.get("artifact_id")) == active_daily_id
+        and _string_or_empty(issue.get("path_field")) == "fills_path"
+        and _string_or_empty(issue.get("issue_code")) == "CSV_EMPTY"
+    )
+
+
+def _is_watch_only_no_fills_daily(metadata: dict[str, Any]) -> bool:
+    if metadata.get("reviewed_decisions_used") is not True:
+        return False
+    if _int_or_zero(metadata.get("fill_count")) != 0:
+        return False
+    if _int_or_zero(metadata.get("open_position_count")) != 0:
+        return False
+    if _int_or_zero(metadata.get("closed_trade_count")) != 0:
+        return False
+    reviewed_path = _daily_reviewed_decisions_path(metadata)
+    if not reviewed_path:
+        return False
+    path = Path(reviewed_path)
+    if not path.exists():
+        return False
+    try:
+        frame = pd.read_csv(path, dtype=str).fillna("")
+    except Exception:
+        return False
+    if frame.empty or "manual_review_status" not in frame.columns:
+        return False
+    statuses = {str(value).strip().upper() for value in frame["manual_review_status"] if str(value).strip()}
+    if statuses != {"WATCH_ONLY"}:
+        return False
+    return not frame.astype(str).apply(lambda series: series.str.contains("APPROVED_FOR_PAPER", na=False)).any().any()
+
+
+def _empty_actionability_counts() -> dict[str, int]:
+    return {
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": 0,
+        "blocking_error_count": 0,
+    }
+
+
+def _classification_label(counts: dict[str, int]) -> str:
+    labels = []
+    if counts.get("blocking_error_count", 0):
+        labels.append(BLOCKING_ERROR)
+    if counts.get("actionable_warning_count", 0):
+        labels.append(ACTIONABLE_WARNING)
+    if counts.get("expected_demo_warning_count", 0):
+        labels.append(EXPECTED_DEMO_WARNING)
+    if counts.get("stale_warning_count", 0):
+        labels.append(STALE_ARTIFACT_WARNING)
+    return ";".join(labels)
+
+
+def _parse_note_count(notes: Any, key: str) -> int:
+    text = _string_or_empty(notes)
+    if not text:
+        return 0
+    prefix = f"{key}="
+    for part in text.replace(",", ";").split(";"):
+        item = part.strip()
+        if item.startswith(prefix):
+            return _int_or_zero(item[len(prefix) :])
+    return 0
+
+
+def _warning_actionability_totals(status_frame: pd.DataFrame) -> dict[str, int]:
+    frame = _finalize_status_frame(status_frame)
+    totals = {
+        "total_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": 0,
+        "blocking_error_count": 0,
+    }
+    if frame.empty:
+        return totals
+    for key in totals:
+        if key in frame.columns:
+            totals[key] = int(pd.to_numeric(frame[key], errors="coerce").fillna(0).sum())
+    return totals
+
+
+def _actionability_count_keys() -> list[str]:
+    return [
+        "total_warning_count",
+        "expected_demo_warning_count",
+        "stale_warning_count",
+        "actionable_warning_count",
+        "blocking_error_count",
+    ]
+
+
 def infer_paper_workflow_stage(status_frame: pd.DataFrame) -> str:
     """Infer the current workflow stage from component status rows."""
 
@@ -441,6 +768,13 @@ def infer_next_manual_action(status_frame: pd.DataFrame, *, workflow_stage: str 
     """Infer the next manual action from the workflow stage."""
 
     stage = workflow_stage or infer_paper_workflow_stage(status_frame)
+    if stage == "WORKFLOW_NEEDS_ATTENTION":
+        totals = _warning_actionability_totals(status_frame)
+        if totals["blocking_error_count"] == 0 and totals["actionable_warning_count"] == 0:
+            if totals["expected_demo_warning_count"] > 0:
+                return DEMO_WORKFLOW_NEXT_ACTION
+            if totals["stale_warning_count"] > 0:
+                return STALE_ONLY_NEXT_ACTION
     actions = {
         "NO_CURRENT_CANDIDATES": "Run current-candidates.",
         "CURRENT_CANDIDATES_READY": "Run current-to-paper.",
@@ -471,6 +805,7 @@ def summarize_paper_workflow_status(
     missing_count = explicit_statuses.count("MISSING")
     error_count = int(pd.to_numeric(frame["error_count"], errors="coerce").fillna(0).sum()) if not frame.empty else 0
     warning_count = int(pd.to_numeric(frame["warning_count"], errors="coerce").fillna(0).sum()) if not frame.empty else 0
+    actionability = _warning_actionability_totals(frame)
     status = "FAIL" if "FAIL" in explicit_statuses or error_count else "WARN" if "WARN" in explicit_statuses or missing_count or warning_count else "PASS"
     artifact_index_status = _combined_component_status(
         by_component,
@@ -495,6 +830,11 @@ def summarize_paper_workflow_status(
         "reconciliation_status": _component_status(by_component, "RECONCILIATION"),
         "artifact_index_status": artifact_index_status,
         "artifact_health_status": artifact_health_status,
+        "total_warning_count": actionability["total_warning_count"],
+        "expected_demo_warning_count": actionability["expected_demo_warning_count"],
+        "stale_warning_count": actionability["stale_warning_count"],
+        "actionable_warning_count": actionability["actionable_warning_count"],
+        "blocking_error_count": actionability["blocking_error_count"],
         "next_manual_action": next_manual_action,
     }
     return pd.DataFrame([row], columns=SUMMARY_COLUMNS)
@@ -535,6 +875,7 @@ def build_paper_workflow_status_metadata(
 ) -> dict[str, Any]:
     """Build metadata for workflow status artifacts."""
 
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
     return {
         "workflow_status_id": result.workflow_status_id,
         "created_at": "1970-01-01T00:00:00+00:00",
@@ -542,6 +883,11 @@ def build_paper_workflow_status_metadata(
         "workflow_stage": result.workflow_stage,
         "latest_decision_date": result.latest_decision_date,
         "next_manual_action": result.next_manual_action,
+        "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
+        "expected_demo_warning_count": _int_or_zero(summary.get("expected_demo_warning_count")),
+        "stale_warning_count": _int_or_zero(summary.get("stale_warning_count")),
+        "actionable_warning_count": _int_or_zero(summary.get("actionable_warning_count")),
+        "blocking_error_count": _int_or_zero(summary.get("blocking_error_count")),
         "component_statuses": result.summary_frame.to_dict("records")[0] if not result.summary_frame.empty else {},
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
         "warnings": result.warnings,
@@ -574,6 +920,11 @@ def render_paper_workflow_status_report(
                 "workflow_stage",
                 "status",
                 "latest_decision_date",
+                "total_warning_count",
+                "expected_demo_warning_count",
+                "stale_warning_count",
+                "actionable_warning_count",
+                "blocking_error_count",
                 "next_manual_action",
             ],
         ),
@@ -590,6 +941,12 @@ def render_paper_workflow_status_report(
                 "issue_count",
                 "warning_count",
                 "error_count",
+                "total_warning_count",
+                "expected_demo_warning_count",
+                "stale_warning_count",
+                "actionable_warning_count",
+                "blocking_error_count",
+                "warning_classification",
                 "next_action",
                 "report_path",
             ],
@@ -919,6 +1276,12 @@ def _record(**values: Any) -> dict[str, Any]:
         "issue_count": 0,
         "warning_count": 0,
         "error_count": 0,
+        "total_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": 0,
+        "blocking_error_count": 0,
+        "warning_classification": "",
         "next_action": "",
         "notes": "",
         "created_at": "",
@@ -932,6 +1295,12 @@ def _record(**values: Any) -> dict[str, Any]:
     row["issue_count"] = _int_or_zero(row.get("issue_count"))
     row["warning_count"] = _int_or_zero(row.get("warning_count"))
     row["error_count"] = _int_or_zero(row.get("error_count"))
+    row["total_warning_count"] = _int_or_zero(row.get("total_warning_count"))
+    row["expected_demo_warning_count"] = _int_or_zero(row.get("expected_demo_warning_count"))
+    row["stale_warning_count"] = _int_or_zero(row.get("stale_warning_count"))
+    row["actionable_warning_count"] = _int_or_zero(row.get("actionable_warning_count"))
+    row["blocking_error_count"] = _int_or_zero(row.get("blocking_error_count"))
+    row["warning_classification"] = _string_or_empty(row.get("warning_classification"))
     return row
 
 
@@ -1001,7 +1370,17 @@ def _latest_decision_date(frame: pd.DataFrame) -> str:
 
 def _dashboard_warnings(status_frame: pd.DataFrame, workflow_stage: str) -> list[str]:
     warnings = []
-    if workflow_stage != "WORKFLOW_COMPLETE":
+    totals = _warning_actionability_totals(status_frame)
+    if (
+        workflow_stage == "WORKFLOW_NEEDS_ATTENTION"
+        and totals["blocking_error_count"] == 0
+        and totals["actionable_warning_count"] == 0
+        and (totals["expected_demo_warning_count"] > 0 or totals["stale_warning_count"] > 0)
+    ):
+        warnings.append(
+            "Only expected demo or stale artifact warnings were classified for the active workflow chain."
+        )
+    elif workflow_stage != "WORKFLOW_COMPLETE":
         warnings.append(f"Workflow stage is {workflow_stage}; manual action is still needed.")
     failing = status_frame.loc[status_frame["status"] == "FAIL"] if not status_frame.empty else pd.DataFrame()
     for row in failing.to_dict("records"):

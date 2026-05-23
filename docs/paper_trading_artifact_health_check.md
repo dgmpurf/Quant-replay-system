@@ -62,6 +62,24 @@ Missing files, unreadable JSON, unreadable CSVs, malformed references, and unsup
 
 Empty CSVs, missing no-live-trading statements, and missing metadata fields are configurable as `WARN` or `ERROR`. `--strict` escalates configurable warnings to errors.
 
+## Warning Actionability
+
+Health issues also include an `actionability` classification:
+
+- `EXPECTED_DEMO_WARNING`: expected during an explicit local demo flow. For example, an empty `fills.csv` in a reviewed `WATCH_ONLY` daily paper run with no open positions, no closed trades, and no approved paper decisions.
+- `ACTIONABLE_WARNING`: a warning that should be reviewed before relying on the artifact.
+- `BLOCKING_ERROR`: an error such as a missing file, unreadable CSV, or unreadable JSON.
+
+The raw `WARN` status is preserved. The classification helps dashboards explain whether a warning blocks the active workflow or is expected for a no-fills local demo.
+
+The health summary and metadata include:
+
+- `total_warning_count`
+- `expected_demo_warning_count`
+- `stale_warning_count`
+- `actionable_warning_count`
+- `blocking_error_count`
+
 ## CLI Usage
 
 Check an existing paper artifact index:

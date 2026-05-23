@@ -281,6 +281,66 @@ def test_dashboard_prefers_active_review_chain_over_stale_warn_artifacts(tmp_pat
     assert result.paper_review_status == "READY"
     assert "stale_warning_count" in by_component["REVIEW_TEMPLATE_HEALTH"]["notes"]
     assert result.workflow_stage != "LOCAL_RESEARCH_NEEDS_ATTENTION"
+    assert int(result.summary_frame.iloc[0]["stale_warning_count"]) > 0
+
+
+def test_dashboard_inherits_expected_demo_warning_actionability_from_paper_workflow_status(tmp_path: Path) -> None:
+    root = _workflow_to_daily(_reports_root(tmp_path))
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WORKFLOW_NEEDS_ATTENTION",
+        expected_demo_warning_count=1,
+        stale_warning_count=0,
+        actionable_warning_count=0,
+        blocking_error_count=0,
+        next_manual_action=(
+            "Demo workflow validated; no fills were supplied. Proceed to paper-reconcile-fills only if you want "
+            "to test fills, or return to data-source strategy."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    paper_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "PAPER_WORKFLOW_STATUS"].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.status == "WARN"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert "Demo workflow validated" in result.next_manual_action
+    assert paper_row["warning_classification"] == "EXPECTED_DEMO_WARNING"
+    assert summary["expected_demo_warning_count"] == 1
+    assert summary["actionable_warning_count"] == 0
+
+
+def test_dashboard_classifies_prior_current_candidate_health_warning_as_stale(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+    _current_candidate_health_with_issues(
+        root,
+        status="WARN",
+        issues=[
+            {
+                "artifact_type": "CURRENT_CANDIDATES",
+                "run_id": "old-dry-run",
+                "path_field": "candidates_path",
+                "path_value": str(root / "current_candidates" / "old" / "candidates.csv"),
+                "severity": "WARN",
+                "issue_code": "CSV_EMPTY",
+                "issue_message": "candidates.csv has no rows.",
+                "suggested_action": "Confirm no candidates passed filters.",
+            }
+        ],
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    health_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "CURRENT_CANDIDATE_HEALTH"].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "CURRENT_CANDIDATES_HEALTH_READY"
+    assert result.next_manual_action == "Run current-to-paper."
+    assert health_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert summary["stale_warning_count"] == 1
+    assert summary["actionable_warning_count"] == 0
 
 
 def _reports_root(tmp_path: Path) -> Path:
@@ -424,6 +484,41 @@ def _current_candidate_health(root: Path, *, status: str = "PASS", errors: int =
             "error_count": errors,
             "warning_count": warnings,
             "output_files": {"current_candidate_artifact_health_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _current_candidate_health_with_issues(
+    root: Path,
+    *,
+    status: str,
+    issues: list[dict],
+) -> Path:
+    folder = root / "current_candidates" / "health" / "cch-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "current_candidate_artifact_health_report.md"
+    issues_path = folder / "current_candidate_artifact_health_issues.csv"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    pd.DataFrame(issues).to_csv(issues_path, index=False)
+    error_count = sum(1 for issue in issues if issue.get("severity") == "ERROR")
+    warning_count = sum(1 for issue in issues if issue.get("severity") == "WARN")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "health_check_id": "cch-a",
+            "created_at": f"{DECISION_DATE}T15:40:00",
+            "status": status,
+            "issue_count": len(issues),
+            "error_count": error_count,
+            "warning_count": warning_count,
+            "output_files": {
+                "current_candidate_artifact_health_report": str(report),
+                "current_candidate_artifact_health_issues": str(issues_path),
+            },
             "warnings": [],
             "live_trading_enabled": False,
             "broker_api_invoked": False,
@@ -600,20 +695,44 @@ def _reconciliation(root: Path, *, status: str = "PASS", errors: int = 0, warnin
     return folder
 
 
-def _paper_workflow_status(root: Path, *, status: str = "PASS") -> Path:
+def _paper_workflow_status(
+    root: Path,
+    *,
+    status: str = "PASS",
+    workflow_stage: str | None = None,
+    expected_demo_warning_count: int = 0,
+    stale_warning_count: int = 0,
+    actionable_warning_count: int = 0,
+    blocking_error_count: int = 0,
+    next_manual_action: str = "Review completed workflow artifacts.",
+) -> Path:
     folder = root / "paper_trading" / "workflow_status" / "paper-workflow-status-a"
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "paper_workflow_status_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    total_warning_count = expected_demo_warning_count + stale_warning_count + actionable_warning_count
+    resolved_stage = workflow_stage or ("WORKFLOW_COMPLETE" if status == "PASS" else "WORKFLOW_NEEDS_ATTENTION")
     _write_json(
         folder / "metadata.json",
         {
             "workflow_status_id": "paper-workflow-status-a",
             "created_at": f"{DECISION_DATE}T16:15:00",
             "status": status,
-            "workflow_stage": "WORKFLOW_COMPLETE" if status == "PASS" else "WORKFLOW_NEEDS_ATTENTION",
+            "workflow_stage": resolved_stage,
             "latest_decision_date": DECISION_DATE,
-            "next_manual_action": "Review completed workflow artifacts.",
+            "next_manual_action": next_manual_action,
+            "total_warning_count": total_warning_count,
+            "expected_demo_warning_count": expected_demo_warning_count,
+            "stale_warning_count": stale_warning_count,
+            "actionable_warning_count": actionable_warning_count,
+            "blocking_error_count": blocking_error_count,
+            "component_statuses": {
+                "total_warning_count": total_warning_count,
+                "expected_demo_warning_count": expected_demo_warning_count,
+                "stale_warning_count": stale_warning_count,
+                "actionable_warning_count": actionable_warning_count,
+                "blocking_error_count": blocking_error_count,
+            },
             "output_files": {"paper_workflow_status_report": str(report)},
             "warnings": [],
             "live_trading_enabled": False,

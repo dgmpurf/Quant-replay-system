@@ -57,6 +57,25 @@ If that daily metadata includes `reviewed_decisions_path`, the dashboard follows
 
 Older review or template-health artifacts remain discoverable through `paper-index` and `paper-health-check`, and stale warnings can appear in component notes. They do not define the active workflow stage when a later linked reviewed flow is available.
 
+## Warning Actionability
+
+The dashboard preserves raw warning and error counts, then adds actionability counts:
+
+- `EXPECTED_DEMO_WARNING`: expected in an explicit local demo flow. A no-fills `WATCH_ONLY` paper daily run can produce an empty `fills.csv` warning while still validating the review and handoff workflow.
+- `STALE_ARTIFACT_WARNING`: warning from an older artifact that is still indexed but is not part of the active reviewed daily chain.
+- `ACTIONABLE_WARNING`: warning on the active chain that should be reviewed, such as active review-template health warnings before review application.
+- `BLOCKING_ERROR`: active missing, unreadable, or failed artifacts.
+
+Reports and metadata include:
+
+- `total_warning_count`
+- `expected_demo_warning_count`
+- `stale_warning_count`
+- `actionable_warning_count`
+- `blocking_error_count`
+
+If only expected demo or stale warnings are present, the dashboard keeps the raw `WARN` signal but changes the next manual action to explain that the local demo workflow was validated and that no fills were supplied. Actionable warnings and blocking errors still produce the normal review/fix prompts.
+
 ## Stage Meanings
 
 - `NO_CURRENT_CANDIDATES`: no current-candidate artifact found.
@@ -84,6 +103,7 @@ The dashboard recommends one next step based on the inferred stage:
 - Enter manual fills CSV or run `paper-reconcile-fills`.
 - Run `paper-index` and `paper-health-check`.
 - Review warnings/errors.
+- Treat expected no-fills demo warnings as validation notes instead of active blockers.
 
 These are workflow prompts, not trading instructions.
 

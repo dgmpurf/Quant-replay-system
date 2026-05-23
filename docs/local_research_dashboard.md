@@ -46,6 +46,19 @@ When the latest daily paper artifact used reviewed decisions, the dashboard foll
 
 Stale artifacts are still useful audit evidence. They remain available in paper indexes and health reports, and stale warning counts may be noted, but the unified dashboard stage follows the active daily reviewed workflow chain.
 
+## Warning Actionability
+
+`research-status` preserves raw warning counts and adds actionability counts inherited from component dashboards where available:
+
+- `EXPECTED_DEMO_WARNING`: expected in explicit local dry-run workflows, such as a `WATCH_ONLY` paper daily run with no fills.
+- `STALE_ARTIFACT_WARNING`: warning from an older dry-run artifact that is no longer part of the active workflow chain.
+- `ACTIONABLE_WARNING`: warning that should be reviewed before continuing.
+- `BLOCKING_ERROR`: missing, unreadable, or failed active artifacts.
+
+If the only warnings are expected demo or stale artifact warnings, the dashboard does not treat them as active blockers. It keeps the raw `WARN` status for audit visibility and recommends the demo-specific next action instead of the generic `Review warnings/errors` prompt.
+
+Prior current-candidate health warnings from old dry runs can be classified as stale when the health issue `run_id` does not match the active current-candidate run.
+
 ## Stage Meanings
 
 - `NO_DATA`: no useful local workflow artifacts were found.
@@ -80,6 +93,7 @@ The dashboard recommends one conservative next step, such as:
 - Run `paper-reconcile-fills`.
 - Run `paper-workflow-status`.
 - Review warnings/errors.
+- Continue or clean up expected demo/stale warning artifacts when they are not active blockers.
 
 These prompts are workflow reminders, not trading advice.
 
