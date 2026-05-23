@@ -94,13 +94,46 @@ During development, run relevant focused tests first. Before any checkpoint, com
 
 If the full suite exceeds 60 seconds, run `python -m pytest --durations=30` and report the slowest tests so future work can decide whether to split, mark, or optimize them.
 
-## Local CLI Verification And Artifact Diagnostics
+## Codex Local CLI Verification And Artifact Diagnostics
 
-When a task explicitly asks for local workflow verification, and the required inputs already exist or can be created under ignored local paths, Codex should run the relevant local CLI commands itself instead of leaving manual stitching to the user.
+When a task involves data imports, manifests, overlays, generated artifacts, paper workflow outputs, or dashboard status, Codex should perform safe local CLI verification itself when the required inputs already exist or can be created under ignored local paths.
 
-Safe verification examples include local-only commands such as `universe-overlay`, `data-pipeline`, `snapshot-quality`, `current-candidates`, and status dashboards using ignored `data/raw`, `data/processed`, and `outputs` artifacts. Codex should inspect the generated CSV/JSON/Markdown artifacts, report important paths and row counts, and then run `git status --short` plus tracked-file safety checks.
+Safe verification examples include local-only commands such as:
 
-Codex must still avoid real network/API calls unless explicitly allowed, must not modify `.env`, must not print secrets, and must not run `git add`, `git commit`, or `git push`.
+```bat
+python -m quant_replay_system.cli data-pipeline
+python -m quant_replay_system.cli snapshot-quality
+python -m quant_replay_system.cli current-candidates
+python -m quant_replay_system.cli universe-overlay
+python -m quant_replay_system.cli paper-workflow-status
+python -m quant_replay_system.cli research-status
+```
+
+Codex may:
+
+- inspect generated CSV, JSON, and Markdown artifacts;
+- create ignored diagnostics reports under `outputs/reports/manual_diagnostics/`;
+- create ignored local dry-run files under `data/raw/manual_*` or `data/raw/manual_manifests/`;
+- edit local manifests when needed for a dry run;
+- report exact artifact paths, row counts, statuses, warning counts, and next manual actions.
+
+Codex must run git safety checks after local artifact work:
+
+```bat
+git status --short
+git ls-files | findstr /R /C:"^data/raw" /C:"^data/processed" /C:"^outputs" /C:"^\.env" /C:"^\.venv" /C:"^secrets"
+```
+
+Codex must not:
+
+- run `git add`, `git commit`, `git push`, or create tags;
+- track generated `data/raw`, `data/processed`, `outputs`, `.env`, `.venv`, or secrets;
+- print secrets, tokens, account values, or private keys;
+- modify `.env`;
+- use real network/API calls unless the task explicitly allows a manual diagnostic or real-data dry run;
+- add live trading, broker integration, or automated order placement.
+
+The user handles Git checkpointing, tags, pushes, and sensitive strategy or account decisions.
 
 ## 3. ChatGPT Review Loop
 

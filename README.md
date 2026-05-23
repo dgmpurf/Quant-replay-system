@@ -125,6 +125,8 @@ For a one-page local workflow status dashboard and next manual action, see [docs
 
 For local-safe raw data source adapters before ingestion, see [docs/data_sources.md](docs/data_sources.md).
 
+For the project data-source roadmap across AKShare upstream routes, BaoStock, Tushare, professional vendors, and permanent `LOCAL_CSV` fallback, see [docs/data_source_strategy.md](docs/data_source_strategy.md).
+
 `AKSHARE_OPTIONAL` is available for guarded manual local market, benchmark, trading-calendar, and universe snapshot fetches; it requires `--allow-real-data`, is never called by automated tests, includes stock/ETF market routing diagnostics plus a manual-only `curl_cffi` Eastmoney kline fallback, and should be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
 
 `TUSHARE_OPTIONAL` is available as a second guarded manual source for market, benchmark, trading-calendar, and universe snapshot fetches; it requires `--allow-real-data` and a local `TUSHARE_TOKEN`, never writes the token to metadata, is never called by automated tests, and should also be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
@@ -152,6 +154,16 @@ For the unified local research workflow dashboard, see [docs/local_research_dash
 For the end-to-end local research workflow smoke-test path, see [docs/local_research_workflow_e2e.md](docs/local_research_workflow_e2e.md).
 
 For the v0.39.0 local research workflow checkpoint summary, see [docs/release_checkpoint_v0.39.0.md](docs/release_checkpoint_v0.39.0.md).
+
+For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
+
+Recommended next data-source engineering sequence:
+
+1. AKShare Non-Eastmoney Market Fallback Adapter.
+2. Data Source Health Check.
+3. Local Market Data Cache.
+4. BaoStock Optional Adapter.
+5. Tushare Optional Adapter if cost and permission are acceptable.
 
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv

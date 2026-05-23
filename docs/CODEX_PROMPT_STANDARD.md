@@ -31,7 +31,9 @@ Use this document when drafting future Codex prompts for:
 - Every task must avoid secrets, `.env` changes, token printing, and real network/API calls in tests.
 - Every task should use mock or local CSV data unless the prompt explicitly says otherwise.
 - Every task should record known limitations and the next recommended task.
-- When a task explicitly asks for local CLI verification, Codex should perform safe local dry-runs itself when required inputs exist or can be created under ignored local paths. It should inspect generated artifacts, report paths and row counts, and run git safety checks instead of leaving those local verification steps to the user.
+- When a task involves data imports, manifests, overlays, generated artifacts, paper workflow outputs, or dashboard status, Codex should perform safe local CLI verification and artifact diagnostics itself when required inputs exist or can be created under ignored local paths. It should inspect generated artifacts, report paths and row counts, and run git safety checks instead of leaving those local verification steps to the user.
+- Codex may create ignored local diagnostic reports under `outputs/reports/manual_diagnostics/` and ignored dry-run inputs under `data/raw/manual_*` or `data/raw/manual_manifests/`.
+- Codex must not run `git add`, `git commit`, `git push`, or create tags. The user handles Git checkpointing and sensitive strategy/account decisions.
 
 ## Standard Codex Prompt Template
 
@@ -217,6 +219,34 @@ For documentation-only tasks, Codex should also confirm:
 - no source code was changed,
 - no tests were changed,
 - no configs with behavior changes were modified.
+
+## Local Workflow Delegation Rules
+
+Codex should run local CLI diagnostics and dry-runs when safe for tasks involving:
+
+- data imports or source fetch handoff,
+- local manifests,
+- reviewed overlays,
+- artifact indexes or health checks,
+- paper workflow artifacts,
+- workflow status dashboards.
+
+Codex may inspect generated CSV, JSON, and Markdown artifacts and should report exact paths, row counts, status values, warning/error counts, and next manual actions.
+
+Codex may create ignored local files only for verification:
+
+- diagnostics reports under `outputs/reports/manual_diagnostics/`,
+- reviewed local dry-run inputs under `data/raw/manual_*`,
+- local manifests under `data/raw/manual_manifests/`.
+
+Codex must run git safety checks after local artifact work:
+
+```bat
+git status --short
+git ls-files | findstr /R /C:"^data/raw" /C:"^data/processed" /C:"^outputs" /C:"^\.env" /C:"^\.venv" /C:"^secrets"
+```
+
+Codex must not commit, push, tag, track generated local artifacts, modify `.env`, print secrets, or make real network/API calls unless a task explicitly allows a manual diagnostic or real-data dry run.
 
 ## Prompt Templates
 

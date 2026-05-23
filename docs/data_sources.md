@@ -14,6 +14,8 @@ source adapter -> data/raw/... -> ingestion -> data/processed/... -> snapshot qu
 
 The adapter layer gives each future source a consistent contract without mixing vendor-specific fetching into replay, scoring, or paper trading.
 
+For the broader source roadmap across AKShare upstream routes, BaoStock, Tushare, JQData/RQData, institutional vendors, and permanent `LOCAL_CSV` fallback, see [data_source_strategy.md](data_source_strategy.md).
+
 ## Supported Adapters
 
 ### LOCAL_CSV
