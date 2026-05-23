@@ -313,6 +313,16 @@ data_source_health:
   enable_live_trading: false
   enable_broker_api: false
 
+market_data_cache:
+  cache_path: data/cache/market/daily_bars.csv
+  output_dir: outputs/reports/market_data_cache
+  duplicate_policy: keep_latest
+  require_available_time: true
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_pipeline:
   output_dir: outputs/reports/data_pipeline
   raw_output_dir: data/raw

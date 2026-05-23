@@ -29,6 +29,7 @@ secrets/
 
 # Local data and generated outputs
 data/raw/
+data/cache/
 data/processed/
 data/snapshots/
 outputs/

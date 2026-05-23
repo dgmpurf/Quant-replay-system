@@ -129,6 +129,8 @@ For the project data-source roadmap across AKShare upstream routes, BaoStock, Tu
 
 For checking local source and upstream route availability before import, see [docs/data_source_health.md](docs/data_source_health.md).
 
+For caching successful canonical daily market bars and querying them into local pipeline inputs, see [docs/market_data_cache.md](docs/market_data_cache.md).
+
 `AKSHARE_OPTIONAL` is available for guarded manual local market, benchmark, trading-calendar, and universe snapshot fetches; it requires `--allow-real-data`, is never called by automated tests, tries non-Eastmoney Sina/Tencent market routes before Eastmoney where supported, includes stock/ETF/index routing diagnostics plus a manual-only `curl_cffi` Eastmoney kline fallback, and should be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
 
 `TUSHARE_OPTIONAL` is available as a second guarded manual source for market, benchmark, trading-calendar, and universe snapshot fetches; it requires `--allow-real-data` and a local `TUSHARE_TOKEN`, never writes the token to metadata, is never called by automated tests, and should also be followed by `data-pipeline`, `data-quality`, and `snapshot-quality`.
@@ -161,14 +163,15 @@ For Codex local CLI verification and artifact diagnostics delegation rules, see 
 
 Recommended next data-source engineering sequence:
 
-1. Local Market Data Cache.
-2. BaoStock Optional Adapter.
-3. Tushare Optional Adapter if cost and permission are acceptable.
-4. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
+1. BaoStock Optional Adapter.
+2. Tushare Optional Adapter if cost and permission are acceptable.
+3. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
 
 ```powershell
 python -m quant_replay_system.cli data-source-fetch --source LOCAL_CSV --dataset-type market --input data/mock/prices.csv
 python -m quant_replay_system.cli data-source-health --source AKSHARE_OPTIONAL --dataset-type market --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+python -m quant_replay_system.cli market-cache-ingest --input data/raw/AKSHARE_OPTIONAL/market/<run_id>/raw_data.csv --metadata data/raw/AKSHARE_OPTIONAL/market/<run_id>/metadata.json
+python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data/raw/manual_cache/510300_market.csv
 python -m quant_replay_system.cli universe-overlay --base-universe data/raw/AKSHARE_OPTIONAL/universe/<run_id>/raw_data.csv --overlay data/raw/manual_overlays/etf_universe_overlay.csv
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv

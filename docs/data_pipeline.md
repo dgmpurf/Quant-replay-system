@@ -31,6 +31,16 @@ Example:
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data\mock\prices.csv
 ```
 
+For market data fetched from optional public sources, the recommended repeatable path is to cache the successful canonical `raw_data.csv` first, then query a local CSV for pipeline input:
+
+```cmd
+python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
+python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data\raw\manual_cache\510300_market.csv
+python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data\raw\manual_cache\510300_market.csv
+```
+
+See [market_data_cache.md](market_data_cache.md). The cache reduces repeated public endpoint calls but does not replace data-quality or snapshot-quality gates.
+
 Supported dataset types:
 
 - `market`

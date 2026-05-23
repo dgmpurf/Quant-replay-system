@@ -21,7 +21,7 @@ Every raw data path, regardless of source, must still pass:
 data-pipeline -> data-quality -> snapshot-quality -> current-candidates
 ```
 
-Before importing from optional real-data routes, run `data-source-health` to verify route availability and fallback behavior. The health check is a local diagnostic only; it does not replace data quality or snapshot quality.
+Before importing from optional real-data routes, run `data-source-health` to verify route availability and fallback behavior. Successful market outputs can be ingested into the [local market data cache](market_data_cache.md) to reduce repeated public endpoint calls. Health checks and cache hits are diagnostics only; they do not replace data quality or snapshot quality.
 
 ## Source Categories
 
@@ -140,7 +140,7 @@ Constraints:
 ## Recommended Roadmap
 
 1. Free route:
-   BaoStock + AKShare Sina/Tencent + `LOCAL_CSV` + local cache.
+   BaoStock + AKShare Sina/Tencent + `LOCAL_CSV` + local market data cache.
 2. Low-cost API route:
    Tushare if permissions and cost make sense.
 3. Professional route:
@@ -152,10 +152,9 @@ Constraints:
 
 Recommended next source-related tasks:
 
-1. Local Market Data Cache.
-2. BaoStock Optional Adapter.
-3. Tushare Optional Adapter if cost and permission are acceptable.
-4. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
+1. BaoStock Optional Adapter.
+2. Tushare Optional Adapter if cost and permission are acceptable.
+3. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
 
 ## Required Data Preparation Path
 
@@ -164,6 +163,13 @@ Every source should produce local raw files first:
 ```text
 data/raw/<source>/<dataset_type>/<run_id>/raw_data.csv
 data/raw/<source>/<dataset_type>/<run_id>/metadata.json
+```
+
+For market data, successful canonical daily bars may then be cached locally:
+
+```cmd
+python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
+python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data\raw\manual_cache\510300_market.csv
 ```
 
 Then it must go through:

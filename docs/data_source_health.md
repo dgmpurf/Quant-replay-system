@@ -77,10 +77,12 @@ Metadata never stores API tokens or secrets.
 Run health checks before importing real or manually reviewed data:
 
 ```text
-data-source-health -> data-source-fetch -> data-pipeline -> data-quality -> snapshot-quality -> current-candidates
+data-source-health -> data-source-fetch -> market-cache-ingest -> market-cache-query -> data-pipeline -> data-quality -> snapshot-quality -> current-candidates
 ```
 
 If a route fails, use the recommended fallback from the report. For AKShare market data, Eastmoney instability should trigger Sina/Tencent fallback or reviewed `LOCAL_CSV` fallback.
+
+For market data that succeeds, use [market_data_cache.md](market_data_cache.md) to cache the canonical `raw_data.csv` locally before building repeatable pipeline inputs.
 
 ## Safety
 

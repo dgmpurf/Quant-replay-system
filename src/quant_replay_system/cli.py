@@ -37,6 +37,11 @@ from quant_replay_system.data_ingestion import (
 )
 from quant_replay_system.daily_paper_runner import run_daily_paper_trading
 from quant_replay_system.local_research_dashboard import run_local_research_dashboard
+from quant_replay_system.market_data_cache import (
+    ingest_market_cache_csv,
+    query_market_cache,
+    summarize_market_cache_status,
+)
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
@@ -364,6 +369,38 @@ def build_parser() -> argparse.ArgumentParser:
     data_source_health.add_argument("--output-dir", help="Optional health artifact output directory")
     data_source_health.add_argument("--config", help="Optional config YAML path")
     data_source_health.set_defaults(handler=_handle_data_source_health)
+
+    market_cache_ingest = subparsers.add_parser(
+        "market-cache-ingest",
+        help="Ingest canonical daily market bars into the local market data cache",
+    )
+    market_cache_ingest.add_argument("--input", required=True, help="Canonical market raw_data.csv path")
+    market_cache_ingest.add_argument("--metadata", help="Optional data-source metadata.json path")
+    market_cache_ingest.add_argument("--cache-path", help="Optional market cache CSV path")
+    market_cache_ingest.add_argument("--output-dir", help="Optional market cache report output directory")
+    market_cache_ingest.add_argument("--config", help="Optional config YAML path")
+    market_cache_ingest.set_defaults(handler=_handle_market_cache_ingest)
+
+    market_cache_query = subparsers.add_parser(
+        "market-cache-query",
+        help="Query local cached daily market bars",
+    )
+    market_cache_query.add_argument("--symbol", required=True, help="Symbol to query, e.g. 510300")
+    market_cache_query.add_argument("--start-date", help="Optional inclusive start date")
+    market_cache_query.add_argument("--end-date", help="Optional inclusive end date")
+    market_cache_query.add_argument("--cache-path", help="Optional market cache CSV path")
+    market_cache_query.add_argument("--output", help="Optional output CSV path for query rows")
+    market_cache_query.add_argument("--config", help="Optional config YAML path")
+    market_cache_query.set_defaults(handler=_handle_market_cache_query)
+
+    market_cache_status = subparsers.add_parser(
+        "market-cache-status",
+        help="Summarize the local market data cache",
+    )
+    market_cache_status.add_argument("--cache-path", help="Optional market cache CSV path")
+    market_cache_status.add_argument("--output-dir", help="Optional market cache report output directory")
+    market_cache_status.add_argument("--config", help="Optional config YAML path")
+    market_cache_status.set_defaults(handler=_handle_market_cache_status)
 
     universe_overlay = subparsers.add_parser(
         "universe-overlay",
@@ -1262,6 +1299,78 @@ def _handle_data_source_health(args: argparse.Namespace) -> int:
     return 1 if result.status == "FAIL" else 0
 
 
+def _handle_market_cache_ingest(args: argparse.Namespace) -> int:
+    settings = _market_cache_settings_from_args(args)
+    result = ingest_market_cache_csv(
+        args.input,
+        metadata_path=args.metadata,
+        cache_path=args.cache_path,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    print(f"Market cache status: {result.status}")
+    print(f"cache_run_id: {result.cache_run_id}")
+    print(f"cache_path: {result.cache_path}")
+    print(f"ingested_row_count: {result.row_count}")
+    print(f"cache_row_count: {result.cache_row_count}")
+    print(f"symbol_count: {result.symbol_count}")
+    print(f"Report path: {result.artifact_paths['market_cache_report']}")
+    print(f"Summary CSV path: {result.artifact_paths['market_cache_summary']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_cache_query(args: argparse.Namespace) -> int:
+    settings = _market_cache_settings_from_args(args)
+    result = query_market_cache(
+        symbol=args.symbol,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        cache_path=args.cache_path,
+        output_path=args.output,
+        config=settings,
+    )
+    print(f"Market cache query status: {result.status}")
+    print(f"cache_path: {result.cache_path}")
+    print(f"symbol: {result.symbol}")
+    print(f"row_count: {result.row_count}")
+    if not result.result_frame.empty:
+        print(f"date_range: {result.result_frame['trade_date'].min()} to {result.result_frame['trade_date'].max()}")
+    else:
+        print("date_range: ")
+    if result.output_path is not None:
+        print(f"output_path: {result.output_path}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_cache_status(args: argparse.Namespace) -> int:
+    settings = _market_cache_settings_from_args(args)
+    result = summarize_market_cache_status(
+        cache_path=args.cache_path,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Market cache status: {result.status}")
+    print(f"cache_run_id: {result.cache_run_id}")
+    print(f"cache_path: {result.cache_path}")
+    print(f"row_count: {summary.get('cache_row_count', 0)}")
+    print(f"symbol_count: {summary.get('symbol_count', 0)}")
+    print(f"date_range: {summary.get('min_trade_date', '')} to {summary.get('max_trade_date', '')}")
+    print(f"source_counts: {summary.get('source_counts', '{}')}")
+    print(f"upstream_counts: {summary.get('upstream_counts', '{}')}")
+    print(f"Report path: {result.artifact_paths['market_cache_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
 def _handle_universe_overlay(args: argparse.Namespace) -> int:
     settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
     updates = {"allow_override_existing": bool(args.allow_override_existing)}
@@ -1589,6 +1698,22 @@ def _workflow_settings_from_args(args: argparse.Namespace, section_name: str):
             update={section_name: current_section.model_copy(update={"output_dir": Path(args.output_dir)})}
         )
     return _apply_snapshot_preflight_args(settings, args)
+
+
+def _market_cache_settings_from_args(args: argparse.Namespace):
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if getattr(args, "cache_path", None):
+        updates["cache_path"] = Path(args.cache_path)
+    if getattr(args, "output_dir", None):
+        updates["output_dir"] = Path(args.output_dir)
+    if not updates:
+        return settings
+    return settings.model_copy(
+        update={
+            "market_data_cache": settings.market_data_cache.model_copy(update=updates)
+        }
+    )
 
 
 def _apply_snapshot_preflight_args(settings, args: argparse.Namespace):

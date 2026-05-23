@@ -347,6 +347,17 @@ class DataSourceHealthSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketDataCacheSettings(BaseModel):
+    cache_path: Path = Path("data/cache/market/daily_bars.csv")
+    output_dir: Path = Path("outputs/reports/market_data_cache")
+    duplicate_policy: Literal["keep_latest"] = "keep_latest"
+    require_available_time: bool = True
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataPipelineSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/data_pipeline")
     raw_output_dir: Path = Path("data/raw")
@@ -526,6 +537,7 @@ class Settings(BaseModel):
     paper_workflow_status: PaperWorkflowStatusSettings = Field(default_factory=PaperWorkflowStatusSettings)
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
     data_source_health: DataSourceHealthSettings = Field(default_factory=DataSourceHealthSettings)
+    market_data_cache: MarketDataCacheSettings = Field(default_factory=MarketDataCacheSettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
     universe_overlay: UniverseOverlaySettings = Field(default_factory=UniverseOverlaySettings)
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)
