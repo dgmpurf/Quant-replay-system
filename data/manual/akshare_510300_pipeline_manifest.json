@@ -1,0 +1,19 @@
+{
+  "datasets": [
+    {
+      "dataset_type": "market",
+      "source": "LOCAL_CSV",
+      "input_path": "data/raw/AKSHARE_OPTIONAL/market/afd7b44a7c6c/raw_data.csv"
+    },
+    {
+      "dataset_type": "universe",
+      "source": "LOCAL_CSV",
+      "input_path": "data/raw/AKSHARE_OPTIONAL/universe/fb6460ab877b/raw_data.csv"
+    },
+    {
+      "dataset_type": "trading_calendar",
+      "source": "LOCAL_CSV",
+      "input_path": "data/raw/AKSHARE_OPTIONAL/trading_calendar/ad40610b7483/raw_data.csv"
+    }
+  ]
+}
