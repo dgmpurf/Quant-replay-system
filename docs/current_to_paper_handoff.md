@@ -31,6 +31,8 @@ Direct path mode records:
 
 Artifact health checks are skipped for direct path mode unless an index/root workflow is used.
 
+If the selected `candidates.csv` was produced with `selection_profile=demo`, treat the handoff as a workflow validation run only. Demo candidates are not strategy recommendations; they exist so tiny local datasets can exercise the paper-review and paper-daily artifact path.
+
 ## Index Or Root Flow
 
 Use an index CSV to select by decision date, universe, or run id:
@@ -152,4 +154,5 @@ python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs\repo
 - Does not repair missing or stale artifacts.
 - Direct `candidates.csv` mode skips health checks by default.
 - Manual review is still required before fills should be entered.
+- Demo current-candidate files can be handed off for local workflow validation, but they remain explicitly marked as demo/not strategy recommendations.
 - No live trading or broker API integration is implemented.

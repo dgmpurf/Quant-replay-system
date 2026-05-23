@@ -89,6 +89,7 @@ def generate_current_candidates(
     trading_calendar: TradingCalendar | None = None,
     run_id: str | None = None,
     enable_snapshot_preflight: bool | None = None,
+    selection_profile: str | None = None,
 ) -> CurrentCandidateResult:
     """Generate ranked current/as-of-date candidates from local point-in-time data."""
 
@@ -100,6 +101,9 @@ def generate_current_candidates(
     settings = _settings_with_manifest_preflight(settings, snapshot_manifest_path, enable_snapshot_preflight)
     as_of_date = _normalize_date(decision_date)
     effective_top_n = top_n if top_n is not None else settings.current_candidates.default_top_n
+    effective_selection_profile = _normalize_selection_profile(
+        selection_profile or settings.current_candidates.selection_profile
+    )
 
     preflight = run_snapshot_quality_preflight(
         settings,
@@ -144,7 +148,14 @@ def generate_current_candidates(
         min_final_score=settings.current_candidates.min_final_score,
         exclude_blocked=settings.candidate_selection.exclude_blocked,
     )
-    selected = select_candidates(scored_dataset, config=selection_config)
+    default_selected = select_candidates(scored_dataset, config=selection_config)
+    selected, selection_warnings = apply_current_candidate_selection_profile(
+        scored_dataset,
+        default_selected,
+        selection_profile=effective_selection_profile,
+        top_n=effective_top_n,
+    )
+    warnings.extend(selection_warnings)
 
     effective_run_id = run_id or generate_current_candidate_run_id(
         decision_date=as_of_date,
@@ -152,6 +163,7 @@ def generate_current_candidates(
         top_n=effective_top_n,
         config_version=settings.current_candidates.config_version,
         snapshot_manifest_path=snapshot_manifest_path,
+        selection_profile=effective_selection_profile,
     )
     paths = resolve_current_candidate_artifact_paths(
         output_dir=settings.current_candidates.output_dir,
@@ -171,9 +183,10 @@ def generate_current_candidates(
         scored_dataset=scored_dataset,
         candidates=candidates,
         input_diagnostics=input_diagnostics,
+        selection_profile=effective_selection_profile,
     )
     audit_metadata.update(preflight.metadata_fields())
-    config_summary = _config_summary(settings, effective_top_n, effective_run_id)
+    config_summary = _config_summary(settings, effective_top_n, effective_run_id, effective_selection_profile)
     config_summary["snapshot_quality_preflight"] = preflight.metadata_fields()
     result = CurrentCandidateResult(
         decision_date=as_of_date,
@@ -206,6 +219,7 @@ def generate_current_candidate_run_id(
     top_n: int,
     config_version: str = "mvp",
     snapshot_manifest_path: str | Path | None = None,
+    selection_profile: str = "default",
 ) -> str:
     """Generate a deterministic short id for a current-candidate run."""
 
@@ -216,8 +230,68 @@ def generate_current_candidate_run_id(
         "config_version": config_version,
         "snapshot_manifest_path": str(snapshot_manifest_path) if snapshot_manifest_path is not None else "",
     }
+    if _normalize_selection_profile(selection_profile) != "default":
+        payload["selection_profile"] = _normalize_selection_profile(selection_profile)
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()[:10]
+
+
+def apply_current_candidate_selection_profile(
+    scored_dataset: pd.DataFrame,
+    default_selected: pd.DataFrame,
+    *,
+    selection_profile: str,
+    top_n: int,
+) -> tuple[pd.DataFrame, list[str]]:
+    """Apply an explicit current-candidate selection profile after default scoring."""
+
+    profile = _normalize_selection_profile(selection_profile)
+    selected = default_selected.copy(deep=True)
+    warnings: list[str] = []
+    if profile == "default":
+        if not selected.empty:
+            selected["selection_profile"] = "default"
+            selected["demo_mode"] = False
+            selected["not_strategy_recommendation"] = False
+            selected["selection_reason"] = "DEFAULT_SELECTION_THRESHOLDS_PASSED"
+        return selected, warnings
+
+    if not selected.empty:
+        selected["selection_profile"] = "demo"
+        selected["demo_mode"] = True
+        selected["not_strategy_recommendation"] = True
+        selected["selection_reason"] = "DEFAULT_SELECTION_PASSED_WITH_DEMO_PROFILE_ENABLED"
+        warnings.append(_demo_profile_warning(len(selected), fallback_used=False))
+        return selected, warnings
+
+    if scored_dataset.empty:
+        warnings.append("Demo selection profile found no scored rows to select for workflow validation.")
+        return selected, warnings
+
+    frame = scored_dataset.copy(deep=True)
+    if "score_action" in frame.columns:
+        frame = frame.loc[frame["score_action"].astype(str) != "BLOCKED"].copy()
+    if "risk_precheck_status" in frame.columns:
+        frame = frame.loc[frame["risk_precheck_status"].astype(str).str.upper() != "BLOCK"].copy()
+    if frame.empty:
+        warnings.append("Demo selection profile did not select candidates because all scored rows were blocked.")
+        return selected, warnings
+
+    sort_columns = ["final_score"] if "final_score" in frame.columns else []
+    ascending = [False] if sort_columns else []
+    for optional_column in ["decision_date", "symbol"]:
+        if optional_column in frame.columns:
+            sort_columns.append(optional_column)
+            ascending.append(True)
+    if sort_columns:
+        frame = frame.sort_values(sort_columns, ascending=ascending)
+    selected = frame.head(top_n).reset_index(drop=True)
+    selected["selection_profile"] = "demo"
+    selected["demo_mode"] = True
+    selected["not_strategy_recommendation"] = True
+    selected["selection_reason"] = "DEMO_PROFILE_SELECTED_FOR_WORKFLOW_VALIDATION"
+    warnings.append(_demo_profile_warning(len(selected), fallback_used=True))
+    return selected, warnings
 
 
 def resolve_current_candidate_artifact_paths(
@@ -278,6 +352,10 @@ def build_current_candidate_metadata(
             "status": result.snapshot_quality_status,
             "report_path": str(result.snapshot_quality_report_path) if result.snapshot_quality_report_path is not None else "",
         },
+        "selection_profile": result.audit_metadata.get("selection_profile", "default"),
+        "demo_mode": result.audit_metadata.get("demo_mode", False),
+        "not_strategy_recommendation": result.audit_metadata.get("not_strategy_recommendation", False),
+        "no_live_trading": True,
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
         "audit_metadata": result.audit_metadata,
@@ -309,6 +387,9 @@ def render_current_candidate_report(
                 "universe_name": result.universe_name,
                 "run_id": result.run_id,
                 "top_n": result.top_n,
+                "selection_profile": result.audit_metadata.get("selection_profile"),
+                "demo_mode": result.audit_metadata.get("demo_mode"),
+                "not_strategy_recommendation": result.audit_metadata.get("not_strategy_recommendation"),
                 "candidate_count": result.candidate_count,
                 "artifact_dir": paths.artifact_dir,
                 "report_path": paths.current_candidates_report,
@@ -318,6 +399,17 @@ def render_current_candidate_report(
         "## Config Summary",
         "",
         _dict_table(result.config_summary),
+        "",
+        "## Selection Profile",
+        "",
+        _dict_table(
+            {
+                "selection_profile": result.audit_metadata.get("selection_profile"),
+                "demo_mode": result.audit_metadata.get("demo_mode"),
+                "not_strategy_recommendation": result.audit_metadata.get("not_strategy_recommendation"),
+                "purpose": result.audit_metadata.get("selection_profile_purpose"),
+            }
+        ),
         "",
         "## Snapshot Quality Preflight",
         "",
@@ -356,6 +448,8 @@ def render_current_candidate_report(
                 "risk_penalty",
                 "risk_precheck_status",
                 "risk_precheck_reason",
+                "selection_profile",
+                "selection_reason",
             ],
         ),
         "",
@@ -440,6 +534,10 @@ def _candidate_columns() -> list[str]:
         "risk_precheck_reason",
         "score_reason",
         "score_breakdown",
+        "selection_profile",
+        "demo_mode",
+        "not_strategy_recommendation",
+        "selection_reason",
         "current_candidate_run_id",
         "source_run_id",
         "source_report_path",
@@ -516,7 +614,9 @@ def _audit_metadata(
     scored_dataset: pd.DataFrame,
     candidates: pd.DataFrame,
     input_diagnostics: dict[str, Any] | None = None,
+    selection_profile: str = "default",
 ) -> dict[str, Any]:
+    demo_mode = selection_profile == "demo"
     return {
         "decision_date": decision_date,
         "decision_time": decision_time,
@@ -527,6 +627,15 @@ def _audit_metadata(
         "factor_dataset_rows": len(factor_dataset),
         "scored_dataset_rows": len(scored_dataset),
         "candidate_rows": len(candidates),
+        "selection_profile": selection_profile,
+        "demo_mode": demo_mode,
+        "not_strategy_recommendation": demo_mode,
+        "selection_profile_purpose": (
+            "Local artifact/workflow validation only; not a strategy recommendation."
+            if demo_mode
+            else "Default current-candidate research thresholds."
+        ),
+        "no_live_trading": True,
         "live_trading_enabled": False,
         "broker_api_invoked": False,
         "current_candidate_generation_only": True,
@@ -576,11 +685,13 @@ def _empty_factor_dataset_warning(diagnostics: dict[str, Any]) -> str:
     )
 
 
-def _config_summary(settings: Settings, top_n: int, run_id: str) -> dict[str, Any]:
+def _config_summary(settings: Settings, top_n: int, run_id: str, selection_profile: str) -> dict[str, Any]:
     return {
         "top_n": top_n,
         "run_id": run_id,
         "config_version": settings.current_candidates.config_version,
+        "selection_profile": selection_profile,
+        "demo_mode": selection_profile == "demo",
         "min_action": settings.current_candidates.min_action,
         "min_final_score": settings.current_candidates.min_final_score,
         "factor_dataset": settings.factor_dataset.model_dump(),
@@ -592,6 +703,21 @@ def _config_summary(settings: Settings, top_n: int, run_id: str) -> dict[str, An
             "min_final_score": settings.current_candidates.min_final_score,
         },
     }
+
+
+def _normalize_selection_profile(selection_profile: str) -> str:
+    profile = str(selection_profile or "default").strip().lower()
+    if profile not in {"default", "demo"}:
+        raise ValueError("selection_profile must be one of: default, demo")
+    return profile
+
+
+def _demo_profile_warning(candidate_count: int, *, fallback_used: bool) -> str:
+    mode = "selected candidates below default current-candidate thresholds" if fallback_used else "was enabled"
+    return (
+        f"Demo selection profile {mode}; candidate_count={candidate_count}. "
+        "Demo candidates are for local artifact/workflow validation only and are not strategy recommendations."
+    )
 
 
 def _load_project_settings(config: Settings | str | Path | None) -> Settings:

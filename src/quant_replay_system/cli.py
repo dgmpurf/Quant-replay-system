@@ -149,6 +149,12 @@ def build_parser() -> argparse.ArgumentParser:
     current_candidates.add_argument("--universe", required=True, help="Universe name")
     current_candidates.add_argument("--top", type=int, help="Candidate count override")
     current_candidates.add_argument("--output-dir", help="Optional current-candidate output directory")
+    current_candidates.add_argument(
+        "--selection-profile",
+        choices=["default", "demo"],
+        default="default",
+        help="Current-candidate selection profile. Use demo only for local artifact/workflow validation.",
+    )
     current_candidates.add_argument("--config", help="Optional config YAML path")
     _add_snapshot_preflight_arguments(current_candidates)
     current_candidates.set_defaults(handler=_handle_current_candidates)
@@ -628,12 +634,15 @@ def _handle_current_candidates(args: argparse.Namespace) -> int:
             config=settings,
             snapshot_manifest_path=args.snapshot_manifest,
             enable_snapshot_preflight=preflight_override,
+            selection_profile=args.selection_profile,
         )
     except SnapshotQualityPreflightError as exc:
         return _print_snapshot_preflight_error(exc)
 
     print(f"current_candidate_run_id: {result.run_id}")
     print(f"decision_date: {result.decision_date.date()}")
+    print(f"selection_profile: {result.audit_metadata.get('selection_profile', 'default')}")
+    print(f"demo_mode: {result.audit_metadata.get('demo_mode', False)}")
     print(f"candidate_count: {result.candidate_count}")
     print(f"candidates_path: {result.artifact_paths['candidates']}")
     print(f"report_path: {result.artifact_paths['current_candidates_report']}")

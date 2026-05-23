@@ -8,6 +8,8 @@ It is local-only. It does not connect to brokers, place orders, automate executi
 
 `current-to-paper` can create a daily paper decision log from a healthy `candidates.csv`. The next step is manual review.
 
+When the upstream current-candidate file uses `selection_profile=demo`, the review template is still useful for local workflow validation, but the rows remain demo candidates and must not be treated as strategy recommendations.
+
 This helper writes `review_updates_template.csv` so the user can edit review decisions before running:
 
 ```cmd
@@ -122,6 +124,7 @@ Files:
 - Uses local CSV/mock data only.
 - Does not provide an interactive review UI.
 - Does not auto-approve candidates.
+- Does not convert demo candidates into real strategy recommendations.
 - Does not validate future fills.
 - Does not place or route orders.
 - Does not connect to brokers.

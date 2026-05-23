@@ -105,6 +105,14 @@ python -m quant_replay_system.cli snapshot-quality --manifest outputs\reports\da
 python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest outputs\reports\data_pipeline\<pipeline_id>\snapshot_manifest.json
 ```
 
+For a tiny local dry-run where a single scored ETF row does not pass default candidate thresholds, use the explicit demo selection profile:
+
+```cmd
+python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest outputs\reports\data_pipeline\<pipeline_id>\snapshot_manifest.json --selection-profile demo
+```
+
+Demo candidates are for artifact and paper workflow validation only. They are marked as `selection_profile=demo` and `not_strategy_recommendation=true`.
+
 ## Artifact Outputs
 
 `universe-overlay` writes:
@@ -121,6 +129,7 @@ The report includes row counts, added symbols, overridden symbols, output paths,
 - Do not commit `data/raw/`, `data/processed/`, or `outputs/`.
 - Run `data-quality` and `snapshot-quality` before using merged data.
 - Current candidates are paper-trading research inputs only.
+- The current-candidate demo profile can validate downstream artifacts with tiny datasets, but demo rows are not strategy recommendations.
 - No broker API or live trading integration is involved.
 - Automated tests use local fake CSV data only and do not call real network APIs.
 

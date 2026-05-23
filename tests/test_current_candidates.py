@@ -11,6 +11,7 @@ from quant_replay_system.calendar import TradingCalendar
 from quant_replay_system.config import load_settings
 from quant_replay_system.current_candidates import (
     CurrentCandidateResult,
+    apply_current_candidate_selection_profile,
     generate_current_candidate_run_id,
     generate_current_candidates,
 )
@@ -174,6 +175,143 @@ def test_current_candidates_can_build_factor_dataset_for_etf_symbol(tmp_path: Pa
     assert result.audit_metadata["market_universe_intersection_count"] == 1
 
 
+def test_default_selection_profile_behavior_is_unchanged(tmp_path: Path) -> None:
+    default_result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="etf_core",
+        top_n=2,
+        config=_strict_settings(tmp_path),
+        market_data=_make_low_score_market_data("510300"),
+        universe_snapshot=_make_universe_snapshot(["510300"]),
+        benchmark_data=None,
+        trading_calendar=_make_calendar(),
+        selection_profile="default",
+    )
+
+    assert default_result.candidate_count == 0
+    assert default_result.audit_metadata["selection_profile"] == "default"
+    assert default_result.audit_metadata["demo_mode"] is False
+
+
+def test_demo_selection_profile_selects_one_candidate_from_one_scored_etf_row(tmp_path: Path) -> None:
+    result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="etf_core",
+        top_n=2,
+        config=_strict_settings(tmp_path),
+        market_data=_make_low_score_market_data("510300"),
+        universe_snapshot=_make_universe_snapshot(["510300"]),
+        benchmark_data=None,
+        trading_calendar=_make_calendar(),
+        selection_profile="demo",
+    )
+
+    assert result.factor_dataset_row_count == 1
+    assert result.scored_dataset_row_count == 1
+    assert result.candidate_count == 1
+    assert result.candidates.loc[0, "symbol"] == "510300"
+    assert result.candidates.loc[0, "selection_reason"] == "DEMO_PROFILE_SELECTED_FOR_WORKFLOW_VALIDATION"
+    assert result.candidates.loc[0, "selection_profile"] == "demo"
+    assert bool(result.candidates.loc[0, "demo_mode"]) is True
+    assert bool(result.candidates.loc[0, "not_strategy_recommendation"]) is True
+    assert result.candidates.loc[0, "action"] == result.scored_dataset.loc[0, "score_action"]
+
+
+def test_demo_selection_profile_marks_metadata_report_and_candidate_row(tmp_path: Path) -> None:
+    result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="etf_core",
+        top_n=2,
+        config=_strict_settings(tmp_path),
+        market_data=_make_low_score_market_data("510300"),
+        universe_snapshot=_make_universe_snapshot(["510300"]),
+        benchmark_data=None,
+        trading_calendar=_make_calendar(),
+        selection_profile="demo",
+    )
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    report = result.artifact_paths["current_candidates_report"].read_text(encoding="utf-8")
+
+    assert metadata["selection_profile"] == "demo"
+    assert metadata["demo_mode"] is True
+    assert metadata["not_strategy_recommendation"] is True
+    assert metadata["no_live_trading"] is True
+    assert "## Selection Profile" in report
+    assert "Local artifact/workflow validation only" in report
+    assert "Demo candidates are for local artifact/workflow validation only" in "\n".join(result.warnings)
+
+
+def test_demo_selection_profile_does_not_change_score_calculation(tmp_path: Path) -> None:
+    default_result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="etf_core",
+        top_n=2,
+        config=_strict_settings(tmp_path),
+        market_data=_make_low_score_market_data("510300"),
+        universe_snapshot=_make_universe_snapshot(["510300"]),
+        benchmark_data=None,
+        trading_calendar=_make_calendar(),
+        selection_profile="default",
+    )
+    demo_result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="etf_core",
+        top_n=2,
+        config=_strict_settings(tmp_path),
+        market_data=_make_low_score_market_data("510300"),
+        universe_snapshot=_make_universe_snapshot(["510300"]),
+        benchmark_data=None,
+        trading_calendar=_make_calendar(),
+        selection_profile="demo",
+    )
+
+    assert_frame_equal(default_result.scored_dataset, demo_result.scored_dataset)
+
+
+def test_demo_selection_profile_does_not_select_blocked_rows(tmp_path: Path) -> None:
+    market = _make_low_score_market_data("510300")
+    market.loc[market["trade_date"] == DECISION_DATE, "open"] = 100
+    market.loc[market["trade_date"] == DECISION_DATE, "limit_up"] = 100
+    result = generate_current_candidates(
+        DECISION_DATE,
+        universe_name="etf_core",
+        top_n=2,
+        config=_strict_settings(tmp_path),
+        market_data=market,
+        universe_snapshot=_make_universe_snapshot(["510300"]),
+        benchmark_data=None,
+        trading_calendar=_make_calendar(),
+        selection_profile="demo",
+    )
+
+    assert result.scored_dataset_row_count == 1
+    assert result.scored_dataset.loc[0, "score_action"] == "BLOCKED"
+    assert result.candidate_count == 0
+    assert any("all scored rows were blocked" in warning for warning in result.warnings)
+
+
+def test_apply_demo_selection_profile_preserves_blocked_exclusion() -> None:
+    scored = pd.DataFrame(
+        [
+            {
+                "symbol": "AAA",
+                "final_score": 95,
+                "score_action": "BLOCKED",
+                "risk_precheck_status": "PASS",
+            }
+        ]
+    )
+    selected, warnings = apply_current_candidate_selection_profile(
+        scored,
+        pd.DataFrame(columns=scored.columns),
+        selection_profile="demo",
+        top_n=1,
+    )
+
+    assert selected.empty
+    assert any("blocked" in warning for warning in warnings)
+
+
 def test_current_candidates_empty_factor_dataset_reports_symbol_diagnostics(tmp_path: Path) -> None:
     result = generate_current_candidates(
         DECISION_DATE,
@@ -236,7 +374,43 @@ def test_cli_current_candidates_works(tmp_path: Path, monkeypatch: pytest.Monkey
     assert code == 0
     assert calls["universe_name"] == "unit_test"
     assert calls["top_n"] == 2
+    assert calls["selection_profile"] == "default"
     assert "candidate_count: 1" in output.out
+
+
+def test_cli_current_candidates_demo_selection_profile_works(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys,
+) -> None:
+    calls = {}
+
+    def fake_generate(*args, **kwargs):
+        calls.update(kwargs)
+        result = _fake_current_result(tmp_path, status=None)
+        result.audit_metadata["selection_profile"] = "demo"
+        result.audit_metadata["demo_mode"] = True
+        return result
+
+    monkeypatch.setattr("quant_replay_system.cli.generate_current_candidates", fake_generate)
+
+    code = cli.main(
+        [
+            "current-candidates",
+            "--date",
+            "2024-03-01",
+            "--universe",
+            "unit_test",
+            "--selection-profile",
+            "demo",
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert calls["selection_profile"] == "demo"
+    assert "selection_profile: demo" in output.out
+    assert "demo_mode: True" in output.out
 
 
 def test_cli_prints_candidates_and_report_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
@@ -396,6 +570,21 @@ def _settings(tmp_path: Path):
     )
 
 
+def _strict_settings(tmp_path: Path):
+    settings = _settings(tmp_path)
+    return settings.model_copy(
+        update={
+            "current_candidates": settings.current_candidates.model_copy(
+                update={
+                    "min_action": "PAPER_TRADE",
+                    "min_final_score": 70,
+                    "selection_profile": "default",
+                }
+            )
+        }
+    )
+
+
 def _make_calendar() -> TradingCalendar:
     dates = pd.date_range("2024-01-01", "2024-03-15", freq="D")
     rows = []
@@ -479,6 +668,40 @@ def _make_market_data(symbols: list[str]) -> pd.DataFrame:
                 }
             )
             previous_close = close
+    return pd.DataFrame(rows)
+
+
+def _make_low_score_market_data(symbol: str) -> pd.DataFrame:
+    rows = []
+    dates = pd.bdate_range("2024-01-01", "2024-03-15")
+    dates = dates[dates != pd.Timestamp("2024-03-06")]
+    previous_close = None
+    for idx, trade_date in enumerate(dates):
+        close = 20 - idx * 0.05
+        rows.append(
+            {
+                "symbol": symbol,
+                "trade_date": trade_date,
+                "open": close + 0.05,
+                "high": close + 0.1,
+                "low": close - 0.1,
+                "close": close,
+                "volume": 1_000,
+                "amount": 10_000,
+                "pre_close": previous_close if previous_close is not None else close + 0.05,
+                "adj_factor": 1.0,
+                "is_suspended": False,
+                "limit_up": close * 1.1,
+                "limit_down": close * 0.9,
+                "event_time": trade_date + pd.Timedelta(hours=15),
+                "publish_time": trade_date + pd.Timedelta(hours=15, minutes=5),
+                "ingest_time": trade_date + pd.Timedelta(hours=15, minutes=10),
+                "available_time": trade_date + pd.Timedelta(hours=15, minutes=10),
+                "revision_id": "m1",
+                "source": "unit-test-low-score",
+            }
+        )
+        previous_close = close
     return pd.DataFrame(rows)
 
 

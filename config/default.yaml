@@ -58,6 +58,7 @@ current_candidates:
   default_top_n: 10
   min_final_score: 70
   min_action: PAPER_TRADE
+  selection_profile: default
   enable_snapshot_quality_preflight: true
   config_version: mvp
   write_artifacts: true

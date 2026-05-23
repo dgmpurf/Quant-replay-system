@@ -37,6 +37,24 @@ Current-candidate generation requires market and universe symbols to overlap aft
 
 When a vendor universe is stock-only, use the reviewed [universe overlay workflow](universe_overlay.md) to merge ETF rows before running `data-pipeline` and `current-candidates`.
 
+## Selection Profiles
+
+`current-candidates` supports explicit selection profiles:
+
+- `default`: the normal research behavior. It uses configured `min_action`, `min_final_score`, risk blocks, and candidate selection thresholds.
+- `demo`: a local dry-run profile for artifact and workflow validation with tiny datasets. If no default candidates pass, it can select top scored non-blocked rows so downstream paper workflow artifacts can be tested.
+
+The default profile remains unchanged and is the only profile intended for normal research review.
+
+The demo profile is not a strategy recommendation. Demo candidates are marked in `candidates.csv`, report output, and metadata with:
+
+- `selection_profile=demo`
+- `demo_mode=true`
+- `not_strategy_recommendation=true`
+- `selection_reason=DEMO_PROFILE_SELECTED_FOR_WORKFLOW_VALIDATION` when the row did not pass default thresholds
+
+Demo selection does not change score calculation and does not select `BLOCKED` rows.
+
 ## Snapshot Quality Preflight
 
 If `snapshot_manifest_path` is supplied, snapshot preflight runs by default according to current-candidate settings:
@@ -103,6 +121,10 @@ The candidate export includes:
 - `risk_precheck_reason`
 - `score_reason`
 - `score_breakdown`
+- `selection_profile`
+- `demo_mode`
+- `not_strategy_recommendation`
+- `selection_reason`
 - `current_candidate_run_id`
 - `source_run_id`
 - `source_report_path`
@@ -133,6 +155,12 @@ Disable snapshot preflight explicitly:
 
 ```cmd
 python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --snapshot-manifest data\snapshots\example_snapshot_manifest.json --disable-snapshot-preflight
+```
+
+Run a local demo profile for tiny workflow smoke tests:
+
+```cmd
+python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest data\snapshots\example_snapshot_manifest.json --selection-profile demo
 ```
 
 The CLI prints the candidate count, `candidates.csv` path, report path, snapshot quality status when applicable, and:
@@ -171,4 +199,5 @@ python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decis
 - Missing universe `listed_date` values are supported as unknown listing dates, but incomplete vendor universe coverage should still be reviewed before paper-trading research use.
 - If a market symbol is absent from the universe snapshot, the point-in-time factor dataset will be empty for that symbol. ETF workflows need ETF universe coverage, not stock-only universe coverage.
 - A reviewed ETF overlay can add ETF universe coverage, but the project does not infer or auto-approve ETF rows.
+- The `demo` selection profile is only for local artifact/workflow validation with tiny datasets; it is not a strategy recommendation and does not change scoring formulas.
 - Candidate scoring remains explainable MVP scoring, not machine learning.

@@ -76,6 +76,7 @@ class CurrentCandidateSettings(BaseModel):
     default_top_n: int = Field(default=10, gt=0)
     min_final_score: float | None = 70.0
     min_action: str = "PAPER_TRADE"
+    selection_profile: Literal["default", "demo"] = "default"
     enable_snapshot_quality_preflight: bool = True
     config_version: str = "mvp"
     write_artifacts: bool = True
