@@ -42,6 +42,25 @@ def test_single_universe_dataset_pipeline_succeeds(tmp_path: Path) -> None:
     assert result.dataset_results[0].row_count == 2
 
 
+def test_universe_pipeline_succeeds_with_akshare_like_missing_listed_date(tmp_path: Path) -> None:
+    input_path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame["listed_date"] = "NaN"
+    frame["delisted_date"] = "--"
+    frame.to_csv(input_path, index=False)
+
+    result = run_data_source_ingestion_pipeline(
+        [DataPipelineDatasetRequest(dataset_type="universe", source="LOCAL_CSV", input_path=input_path)],
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "PASS"
+    assert result.dataset_results[0].row_count == 2
+    processed = pd.read_csv(result.processed_paths["universe"])
+    assert "listed_date" in processed.columns
+    assert "delisted_date" in processed.columns
+
+
 def test_single_trading_calendar_dataset_pipeline_succeeds(tmp_path: Path) -> None:
     input_path = tmp_path / "calendar.csv"
     _calendar_frame().to_csv(input_path, index=False)

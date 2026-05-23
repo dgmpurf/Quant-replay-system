@@ -100,6 +100,99 @@ def test_universe_snapshot_ingestion_succeeds(tmp_path: Path) -> None:
     assert set(result.cleaned_data["symbol"]) == {"AAA", "BBB", "CCC"}
 
 
+def test_universe_ingestion_succeeds_with_listed_date_blank(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame.loc[0, "listed_date"] = ""
+    frame.to_csv(path, index=False)
+
+    result = ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+    assert result.validation.valid is True
+    assert "listed_date" in result.cleaned_data.columns
+    assert pd.isna(result.cleaned_data.loc[result.cleaned_data["symbol"] == "AAA", "listed_date"].iloc[0])
+
+
+def test_universe_ingestion_succeeds_with_listed_date_nan_token(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame.loc[0, "listed_date"] = "NaN"
+    frame.to_csv(path, index=False)
+
+    result = ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+    assert result.validation.valid is True
+    assert pd.isna(result.cleaned_data.loc[result.cleaned_data["symbol"] == "AAA", "listed_date"].iloc[0])
+
+
+def test_universe_ingestion_succeeds_with_listed_date_nat_token(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame.loc[0, "listed_date"] = "NaT"
+    frame.to_csv(path, index=False)
+
+    result = ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+    assert result.validation.valid is True
+    assert pd.isna(result.cleaned_data.loc[result.cleaned_data["symbol"] == "AAA", "listed_date"].iloc[0])
+
+
+def test_universe_ingestion_succeeds_with_listed_date_dash_token(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame.loc[0, "listed_date"] = "--"
+    frame.to_csv(path, index=False)
+
+    result = ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+    assert result.validation.valid is True
+    assert pd.isna(result.cleaned_data.loc[result.cleaned_data["symbol"] == "AAA", "listed_date"].iloc[0])
+
+
+def test_universe_ingestion_fails_with_invalid_non_empty_listed_date(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame.loc[0, "listed_date"] = "not-a-date"
+    frame.to_csv(path, index=False)
+
+    with pytest.raises(ValueError, match="INVALID_DATE"):
+        ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+
+def test_universe_ingestion_fails_when_listed_date_after_as_of_date(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame.loc[0, "listed_date"] = "2024-06-01"
+    frame.to_csv(path, index=False)
+
+    with pytest.raises(ValueError, match="LISTED_DATE_AFTER_AS_OF_DATE"):
+        ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+
+def test_universe_ingestion_succeeds_with_delisted_date_blank(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame.loc[0, "delisted_date"] = ""
+    frame.to_csv(path, index=False)
+
+    result = ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+    assert result.validation.valid is True
+    assert "delisted_date" in result.cleaned_data.columns
+    assert pd.isna(result.cleaned_data.loc[result.cleaned_data["symbol"] == "AAA", "delisted_date"].iloc[0])
+
+
+def test_universe_ingestion_fails_when_delisted_date_before_listed_date(tmp_path: Path) -> None:
+    path = tmp_path / "universe.csv"
+    frame = _universe_frame()
+    frame.loc[0, "listed_date"] = "2020-01-01"
+    frame.loc[0, "delisted_date"] = "2019-12-31"
+    frame.to_csv(path, index=False)
+
+    with pytest.raises(ValueError, match="DELISTED_DATE_BEFORE_LISTED_DATE"):
+        ingest_universe_snapshot_csv(path, settings=_settings(tmp_path))
+
+
 def test_universe_inactive_st_suspended_fields_are_preserved(tmp_path: Path) -> None:
     path = tmp_path / "universe.csv"
     _universe_frame().to_csv(path, index=False)

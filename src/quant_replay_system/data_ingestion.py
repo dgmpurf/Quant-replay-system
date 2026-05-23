@@ -44,6 +44,8 @@ INGESTION_CATEGORIES = {
     "trading_calendar": "trading_calendar",
 }
 
+MISSING_DATE_TOKENS = {"", "nan", "nat", "none", "null", "-", "--"}
+
 
 @dataclass(frozen=True)
 class SchemaValidationResult:
@@ -163,7 +165,7 @@ def ingest_universe_snapshot_csv(
         default_time_text="08:00",
         output_dir=output_dir,
         settings=settings,
-        nullable_date_columns=["delisted_date"],
+        nullable_date_columns=["listed_date", "delisted_date"],
     )
 
 
@@ -264,12 +266,42 @@ def normalize_date_columns(
     for column in date_columns:
         if column not in output.columns:
             continue
-        parsed = pd.to_datetime(output[column], errors="coerce")
         if column in nullable:
-            output[column] = parsed.dt.normalize()
+            parsed = normalize_optional_date_series(output[column])
         else:
-            output[column] = parsed.dt.normalize()
+            parsed = pd.to_datetime(output[column], errors="coerce").dt.normalize()
+        output[column] = parsed
     return output
+
+
+def is_missing_date_token(value: Any) -> bool:
+    """Return true for accepted blank/null date tokens in optional date fields."""
+
+    if value is None:
+        return True
+    try:
+        if pd.isna(value):
+            return True
+    except (TypeError, ValueError):
+        pass
+    return str(value).strip().lower() in MISSING_DATE_TOKENS
+
+
+def normalize_optional_date_series(series: pd.Series) -> pd.Series:
+    """Normalize optional dates while preserving recognized missing tokens as NaT."""
+
+    missing = series.map(is_missing_date_token)
+    parse_input = series.where(~missing, pd.NA)
+    return pd.to_datetime(parse_input, errors="coerce").dt.normalize()
+
+
+def validate_optional_date_series(series: pd.Series) -> tuple[pd.Series, pd.Series]:
+    """Return parsed optional dates and an invalid mask for non-empty bad values."""
+
+    missing = series.map(is_missing_date_token)
+    parsed = normalize_optional_date_series(series)
+    invalid = parsed.isna() & ~missing
+    return parsed, invalid
 
 
 def assign_default_available_time(
@@ -548,8 +580,11 @@ def _prepare_frame(
 
     nullable = set(nullable_date_columns)
     for column in date_columns:
-        parsed = pd.to_datetime(frame[column].replace("", pd.NA), errors="coerce")
-        invalid = parsed.isna() & ~(column in nullable and frame[column].astype(str).str.strip().eq(""))
+        if column in nullable:
+            parsed, invalid = validate_optional_date_series(frame[column])
+        else:
+            parsed = pd.to_datetime(frame[column].replace("", pd.NA), errors="coerce").dt.normalize()
+            invalid = parsed.isna()
         if invalid.any():
             issues.append(
                 _validation_issue(
@@ -562,7 +597,10 @@ def _prepare_frame(
                     suggested_action="Fix date values before ingestion.",
                 )
             )
-        frame[column] = parsed.dt.normalize()
+        frame[column] = parsed
+
+    if dataset_type == "universe":
+        issues.extend(_universe_date_sanity_issues(frame, dataset_type))
 
     for column in datetime_columns:
         if column not in frame.columns:
@@ -767,6 +805,43 @@ def _duplicate_issues(
             suggested_action="Deduplicate source rows or set duplicate_key_severity=ERROR to fail ingestion.",
         )
     ]
+
+
+def _universe_date_sanity_issues(frame: pd.DataFrame, dataset_type: str) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    if {"as_of_date", "listed_date"}.issubset(frame.columns):
+        as_of = pd.to_datetime(frame["as_of_date"], errors="coerce")
+        listed = pd.to_datetime(frame["listed_date"], errors="coerce")
+        listed_after = listed.notna() & as_of.notna() & (listed > as_of)
+        if listed_after.any():
+            issues.append(
+                _validation_issue(
+                    dataset_type=dataset_type,
+                    severity="ERROR",
+                    issue_code="LISTED_DATE_AFTER_AS_OF_DATE",
+                    column="listed_date",
+                    row_count=int(listed_after.sum()),
+                    message="listed_date is after as_of_date.",
+                    suggested_action="Fix listed_date or snapshot date before ingestion.",
+                )
+            )
+    if {"listed_date", "delisted_date"}.issubset(frame.columns):
+        listed = pd.to_datetime(frame["listed_date"], errors="coerce")
+        delisted = pd.to_datetime(frame["delisted_date"], errors="coerce")
+        delisted_before = delisted.notna() & listed.notna() & (delisted < listed)
+        if delisted_before.any():
+            issues.append(
+                _validation_issue(
+                    dataset_type=dataset_type,
+                    severity="ERROR",
+                    issue_code="DELISTED_DATE_BEFORE_LISTED_DATE",
+                    column="delisted_date",
+                    row_count=int(delisted_before.sum()),
+                    message="delisted_date is before listed_date.",
+                    suggested_action="Fix listed/delisted dates before ingestion.",
+                )
+            )
+    return issues
 
 
 def _raise_for_validation_errors(dataset_type: str, report: pd.DataFrame) -> None:

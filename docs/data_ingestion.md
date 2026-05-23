@@ -49,6 +49,8 @@ delisted_date, is_active, is_st, is_suspended, industry, min_lot,
 t_plus_rule, available_time, revision_id, source
 ```
 
+For universe snapshots, `listed_date` and `delisted_date` are optional date fields. Missing values such as blank strings, `NaN`, `NaT`, `None`, `null`, `-`, and `--` are accepted and preserved as missing dates in the canonical output. Non-empty invalid values, such as `not-a-date`, still fail ingestion. When dates are present and parseable, ingestion still rejects `listed_date` after `as_of_date` and `delisted_date` before `listed_date`.
+
 Corporate actions use:
 
 ```text
@@ -85,6 +87,9 @@ Validation fails on:
 
 - missing required columns,
 - invalid dates,
+- invalid non-empty optional universe dates,
+- universe `listed_date` after `as_of_date`,
+- universe `delisted_date` before `listed_date`,
 - invalid timestamps,
 - invalid booleans,
 - missing `available_time` when defaulting is disabled,
@@ -184,6 +189,7 @@ That keeps the replay engine insulated from source-specific quirks and protects 
 - No network data fetching.
 - No API token handling.
 - No vendor-specific symbol mapping beyond uppercase/strip normalization.
+- AKShare-style universe exports can have incomplete listing-date coverage; missing `listed_date` / `delisted_date` values are allowed, but invalid non-empty values are rejected.
 - No corporate action adjustment engine.
 - No timezone-aware timestamp storage yet.
 - Duplicate handling is validation-only; it does not automatically resolve revisions.

@@ -41,6 +41,8 @@ Supported dataset types:
 
 The matching ingestion function is selected automatically.
 
+For `universe` inputs, the pipeline inherits ingestion's optional date handling: `listed_date` and `delisted_date` may be missing, including AKShare-style blank/`NaN`/`NaT`/`--` values. Non-empty invalid dates are still rejected, and parseable `listed_date` / `delisted_date` values still go through universe date-order checks.
+
 ## Manifest Mode
 
 Manifest mode runs multiple datasets in one pipeline.
@@ -179,6 +181,7 @@ It does not change point-in-time filtering, trading calendar logic, T+1 executio
 - Real/network data sources remain disabled by default.
 - No real API calls are used in automated tests.
 - The pipeline does not repair failed source data.
+- AKShare universe output may not include complete `listed_date` coverage; missing optional universe dates are allowed, but invalid non-empty values still fail ingestion.
 - Snapshot manifest creation is limited to datasets processed in the same run.
 - It does not merge with or update an existing snapshot manifest.
 - It is not live trading and never invokes broker APIs.
