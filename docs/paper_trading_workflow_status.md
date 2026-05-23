@@ -49,6 +49,14 @@ outputs/reports/paper_trading/health/
 
 It reads existing `metadata.json` files only. It does not rerun workflow steps.
 
+## Active Reviewed Workflow Chain
+
+When daily paper artifacts exist, the dashboard first selects the latest relevant `DAILY_PAPER` artifact and prefers a daily run with `reviewed_decisions_used=true`.
+
+If that daily metadata includes `reviewed_decisions_path`, the dashboard follows that path back to the matching paper review artifact and then to the template-health artifact recorded in the review metadata. This keeps the active workflow status aligned with the reviewed decisions that the daily paper report actually used.
+
+Older review or template-health artifacts remain discoverable through `paper-index` and `paper-health-check`, and stale warnings can appear in component notes. They do not define the active workflow stage when a later linked reviewed flow is available.
+
 ## Stage Meanings
 
 - `NO_CURRENT_CANDIDATES`: no current-candidate artifact found.

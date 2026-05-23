@@ -245,6 +245,91 @@ def test_dashboard_complete_workflow_is_pass(tmp_path: Path) -> None:
     assert result.artifact_health_status == "PASS"
 
 
+def test_dashboard_prefers_review_artifacts_linked_from_latest_daily_reviewed_decisions_path(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="health-stale", status="WARN", warnings=1)
+    _paper_review(
+        root,
+        review_id="review-stale",
+        template_health={
+            "template_health_check_id": "health-stale",
+            "template_health_status": "WARN",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "health-stale" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 1,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 1,
+        },
+        warnings=["stale review warning"],
+    )
+    _review_template_health(root, health_id="health-active", status="PASS")
+    active_review = _paper_review(
+        root,
+        review_id="review-active",
+        template_health={
+            "template_health_check_id": "health-active",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "health-active" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    _daily_paper(root, reviewed_decisions_path=active_review / "reviewed_decisions.csv")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    by_component = {row["component"]: row for row in result.status_frame.to_dict("records")}
+
+    assert by_component["PAPER_REVIEW"]["latest_artifact_id"] == "review-active"
+    assert by_component["REVIEW_TEMPLATE_HEALTH"]["latest_artifact_id"] == "health-active"
+    assert result.review_template_health_status == "PASS"
+    assert result.workflow_stage != "REVIEW_TEMPLATE_HEALTH_WARN"
+    assert "stale_warning_count" in by_component["REVIEW_TEMPLATE_HEALTH"]["notes"]
+
+
+def test_dashboard_active_linked_review_health_warn_drives_stage(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="health-stale-pass", status="PASS")
+    _review_template_health(root, health_id="health-active-warn", status="WARN", warnings=1)
+    active_review = _paper_review(
+        root,
+        review_id="review-active",
+        template_health={
+            "template_health_check_id": "health-active-warn",
+            "template_health_status": "WARN",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "health-active-warn" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 1,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 1,
+        },
+    )
+    _daily_paper(root, reviewed_decisions_path=active_review / "reviewed_decisions.csv")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+
+    assert result.review_template_health_status == "WARN"
+    assert result.workflow_stage == "REVIEW_TEMPLATE_HEALTH_WARN"
+
+
+def test_dashboard_reports_missing_health_when_active_link_has_no_template_health(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="unrelated-health", status="PASS")
+    active_review = _paper_review(root, review_id="review-active")
+    _daily_paper(root, reviewed_decisions_path=active_review / "reviewed_decisions.csv")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    by_component = {row["component"]: row for row in result.status_frame.to_dict("records")}
+
+    assert by_component["PAPER_REVIEW"]["latest_artifact_id"] == "review-active"
+    assert by_component["REVIEW_TEMPLATE_HEALTH"]["status"] == "MISSING"
+    assert "No template health artifact linked" in by_component["REVIEW_TEMPLATE_HEALTH"]["notes"]
+
+
 def _reports_root(tmp_path: Path) -> Path:
     root = tmp_path / "reports"
     root.mkdir(parents=True, exist_ok=True)
@@ -390,15 +475,22 @@ def _review_template(root: Path) -> Path:
     return folder
 
 
-def _review_template_health(root: Path, *, status: str = "PASS", errors: int = 0, warnings: int = 0) -> Path:
-    folder = root / "paper_trading" / "review_template_health" / "template-health-a"
+def _review_template_health(
+    root: Path,
+    *,
+    health_id: str = "template-health-a",
+    status: str = "PASS",
+    errors: int = 0,
+    warnings: int = 0,
+) -> Path:
+    folder = root / "paper_trading" / "review_template_health" / health_id
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "review_template_health_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
     _write_json(
         folder / "metadata.json",
         {
-            "health_check_id": "template-health-a",
+            "health_check_id": health_id,
             "created_at": f"{DECISION_DATE}T16:15:00",
             "status": status,
             "issue_count": errors + warnings,
@@ -411,27 +503,46 @@ def _review_template_health(root: Path, *, status: str = "PASS", errors: int = 0
     return folder
 
 
-def _paper_review(root: Path) -> Path:
-    folder = root / "paper_trading" / "reviews" / "review-a"
+def _paper_review(
+    root: Path,
+    *,
+    review_id: str = "review-a",
+    template_health: dict | None = None,
+    warnings: list[str] | None = None,
+) -> Path:
+    folder = root / "paper_trading" / "reviews" / review_id
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "paper_review_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    reviewed = folder / "reviewed_decisions.csv"
+    pd.DataFrame(
+        [
+            {
+                "decision_id": "d1",
+                "symbol": "510300",
+                "manual_review_status": "WATCH_ONLY",
+            }
+        ]
+    ).to_csv(reviewed, index=False)
+    metadata = {
+        "review_id": review_id,
+        "created_at": f"{DECISION_DATE}T16:20:00",
+        "output_files": {"paper_review_report": str(report), "reviewed_decisions": str(reviewed)},
+        "warnings": warnings or [],
+        "live_trading_enabled": False,
+        "broker_api_invoked": False,
+        "paper_trading_only": True,
+    }
+    if template_health is not None:
+        metadata["template_health"] = template_health
     _write_json(
         folder / "metadata.json",
-        {
-            "review_id": "review-a",
-            "created_at": f"{DECISION_DATE}T16:20:00",
-            "output_files": {"paper_review_report": str(report), "reviewed_decisions": str(folder / "reviewed_decisions.csv")},
-            "warnings": [],
-            "live_trading_enabled": False,
-            "broker_api_invoked": False,
-            "paper_trading_only": True,
-        },
+        metadata,
     )
     return folder
 
 
-def _daily_paper(root: Path) -> Path:
+def _daily_paper(root: Path, *, reviewed_decisions_path: Path | None = None) -> Path:
     folder = root / "paper_trading" / "daily" / f"{DECISION_DATE}_journal-a"
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "paper_report.md"
@@ -451,6 +562,12 @@ def _daily_paper(root: Path) -> Path:
             "paper_trading_only": True,
         },
     )
+    if reviewed_decisions_path is not None:
+        metadata_path = folder / "metadata.json"
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        metadata["reviewed_decisions_path"] = str(reviewed_decisions_path)
+        metadata["output_files"]["reviewed_decisions"] = str(reviewed_decisions_path)
+        metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
     return folder
 
 

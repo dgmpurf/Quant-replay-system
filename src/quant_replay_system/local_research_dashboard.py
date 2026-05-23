@@ -282,17 +282,166 @@ def build_local_research_dashboard_frame(
     """Build one dashboard row per local research workflow component."""
 
     frame = _finalize_scan_frame(scan_frame)
+    active_chain = _active_reviewed_paper_chain(frame)
     rows: list[dict[str, Any]] = []
     for component in COMPONENTS:
         component_rows = frame.loc[frame["component"] == component]
+        linked_missing = _linked_missing_component(component, active_chain)
+        if linked_missing is not None:
+            rows.append(linked_missing)
+            continue
         if component_rows.empty:
             rows.append(_missing_dashboard_row(component))
             continue
-        latest = _latest_record(component_rows).copy()
+        latest = active_chain.get(component, _latest_record(component_rows)).copy()
+        latest = _annotate_stale_component_warnings(latest, component_rows)
         latest["next_action"] = _component_next_action(component, latest.get("status", ""))
         rows.append(latest)
     _ = decision_date, universe_name
     return _finalize_dashboard_frame(pd.DataFrame(rows))
+
+
+def _active_reviewed_paper_chain(frame: pd.DataFrame) -> dict[str, dict[str, Any]]:
+    """Resolve the active reviewed paper chain from the selected daily artifact."""
+
+    chain: dict[str, dict[str, Any]] = {}
+    daily = _active_daily_record(frame)
+    if daily is None:
+        return chain
+    chain["DAILY_PAPER"] = daily
+    if daily.get("status") != "REVIEWED_READY":
+        return chain
+    daily_metadata = _metadata_for_row(daily)
+    if not _daily_reviewed_decisions_path(daily_metadata):
+        return chain
+
+    review = _review_record_linked_to_daily(frame, daily)
+    if review is not None:
+        chain["PAPER_REVIEW"] = review
+        template_health = _template_health_record_linked_to_review(frame, review)
+        if template_health is not None:
+            chain["REVIEW_TEMPLATE_HEALTH"] = template_health
+        else:
+            chain["REVIEW_TEMPLATE_HEALTH_MISSING"] = _missing_dashboard_row(
+                "REVIEW_TEMPLATE_HEALTH",
+                notes="No template health artifact linked to active reviewed decisions.",
+            )
+    else:
+        chain["PAPER_REVIEW_MISSING"] = _missing_dashboard_row(
+            "PAPER_REVIEW",
+            notes="No paper review artifact linked to active reviewed decisions.",
+        )
+        chain["REVIEW_TEMPLATE_HEALTH_MISSING"] = _missing_dashboard_row(
+            "REVIEW_TEMPLATE_HEALTH",
+            notes="No linked paper review artifact was available for template health selection.",
+        )
+    return chain
+
+
+def _active_daily_record(frame: pd.DataFrame) -> dict[str, Any] | None:
+    daily_rows = frame.loc[frame["component"] == "DAILY_PAPER"]
+    if daily_rows.empty:
+        return None
+    reviewed_rows = daily_rows.loc[daily_rows["status"] == "REVIEWED_READY"]
+    if not reviewed_rows.empty:
+        return _latest_record(reviewed_rows)
+    return _latest_record(daily_rows)
+
+
+def _review_record_linked_to_daily(frame: pd.DataFrame, daily: dict[str, Any]) -> dict[str, Any] | None:
+    daily_metadata = _metadata_for_row(daily)
+    reviewed_path = _daily_reviewed_decisions_path(daily_metadata)
+    review_id = _artifact_id_from_path(reviewed_path)
+    review_rows = frame.loc[frame["component"] == "PAPER_REVIEW"]
+    if review_rows.empty:
+        return None
+
+    matches = []
+    for row in review_rows.to_dict("records"):
+        review_metadata = _metadata_for_row(row)
+        review_output = _output_files(review_metadata).get("reviewed_decisions") or review_metadata.get(
+            "reviewed_decisions_path"
+        )
+        metadata_review_id = _string_or_empty(review_metadata.get("review_id")) or _artifact_id_from_path(
+            row.get("metadata_path")
+        )
+        if (reviewed_path and _paths_match(review_output, reviewed_path)) or (
+            review_id and metadata_review_id == review_id
+        ):
+            matches.append(row)
+    if matches:
+        return _latest_record(pd.DataFrame(matches))
+    return None
+
+
+def _template_health_record_linked_to_review(frame: pd.DataFrame, review: dict[str, Any]) -> dict[str, Any] | None:
+    review_metadata = _metadata_for_row(review)
+    template_health = review_metadata.get("template_health") if isinstance(review_metadata.get("template_health"), dict) else {}
+    health_id = _string_or_empty(template_health.get("template_health_check_id"))
+    health_report = _string_or_empty(template_health.get("template_health_report_path"))
+    health_rows = frame.loc[frame["component"] == "REVIEW_TEMPLATE_HEALTH"]
+
+    matches = []
+    for row in health_rows.to_dict("records"):
+        if (health_id and _string_or_empty(row.get("latest_artifact_id")) == health_id) or (
+            health_report and _paths_match(row.get("report_path"), health_report)
+        ):
+            matches.append(row)
+    if matches:
+        return _latest_record(pd.DataFrame(matches))
+
+    status = _string_or_empty(template_health.get("template_health_status"))
+    if status:
+        return _record(
+            workflow_area="PAPER_TRADING",
+            component="REVIEW_TEMPLATE_HEALTH",
+            status=status,
+            stage="REVIEW_TEMPLATE_HEALTH_READY",
+            latest_artifact_id=health_id or _artifact_id_from_path(health_report),
+            report_path=health_report,
+            metadata_path="",
+            issue_count=_int_or_zero(template_health.get("template_health_issue_count")),
+            warning_count=_int_or_zero(template_health.get("template_health_warning_count")),
+            error_count=_int_or_zero(template_health.get("template_health_error_count")),
+            notes="linked_from_active_paper_review_metadata",
+            created_at=review.get("created_at"),
+        )
+    return None
+
+
+def _linked_missing_component(component: str, active_chain: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
+    if component == "PAPER_REVIEW" and "PAPER_REVIEW_MISSING" in active_chain:
+        return active_chain["PAPER_REVIEW_MISSING"]
+    if component == "REVIEW_TEMPLATE_HEALTH" and "REVIEW_TEMPLATE_HEALTH_MISSING" in active_chain:
+        return active_chain["REVIEW_TEMPLATE_HEALTH_MISSING"]
+    return None
+
+
+def _annotate_stale_component_warnings(selected: dict[str, Any], component_rows: pd.DataFrame) -> dict[str, Any]:
+    if component_rows.empty:
+        return selected
+    selected_path = _string_or_empty(selected.get("metadata_path"))
+    selected_id = _string_or_empty(selected.get("latest_artifact_id"))
+    stale_warning_count = 0
+    stale_error_count = 0
+    for row in component_rows.to_dict("records"):
+        same_path = selected_path and _string_or_empty(row.get("metadata_path")) == selected_path
+        same_id = selected_id and _string_or_empty(row.get("latest_artifact_id")) == selected_id
+        if same_path or same_id:
+            continue
+        stale_warning_count += _int_or_zero(row.get("warning_count"))
+        stale_error_count += _int_or_zero(row.get("error_count"))
+        if _string_or_empty(row.get("status")) == "WARN":
+            stale_warning_count += 1
+        if _string_or_empty(row.get("status")) == "FAIL":
+            stale_error_count += 1
+    if not stale_warning_count and not stale_error_count:
+        return selected
+    annotated = selected.copy()
+    notes = _string_or_empty(annotated.get("notes"))
+    stale_note = f"stale_warning_count={stale_warning_count}; stale_error_count={stale_error_count}"
+    annotated["notes"] = f"{notes}; {stale_note}" if notes else stale_note
+    return annotated
 
 
 def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
@@ -885,13 +1034,13 @@ def _record(**values: Any) -> dict[str, Any]:
     return row
 
 
-def _missing_dashboard_row(component: str) -> dict[str, Any]:
+def _missing_dashboard_row(component: str, *, notes: str = "No matching local artifact metadata found.") -> dict[str, Any]:
     return _record(
         workflow_area=WORKFLOW_AREAS.get(component, ""),
         component=component,
         status="MISSING",
         next_action=_component_next_action(component, "MISSING"),
-        notes="No matching local artifact metadata found.",
+        notes=notes,
     )
 
 
@@ -996,6 +1145,51 @@ def _load_json_or_none(path: Path) -> dict[str, Any] | None:
 def _output_files(metadata: dict[str, Any]) -> dict[str, Any]:
     output_files = metadata.get("output_files")
     return output_files if isinstance(output_files, dict) else {}
+
+
+def _metadata_for_row(row: dict[str, Any]) -> dict[str, Any]:
+    path_text = _string_or_empty(row.get("metadata_path"))
+    if not path_text:
+        return {}
+    return _load_json_or_none(Path(path_text)) or {}
+
+
+def _daily_reviewed_decisions_path(metadata: dict[str, Any]) -> str:
+    output_files = _output_files(metadata)
+    return _string_or_empty(metadata.get("reviewed_decisions_path")) or _string_or_empty(
+        output_files.get("reviewed_decisions")
+    )
+
+
+def _artifact_id_from_path(value: Any) -> str:
+    text = _string_or_empty(value)
+    if not text:
+        return ""
+    path = Path(text)
+    if path.name == "metadata.json":
+        return path.parent.name
+    if path.name:
+        return path.parent.name
+    return ""
+
+
+def _paths_match(left: Any, right: Any) -> bool:
+    left_keys = _path_keys(left)
+    right_keys = _path_keys(right)
+    return bool(left_keys and right_keys and left_keys.intersection(right_keys))
+
+
+def _path_keys(value: Any) -> set[str]:
+    text = _string_or_empty(value)
+    if not text:
+        return set()
+    normalized = text.replace("\\", "/").lower()
+    keys = {normalized}
+    try:
+        keys.add(str(Path(text).resolve(strict=False)).replace("\\", "/").lower())
+    except (OSError, RuntimeError):
+        pass
+    return keys
 
 
 def _latest_record(frame: pd.DataFrame) -> dict[str, Any]:

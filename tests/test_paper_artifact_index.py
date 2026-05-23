@@ -43,6 +43,17 @@ def test_artifact_index_scans_review_artifacts(tmp_path: Path) -> None:
     assert row["reviewed_decisions_path"].endswith("reviewed_decisions.csv")
 
 
+def test_artifact_index_keeps_stale_and_active_review_artifacts(tmp_path: Path) -> None:
+    root = _paper_root(tmp_path)
+    _review_artifact(root, review_id="review-stale")
+    _review_artifact(root, review_id="review-active")
+
+    frame = scan_paper_trading_artifacts(root, artifact_type="review")
+
+    assert set(frame["artifact_id"]) == {"review-stale", "review-active"}
+    assert frame["reviewed_decisions_path"].notna().all()
+
+
 def test_artifact_index_scans_reconciliation_artifacts(tmp_path: Path) -> None:
     root = _paper_root(tmp_path)
     _reconciliation_artifact(root, reconciliation_id="recon-a", status="FAIL", errors=2)

@@ -38,6 +38,14 @@ outputs/reports/paper_trading/workflow_status/
 
 It reads existing local `metadata.json` or `handoff_metadata.json` files only. It does not rerun any workflow step.
 
+## Active Paper Flow Selection
+
+For paper trading components, `research-status` uses the same active reviewed-flow idea as `paper-workflow-status`.
+
+When the latest daily paper artifact used reviewed decisions, the dashboard follows `reviewed_decisions_path` to the matching paper review artifact and then uses that review's linked template-health metadata. This prevents an older unrelated warning template from making the active paper workflow look stale.
+
+Stale artifacts are still useful audit evidence. They remain available in paper indexes and health reports, and stale warning counts may be noted, but the unified dashboard stage follows the active daily reviewed workflow chain.
+
 ## Stage Meanings
 
 - `NO_DATA`: no useful local workflow artifacts were found.
