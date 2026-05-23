@@ -63,15 +63,15 @@ Manual market and benchmark fetches require:
 - `--end-date`
 - `--allow-real-data`
 
-For `market`, the adapter infers the symbol route and chooses AKShare history functions by default:
+For `market`, the adapter infers the symbol route and uses configurable AKShare upstream fallback orders. Eastmoney remains available, but it is no longer the only market path:
 
-- ETF-like symbols, such as `510300`, `512xxx`, `515xxx`, `516xxx`, and `159xxx`, try `fund_etf_hist_em` first and can fall back to `stock_zh_a_hist`.
-- Stock-like symbols, such as `000001`, `300xxx`, `600xxx`, `601xxx`, `603xxx`, `605xxx`, and `688xxx`, use `stock_zh_a_hist`.
-- Index-like known codes, such as `000300`, `000905`, and `000852`, use `stock_zh_index_daily` when requested through market-style routing.
+- Stock-like symbols, such as `000001`, `300xxx`, `600xxx`, `601xxx`, `603xxx`, `605xxx`, and `688xxx`, try Tencent `stock_zh_a_hist_tx`, then Sina `stock_zh_a_daily`, then Eastmoney `stock_zh_a_hist` by default.
+- ETF-like symbols, such as `510300`, `512xxx`, `515xxx`, `516xxx`, and `159xxx`, try Sina `fund_etf_hist_sina`, then Eastmoney `fund_etf_hist_em` by default.
+- Index-like known codes, such as `000300`, `000905`, and `000852`, try Sina `stock_zh_index_daily`, then Tencent `stock_zh_index_daily_tx`, then the isolated Eastmoney index fallback helper by default.
 - Unknown symbols try a small bounded fallback list and report diagnostics if every attempt fails.
-- If the AKShare `requests` path fails, the adapter can try a final manual-only `eastmoney_curl_cffi_kline` fallback against the same Eastmoney kline API when `akshare_market_enable_curl_cffi_fallback` is enabled.
+- If the Eastmoney AKShare path fails, the adapter can try a final manual-only `eastmoney_curl_cffi_kline` fallback against the same Eastmoney kline API when `akshare_market_enable_curl_cffi_fallback` is enabled.
 
-Successful market metadata includes `inferred_symbol_type`, `attempted_functions`, `successful_function`, `fallback_used`, `row_count`, `adapter_status`, and `mapping_warnings`. If every market fetch attempt fails, the diagnostic error includes the dataset type, symbol, inferred type, date range, attempted functions, exception classes, safe exception messages, and suggested actions. Safe messages redact obvious secret-like values.
+Successful market metadata includes `inferred_symbol_type`, `attempted_functions`, `attempted_upstreams`, `successful_function`, `upstream_source`, `fallback_used`, `row_count`, `adapter_status`, and `mapping_warnings`. If every market fetch attempt fails, the diagnostic error includes the dataset type, symbol, inferred type, date range, attempted functions, upstream source, exception classes, safe exception messages, and suggested actions. Safe messages redact obvious secret-like values.
 
 The `curl_cffi` fallback is a recovery attempt, not a guarantee. If Eastmoney closes the kline connection, VPN/proxy routing is unstable, or the upstream endpoint is unavailable, both AKShare and `curl_cffi` can fail. In that case, use a reviewed local CSV through `LOCAL_CSV`.
 
@@ -169,6 +169,17 @@ data_sources:
   allow_network_sources: false
   allow_real_data_fetch: false
   require_manual_real_data_flag: true
+  akshare_market_stock_fallback_order:
+    - TENCENT
+    - SINA
+    - EASTMONEY
+  akshare_market_etf_fallback_order:
+    - SINA
+    - EASTMONEY
+  akshare_market_index_fallback_order:
+    - SINA
+    - TENCENT
+    - EASTMONEY
   akshare_market_retry_count: 1
   akshare_market_retry_sleep_seconds: 0
   akshare_market_enable_curl_cffi_fallback: true
@@ -302,6 +313,8 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 
 - `AKSHARE_OPTIONAL` is a guarded MVP adapter, not a production data downloader.
 - `TUSHARE_OPTIONAL` is a guarded MVP adapter and requires a local token; it is not a production data downloader.
+- AKShare market routing now attempts non-Eastmoney Sina/Tencent routes first where supported, but route coverage and field semantics can differ by upstream source.
+- Adjustment/factor semantics can differ between Sina, Tencent, and Eastmoney; always run data-quality and snapshot-quality before current candidates.
 - AKShare market routing is best-effort and may need manual `params` or later source-specific mapping when upstream endpoints change.
 - The `curl_cffi` fallback is manual-only and may still fail when Eastmoney kline, TLS, VPN, or proxy behavior is unstable.
 - Tushare field coverage and permissions depend on the user's Tushare account and point balance; review data quality before use.

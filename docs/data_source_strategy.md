@@ -56,8 +56,8 @@ Risk:
 
 Recommended next AKShare engineering work:
 
-- add non-Eastmoney market fallback routes where practical,
-- prefer Sina/Tencent paths for market backup before giving up,
+- keep non-Eastmoney market fallback routes healthy where practical,
+- prefer Sina/Tencent paths for stock/index market backup and Sina paths for ETF backup before giving up,
 - record attempted upstream family and failure reason,
 - keep `LOCAL_CSV` fallback first-class.
 
@@ -150,11 +150,11 @@ Constraints:
 
 Recommended next source-related tasks:
 
-1. AKShare Non-Eastmoney Market Fallback Adapter.
-2. Data Source Health Check.
-3. Local Market Data Cache.
-4. BaoStock Optional Adapter.
-5. Tushare Optional Adapter if cost and permission are acceptable.
+1. Data Source Health Check.
+2. Local Market Data Cache.
+3. BaoStock Optional Adapter.
+4. Tushare Optional Adapter if cost and permission are acceptable.
+5. Professional data adapter evaluation for JQData/RQData if local workflow needs stronger coverage.
 
 ## Required Data Preparation Path
 
@@ -194,3 +194,4 @@ Do not use raw vendor output directly for replay, current candidates, or paper w
 - Local market data caching is not yet implemented.
 - BaoStock/JQData/RQData routes are strategy candidates, not implemented workflow defaults.
 - Raw data quality is source-dependent and must always be checked locally.
+- Sina/Tencent/Eastmoney AKShare routes can differ in adjustment, amount, volume, and date coverage semantics; compare and quality-check outputs before research use.

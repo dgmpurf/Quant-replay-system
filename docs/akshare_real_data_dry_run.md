@@ -63,7 +63,13 @@ Copy the printed `raw_data` path. It should look like:
 data\raw\AKSHARE_OPTIONAL\market\<market_run_id>\raw_data.csv
 ```
 
-Market routing is best-effort. ETF-like symbols such as `510300` and `159xxx` try ETF/fund history first and can fall back to stock-style history. Stock-like symbols such as `000001` use the stock history path. If AKShare's `requests` path fails against Eastmoney kline, the adapter can try the manual-only `eastmoney_curl_cffi_kline` fallback. Successful metadata records `inferred_symbol_type`, `attempted_functions`, `successful_function`, and `fallback_used`.
+Market routing is best-effort and now uses non-Eastmoney routes before Eastmoney where supported.
+
+- Stock-like symbols such as `000001` try Tencent `stock_zh_a_hist_tx`, then Sina `stock_zh_a_daily`, then Eastmoney `stock_zh_a_hist`.
+- ETF-like symbols such as `510300` and `159xxx` try Sina `fund_etf_hist_sina`, then Eastmoney `fund_etf_hist_em`.
+- Index-like symbols such as `000300`, `000905`, and `000852` try Sina/Tencent index routes before the isolated Eastmoney index fallback helper.
+
+If the Eastmoney AKShare path fails, the adapter can try the manual-only `eastmoney_curl_cffi_kline` fallback. Successful metadata records `inferred_symbol_type`, `attempted_functions`, `attempted_upstreams`, `successful_function`, `upstream_source`, and `fallback_used`.
 
 ## 4. Fetch AKShare Universe Snapshot
 
@@ -267,9 +273,10 @@ For market fetch failures, inspect the diagnostic message:
 - `inferred_symbol_type`
 - `start_date` / `end_date`
 - `attempted_functions`
+- `upstream_source` / `attempted_upstreams` in metadata when a route succeeds
 - exception classes and safe exception messages
 
-If an ETF endpoint fails while a stock endpoint works, try again later, check VPN/proxy/network behavior, or use a locally saved CSV through `LOCAL_CSV`.
+If an ETF endpoint fails while a stock endpoint works, try again later, check VPN/proxy/network behavior, inspect whether Sina or Eastmoney was attempted, or use a locally saved CSV through `LOCAL_CSV`.
 
 If diagnostics show `eastmoney_curl_cffi_kline` was attempted and failed too, treat it as an upstream/network/TLS problem and prefer `LOCAL_CSV` fallback until connectivity is stable.
 
@@ -300,7 +307,8 @@ Open the linked report and inspect the component with warnings. A WARN can be ac
 ## Known MVP Limitations
 
 - AKShare real-data usage is manual-only and disabled by default.
-- Market symbol routing and fallback are best-effort; upstream endpoint instability can still require retry or `LOCAL_CSV` fallback.
+- Market symbol routing and fallback are best-effort; Sina, Tencent, and Eastmoney can differ in field coverage, adjustment conventions, and availability.
+- Upstream endpoint instability can still require retry or `LOCAL_CSV` fallback.
 - The `curl_cffi` fallback is a manual recovery attempt and can still fail when Eastmoney kline closes the connection or the local proxy/TLS path is unstable.
 - Universe snapshot fields may rely on conservative defaults when AKShare does not provide them.
 - Universe field mapping is best-effort because AKShare raw columns can vary by endpoint and version.

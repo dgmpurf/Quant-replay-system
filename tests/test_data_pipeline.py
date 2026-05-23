@@ -630,6 +630,31 @@ def _fake_akshare_module() -> ModuleType:
     module = ModuleType("akshare")
     module.universe_calls = []
 
+    def fund_etf_hist_sina(**kwargs):
+        _ = kwargs
+        return pd.DataFrame(
+            [
+                {
+                    "date": "2024-01-02",
+                    "open": 10.0,
+                    "high": 10.5,
+                    "low": 9.8,
+                    "close": 10.2,
+                    "volume": 1000,
+                    "amount": 10200,
+                },
+                {
+                    "date": "2024-01-03",
+                    "open": 10.2,
+                    "high": 10.8,
+                    "low": 10.1,
+                    "close": 10.6,
+                    "volume": 1100,
+                    "amount": 11660,
+                },
+            ]
+        )
+
     def fund_etf_hist_em(**kwargs):
         _ = kwargs
         return pd.DataFrame(
@@ -655,6 +680,7 @@ def _fake_akshare_module() -> ModuleType:
             ]
         )
 
+    module.fund_etf_hist_sina = fund_etf_hist_sina
     module.fund_etf_hist_em = fund_etf_hist_em
 
     def stock_info_a_code_name():

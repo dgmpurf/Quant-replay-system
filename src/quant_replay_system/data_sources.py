@@ -76,6 +76,12 @@ class DataSourceResult:
     audit_metadata: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class AkshareMarketFunctionSpec:
+    upstream_source: str
+    function_name: str
+
+
 class BaseDataSourceAdapter:
     """Base class for local-safe data source adapters."""
 
@@ -429,9 +435,10 @@ def _fetch_akshare_market_like(
         inferred_symbol_type=inferred_symbol_type,
         settings=settings,
     )
+    canonical_symbol = _akshare_canonical_output_symbol(request.symbol)
     frame = _normalize_akshare_market_frame(
         pd.DataFrame(raw),
-        symbol=normalize_symbol_value(request.symbol) if request.symbol is not None else None,
+        symbol=canonical_symbol,
         dataset_type=request.dataset_type,
         start_date=request.start_date,
         end_date=request.end_date,
@@ -446,7 +453,9 @@ def _fetch_akshare_market_like(
         "end_date": request.end_date,
         "inferred_symbol_type": inferred_symbol_type,
         "attempted_functions": routing_metadata["attempted_functions"],
+        "attempted_upstreams": routing_metadata.get("attempted_upstreams", []),
         "successful_function": routing_metadata["successful_function"],
+        "upstream_source": routing_metadata.get("upstream_source", ""),
         "fallback_used": routing_metadata["fallback_used"],
         "failed_attempts": routing_metadata["failed_attempts"],
         "mapping_warnings": [],
@@ -458,7 +467,7 @@ def _fetch_akshare_market_like(
 def infer_akshare_market_symbol_type(symbol: str | None) -> str:
     """Infer the MVP AKShare market route from a China market symbol."""
 
-    code = str(symbol or "").strip().upper().split(".", 1)[0]
+    code = _akshare_symbol_code(symbol)
     if code in {"000300", "000905", "000852"}:
         return "INDEX"
     if len(code) == 6 and code.startswith(("510", "511", "512", "513", "515", "516", "159")):
@@ -468,16 +477,86 @@ def infer_akshare_market_symbol_type(symbol: str | None) -> str:
     return "UNKNOWN"
 
 
+def _akshare_symbol_code(symbol: str | None) -> str:
+    text = str(symbol or "").strip().upper()
+    if not text:
+        return ""
+    if text.startswith(("SH", "SZ", "BJ")) and len(text) > 2 and text[2:].isdigit():
+        text = text[2:]
+    if "." in text:
+        code, _suffix = text.split(".", 1)
+        text = code
+    if re_match := re.match(r"^(\d+)\.0+$", text):
+        text = re_match.group(1)
+    if text.isdigit() and 0 < len(text) <= 6:
+        return text.zfill(6)
+    return text
+
+
+def _akshare_canonical_output_symbol(symbol: str | None) -> str:
+    code = _akshare_symbol_code(symbol)
+    if code.isdigit() and len(code) == 6:
+        return code
+    return normalize_symbol_value(symbol)
+
+
+def _akshare_prefixed_symbol(symbol: str | None, *, inferred_symbol_type: str | None = None) -> str:
+    code = _akshare_symbol_code(symbol)
+    if not code:
+        return ""
+    if str(symbol or "").strip().lower().startswith(("sh", "sz", "bj")):
+        return str(symbol).strip().lower()
+    if code.startswith(("6", "5", "9")) or code in {"000300", "000905", "000852"}:
+        return f"sh{code}"
+    if code.startswith(("0", "1", "2", "3")):
+        return f"sz{code}"
+    if inferred_symbol_type == "INDEX":
+        return f"sh{code}"
+    return code
+
+
 def fetch_akshare_stock_market_data(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return fetch_akshare_stock_market_eastmoney(akshare, request)
+
+
+def fetch_akshare_stock_market_tencent(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return _call_akshare_market_function(akshare, request, "stock_zh_a_hist_tx")
+
+
+def fetch_akshare_stock_market_sina(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return _call_akshare_market_function(akshare, request, "stock_zh_a_daily")
+
+
+def fetch_akshare_stock_market_eastmoney(akshare, request: DataSourceRequest) -> pd.DataFrame:
     return _call_akshare_market_function(akshare, request, "stock_zh_a_hist")
 
 
 def fetch_akshare_etf_market_data(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return fetch_akshare_etf_market_eastmoney(akshare, request)
+
+
+def fetch_akshare_etf_market_sina(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return _call_akshare_market_function(akshare, request, "fund_etf_hist_sina")
+
+
+def fetch_akshare_etf_market_eastmoney(akshare, request: DataSourceRequest) -> pd.DataFrame:
     return _call_akshare_market_function(akshare, request, "fund_etf_hist_em")
 
 
 def fetch_akshare_index_market_data(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return fetch_akshare_index_market_sina(akshare, request)
+
+
+def fetch_akshare_index_market_sina(akshare, request: DataSourceRequest) -> pd.DataFrame:
     return _call_akshare_market_function(akshare, request, "stock_zh_index_daily")
+
+
+def fetch_akshare_index_market_tencent(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return _call_akshare_market_function(akshare, request, "stock_zh_index_daily_tx")
+
+
+def fetch_akshare_index_market_eastmoney(akshare, request: DataSourceRequest) -> pd.DataFrame:
+    return _call_akshare_market_function(akshare, request, "stock_zh_index_daily_em")
 
 
 def fetch_eastmoney_kline_with_curl_cffi(
@@ -546,30 +625,35 @@ def fetch_akshare_market_data_with_fallback(
     settings: DataSourceSettings,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     attempted_functions: list[str] = []
+    attempted_upstreams: list[str] = []
     failed_attempts: list[dict[str, str]] = []
     max_attempts = max(1, int(settings.akshare_market_retry_count) + 1)
-    function_names = _akshare_market_function_candidates(request, inferred_symbol_type, settings=settings)
-    for function_name in function_names:
-        attempted_functions.append(function_name)
+    function_specs = _akshare_market_function_candidates(request, inferred_symbol_type, settings=settings)
+    for fallback_index, function_spec in enumerate(function_specs):
+        attempted_functions.append(function_spec.function_name)
+        attempted_upstreams.append(function_spec.upstream_source)
         for attempt_number in range(max_attempts):
             try:
                 raw = _fetch_akshare_market_function_by_name(
                     akshare,
                     request,
-                    function_name,
+                    function_spec.function_name,
                     inferred_symbol_type=inferred_symbol_type,
                     settings=settings,
                 )
                 return pd.DataFrame(raw), {
                     "attempted_functions": attempted_functions,
-                    "successful_function": function_name,
-                    "fallback_used": function_name == "eastmoney_curl_cffi_kline",
+                    "attempted_upstreams": attempted_upstreams,
+                    "successful_function": function_spec.function_name,
+                    "upstream_source": function_spec.upstream_source,
+                    "fallback_used": fallback_index > 0 or function_spec.function_name == "eastmoney_curl_cffi_kline",
                     "failed_attempts": failed_attempts,
                 }
             except Exception as exc:
                 failed_attempts.append(
                     {
-                        "function": function_name,
+                        "function": function_spec.function_name,
+                        "upstream_source": function_spec.upstream_source,
                         "attempt": str(attempt_number + 1),
                         "exception_type": type(exc).__name__,
                         "message": _safe_exception_message(exc),
@@ -593,12 +677,22 @@ def _fetch_akshare_market_function_by_name(
     inferred_symbol_type: str,
     settings: DataSourceSettings,
 ) -> pd.DataFrame:
+    if function_name == "stock_zh_a_hist_tx":
+        return fetch_akshare_stock_market_tencent(akshare, request)
+    if function_name == "stock_zh_a_daily":
+        return fetch_akshare_stock_market_sina(akshare, request)
     if function_name == "stock_zh_a_hist":
-        return fetch_akshare_stock_market_data(akshare, request)
+        return fetch_akshare_stock_market_eastmoney(akshare, request)
+    if function_name == "fund_etf_hist_sina":
+        return fetch_akshare_etf_market_sina(akshare, request)
     if function_name == "fund_etf_hist_em":
-        return fetch_akshare_etf_market_data(akshare, request)
+        return fetch_akshare_etf_market_eastmoney(akshare, request)
     if function_name == "stock_zh_index_daily":
-        return fetch_akshare_index_market_data(akshare, request)
+        return fetch_akshare_index_market_sina(akshare, request)
+    if function_name == "stock_zh_index_daily_tx":
+        return fetch_akshare_index_market_tencent(akshare, request)
+    if function_name == "stock_zh_index_daily_em":
+        return fetch_akshare_index_market_eastmoney(akshare, request)
     if function_name == "eastmoney_curl_cffi_kline":
         return fetch_eastmoney_kline_with_curl_cffi(
             request,
@@ -636,20 +730,21 @@ def _eastmoney_kline_params(request: DataSourceRequest, inferred_symbol_type: st
         raise ValueError("Eastmoney curl_cffi fallback supports period values: daily, weekly, monthly")
     if adjust not in adjust_dict:
         raise ValueError("Eastmoney curl_cffi fallback supports adjust values: qfq, hfq, or empty")
+    code = _akshare_symbol_code(request.symbol)
     return {
         "fields1": "f1,f2,f3,f4,f5,f6",
         "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f116",
         "ut": "7eea3edcaed734bea9cbfc24409ed989",
         "klt": period_dict[period],
         "fqt": adjust_dict[adjust],
-        "secid": f"{_eastmoney_market_id(request.symbol, inferred_symbol_type)}.{request.symbol}",
+        "secid": f"{_eastmoney_market_id(code, inferred_symbol_type)}.{code}",
         "beg": _akshare_date(request.start_date),
         "end": _akshare_date(request.end_date),
     }
 
 
 def _eastmoney_market_id(symbol: str | None, inferred_symbol_type: str) -> str:
-    code = str(symbol or "").strip().upper().split(".", 1)[0]
+    code = _akshare_symbol_code(symbol)
     if inferred_symbol_type == "ETF":
         return "1" if code.startswith("5") else "0"
     if inferred_symbol_type == "INDEX":
@@ -664,21 +759,78 @@ def _akshare_market_function_candidates(
     inferred_symbol_type: str,
     *,
     settings: DataSourceSettings,
-) -> list[str]:
+) -> list[AkshareMarketFunctionSpec]:
     configured = request.params.get("akshare_function")
     if configured:
-        return [str(configured)]
+        function_name = str(configured)
+        return [AkshareMarketFunctionSpec(_infer_akshare_upstream_source(function_name), function_name)]
+
     if request.dataset_type == "benchmark" or inferred_symbol_type == "INDEX":
-        candidates = ["stock_zh_index_daily"]
+        order = _normalize_akshare_upstream_order(settings.akshare_market_index_fallback_order)
+        candidates = _akshare_market_specs_for_order("INDEX", order)
     elif inferred_symbol_type == "ETF":
-        candidates = ["fund_etf_hist_em", "stock_zh_a_hist"]
+        order = _normalize_akshare_upstream_order(settings.akshare_market_etf_fallback_order)
+        candidates = _akshare_market_specs_for_order("ETF", order)
     elif inferred_symbol_type == "STOCK":
-        candidates = ["stock_zh_a_hist"]
+        order = _normalize_akshare_upstream_order(settings.akshare_market_stock_fallback_order)
+        candidates = _akshare_market_specs_for_order("STOCK", order)
     else:
-        candidates = ["stock_zh_a_hist", "fund_etf_hist_em", "stock_zh_index_daily"]
+        candidates = _unknown_akshare_market_specs(settings)
     if _request_enables_curl_cffi_fallback(request, settings):
-        candidates.append("eastmoney_curl_cffi_kline")
+        candidates.append(AkshareMarketFunctionSpec("EASTMONEY", "eastmoney_curl_cffi_kline"))
     return candidates
+
+
+def _akshare_market_specs_for_order(symbol_type: str, order: list[str]) -> list[AkshareMarketFunctionSpec]:
+    mapping = {
+        ("STOCK", "TENCENT"): "stock_zh_a_hist_tx",
+        ("STOCK", "SINA"): "stock_zh_a_daily",
+        ("STOCK", "EASTMONEY"): "stock_zh_a_hist",
+        ("ETF", "SINA"): "fund_etf_hist_sina",
+        ("ETF", "EASTMONEY"): "fund_etf_hist_em",
+        ("INDEX", "SINA"): "stock_zh_index_daily",
+        ("INDEX", "TENCENT"): "stock_zh_index_daily_tx",
+        ("INDEX", "EASTMONEY"): "stock_zh_index_daily_em",
+    }
+    specs: list[AkshareMarketFunctionSpec] = []
+    for upstream_source in order:
+        function_name = mapping.get((symbol_type, upstream_source))
+        if function_name:
+            specs.append(AkshareMarketFunctionSpec(upstream_source, function_name))
+    return specs
+
+
+def _unknown_akshare_market_specs(settings: DataSourceSettings) -> list[AkshareMarketFunctionSpec]:
+    specs: list[AkshareMarketFunctionSpec] = []
+    for symbol_type, order in [
+        ("STOCK", _normalize_akshare_upstream_order(settings.akshare_market_stock_fallback_order)),
+        ("ETF", _normalize_akshare_upstream_order(settings.akshare_market_etf_fallback_order)),
+        ("INDEX", _normalize_akshare_upstream_order(settings.akshare_market_index_fallback_order)),
+    ]:
+        for spec in _akshare_market_specs_for_order(symbol_type, order):
+            if spec.function_name not in {item.function_name for item in specs}:
+                specs.append(spec)
+    return specs
+
+
+def _normalize_akshare_upstream_order(order: list[str] | tuple[str, ...] | None) -> list[str]:
+    normalized: list[str] = []
+    for item in order or []:
+        upstream_source = str(item).strip().upper()
+        if upstream_source in {"TENCENT", "SINA", "EASTMONEY"} and upstream_source not in normalized:
+            normalized.append(upstream_source)
+    return normalized
+
+
+def _infer_akshare_upstream_source(function_name: str) -> str:
+    lowered = str(function_name).lower()
+    if lowered.endswith("_tx") or "tencent" in lowered:
+        return "TENCENT"
+    if "sina" in lowered or lowered in {"stock_zh_a_daily", "stock_zh_index_daily"}:
+        return "SINA"
+    if lowered.endswith("_em") or "eastmoney" in lowered or lowered == "stock_zh_a_hist":
+        return "EASTMONEY"
+    return "UNKNOWN"
 
 
 def _request_enables_curl_cffi_fallback(request: DataSourceRequest, settings: DataSourceSettings) -> bool:
@@ -829,10 +981,29 @@ def _akshare_market_function_name(request: DataSourceRequest) -> str:
 
 
 def _akshare_market_kwargs(request: DataSourceRequest, function_name: str) -> dict[str, Any]:
-    if function_name == "stock_zh_index_daily":
-        return {"symbol": request.symbol}
+    inferred_symbol_type = "INDEX" if request.dataset_type == "benchmark" else infer_akshare_market_symbol_type(request.symbol)
+    code = _akshare_symbol_code(request.symbol)
+    prefixed_symbol = _akshare_prefixed_symbol(request.symbol, inferred_symbol_type=inferred_symbol_type)
+    if function_name in {"stock_zh_index_daily", "stock_zh_index_daily_tx"}:
+        return {"symbol": prefixed_symbol}
+    if function_name == "stock_zh_index_daily_em":
+        return {
+            "symbol": code,
+            "period": request.params.get("period", "daily"),
+            "start_date": _akshare_date(request.start_date),
+            "end_date": _akshare_date(request.end_date),
+        }
+    if function_name == "fund_etf_hist_sina":
+        return {"symbol": prefixed_symbol}
+    if function_name in {"stock_zh_a_hist_tx", "stock_zh_a_daily"}:
+        return {
+            "symbol": prefixed_symbol,
+            "start_date": _akshare_date(request.start_date),
+            "end_date": _akshare_date(request.end_date),
+            "adjust": request.params.get("adjust", ""),
+        }
     kwargs = {
-        "symbol": request.symbol,
+        "symbol": code,
         "period": request.params.get("period", "daily"),
         "start_date": _akshare_date(request.start_date),
         "end_date": _akshare_date(request.end_date),
@@ -1394,21 +1565,30 @@ def _tushare_date(value: str | None) -> str:
 
 _AKSHARE_MARKET_COLUMN_ALIASES = {
     "\u65e5\u671f": "trade_date",
+    "\u4ea4\u6613\u65e5\u671f": "trade_date",
     "date": "trade_date",
     "trade_date": "trade_date",
     "\u5f00\u76d8": "open",
+    "\u5f00\u76d8\u4ef7": "open",
     "open": "open",
     "\u6700\u9ad8": "high",
+    "\u6700\u9ad8\u4ef7": "high",
     "high": "high",
     "\u6700\u4f4e": "low",
+    "\u6700\u4f4e\u4ef7": "low",
     "low": "low",
     "\u6536\u76d8": "close",
+    "\u6536\u76d8\u4ef7": "close",
     "close": "close",
     "\u6210\u4ea4\u91cf": "volume",
+    "\u6210\u4ea4\u91cf(\u624b)": "volume",
     "volume": "volume",
+    "vol": "volume",
     "\u6210\u4ea4\u989d": "amount",
+    "\u6210\u4ea4\u91d1\u989d": "amount",
     "amount": "amount",
     "\u524d\u6536\u76d8": "pre_close",
+    "\u524d\u6536\u76d8\u4ef7": "pre_close",
     "pre_close": "pre_close",
 }
 
@@ -1665,7 +1845,9 @@ def build_data_source_metadata(result: DataSourceResult, paths: DataSourceArtifa
         "adapter_status": result.audit_metadata.get("adapter_status", ""),
         "inferred_symbol_type": adapter_metadata.get("inferred_symbol_type", ""),
         "attempted_functions": adapter_metadata.get("attempted_functions", []),
+        "attempted_upstreams": adapter_metadata.get("attempted_upstreams", []),
         "successful_function": adapter_metadata.get("successful_function", ""),
+        "upstream_source": adapter_metadata.get("upstream_source", ""),
         "fallback_used": bool(adapter_metadata.get("fallback_used", False)),
         "failure_reason": adapter_metadata.get("failure_reason", ""),
         "token_present": bool(adapter_metadata.get("token_present", False)),

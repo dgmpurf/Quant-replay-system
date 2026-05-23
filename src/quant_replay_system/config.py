@@ -318,6 +318,13 @@ class DataSourceSettings(BaseModel):
     allow_network_sources: bool = False
     allow_real_data_fetch: bool = False
     require_manual_real_data_flag: bool = True
+    akshare_market_stock_fallback_order: list[str] = Field(
+        default_factory=lambda: ["TENCENT", "SINA", "EASTMONEY"]
+    )
+    akshare_market_etf_fallback_order: list[str] = Field(default_factory=lambda: ["SINA", "EASTMONEY"])
+    akshare_market_index_fallback_order: list[str] = Field(
+        default_factory=lambda: ["SINA", "TENCENT", "EASTMONEY"]
+    )
     akshare_market_retry_count: int = Field(default=1, ge=0)
     akshare_market_retry_sleep_seconds: float = Field(default=0.0, ge=0)
     akshare_market_enable_curl_cffi_fallback: bool = True

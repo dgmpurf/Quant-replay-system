@@ -282,6 +282,17 @@ data_sources:
   allow_network_sources: false
   allow_real_data_fetch: false
   require_manual_real_data_flag: true
+  akshare_market_stock_fallback_order:
+    - TENCENT
+    - SINA
+    - EASTMONEY
+  akshare_market_etf_fallback_order:
+    - SINA
+    - EASTMONEY
+  akshare_market_index_fallback_order:
+    - SINA
+    - TENCENT
+    - EASTMONEY
   akshare_market_retry_count: 1
   akshare_market_retry_sleep_seconds: 0
   akshare_market_enable_curl_cffi_fallback: true
