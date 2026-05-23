@@ -65,8 +65,11 @@ For `market`, the adapter infers the symbol route and chooses AKShare history fu
 - Stock-like symbols, such as `000001`, `300xxx`, `600xxx`, `601xxx`, `603xxx`, `605xxx`, and `688xxx`, use `stock_zh_a_hist`.
 - Index-like known codes, such as `000300`, `000905`, and `000852`, use `stock_zh_index_daily` when requested through market-style routing.
 - Unknown symbols try a small bounded fallback list and report diagnostics if every attempt fails.
+- If the AKShare `requests` path fails, the adapter can try a final manual-only `eastmoney_curl_cffi_kline` fallback against the same Eastmoney kline API when `akshare_market_enable_curl_cffi_fallback` is enabled.
 
-Successful market metadata includes `inferred_symbol_type`, `attempted_functions`, `successful_function`, `row_count`, `adapter_status`, and `mapping_warnings`. If every market fetch attempt fails, the diagnostic error includes the dataset type, symbol, inferred type, date range, attempted functions, exception classes, safe exception messages, and suggested actions. Safe messages redact obvious secret-like values.
+Successful market metadata includes `inferred_symbol_type`, `attempted_functions`, `successful_function`, `fallback_used`, `row_count`, `adapter_status`, and `mapping_warnings`. If every market fetch attempt fails, the diagnostic error includes the dataset type, symbol, inferred type, date range, attempted functions, exception classes, safe exception messages, and suggested actions. Safe messages redact obvious secret-like values.
+
+The `curl_cffi` fallback is a recovery attempt, not a guarantee. If Eastmoney closes the kline connection, VPN/proxy routing is unstable, or the upstream endpoint is unavailable, both AKShare and `curl_cffi` can fail. In that case, use a reviewed local CSV through `LOCAL_CSV`.
 
 For `benchmark`, the adapter uses `stock_zh_index_daily` by default and filters dates locally.
 
@@ -79,6 +82,63 @@ If universe mapping fails, the error includes `dataset_type`, raw DataFrame shap
 The adapter normalizes returned frames into raw CSVs that are compatible with the existing ingestion path where possible. Users should still run `data-pipeline`, `data-quality`, and `snapshot-quality` before using the data for current candidates or replay.
 
 For the guarded manual command sequence from AKShare fetch to current candidates, see [akshare_manual_workflow.md](akshare_manual_workflow.md). For a shorter universe + market dry-run checklist with a copyable manifest template, see [akshare_real_data_dry_run.md](akshare_real_data_dry_run.md).
+
+### TUSHARE_OPTIONAL
+
+`TUSHARE_OPTIONAL` is a guarded manual-only adapter for local Tushare fetches.
+
+It is disabled by default, imports `tushare` lazily only after guardrails pass, and must not be used for real network calls in automated tests.
+
+Supported v0.1 dataset types:
+
+- `market`
+- `benchmark`
+- `trading_calendar`
+- `universe`
+
+Unsupported dataset types return a clear not-implemented error.
+
+Manual Tushare fetches require:
+
+- `--allow-real-data`
+- `TUSHARE_TOKEN` in the current environment or local `.env`
+- `tushare` installed in the local virtual environment
+
+Install Tushare manually only for local real-data dry runs:
+
+```cmd
+python -m pip install tushare
+```
+
+Token rules:
+
+- Store the token only in the local `.env` file or current CMD environment.
+- Do not commit `.env`.
+- The adapter records `token_present: true/false` but never writes the token value to metadata.
+- Error messages redact the token if an upstream exception includes it.
+- Automated tests use fake clients and fake tokens only.
+
+Manual market fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source TUSHARE_OPTIONAL --dataset-type market --symbol 000001.SZ --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
+Manual universe snapshot fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source TUSHARE_OPTIONAL --dataset-type universe --as-of-date 2024-05-20 --market-type all --allow-real-data
+```
+
+Manual trading-calendar fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source TUSHARE_OPTIONAL --dataset-type trading_calendar --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
+Tushare market data is normalized into canonical market-style columns where possible. Tushare `daily` / `index_daily` fields such as `ts_code`, `trade_date`, `vol`, and `amount` are mapped to `symbol`, `trade_date`, `volume`, and `amount`; derived fields such as `available_time`, `limit_up`, and `limit_down` use conservative MVP defaults. Universe snapshots use `stock_basic` and, for ETF/all scopes, `fund_basic` with conservative defaults for fields Tushare does not provide. Trading calendars use `trade_cal`.
+
+The raw Tushare output should still go through `data-pipeline`, `data-quality`, and `snapshot-quality` before current-candidate generation or replay.
 
 ## Dataset Types
 
@@ -103,6 +163,8 @@ data_sources:
   require_manual_real_data_flag: true
   akshare_market_retry_count: 1
   akshare_market_retry_sleep_seconds: 0
+  akshare_market_enable_curl_cffi_fallback: true
+  akshare_market_curl_cffi_impersonate: chrome
 ```
 
 Rules:
@@ -110,12 +172,12 @@ Rules:
 - Real/network adapters are disabled by default.
 - CLI real-data runs require `--allow-real-data`.
 - Automated tests must use `LOCAL_CSV` or `MOCK`.
-- Automated tests may monkeypatch a fake `akshare` module, but they must not call real AKShare or network APIs.
-- No API keys or tokens are required or printed.
+- Automated tests may monkeypatch fake `akshare` or `tushare` modules, but they must not call real AKShare, Tushare, or network APIs.
+- AKShare requires no token; Tushare requires `TUSHARE_TOKEN` for manual real-data fetches, but the token is never printed or written to metadata.
 - `.env` is not modified.
 - Broker/live trading integrations are not invoked.
 
-Network availability, VPN/proxy configuration, and upstream endpoint changes can affect AKShare manual fetches. When an upstream request fails or returns unexpected columns, retry later, narrow the request, review the printed diagnostics, or save/use a local CSV through `LOCAL_CSV`.
+Network availability, VPN/proxy configuration, and upstream endpoint changes can affect AKShare manual fetches. Eastmoney kline requests can fail even when `https://push2his.eastmoney.com` itself returns an HTTP response. Verify local proxy listener ports with `netstat` before setting proxy variables; do not assume ports such as `7890` or `10808` are active. When an upstream request fails or returns unexpected columns, retry later, narrow the request, review the printed diagnostics, or save/use a local CSV through `LOCAL_CSV`.
 
 ## CLI Usage
 
@@ -161,6 +223,24 @@ Manual AKShare universe snapshot fetch:
 python -m quant_replay_system.cli data-source-fetch --source AKSHARE_OPTIONAL --dataset-type universe --as-of-date 2024-05-20 --market-type all --allow-real-data
 ```
 
+Manual Tushare market fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source TUSHARE_OPTIONAL --dataset-type market --symbol 000001.SZ --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
+Manual Tushare universe snapshot fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source TUSHARE_OPTIONAL --dataset-type universe --as-of-date 2024-05-20 --market-type all --allow-real-data
+```
+
+Manual Tushare trading calendar fetch:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source TUSHARE_OPTIONAL --dataset-type trading_calendar --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+```
+
 The command prints raw artifact paths, row count, and:
 
 ```text
@@ -193,6 +273,14 @@ python -m quant_replay_system.cli data-pipeline --dataset-type universe --source
 python -m quant_replay_system.cli data-quality --dataset-type universe --input data\processed\universe\<pipeline_id>\raw_data_cleaned.csv
 ```
 
+For a manual Tushare market fetch, use the same local handoff path:
+
+```cmd
+python -m quant_replay_system.cli data-source-fetch --source TUSHARE_OPTIONAL --dataset-type market --symbol 000001.SZ --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data\raw\TUSHARE_OPTIONAL\market\<run_id>\raw_data.csv
+python -m quant_replay_system.cli data-quality --dataset-type market --input data\processed\market\<pipeline_id>\raw_data_cleaned.csv
+```
+
 You can still run the underlying commands manually:
 
 ```cmd
@@ -205,7 +293,10 @@ python -m quant_replay_system.cli current-candidates --date 2024-05-20 --univers
 ## Known MVP Limitations
 
 - `AKSHARE_OPTIONAL` is a guarded MVP adapter, not a production data downloader.
+- `TUSHARE_OPTIONAL` is a guarded MVP adapter and requires a local token; it is not a production data downloader.
 - AKShare market routing is best-effort and may need manual `params` or later source-specific mapping when upstream endpoints change.
+- The `curl_cffi` fallback is manual-only and may still fail when Eastmoney kline, TLS, VPN, or proxy behavior is unstable.
+- Tushare field coverage and permissions depend on the user's Tushare account and point balance; review data quality before use.
 - Universe snapshot support fills conservative defaults when AKShare does not provide optional fields; review data quality before current-candidate use.
 - Universe field mapping is best-effort and may need updates when AKShare changes raw output columns.
 - Corporate action AKShare fetches are not implemented in v0.1.

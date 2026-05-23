@@ -63,7 +63,7 @@ Copy the printed `raw_data` path. It should look like:
 data\raw\AKSHARE_OPTIONAL\market\<market_run_id>\raw_data.csv
 ```
 
-Market routing is best-effort. ETF-like symbols such as `510300` and `159xxx` try ETF/fund history first and can fall back to stock-style history. Stock-like symbols such as `000001` use the stock history path. Successful metadata records `inferred_symbol_type`, `attempted_functions`, and `successful_function`.
+Market routing is best-effort. ETF-like symbols such as `510300` and `159xxx` try ETF/fund history first and can fall back to stock-style history. Stock-like symbols such as `000001` use the stock history path. If AKShare's `requests` path fails against Eastmoney kline, the adapter can try the manual-only `eastmoney_curl_cffi_kline` fallback. Successful metadata records `inferred_symbol_type`, `attempted_functions`, `successful_function`, and `fallback_used`.
 
 ## 4. Fetch AKShare Universe Snapshot
 
@@ -250,7 +250,15 @@ Then update the AKShare universe mapping or prepare a canonical local universe C
 
 ### Network, VPN, or proxy failure
 
-AKShare upstream endpoints can fail with network errors such as disconnected remote responses. VPN, proxy, firewall, or regional routing can also affect requests. Retry later, narrow the date range, change networks if appropriate, or use previously saved local CSV files through `LOCAL_CSV`.
+AKShare upstream endpoints can fail with network errors such as disconnected remote responses or TLS errors. Eastmoney kline requests can fail even if the root domain returns an HTTP response such as `404`. VPN, proxy, firewall, or regional routing can also affect requests. Retry later, narrow the date range, change networks if appropriate, or use previously saved local CSV files through `LOCAL_CSV`.
+
+Before setting proxy variables, detect actual local listeners:
+
+```cmd
+netstat -ano | findstr LISTENING | findstr "10808 10809 1080 7890 7891 2080 2081"
+```
+
+Do not assume `7890`, `10808`, or any other port is available unless it is shown as `LISTENING`.
 
 For market fetch failures, inspect the diagnostic message:
 
@@ -262,6 +270,8 @@ For market fetch failures, inspect the diagnostic message:
 - exception classes and safe exception messages
 
 If an ETF endpoint fails while a stock endpoint works, try again later, check VPN/proxy/network behavior, or use a locally saved CSV through `LOCAL_CSV`.
+
+If diagnostics show `eastmoney_curl_cffi_kline` was attempted and failed too, treat it as an upstream/network/TLS problem and prefer `LOCAL_CSV` fallback until connectivity is stable.
 
 ### Symbol format issues
 
@@ -291,6 +301,7 @@ Open the linked report and inspect the component with warnings. A WARN can be ac
 
 - AKShare real-data usage is manual-only and disabled by default.
 - Market symbol routing and fallback are best-effort; upstream endpoint instability can still require retry or `LOCAL_CSV` fallback.
+- The `curl_cffi` fallback is a manual recovery attempt and can still fail when Eastmoney kline closes the connection or the local proxy/TLS path is unstable.
 - Universe snapshot fields may rely on conservative defaults when AKShare does not provide them.
 - Universe field mapping is best-effort because AKShare raw columns can vary by endpoint and version.
 - Trading-calendar endpoint availability can vary by AKShare version.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -16,7 +17,7 @@ from quant_replay_system.config import DataSourceSettings, Settings, load_settin
 
 
 SUPPORTED_DATASET_TYPES = {"market", "universe", "benchmark", "corporate_actions", "trading_calendar"}
-REAL_DATA_SOURCES = {"AKSHARE_OPTIONAL"}
+REAL_DATA_SOURCES = {"AKSHARE_OPTIONAL", "TUSHARE_OPTIONAL"}
 
 DATA_SOURCE_LIMITATIONS = [
     "LOCAL_CSV and MOCK adapters use local files only.",
@@ -166,6 +167,39 @@ class OptionalAkshareDataSourceAdapter(BaseDataSourceAdapter):
         ]
 
 
+class OptionalTushareDataSourceAdapter(BaseDataSourceAdapter):
+    """Manual-only Tushare data source adapter with strict token safety."""
+
+    source = "TUSHARE_OPTIONAL"
+    is_real_data_source = True
+
+    def fetch(
+        self,
+        request: DataSourceRequest,
+        settings: DataSourceSettings,
+        project_settings: Settings,
+    ) -> tuple[pd.DataFrame, dict[str, Any], list[str]]:
+        _enforce_real_data_guardrails(self, request, settings)
+        _ = project_settings
+        if request.dataset_type not in {"market", "benchmark", "trading_calendar", "universe"}:
+            raise NotImplementedError(
+                f"TUSHARE_OPTIONAL does not support dataset_type={request.dataset_type!r} in v0.1. "
+                "Supported dataset types: market, benchmark, trading_calendar, universe."
+            )
+        token = _resolve_tushare_token()
+        tushare = _import_tushare()
+        client = _create_tushare_client(tushare, token)
+        if request.dataset_type in {"market", "benchmark"}:
+            frame, adapter_metadata = _fetch_tushare_market_like(client, request, token=token)
+        elif request.dataset_type == "universe":
+            frame, adapter_metadata = _fetch_tushare_universe(client, request, token=token)
+        else:
+            frame, adapter_metadata = _fetch_tushare_trading_calendar(client, request, token=token)
+        return frame, adapter_metadata, [
+            "TUSHARE_OPTIONAL is manual-only and should be passed through ingestion and data quality before use."
+        ]
+
+
 def _import_akshare():
     try:
         import akshare  # type: ignore
@@ -175,6 +209,199 @@ def _import_akshare():
             "Install it in your local environment with: python -m pip install akshare"
         ) from exc
     return akshare
+
+
+def _import_tushare():
+    try:
+        import tushare  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(
+            "TUSHARE_OPTIONAL requires tushare to be installed for manual real-data fetches. "
+            "Install it in your local environment with: python -m pip install tushare"
+        ) from exc
+    return tushare
+
+
+def _resolve_tushare_token() -> str:
+    token = os.environ.get("TUSHARE_TOKEN") or _read_env_file_value(Path(".env"), "TUSHARE_TOKEN")
+    if not token:
+        raise RuntimeError("TUSHARE_TOKEN is required for TUSHARE_OPTIONAL real-data fetch.")
+    return token
+
+
+def _read_env_file_value(path: Path, key: str) -> str:
+    if not path.exists():
+        return ""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ""
+    prefix = f"{key}="
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or not stripped.startswith(prefix):
+            continue
+        return stripped[len(prefix):].strip().strip('"').strip("'")
+    return ""
+
+
+def _create_tushare_client(tushare, token: str):
+    try:
+        return tushare.pro_api(token)
+    except TypeError:
+        if hasattr(tushare, "set_token"):
+            tushare.set_token(token)
+        return tushare.pro_api()
+    except Exception as exc:
+        raise RuntimeError(
+            "TUSHARE_OPTIONAL client initialization failed; "
+            f"exception_type={type(exc).__name__}; "
+            f"message={_safe_exception_message(_redact_tushare_token(exc, token))}"
+        ) from exc
+
+
+def _fetch_tushare_market_like(client, request: DataSourceRequest, *, token: str) -> tuple[pd.DataFrame, dict[str, Any]]:
+    if not request.symbol:
+        raise ValueError("TUSHARE_OPTIONAL market/benchmark fetch requires --symbol")
+    if not request.start_date or not request.end_date:
+        raise ValueError("TUSHARE_OPTIONAL market/benchmark fetch requires --start-date and --end-date")
+    function_name = "index_daily" if request.dataset_type == "benchmark" else "daily"
+    raw = _call_tushare_client(
+        client,
+        function_name,
+        token=token,
+        ts_code=request.symbol,
+        start_date=_tushare_date(request.start_date),
+        end_date=_tushare_date(request.end_date),
+    )
+    frame = _normalize_tushare_market_frame(
+        pd.DataFrame(raw),
+        symbol=request.symbol,
+        dataset_type=request.dataset_type,
+        start_date=request.start_date,
+        end_date=request.end_date,
+        source=request.source,
+        revision_id=request.revision_id,
+    )
+    adapter_metadata = {
+        "adapter": request.source,
+        "adapter_status": "SUCCESS",
+        "tushare_function": function_name,
+        "symbol": request.symbol,
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+        "token_present": True,
+        "row_count": len(frame),
+        "mapping_warnings": [],
+    }
+    return frame, adapter_metadata
+
+
+def _fetch_tushare_universe(client, request: DataSourceRequest, *, token: str) -> tuple[pd.DataFrame, dict[str, Any]]:
+    as_of_date = request.as_of_date or pd.Timestamp.now(tz="Asia/Shanghai").date().isoformat()
+    market_type = _normalize_akshare_market_type(request.market_type or request.params.get("market_type") or "stock")
+    frames: list[pd.DataFrame] = []
+    function_names: list[str] = []
+    if market_type in {"stock", "all"}:
+        raw_stock = _call_tushare_client(
+            client,
+            "stock_basic",
+            token=token,
+            exchange="",
+            list_status="L",
+            fields="ts_code,symbol,name,area,industry,market,list_date,delist_date,exchange",
+        )
+        stock = pd.DataFrame(raw_stock)
+        stock["_tushare_instrument_type"] = "STOCK"
+        frames.append(stock)
+        function_names.append("stock_basic")
+    if market_type in {"etf", "all"}:
+        raw_fund = _call_tushare_client(
+            client,
+            "fund_basic",
+            token=token,
+            market="E",
+            status="L",
+            fields="ts_code,name,management,custodian,fund_type,found_date,due_date,list_date,delist_date,status",
+        )
+        fund = pd.DataFrame(raw_fund)
+        fund["_tushare_instrument_type"] = "ETF"
+        frames.append(fund)
+        function_names.append("fund_basic")
+    if market_type not in {"stock", "etf", "all"}:
+        raise ValueError("TUSHARE_OPTIONAL universe market_type must be one of: stock, etf, all")
+    combined = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    frame, mapping_warnings = _normalize_tushare_universe_frame(
+        combined,
+        as_of_date=as_of_date,
+        source=request.source,
+        revision_id=request.revision_id,
+    )
+    adapter_metadata = {
+        "adapter": request.source,
+        "adapter_status": "SUCCESS",
+        "tushare_functions": function_names,
+        "as_of_date": as_of_date,
+        "market_type": market_type,
+        "token_present": True,
+        "row_count": len(frame),
+        "raw_columns": [str(column) for column in combined.columns],
+        "normalized_columns": list(frame.columns),
+        "mapping_warnings": mapping_warnings,
+    }
+    return frame, adapter_metadata
+
+
+def _fetch_tushare_trading_calendar(
+    client,
+    request: DataSourceRequest,
+    *,
+    token: str,
+) -> tuple[pd.DataFrame, dict[str, Any]]:
+    if not request.start_date or not request.end_date:
+        raise ValueError("TUSHARE_OPTIONAL trading_calendar fetch requires --start-date and --end-date")
+    raw = _call_tushare_client(
+        client,
+        "trade_cal",
+        token=token,
+        exchange="",
+        start_date=_tushare_date(request.start_date),
+        end_date=_tushare_date(request.end_date),
+    )
+    frame = _normalize_tushare_calendar_frame(pd.DataFrame(raw))
+    adapter_metadata = {
+        "adapter": request.source,
+        "adapter_status": "SUCCESS",
+        "tushare_function": "trade_cal",
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+        "token_present": True,
+        "row_count": len(frame),
+        "mapping_warnings": [],
+    }
+    return frame, adapter_metadata
+
+
+def _call_tushare_client(client, function_name: str, *, token: str, **kwargs) -> pd.DataFrame:
+    function = getattr(client, function_name, None)
+    if function is None:
+        raise RuntimeError(f"tushare pro client function not available: {function_name}")
+    try:
+        return pd.DataFrame(function(**kwargs))
+    except Exception as exc:
+        safe_exc = _redact_tushare_token(exc, token)
+        raise RuntimeError(
+            f"TUSHARE_OPTIONAL {function_name} fetch failed; "
+            f"exception_type={type(exc).__name__}; "
+            f"message={_safe_exception_message(safe_exc)}"
+        ) from exc
+
+
+def _redact_tushare_token(exc: Exception, token: str) -> Exception:
+    message = str(exc)
+    if token:
+        message = message.replace(token, "<redacted>")
+    return RuntimeError(message)
 
 
 def _fetch_akshare_market_like(
@@ -215,6 +442,7 @@ def _fetch_akshare_market_like(
         "inferred_symbol_type": inferred_symbol_type,
         "attempted_functions": routing_metadata["attempted_functions"],
         "successful_function": routing_metadata["successful_function"],
+        "fallback_used": routing_metadata["fallback_used"],
         "failed_attempts": routing_metadata["failed_attempts"],
         "mapping_warnings": [],
         "row_count": len(frame),
@@ -247,6 +475,64 @@ def fetch_akshare_index_market_data(akshare, request: DataSourceRequest) -> pd.D
     return _call_akshare_market_function(akshare, request, "stock_zh_index_daily")
 
 
+def fetch_eastmoney_kline_with_curl_cffi(
+    request: DataSourceRequest,
+    *,
+    inferred_symbol_type: str,
+    settings: DataSourceSettings,
+) -> pd.DataFrame:
+    """Fetch Eastmoney kline data through curl_cffi for manual fallback runs."""
+
+    curl_requests = _import_curl_cffi_requests()
+    url = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+    params = _eastmoney_kline_params(request, inferred_symbol_type)
+    response = curl_requests.get(
+        url,
+        params=params,
+        timeout=15,
+        impersonate=settings.akshare_market_curl_cffi_impersonate,
+    )
+    status_code = int(getattr(response, "status_code", 0) or 0)
+    if status_code >= 400:
+        raise RuntimeError(f"Eastmoney curl_cffi kline request failed with HTTP {status_code}")
+    try:
+        payload = response.json()
+    except Exception:
+        payload = json.loads(getattr(response, "text", ""))
+    return normalize_eastmoney_kline_payload(payload, symbol=request.symbol or "")
+
+
+def normalize_eastmoney_kline_payload(payload: dict[str, Any], *, symbol: str) -> pd.DataFrame:
+    """Normalize Eastmoney kline JSON into market-like raw columns."""
+
+    if not isinstance(payload, dict):
+        raise ValueError("Eastmoney kline payload was not a JSON object")
+    data = payload.get("data")
+    if not data:
+        return pd.DataFrame(columns=["date", "symbol", "open", "high", "low", "close", "volume", "amount"])
+    if not isinstance(data, dict):
+        raise ValueError("Eastmoney kline payload data field was not a JSON object")
+    klines = data.get("klines") or []
+    records: list[dict[str, Any]] = []
+    for item in klines:
+        parts = str(item).split(",")
+        if len(parts) < 7:
+            raise ValueError("Eastmoney kline row had fewer than 7 comma-separated fields")
+        records.append(
+            {
+                "date": parts[0],
+                "symbol": symbol,
+                "open": parts[1],
+                "close": parts[2],
+                "high": parts[3],
+                "low": parts[4],
+                "volume": parts[5],
+                "amount": parts[6],
+            }
+        )
+    return pd.DataFrame(records, columns=["date", "symbol", "open", "high", "low", "close", "volume", "amount"])
+
+
 def fetch_akshare_market_data_with_fallback(
     akshare,
     request: DataSourceRequest,
@@ -257,15 +543,22 @@ def fetch_akshare_market_data_with_fallback(
     attempted_functions: list[str] = []
     failed_attempts: list[dict[str, str]] = []
     max_attempts = max(1, int(settings.akshare_market_retry_count) + 1)
-    function_names = _akshare_market_function_candidates(request, inferred_symbol_type)
+    function_names = _akshare_market_function_candidates(request, inferred_symbol_type, settings=settings)
     for function_name in function_names:
         attempted_functions.append(function_name)
         for attempt_number in range(max_attempts):
             try:
-                raw = _fetch_akshare_market_function_by_name(akshare, request, function_name)
+                raw = _fetch_akshare_market_function_by_name(
+                    akshare,
+                    request,
+                    function_name,
+                    inferred_symbol_type=inferred_symbol_type,
+                    settings=settings,
+                )
                 return pd.DataFrame(raw), {
                     "attempted_functions": attempted_functions,
                     "successful_function": function_name,
+                    "fallback_used": function_name == "eastmoney_curl_cffi_kline",
                     "failed_attempts": failed_attempts,
                 }
             except Exception as exc:
@@ -291,6 +584,9 @@ def _fetch_akshare_market_function_by_name(
     akshare,
     request: DataSourceRequest,
     function_name: str,
+    *,
+    inferred_symbol_type: str,
+    settings: DataSourceSettings,
 ) -> pd.DataFrame:
     if function_name == "stock_zh_a_hist":
         return fetch_akshare_stock_market_data(akshare, request)
@@ -298,6 +594,12 @@ def _fetch_akshare_market_function_by_name(
         return fetch_akshare_etf_market_data(akshare, request)
     if function_name == "stock_zh_index_daily":
         return fetch_akshare_index_market_data(akshare, request)
+    if function_name == "eastmoney_curl_cffi_kline":
+        return fetch_eastmoney_kline_with_curl_cffi(
+            request,
+            inferred_symbol_type=inferred_symbol_type,
+            settings=settings,
+        )
     return _call_akshare_market_function(akshare, request, function_name)
 
 
@@ -309,17 +611,78 @@ def _call_akshare_market_function(akshare, request: DataSourceRequest, function_
     return pd.DataFrame(function(**kwargs))
 
 
-def _akshare_market_function_candidates(request: DataSourceRequest, inferred_symbol_type: str) -> list[str]:
+def _import_curl_cffi_requests():
+    try:
+        from curl_cffi import requests as curl_requests  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(
+            "Eastmoney curl_cffi fallback requires curl_cffi. "
+            "It is normally installed with AKShare; install it manually with: python -m pip install curl_cffi"
+        ) from exc
+    return curl_requests
+
+
+def _eastmoney_kline_params(request: DataSourceRequest, inferred_symbol_type: str) -> dict[str, str]:
+    adjust_dict = {"qfq": "1", "hfq": "2", "": "0"}
+    period_dict = {"daily": "101", "weekly": "102", "monthly": "103"}
+    period = str(request.params.get("period", "daily"))
+    adjust = str(request.params.get("adjust", ""))
+    if period not in period_dict:
+        raise ValueError("Eastmoney curl_cffi fallback supports period values: daily, weekly, monthly")
+    if adjust not in adjust_dict:
+        raise ValueError("Eastmoney curl_cffi fallback supports adjust values: qfq, hfq, or empty")
+    return {
+        "fields1": "f1,f2,f3,f4,f5,f6",
+        "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f116",
+        "ut": "7eea3edcaed734bea9cbfc24409ed989",
+        "klt": period_dict[period],
+        "fqt": adjust_dict[adjust],
+        "secid": f"{_eastmoney_market_id(request.symbol, inferred_symbol_type)}.{request.symbol}",
+        "beg": _akshare_date(request.start_date),
+        "end": _akshare_date(request.end_date),
+    }
+
+
+def _eastmoney_market_id(symbol: str | None, inferred_symbol_type: str) -> str:
+    code = str(symbol or "").strip().upper().split(".", 1)[0]
+    if inferred_symbol_type == "ETF":
+        return "1" if code.startswith("5") else "0"
+    if inferred_symbol_type == "INDEX":
+        return "0" if code.startswith("399") else "1"
+    if inferred_symbol_type == "STOCK":
+        return "1" if code.startswith(("6", "9")) else "0"
+    return "1" if code.startswith(("5", "6", "9")) else "0"
+
+
+def _akshare_market_function_candidates(
+    request: DataSourceRequest,
+    inferred_symbol_type: str,
+    *,
+    settings: DataSourceSettings,
+) -> list[str]:
     configured = request.params.get("akshare_function")
     if configured:
         return [str(configured)]
     if request.dataset_type == "benchmark" or inferred_symbol_type == "INDEX":
-        return ["stock_zh_index_daily"]
-    if inferred_symbol_type == "ETF":
-        return ["fund_etf_hist_em", "stock_zh_a_hist"]
-    if inferred_symbol_type == "STOCK":
-        return ["stock_zh_a_hist"]
-    return ["stock_zh_a_hist", "fund_etf_hist_em", "stock_zh_index_daily"]
+        candidates = ["stock_zh_index_daily"]
+    elif inferred_symbol_type == "ETF":
+        candidates = ["fund_etf_hist_em", "stock_zh_a_hist"]
+    elif inferred_symbol_type == "STOCK":
+        candidates = ["stock_zh_a_hist"]
+    else:
+        candidates = ["stock_zh_a_hist", "fund_etf_hist_em", "stock_zh_index_daily"]
+    if _request_enables_curl_cffi_fallback(request, settings):
+        candidates.append("eastmoney_curl_cffi_kline")
+    return candidates
+
+
+def _request_enables_curl_cffi_fallback(request: DataSourceRequest, settings: DataSourceSettings) -> bool:
+    configured = request.params.get("enable_curl_cffi_fallback")
+    if configured is None:
+        return bool(settings.akshare_market_enable_curl_cffi_fallback)
+    if isinstance(configured, bool):
+        return configured
+    return str(configured).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
 def _akshare_market_fetch_error(
@@ -554,6 +917,133 @@ def _canonical_market_frame(
             "source",
         ]
     ]
+
+
+def _normalize_tushare_market_frame(
+    frame: pd.DataFrame,
+    *,
+    symbol: str,
+    dataset_type: str,
+    start_date: str,
+    end_date: str,
+    source: str,
+    revision_id: str | None,
+) -> pd.DataFrame:
+    _ = dataset_type
+    if frame.empty:
+        return _canonical_market_frame(pd.DataFrame(), symbol=symbol, source=source, revision_id=revision_id)
+    normalized = frame.rename(
+        columns={
+            "ts_code": "symbol",
+            "trade_date": "trade_date",
+            "vol": "volume",
+            "amount": "amount",
+        }
+    )
+    if "trade_date" not in normalized.columns:
+        raise ValueError("TUSHARE_OPTIONAL market data did not include trade_date")
+    normalized["trade_date"] = pd.to_datetime(normalized["trade_date"], errors="coerce")
+    start = pd.Timestamp(start_date)
+    end = pd.Timestamp(end_date)
+    normalized = normalized.loc[
+        normalized["trade_date"].notna()
+        & (normalized["trade_date"] >= start)
+        & (normalized["trade_date"] <= end)
+    ].copy()
+    if "symbol" not in normalized.columns:
+        normalized["symbol"] = symbol
+    normalized = normalized.sort_values(["symbol", "trade_date"]).reset_index(drop=True)
+    return _canonical_market_frame(normalized, symbol=symbol, source=source, revision_id=revision_id)
+
+
+def _normalize_tushare_universe_frame(
+    frame: pd.DataFrame,
+    *,
+    as_of_date: str,
+    source: str,
+    revision_id: str | None,
+) -> tuple[pd.DataFrame, list[str]]:
+    mapping_warnings: list[str] = []
+    if frame.empty:
+        return pd.DataFrame(columns=_UNIVERSE_COLUMNS), ["Tushare universe returned no rows."]
+    output = pd.DataFrame(index=frame.index)
+    ts_code = normalize_symbol_series(
+        get_first_series(frame, ("ts_code", "symbol", "code"), conceptual_field="symbol", mapping_warnings=mapping_warnings)
+    )
+    symbol = ts_code.where(ts_code.ne(""), normalize_symbol_series(pd.Series("", index=frame.index)))
+    output["symbol"] = symbol
+    name = normalize_text_series(
+        get_first_series(frame, ("name", "fullname"), conceptual_field="name", default=symbol, mapping_warnings=mapping_warnings)
+    )
+    output["name"] = name.where(name.ne(""), symbol)
+    source_type = normalize_text_series(
+        get_first_series(
+            frame,
+            ("_tushare_instrument_type", "instrument_type", "market", "fund_type"),
+            conceptual_field="instrument_type",
+            default="UNKNOWN",
+            mapping_warnings=mapping_warnings,
+        )
+    )
+    output["instrument_type"] = [
+        "ETF" if str(value).upper() in {"ETF", "E", "FUND"} else "STOCK" if str(value).upper() == "STOCK" else "UNKNOWN"
+        for value in source_type
+    ]
+    exchange = normalize_text_series(
+        get_first_series(frame, ("exchange", "market"), conceptual_field="exchange", default="", mapping_warnings=mapping_warnings)
+    )
+    output["exchange"] = [_infer_exchange(sym, exch) for sym, exch in zip(symbol, exchange)]
+    industry = normalize_text_series(
+        get_first_series(frame, ("industry", "fund_type"), conceptual_field="industry", default="UNKNOWN", mapping_warnings=mapping_warnings)
+    )
+    output["industry"] = industry.where(industry.ne(""), "UNKNOWN")
+    output["as_of_date"] = pd.Timestamp(as_of_date).normalize()
+    output["listed_date"] = pd.to_datetime(
+        normalize_text_series(get_first_series(
+            frame,
+            ("list_date", "found_date", "listed_date"),
+            conceptual_field="listed_date",
+            default="",
+            mapping_warnings=mapping_warnings,
+        )).replace("", pd.NA),
+        errors="coerce",
+    )
+    output["delisted_date"] = pd.to_datetime(
+        normalize_text_series(get_first_series(
+            frame,
+            ("delist_date", "due_date", "delisted_date"),
+            conceptual_field="delisted_date",
+            default="",
+            mapping_warnings=mapping_warnings,
+        )).replace("", pd.NA),
+        errors="coerce",
+    )
+    output["is_active"] = True
+    output["is_st"] = output["name"].astype(str).str.upper().str.contains("ST", regex=False)
+    output["is_suspended"] = False
+    output["min_lot"] = 100
+    output["t_plus_rule"] = "T+1"
+    output["available_time"] = pd.Timestamp(as_of_date).normalize() + pd.Timedelta(hours=8)
+    output["revision_id"] = revision_id or "v1"
+    output["source"] = source
+    return output[_UNIVERSE_COLUMNS].sort_values(["as_of_date", "symbol"]).reset_index(drop=True), mapping_warnings
+
+
+def _normalize_tushare_calendar_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(columns=["trade_date", "is_trading_day", "session_open", "session_close", "decision_time", "reason"])
+    normalized = frame.rename(columns={"cal_date": "trade_date", "is_open": "is_trading_day"})
+    if "trade_date" not in normalized.columns:
+        raise ValueError("TUSHARE_OPTIONAL trading_calendar data did not include cal_date/trade_date")
+    output = pd.DataFrame(index=normalized.index)
+    output["trade_date"] = pd.to_datetime(normalized["trade_date"], errors="coerce")
+    is_open = pd.to_numeric(normalized.get("is_trading_day", pd.Series(0, index=normalized.index)), errors="coerce").fillna(0)
+    output["is_trading_day"] = is_open.astype(int).eq(1)
+    output["session_open"] = output["is_trading_day"].map(lambda value: "09:30" if value else "")
+    output["session_close"] = output["is_trading_day"].map(lambda value: "15:00" if value else "")
+    output["decision_time"] = output["is_trading_day"].map(lambda value: "15:30" if value else "")
+    output["reason"] = output["is_trading_day"].map(lambda value: "tushare_open" if value else "tushare_closed")
+    return output[["trade_date", "is_trading_day", "session_open", "session_close", "decision_time", "reason"]].sort_values("trade_date").reset_index(drop=True)
 
 
 def _normalize_akshare_calendar_frame(
@@ -894,6 +1384,12 @@ def _akshare_date(value: str | None) -> str:
     return pd.Timestamp(value).strftime("%Y%m%d")
 
 
+def _tushare_date(value: str | None) -> str:
+    if value is None:
+        return ""
+    return pd.Timestamp(value).strftime("%Y%m%d")
+
+
 _AKSHARE_MARKET_COLUMN_ALIASES = {
     "\u65e5\u671f": "trade_date",
     "date": "trade_date",
@@ -1168,7 +1664,9 @@ def build_data_source_metadata(result: DataSourceResult, paths: DataSourceArtifa
         "inferred_symbol_type": adapter_metadata.get("inferred_symbol_type", ""),
         "attempted_functions": adapter_metadata.get("attempted_functions", []),
         "successful_function": adapter_metadata.get("successful_function", ""),
+        "fallback_used": bool(adapter_metadata.get("fallback_used", False)),
         "failure_reason": adapter_metadata.get("failure_reason", ""),
+        "token_present": bool(adapter_metadata.get("token_present", False)),
         "raw_columns": adapter_metadata.get("raw_columns", []),
         "normalized_columns": adapter_metadata.get("normalized_columns", []),
         "mapping_warnings": adapter_metadata.get("mapping_warnings", []),
@@ -1189,6 +1687,7 @@ def _adapter_registry() -> dict[str, BaseDataSourceAdapter]:
         "LOCAL_CSV": LocalCsvDataSourceAdapter(),
         "MOCK": MockDataSourceAdapter(),
         "AKSHARE_OPTIONAL": OptionalAkshareDataSourceAdapter(),
+        "TUSHARE_OPTIONAL": OptionalTushareDataSourceAdapter(),
     }
 
 

@@ -283,6 +283,8 @@ data_sources:
   require_manual_real_data_flag: true
   akshare_market_retry_count: 1
   akshare_market_retry_sleep_seconds: 0
+  akshare_market_enable_curl_cffi_fallback: true
+  akshare_market_curl_cffi_impersonate: chrome
   default_revision_id: v1
   default_source_name: LOCAL_CSV
   config_version: mvp

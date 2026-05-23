@@ -195,6 +195,181 @@ def test_akshare_universe_missing_installation_returns_clear_error(tmp_path: Pat
         )
 
 
+def test_tushare_adapter_is_registered() -> None:
+    adapters = list_data_source_adapters()
+
+    assert "TUSHARE_OPTIONAL" in adapters
+    assert "TUSHARE_OPTIONAL" not in list_data_source_adapters(include_real=False)
+
+
+def test_tushare_adapter_blocks_without_allow_real_data(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="requires explicit --allow-real-data"):
+        run_data_source_fetch(
+            DataSourceRequest(source="TUSHARE_OPTIONAL", dataset_type="market"),
+            settings=_settings(tmp_path),
+        )
+
+
+def test_tushare_adapter_does_not_import_when_blocked(tmp_path: Path, monkeypatch) -> None:
+    original_import = builtins.__import__
+
+    def guarded_import(name, *args, **kwargs):
+        if name == "tushare":
+            raise AssertionError("tushare should not be imported when real data is blocked")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(ValueError, match="requires explicit --allow-real-data"):
+        run_data_source_fetch(
+            DataSourceRequest(source="TUSHARE_OPTIONAL", dataset_type="market"),
+            settings=_settings(tmp_path),
+        )
+
+
+def test_tushare_missing_token_returns_clear_error_without_importing_tushare(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
+    monkeypatch.setattr("quant_replay_system.data_sources._read_env_file_value", lambda path, key: "")
+    original_import = builtins.__import__
+
+    def guarded_import(name, *args, **kwargs):
+        if name == "tushare":
+            raise AssertionError("tushare should not be imported before token validation")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="TUSHARE_OPTIONAL",
+                dataset_type="market",
+                allow_real_data=True,
+                symbol="000001.SZ",
+                start_date="2024-01-01",
+                end_date="2024-01-03",
+            ),
+            settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+        )
+
+    message = str(exc_info.value)
+    assert "TUSHARE_TOKEN is required" in message
+    assert "fake_token" not in message
+
+
+def test_tushare_missing_installation_returns_clear_error(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TUSHARE_TOKEN", "fake_token")
+    monkeypatch.delitem(sys.modules, "tushare", raising=False)
+    original_import = builtins.__import__
+
+    def guarded_import(name, *args, **kwargs):
+        if name == "tushare":
+            raise ImportError("tushare unavailable in offline test")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(RuntimeError, match="python -m pip install tushare"):
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="TUSHARE_OPTIONAL",
+                dataset_type="market",
+                allow_real_data=True,
+                symbol="000001.SZ",
+                start_date="2024-01-01",
+                end_date="2024-01-03",
+            ),
+            settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+        )
+
+
+def test_tushare_market_success_writes_raw_artifacts(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TUSHARE_TOKEN", "fake_token")
+    fake_tushare = _fake_tushare_module()
+    monkeypatch.setitem(sys.modules, "tushare", fake_tushare)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="TUSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001.SZ",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert result.source == "TUSHARE_OPTIONAL"
+    assert result.row_count == 2
+    assert {"symbol", "trade_date", "open", "close", "available_time", "source"}.issubset(exported.columns)
+    assert exported["symbol"].eq("000001.SZ").all()
+    assert exported["source"].eq("TUSHARE_OPTIONAL").all()
+    assert metadata["token_present"] is True
+    assert "fake_token" not in json.dumps(metadata)
+    assert fake_tushare.calls[0]["token"] == "fake_token"
+    assert fake_tushare.calls[1]["function"] == "daily"
+
+
+def test_tushare_universe_success_writes_raw_artifacts(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TUSHARE_TOKEN", "fake_token")
+    fake_tushare = _fake_tushare_module()
+    monkeypatch.setitem(sys.modules, "tushare", fake_tushare)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="TUSHARE_OPTIONAL",
+            dataset_type="universe",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            as_of_date="2024-05-20",
+            market_type="all",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert result.row_count == 3
+    assert list(exported.columns) == _UNIVERSE_COLUMNS
+    assert set(exported["instrument_type"]) == {"STOCK", "ETF"}
+    assert exported["source"].eq("TUSHARE_OPTIONAL").all()
+    assert metadata["token_present"] is True
+    assert "fake_token" not in json.dumps(metadata)
+    assert {"stock_basic", "fund_basic"}.issubset({call["function"] for call in fake_tushare.calls})
+
+
+def test_tushare_trading_calendar_success_writes_raw_artifacts(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("TUSHARE_TOKEN", "fake_token")
+    fake_tushare = _fake_tushare_module()
+    monkeypatch.setitem(sys.modules, "tushare", fake_tushare)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="TUSHARE_OPTIONAL",
+            dataset_type="trading_calendar",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(tmp_path, allow_network_sources=True, allow_real_data_fetch=True),
+    )
+
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    exported = pd.read_csv(result.artifact_paths["raw_data"])
+
+    assert result.row_count == 3
+    assert {"trade_date", "is_trading_day", "session_open", "session_close", "decision_time", "reason"}.issubset(exported.columns)
+    assert metadata["token_present"] is True
+    assert "fake_token" not in json.dumps(metadata)
+
+
 def test_infer_akshare_market_symbol_type_etf_and_stock_and_index() -> None:
     assert infer_akshare_market_symbol_type("510300") == "ETF"
     assert infer_akshare_market_symbol_type("159915") == "ETF"
@@ -235,6 +410,7 @@ def test_akshare_success_path_with_fake_module_writes_raw_artifacts(tmp_path: Pa
     assert metadata["inferred_symbol_type"] == "ETF"
     assert metadata["attempted_functions"] == ["fund_etf_hist_em"]
     assert metadata["successful_function"] == "fund_etf_hist_em"
+    assert metadata["fallback_used"] is False
     assert metadata["live_trading_enabled"] is False
     assert metadata["broker_api_invoked"] is False
 
@@ -265,6 +441,7 @@ def test_akshare_stock_market_success_uses_stock_route(tmp_path: Path, monkeypat
     assert metadata["inferred_symbol_type"] == "STOCK"
     assert metadata["attempted_functions"] == ["stock_zh_a_hist"]
     assert metadata["successful_function"] == "stock_zh_a_hist"
+    assert metadata["fallback_used"] is False
 
 
 def test_akshare_etf_market_success_uses_etf_route(tmp_path: Path, monkeypatch) -> None:
@@ -291,6 +468,7 @@ def test_akshare_etf_market_success_uses_etf_route(tmp_path: Path, monkeypatch) 
     assert metadata["inferred_symbol_type"] == "ETF"
     assert metadata["attempted_functions"] == ["fund_etf_hist_em"]
     assert metadata["successful_function"] == "fund_etf_hist_em"
+    assert metadata["fallback_used"] is False
 
 
 def test_akshare_etf_primary_failure_tries_fallback(tmp_path: Path, monkeypatch) -> None:
@@ -333,7 +511,217 @@ def test_akshare_etf_primary_failure_tries_fallback(tmp_path: Path, monkeypatch)
     assert result.row_count == 2
     assert metadata["attempted_functions"] == ["fund_etf_hist_em", "stock_zh_a_hist"]
     assert metadata["successful_function"] == "stock_zh_a_hist"
+    assert metadata["fallback_used"] is False
     assert metadata["audit_metadata"]["adapter_metadata"]["failed_attempts"][0]["exception_type"] == "ConnectionError"
+
+
+def test_akshare_market_curl_cffi_fallback_success_with_fake_response(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module = ModuleType("akshare")
+
+    def stock_zh_a_hist(**kwargs):
+        _ = kwargs
+        raise ConnectionError("AKShare Eastmoney requests path failed")
+
+    module.stock_zh_a_hist = stock_zh_a_hist
+    monkeypatch.setitem(sys.modules, "akshare", module)
+    fake_curl = _fake_curl_cffi_module(
+        {
+            "data": {
+                "klines": [
+                    "2024-01-02,10.0,10.2,10.5,9.8,1000,10200,0,0,0,0,0",
+                    "2024-01-03,10.2,10.6,10.8,10.1,1100,11660,0,0,0,0,0",
+                ]
+            }
+        }
+    )
+    monkeypatch.setitem(sys.modules, "curl_cffi", fake_curl)
+    monkeypatch.setitem(sys.modules, "curl_cffi.requests", fake_curl.requests)
+
+    result = run_data_source_fetch(
+        DataSourceRequest(
+            source="AKSHARE_OPTIONAL",
+            dataset_type="market",
+            output_dir=tmp_path / "raw",
+            allow_real_data=True,
+            symbol="000001",
+            start_date="2024-01-01",
+            end_date="2024-01-03",
+        ),
+        settings=_settings(
+            tmp_path,
+            allow_network_sources=True,
+            allow_real_data_fetch=True,
+            akshare_market_retry_count=0,
+        ),
+    )
+
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    exported = pd.read_csv(result.artifact_paths["raw_data"], dtype={"symbol": str})
+
+    assert result.row_count == 2
+    assert set(
+        [
+            "symbol",
+            "trade_date",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "amount",
+            "available_time",
+            "revision_id",
+            "source",
+        ]
+    ).issubset(exported.columns)
+    assert exported["symbol"].eq("000001").all()
+    assert metadata["attempted_functions"] == ["stock_zh_a_hist", "eastmoney_curl_cffi_kline"]
+    assert metadata["successful_function"] == "eastmoney_curl_cffi_kline"
+    assert metadata["fallback_used"] is True
+    assert fake_curl.requests.calls[0]["params"]["secid"] == "0.000001"
+    assert fake_curl.requests.calls[0]["impersonate"] == "chrome"
+
+
+def test_akshare_market_curl_cffi_missing_dependency_is_clear(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module = ModuleType("akshare")
+
+    def stock_zh_a_hist(**kwargs):
+        _ = kwargs
+        raise ConnectionError("AKShare path failed")
+
+    module.stock_zh_a_hist = stock_zh_a_hist
+    monkeypatch.setitem(sys.modules, "akshare", module)
+    monkeypatch.delitem(sys.modules, "curl_cffi", raising=False)
+    monkeypatch.delitem(sys.modules, "curl_cffi.requests", raising=False)
+    original_import = builtins.__import__
+
+    def guarded_import(name, *args, **kwargs):
+        if name.startswith("curl_cffi"):
+            raise ImportError("curl_cffi unavailable in offline test")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="AKSHARE_OPTIONAL",
+                dataset_type="market",
+                output_dir=tmp_path / "raw",
+                allow_real_data=True,
+                symbol="000001",
+                start_date="2024-01-01",
+                end_date="2024-01-03",
+            ),
+            settings=_settings(
+                tmp_path,
+                allow_network_sources=True,
+                allow_real_data_fetch=True,
+                akshare_market_retry_count=0,
+            ),
+        )
+
+    message = str(exc_info.value)
+    assert "eastmoney_curl_cffi_kline" in message
+    assert "curl_cffi fallback requires curl_cffi" in message
+    assert "python -m pip install curl_cffi" in message
+
+
+def test_akshare_market_curl_cffi_fallback_can_be_disabled(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module = ModuleType("akshare")
+
+    def stock_zh_a_hist(**kwargs):
+        _ = kwargs
+        raise ConnectionError("AKShare path failed")
+
+    module.stock_zh_a_hist = stock_zh_a_hist
+    monkeypatch.setitem(sys.modules, "akshare", module)
+    original_import = builtins.__import__
+
+    def guarded_import(name, *args, **kwargs):
+        if name.startswith("curl_cffi"):
+            raise AssertionError("curl_cffi should not be imported when fallback is disabled")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="AKSHARE_OPTIONAL",
+                dataset_type="market",
+                output_dir=tmp_path / "raw",
+                allow_real_data=True,
+                symbol="000001",
+                start_date="2024-01-01",
+                end_date="2024-01-03",
+            ),
+            settings=_settings(
+                tmp_path,
+                allow_network_sources=True,
+                allow_real_data_fetch=True,
+                akshare_market_retry_count=0,
+                akshare_market_enable_curl_cffi_fallback=False,
+            ),
+        )
+
+    message = str(exc_info.value)
+    assert "attempted_functions=['stock_zh_a_hist']" in message
+    assert "eastmoney_curl_cffi_kline" not in message
+
+
+def test_akshare_market_curl_cffi_failure_redacts_secret_like_values(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    module = ModuleType("akshare")
+
+    def stock_zh_a_hist(**kwargs):
+        _ = kwargs
+        raise ConnectionError("AKShare path token=abc123")
+
+    module.stock_zh_a_hist = stock_zh_a_hist
+    monkeypatch.setitem(sys.modules, "akshare", module)
+    fake_curl = _fake_curl_cffi_module(
+        {"data": {"klines": []}},
+        error=RuntimeError("curl path api_key=secret123"),
+    )
+    monkeypatch.setitem(sys.modules, "curl_cffi", fake_curl)
+    monkeypatch.setitem(sys.modules, "curl_cffi.requests", fake_curl.requests)
+
+    with pytest.raises(RuntimeError) as exc_info:
+        run_data_source_fetch(
+            DataSourceRequest(
+                source="AKSHARE_OPTIONAL",
+                dataset_type="market",
+                output_dir=tmp_path / "raw",
+                allow_real_data=True,
+                symbol="000001",
+                start_date="2024-01-01",
+                end_date="2024-01-03",
+            ),
+            settings=_settings(
+                tmp_path,
+                allow_network_sources=True,
+                allow_real_data_fetch=True,
+                akshare_market_retry_count=0,
+            ),
+        )
+
+    message = str(exc_info.value)
+    assert "token=<redacted>" in message
+    assert "api_key=<redacted>" in message
+    assert "abc123" not in message
+    assert "secret123" not in message
 
 
 def test_akshare_market_all_failures_produce_clear_diagnostic_without_secrets(
@@ -370,6 +758,7 @@ def test_akshare_market_all_failures_produce_clear_diagnostic_without_secrets(
                 allow_network_sources=True,
                 allow_real_data_fetch=True,
                 akshare_market_retry_count=0,
+                akshare_market_enable_curl_cffi_fallback=False,
             ),
         )
 
@@ -742,8 +1131,9 @@ def test_run_id_is_deterministic_for_same_request(tmp_path: Path) -> None:
 def test_adapter_registry_lists_local_and_optional_sources() -> None:
     adapters = list_data_source_adapters()
 
-    assert {"LOCAL_CSV", "MOCK", "AKSHARE_OPTIONAL"}.issubset(set(adapters))
+    assert {"LOCAL_CSV", "MOCK", "AKSHARE_OPTIONAL", "TUSHARE_OPTIONAL"}.issubset(set(adapters))
     assert "AKSHARE_OPTIONAL" not in list_data_source_adapters(include_real=False)
+    assert "TUSHARE_OPTIONAL" not in list_data_source_adapters(include_real=False)
 
 
 def test_cli_data_source_fetch_works_for_local_csv(tmp_path: Path, capsys) -> None:
@@ -827,6 +1217,62 @@ def test_cli_blocks_akshare_universe_without_allow_real_data(tmp_path: Path, cap
 
     assert code == 1
     assert "requires explicit --allow-real-data" in output.err
+
+
+def test_cli_blocks_tushare_without_allow_real_data(tmp_path: Path, capsys) -> None:
+    code = cli.main(
+        [
+            "data-source-fetch",
+            "--source",
+            "TUSHARE_OPTIONAL",
+            "--dataset-type",
+            "market",
+            "--symbol",
+            "000001.SZ",
+            "--start-date",
+            "2024-01-01",
+            "--end-date",
+            "2024-01-03",
+            "--output-dir",
+            str(tmp_path / "raw"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 1
+    assert "requires explicit --allow-real-data" in output.err
+
+
+def test_cli_allows_tushare_with_fake_client_and_token(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setenv("TUSHARE_TOKEN", "fake_token")
+    monkeypatch.setitem(sys.modules, "tushare", _fake_tushare_module())
+
+    code = cli.main(
+        [
+            "data-source-fetch",
+            "--source",
+            "TUSHARE_OPTIONAL",
+            "--dataset-type",
+            "market",
+            "--symbol",
+            "000001.SZ",
+            "--start-date",
+            "2024-01-01",
+            "--end-date",
+            "2024-01-03",
+            "--allow-real-data",
+            "--output-dir",
+            str(tmp_path / "raw"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "source: TUSHARE_OPTIONAL" in output.out
+    assert "row_count: 2" in output.out
+    assert "No live trading or broker API was invoked." in output.out
+    assert "fake_token" not in output.out
+    assert "fake_token" not in output.err
 
 
 def test_cli_allows_akshare_with_allow_real_data_using_fake_module(tmp_path: Path, monkeypatch, capsys) -> None:
@@ -1044,6 +1490,126 @@ def _fake_akshare_universe_module(frame: pd.DataFrame) -> ModuleType:
         return frame.copy()
 
     module.stock_info_a_code_name = stock_info_a_code_name
+    return module
+
+
+def _fake_tushare_module() -> ModuleType:
+    module = ModuleType("tushare")
+    module.calls = []
+
+    class FakeProClient:
+        def daily(self, **kwargs):
+            module.calls.append({"function": "daily", **kwargs})
+            return pd.DataFrame(
+                [
+                    {
+                        "ts_code": kwargs["ts_code"],
+                        "trade_date": "20240102",
+                        "open": 10.0,
+                        "high": 10.5,
+                        "low": 9.8,
+                        "close": 10.2,
+                        "pre_close": 9.9,
+                        "vol": 1000,
+                        "amount": 10200,
+                    },
+                    {
+                        "ts_code": kwargs["ts_code"],
+                        "trade_date": "20240103",
+                        "open": 10.2,
+                        "high": 10.8,
+                        "low": 10.1,
+                        "close": 10.6,
+                        "pre_close": 10.2,
+                        "vol": 1100,
+                        "amount": 11660,
+                    },
+                ]
+            )
+
+        def index_daily(self, **kwargs):
+            module.calls.append({"function": "index_daily", **kwargs})
+            return self.daily(**kwargs)
+
+        def stock_basic(self, **kwargs):
+            module.calls.append({"function": "stock_basic", **kwargs})
+            return pd.DataFrame(
+                [
+                    {
+                        "ts_code": "000001.SZ",
+                        "symbol": "000001",
+                        "name": "Ping An Bank",
+                        "industry": "Banking",
+                        "market": "main",
+                        "list_date": "19910403",
+                        "delist_date": "",
+                        "exchange": "SZSE",
+                    },
+                    {
+                        "ts_code": "600000.SH",
+                        "symbol": "600000",
+                        "name": "PF Bank",
+                        "industry": "Banking",
+                        "market": "main",
+                        "list_date": "19991110",
+                        "delist_date": "",
+                        "exchange": "SSE",
+                    },
+                ]
+            )
+
+        def fund_basic(self, **kwargs):
+            module.calls.append({"function": "fund_basic", **kwargs})
+            return pd.DataFrame(
+                [
+                    {
+                        "ts_code": "510300.SH",
+                        "name": "CSI 300 ETF",
+                        "fund_type": "ETF",
+                        "list_date": "20120528",
+                        "delist_date": "",
+                    }
+                ]
+            )
+
+        def trade_cal(self, **kwargs):
+            module.calls.append({"function": "trade_cal", **kwargs})
+            return pd.DataFrame(
+                [
+                    {"cal_date": "20240101", "is_open": 0},
+                    {"cal_date": "20240102", "is_open": 1},
+                    {"cal_date": "20240103", "is_open": 1},
+                ]
+            )
+
+    def pro_api(token=None):
+        module.calls.append({"function": "pro_api", "token": token})
+        return FakeProClient()
+
+    module.pro_api = pro_api
+    return module
+
+
+def _fake_curl_cffi_module(payload: dict, error: Exception | None = None) -> ModuleType:
+    module = ModuleType("curl_cffi")
+    requests_module = ModuleType("curl_cffi.requests")
+    requests_module.calls = []
+
+    class Response:
+        status_code = 200
+        text = json.dumps(payload)
+
+        def json(self):
+            return payload
+
+    def get(url, **kwargs):
+        requests_module.calls.append({"url": url, **kwargs})
+        if error is not None:
+            raise error
+        return Response()
+
+    requests_module.get = get
+    module.requests = requests_module
     return module
 
 

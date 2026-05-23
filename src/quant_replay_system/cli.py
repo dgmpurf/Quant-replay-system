@@ -309,7 +309,7 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.set_defaults(handler=_handle_research_status)
 
     data_source = subparsers.add_parser("data-source-fetch", help="Fetch or load raw local market data source files")
-    data_source.add_argument("--source", required=True, help="Data source adapter, e.g. LOCAL_CSV, MOCK, AKSHARE_OPTIONAL")
+    data_source.add_argument("--source", required=True, help="Data source adapter, e.g. LOCAL_CSV, MOCK, AKSHARE_OPTIONAL, TUSHARE_OPTIONAL")
     data_source.add_argument("--dataset-type", required=True, help="Dataset type: market, universe, benchmark, corporate_actions, trading_calendar")
     data_source.add_argument("--input", help="Input CSV path for LOCAL_CSV")
     data_source.add_argument("--output-dir", help="Optional raw output root directory")

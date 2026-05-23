@@ -73,7 +73,7 @@ No live trading or broker API was invoked.
 
 For v0.1, AKShare support is intentionally limited:
 
-- `market` supports ETF-like symbols such as `510300` through the default ETF daily-history path.
+- `market` supports stock-like and ETF-like symbols through guarded AKShare history paths, with a final manual-only `curl_cffi` Eastmoney kline fallback when enabled.
 - `benchmark` uses the default AKShare index daily-history path.
 - `trading_calendar` uses the default AKShare trading-calendar path.
 - `universe` supports guarded stock/ETF symbol snapshot fetches with conservative default fields.
@@ -257,7 +257,7 @@ Then rerun the `data-source-fetch` command.
 
 ### Network or API failure
 
-AKShare is an external data source and can fail due to network, service, or upstream schema changes. Rerun later, narrow the date range, or use an already downloaded local CSV through `LOCAL_CSV`.
+AKShare is an external data source and can fail due to network, service, TLS, proxy, or upstream schema changes. Eastmoney kline can fail even when the root Eastmoney host returns an HTTP response. Rerun later, narrow the date range, verify local proxy ports with `netstat`, or use an already downloaded local CSV through `LOCAL_CSV`.
 
 Automated tests should never depend on this path.
 
@@ -275,7 +275,7 @@ Then run `data-quality` before using the file.
 
 ### Symbol format uncertainty
 
-For v0.1, ETF-like symbols such as `510300` use the default ETF daily-history path. Other market symbols use the default A-share daily-history path. If a symbol does not work, verify the symbol format directly with AKShare documentation before relying on the output.
+ETF-like symbols such as `510300` use the ETF daily-history path first. Stock-like symbols such as `000001` use the A-share daily-history path. When the optional `curl_cffi` fallback succeeds, metadata records `successful_function=eastmoney_curl_cffi_kline` and `fallback_used=true`. If a symbol does not work, verify the symbol format directly with AKShare documentation before relying on the output.
 
 ### `current-candidates` returns zero candidates
 
@@ -301,6 +301,7 @@ Open the generated snapshot quality report. Required dataset failures should blo
 - Universe snapshot support is MVP-level and may rely on defaulted fields such as `industry=UNKNOWN`, `min_lot=100`, and `t_plus_rule=T+1`.
 - Corporate action AKShare fetches are not implemented yet.
 - Function selection for market data is simple and may need manual refinement later.
+- The `curl_cffi` fallback is manual-only and can still fail when Eastmoney kline or local network/proxy behavior is unstable.
 - Data quality checks summarize issues; they do not repair data.
 - Mock data and small examples are not strategy-quality validation.
 - This workflow is not live trading and never invokes broker APIs.

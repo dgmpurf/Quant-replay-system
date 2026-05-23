@@ -343,6 +343,42 @@ def test_pipeline_akshare_universe_passes_request_fields_to_fake_module(
     assert fake_akshare.universe_calls == [{"function": "stock_info_a_code_name"}]
 
 
+def test_pipeline_tushare_optional_passes_request_fields_to_fake_module(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("TUSHARE_TOKEN", "fake_token")
+    fake_tushare = _fake_tushare_module()
+    monkeypatch.setitem(sys.modules, "tushare", fake_tushare)
+
+    result = run_data_source_ingestion_pipeline(
+        [
+            {
+                "dataset_type": "market",
+                "source": "TUSHARE_OPTIONAL",
+                "allow_real_data": True,
+                "symbol": "000001.SZ",
+                "start_date": "2024-01-01",
+                "end_date": "2024-01-03",
+            }
+        ],
+        config=_settings(tmp_path, allow_real_data=True),
+        run_data_quality=False,
+        build_snapshot_manifest=False,
+    )
+
+    assert result.status == "PASS"
+    assert result.dataset_results[0].source == "TUSHARE_OPTIONAL"
+    assert result.dataset_results[0].source_result is not None
+    assert result.dataset_results[0].source_result.audit_metadata["request"]["symbol"] == "000001.SZ"
+    assert result.dataset_results[0].source_result.audit_metadata["adapter_metadata"]["token_present"] is True
+    assert "fake_token" not in json.dumps(result.dataset_results[0].source_result.audit_metadata)
+    processed = pd.read_csv(result.processed_paths["market"])
+    assert processed["symbol"].astype(str).tolist() == ["000001.SZ", "000001.SZ"]
+    assert fake_tushare.calls[0]["token"] == "fake_token"
+    assert fake_tushare.calls[1]["function"] == "daily"
+
+
 def test_no_live_trading_or_broker_integration_is_invoked(tmp_path: Path) -> None:
     input_path = tmp_path / "market.csv"
     _market_frame().to_csv(input_path, index=False)
@@ -567,4 +603,46 @@ def _fake_akshare_module() -> ModuleType:
         )
 
     module.stock_info_a_code_name = stock_info_a_code_name
+    return module
+
+
+def _fake_tushare_module() -> ModuleType:
+    module = ModuleType("tushare")
+    module.calls = []
+
+    class FakeProClient:
+        def daily(self, **kwargs):
+            module.calls.append({"function": "daily", **kwargs})
+            return pd.DataFrame(
+                [
+                    {
+                        "ts_code": kwargs["ts_code"],
+                        "trade_date": "20240102",
+                        "open": 10.0,
+                        "high": 10.5,
+                        "low": 9.8,
+                        "close": 10.2,
+                        "pre_close": 9.9,
+                        "vol": 1000,
+                        "amount": 10200,
+                    },
+                    {
+                        "ts_code": kwargs["ts_code"],
+                        "trade_date": "20240103",
+                        "open": 10.2,
+                        "high": 10.8,
+                        "low": 10.1,
+                        "close": 10.6,
+                        "pre_close": 10.2,
+                        "vol": 1100,
+                        "amount": 11660,
+                    },
+                ]
+            )
+
+    def pro_api(token=None):
+        module.calls.append({"function": "pro_api", "token": token})
+        return FakeProClient()
+
+    module.pro_api = pro_api
     return module

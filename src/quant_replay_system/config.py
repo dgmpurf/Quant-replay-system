@@ -319,6 +319,8 @@ class DataSourceSettings(BaseModel):
     require_manual_real_data_flag: bool = True
     akshare_market_retry_count: int = Field(default=1, ge=0)
     akshare_market_retry_sleep_seconds: float = Field(default=0.0, ge=0)
+    akshare_market_enable_curl_cffi_fallback: bool = True
+    akshare_market_curl_cffi_impersonate: str = "chrome"
     default_revision_id: str = "v1"
     default_source_name: str = "LOCAL_CSV"
     config_version: str = "mvp"
