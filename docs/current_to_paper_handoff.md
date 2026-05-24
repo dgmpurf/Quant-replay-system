@@ -33,6 +33,12 @@ Artifact health checks are skipped for direct path mode unless an index/root wor
 
 If the selected `candidates.csv` was produced with `selection_profile=demo`, treat the handoff as a workflow validation run only. Demo candidates are not strategy recommendations; they exist so tiny local datasets can exercise the paper-review and paper-daily artifact path.
 
+## Symbol Integrity
+
+Current-to-paper handoff treats market symbols as string identifiers across CSV boundaries. Leading zeros are significant: `000001` must remain `000001`, never `1` or `1.0`.
+
+This invariant applies from `candidates.csv` through paper decisions, review templates, WATCH_ONLY/reviewed decisions, fills, reconciliation, and daily paper reports. Regression tests in `tests/test_paper_workflow_symbol_preservation.py` protect both direct workflow calls and CLI command boundaries.
+
 ## Index Or Root Flow
 
 Use an index CSV to select by decision date, universe, or run id:

@@ -53,6 +53,12 @@ def456,REJECTED,Risk too high,msj,RISK_TOO_HIGH
 ghi789,WATCH_ONLY,Monitor only,msj,WATCHLIST_ONLY
 ```
 
+## Symbol Integrity
+
+Paper review CSVs must preserve market symbols as strings. Leading zeros are part of the identifier: `000001` must remain `000001`, not `1` or `1.0`.
+
+This applies to decisions, review update templates, edited review updates, reviewed decisions, fills, reconciliation, and daily paper reports. The invariant is protected by `tests/test_paper_workflow_symbol_preservation.py`.
+
 ## Audit Log
 
 Each review update writes one audit row:

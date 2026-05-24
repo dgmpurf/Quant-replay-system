@@ -47,6 +47,12 @@ Each decision includes:
 
 Decision IDs are deterministic for the same source run, date, symbol, rank, and planned dates.
 
+## Symbol Integrity
+
+Market symbols are protected string identifiers throughout the paper workflow. Leading zeros are significant: `000001` must remain `000001`, never `1` or `1.0`.
+
+Load and write `symbol` columns as strings for candidates, decisions, review updates, reviewed decisions, fills, reconciliation inputs, and daily paper reports. Regression coverage for this invariant lives in `tests/test_paper_workflow_symbol_preservation.py`.
+
 ## Manual Review Workflow
 
 Supported decision actions:
