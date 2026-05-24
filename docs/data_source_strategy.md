@@ -33,6 +33,8 @@ Use `market-daily-update` for dry-run-first incremental local cache maintenance.
 
 Use `historical-backfill` for reviewed historical symbol/date manifests when building a broader local research history. It can split rows into date chunks, use reviewed offline `raw_input` files or guarded manual real fetches, run `market-cache-preflight`, and optionally ingest only when `--accept-cache-write` is supplied. It is local/manual and separate from daily updates.
 
+Use `historical-backfill-index`, `historical-backfill-health`, and `historical-backfill-status` to discover, check, and summarize backfill artifacts before scaling up or approving any explicit cache write. These views check local artifact completeness and workflow stage; they do not replace preflight, data-quality, or snapshot-quality.
+
 For reviewed batches, use a local CSV symbol manifest with `market-daily-update --symbol-manifest`. Disabled rows are skipped, rows that need real fetches are blocked unless `--allow-real-data` is supplied, and cache writes remain explicit. This is controlled local data maintenance, not scheduling or automation.
 
 For deterministic local verification, use an offline reviewed symbol manifest with `raw_input` and `metadata_path` columns. Offline rows use reviewed local raw files, do not require `--allow-real-data`, and still pass through `market-cache-preflight` before any optional cache write.

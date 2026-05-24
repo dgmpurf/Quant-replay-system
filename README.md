@@ -137,6 +137,8 @@ For a dry-run-first local market update wrapper that runs preflight before optio
 
 For a local-only historical backfill skeleton over a reviewed symbol/date manifest, use `historical-backfill`; see [docs/historical_backfill.md](docs/historical_backfill.md) and [docs/examples/historical_backfill_example.csv](docs/examples/historical_backfill_example.csv).
 
+To discover, check, and summarize historical backfill artifacts before larger runs or cache-write approval, use `historical-backfill-index`, `historical-backfill-health`, and `historical-backfill-status`; see [docs/historical_backfill.md#index-health-and-status](docs/historical_backfill.md#index-health-and-status).
+
 For reviewed batch updates, `market-daily-update --symbol-manifest` reads a local CSV symbol list such as [docs/examples/daily_market_symbols_example.csv](docs/examples/daily_market_symbols_example.csv). It is still dry-run-first and not a scheduler.
 
 For deterministic offline batch smoke tests, use a manifest with `raw_input` and `metadata_path` columns such as [docs/examples/daily_market_symbols_offline_example.csv](docs/examples/daily_market_symbols_offline_example.csv). Offline manifests do not need `--allow-real-data`.
@@ -204,6 +206,9 @@ python -m quant_replay_system.cli market-update-handoff --symbol-manifest data/r
 python -m quant_replay_system.cli market-update-handoff-index --root outputs/reports/market_update_handoff
 python -m quant_replay_system.cli market-update-handoff-health --index outputs/reports/market_update_handoff/index/market_update_handoff_index.csv
 python -m quant_replay_system.cli market-update-handoff-status --root outputs/reports/market_update_handoff
+python -m quant_replay_system.cli historical-backfill-index --root outputs/reports/historical_backfill
+python -m quant_replay_system.cli historical-backfill-health --index outputs/reports/historical_backfill/index/historical_backfill_index.csv
+python -m quant_replay_system.cli historical-backfill-status --root outputs/reports/historical_backfill
 python -m quant_replay_system.cli market-cache-ingest --input data/raw/AKSHARE_OPTIONAL/market/<run_id>/raw_data.csv --metadata data/raw/AKSHARE_OPTIONAL/market/<run_id>/metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data/raw/manual_cache/510300_market.csv

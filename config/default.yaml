@@ -446,6 +446,36 @@ historical_backfill:
   enable_live_trading: false
   enable_broker_api: false
 
+historical_backfill_index:
+  root_dir: outputs/reports/historical_backfill
+  output_dir: outputs/reports/historical_backfill/index
+  include_missing_metadata: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+historical_backfill_health:
+  index_path: outputs/reports/historical_backfill/index/historical_backfill_index.csv
+  root_dir: outputs/reports/historical_backfill
+  output_dir: outputs/reports/historical_backfill/health
+  strict: false
+  missing_no_live_statement_severity: WARN
+  missing_manifest_severity: WARN
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+historical_backfill_status:
+  root_dir: outputs/reports/historical_backfill
+  output_dir: outputs/reports/historical_backfill/status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 market_update_handoff:
   output_dir: outputs/reports/market_update_handoff
   batch_output_dir: data/raw/manual_update_batches

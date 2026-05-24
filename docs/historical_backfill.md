@@ -109,6 +109,49 @@ Files:
 
 The metadata records the manifest path, task result counts, cache write flag, safety audit fields, and known limitations.
 
+## Index, Health, And Status
+
+Historical backfill can produce many per-symbol/per-chunk artifacts. Use the local artifact views before scaling a backfill or approving any cache write:
+
+```cmd
+python -m quant_replay_system.cli historical-backfill-index
+python -m quant_replay_system.cli historical-backfill-health
+python -m quant_replay_system.cli historical-backfill-status
+```
+
+`historical-backfill-index` scans `outputs/reports/historical_backfill/` and writes:
+
+```text
+outputs/reports/historical_backfill/index/historical_backfill_index_report.md
+outputs/reports/historical_backfill/index/historical_backfill_index.csv
+outputs/reports/historical_backfill/index/historical_backfill_index.json
+outputs/reports/historical_backfill/index/metadata.json
+```
+
+The index records `backfill_id`, status, manifest path, task counts, pass/warn/fail/skipped counts, cache-write flag, symbols, date coverage, and report/metadata paths.
+
+`historical-backfill-health` checks artifact completeness:
+
+- `metadata.json` readable
+- report exists and includes the no-live-trading/no-broker statement
+- task/result CSVs exist and are readable
+- referenced reviewed manifest exists when the local path is available
+- task/result counts match the metadata summary
+- cache-write and local-only safety metadata are present
+
+Health checks artifact integrity only. They do not certify strategy quality or market data correctness.
+
+`historical-backfill-status` summarizes the latest backfill into a workflow stage and next manual action. Stages include:
+
+- `NO_BACKFILL_ARTIFACTS`
+- `BACKFILL_DRY_RUN_READY`
+- `BACKFILL_WARNINGS_NEED_REVIEW`
+- `BACKFILL_FAILED`
+- `BACKFILL_CACHE_WRITE_READY`
+- `BACKFILL_COMPLETED`
+
+A dry-run with expected provisional or known-caveat warnings should be reviewed as `BACKFILL_WARNINGS_NEED_REVIEW`; it is not automatically approved for cache write. Only rerun with `--accept-cache-write` after manual review.
+
 ## Safety Boundaries
 
 - No live trading is implemented.

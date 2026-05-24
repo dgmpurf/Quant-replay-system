@@ -498,6 +498,39 @@ class HistoricalBackfillSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class HistoricalBackfillIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/historical_backfill")
+    output_dir: Path = Path("outputs/reports/historical_backfill/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class HistoricalBackfillHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/historical_backfill/index/historical_backfill_index.csv")
+    root_dir: Path = Path("outputs/reports/historical_backfill")
+    output_dir: Path = Path("outputs/reports/historical_backfill/health")
+    strict: bool = False
+    missing_no_live_statement_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_manifest_severity: Literal["WARN", "ERROR"] = "WARN"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class HistoricalBackfillStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/historical_backfill")
+    output_dir: Path = Path("outputs/reports/historical_backfill/status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class MarketUpdateHandoffSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/market_update_handoff")
     batch_output_dir: Path = Path("data/raw/manual_update_batches")
@@ -730,6 +763,9 @@ class Settings(BaseModel):
     market_cache_preflight: MarketCachePreflightSettings = Field(default_factory=MarketCachePreflightSettings)
     market_daily_update: MarketDailyUpdateSettings = Field(default_factory=MarketDailyUpdateSettings)
     historical_backfill: HistoricalBackfillSettings = Field(default_factory=HistoricalBackfillSettings)
+    historical_backfill_index: HistoricalBackfillIndexSettings = Field(default_factory=HistoricalBackfillIndexSettings)
+    historical_backfill_health: HistoricalBackfillHealthSettings = Field(default_factory=HistoricalBackfillHealthSettings)
+    historical_backfill_status: HistoricalBackfillStatusSettings = Field(default_factory=HistoricalBackfillStatusSettings)
     market_update_handoff: MarketUpdateHandoffSettings = Field(default_factory=MarketUpdateHandoffSettings)
     market_update_handoff_index: MarketUpdateHandoffIndexSettings = Field(default_factory=MarketUpdateHandoffIndexSettings)
     market_update_handoff_health: MarketUpdateHandoffHealthSettings = Field(default_factory=MarketUpdateHandoffHealthSettings)

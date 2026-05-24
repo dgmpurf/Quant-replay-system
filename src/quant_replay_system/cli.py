@@ -30,6 +30,9 @@ from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_source_health import run_data_source_health_check
 from quant_replay_system.data_sources import DataSourceRequest, run_data_source_fetch
 from quant_replay_system.historical_backfill import run_historical_backfill
+from quant_replay_system.historical_backfill_health import check_historical_backfill_health
+from quant_replay_system.historical_backfill_index import build_historical_backfill_index
+from quant_replay_system.historical_backfill_status import run_historical_backfill_status
 from quant_replay_system.data_ingestion import (
     ingest_benchmark_data_csv,
     ingest_corporate_actions_csv,
@@ -475,6 +478,38 @@ def build_parser() -> argparse.ArgumentParser:
     historical_backfill.add_argument("--output-dir", help="Optional historical backfill report output directory")
     historical_backfill.add_argument("--config", help="Optional config YAML path")
     historical_backfill.set_defaults(handler=_handle_historical_backfill)
+
+    historical_backfill_index = subparsers.add_parser(
+        "historical-backfill-index",
+        help="Build a local index of historical-backfill artifacts",
+    )
+    historical_backfill_index.add_argument("--root", help="Historical-backfill artifact root directory")
+    historical_backfill_index.add_argument("--output-dir", help="Optional index output directory")
+    historical_backfill_index.add_argument("--include-missing-metadata", action="store_true")
+    historical_backfill_index.add_argument("--config", help="Optional config YAML path")
+    historical_backfill_index.set_defaults(handler=_handle_historical_backfill_index)
+
+    historical_backfill_health = subparsers.add_parser(
+        "historical-backfill-health",
+        help="Check indexed historical-backfill artifacts",
+    )
+    historical_backfill_health.add_argument("--index", help="Historical-backfill index CSV path")
+    historical_backfill_health.add_argument("--root", help="Historical-backfill artifact root directory")
+    historical_backfill_health.add_argument("--output-dir", help="Optional health output directory")
+    historical_backfill_health.add_argument("--strict", action="store_true")
+    historical_backfill_health.add_argument("--allow-warn", action="store_true")
+    historical_backfill_health.add_argument("--config", help="Optional config YAML path")
+    historical_backfill_health.set_defaults(handler=_handle_historical_backfill_health)
+
+    historical_backfill_status = subparsers.add_parser(
+        "historical-backfill-status",
+        help="Summarize the latest local historical-backfill workflow state",
+    )
+    historical_backfill_status.add_argument("--root", help="Historical-backfill artifact root directory")
+    historical_backfill_status.add_argument("--output-dir", help="Optional status output directory")
+    historical_backfill_status.add_argument("--strict", action="store_true")
+    historical_backfill_status.add_argument("--config", help="Optional config YAML path")
+    historical_backfill_status.set_defaults(handler=_handle_historical_backfill_status)
 
     market_update_handoff = subparsers.add_parser(
         "market-update-handoff",
@@ -1716,6 +1751,105 @@ def _handle_historical_backfill(args: argparse.Namespace) -> int:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
     return 0 if result.status != "FAIL" else 1
+
+
+def _handle_historical_backfill_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.include_missing_metadata:
+        updates["include_missing_metadata"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "historical_backfill_index": settings.historical_backfill_index.model_copy(update=updates)
+            }
+        )
+    result = build_historical_backfill_index(settings=settings)
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"Index report path: {result.artifact_paths['historical_backfill_index_report']}")
+    print(f"Index CSV path: {result.artifact_paths['historical_backfill_index_csv']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_historical_backfill_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.strict:
+        updates["strict"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "historical_backfill_health": settings.historical_backfill_health.model_copy(update=updates)
+            }
+        )
+    result = check_historical_backfill_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Report path: {result.artifact_paths['historical_backfill_health_report']}")
+    print(f"Issues CSV path: {result.artifact_paths['historical_backfill_health_issues']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_historical_backfill_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.strict:
+        updates["strict"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "historical_backfill_status": settings.historical_backfill_status.model_copy(update=updates)
+            }
+        )
+    result = run_historical_backfill_status(
+        root=args.root,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    print(f"Historical backfill workflow status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_backfill_id: {result.latest_backfill_id}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['historical_backfill_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
+    return 0
 
 
 def _handle_market_update_handoff(args: argparse.Namespace) -> int:
