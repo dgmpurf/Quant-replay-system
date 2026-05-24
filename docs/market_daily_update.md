@@ -74,6 +74,14 @@ python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw
 
 `--fail-fast` stops after the first failed manifest row. Without it, enabled rows continue independently and row-level failures are recorded in the symbol results CSV.
 
+Offline reviewed symbol manifest dry-run:
+
+```cmd
+python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw\manual_manifests\daily_market_symbols_offline_example.csv --dry-run
+```
+
+An offline manifest supplies `raw_input` and optional `metadata_path` for each row. It can run without `--allow-real-data` because no source fetch is needed. It still runs `market-cache-preflight`, still applies source policy, and still does not write cache unless `--accept-cache-write` is supplied.
+
 ## Symbol Manifest
 
 The v0.1 manifest format is CSV.
@@ -98,6 +106,8 @@ raw_input,metadata_path,raw_output_dir,revision_id
 
 When `raw_input` is present, the row uses that existing canonical raw market CSV and does not need a real fetch. When `raw_input` is absent for a real source such as `AKSHARE_OPTIONAL` or `BAOSTOCK_OPTIONAL`, `--allow-real-data` is required or the row is recorded as `BLOCKED_NEEDS_ALLOW_REAL_DATA`.
 
+If `raw_input` is present but missing on disk, the row is recorded as `BLOCKED_MISSING_RAW_INPUT`. If `metadata_path` is supplied but missing, the row is recorded as `BLOCKED_MISSING_METADATA`. Metadata is optional, but when present it is used for source/upstream provenance in preflight and cache ingest.
+
 Example:
 
 ```csv
@@ -110,6 +120,16 @@ symbol,source,dataset_type,start_date,end_date,enabled,security_type,preferred_u
 
 See `docs/examples/daily_market_symbols_example.csv`.
 
+Offline example with reviewed local raw files:
+
+```csv
+symbol,source,dataset_type,start_date,end_date,enabled,security_type,preferred_upstream,require_fields,reference_source,strict_provisional,raw_input,metadata_path,notes
+000001,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,STOCK,TENCENT,"close,volume,amount",BAOSTOCK_OPTIONAL,false,data/raw/example_reviewed_market/000001/raw_data.csv,data/raw/example_reviewed_market/000001/metadata.json,Offline reviewed Shenzhen stock demo path
+510300,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,ETF,SINA,"close,volume,amount",,false,data/raw/example_reviewed_market/510300/raw_data.csv,data/raw/example_reviewed_market/510300/metadata.json,Offline reviewed ETF provisional demo path
+```
+
+See `docs/examples/daily_market_symbols_offline_example.csv`. The paths are illustrative; for a local dry run, copy the file to `data/raw/manual_manifests/` and replace paths with ignored local raw artifacts.
+
 Row-level statuses:
 
 - `PASS`: row completed without warnings.
@@ -117,6 +137,8 @@ Row-level statuses:
 - `FAIL`: row failed for an unexpected reason.
 - `SKIPPED_DISABLED`: manifest row has `enabled=false`.
 - `BLOCKED_NEEDS_ALLOW_REAL_DATA`: row needs a real fetch and `--allow-real-data` was not supplied.
+- `BLOCKED_MISSING_RAW_INPUT`: row references a missing offline `raw_input` path.
+- `BLOCKED_MISSING_METADATA`: row references a missing offline `metadata_path`.
 - `BLOCKED_PREFLIGHT_REJECT`: preflight rejected the candidate rows and cache ingest was blocked.
 
 ## Safety Gates

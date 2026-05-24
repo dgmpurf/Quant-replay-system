@@ -416,6 +416,32 @@ def run_market_daily_update_manifest(
             if should_stop_on_fail:
                 break
             continue
+        if row.raw_input and not Path(row.raw_input).exists():
+            symbol_result_rows.append(
+                _manifest_symbol_result(
+                    row,
+                    status="BLOCKED_MISSING_RAW_INPUT",
+                    message=f"Manifest raw_input does not exist: {row.raw_input}",
+                    raw_data_path=str(row.raw_input),
+                    metadata_path=str(row.metadata_path) if row.metadata_path is not None else "",
+                )
+            )
+            if should_stop_on_fail:
+                break
+            continue
+        if row.metadata_path and not Path(row.metadata_path).exists():
+            symbol_result_rows.append(
+                _manifest_symbol_result(
+                    row,
+                    status="BLOCKED_MISSING_METADATA",
+                    message=f"Manifest metadata_path does not exist: {row.metadata_path}",
+                    raw_data_path=str(row.raw_input) if row.raw_input is not None else "",
+                    metadata_path=str(row.metadata_path),
+                )
+            )
+            if should_stop_on_fail:
+                break
+            continue
 
         row_output_dir = paths.artifact_dir / f"symbol_{len(symbol_result_rows) + 1}_{row.symbol}"
         request = row.to_request(
@@ -430,7 +456,21 @@ def run_market_daily_update_manifest(
             request = MarketDailyUpdateRequest(
                 **{**request.__dict__, "raw_output_dir": Path(raw_output_dir) / row.symbol}
             )
-        row_result = run_market_daily_update(request, config=project_settings)
+        try:
+            row_result = run_market_daily_update(request, config=project_settings)
+        except Exception as exc:
+            symbol_result_rows.append(
+                _manifest_symbol_result(
+                    row,
+                    status="FAIL",
+                    message=f"Symbol update row failed: {exc}",
+                    raw_data_path=str(row.raw_input) if row.raw_input is not None else "",
+                    metadata_path=str(row.metadata_path) if row.metadata_path is not None else "",
+                )
+            )
+            if should_stop_on_fail:
+                break
+            continue
         symbol_row = _symbol_result_from_single_result(row, row_result)
         symbol_result_rows.append(symbol_row)
         for step in row_result.steps_frame.to_dict("records"):
@@ -445,6 +485,8 @@ def run_market_daily_update_manifest(
         if should_stop_on_fail and symbol_row["status"] in {
             "FAIL",
             "BLOCKED_NEEDS_ALLOW_REAL_DATA",
+            "BLOCKED_MISSING_RAW_INPUT",
+            "BLOCKED_MISSING_METADATA",
             "BLOCKED_PREFLIGHT_REJECT",
         }:
             break
@@ -802,6 +844,8 @@ def render_market_daily_update_manifest_report(result: MarketDailyUpdateManifest
         f"- fail_count: {counts.get('FAIL', 0)}",
         f"- skipped_disabled_count: {counts.get('SKIPPED_DISABLED', 0)}",
         f"- blocked_needs_allow_real_data_count: {counts.get('BLOCKED_NEEDS_ALLOW_REAL_DATA', 0)}",
+        f"- blocked_missing_raw_input_count: {counts.get('BLOCKED_MISSING_RAW_INPUT', 0)}",
+        f"- blocked_missing_metadata_count: {counts.get('BLOCKED_MISSING_METADATA', 0)}",
         f"- blocked_preflight_reject_count: {counts.get('BLOCKED_PREFLIGHT_REJECT', 0)}",
         "",
         "No live trading or broker API was invoked.",
@@ -1087,7 +1131,13 @@ def _manifest_overall_status(symbol_results: pd.DataFrame) -> str:
     if symbol_results.empty:
         return "WARN"
     statuses = set(symbol_results["status"].astype(str))
-    if statuses & {"FAIL", "BLOCKED_NEEDS_ALLOW_REAL_DATA", "BLOCKED_PREFLIGHT_REJECT"}:
+    if statuses & {
+        "FAIL",
+        "BLOCKED_NEEDS_ALLOW_REAL_DATA",
+        "BLOCKED_MISSING_RAW_INPUT",
+        "BLOCKED_MISSING_METADATA",
+        "BLOCKED_PREFLIGHT_REJECT",
+    }:
         return "FAIL"
     if "WARN" in statuses:
         return "WARN"
@@ -1099,7 +1149,14 @@ def _manifest_warnings(symbol_results: pd.DataFrame) -> list[str]:
         return ["Symbol manifest produced no rows."]
     warnings: list[str] = []
     for row in symbol_results.to_dict("records"):
-        if str(row.get("status", "")) in {"WARN", "FAIL", "BLOCKED_NEEDS_ALLOW_REAL_DATA", "BLOCKED_PREFLIGHT_REJECT"}:
+        if str(row.get("status", "")) in {
+            "WARN",
+            "FAIL",
+            "BLOCKED_NEEDS_ALLOW_REAL_DATA",
+            "BLOCKED_MISSING_RAW_INPUT",
+            "BLOCKED_MISSING_METADATA",
+            "BLOCKED_PREFLIGHT_REJECT",
+        }:
             warnings.append(f"{row.get('symbol')} {row.get('status')}: {row.get('message')}")
     return warnings
 

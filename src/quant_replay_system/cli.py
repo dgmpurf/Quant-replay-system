@@ -1527,6 +1527,8 @@ def _handle_market_daily_update(args: argparse.Namespace) -> int:
         print(f"fail_count: {counts.get('FAIL', 0)}")
         print(f"skipped_disabled_count: {counts.get('SKIPPED_DISABLED', 0)}")
         print(f"blocked_needs_allow_real_data_count: {counts.get('BLOCKED_NEEDS_ALLOW_REAL_DATA', 0)}")
+        print(f"blocked_missing_raw_input_count: {counts.get('BLOCKED_MISSING_RAW_INPUT', 0)}")
+        print(f"blocked_missing_metadata_count: {counts.get('BLOCKED_MISSING_METADATA', 0)}")
         print(f"blocked_preflight_reject_count: {counts.get('BLOCKED_PREFLIGHT_REJECT', 0)}")
         print(f"cache_write_occurred: {result.cache_write_occurred}")
         print(f"Report path: {result.artifact_paths['market_daily_update_report']}")

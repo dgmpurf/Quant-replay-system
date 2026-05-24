@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from quant_replay_system import cli
+import quant_replay_system.market_daily_update as market_daily_update_module
 from quant_replay_system.config import load_settings
 from quant_replay_system.market_daily_update import (
     MarketDailyUpdateRequest,
@@ -279,6 +280,38 @@ def test_manifest_dry_run_does_not_mutate_cache(tmp_path: Path) -> None:
     assert cache_path.read_text(encoding="utf-8") == before
 
 
+def test_offline_manifest_raw_input_does_not_require_allow_real_data_or_fetch(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    raw_path, metadata_path = _write_raw_and_metadata(tmp_path)
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_manifest_row(symbol="000001", raw_input=raw_path, metadata_path=metadata_path, reference_source="")],
+    )
+    fetch_called = False
+
+    def _fail_if_fetch_called(*_args, **_kwargs):
+        nonlocal fetch_called
+        fetch_called = True
+        raise AssertionError("data-source-fetch should not run for offline raw_input manifest rows")
+
+    monkeypatch.setattr(market_daily_update_module, "run_data_source_fetch", _fail_if_fetch_called)
+    cache_path = _write_cache(tmp_path, [])
+
+    result = run_market_daily_update_manifest(
+        manifest_path,
+        allow_real_data=False,
+        cache_path=cache_path,
+        config=_settings(tmp_path),
+    )
+
+    assert fetch_called is False
+    assert result.status == "PASS"
+    assert result.symbol_results_frame.iloc[0]["preflight_status"] == "ACCEPT"
+    assert result.symbol_results_frame.iloc[0]["row_count"] == 2
+
+
 def test_manifest_real_fetch_without_allow_real_data_is_blocked(tmp_path: Path) -> None:
     manifest_path = _write_manifest(tmp_path, [_manifest_row(symbol="000001")])
 
@@ -291,6 +324,90 @@ def test_manifest_real_fetch_without_allow_real_data_is_blocked(tmp_path: Path) 
     assert result.status == "FAIL"
     assert result.symbol_results_frame.iloc[0]["status"] == "BLOCKED_NEEDS_ALLOW_REAL_DATA"
     assert result.cache_write_occurred is False
+
+
+def test_offline_manifest_missing_raw_input_path_fails_and_continues(tmp_path: Path) -> None:
+    good_raw, good_metadata = _write_raw_and_metadata(tmp_path / "good", symbol="600000")
+    missing_raw = tmp_path / "missing" / "raw_data.csv"
+    manifest_path = _write_manifest(
+        tmp_path,
+        [
+            _manifest_row(symbol="000001", raw_input=missing_raw, metadata_path=good_metadata),
+            _manifest_row(symbol="600000", raw_input=good_raw, metadata_path=good_metadata, reference_source=""),
+        ],
+    )
+    cache_path = _write_cache(tmp_path, [])
+
+    result = run_market_daily_update_manifest(
+        manifest_path,
+        cache_path=cache_path,
+        fail_fast=False,
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "FAIL"
+    assert result.symbol_results_frame["status"].tolist() == ["BLOCKED_MISSING_RAW_INPUT", "PASS"]
+
+
+def test_offline_manifest_fail_fast_true_stops_on_missing_raw_input(tmp_path: Path) -> None:
+    good_raw, good_metadata = _write_raw_and_metadata(tmp_path / "good", symbol="600000")
+    missing_raw = tmp_path / "missing" / "raw_data.csv"
+    manifest_path = _write_manifest(
+        tmp_path,
+        [
+            _manifest_row(symbol="000001", raw_input=missing_raw, metadata_path=good_metadata),
+            _manifest_row(symbol="600000", raw_input=good_raw, metadata_path=good_metadata),
+        ],
+    )
+
+    result = run_market_daily_update_manifest(
+        manifest_path,
+        cache_path=tmp_path / "cache" / "daily_bars.csv",
+        fail_fast=True,
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "FAIL"
+    assert len(result.symbol_results_frame) == 1
+    assert result.symbol_results_frame.iloc[0]["status"] == "BLOCKED_MISSING_RAW_INPUT"
+
+
+def test_offline_manifest_missing_metadata_path_fails_when_supplied(tmp_path: Path) -> None:
+    raw_path, _metadata_path = _write_raw_and_metadata(tmp_path)
+    missing_metadata = tmp_path / "missing" / "metadata.json"
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_manifest_row(symbol="000001", raw_input=raw_path, metadata_path=missing_metadata)],
+    )
+
+    result = run_market_daily_update_manifest(
+        manifest_path,
+        cache_path=tmp_path / "cache" / "daily_bars.csv",
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "FAIL"
+    assert result.symbol_results_frame.iloc[0]["status"] == "BLOCKED_MISSING_METADATA"
+
+
+def test_offline_manifest_metadata_path_is_used_when_present(tmp_path: Path) -> None:
+    raw_path, metadata_path = _write_raw_and_metadata(tmp_path, upstream_source="SINA")
+    manifest_path = _write_manifest(
+        tmp_path,
+        [_manifest_row(symbol="000001", raw_input=raw_path, metadata_path=metadata_path, reference_source="")],
+    )
+
+    result = run_market_daily_update_manifest(
+        manifest_path,
+        cache_path=tmp_path / "cache" / "daily_bars.csv",
+        config=_settings(tmp_path),
+    )
+    symbol_report = Path(result.symbol_results_frame.iloc[0]["report_path"])
+    preflight_dir = symbol_report.parent / "market_cache_preflight"
+    summaries = list(preflight_dir.glob("*/market_cache_preflight_summary.csv"))
+    summary = pd.read_csv(summaries[0])
+
+    assert summary.iloc[0]["upstream_source"] == "SINA"
 
 
 def test_manifest_accept_without_cache_write_does_not_ingest(tmp_path: Path) -> None:
@@ -471,6 +588,7 @@ def _write_raw_and_metadata(
     *,
     invalid_ohlc: bool = False,
     symbol: str = "000001",
+    upstream_source: str = "TENCENT",
 ) -> tuple[Path, Path]:
     tmp_path.mkdir(parents=True, exist_ok=True)
     raw_path = tmp_path / "raw_data.csv"
@@ -483,7 +601,7 @@ def _write_raw_and_metadata(
     metadata = {
         "source": "AKSHARE_OPTIONAL",
         "dataset_type": "market",
-        "upstream_source": "TENCENT",
+        "upstream_source": upstream_source,
         "successful_function": "stock_zh_a_hist_tx",
         "created_at": "1970-01-01T00:00:00+00:00",
         "no_live_trading": True,

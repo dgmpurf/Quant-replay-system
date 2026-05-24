@@ -1,0 +1,3 @@
+symbol,source,dataset_type,start_date,end_date,enabled,security_type,preferred_upstream,require_fields,reference_source,strict_provisional,raw_input,metadata_path,notes
+000001,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,STOCK,TENCENT,"close,volume,amount",BAOSTOCK_OPTIONAL,false,data/raw/example_reviewed_market/000001/raw_data.csv,data/raw/example_reviewed_market/000001/metadata.json,Offline reviewed Shenzhen stock demo path
+510300,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,ETF,SINA,"close,volume,amount",,false,data/raw/example_reviewed_market/510300/raw_data.csv,data/raw/example_reviewed_market/510300/metadata.json,Offline reviewed ETF provisional demo path

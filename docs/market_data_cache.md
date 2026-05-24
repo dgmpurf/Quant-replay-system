@@ -66,6 +66,14 @@ python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw
 
 The manifest workflow records one row per symbol in `market_daily_update_symbol_results.csv`. Disabled rows are skipped, real-fetch rows are blocked without `--allow-real-data`, and cache writes still require `--accept-cache-write`.
 
+For deterministic offline batch smoke tests, use a reviewed manifest with `raw_input` and `metadata_path` columns:
+
+```cmd
+python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw\manual_manifests\daily_market_symbols_offline_example.csv --dry-run
+```
+
+Offline rows do not call real data sources, but they still run `market-cache-preflight` and still need `--accept-cache-write` before cache mutation.
+
 BaoStock market output uses the same canonical raw market schema and can be cached the same way:
 
 ```cmd
