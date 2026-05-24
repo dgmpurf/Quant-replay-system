@@ -96,6 +96,34 @@ Files:
 
 The metadata records the batch CSV path, local pipeline manifest path, pipeline id, snapshot quality status, current-candidate run id, factor/scored/candidate shapes, warnings, and no-live-trading/no-broker audit fields.
 
+## Index, Health, And Status
+
+Recent handoff artifacts can be discovered and checked before running paper workflow smoke tests.
+
+Build a local handoff artifact index:
+
+```cmd
+python -m quant_replay_system.cli market-update-handoff-index --root outputs\reports\market_update_handoff
+```
+
+The index records each `handoff_id`, batch market CSV path, generated pipeline manifest path, pipeline id, snapshot-quality status, current-candidate run id, factor/scored/candidate row counts, and report paths.
+
+Check indexed artifacts:
+
+```cmd
+python -m quant_replay_system.cli market-update-handoff-health --index outputs\reports\market_update_handoff\index\market_update_handoff_index.csv
+```
+
+The health check verifies metadata, batch market CSVs, generated manifests, linked data-pipeline reports, snapshot-quality reports, current-candidate artifacts when paths are available, and no-live-trading statements where expected.
+
+Summarize the latest handoff:
+
+```cmd
+python -m quant_replay_system.cli market-update-handoff-status --root outputs\reports\market_update_handoff
+```
+
+The status view reports the latest handoff, `PASS`/`WARN`/`FAIL`, workflow stage, next manual action, and warnings/errors. It does not regenerate artifacts, mutate the cache, fetch data, or run paper trading.
+
 ## Safety
 
 - No cache write occurs.

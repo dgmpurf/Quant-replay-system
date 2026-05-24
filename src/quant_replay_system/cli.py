@@ -49,6 +49,9 @@ from quant_replay_system.market_daily_update import run_market_daily_update
 from quant_replay_system.market_daily_update import run_market_daily_update_manifest
 from quant_replay_system.market_source_policy import run_market_source_policy_report
 from quant_replay_system.market_update_handoff import run_market_update_snapshot_handoff
+from quant_replay_system.market_update_handoff_health import check_market_update_handoff_health
+from quant_replay_system.market_update_handoff_index import build_market_update_handoff_index
+from quant_replay_system.market_update_handoff_status import run_market_update_handoff_status
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
@@ -480,6 +483,38 @@ def build_parser() -> argparse.ArgumentParser:
     market_update_handoff.add_argument("--output-dir", help="Optional handoff report output directory")
     market_update_handoff.add_argument("--config", help="Optional config YAML path")
     market_update_handoff.set_defaults(handler=_handle_market_update_handoff)
+
+    market_update_handoff_index = subparsers.add_parser(
+        "market-update-handoff-index",
+        help="Build a local index of market-update-handoff artifacts",
+    )
+    market_update_handoff_index.add_argument("--root", help="Market-update-handoff artifact root directory")
+    market_update_handoff_index.add_argument("--output-dir", help="Optional index output directory")
+    market_update_handoff_index.add_argument("--include-missing-metadata", action="store_true")
+    market_update_handoff_index.add_argument("--config", help="Optional config YAML path")
+    market_update_handoff_index.set_defaults(handler=_handle_market_update_handoff_index)
+
+    market_update_handoff_health = subparsers.add_parser(
+        "market-update-handoff-health",
+        help="Check indexed market-update-handoff artifacts",
+    )
+    market_update_handoff_health.add_argument("--index", help="Market-update-handoff index CSV path")
+    market_update_handoff_health.add_argument("--root", help="Market-update-handoff artifact root directory")
+    market_update_handoff_health.add_argument("--output-dir", help="Optional health output directory")
+    market_update_handoff_health.add_argument("--strict", action="store_true")
+    market_update_handoff_health.add_argument("--allow-warn", action="store_true")
+    market_update_handoff_health.add_argument("--config", help="Optional config YAML path")
+    market_update_handoff_health.set_defaults(handler=_handle_market_update_handoff_health)
+
+    market_update_handoff_status = subparsers.add_parser(
+        "market-update-handoff-status",
+        help="Summarize the latest local market-update-handoff workflow state",
+    )
+    market_update_handoff_status.add_argument("--root", help="Market-update-handoff artifact root directory")
+    market_update_handoff_status.add_argument("--output-dir", help="Optional status output directory")
+    market_update_handoff_status.add_argument("--strict", action="store_true")
+    market_update_handoff_status.add_argument("--config", help="Optional config YAML path")
+    market_update_handoff_status.set_defaults(handler=_handle_market_update_handoff_status)
 
     market_cache_compare = subparsers.add_parser(
         "market-cache-compare",
@@ -1656,6 +1691,102 @@ def _handle_market_update_handoff(args: argparse.Namespace) -> int:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
     return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_update_handoff_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.include_missing_metadata:
+        updates["include_missing_metadata"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "market_update_handoff_index": settings.market_update_handoff_index.model_copy(update=updates)
+            }
+        )
+    result = build_market_update_handoff_index(settings=settings)
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"Index report path: {result.artifact_paths['market_update_handoff_index']}")
+    print(f"Index CSV path: {result.artifact_paths['market_update_handoff_index_csv']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_market_update_handoff_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.strict:
+        updates["strict"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "market_update_handoff_health": settings.market_update_handoff_health.model_copy(update=updates)
+            }
+        )
+    result = check_market_update_handoff_health(
+        index_path=args.index,
+        root=args.root,
+        settings=settings,
+    )
+    print(f"Market update handoff health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"Report path: {result.artifact_paths['market_update_handoff_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_market_update_handoff_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.strict:
+        updates["strict"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "market_update_handoff_status": settings.market_update_handoff_status.model_copy(update=updates)
+            }
+        )
+    result = run_market_update_handoff_status(
+        root=args.root,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    print(f"Market update handoff status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_handoff_id: {result.latest_handoff_id}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['market_update_handoff_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
+    return 0
 
 
 def _handle_market_cache_compare(args: argparse.Namespace) -> int:

@@ -499,6 +499,39 @@ class MarketUpdateHandoffSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketUpdateHandoffIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/market_update_handoff")
+    output_dir: Path = Path("outputs/reports/market_update_handoff/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class MarketUpdateHandoffHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/market_update_handoff/index/market_update_handoff_index.csv")
+    root_dir: Path = Path("outputs/reports/market_update_handoff")
+    output_dir: Path = Path("outputs/reports/market_update_handoff/health")
+    strict: bool = False
+    missing_no_live_statement_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_linked_artifact_severity: Literal["WARN", "ERROR"] = "ERROR"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class MarketUpdateHandoffStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/market_update_handoff")
+    output_dir: Path = Path("outputs/reports/market_update_handoff/status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataPipelineSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/data_pipeline")
     raw_output_dir: Path = Path("data/raw")
@@ -684,6 +717,9 @@ class Settings(BaseModel):
     market_cache_preflight: MarketCachePreflightSettings = Field(default_factory=MarketCachePreflightSettings)
     market_daily_update: MarketDailyUpdateSettings = Field(default_factory=MarketDailyUpdateSettings)
     market_update_handoff: MarketUpdateHandoffSettings = Field(default_factory=MarketUpdateHandoffSettings)
+    market_update_handoff_index: MarketUpdateHandoffIndexSettings = Field(default_factory=MarketUpdateHandoffIndexSettings)
+    market_update_handoff_health: MarketUpdateHandoffHealthSettings = Field(default_factory=MarketUpdateHandoffHealthSettings)
+    market_update_handoff_status: MarketUpdateHandoffStatusSettings = Field(default_factory=MarketUpdateHandoffStatusSettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
     universe_overlay: UniverseOverlaySettings = Field(default_factory=UniverseOverlaySettings)
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)

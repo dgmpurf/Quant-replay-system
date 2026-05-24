@@ -444,6 +444,36 @@ market_update_handoff:
   enable_live_trading: false
   enable_broker_api: false
 
+market_update_handoff_index:
+  root_dir: outputs/reports/market_update_handoff
+  output_dir: outputs/reports/market_update_handoff/index
+  include_missing_metadata: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+market_update_handoff_health:
+  index_path: outputs/reports/market_update_handoff/index/market_update_handoff_index.csv
+  root_dir: outputs/reports/market_update_handoff
+  output_dir: outputs/reports/market_update_handoff/health
+  strict: false
+  missing_no_live_statement_severity: WARN
+  missing_linked_artifact_severity: ERROR
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+market_update_handoff_status:
+  root_dir: outputs/reports/market_update_handoff
+  output_dir: outputs/reports/market_update_handoff/status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_pipeline:
   output_dir: outputs/reports/data_pipeline
   raw_output_dir: data/raw

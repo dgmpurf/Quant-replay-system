@@ -485,18 +485,29 @@ def build_market_update_handoff_metadata(result: MarketUpdateHandoffResult) -> d
         "summary": summarize_market_update_handoff(result).to_dict("records"),
         "symbol_manifest_path": str(result.symbol_manifest_path or ""),
         "market_daily_update_dir": str(result.market_daily_update_dir or ""),
-        "batch_market_csv_path": str(result.batch_market_csv_path or ""),
-        "generated_pipeline_manifest_path": str(result.pipeline_manifest_path or ""),
-        "pipeline_id": pipeline.pipeline_id if pipeline is not None else "",
-        "pipeline_status": pipeline.status if pipeline is not None else "",
-        "snapshot_quality_status": snapshot.status if snapshot is not None else "",
-        "snapshot_quality_report_path": str(snapshot.artifact_paths["snapshot_quality_gate_report"])
-        if snapshot is not None
-        else "",
-        "current_candidate_run_id": current.run_id if current is not None else "",
-        "factor_dataset_shape": list(current.factor_dataset.shape) if current is not None else [0, 0],
-        "scored_dataset_shape": list(current.scored_dataset.shape) if current is not None else [0, 0],
-        "candidates_shape": list(current.candidates.shape) if current is not None else [0, 0],
+            "batch_market_csv_path": str(result.batch_market_csv_path or ""),
+            "generated_pipeline_manifest_path": str(result.pipeline_manifest_path or ""),
+            "pipeline_id": pipeline.pipeline_id if pipeline is not None else "",
+            "pipeline_status": pipeline.status if pipeline is not None else "",
+            "data_pipeline_report_path": str(getattr(pipeline, "artifact_paths", {}).get("data_pipeline_report", ""))
+            if pipeline is not None
+            else "",
+            "snapshot_manifest_path": str(pipeline.snapshot_manifest_path or "")
+            if pipeline is not None
+            else "",
+            "snapshot_quality_status": snapshot.status if snapshot is not None else "",
+            "snapshot_quality_report_path": str(snapshot.artifact_paths["snapshot_quality_gate_report"])
+            if snapshot is not None
+            else "",
+            "current_candidate_run_id": current.run_id if current is not None else "",
+            "current_candidate_artifact_paths": {
+                key: str(value) for key, value in getattr(current, "artifact_paths", {}).items()
+            }
+            if current is not None
+            else {},
+            "factor_dataset_shape": list(current.factor_dataset.shape) if current is not None else [0, 0],
+            "scored_dataset_shape": list(current.scored_dataset.shape) if current is not None else [0, 0],
+            "candidates_shape": list(current.candidates.shape) if current is not None else [0, 0],
         "candidate_count": current.candidate_count if current is not None else 0,
         "current_candidate_warnings": current.warnings if current is not None else [],
         "handoff_rows": result.handoff_rows_frame.to_dict("records"),

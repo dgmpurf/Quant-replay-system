@@ -141,6 +141,8 @@ For deterministic offline batch smoke tests, use a manifest with `raw_input` and
 
 For turning accepted reviewed offline update rows into a local snapshot dry-run, use `market-update-handoff`; see [docs/market_update_handoff.md](docs/market_update_handoff.md).
 
+To discover and verify recent reviewed offline update handoffs before paper workflow smoke tests, use `market-update-handoff-index`, `market-update-handoff-health`, and `market-update-handoff-status`; see [docs/market_update_handoff.md#index-health-and-status](docs/market_update_handoff.md#index-health-and-status).
+
 For comparing overlapping cached market bars across sources such as AKShare and BaoStock, including likely volume/amount unit or source-semantic diagnostics, use `market-cache-compare`; see [docs/market_data_cache.md#compare-sources](docs/market_data_cache.md#compare-sources).
 
 For field-level reliability hints by source, upstream, security type, and market field, use `market-source-policy`; see [docs/market_source_policy.md](docs/market_source_policy.md).
@@ -193,6 +195,9 @@ python -m quant_replay_system.cli market-daily-update --symbol 000001 --start-da
 python -m quant_replay_system.cli market-daily-update --symbol-manifest data/raw/manual_manifests/daily_market_symbols_example.csv --dry-run
 python -m quant_replay_system.cli market-daily-update --symbol-manifest data/raw/manual_manifests/daily_market_symbols_offline_example.csv --dry-run
 python -m quant_replay_system.cli market-update-handoff --symbol-manifest data/raw/manual_manifests/daily_market_symbols_offline_example.csv --universe data/raw/LOCAL_CSV/universe_overlay/<overlay_id>/raw_data.csv --trading-calendar data/raw/AKSHARE_OPTIONAL/trading_calendar/<run_id>/raw_data.csv --decision-date 2024-05-20 --universe-name etf_core --selection-profile demo --dry-run
+python -m quant_replay_system.cli market-update-handoff-index --root outputs/reports/market_update_handoff
+python -m quant_replay_system.cli market-update-handoff-health --index outputs/reports/market_update_handoff/index/market_update_handoff_index.csv
+python -m quant_replay_system.cli market-update-handoff-status --root outputs/reports/market_update_handoff
 python -m quant_replay_system.cli market-cache-ingest --input data/raw/AKSHARE_OPTIONAL/market/<run_id>/raw_data.csv --metadata data/raw/AKSHARE_OPTIONAL/market/<run_id>/metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data/raw/manual_cache/510300_market.csv
