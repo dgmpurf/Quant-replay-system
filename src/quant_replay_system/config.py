@@ -603,6 +603,7 @@ class LocalResearchDashboardSettings(BaseModel):
     root_dir: Path = Path("outputs/reports")
     data_preparation_root: Path = Path("outputs/reports/data_preparation")
     current_candidates_root: Path = Path("outputs/reports/current_candidates")
+    market_update_handoff_root: Path = Path("outputs/reports/market_update_handoff")
     paper_trading_root: Path = Path("outputs/reports/paper_trading")
     output_dir: Path = Path("outputs/reports/local_research_dashboard")
     strict: bool = False

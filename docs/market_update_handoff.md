@@ -124,6 +124,10 @@ python -m quant_replay_system.cli market-update-handoff-status --root outputs\re
 
 The status view reports the latest handoff, `PASS`/`WARN`/`FAIL`, workflow stage, next manual action, and warnings/errors. It does not regenerate artifacts, mutate the cache, fetch data, or run paper trading.
 
+`research-status` also reads the latest `market-update-handoff-status` artifact as a pre-paper workflow component. The unified dashboard includes the latest handoff id, linked pipeline id, snapshot-quality status, current-candidate run id, handoff stage, and handoff next action. If a later paper workflow artifact exists, paper workflow status remains the active stage; older handoff warnings stay visible as audit context.
+
+A `WARN` handoff caused only by included provisional `WARN_ACCEPT` rows, such as AKShare/Sina ETF rows, is visible in `research-status` but is not treated as a broken artifact by itself.
+
 ## Safety
 
 - No cache write occurs.

@@ -343,6 +343,87 @@ def test_dashboard_classifies_prior_current_candidate_health_warning_as_stale(tm
     assert summary["actionable_warning_count"] == 0
 
 
+def test_dashboard_includes_market_update_handoff_status_when_no_paper_workflow_exists(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_update_handoff_status(root, status="WARN", warning_count=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    handoff_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_UPDATE_HANDOFF_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+    assert result.market_update_handoff_status == "WARN"
+    assert result.latest_market_update_handoff_id == "handoff-a"
+    assert result.market_update_handoff_stage == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+    assert result.market_update_handoff_current_candidate_run_id == "candidate-a"
+    assert "current-to-paper" in result.next_manual_action
+    assert handoff_row["warning_classification"] == "EXPECTED_DEMO_WARNING"
+    assert summary["market_update_handoff_pipeline_id"] == "pipeline-a"
+    assert summary["market_update_handoff_snapshot_quality_status"] == "PASS"
+    assert summary["actionable_warning_count"] == 0
+
+
+def test_dashboard_does_not_regress_from_paper_workflow_to_market_update_handoff(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_update_handoff_status(
+        root,
+        status="FAIL",
+        workflow_stage="HANDOFF_ARTIFACTS_NEED_REPAIR",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+    _paper_workflow_status(root, status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    handoff_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_UPDATE_HANDOFF_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
+    assert result.status == "WARN"
+    assert result.paper_workflow_status == "PASS"
+    assert handoff_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Review completed" in result.next_manual_action
+
+
+def test_dashboard_marks_active_broken_market_update_handoff_as_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_update_handoff_status(
+        root,
+        status="FAIL",
+        workflow_stage="HANDOFF_ARTIFACTS_NEED_REPAIR",
+        health_status="FAIL",
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    handoff_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_UPDATE_HANDOFF_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_NEEDS_ATTENTION"
+    assert result.status == "FAIL"
+    assert result.next_manual_action == "Review warnings/errors."
+    assert handoff_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+
+
+def test_cli_research_status_prints_market_update_handoff_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _market_update_handoff_status(root, status="WARN", warning_count=1)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_market_update_handoff_id: handoff-a" in output.out
+    assert "market_update_handoff_status: WARN" in output.out
+    assert "market_update_handoff_current_candidate_run_id: candidate-a" in output.out
+
+
 def _reports_root(tmp_path: Path) -> Path:
     root = tmp_path / "reports"
     root.mkdir(parents=True, exist_ok=True)
@@ -735,6 +816,94 @@ def _paper_workflow_status(
             },
             "output_files": {"paper_workflow_status_report": str(report)},
             "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _market_update_handoff_status(
+    root: Path,
+    *,
+    status: str = "WARN",
+    workflow_stage: str = "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST",
+    handoff_id: str = "handoff-a",
+    health_status: str = "PASS",
+    warning_count: int = 0,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:35:00",
+) -> Path:
+    folder = root / "market_update_handoff" / "status" / f"status-{handoff_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "market_update_handoff_status_report.md"
+    status_csv = folder / "market_update_handoff_status.csv"
+    summary_csv = folder / "market_update_handoff_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    next_action = "Run current-to-paper on the latest current-candidates artifact, then continue paper review smoke testing."
+    report.write_text("No live trading or broker API was invoked.", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "component": "MARKET_UPDATE_HANDOFF_INDEX",
+                "status": "PASS",
+                "latest_handoff_id": handoff_id,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "MARKET_UPDATE_HANDOFF_HEALTH",
+                "status": health_status,
+                "latest_handoff_id": handoff_id,
+                "warning_count": 0,
+                "error_count": error_count,
+                "issue_count": error_count,
+            },
+            {
+                "component": "LATEST_MARKET_UPDATE_HANDOFF",
+                "status": status,
+                "latest_handoff_id": handoff_id,
+                "warning_count": warning_count,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "latest_handoff_id": handoff_id,
+                "pipeline_id": "pipeline-a",
+                "snapshot_quality_status": "PASS",
+                "current_candidate_run_id": "candidate-a",
+                "candidate_count": 2,
+                "health_status": health_status,
+                "issue_count": error_count,
+                "warning_count": 0,
+                "error_count": error_count,
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{handoff_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_handoff_id": handoff_id,
+            "next_manual_action": next_action,
+            "warnings": ["Provisional WARN_ACCEPT rows were included."] if warning_count else [],
+            "output_files": {
+                "market_update_handoff_status_report": str(report),
+                "market_update_handoff_status_csv": str(status_csv),
+                "market_update_handoff_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
             "live_trading_enabled": False,
             "broker_api_invoked": False,
         },

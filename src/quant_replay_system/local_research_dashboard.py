@@ -11,6 +11,7 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.config import LocalResearchDashboardSettings, Settings, load_settings
+from quant_replay_system.market_update_handoff_status import run_market_update_handoff_status
 
 
 LOCAL_RESEARCH_DASHBOARD_LIMITATIONS = [
@@ -52,6 +53,13 @@ SUMMARY_COLUMNS = [
     "snapshot_quality_status",
     "current_candidate_status",
     "current_candidate_health_status",
+    "market_update_handoff_status",
+    "latest_market_update_handoff_id",
+    "market_update_handoff_stage",
+    "market_update_handoff_next_action",
+    "market_update_handoff_pipeline_id",
+    "market_update_handoff_snapshot_quality_status",
+    "market_update_handoff_current_candidate_run_id",
     "current_to_paper_status",
     "current_to_paper_review_status",
     "paper_review_status",
@@ -85,6 +93,7 @@ COMPONENTS = [
     "SNAPSHOT_QUALITY",
     "CURRENT_CANDIDATES",
     "CURRENT_CANDIDATE_HEALTH",
+    "MARKET_UPDATE_HANDOFF_STATUS",
     "CURRENT_TO_PAPER_HANDOFF",
     "CURRENT_TO_PAPER_REVIEW_HANDOFF",
     "REVIEW_TEMPLATE_HEALTH",
@@ -99,6 +108,7 @@ WORKFLOW_AREAS = {
     "SNAPSHOT_QUALITY": "DATA_PREPARATION",
     "CURRENT_CANDIDATES": "CURRENT_CANDIDATES",
     "CURRENT_CANDIDATE_HEALTH": "CURRENT_CANDIDATES",
+    "MARKET_UPDATE_HANDOFF_STATUS": "MARKET_UPDATE_HANDOFF",
     "CURRENT_TO_PAPER_HANDOFF": "PAPER_TRADING",
     "CURRENT_TO_PAPER_REVIEW_HANDOFF": "PAPER_TRADING",
     "REVIEW_TEMPLATE_HEALTH": "PAPER_TRADING",
@@ -137,6 +147,13 @@ class LocalResearchDashboardResult:
     snapshot_quality_status: str
     current_candidate_status: str
     current_candidate_health_status: str
+    market_update_handoff_status: str
+    latest_market_update_handoff_id: str
+    market_update_handoff_stage: str
+    market_update_handoff_next_action: str
+    market_update_handoff_pipeline_id: str
+    market_update_handoff_snapshot_quality_status: str
+    market_update_handoff_current_candidate_run_id: str
     current_to_paper_status: str
     current_to_paper_review_status: str
     paper_review_status: str
@@ -158,6 +175,7 @@ def run_local_research_dashboard(
     root: str | Path | None = None,
     data_preparation_root: str | Path | None = None,
     current_candidates_root: str | Path | None = None,
+    market_update_handoff_root: str | Path | None = None,
     paper_trading_root: str | Path | None = None,
     output_dir: str | Path | None = None,
     decision_date: str | pd.Timestamp | None = None,
@@ -181,6 +199,11 @@ def run_local_research_dashboard(
         if current_candidates_root is not None
         else dashboard_settings.current_candidates_root
     )
+    effective_market_update_handoff_root = (
+        Path(market_update_handoff_root)
+        if market_update_handoff_root is not None
+        else dashboard_settings.market_update_handoff_root
+    )
     effective_paper_root = Path(paper_trading_root) if paper_trading_root is not None else dashboard_settings.paper_trading_root
     effective_output_dir = Path(output_dir) if output_dir is not None else dashboard_settings.output_dir
     if root is not None:
@@ -188,6 +211,8 @@ def run_local_research_dashboard(
             effective_data_prep_root = effective_root / "data_preparation"
         if current_candidates_root is None:
             effective_current_root = effective_root / "current_candidates"
+        if market_update_handoff_root is None:
+            effective_market_update_handoff_root = effective_root / "market_update_handoff"
         if paper_trading_root is None:
             effective_paper_root = effective_root / "paper_trading"
 
@@ -195,6 +220,7 @@ def run_local_research_dashboard(
         root=effective_root,
         data_preparation_root=effective_data_prep_root,
         current_candidates_root=effective_current_root,
+        market_update_handoff_root=effective_market_update_handoff_root,
         paper_trading_root=effective_paper_root,
         decision_date=decision_date,
         universe_name=universe_name,
@@ -224,6 +250,7 @@ def run_local_research_dashboard(
         "root_dir": effective_root,
         "data_preparation_root": effective_data_prep_root,
         "current_candidates_root": effective_current_root,
+        "market_update_handoff_root": effective_market_update_handoff_root,
         "paper_trading_root": effective_paper_root,
         "decision_date_filter": _date_string(decision_date),
         "universe_name_filter": _string_or_empty(universe_name),
@@ -244,6 +271,17 @@ def run_local_research_dashboard(
         snapshot_quality_status=str(summary.get("snapshot_quality_status", "MISSING")),
         current_candidate_status=str(summary.get("current_candidate_status", "MISSING")),
         current_candidate_health_status=str(summary.get("current_candidate_health_status", "MISSING")),
+        market_update_handoff_status=str(summary.get("market_update_handoff_status", "MISSING")),
+        latest_market_update_handoff_id=str(summary.get("latest_market_update_handoff_id", "")),
+        market_update_handoff_stage=str(summary.get("market_update_handoff_stage", "")),
+        market_update_handoff_next_action=str(summary.get("market_update_handoff_next_action", "")),
+        market_update_handoff_pipeline_id=str(summary.get("market_update_handoff_pipeline_id", "")),
+        market_update_handoff_snapshot_quality_status=str(
+            summary.get("market_update_handoff_snapshot_quality_status", "")
+        ),
+        market_update_handoff_current_candidate_run_id=str(
+            summary.get("market_update_handoff_current_candidate_run_id", "")
+        ),
         current_to_paper_status=str(summary.get("current_to_paper_status", "MISSING")),
         current_to_paper_review_status=str(summary.get("current_to_paper_review_status", "MISSING")),
         paper_review_status=str(summary.get("paper_review_status", "MISSING")),
@@ -270,6 +308,7 @@ def scan_local_research_workflow_artifacts(
     root: str | Path,
     data_preparation_root: str | Path,
     current_candidates_root: str | Path,
+    market_update_handoff_root: str | Path,
     paper_trading_root: str | Path,
     decision_date: str | pd.Timestamp | None = None,
     universe_name: str | None = None,
@@ -279,6 +318,7 @@ def scan_local_research_workflow_artifacts(
     root_path = Path(root)
     data_prep_root = Path(data_preparation_root)
     current_root = Path(current_candidates_root)
+    market_update_root = Path(market_update_handoff_root)
     paper_root = Path(paper_trading_root)
     requested_date = _date_string(decision_date)
     requested_universe = _string_or_empty(universe_name)
@@ -288,6 +328,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_snapshot_quality(root_path / "snapshot_quality", requested_date))
     records.extend(_scan_current_candidates(current_root, requested_date, requested_universe))
     records.extend(_scan_current_candidate_health(current_root / "health"))
+    records.extend(_scan_market_update_handoff_status(market_update_root))
     records.extend(_scan_current_to_paper_handoff(root_path / "current_to_paper_handoff", requested_date, requested_universe))
     records.extend(_scan_current_to_paper_review_handoff(root_path / "current_to_paper_review_handoff"))
     records.extend(_scan_review_template_health(paper_root / "review_template_health"))
@@ -490,10 +531,23 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
     current = by_component.get("CURRENT_CANDIDATES", {})
     daily = by_component.get("DAILY_PAPER", {})
     daily_metadata = _metadata_for_row(daily)
+    paper_started_components = {
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
     return {
         "active_current_run_id": _string_or_empty(current.get("latest_artifact_id")),
         "active_daily_id": _string_or_empty(daily.get("latest_artifact_id")),
         "watch_only_no_fills_demo": _is_watch_only_no_fills_daily(daily_metadata),
+        "paper_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in paper_started_components
+        ),
     }
 
 
@@ -512,6 +566,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
         metadata_counts = _metadata_actionability_counts(row)
         if metadata_counts is not None:
             return metadata_counts
+
+    if component == "MARKET_UPDATE_HANDOFF_STATUS":
+        return _market_update_handoff_warning_actionability(row, context)
 
     if component == "CURRENT_CANDIDATE_HEALTH":
         issue_counts = _current_candidate_health_issue_actionability(row, context)
@@ -532,6 +589,53 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
         "stale_warning_count": stale_warning_count,
         "actionable_warning_count": actionable_warning_count,
         "blocking_error_count": blocking_error_count,
+    }
+
+
+def _market_update_handoff_warning_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    notes = _string_or_empty(row.get("notes"))
+    health_status = _parse_note_value(notes, "health_status").upper()
+    if context.get("paper_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    is_provisional_ready = (
+        status == "WARN"
+        and stage == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+        and health_status in {"", "PASS"}
+    )
+    if is_provisional_ready:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_demo_warning_count": expected_count,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
     }
 
 
@@ -688,6 +792,18 @@ def _parse_note_count(notes: Any, key: str) -> int:
     return 0
 
 
+def _parse_note_value(notes: Any, key: str) -> str:
+    text = _string_or_empty(notes)
+    if not text:
+        return ""
+    prefix = f"{key}="
+    for part in text.replace(",", ";").split(";"):
+        item = part.strip()
+        if item.startswith(prefix):
+            return item[len(prefix) :].strip()
+    return ""
+
+
 def _actionability_count_keys() -> list[str]:
     return [
         "total_warning_count",
@@ -713,6 +829,13 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         return "PAPER_WORKFLOW_READY"
     if all(status == "MISSING" for status in statuses.values()):
         return "NO_DATA"
+    if (
+        statuses["CURRENT_TO_PAPER_HANDOFF"] == "MISSING"
+        and statuses["MARKET_UPDATE_HANDOFF_STATUS"] in {"PASS", "WARN", "READY"}
+        and _market_update_handoff_stage_from_frame(dashboard_frame)
+        == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+    ):
+        return "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
     if statuses["CURRENT_CANDIDATES"] == "MISSING":
         if statuses["SNAPSHOT_QUALITY"] != "MISSING":
             return "SNAPSHOT_READY"
@@ -758,6 +881,7 @@ def infer_local_research_next_action(
         "SNAPSHOT_READY": "Run current-candidates.",
         "CURRENT_CANDIDATES_READY": "Run current-candidates-index.",
         "CURRENT_CANDIDATES_HEALTH_READY": "Run current-to-paper.",
+        "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST": "Run current-to-paper on the latest current-candidates artifact, then continue paper review smoke testing.",
         "PAPER_HANDOFF_READY": "Run current-to-paper-review.",
         "REVIEW_TEMPLATE_READY": "Manually edit review_updates_template.csv.",
         "REVIEW_TEMPLATE_HEALTH_READY": "Run paper-review-decisions --health-check.",
@@ -783,14 +907,18 @@ def summarize_local_research_status(
     by_component = {row["component"]: row for row in frame.to_dict("records")}
     active = frame.loc[frame["status"] != "MISSING"] if not frame.empty else pd.DataFrame()
     active_statuses = [str(row.get("status", "")).upper() for row in active.to_dict("records")]
-    all_statuses = [str(row.get("status", "")).upper() for row in frame.to_dict("records")]
+    status_frame = frame.loc[
+        ~((frame["component"] == "MARKET_UPDATE_HANDOFF_STATUS") & (frame["status"] == "MISSING"))
+    ]
+    all_statuses = [str(row.get("status", "")).upper() for row in status_frame.to_dict("records")]
     missing_count = all_statuses.count("MISSING")
     error_count = int(pd.to_numeric(frame["error_count"], errors="coerce").fillna(0).sum()) if not frame.empty else 0
     warning_count = int(pd.to_numeric(frame["warning_count"], errors="coerce").fillna(0).sum()) if not frame.empty else 0
     actionability = _warning_actionability_totals(frame)
+    stale_market_fail_only = _only_stale_market_update_handoff_fail(frame, actionability)
     status = (
         "FAIL"
-        if "FAIL" in active_statuses or error_count
+        if ("FAIL" in active_statuses or error_count) and not stale_market_fail_only
         else "WARN"
         if "WARN" in active_statuses or missing_count or warning_count
         else "PASS"
@@ -804,6 +932,29 @@ def summarize_local_research_status(
         "snapshot_quality_status": _component_status(by_component, "SNAPSHOT_QUALITY"),
         "current_candidate_status": _component_status(by_component, "CURRENT_CANDIDATES"),
         "current_candidate_health_status": _component_status(by_component, "CURRENT_CANDIDATE_HEALTH"),
+        "market_update_handoff_status": _component_status(by_component, "MARKET_UPDATE_HANDOFF_STATUS"),
+        "latest_market_update_handoff_id": _string_or_empty(
+            by_component.get("MARKET_UPDATE_HANDOFF_STATUS", {}).get("latest_artifact_id")
+        ),
+        "market_update_handoff_stage": _string_or_empty(
+            by_component.get("MARKET_UPDATE_HANDOFF_STATUS", {}).get("stage")
+        ),
+        "market_update_handoff_next_action": _parse_note_value(
+            by_component.get("MARKET_UPDATE_HANDOFF_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "market_update_handoff_pipeline_id": _parse_note_value(
+            by_component.get("MARKET_UPDATE_HANDOFF_STATUS", {}).get("notes"),
+            "pipeline_id",
+        ),
+        "market_update_handoff_snapshot_quality_status": _parse_note_value(
+            by_component.get("MARKET_UPDATE_HANDOFF_STATUS", {}).get("notes"),
+            "snapshot_quality_status",
+        ),
+        "market_update_handoff_current_candidate_run_id": _parse_note_value(
+            by_component.get("MARKET_UPDATE_HANDOFF_STATUS", {}).get("notes"),
+            "current_candidate_run_id",
+        ),
         "current_to_paper_status": _component_status(by_component, "CURRENT_TO_PAPER_HANDOFF"),
         "current_to_paper_review_status": _component_status(by_component, "CURRENT_TO_PAPER_REVIEW_HANDOFF"),
         "paper_review_status": _component_status(by_component, "PAPER_REVIEW"),
@@ -863,6 +1014,13 @@ def build_local_research_dashboard_metadata(
         "workflow_stage": result.workflow_stage,
         "latest_decision_date": result.latest_decision_date,
         "universe_name": result.universe_name,
+        "latest_market_update_handoff_id": result.latest_market_update_handoff_id,
+        "market_update_handoff_status": result.market_update_handoff_status,
+        "market_update_handoff_stage": result.market_update_handoff_stage,
+        "market_update_handoff_next_action": result.market_update_handoff_next_action,
+        "market_update_handoff_pipeline_id": result.market_update_handoff_pipeline_id,
+        "market_update_handoff_snapshot_quality_status": result.market_update_handoff_snapshot_quality_status,
+        "market_update_handoff_current_candidate_run_id": result.market_update_handoff_current_candidate_run_id,
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_demo_warning_count": _int_or_zero(summary.get("expected_demo_warning_count")),
@@ -902,6 +1060,10 @@ def render_local_research_dashboard_report(
                 "status",
                 "latest_decision_date",
                 "universe_name",
+                "market_update_handoff_status",
+                "latest_market_update_handoff_id",
+                "market_update_handoff_stage",
+                "market_update_handoff_current_candidate_run_id",
                 "total_warning_count",
                 "expected_demo_warning_count",
                 "stale_warning_count",
@@ -1086,6 +1248,123 @@ def _scan_current_candidate_health(root: Path) -> list[dict[str, Any]]:
         report_key="current_candidate_artifact_health_report",
         default_report="current_candidate_artifact_health_report.md",
         stage="CURRENT_CANDIDATES_HEALTH_READY",
+    )
+
+
+def _scan_market_update_handoff_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_market_update_handoff_status_record(root)
+    if computed is not None:
+        return [computed]
+
+    scan_root = root if root.name == "status" else root / "status"
+    records = []
+    for metadata_path in _metadata_paths(scan_root, "metadata.json"):
+        metadata = _load_json_or_none(metadata_path)
+        if metadata is None or not metadata.get("status_id"):
+            continue
+        output_files = _output_files(metadata)
+        summary = _first_csv_record(output_files.get("market_update_handoff_status_summary"))
+        status_rows = _csv_records(output_files.get("market_update_handoff_status_csv"))
+        latest_status_row = next(
+            (
+                row
+                for row in status_rows
+                if _string_or_empty(row.get("component")) == "LATEST_MARKET_UPDATE_HANDOFF"
+            ),
+            {},
+        )
+        status_text = _string_or_empty(metadata.get("status")) or _string_or_empty(summary.get("status")) or "READY"
+        stage = _string_or_empty(metadata.get("workflow_stage")) or _string_or_empty(summary.get("workflow_stage"))
+        latest_handoff_id = _string_or_empty(metadata.get("latest_handoff_id")) or _string_or_empty(
+            summary.get("latest_handoff_id")
+        )
+        pipeline_id = _string_or_empty(summary.get("pipeline_id"))
+        snapshot_quality_status = _string_or_empty(summary.get("snapshot_quality_status"))
+        current_candidate_run_id = _string_or_empty(summary.get("current_candidate_run_id"))
+        candidate_count = _string_or_empty(summary.get("candidate_count"))
+        health_status = _string_or_empty(summary.get("health_status"))
+        warning_count = (
+            _int_or_zero(summary.get("warning_count"))
+            + _int_or_zero(latest_status_row.get("warning_count"))
+            + (len(metadata.get("warnings", [])) if isinstance(metadata.get("warnings"), list) else 0)
+        )
+        if status_text == "WARN" and warning_count == 0:
+            warning_count = 1
+        records.append(
+            _record(
+                workflow_area="MARKET_UPDATE_HANDOFF",
+                component="MARKET_UPDATE_HANDOFF_STATUS",
+                status=status_text,
+                stage=stage or "MARKET_UPDATE_HANDOFF_READY",
+                latest_artifact_id=latest_handoff_id or _string_or_empty(metadata.get("status_id")) or metadata_path.parent.name,
+                report_path=output_files.get(
+                    "market_update_handoff_status_report",
+                    metadata_path.parent / "market_update_handoff_status_report.md",
+                ),
+                metadata_path=metadata_path,
+                issue_count=_int_or_zero(summary.get("issue_count")),
+                warning_count=warning_count,
+                error_count=_int_or_zero(summary.get("error_count")),
+                notes=(
+                    f"next_manual_action={_string_or_empty(metadata.get('next_manual_action'))}; "
+                    f"pipeline_id={pipeline_id}; "
+                    f"snapshot_quality_status={snapshot_quality_status}; "
+                    f"current_candidate_run_id={current_candidate_run_id}; "
+                    f"candidate_count={candidate_count}; "
+                    f"health_status={health_status}"
+                ),
+                created_at=metadata.get("created_at"),
+            )
+        )
+    return records
+
+
+def _computed_market_update_handoff_status_record(root: Path) -> dict[str, Any] | None:
+    handoff_root = root.parent if root.name == "status" else root
+    if not handoff_root.exists():
+        return None
+    try:
+        result = run_market_update_handoff_status(
+            root=handoff_root,
+            output_dir=handoff_root / "status",
+            config={"write_artifacts": False},
+        )
+    except Exception:
+        return None
+    if not result.latest_handoff_id:
+        return None
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    latest_status_row = {}
+    if not result.status_frame.empty:
+        latest_rows = result.status_frame.loc[result.status_frame["component"] == "LATEST_MARKET_UPDATE_HANDOFF"]
+        if not latest_rows.empty:
+            latest_status_row = latest_rows.iloc[0].to_dict()
+    warning_count = (
+        _int_or_zero(summary.get("warning_count"))
+        + _int_or_zero(latest_status_row.get("warning_count"))
+        + len(result.warnings)
+    )
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="MARKET_UPDATE_HANDOFF",
+        component="MARKET_UPDATE_HANDOFF_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_handoff_id,
+        report_path=result.artifact_paths.get("market_update_handoff_status_report", ""),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=_int_or_zero(summary.get("issue_count")),
+        warning_count=warning_count,
+        error_count=_int_or_zero(summary.get("error_count")),
+        notes=(
+            f"next_manual_action={result.next_manual_action}; "
+            f"pipeline_id={_string_or_empty(summary.get('pipeline_id'))}; "
+            f"snapshot_quality_status={_string_or_empty(summary.get('snapshot_quality_status'))}; "
+            f"current_candidate_run_id={_string_or_empty(summary.get('current_candidate_run_id'))}; "
+            f"candidate_count={_string_or_empty(summary.get('candidate_count'))}; "
+            f"health_status={_string_or_empty(summary.get('health_status'))}"
+        ),
     )
 
 
@@ -1362,6 +1641,12 @@ def _component_next_action(component: str, status: str) -> str:
         return "Run current-candidates." if status == "MISSING" else "Run current-candidates-index."
     if component == "CURRENT_CANDIDATE_HEALTH":
         return "Run current-candidates-health." if status == "MISSING" else "Run current-to-paper."
+    if component == "MARKET_UPDATE_HANDOFF_STATUS":
+        return (
+            "Run market-update-handoff for a reviewed offline update batch."
+            if status == "MISSING"
+            else "Run current-to-paper on the latest current-candidates artifact."
+        )
     if component == "CURRENT_TO_PAPER_HANDOFF":
         return "Run current-to-paper." if status == "MISSING" else "Run current-to-paper-review."
     if component == "CURRENT_TO_PAPER_REVIEW_HANDOFF":
@@ -1385,6 +1670,14 @@ def _status_by_component(dashboard_frame: pd.DataFrame) -> dict[str, str]:
     for component in COMPONENTS:
         values.setdefault(component, "MISSING")
     return values
+
+
+def _market_update_handoff_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "MARKET_UPDATE_HANDOFF_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
 
 
 def _has_attention_status(dashboard_frame: pd.DataFrame) -> bool:
@@ -1473,6 +1766,19 @@ def _warning_actionability_totals(dashboard_frame: pd.DataFrame) -> dict[str, in
     return totals
 
 
+def _only_stale_market_update_handoff_fail(frame: pd.DataFrame, actionability: dict[str, int]) -> bool:
+    finalized = _finalize_dashboard_frame(frame)
+    failing = finalized.loc[finalized["status"] == "FAIL"]
+    if failing.empty:
+        return False
+    return (
+        set(failing["component"].astype(str)) == {"MARKET_UPDATE_HANDOFF_STATUS"}
+        and actionability.get("blocking_error_count", 0) == 0
+        and actionability.get("actionable_warning_count", 0) == 0
+        and actionability.get("stale_warning_count", 0) > 0
+    )
+
+
 def _deduped_actionability_frame(frame: pd.DataFrame) -> pd.DataFrame:
     if frame.empty:
         return frame
@@ -1518,6 +1824,24 @@ def _load_json_or_none(path: Path) -> dict[str, Any] | None:
     except (OSError, json.JSONDecodeError):
         return None
     return payload if isinstance(payload, dict) else None
+
+
+def _first_csv_record(path_value: Any) -> dict[str, Any]:
+    records = _csv_records(path_value)
+    return records[0] if records else {}
+
+
+def _csv_records(path_value: Any) -> list[dict[str, Any]]:
+    path_text = _string_or_empty(path_value)
+    if not path_text:
+        return []
+    path = Path(path_text)
+    if not path.exists():
+        return []
+    try:
+        return pd.read_csv(path, dtype=str, keep_default_na=False).fillna("").to_dict("records")
+    except Exception:
+        return []
 
 
 def _output_files(metadata: dict[str, Any]) -> dict[str, Any]:

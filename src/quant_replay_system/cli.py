@@ -323,6 +323,7 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument("--root", help="Reports root directory")
     research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
     research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
+    research_status.add_argument("--market-update-handoff-root", help="Market-update-handoff artifact root directory")
     research_status.add_argument("--paper-trading-root", help="Paper trading artifact root directory")
     research_status.add_argument("--decision-date", help="Optional decision date filter")
     research_status.add_argument("--universe", help="Optional universe name filter")
@@ -1322,6 +1323,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["data_preparation_root"] = Path(args.data_preparation_root)
     if args.current_candidates_root:
         updates["current_candidates_root"] = Path(args.current_candidates_root)
+    if args.market_update_handoff_root:
+        updates["market_update_handoff_root"] = Path(args.market_update_handoff_root)
     if args.paper_trading_root:
         updates["paper_trading_root"] = Path(args.paper_trading_root)
     if args.output_dir:
@@ -1335,6 +1338,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         root=args.root,
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
+        market_update_handoff_root=args.market_update_handoff_root,
         paper_trading_root=args.paper_trading_root,
         decision_date=args.decision_date,
         universe_name=args.universe,
@@ -1344,6 +1348,10 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"Research status: {result.status}")
     print(f"workflow_stage: {result.workflow_stage}")
     print(f"latest_decision_date: {result.latest_decision_date}")
+    print(f"latest_market_update_handoff_id: {result.latest_market_update_handoff_id}")
+    print(f"market_update_handoff_status: {result.market_update_handoff_status}")
+    print(f"market_update_handoff_stage: {result.market_update_handoff_stage}")
+    print(f"market_update_handoff_current_candidate_run_id: {result.market_update_handoff_current_candidate_run_id}")
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['local_research_dashboard']}")
     for warning in result.warnings:

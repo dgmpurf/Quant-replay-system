@@ -10,6 +10,7 @@ The project now has separate dashboards and health checks for data preparation, 
 
 - Has data preparation produced usable artifacts?
 - Has snapshot quality run?
+- Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
 - Has the current-to-paper handoff run?
@@ -25,6 +26,7 @@ The dashboard scans metadata under:
 ```text
 outputs/reports/data_preparation/workflow_status/
 outputs/reports/snapshot_quality/
+outputs/reports/market_update_handoff/status/
 outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
 outputs/reports/current_to_paper_handoff/
@@ -38,6 +40,14 @@ outputs/reports/paper_trading/workflow_status/
 
 It reads existing local `metadata.json` or `handoff_metadata.json` files only. It does not rerun any workflow step.
 
+## Market Update Handoff Status
+
+`research-status` includes `market-update-handoff-status` as a pre-paper workflow component when those artifacts exist.
+
+The unified summary records the latest handoff id, handoff status/stage, linked pipeline id, linked snapshot-quality status, linked current-candidate run id, and the handoff's next manual action. When the handoff stage is `CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST`, the dashboard treats current candidates as ready for a local paper workflow smoke test and recommends `current-to-paper`.
+
+If a handoff is `WARN` only because provisional rows such as AKShare/Sina ETF `WARN_ACCEPT` rows were included, the warning remains visible but is classified as non-blocking for the active workflow. Broken handoff health or missing linked artifacts remain actionable when the handoff is the active stage.
+
 ## Active Paper Flow Selection
 
 For paper trading components, `research-status` uses the same active reviewed-flow idea as `paper-workflow-status`.
@@ -45,6 +55,8 @@ For paper trading components, `research-status` uses the same active reviewed-fl
 When the latest daily paper artifact used reviewed decisions, the dashboard follows `reviewed_decisions_path` to the matching paper review artifact and then uses that review's linked template-health metadata. This prevents an older unrelated warning template from making the active paper workflow look stale.
 
 Stale artifacts are still useful audit evidence. They remain available in paper indexes and health reports, and stale warning counts may be noted, but the unified dashboard stage follows the active daily reviewed workflow chain.
+
+If a paper workflow has already advanced beyond the market-update-handoff stage, the paper workflow state takes precedence. Older handoff warnings or failures remain visible as stale audit context and do not move the active stage back to "run current-to-paper."
 
 ## Warning Actionability
 
@@ -66,6 +78,7 @@ Prior current-candidate health warnings from old dry runs can be classified as s
 - `SNAPSHOT_READY`: snapshot quality exists; current candidates are next.
 - `CURRENT_CANDIDATES_READY`: current-candidate artifacts exist; index/health checks are next.
 - `CURRENT_CANDIDATES_HEALTH_READY`: current-candidate health exists; current-to-paper is next.
+- `CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST`: a market-update-handoff produced current candidates ready for a local paper workflow smoke test.
 - `PAPER_HANDOFF_READY`: current-to-paper handoff exists; review template generation is next.
 - `REVIEW_TEMPLATE_READY`: review template exists and needs manual editing.
 - `REVIEW_TEMPLATE_HEALTH_READY`: template health passed; review decisions can be applied.

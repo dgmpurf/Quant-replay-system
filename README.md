@@ -143,6 +143,8 @@ For turning accepted reviewed offline update rows into a local snapshot dry-run,
 
 To discover and verify recent reviewed offline update handoffs before paper workflow smoke tests, use `market-update-handoff-index`, `market-update-handoff-health`, and `market-update-handoff-status`; see [docs/market_update_handoff.md#index-health-and-status](docs/market_update_handoff.md#index-health-and-status).
 
+`research-status` includes the latest `market-update-handoff-status` as a pre-paper workflow component, while still letting later paper workflow artifacts take precedence; see [docs/local_research_dashboard.md#market-update-handoff-status](docs/local_research_dashboard.md#market-update-handoff-status).
+
 For comparing overlapping cached market bars across sources such as AKShare and BaoStock, including likely volume/amount unit or source-semantic diagnostics, use `market-cache-compare`; see [docs/market_data_cache.md#compare-sources](docs/market_data_cache.md#compare-sources).
 
 For field-level reliability hints by source, upstream, security type, and market field, use `market-source-policy`; see [docs/market_source_policy.md](docs/market_source_policy.md).
