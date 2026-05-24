@@ -75,6 +75,8 @@ For `market`, the adapter infers the symbol route and uses configurable AKShare 
 
 Successful market metadata includes `inferred_symbol_type`, `attempted_functions`, `attempted_upstreams`, `successful_function`, `upstream_source`, `fallback_used`, `row_count`, `adapter_status`, and `mapping_warnings`. If every market fetch attempt fails, the diagnostic error includes the dataset type, symbol, inferred type, date range, attempted functions, upstream source, exception classes, safe exception messages, and suggested actions. Safe messages redact obvious secret-like values.
 
+Use `market-source-policy` after health checks and source comparisons when a workflow needs field-level source reliability hints. The policy records, for example, that tested AKShare/Tencent stock OHLC, volume, and amount fields are reliable after raw turnover extraction, that stock `pre_close` has a first-window caveat, and that AKShare/Sina ETF fields remain provisional without a second-source ETF comparison.
+
 Tencent `stock_zh_a_hist_tx` returns a compact daily kline frame where AKShare names the sixth field `amount`; AKShare's public documentation marks that field's unit as `手`, so the adapter treats it as trading volume in hands rather than turnover amount. The adapter first attempts a guarded raw Tencent kline fetch for real manual AKShare runs because Tencent's raw response can include a later turnover-amount field. When raw turnover is verified, the adapter maps `volume_hands * 100` into canonical `volume` and `turnover_amount_10k_yuan * 10000` into canonical `amount`.
 
 Mapping warnings make the path explicit:

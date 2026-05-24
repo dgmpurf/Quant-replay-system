@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Literal
+from typing import Any, Dict, Literal
 
 import yaml
 from pydantic import BaseModel, Field
@@ -372,6 +372,93 @@ class MarketDataComparisonSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+def _default_market_source_field_reliability() -> dict[str, Any]:
+    return {
+        "AKSHARE_OPTIONAL": {
+            "TENCENT": {
+                "STOCK": {
+                    "open": "RELIABLE",
+                    "high": "RELIABLE",
+                    "low": "RELIABLE",
+                    "close": "RELIABLE",
+                    "volume": "RELIABLE",
+                    "amount": "RELIABLE",
+                    "pre_close": "CAVEAT_FIRST_WINDOW_ROW",
+                    "notes": [
+                        "Requires raw Tencent turnover extraction path for amount.",
+                        "AKShare stock_zh_a_hist_tx DataFrame amount field is volume in hands, not turnover amount.",
+                    ],
+                }
+            },
+            "SINA": {
+                "ETF": {
+                    "open": "PROVISIONAL",
+                    "high": "PROVISIONAL",
+                    "low": "PROVISIONAL",
+                    "close": "PROVISIONAL",
+                    "volume": "PROVISIONAL",
+                    "amount": "PROVISIONAL",
+                    "pre_close": "UNKNOWN",
+                    "notes": [
+                        "ETF data is available locally but lacks second-source comparison in current tests.",
+                    ],
+                }
+            },
+            "EASTMONEY": {
+                "STOCK": {
+                    "open": "UNSTABLE",
+                    "high": "UNSTABLE",
+                    "low": "UNSTABLE",
+                    "close": "UNSTABLE",
+                    "volume": "UNSTABLE",
+                    "amount": "UNSTABLE",
+                    "pre_close": "UNSTABLE",
+                    "notes": [
+                        "Eastmoney market endpoints were unstable in local diagnostics.",
+                    ],
+                }
+            },
+        },
+        "BAOSTOCK_OPTIONAL": {
+            "BAOSTOCK": {
+                "STOCK": {
+                    "open": "RELIABLE",
+                    "high": "RELIABLE",
+                    "low": "RELIABLE",
+                    "close": "RELIABLE",
+                    "volume": "RELIABLE",
+                    "amount": "RELIABLE",
+                    "pre_close": "CAVEAT_FIRST_WINDOW_ROW",
+                    "notes": [
+                        "Stock OHLC, volume, and amount aligned with AKShare/Tencent in representative comparisons.",
+                    ],
+                },
+                "ETF": {
+                    "open": "UNAVAILABLE",
+                    "high": "UNAVAILABLE",
+                    "low": "UNAVAILABLE",
+                    "close": "UNAVAILABLE",
+                    "volume": "UNAVAILABLE",
+                    "amount": "UNAVAILABLE",
+                    "pre_close": "UNAVAILABLE",
+                    "notes": [
+                        "BaoStock returned 0 rows for 510300 and 159915 in current local tests.",
+                    ],
+                },
+            }
+        },
+    }
+
+
+class MarketSourcePolicySettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/market_source_policy")
+    field_reliability: dict[str, Any] = Field(default_factory=_default_market_source_field_reliability)
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataPipelineSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/data_pipeline")
     raw_output_dir: Path = Path("data/raw")
@@ -553,6 +640,7 @@ class Settings(BaseModel):
     data_source_health: DataSourceHealthSettings = Field(default_factory=DataSourceHealthSettings)
     market_data_cache: MarketDataCacheSettings = Field(default_factory=MarketDataCacheSettings)
     market_data_comparison: MarketDataComparisonSettings = Field(default_factory=MarketDataComparisonSettings)
+    market_source_policy: MarketSourcePolicySettings = Field(default_factory=MarketSourcePolicySettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
     universe_overlay: UniverseOverlaySettings = Field(default_factory=UniverseOverlaySettings)
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)

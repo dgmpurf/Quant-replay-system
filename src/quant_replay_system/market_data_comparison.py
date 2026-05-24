@@ -14,6 +14,7 @@ import pandas as pd
 from quant_replay_system.config import MarketDataComparisonSettings, Settings, load_settings
 from quant_replay_system.data import normalize_symbol_series
 from quant_replay_system.market_data_cache import MARKET_CACHE_COLUMNS, load_market_cache
+from quant_replay_system.market_source_policy import build_market_comparison_policy_hints
 
 
 MARKET_COMPARISON_TIMESTAMP = "1970-01-01T00:00:00+00:00"
@@ -86,6 +87,18 @@ MARKET_COMPARISON_SUMMARY_COLUMNS = [
     "suspected_volume_scale_factor",
     "suspected_amount_scale_factor",
     "diagnostic_classification",
+    "policy_security_type",
+    "source_a_upstream_source",
+    "source_b_upstream_source",
+    "source_a_field_reliability",
+    "source_b_field_reliability",
+    "recommended_for_price",
+    "recommended_for_volume",
+    "recommended_for_amount",
+    "amount_sensitive_preferred_source",
+    "pre_close_caveat",
+    "source_a_policy_notes",
+    "source_b_policy_notes",
     "pass_count",
     "warn_count",
     "fail_count",
@@ -220,6 +233,7 @@ def run_market_source_comparison(
         start_date=start_date or "",
         end_date=end_date or "",
         settings=comparison_settings,
+        policy_config=project_settings,
     )
     status = str(summary_frame.iloc[0]["status"]) if not summary_frame.empty else "PASS"
     artifact_paths = resolve_market_source_comparison_artifact_paths(
@@ -345,6 +359,7 @@ def summarize_market_source_comparison(
     start_date: str,
     end_date: str,
     settings: MarketDataComparisonSettings | dict[str, Any] | None = None,
+    policy_config: Settings | dict[str, Any] | None = None,
 ) -> pd.DataFrame:
     comparison_settings = _coerce_comparison_settings(settings)
     frame = comparison_frame.copy(deep=True)
@@ -362,6 +377,13 @@ def summarize_market_source_comparison(
         max_volume = _max_abs_numeric(frame.get("volume_diff_pct", pd.Series(dtype="float64")))
         max_amount = _max_abs_numeric(frame.get("amount_diff_pct", pd.Series(dtype="float64")))
     unit_summary = _summarize_unit_diagnostics(frame, comparison_settings)
+    policy_hints = build_market_comparison_policy_hints(
+        frame,
+        symbol=symbol,
+        source_a=source_a,
+        source_b=source_b,
+        config=policy_config,
+    )
     status = "FAIL" if fail_count else "WARN" if warn_count else "PASS"
     return pd.DataFrame(
         [
@@ -381,6 +403,7 @@ def summarize_market_source_comparison(
                 "max_volume_diff_pct": max_volume,
                 "max_amount_diff_pct": max_amount,
                 **unit_summary,
+                **policy_hints,
                 "pass_count": pass_count,
                 "warn_count": warn_count,
                 "fail_count": fail_count,
@@ -412,6 +435,20 @@ def write_market_source_comparison_artifacts(result: MarketDataComparisonResult)
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
         "audit_metadata": result.audit_metadata,
+        "policy_hints": result.summary_frame[
+            [
+                "policy_security_type",
+                "source_a_field_reliability",
+                "source_b_field_reliability",
+                "recommended_for_price",
+                "recommended_for_volume",
+                "recommended_for_amount",
+                "amount_sensitive_preferred_source",
+                "pre_close_caveat",
+            ]
+        ].to_dict("records")
+        if not result.summary_frame.empty
+        else [],
         "created_at": MARKET_COMPARISON_TIMESTAMP,
         "live_trading_enabled": False,
         "broker_api_invoked": False,
@@ -445,6 +482,12 @@ def render_market_source_comparison_report(result: MarketDataComparisonResult) -
         f"- median_amount_ratio: {summary.get('median_amount_ratio', '')}",
         f"- suspected_volume_scale_factor: {summary.get('suspected_volume_scale_factor', '')}",
         f"- suspected_amount_scale_factor: {summary.get('suspected_amount_scale_factor', '')}",
+        f"- policy_security_type: {summary.get('policy_security_type', '')}",
+        f"- recommended_for_price: {summary.get('recommended_for_price', '')}",
+        f"- recommended_for_volume: {summary.get('recommended_for_volume', '')}",
+        f"- recommended_for_amount: {summary.get('recommended_for_amount', '')}",
+        f"- amount_sensitive_preferred_source: {summary.get('amount_sensitive_preferred_source', '')}",
+        f"- pre_close_caveat: {summary.get('pre_close_caveat', '')}",
         "",
         "No live trading or broker API was invoked.",
         "",
@@ -458,6 +501,23 @@ def render_market_source_comparison_report(result: MarketDataComparisonResult) -
         "- Stable ratios far from 1.0 can indicate a possible source-specific unit scale.",
         "- Unstable ratios with matched prices are reported as source semantics differences, not corrected automatically.",
         "- Diagnostics do not choose a trusted source or mutate cached data.",
+        "",
+        "## Source Field Reliability Policy Hints",
+        "",
+        f"- security_type: {summary.get('policy_security_type', '')}",
+        f"- source_a_upstream_source: {summary.get('source_a_upstream_source', '')}",
+        f"- source_b_upstream_source: {summary.get('source_b_upstream_source', '')}",
+        f"- source_a_field_reliability: {summary.get('source_a_field_reliability', '')}",
+        f"- source_b_field_reliability: {summary.get('source_b_field_reliability', '')}",
+        f"- recommended_for_price: {summary.get('recommended_for_price', '')}",
+        f"- recommended_for_volume: {summary.get('recommended_for_volume', '')}",
+        f"- recommended_for_amount: {summary.get('recommended_for_amount', '')}",
+        f"- amount_sensitive_preferred_source: {summary.get('amount_sensitive_preferred_source', '')}",
+        f"- pre_close_caveat: {summary.get('pre_close_caveat', '')}",
+        f"- source_a_policy_notes: {summary.get('source_a_policy_notes', '')}",
+        f"- source_b_policy_notes: {summary.get('source_b_policy_notes', '')}",
+        "",
+        "Policy hints are field-level research data preparation guidance. They do not override comparison tolerances, data quality, or snapshot quality gates.",
         "",
         _render_top_difference_rows(result.comparison_frame),
         "",

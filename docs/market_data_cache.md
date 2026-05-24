@@ -96,6 +96,14 @@ When the cache contains the same symbol/date from multiple sources, compare them
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 ```
 
+For source/upstream/security-type field reliability policy, run:
+
+```cmd
+python -m quant_replay_system.cli market-source-policy
+```
+
+The policy complements comparison reports. Health checks show route availability, comparisons show whether overlapping rows agree, and the policy records which fields are reliable, provisional, unavailable, unstable, or caveated.
+
 The comparison performs a full outer join on `symbol + trade_date`, so it reports both overlapping dates and source-only coverage gaps.
 
 Row-level comparison fields include:
@@ -106,6 +114,7 @@ Row-level comparison fields include:
 - source A/source B volume and amount ratios
 - `amount / (close * volume)` ratios for each side
 - unit/semantic diagnostic flags and reasons
+- source field reliability policy hints
 - `row_match_status`: `MATCHED`, `SOURCE_A_ONLY`, or `SOURCE_B_ONLY`
 - `tolerance_status`: `PASS`, `WARN`, or `FAIL`
 
@@ -132,6 +141,7 @@ Interpretation:
 - Source-only rows indicate coverage gaps.
 - The report does not declare either source as truth.
 - The comparison never rewrites cached rows. Any source-specific normalization rule must be added explicitly after review.
+- Policy hints do not override comparison tolerances, data-quality, or snapshot-quality. They only record current field-level source confidence.
 
 ## Status
 
@@ -179,6 +189,18 @@ Files:
 - `market_data_comparison_report.md`
 - `market_data_comparison_rows.csv`
 - `market_data_comparison_summary.csv`
+- `metadata.json`
+
+Field reliability policy reports are written under:
+
+```text
+outputs/reports/market_source_policy/<policy_report_id>/
+```
+
+Files:
+
+- `market_source_policy_report.md`
+- `market_source_policy.csv`
 - `metadata.json`
 
 ## Recommended Workflow

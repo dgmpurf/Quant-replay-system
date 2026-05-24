@@ -43,6 +43,7 @@ from quant_replay_system.market_data_cache import (
     summarize_market_cache_status,
 )
 from quant_replay_system.market_data_comparison import run_market_source_comparison
+from quant_replay_system.market_source_policy import run_market_source_policy_report
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
@@ -416,6 +417,14 @@ def build_parser() -> argparse.ArgumentParser:
     market_cache_compare.add_argument("--output-dir", help="Optional comparison report output directory")
     market_cache_compare.add_argument("--config", help="Optional config YAML path")
     market_cache_compare.set_defaults(handler=_handle_market_cache_compare)
+
+    market_source_policy = subparsers.add_parser(
+        "market-source-policy",
+        help="Write the market source field reliability policy table",
+    )
+    market_source_policy.add_argument("--output-dir", help="Optional policy report output directory")
+    market_source_policy.add_argument("--config", help="Optional config YAML path")
+    market_source_policy.set_defaults(handler=_handle_market_source_policy)
 
     universe_overlay = subparsers.add_parser(
         "universe-overlay",
@@ -1424,12 +1433,42 @@ def _handle_market_cache_compare(args: argparse.Namespace) -> int:
     print(f"suspected_volume_scale_factor: {summary.get('suspected_volume_scale_factor', '')}")
     print(f"suspected_amount_scale_factor: {summary.get('suspected_amount_scale_factor', '')}")
     print(f"diagnostic_classification: {summary.get('diagnostic_classification', 'NO_UNIT_MISMATCH')}")
+    print(f"recommended_for_price: {summary.get('recommended_for_price', '')}")
+    print(f"recommended_for_volume: {summary.get('recommended_for_volume', '')}")
+    print(f"recommended_for_amount: {summary.get('recommended_for_amount', '')}")
+    print(f"amount_sensitive_preferred_source: {summary.get('amount_sensitive_preferred_source', '')}")
+    print(f"pre_close_caveat: {summary.get('pre_close_caveat', '')}")
     print(f"pass_count: {summary.get('pass_count', 0)}")
     print(f"warn_count: {summary.get('warn_count', 0)}")
     print(f"fail_count: {summary.get('fail_count', 0)}")
     print(f"Report path: {result.artifact_paths['market_data_comparison_report']}")
     print(f"Rows CSV path: {result.artifact_paths['market_data_comparison_rows']}")
     print(f"Summary CSV path: {result.artifact_paths['market_data_comparison_summary']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_source_policy(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "market_source_policy": settings.market_source_policy.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = run_market_source_policy_report(
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    print(f"Market source policy status: {result.status}")
+    print(f"policy_report_id: {result.policy_report_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"Report path: {result.artifact_paths['market_source_policy_report']}")
+    print(f"Policy CSV path: {result.artifact_paths['market_source_policy_csv']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

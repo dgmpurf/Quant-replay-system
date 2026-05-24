@@ -25,6 +25,8 @@ Before importing from optional real-data routes, run `data-source-health` to ver
 
 When multiple sources overlap in the cache, run `market-cache-compare` before using combined rows. The comparison highlights OHLC, volume, amount, adjustment, coverage, and likely unit/semantic differences without declaring either source as truth.
 
+Use `market-source-policy` for machine-readable field reliability hints by source, upstream route, security type, and field. Health checks answer whether a route can fetch, comparisons answer whether overlapping rows agree, and the policy answers which fields are currently reliable, provisional, unavailable, unstable, or caveated.
+
 ## Source Categories
 
 ### Permanent Local Safety Path
@@ -93,7 +95,15 @@ python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-
 
 If prices match but volume or amount differ, review the comparison diagnostics before deciding whether a source-specific normalization rule is justified. Stable ratios can suggest a unit scale, while unstable ratios usually point to source semantics, adjustment, or field-definition differences. Do not auto-correct cached data from diagnostics alone.
 
-AKShare/Tencent market history has a known source-specific field semantic: `stock_zh_a_hist_tx` exposes the sixth kline field as `amount`, and AKShare documents that field's unit as `手`. The adapter maps that field to canonical volume in shares and records mapping warnings. For real manual runs, it also tries a guarded raw Tencent kline path before AKShare's truncated DataFrame path; if the raw turnover field is present, it maps turnover amount from `万元` into canonical yuan. If raw turnover is unavailable, the adapter leaves amount unavailable rather than fabricating it. Continue to compare Tencent against BaoStock/Sina when amount or liquidity features depend on turnover value.
+AKShare/Tencent market history has a known source-specific field semantic: `stock_zh_a_hist_tx` exposes the sixth kline field as `amount`, and AKShare documents that field as volume in hands. The adapter maps that field to canonical volume in shares and records mapping warnings. For real manual runs, it also tries a guarded raw Tencent kline path before AKShare's truncated DataFrame path; if the raw turnover field is present, it maps turnover amount from 10k yuan into canonical yuan. If raw turnover is unavailable, the adapter leaves amount unavailable rather than fabricating it. Continue to compare Tencent against BaoStock/Sina when amount or liquidity features depend on turnover value.
+
+Current field reliability policy:
+
+- AKShare/Tencent stock `open`, `high`, `low`, `close`, `volume`, and `amount` are recorded as `RELIABLE` after representative local stock comparisons against BaoStock.
+- AKShare/Tencent stock `pre_close` is `CAVEAT_FIRST_WINDOW_ROW` because `600000` showed a first-row source/window-boundary difference.
+- BaoStock stock `open`, `high`, `low`, `close`, `volume`, and `amount` are recorded as `RELIABLE` for tested stock cases.
+- AKShare/Sina ETF fields are `PROVISIONAL` until compared with another ETF reference source.
+- BaoStock ETF fields are `UNAVAILABLE` in the current local run because `510300` and `159915` returned 0 rows.
 
 ### Tushare Optional API Route
 

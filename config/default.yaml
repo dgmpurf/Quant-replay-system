@@ -336,6 +336,71 @@ market_data_comparison:
   enable_live_trading: false
   enable_broker_api: false
 
+market_source_policy:
+  output_dir: outputs/reports/market_source_policy
+  field_reliability:
+    AKSHARE_OPTIONAL:
+      TENCENT:
+        STOCK:
+          open: RELIABLE
+          high: RELIABLE
+          low: RELIABLE
+          close: RELIABLE
+          volume: RELIABLE
+          amount: RELIABLE
+          pre_close: CAVEAT_FIRST_WINDOW_ROW
+          notes:
+            - Requires raw Tencent turnover extraction path for amount.
+            - AKShare stock_zh_a_hist_tx DataFrame amount field is volume in hands, not turnover amount.
+      SINA:
+        ETF:
+          open: PROVISIONAL
+          high: PROVISIONAL
+          low: PROVISIONAL
+          close: PROVISIONAL
+          volume: PROVISIONAL
+          amount: PROVISIONAL
+          pre_close: UNKNOWN
+          notes:
+            - ETF data is available locally but lacks second-source comparison in current tests.
+      EASTMONEY:
+        STOCK:
+          open: UNSTABLE
+          high: UNSTABLE
+          low: UNSTABLE
+          close: UNSTABLE
+          volume: UNSTABLE
+          amount: UNSTABLE
+          pre_close: UNSTABLE
+          notes:
+            - Eastmoney market endpoints were unstable in local diagnostics.
+    BAOSTOCK_OPTIONAL:
+      BAOSTOCK:
+        STOCK:
+          open: RELIABLE
+          high: RELIABLE
+          low: RELIABLE
+          close: RELIABLE
+          volume: RELIABLE
+          amount: RELIABLE
+          pre_close: CAVEAT_FIRST_WINDOW_ROW
+          notes:
+            - Stock OHLC, volume, and amount aligned with AKShare/Tencent in representative comparisons.
+        ETF:
+          open: UNAVAILABLE
+          high: UNAVAILABLE
+          low: UNAVAILABLE
+          close: UNAVAILABLE
+          volume: UNAVAILABLE
+          amount: UNAVAILABLE
+          pre_close: UNAVAILABLE
+          notes:
+            - BaoStock returned 0 rows for 510300 and 159915 in current local tests.
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_pipeline:
   output_dir: outputs/reports/data_pipeline
   raw_output_dir: data/raw

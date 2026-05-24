@@ -36,6 +36,10 @@ def test_comparison_detects_exact_match(tmp_path: Path) -> None:
     assert bool(row["likely_volume_unit_mismatch"]) is False
     assert bool(row["likely_amount_unit_mismatch"]) is False
     assert result.summary_frame.iloc[0]["diagnostic_classification"] == "NO_UNIT_MISMATCH"
+    assert result.summary_frame.iloc[0]["recommended_for_price"] == "AKSHARE_OPTIONAL,BAOSTOCK_OPTIONAL"
+    assert result.summary_frame.iloc[0]["recommended_for_volume"] == "AKSHARE_OPTIONAL,BAOSTOCK_OPTIONAL"
+    assert result.summary_frame.iloc[0]["recommended_for_amount"] == "AKSHARE_OPTIONAL,BAOSTOCK_OPTIONAL"
+    assert result.summary_frame.iloc[0]["pre_close_caveat"] == "CAVEAT_FIRST_WINDOW_ROW"
     assert result.matched_row_count == 1
     assert result.pass_count == 1
 
@@ -337,6 +341,8 @@ def test_comparison_writes_artifacts_and_metadata(tmp_path: Path) -> None:
     assert len(rows) == 1
     assert rows.iloc[0]["symbol"] == "000001"
     assert "volume_ratio_a_to_b" in rows.columns
+    assert "recommended_for_amount" in metadata["summary"][0]
+    assert metadata["policy_hints"][0]["recommended_for_amount"] == "AKSHARE_OPTIONAL,BAOSTOCK_OPTIONAL"
     assert metadata["no_live_trading"] is True
     assert metadata["no_broker_api"] is True
     assert "secret" not in json.dumps(metadata).lower()
@@ -372,6 +378,7 @@ def test_cli_market_cache_compare_works(tmp_path: Path, capsys) -> None:
     assert "Market cache comparison status: PASS" in output.out
     assert "matched_row_count: 1" in output.out
     assert "diagnostic_classification: NO_UNIT_MISMATCH" in output.out
+    assert "recommended_for_amount: AKSHARE_OPTIONAL,BAOSTOCK_OPTIONAL" in output.out
     assert "No live trading or broker API was invoked." in output.out
 
 
@@ -396,6 +403,7 @@ def test_cli_market_cache_compare_report_includes_diagnostics(tmp_path: Path) ->
     report = result.artifact_paths["market_data_comparison_report"].read_text(encoding="utf-8")
 
     assert "## Unit And Semantic Diagnostics" in report
+    assert "## Source Field Reliability Policy Hints" in report
     assert "diagnostic_classification" in report
     assert "AMOUNT_UNIT_MISMATCH" in report
 
