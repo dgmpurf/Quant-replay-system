@@ -1,0 +1,5 @@
+symbol,source,dataset_type,start_date,end_date,enabled,security_type,preferred_upstream,require_fields,reference_source,strict_provisional,notes
+000001,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,STOCK,TENCENT,"close,volume,amount",BAOSTOCK_OPTIONAL,false,Shenzhen stock demo
+600000,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,STOCK,TENCENT,"close,volume,amount",BAOSTOCK_OPTIONAL,false,Shanghai stock demo
+510300,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,ETF,SINA,"close,volume,amount",,false,ETF provisional demo
+159915,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,ETF,SINA,"close,volume,amount",,false,ETF provisional demo

@@ -426,6 +426,7 @@ market_daily_update:
   run_health_check: true
   run_cache_status: true
   default_dry_run: true
+  fail_fast: false
   config_version: mvp
   write_artifacts: true
   enable_live_trading: false

@@ -479,6 +479,7 @@ class MarketDailyUpdateSettings(BaseModel):
     run_health_check: bool = True
     run_cache_status: bool = True
     default_dry_run: bool = True
+    fail_fast: bool = False
     config_version: str = "mvp"
     write_artifacts: bool = True
     enable_live_trading: Literal[False] = False

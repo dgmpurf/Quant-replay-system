@@ -45,6 +45,7 @@ from quant_replay_system.market_data_cache import (
 from quant_replay_system.market_data_comparison import run_market_source_comparison
 from quant_replay_system.market_cache_preflight import run_market_cache_preflight
 from quant_replay_system.market_daily_update import run_market_daily_update
+from quant_replay_system.market_daily_update import run_market_daily_update_manifest
 from quant_replay_system.market_source_policy import run_market_source_policy_report
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
@@ -431,10 +432,11 @@ def build_parser() -> argparse.ArgumentParser:
         "market-daily-update",
         help="Run a local preflight-gated market cache update skeleton",
     )
-    market_daily_update.add_argument("--source", required=True, help="Data source, e.g. AKSHARE_OPTIONAL")
-    market_daily_update.add_argument("--symbol", required=True, help="Market symbol, e.g. 000001")
-    market_daily_update.add_argument("--start-date", required=True, help="Inclusive start date")
-    market_daily_update.add_argument("--end-date", required=True, help="Inclusive end date")
+    market_daily_update.add_argument("--symbol-manifest", help="Reviewed CSV manifest of symbols to process")
+    market_daily_update.add_argument("--source", help="Data source, e.g. AKSHARE_OPTIONAL")
+    market_daily_update.add_argument("--symbol", help="Market symbol, e.g. 000001")
+    market_daily_update.add_argument("--start-date", help="Inclusive start date")
+    market_daily_update.add_argument("--end-date", help="Inclusive end date")
     market_daily_update.add_argument("--raw-input", help="Existing canonical raw_data.csv path")
     market_daily_update.add_argument("--metadata", help="Optional metadata.json path for raw input")
     market_daily_update.add_argument("--allow-real-data", action="store_true", help="Manual opt-in for real source fetch")
@@ -442,6 +444,9 @@ def build_parser() -> argparse.ArgumentParser:
     market_daily_update.add_argument("--accept-cache-write", action="store_true", help="Explicitly allow accepted rows to be ingested into cache")
     market_daily_update.add_argument("--reference-source", help="Optional cached reference source for preflight comparison")
     market_daily_update.add_argument("--require-fields", help="Comma-separated required fields, e.g. close,volume,amount")
+    market_daily_update.add_argument("--preferred-upstream", help="Optional preferred upstream, e.g. TENCENT or SINA")
+    market_daily_update.add_argument("--strict-provisional", action="store_true", help="Reject provisional fields")
+    market_daily_update.add_argument("--fail-fast", action="store_true", help="Stop manifest processing after the first failed row")
     market_daily_update.add_argument("--cache-path", help="Optional market cache CSV path")
     market_daily_update.add_argument("--raw-output-dir", help="Optional raw output root for data-source-fetch")
     market_daily_update.add_argument("--revision-id", help="Optional revision id for fetched raw data")
@@ -1500,6 +1505,37 @@ def _handle_market_daily_update(args: argparse.Namespace) -> int:
                 )
             }
         )
+    if args.symbol_manifest:
+        result = run_market_daily_update_manifest(
+            args.symbol_manifest,
+            allow_real_data=bool(args.allow_real_data),
+            dry_run=True if args.dry_run else None,
+            accept_cache_write=bool(args.accept_cache_write),
+            fail_fast=True if args.fail_fast else None,
+            cache_path=args.cache_path,
+            output_dir=args.output_dir,
+            raw_output_dir=args.raw_output_dir,
+            config=settings,
+        )
+        counts = result.audit_metadata.get("symbol_result_counts", {})
+        print(f"Market daily update status: {result.status}")
+        print(f"update_id: {result.update_id}")
+        print(f"symbol_manifest: {result.manifest_path}")
+        print(f"symbol_row_count: {len(result.symbol_results_frame)}")
+        print(f"pass_count: {counts.get('PASS', 0)}")
+        print(f"warn_count: {counts.get('WARN', 0)}")
+        print(f"fail_count: {counts.get('FAIL', 0)}")
+        print(f"skipped_disabled_count: {counts.get('SKIPPED_DISABLED', 0)}")
+        print(f"blocked_needs_allow_real_data_count: {counts.get('BLOCKED_NEEDS_ALLOW_REAL_DATA', 0)}")
+        print(f"blocked_preflight_reject_count: {counts.get('BLOCKED_PREFLIGHT_REJECT', 0)}")
+        print(f"cache_write_occurred: {result.cache_write_occurred}")
+        print(f"Report path: {result.artifact_paths['market_daily_update_report']}")
+        print(f"Steps CSV path: {result.artifact_paths['market_daily_update_steps']}")
+        print(f"Symbol results CSV path: {result.artifact_paths['market_daily_update_symbol_results']}")
+        for warning in result.warnings:
+            print(f"WARNING: {warning}")
+        print("No live trading or broker API was invoked.")
+        return 0 if result.status != "FAIL" else 1
     result = run_market_daily_update(
         source=args.source,
         symbol=args.symbol,
@@ -1515,6 +1551,8 @@ def _handle_market_daily_update(args: argparse.Namespace) -> int:
         cache_path=args.cache_path,
         raw_output_dir=args.raw_output_dir,
         revision_id=args.revision_id,
+        preferred_upstream=args.preferred_upstream,
+        strict_provisional=True if args.strict_provisional else None,
         output_dir=args.output_dir,
         config=settings,
     )
@@ -1529,6 +1567,7 @@ def _handle_market_daily_update(args: argparse.Namespace) -> int:
     print(f"cache_write_occurred: {result.cache_write_occurred}")
     print(f"Report path: {result.artifact_paths['market_daily_update_report']}")
     print(f"Steps CSV path: {result.artifact_paths['market_daily_update_steps']}")
+    print(f"Symbol results CSV path: {result.artifact_paths['market_daily_update_symbol_results']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

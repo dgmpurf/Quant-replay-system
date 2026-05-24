@@ -113,6 +113,8 @@ data-source-health
 
 For local incremental updates, `market-daily-update` wraps the health/fetch-or-raw/preflight/status steps and only calls `market-cache-ingest` when `--accept-cache-write` is supplied.
 
+`market-daily-update --symbol-manifest <csv>` applies the same preflight gate to each enabled reviewed symbol row. A row with `BLOCKED_PREFLIGHT_REJECT` is not ingested, even if the batch was run with `--accept-cache-write`.
+
 ## Known Limitations
 
 - v0.1 preflight is an acceptance aid, not data certification.

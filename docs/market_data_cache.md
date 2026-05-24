@@ -58,6 +58,14 @@ python -m quant_replay_system.cli market-daily-update --symbol 000001 --start-da
 
 The update workflow does not write to the cache unless `--accept-cache-write` is explicitly supplied and preflight accepts the input.
 
+For reviewed batches, use a symbol manifest:
+
+```cmd
+python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw\manual_manifests\daily_market_symbols_example.csv --dry-run
+```
+
+The manifest workflow records one row per symbol in `market_daily_update_symbol_results.csv`. Disabled rows are skipped, real-fetch rows are blocked without `--allow-real-data`, and cache writes still require `--accept-cache-write`.
+
 BaoStock market output uses the same canonical raw market schema and can be cached the same way:
 
 ```cmd

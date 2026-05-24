@@ -31,6 +31,8 @@ Use `market-cache-preflight` before cache ingestion when a raw market file needs
 
 Use `market-daily-update` for dry-run-first incremental local cache maintenance. It orchestrates health, fetch-or-existing-raw input, preflight, optional cache ingest, and cache status. It is not a scheduler or trading workflow, and cache writes require explicit `--accept-cache-write`.
 
+For reviewed batches, use a local CSV symbol manifest with `market-daily-update --symbol-manifest`. Disabled rows are skipped, rows that need real fetches are blocked unless `--allow-real-data` is supplied, and cache writes remain explicit. This is controlled local data maintenance, not scheduling or automation.
+
 ## Source Categories
 
 ### Permanent Local Safety Path
@@ -201,6 +203,7 @@ For market data, successful canonical daily bars may then be cached locally:
 ```cmd
 python -m quant_replay_system.cli market-cache-preflight --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json --require-fields close,volume,amount --reference-source BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-daily-update --symbol 000001 --start-date 2024-05-20 --end-date 2024-05-20 --source AKSHARE_OPTIONAL --raw-input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json --dry-run
+python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw\manual_manifests\daily_market_symbols_example.csv --dry-run
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data\raw\manual_cache\510300_market.csv

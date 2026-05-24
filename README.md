@@ -135,6 +135,8 @@ For source-policy-aware acceptance checks before ingesting market rows into the 
 
 For a dry-run-first local market update wrapper that runs preflight before optional cache ingest, use `market-daily-update`; see [docs/market_daily_update.md](docs/market_daily_update.md).
 
+For reviewed batch updates, `market-daily-update --symbol-manifest` reads a local CSV symbol list such as [docs/examples/daily_market_symbols_example.csv](docs/examples/daily_market_symbols_example.csv). It is still dry-run-first and not a scheduler.
+
 For comparing overlapping cached market bars across sources such as AKShare and BaoStock, including likely volume/amount unit or source-semantic diagnostics, use `market-cache-compare`; see [docs/market_data_cache.md#compare-sources](docs/market_data_cache.md#compare-sources).
 
 For field-level reliability hints by source, upstream, security type, and market field, use `market-source-policy`; see [docs/market_source_policy.md](docs/market_source_policy.md).
@@ -184,6 +186,7 @@ python -m quant_replay_system.cli data-source-health --source BAOSTOCK_OPTIONAL 
 python -m quant_replay_system.cli data-source-fetch --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
 python -m quant_replay_system.cli market-cache-preflight --input data/raw/AKSHARE_OPTIONAL/market/<run_id>/raw_data.csv --metadata data/raw/AKSHARE_OPTIONAL/market/<run_id>/metadata.json --require-fields close,volume,amount
 python -m quant_replay_system.cli market-daily-update --symbol 000001 --start-date 2024-05-20 --end-date 2024-05-20 --source AKSHARE_OPTIONAL --raw-input data/raw/AKSHARE_OPTIONAL/market/<run_id>/raw_data.csv --metadata data/raw/AKSHARE_OPTIONAL/market/<run_id>/metadata.json --dry-run
+python -m quant_replay_system.cli market-daily-update --symbol-manifest data/raw/manual_manifests/daily_market_symbols_example.csv --dry-run
 python -m quant_replay_system.cli market-cache-ingest --input data/raw/AKSHARE_OPTIONAL/market/<run_id>/raw_data.csv --metadata data/raw/AKSHARE_OPTIONAL/market/<run_id>/metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data/raw/manual_cache/510300_market.csv

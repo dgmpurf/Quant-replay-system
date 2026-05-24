@@ -54,11 +54,77 @@ python -m quant_replay_system.cli market-daily-update --symbol 000001 --start-da
 
 Without `--accept-cache-write`, accepted rows are not ingested.
 
+Reviewed symbol manifest dry-run:
+
+```cmd
+python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw\manual_manifests\daily_market_symbols_example.csv --dry-run
+```
+
+Manual real fetch for manifest rows, still without cache write:
+
+```cmd
+python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw\manual_manifests\daily_market_symbols_example.csv --allow-real-data --dry-run
+```
+
+Manifest cache writes are also explicit:
+
+```cmd
+python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw\manual_manifests\daily_market_symbols_example.csv --allow-real-data --accept-cache-write
+```
+
+`--fail-fast` stops after the first failed manifest row. Without it, enabled rows continue independently and row-level failures are recorded in the symbol results CSV.
+
+## Symbol Manifest
+
+The v0.1 manifest format is CSV.
+
+Required columns:
+
+```text
+symbol,source,dataset_type,start_date,end_date,enabled
+```
+
+Optional reviewed columns:
+
+```text
+security_type,preferred_upstream,require_fields,reference_source,strict_provisional,notes
+```
+
+Optional local dry-run columns:
+
+```text
+raw_input,metadata_path,raw_output_dir,revision_id
+```
+
+When `raw_input` is present, the row uses that existing canonical raw market CSV and does not need a real fetch. When `raw_input` is absent for a real source such as `AKSHARE_OPTIONAL` or `BAOSTOCK_OPTIONAL`, `--allow-real-data` is required or the row is recorded as `BLOCKED_NEEDS_ALLOW_REAL_DATA`.
+
+Example:
+
+```csv
+symbol,source,dataset_type,start_date,end_date,enabled,security_type,preferred_upstream,require_fields,reference_source,strict_provisional,notes
+000001,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,STOCK,TENCENT,"close,volume,amount",BAOSTOCK_OPTIONAL,false,Shenzhen stock demo
+600000,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,STOCK,TENCENT,"close,volume,amount",BAOSTOCK_OPTIONAL,false,Shanghai stock demo
+510300,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,ETF,SINA,"close,volume,amount",,false,ETF provisional demo
+159915,AKSHARE_OPTIONAL,market,2024-05-20,2024-05-20,true,ETF,SINA,"close,volume,amount",,false,ETF provisional demo
+```
+
+See `docs/examples/daily_market_symbols_example.csv`.
+
+Row-level statuses:
+
+- `PASS`: row completed without warnings.
+- `WARN`: row completed with warnings, such as provisional source policy.
+- `FAIL`: row failed for an unexpected reason.
+- `SKIPPED_DISABLED`: manifest row has `enabled=false`.
+- `BLOCKED_NEEDS_ALLOW_REAL_DATA`: row needs a real fetch and `--allow-real-data` was not supplied.
+- `BLOCKED_PREFLIGHT_REJECT`: preflight rejected the candidate rows and cache ingest was blocked.
+
 ## Safety Gates
 
 - Real network fetches require `--allow-real-data`.
 - Cache writes require `--accept-cache-write`.
 - If preflight returns `REJECT`, cache ingest is skipped even when `--accept-cache-write` is supplied.
+- Manifest rows continue after failures by default; use `--fail-fast` to stop on the first failed row.
 - Automated tests use fake/local CSV data only.
 - No live trading, broker API, or order automation is invoked.
 
@@ -74,9 +140,10 @@ Files:
 
 - `market_daily_update_report.md`
 - `market_daily_update_steps.csv`
+- `market_daily_update_symbol_results.csv`
 - `metadata.json`
 
-The metadata records the input raw path, preflight status, whether a cache write occurred, and no-live-trading/no-broker audit fields.
+The metadata records input paths, row-level statuses, preflight status, whether any cache write occurred, and no-live-trading/no-broker audit fields.
 
 ## Recommended Use
 
