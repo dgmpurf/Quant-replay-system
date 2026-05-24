@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -116,6 +117,24 @@ def test_historical_backfill_status_summarizes_latest_backfill(tmp_path: Path) -
     assert result.latest_backfill_id == "bf_latest"
     assert result.workflow_stage == "BACKFILL_WARNINGS_NEED_REVIEW"
     assert "Review WARN tasks" in result.next_manual_action
+
+
+def test_historical_backfill_status_uses_artifact_update_time_when_created_at_ties(tmp_path: Path) -> None:
+    root = tmp_path / "historical_backfill"
+    old = _write_fake_backfill_artifact(root, "zzz_old", created_at="1970-01-01T00:00:00+00:00")
+    latest = _write_fake_backfill_artifact(
+        root,
+        "aaa_latest",
+        cache_write_occurred=True,
+        created_at="1970-01-01T00:00:00+00:00",
+    )
+    os.utime(old / "metadata.json", (1000, 1000))
+    os.utime(latest / "metadata.json", (2000, 2000))
+
+    result = run_historical_backfill_status(root=root, output_dir=tmp_path / "status", config=_settings(tmp_path, root))
+
+    assert result.latest_backfill_id == "aaa_latest"
+    assert result.workflow_stage == "BACKFILL_COMPLETED"
 
 
 def test_historical_backfill_status_handles_no_artifacts(tmp_path: Path) -> None:

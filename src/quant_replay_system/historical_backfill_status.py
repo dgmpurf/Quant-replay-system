@@ -328,8 +328,13 @@ def _latest_backfill(index_frame: pd.DataFrame) -> dict[str, Any]:
         return {}
     frame = index_frame.copy(deep=True)
     frame["_created_sort"] = pd.to_datetime(frame.get("created_at", ""), errors="coerce")
-    frame = frame.sort_values(["_created_sort", "backfill_id"], ascending=[False, False], na_position="last")
-    return frame.drop(columns=["_created_sort"]).iloc[0].to_dict()
+    frame["_updated_sort"] = pd.to_datetime(frame.get("artifact_updated_at", ""), errors="coerce")
+    frame = frame.sort_values(
+        ["_created_sort", "_updated_sort", "backfill_id"],
+        ascending=[False, False, False],
+        na_position="last",
+    )
+    return frame.drop(columns=["_created_sort", "_updated_sort"]).iloc[0].to_dict()
 
 
 def _latest_notes(latest: dict[str, Any]) -> str:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +30,7 @@ INDEX_COLUMNS = [
     "backfill_id",
     "artifact_dir",
     "created_at",
+    "artifact_updated_at",
     "status",
     "manifest_path",
     "task_count",
@@ -270,6 +272,7 @@ def _row_from_metadata(artifact_dir: Path, metadata_path: Path, metadata: dict[s
         "backfill_id": str(metadata.get("backfill_id") or artifact_dir.name),
         "artifact_dir": str(artifact_dir),
         "created_at": str(metadata.get("created_at") or ""),
+        "artifact_updated_at": _artifact_updated_at(metadata_path, artifact_dir),
         "status": str(metadata.get("status") or ""),
         "manifest_path": str(metadata.get("manifest_path") or ""),
         "task_count": int(_number(metadata.get("task_count", 0))),
@@ -346,14 +349,29 @@ def _finalize_index_frame(frame: pd.DataFrame) -> pd.DataFrame:
             output[column] = ""
     output = output[INDEX_COLUMNS]
     output["_created_sort"] = pd.to_datetime(output["created_at"], errors="coerce")
-    output = output.sort_values(["_created_sort", "backfill_id"], ascending=[False, False], na_position="last")
-    output = output.drop(columns=["_created_sort"])
+    output["_updated_sort"] = pd.to_datetime(output["artifact_updated_at"], errors="coerce")
+    output = output.sort_values(
+        ["_created_sort", "_updated_sort", "backfill_id"],
+        ascending=[False, False, False],
+        na_position="last",
+    )
+    output = output.drop(columns=["_created_sort", "_updated_sort"])
     return output.reset_index(drop=True)
 
 
 def _path_or_default(value: Any, default: Path) -> Path:
     text = str(value or "").strip()
     return Path(text) if text else default
+
+
+def _artifact_updated_at(metadata_path: Path, artifact_dir: Path) -> str:
+    for path in [metadata_path, artifact_dir]:
+        try:
+            timestamp = path.stat().st_mtime
+        except OSError:
+            continue
+        return datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat()
+    return ""
 
 
 def _report_has_no_live_statement(path: Path) -> bool:
