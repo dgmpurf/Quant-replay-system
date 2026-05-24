@@ -139,6 +139,8 @@ For a local-only historical backfill skeleton over a reviewed symbol/date manife
 
 To discover, check, and summarize historical backfill artifacts before larger runs or cache-write approval, use `historical-backfill-index`, `historical-backfill-health`, and `historical-backfill-status`; see [docs/historical_backfill.md#index-health-and-status](docs/historical_backfill.md#index-health-and-status).
 
+`research-status` includes the latest `historical-backfill-status` as a history/cache-building component, while still letting later data-prep, market-update-handoff, current-candidate, or paper workflow artifacts take priority; see [docs/local_research_dashboard.md#historical-backfill-status](docs/local_research_dashboard.md#historical-backfill-status).
+
 For reviewed batch updates, `market-daily-update --symbol-manifest` reads a local CSV symbol list such as [docs/examples/daily_market_symbols_example.csv](docs/examples/daily_market_symbols_example.csv). It is still dry-run-first and not a scheduler.
 
 For deterministic offline batch smoke tests, use a manifest with `raw_input` and `metadata_path` columns such as [docs/examples/daily_market_symbols_offline_example.csv](docs/examples/daily_market_symbols_offline_example.csv). Offline manifests do not need `--allow-real-data`.
@@ -184,6 +186,8 @@ For the end-to-end local research workflow smoke-test path, see [docs/local_rese
 For the v0.39.0 local research workflow checkpoint summary, see [docs/release_checkpoint_v0.39.0.md](docs/release_checkpoint_v0.39.0.md).
 
 For the v0.64.0 reviewed offline update to `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.64.0.md](docs/release_checkpoint_v0.64.0.md).
+
+For the v0.67.0 historical backfill status integration checkpoint summary, see [docs/release_checkpoint_v0.67.0.md](docs/release_checkpoint_v0.67.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -322,6 +326,10 @@ See [docs/release_checkpoint_v0.39.0.md](docs/release_checkpoint_v0.39.0.md) for
 `v0.64.0` marks the reviewed offline market update to `research-status` integration checkpoint, covering market-cache preflight, offline reviewed symbol manifests, market-update-handoff, handoff index/health/status, current-candidates demo handoff, WATCH_ONLY paper workflow smoke testing, and exported dashboard field regression coverage.
 
 See [docs/release_checkpoint_v0.64.0.md](docs/release_checkpoint_v0.64.0.md) for the milestone summary, safety boundaries, validation baseline, known limitations, and recommended next engineering tasks.
+
+`v0.67.0` marks the historical backfill status integration checkpoint, covering the historical-backfill skeleton, index, health, status, and unified `research-status` dashboard integration while preserving later paper workflow priority.
+
+See [docs/release_checkpoint_v0.67.0.md](docs/release_checkpoint_v0.67.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

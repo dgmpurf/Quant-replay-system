@@ -10,6 +10,7 @@ The project now has separate dashboards and health checks for data preparation, 
 
 - Has data preparation produced usable artifacts?
 - Has snapshot quality run?
+- Has a historical backfill dry-run or cache-write run produced reviewable artifact evidence?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
@@ -24,6 +25,7 @@ The project now has separate dashboards and health checks for data preparation, 
 The dashboard scans metadata under:
 
 ```text
+outputs/reports/historical_backfill/status/
 outputs/reports/data_preparation/workflow_status/
 outputs/reports/snapshot_quality/
 outputs/reports/market_update_handoff/status/
@@ -39,6 +41,16 @@ outputs/reports/paper_trading/workflow_status/
 ```
 
 It reads existing local `metadata.json` or `handoff_metadata.json` files only. It does not rerun any workflow step.
+
+## Historical Backfill Status
+
+`research-status` includes `historical-backfill-status` as a history/cache-building component when those artifacts exist.
+
+The unified summary records the latest backfill id, backfill status/stage, next manual action, task counts, pass/warn/fail/skipped counts, cache-write flag, and report path. When the backfill stage is `BACKFILL_WARNINGS_NEED_REVIEW`, the dashboard shows the warnings as expected reviewable dry-run warnings rather than live-trading or broker failures.
+
+Historical backfill is earlier than data-pipeline, market-update-handoff, current-candidates, and paper workflow. If later workflow artifacts exist, those later stages take priority for the final `workflow_stage`; historical backfill fields remain visible as context. If historical backfill has active failures and no later valid workflow supersedes it, `research-status` surfaces the failure as actionable.
+
+Cache writes remain explicit and manual. A `WARN` dry-run does not approve cache mutation; review WARN tasks and rerun with `--accept-cache-write` only after manual approval.
 
 ## Market Update Handoff Status
 
@@ -58,22 +70,29 @@ Stale artifacts are still useful audit evidence. They remain available in paper 
 
 If a paper workflow has already advanced beyond the market-update-handoff stage, the paper workflow state takes precedence. Older handoff warnings or failures remain visible as stale audit context and do not move the active stage back to "run current-to-paper."
 
+The same priority principle applies to historical backfill: historical WARN/FAIL context remains visible, but it does not regress a more advanced valid paper workflow stage.
+
 ## Warning Actionability
 
 `research-status` preserves raw warning counts and adds actionability counts inherited from component dashboards where available:
 
 - `EXPECTED_DEMO_WARNING`: expected in explicit local dry-run workflows, such as a `WATCH_ONLY` paper daily run with no fills.
+- `EXPECTED_REVIEWABLE_WARNING`: expected but reviewable local dry-run warnings, such as historical backfill WARN tasks from provisional ETF/Sina policy or a known first-window `pre_close` caveat.
 - `STALE_ARTIFACT_WARNING`: warning from an older dry-run artifact that is no longer part of the active workflow chain.
 - `ACTIONABLE_WARNING`: warning that should be reviewed before continuing.
 - `BLOCKING_ERROR`: missing, unreadable, or failed active artifacts.
 
-If the only warnings are expected demo or stale artifact warnings, the dashboard does not treat them as active blockers. It keeps the raw `WARN` status for audit visibility and recommends the demo-specific next action instead of the generic `Review warnings/errors` prompt.
+If the only warnings are expected reviewable, expected demo, or stale artifact warnings, the dashboard does not treat them as active blockers. It keeps the raw `WARN` status for audit visibility and recommends the specific next action instead of the generic `Review warnings/errors` prompt.
 
 Prior current-candidate health warnings from old dry runs can be classified as stale when the health issue `run_id` does not match the active current-candidate run.
 
 ## Stage Meanings
 
 - `NO_DATA`: no useful local workflow artifacts were found.
+- `BACKFILL_WARNINGS_NEED_REVIEW`: historical backfill dry-run completed with reviewable warnings; review before any cache write.
+- `BACKFILL_CACHE_WRITE_READY`: historical backfill passed and could be considered for explicit cache write after manual review.
+- `BACKFILL_COMPLETED`: historical backfill cache write occurred; run cache status and downstream data quality before research use.
+- `BACKFILL_FAILED`: historical backfill has active failure and needs repair or rerun.
 - `DATA_PREPARATION_READY`: data preparation status exists; current candidates are next.
 - `SNAPSHOT_READY`: snapshot quality exists; current candidates are next.
 - `CURRENT_CANDIDATES_READY`: current-candidate artifacts exist; index/health checks are next.

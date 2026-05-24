@@ -325,6 +325,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Build a unified local research workflow dashboard",
     )
     research_status.add_argument("--root", help="Reports root directory")
+    research_status.add_argument("--historical-backfill-root", help="Historical-backfill artifact root directory")
     research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
     research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
     research_status.add_argument("--market-update-handoff-root", help="Market-update-handoff artifact root directory")
@@ -1370,6 +1371,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     updates = {"strict": bool(args.strict)}
     if args.root:
         updates["root_dir"] = Path(args.root)
+    if args.historical_backfill_root:
+        updates["historical_backfill_root"] = Path(args.historical_backfill_root)
     if args.data_preparation_root:
         updates["data_preparation_root"] = Path(args.data_preparation_root)
     if args.current_candidates_root:
@@ -1387,6 +1390,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     result = run_local_research_dashboard(
         root=args.root,
+        historical_backfill_root=args.historical_backfill_root,
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
         market_update_handoff_root=args.market_update_handoff_root,
@@ -1399,6 +1403,10 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"Research status: {result.status}")
     print(f"workflow_stage: {result.workflow_stage}")
     print(f"latest_decision_date: {result.latest_decision_date}")
+    print(f"latest_historical_backfill_id: {result.latest_historical_backfill_id}")
+    print(f"historical_backfill_status: {result.historical_backfill_status}")
+    print(f"historical_backfill_stage: {result.historical_backfill_stage}")
+    print(f"historical_backfill_cache_write_occurred: {result.historical_backfill_cache_write_occurred}")
     print(f"latest_market_update_handoff_id: {result.latest_market_update_handoff_id}")
     print(f"market_update_handoff_status: {result.market_update_handoff_status}")
     print(f"market_update_handoff_stage: {result.market_update_handoff_stage}")

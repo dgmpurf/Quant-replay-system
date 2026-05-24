@@ -11,6 +11,7 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.config import LocalResearchDashboardSettings, Settings, load_settings
+from quant_replay_system.historical_backfill_status import run_historical_backfill_status
 from quant_replay_system.market_update_handoff_status import run_market_update_handoff_status
 
 
@@ -35,6 +36,7 @@ DASHBOARD_COLUMNS = [
     "warning_count",
     "error_count",
     "total_warning_count",
+    "expected_reviewable_warning_count",
     "expected_demo_warning_count",
     "stale_warning_count",
     "actionable_warning_count",
@@ -53,6 +55,17 @@ SUMMARY_COLUMNS = [
     "snapshot_quality_status",
     "current_candidate_status",
     "current_candidate_health_status",
+    "historical_backfill_status",
+    "latest_historical_backfill_id",
+    "historical_backfill_stage",
+    "historical_backfill_next_action",
+    "historical_backfill_task_count",
+    "historical_backfill_pass_count",
+    "historical_backfill_warn_count",
+    "historical_backfill_fail_count",
+    "historical_backfill_skipped_count",
+    "historical_backfill_cache_write_occurred",
+    "historical_backfill_report_path",
     "market_update_handoff_status",
     "latest_market_update_handoff_id",
     "market_update_handoff_stage",
@@ -67,6 +80,7 @@ SUMMARY_COLUMNS = [
     "reconciliation_status",
     "paper_workflow_status",
     "total_warning_count",
+    "expected_reviewable_warning_count",
     "expected_demo_warning_count",
     "stale_warning_count",
     "actionable_warning_count",
@@ -75,6 +89,7 @@ SUMMARY_COLUMNS = [
 ]
 
 EXPECTED_DEMO_WARNING = "EXPECTED_DEMO_WARNING"
+EXPECTED_REVIEWABLE_WARNING = "EXPECTED_REVIEWABLE_WARNING"
 STALE_ARTIFACT_WARNING = "STALE_ARTIFACT_WARNING"
 ACTIONABLE_WARNING = "ACTIONABLE_WARNING"
 BLOCKING_ERROR = "BLOCKING_ERROR"
@@ -89,6 +104,7 @@ STALE_ONLY_NEXT_ACTION = (
 )
 
 COMPONENTS = [
+    "HISTORICAL_BACKFILL_STATUS",
     "DATA_PREPARATION_WORKFLOW",
     "SNAPSHOT_QUALITY",
     "CURRENT_CANDIDATES",
@@ -104,6 +120,7 @@ COMPONENTS = [
 ]
 
 WORKFLOW_AREAS = {
+    "HISTORICAL_BACKFILL_STATUS": "HISTORICAL_BACKFILL",
     "DATA_PREPARATION_WORKFLOW": "DATA_PREPARATION",
     "SNAPSHOT_QUALITY": "DATA_PREPARATION",
     "CURRENT_CANDIDATES": "CURRENT_CANDIDATES",
@@ -147,6 +164,17 @@ class LocalResearchDashboardResult:
     snapshot_quality_status: str
     current_candidate_status: str
     current_candidate_health_status: str
+    historical_backfill_status: str
+    latest_historical_backfill_id: str
+    historical_backfill_stage: str
+    historical_backfill_next_action: str
+    historical_backfill_task_count: int
+    historical_backfill_pass_count: int
+    historical_backfill_warn_count: int
+    historical_backfill_fail_count: int
+    historical_backfill_skipped_count: int
+    historical_backfill_cache_write_occurred: bool
+    historical_backfill_report_path: str
     market_update_handoff_status: str
     latest_market_update_handoff_id: str
     market_update_handoff_stage: str
@@ -173,6 +201,7 @@ class LocalResearchDashboardResult:
 def run_local_research_dashboard(
     *,
     root: str | Path | None = None,
+    historical_backfill_root: str | Path | None = None,
     data_preparation_root: str | Path | None = None,
     current_candidates_root: str | Path | None = None,
     market_update_handoff_root: str | Path | None = None,
@@ -189,6 +218,11 @@ def run_local_research_dashboard(
         raise ValueError("Local research dashboard cannot enable live trading or broker API access")
 
     effective_root = Path(root) if root is not None else dashboard_settings.root_dir
+    effective_historical_backfill_root = (
+        Path(historical_backfill_root)
+        if historical_backfill_root is not None
+        else dashboard_settings.historical_backfill_root
+    )
     effective_data_prep_root = (
         Path(data_preparation_root)
         if data_preparation_root is not None
@@ -207,6 +241,8 @@ def run_local_research_dashboard(
     effective_paper_root = Path(paper_trading_root) if paper_trading_root is not None else dashboard_settings.paper_trading_root
     effective_output_dir = Path(output_dir) if output_dir is not None else dashboard_settings.output_dir
     if root is not None:
+        if historical_backfill_root is None:
+            effective_historical_backfill_root = effective_root / "historical_backfill"
         if data_preparation_root is None:
             effective_data_prep_root = effective_root / "data_preparation"
         if current_candidates_root is None:
@@ -218,6 +254,7 @@ def run_local_research_dashboard(
 
     scan = scan_local_research_workflow_artifacts(
         root=effective_root,
+        historical_backfill_root=effective_historical_backfill_root,
         data_preparation_root=effective_data_prep_root,
         current_candidates_root=effective_current_root,
         market_update_handoff_root=effective_market_update_handoff_root,
@@ -248,6 +285,7 @@ def run_local_research_dashboard(
     audit_metadata = {
         "dashboard_id": dashboard_id,
         "root_dir": effective_root,
+        "historical_backfill_root": effective_historical_backfill_root,
         "data_preparation_root": effective_data_prep_root,
         "current_candidates_root": effective_current_root,
         "market_update_handoff_root": effective_market_update_handoff_root,
@@ -271,6 +309,17 @@ def run_local_research_dashboard(
         snapshot_quality_status=str(summary.get("snapshot_quality_status", "MISSING")),
         current_candidate_status=str(summary.get("current_candidate_status", "MISSING")),
         current_candidate_health_status=str(summary.get("current_candidate_health_status", "MISSING")),
+        historical_backfill_status=str(summary.get("historical_backfill_status", "MISSING")),
+        latest_historical_backfill_id=str(summary.get("latest_historical_backfill_id", "")),
+        historical_backfill_stage=str(summary.get("historical_backfill_stage", "")),
+        historical_backfill_next_action=str(summary.get("historical_backfill_next_action", "")),
+        historical_backfill_task_count=_int_or_zero(summary.get("historical_backfill_task_count")),
+        historical_backfill_pass_count=_int_or_zero(summary.get("historical_backfill_pass_count")),
+        historical_backfill_warn_count=_int_or_zero(summary.get("historical_backfill_warn_count")),
+        historical_backfill_fail_count=_int_or_zero(summary.get("historical_backfill_fail_count")),
+        historical_backfill_skipped_count=_int_or_zero(summary.get("historical_backfill_skipped_count")),
+        historical_backfill_cache_write_occurred=bool(summary.get("historical_backfill_cache_write_occurred", False)),
+        historical_backfill_report_path=str(summary.get("historical_backfill_report_path", "")),
         market_update_handoff_status=str(summary.get("market_update_handoff_status", "MISSING")),
         latest_market_update_handoff_id=str(summary.get("latest_market_update_handoff_id", "")),
         market_update_handoff_stage=str(summary.get("market_update_handoff_stage", "")),
@@ -306,6 +355,7 @@ def run_local_research_dashboard(
 def scan_local_research_workflow_artifacts(
     *,
     root: str | Path,
+    historical_backfill_root: str | Path,
     data_preparation_root: str | Path,
     current_candidates_root: str | Path,
     market_update_handoff_root: str | Path,
@@ -316,6 +366,7 @@ def scan_local_research_workflow_artifacts(
     """Scan local metadata files for the unified research workflow."""
 
     root_path = Path(root)
+    historical_root = Path(historical_backfill_root)
     data_prep_root = Path(data_preparation_root)
     current_root = Path(current_candidates_root)
     market_update_root = Path(market_update_handoff_root)
@@ -324,6 +375,7 @@ def scan_local_research_workflow_artifacts(
     requested_universe = _string_or_empty(universe_name)
     records: list[dict[str, Any]] = []
 
+    records.extend(_scan_historical_backfill_status(historical_root))
     records.extend(_scan_data_preparation_workflow_status(data_prep_root, requested_date, requested_universe))
     records.extend(_scan_snapshot_quality(root_path / "snapshot_quality", requested_date))
     records.extend(_scan_current_candidates(current_root, requested_date, requested_universe))
@@ -540,6 +592,14 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "RECONCILIATION",
         "PAPER_WORKFLOW_STATUS",
     }
+    post_backfill_components = {
+        "DATA_PREPARATION_WORKFLOW",
+        "SNAPSHOT_QUALITY",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
     return {
         "active_current_run_id": _string_or_empty(current.get("latest_artifact_id")),
         "active_daily_id": _string_or_empty(daily.get("latest_artifact_id")),
@@ -547,6 +607,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "paper_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in paper_started_components
+        ),
+        "post_backfill_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_backfill_components
         ),
     }
 
@@ -570,11 +634,15 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
     if component == "MARKET_UPDATE_HANDOFF_STATUS":
         return _market_update_handoff_warning_actionability(row, context)
 
+    if component == "HISTORICAL_BACKFILL_STATUS":
+        return _historical_backfill_warning_actionability(row, context)
+
     if component == "CURRENT_CANDIDATE_HEALTH":
         issue_counts = _current_candidate_health_issue_actionability(row, context)
         if issue_counts is not None:
             return issue_counts | {
-                "total_warning_count": issue_counts["expected_demo_warning_count"]
+                "total_warning_count": issue_counts["expected_reviewable_warning_count"]
+                + issue_counts["expected_demo_warning_count"]
                 + issue_counts["stale_warning_count"]
                 + issue_counts["actionable_warning_count"],
             }
@@ -585,6 +653,7 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
         actionable_warning_count = max(actionable_warning_count, 1)
     return {
         "total_warning_count": warning_count + stale_warning_count,
+        "expected_reviewable_warning_count": 0,
         "expected_demo_warning_count": expected_demo_warning_count,
         "stale_warning_count": stale_warning_count,
         "actionable_warning_count": actionable_warning_count,
@@ -603,6 +672,7 @@ def _market_update_handoff_warning_actionability(row: dict[str, Any], context: d
         stale_count = max(warning_count + error_count, 1)
         return {
             "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
             "expected_demo_warning_count": 0,
             "stale_warning_count": stale_count,
             "actionable_warning_count": 0,
@@ -611,6 +681,7 @@ def _market_update_handoff_warning_actionability(row: dict[str, Any], context: d
     if status == "FAIL" or error_count:
         return {
             "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
             "expected_demo_warning_count": 0,
             "stale_warning_count": 0,
             "actionable_warning_count": warning_count,
@@ -625,6 +696,7 @@ def _market_update_handoff_warning_actionability(row: dict[str, Any], context: d
         expected_count = max(warning_count, 1)
         return {
             "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": 0,
             "expected_demo_warning_count": expected_count,
             "stale_warning_count": 0,
             "actionable_warning_count": 0,
@@ -632,6 +704,51 @@ def _market_update_handoff_warning_actionability(row: dict[str, Any], context: d
         }
     return {
         "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
+def _historical_backfill_warning_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if context.get("post_backfill_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage == "BACKFILL_WARNINGS_NEED_REVIEW":
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
         "expected_demo_warning_count": 0,
         "stale_warning_count": 0,
         "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
@@ -685,6 +802,7 @@ def _metadata_actionability_counts(row: dict[str, Any]) -> dict[str, int] | None
         return None
     return {
         "total_warning_count": _int_or_zero(source.get("total_warning_count")),
+        "expected_reviewable_warning_count": _int_or_zero(source.get("expected_reviewable_warning_count")),
         "expected_demo_warning_count": _int_or_zero(source.get("expected_demo_warning_count")),
         "stale_warning_count": _int_or_zero(source.get("stale_warning_count")),
         "actionable_warning_count": _int_or_zero(source.get("actionable_warning_count")),
@@ -761,6 +879,7 @@ def _is_watch_only_no_fills_daily(metadata: dict[str, Any]) -> bool:
 def _empty_actionability_counts() -> dict[str, int]:
     return {
         "expected_demo_warning_count": 0,
+        "expected_reviewable_warning_count": 0,
         "stale_warning_count": 0,
         "actionable_warning_count": 0,
         "blocking_error_count": 0,
@@ -773,6 +892,8 @@ def _classification_label(counts: dict[str, int]) -> str:
         labels.append(BLOCKING_ERROR)
     if counts.get("actionable_warning_count", 0):
         labels.append(ACTIONABLE_WARNING)
+    if counts.get("expected_reviewable_warning_count", 0):
+        labels.append(EXPECTED_REVIEWABLE_WARNING)
     if counts.get("expected_demo_warning_count", 0):
         labels.append(EXPECTED_DEMO_WARNING)
     if counts.get("stale_warning_count", 0):
@@ -807,6 +928,7 @@ def _parse_note_value(notes: Any, key: str) -> str:
 def _actionability_count_keys() -> list[str]:
     return [
         "total_warning_count",
+        "expected_reviewable_warning_count",
         "expected_demo_warning_count",
         "stale_warning_count",
         "actionable_warning_count",
@@ -819,6 +941,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
 
     statuses = _status_by_component(dashboard_frame)
     if _has_attention_status(dashboard_frame):
+        if not _has_post_backfill_workflow_component(dashboard_frame) and statuses["HISTORICAL_BACKFILL_STATUS"] == "FAIL":
+            return "BACKFILL_FAILED"
         return "LOCAL_RESEARCH_NEEDS_ATTENTION"
     if statuses["PAPER_WORKFLOW_STATUS"] == "PASS":
         return "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
@@ -836,6 +960,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
     ):
         return "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+    if (
+        not _has_post_backfill_workflow_component(dashboard_frame)
+        and statuses["HISTORICAL_BACKFILL_STATUS"] in {"PASS", "WARN", "READY"}
+        and _historical_backfill_stage_from_frame(dashboard_frame)
+    ):
+        return _historical_backfill_stage_from_frame(dashboard_frame)
     if statuses["CURRENT_CANDIDATES"] == "MISSING":
         if statuses["SNAPSHOT_QUALITY"] != "MISSING":
             return "SNAPSHOT_READY"
@@ -869,6 +999,8 @@ def infer_local_research_next_action(
     stage = workflow_stage or infer_local_research_workflow_stage(dashboard_frame)
     totals = _warning_actionability_totals(dashboard_frame)
     if stage == "LOCAL_RESEARCH_NEEDS_ATTENTION" and totals["blocking_error_count"] == 0 and totals["actionable_warning_count"] == 0:
+        if totals["expected_reviewable_warning_count"] > 0:
+            return "Review expected WARN tasks before approving any explicit cache write."
         if totals["expected_demo_warning_count"] > 0:
             return DEMO_WORKFLOW_NEXT_ACTION
         if totals["stale_warning_count"] > 0:
@@ -878,6 +1010,11 @@ def infer_local_research_next_action(
     actions = {
         "NO_DATA": "Run data-pipeline.",
         "DATA_PREPARATION_READY": "Run current-candidates.",
+        "BACKFILL_DRY_RUN_READY": "Review historical-backfill dry-run artifacts before any cache write.",
+        "BACKFILL_WARNINGS_NEED_REVIEW": "Review WARN tasks and only rerun with --accept-cache-write after manual approval.",
+        "BACKFILL_CACHE_WRITE_READY": "Review index and health artifacts, then consider explicit --accept-cache-write if the backfill is approved.",
+        "BACKFILL_COMPLETED": "Run market-cache-status, then data-pipeline/data-quality/snapshot-quality before research use.",
+        "BACKFILL_FAILED": "Review historical-backfill-health errors and repair or rerun the failed backfill.",
         "SNAPSHOT_READY": "Run current-candidates.",
         "CURRENT_CANDIDATES_READY": "Run current-candidates-index.",
         "CURRENT_CANDIDATES_HEALTH_READY": "Run current-to-paper.",
@@ -908,17 +1045,20 @@ def summarize_local_research_status(
     active = frame.loc[frame["status"] != "MISSING"] if not frame.empty else pd.DataFrame()
     active_statuses = [str(row.get("status", "")).upper() for row in active.to_dict("records")]
     status_frame = frame.loc[
-        ~((frame["component"] == "MARKET_UPDATE_HANDOFF_STATUS") & (frame["status"] == "MISSING"))
+        ~(
+            frame["component"].isin({"MARKET_UPDATE_HANDOFF_STATUS", "HISTORICAL_BACKFILL_STATUS"})
+            & (frame["status"] == "MISSING")
+        )
     ]
     all_statuses = [str(row.get("status", "")).upper() for row in status_frame.to_dict("records")]
     missing_count = all_statuses.count("MISSING")
     error_count = int(pd.to_numeric(frame["error_count"], errors="coerce").fillna(0).sum()) if not frame.empty else 0
     warning_count = int(pd.to_numeric(frame["warning_count"], errors="coerce").fillna(0).sum()) if not frame.empty else 0
     actionability = _warning_actionability_totals(frame)
-    stale_market_fail_only = _only_stale_market_update_handoff_fail(frame, actionability)
+    stale_pre_paper_fail_only = _only_stale_pre_paper_fail(frame, actionability)
     status = (
         "FAIL"
-        if ("FAIL" in active_statuses or error_count) and not stale_market_fail_only
+        if ("FAIL" in active_statuses or error_count) and not stale_pre_paper_fail_only
         else "WARN"
         if "WARN" in active_statuses or missing_count or warning_count
         else "PASS"
@@ -932,6 +1072,38 @@ def summarize_local_research_status(
         "snapshot_quality_status": _component_status(by_component, "SNAPSHOT_QUALITY"),
         "current_candidate_status": _component_status(by_component, "CURRENT_CANDIDATES"),
         "current_candidate_health_status": _component_status(by_component, "CURRENT_CANDIDATE_HEALTH"),
+        "historical_backfill_status": _component_status(by_component, "HISTORICAL_BACKFILL_STATUS"),
+        "latest_historical_backfill_id": _string_or_empty(
+            by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("latest_artifact_id")
+        ),
+        "historical_backfill_stage": _string_or_empty(
+            by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("stage")
+        ),
+        "historical_backfill_next_action": _parse_note_value(
+            by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "historical_backfill_task_count": _int_or_zero(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "task_count")
+        ),
+        "historical_backfill_pass_count": _int_or_zero(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "pass_count")
+        ),
+        "historical_backfill_warn_count": _int_or_zero(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "warn_count")
+        ),
+        "historical_backfill_fail_count": _int_or_zero(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "fail_count")
+        ),
+        "historical_backfill_skipped_count": _int_or_zero(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "skipped_count")
+        ),
+        "historical_backfill_cache_write_occurred": _bool_from_text(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "cache_write_occurred")
+        ),
+        "historical_backfill_report_path": _string_or_empty(
+            by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("report_path")
+        ),
         "market_update_handoff_status": _component_status(by_component, "MARKET_UPDATE_HANDOFF_STATUS"),
         "latest_market_update_handoff_id": _string_or_empty(
             by_component.get("MARKET_UPDATE_HANDOFF_STATUS", {}).get("latest_artifact_id")
@@ -962,6 +1134,7 @@ def summarize_local_research_status(
         "reconciliation_status": _component_status(by_component, "RECONCILIATION"),
         "paper_workflow_status": _component_status(by_component, "PAPER_WORKFLOW_STATUS"),
         "total_warning_count": actionability["total_warning_count"],
+        "expected_reviewable_warning_count": actionability["expected_reviewable_warning_count"],
         "expected_demo_warning_count": actionability["expected_demo_warning_count"],
         "stale_warning_count": actionability["stale_warning_count"],
         "actionable_warning_count": actionability["actionable_warning_count"],
@@ -1014,6 +1187,17 @@ def build_local_research_dashboard_metadata(
         "workflow_stage": result.workflow_stage,
         "latest_decision_date": result.latest_decision_date,
         "universe_name": result.universe_name,
+        "latest_historical_backfill_id": result.latest_historical_backfill_id,
+        "historical_backfill_status": result.historical_backfill_status,
+        "historical_backfill_stage": result.historical_backfill_stage,
+        "historical_backfill_next_action": result.historical_backfill_next_action,
+        "historical_backfill_task_count": result.historical_backfill_task_count,
+        "historical_backfill_pass_count": result.historical_backfill_pass_count,
+        "historical_backfill_warn_count": result.historical_backfill_warn_count,
+        "historical_backfill_fail_count": result.historical_backfill_fail_count,
+        "historical_backfill_skipped_count": result.historical_backfill_skipped_count,
+        "historical_backfill_cache_write_occurred": result.historical_backfill_cache_write_occurred,
+        "historical_backfill_report_path": result.historical_backfill_report_path,
         "latest_market_update_handoff_id": result.latest_market_update_handoff_id,
         "market_update_handoff_status": result.market_update_handoff_status,
         "market_update_handoff_stage": result.market_update_handoff_stage,
@@ -1023,6 +1207,7 @@ def build_local_research_dashboard_metadata(
         "market_update_handoff_current_candidate_run_id": result.market_update_handoff_current_candidate_run_id,
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
+        "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
         "expected_demo_warning_count": _int_or_zero(summary.get("expected_demo_warning_count")),
         "stale_warning_count": _int_or_zero(summary.get("stale_warning_count")),
         "actionable_warning_count": _int_or_zero(summary.get("actionable_warning_count")),
@@ -1060,11 +1245,17 @@ def render_local_research_dashboard_report(
                 "status",
                 "latest_decision_date",
                 "universe_name",
+                "historical_backfill_status",
+                "latest_historical_backfill_id",
+                "historical_backfill_stage",
+                "historical_backfill_task_count",
+                "historical_backfill_cache_write_occurred",
                 "market_update_handoff_status",
                 "latest_market_update_handoff_id",
                 "market_update_handoff_stage",
                 "market_update_handoff_current_candidate_run_id",
                 "total_warning_count",
+                "expected_reviewable_warning_count",
                 "expected_demo_warning_count",
                 "stale_warning_count",
                 "actionable_warning_count",
@@ -1089,6 +1280,7 @@ def render_local_research_dashboard_report(
                 "warning_count",
                 "error_count",
                 "total_warning_count",
+                "expected_reviewable_warning_count",
                 "expected_demo_warning_count",
                 "stale_warning_count",
                 "actionable_warning_count",
@@ -1248,6 +1440,122 @@ def _scan_current_candidate_health(root: Path) -> list[dict[str, Any]]:
         report_key="current_candidate_artifact_health_report",
         default_report="current_candidate_artifact_health_report.md",
         stage="CURRENT_CANDIDATES_HEALTH_READY",
+    )
+
+
+def _scan_historical_backfill_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_historical_backfill_status_record(root)
+    if computed is not None:
+        return [computed]
+
+    scan_root = root if root.name == "status" else root / "status"
+    records = []
+    for metadata_path in _metadata_paths(scan_root, "metadata.json"):
+        metadata = _load_json_or_none(metadata_path)
+        if metadata is None or not metadata.get("status_id"):
+            continue
+        output_files = _output_files(metadata)
+        summary = _first_csv_record(output_files.get("historical_backfill_status_summary"))
+        status_rows = _csv_records(output_files.get("historical_backfill_status_csv"))
+        latest_status_row = next(
+            (
+                row
+                for row in status_rows
+                if _string_or_empty(row.get("component")) == "LATEST_HISTORICAL_BACKFILL"
+            ),
+            {},
+        )
+        status_text = _string_or_empty(metadata.get("status")) or _string_or_empty(summary.get("status")) or "READY"
+        stage = _string_or_empty(metadata.get("workflow_stage")) or _string_or_empty(summary.get("workflow_stage"))
+        latest_backfill_id = _string_or_empty(metadata.get("latest_backfill_id")) or _string_or_empty(
+            summary.get("latest_backfill_id")
+        )
+        warning_count = max(
+            _int_or_zero(summary.get("warning_count"))
+            ,
+            _int_or_zero(latest_status_row.get("warning_count")),
+            len(metadata.get("warnings", [])) if isinstance(metadata.get("warnings"), list) else 0,
+        )
+        if status_text == "WARN" and warning_count == 0:
+            warning_count = 1
+        records.append(
+            _record(
+                workflow_area="HISTORICAL_BACKFILL",
+                component="HISTORICAL_BACKFILL_STATUS",
+                status=status_text,
+                stage=stage or "BACKFILL_DRY_RUN_READY",
+                latest_artifact_id=latest_backfill_id or _string_or_empty(metadata.get("status_id")) or metadata_path.parent.name,
+                report_path=output_files.get(
+                    "historical_backfill_status_report",
+                    metadata_path.parent / "historical_backfill_status_report.md",
+                ),
+                metadata_path=metadata_path,
+                issue_count=_int_or_zero(summary.get("issue_count")),
+                warning_count=warning_count,
+                error_count=_int_or_zero(summary.get("error_count")),
+                notes=_historical_backfill_notes(metadata, summary),
+                created_at=metadata.get("created_at"),
+            )
+        )
+    return records
+
+
+def _computed_historical_backfill_status_record(root: Path) -> dict[str, Any] | None:
+    backfill_root = root.parent if root.name == "status" else root
+    if not backfill_root.exists():
+        return None
+    try:
+        result = run_historical_backfill_status(
+            root=backfill_root,
+            output_dir=backfill_root / "status",
+            config={"write_artifacts": False},
+        )
+    except Exception:
+        return None
+    if not result.latest_backfill_id:
+        return None
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    latest_status_row = {}
+    if not result.status_frame.empty:
+        latest_rows = result.status_frame.loc[result.status_frame["component"] == "LATEST_HISTORICAL_BACKFILL"]
+        if not latest_rows.empty:
+            latest_status_row = latest_rows.iloc[0].to_dict()
+    warning_count = max(
+        _int_or_zero(summary.get("warning_count"))
+        ,
+        _int_or_zero(latest_status_row.get("warning_count")),
+        len(result.warnings),
+    )
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="HISTORICAL_BACKFILL",
+        component="HISTORICAL_BACKFILL_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_backfill_id,
+        report_path=result.artifact_paths.get("historical_backfill_status_report", ""),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=_int_or_zero(summary.get("issue_count")),
+        warning_count=warning_count,
+        error_count=_int_or_zero(summary.get("error_count")),
+        notes=_historical_backfill_notes(
+            {"next_manual_action": result.next_manual_action},
+            summary,
+        ),
+    )
+
+
+def _historical_backfill_notes(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_string_or_empty(metadata.get('next_manual_action'))}; "
+        f"task_count={_string_or_empty(summary.get('task_count'))}; "
+        f"pass_count={_string_or_empty(summary.get('pass_count'))}; "
+        f"warn_count={_string_or_empty(summary.get('warn_count'))}; "
+        f"fail_count={_string_or_empty(summary.get('fail_count'))}; "
+        f"skipped_count={_string_or_empty(summary.get('skipped_count'))}; "
+        f"cache_write_occurred={_string_or_empty(summary.get('cache_write_occurred'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}"
     )
 
 
@@ -1591,6 +1899,7 @@ def _record(**values: Any) -> dict[str, Any]:
         "warning_count": 0,
         "error_count": 0,
         "total_warning_count": 0,
+        "expected_reviewable_warning_count": 0,
         "expected_demo_warning_count": 0,
         "stale_warning_count": 0,
         "actionable_warning_count": 0,
@@ -1612,6 +1921,7 @@ def _record(**values: Any) -> dict[str, Any]:
     row["warning_count"] = _int_or_zero(row.get("warning_count"))
     row["error_count"] = _int_or_zero(row.get("error_count"))
     row["total_warning_count"] = _int_or_zero(row.get("total_warning_count"))
+    row["expected_reviewable_warning_count"] = _int_or_zero(row.get("expected_reviewable_warning_count"))
     row["expected_demo_warning_count"] = _int_or_zero(row.get("expected_demo_warning_count"))
     row["stale_warning_count"] = _int_or_zero(row.get("stale_warning_count"))
     row["actionable_warning_count"] = _int_or_zero(row.get("actionable_warning_count"))
@@ -1633,6 +1943,12 @@ def _missing_dashboard_row(component: str, *, notes: str = "No matching local ar
 def _component_next_action(component: str, status: str) -> str:
     if status == "FAIL":
         return "Review warnings/errors."
+    if component == "HISTORICAL_BACKFILL_STATUS":
+        return (
+            "Run historical-backfill with a reviewed manifest in dry-run mode."
+            if status == "MISSING"
+            else "Review historical-backfill-status before any cache write."
+        )
     if component == "DATA_PREPARATION_WORKFLOW":
         return "Run data-prep-status." if status == "MISSING" else "Run current-candidates."
     if component == "SNAPSHOT_QUALITY":
@@ -1680,6 +1996,36 @@ def _market_update_handoff_stage_from_frame(dashboard_frame: pd.DataFrame) -> st
     return _string_or_empty(rows.iloc[0].get("stage"))
 
 
+def _historical_backfill_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "HISTORICAL_BACKFILL_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _has_post_backfill_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "DATA_PREPARATION_WORKFLOW",
+        "SNAPSHOT_QUALITY",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
 def _has_attention_status(dashboard_frame: pd.DataFrame) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)
     if frame.empty:
@@ -1690,7 +2036,11 @@ def _has_attention_status(dashboard_frame: pd.DataFrame) -> bool:
     totals = _warning_actionability_totals(active)
     if totals["blocking_error_count"] > 0 or totals["actionable_warning_count"] > 0:
         return True
-    if totals["expected_demo_warning_count"] > 0 or totals["stale_warning_count"] > 0:
+    if (
+        totals["expected_reviewable_warning_count"] > 0
+        or totals["expected_demo_warning_count"] > 0
+        or totals["stale_warning_count"] > 0
+    ):
         return False
     statuses = set(active["status"].astype(str).str.upper())
     if statuses.intersection({"FAIL", "WARN"}):
@@ -1709,9 +2059,10 @@ def _component_has_only_non_actionable_warnings(dashboard_frame: pd.DataFrame, c
         return False
     blocking = _int_or_zero(row.get("blocking_error_count"))
     actionable = _int_or_zero(row.get("actionable_warning_count"))
+    expected_reviewable = _int_or_zero(row.get("expected_reviewable_warning_count"))
     expected = _int_or_zero(row.get("expected_demo_warning_count"))
     stale = _int_or_zero(row.get("stale_warning_count"))
-    return blocking == 0 and actionable == 0 and (expected > 0 or stale > 0)
+    return blocking == 0 and actionable == 0 and (expected_reviewable > 0 or expected > 0 or stale > 0)
 
 
 def _component_status(by_component: dict[str, dict[str, Any]], component: str) -> str:
@@ -1736,10 +2087,14 @@ def _dashboard_warnings(dashboard_frame: pd.DataFrame, workflow_stage: str) -> l
         workflow_stage == "LOCAL_RESEARCH_NEEDS_ATTENTION"
         and totals["blocking_error_count"] == 0
         and totals["actionable_warning_count"] == 0
-        and (totals["expected_demo_warning_count"] > 0 or totals["stale_warning_count"] > 0)
+        and (
+            totals["expected_reviewable_warning_count"] > 0
+            or totals["expected_demo_warning_count"] > 0
+            or totals["stale_warning_count"] > 0
+        )
     ):
         warnings.append(
-            "Only expected demo or stale artifact warnings were classified for the active workflow chain."
+            "Only expected reviewable, demo, or stale artifact warnings were classified for the active workflow chain."
         )
     elif workflow_stage != "LOCAL_RESEARCH_WORKFLOW_COMPLETE":
         warnings.append(f"Workflow stage is {workflow_stage}; manual action is still needed.")
@@ -1753,6 +2108,7 @@ def _warning_actionability_totals(dashboard_frame: pd.DataFrame) -> dict[str, in
     frame = _deduped_actionability_frame(_finalize_dashboard_frame(dashboard_frame))
     totals = {
         "total_warning_count": 0,
+        "expected_reviewable_warning_count": 0,
         "expected_demo_warning_count": 0,
         "stale_warning_count": 0,
         "actionable_warning_count": 0,
@@ -1766,13 +2122,14 @@ def _warning_actionability_totals(dashboard_frame: pd.DataFrame) -> dict[str, in
     return totals
 
 
-def _only_stale_market_update_handoff_fail(frame: pd.DataFrame, actionability: dict[str, int]) -> bool:
+def _only_stale_pre_paper_fail(frame: pd.DataFrame, actionability: dict[str, int]) -> bool:
     finalized = _finalize_dashboard_frame(frame)
     failing = finalized.loc[finalized["status"] == "FAIL"]
     if failing.empty:
         return False
+    stale_pre_paper_components = {"MARKET_UPDATE_HANDOFF_STATUS", "HISTORICAL_BACKFILL_STATUS"}
     return (
-        set(failing["component"].astype(str)) == {"MARKET_UPDATE_HANDOFF_STATUS"}
+        set(failing["component"].astype(str)).issubset(stale_pre_paper_components)
         and actionability.get("blocking_error_count", 0) == 0
         and actionability.get("actionable_warning_count", 0) == 0
         and actionability.get("stale_warning_count", 0) > 0
@@ -2042,6 +2399,11 @@ def _int_or_zero(value: Any) -> int:
         return int(float(value))
     except (TypeError, ValueError):
         return 0
+
+
+def _bool_from_text(value: Any) -> bool:
+    text = _string_or_empty(value).lower()
+    return text in {"1", "true", "yes", "y"}
 
 
 def _present(value: Any) -> bool:

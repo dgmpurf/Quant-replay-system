@@ -420,6 +420,126 @@ def test_dashboard_includes_market_update_handoff_status_when_no_paper_workflow_
     assert summary["actionable_warning_count"] == 0
 
 
+def test_dashboard_includes_historical_backfill_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _historical_backfill_status(root, status="WARN", warning_count=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    backfill_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "HISTORICAL_BACKFILL_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "BACKFILL_WARNINGS_NEED_REVIEW"
+    assert result.status == "WARN"
+    assert result.latest_historical_backfill_id == "backfill-a"
+    assert result.historical_backfill_status == "WARN"
+    assert result.historical_backfill_stage == "BACKFILL_WARNINGS_NEED_REVIEW"
+    assert result.historical_backfill_task_count == 6
+    assert result.historical_backfill_pass_count == 3
+    assert result.historical_backfill_warn_count == 3
+    assert result.historical_backfill_fail_count == 0
+    assert result.historical_backfill_skipped_count == 0
+    assert result.historical_backfill_cache_write_occurred is False
+    assert "Review WARN tasks" in result.next_manual_action
+    assert backfill_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert summary["expected_reviewable_warning_count"] == 1
+    assert summary["actionable_warning_count"] == 0
+
+
+def test_dashboard_preserves_paper_priority_with_historical_backfill_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _historical_backfill_status(root, status="WARN", warning_count=1)
+    _paper_workflow_status(root, status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    backfill_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "HISTORICAL_BACKFILL_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
+    assert result.paper_workflow_status == "PASS"
+    assert result.latest_historical_backfill_id == "backfill-a"
+    assert result.historical_backfill_status == "WARN"
+    assert backfill_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Review completed" in result.next_manual_action
+
+
+def test_dashboard_marks_active_failed_historical_backfill_as_actionable(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _historical_backfill_status(
+        root,
+        status="FAIL",
+        workflow_stage="BACKFILL_FAILED",
+        health_status="FAIL",
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    backfill_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "HISTORICAL_BACKFILL_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "BACKFILL_FAILED"
+    assert result.latest_historical_backfill_id == "backfill-a"
+    assert backfill_row["warning_classification"] == "BLOCKING_ERROR"
+    assert "failed backfill" in result.next_manual_action
+
+
+def test_dashboard_summary_csv_exports_historical_backfill_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _historical_backfill_status(root, backfill_id="backfill-export", status="WARN", warning_count=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_historical_backfill_id"] == "backfill-export"
+    assert row["historical_backfill_status"] == "WARN"
+    assert row["historical_backfill_stage"] == "BACKFILL_WARNINGS_NEED_REVIEW"
+    assert "Review WARN tasks" in row["historical_backfill_next_action"]
+    assert row["historical_backfill_task_count"] == "6"
+    assert row["historical_backfill_pass_count"] == "3"
+    assert row["historical_backfill_warn_count"] == "3"
+    assert row["historical_backfill_fail_count"] == "0"
+    assert row["historical_backfill_skipped_count"] == "0"
+    assert row["historical_backfill_cache_write_occurred"] == "False"
+    assert row["historical_backfill_report_path"]
+
+
+def test_dashboard_metadata_exports_historical_backfill_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _historical_backfill_status(root, backfill_id="backfill-metadata", status="WARN", warning_count=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    component_statuses = metadata["component_statuses"]
+
+    assert metadata["latest_historical_backfill_id"] == "backfill-metadata"
+    assert metadata["historical_backfill_status"] == "WARN"
+    assert metadata["historical_backfill_stage"] == "BACKFILL_WARNINGS_NEED_REVIEW"
+    assert "Review WARN tasks" in metadata["historical_backfill_next_action"]
+    assert metadata["historical_backfill_task_count"] == 6
+    assert metadata["historical_backfill_warn_count"] == 3
+    assert metadata["historical_backfill_cache_write_occurred"] is False
+    assert component_statuses["latest_historical_backfill_id"] == "backfill-metadata"
+    assert component_statuses["expected_reviewable_warning_count"] == 1
+
+
+def test_cli_research_status_prints_historical_backfill_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _historical_backfill_status(root, backfill_id="backfill-cli", status="WARN", warning_count=1)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_historical_backfill_id: backfill-cli" in output.out
+    assert "historical_backfill_status: WARN" in output.out
+    assert "historical_backfill_stage: BACKFILL_WARNINGS_NEED_REVIEW" in output.out
+
+
 def test_dashboard_does_not_regress_from_paper_workflow_to_market_update_handoff(tmp_path: Path) -> None:
     root = _reports_root(tmp_path)
     _market_update_handoff_status(
@@ -872,6 +992,97 @@ def _paper_workflow_status(
             },
             "output_files": {"paper_workflow_status_report": str(report)},
             "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _historical_backfill_status(
+    root: Path,
+    *,
+    status: str = "WARN",
+    workflow_stage: str = "BACKFILL_WARNINGS_NEED_REVIEW",
+    backfill_id: str = "backfill-a",
+    health_status: str = "WARN",
+    warning_count: int = 0,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T14:30:00",
+) -> Path:
+    folder = root / "historical_backfill" / "status" / f"status-{backfill_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "historical_backfill_status_report.md"
+    status_csv = folder / "historical_backfill_status.csv"
+    summary_csv = folder / "historical_backfill_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    next_action = "Review WARN tasks and only rerun with --accept-cache-write after manual approval."
+    report.write_text("No live trading or broker API was invoked.", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "component": "HISTORICAL_BACKFILL_INDEX",
+                "status": "PASS",
+                "latest_backfill_id": backfill_id,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "HISTORICAL_BACKFILL_HEALTH",
+                "status": health_status,
+                "latest_backfill_id": backfill_id,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "issue_count": warning_count + error_count,
+            },
+            {
+                "component": "LATEST_HISTORICAL_BACKFILL",
+                "status": status,
+                "latest_backfill_id": backfill_id,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "issue_count": warning_count + error_count,
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "latest_backfill_id": backfill_id,
+                "task_count": 6,
+                "pass_count": 3,
+                "warn_count": 3 if status == "WARN" else 0,
+                "fail_count": 1 if status == "FAIL" else 0,
+                "skipped_count": 0,
+                "cache_write_occurred": False,
+                "health_status": health_status,
+                "issue_count": warning_count + error_count,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "next_manual_action": next_action,
+                "report_path": str(root / "historical_backfill" / backfill_id / "historical_backfill_report.md"),
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{backfill_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_backfill_id": backfill_id,
+            "next_manual_action": next_action,
+            "warnings": ["Expected dry-run WARN tasks need review."] if warning_count else [],
+            "output_files": {
+                "historical_backfill_status_report": str(report),
+                "historical_backfill_status_csv": str(status_csv),
+                "historical_backfill_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
             "live_trading_enabled": False,
             "broker_api_invoked": False,
         },

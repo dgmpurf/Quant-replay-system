@@ -152,6 +152,8 @@ Health checks artifact integrity only. They do not certify strategy quality or m
 
 A dry-run with expected provisional or known-caveat warnings should be reviewed as `BACKFILL_WARNINGS_NEED_REVIEW`; it is not automatically approved for cache write. Only rerun with `--accept-cache-write` after manual review.
 
+`research-status` includes the latest `historical-backfill-status` as a history/cache-building component. It exposes the latest backfill id, stage, task counts, cache-write flag, and next manual action. Later data-preparation, market-update-handoff, current-candidates, or paper workflow artifacts can take priority for the final unified workflow stage, but historical backfill remains visible as context.
+
 ## Safety Boundaries
 
 - No live trading is implemented.
