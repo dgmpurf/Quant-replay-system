@@ -24,6 +24,7 @@ The default posture is dry-run-first. Cache writes require the explicit `--accep
 - `market-cache-preflight` checks candidate raw rows against schema sanity, source field policy, optional health metadata, and optional cache comparison.
 - `market-cache-ingest` writes accepted rows into the local cache.
 - `market-cache-status` summarizes the cache after the attempted update.
+- `market-update-handoff` converts accepted or warn-accepted offline update rows into a local data-pipeline snapshot dry run.
 - `data-pipeline`, `data-quality`, and `snapshot-quality` are still required before research use.
 
 ## CLI
@@ -81,6 +82,14 @@ python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw
 ```
 
 An offline manifest supplies `raw_input` and optional `metadata_path` for each row. It can run without `--allow-real-data` because no source fetch is needed. It still runs `market-cache-preflight`, still applies source policy, and still does not write cache unless `--accept-cache-write` is supplied.
+
+After an offline manifest dry-run, use `market-update-handoff` to merge accepted rows into a local batch market CSV and run:
+
+```text
+data-pipeline -> snapshot-quality -> current-candidates --selection-profile demo
+```
+
+That handoff remains cache-free and local-only.
 
 ## Symbol Manifest
 
@@ -182,7 +191,7 @@ data-pipeline -> data-quality -> snapshot-quality -> current-candidates
 ## Known MVP Limitations
 
 - v0.1 is a local skeleton, not a scheduler.
-- It does not automatically build pipeline manifests.
+- It does not automatically build pipeline manifests by itself; use [market_update_handoff.md](market_update_handoff.md) for the reviewed offline batch to snapshot dry-run.
 - It does not choose a universal trusted source.
 - It does not certify strategy quality.
 - It does not rewrite existing cache rows unless `--accept-cache-write` is explicitly supplied and preflight accepts the input.

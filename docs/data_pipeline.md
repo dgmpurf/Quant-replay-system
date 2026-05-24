@@ -85,6 +85,14 @@ Run it with:
 python -m quant_replay_system.cli data-pipeline --manifest data\mock\data_pipeline_manifest.json
 ```
 
+Reviewed offline market-update batches can generate this manifest automatically:
+
+```cmd
+python -m quant_replay_system.cli market-update-handoff --symbol-manifest data\raw\manual_manifests\daily_market_symbols_offline_example.csv --universe data\raw\LOCAL_CSV\universe_overlay\<overlay_id>\raw_data.csv --trading-calendar data\raw\AKSHARE_OPTIONAL\trading_calendar\<run_id>\raw_data.csv --decision-date 2024-05-20 --universe-name etf_core --selection-profile demo --dry-run
+```
+
+The generated manifest is still local `LOCAL_CSV` input and still runs through the same ingestion, data-quality, and snapshot manifest path.
+
 When more than one processed dataset is present and snapshot manifest generation is enabled, the pipeline writes a local `snapshot_manifest.json` compatible with Snapshot Quality Gate.
 
 ## Data Quality Integration
@@ -208,4 +216,5 @@ It does not change point-in-time filtering, trading calendar logic, T+1 executio
 - Use [universe_overlay.md](universe_overlay.md) to merge reviewed ETF rows into a stock-only universe before the pipeline.
 - Snapshot manifest creation is limited to datasets processed in the same run.
 - It does not merge with or update an existing snapshot manifest.
+- Reviewed update handoff manifests are local dry-run inputs; they do not mutate the market cache.
 - It is not live trading and never invokes broker APIs.

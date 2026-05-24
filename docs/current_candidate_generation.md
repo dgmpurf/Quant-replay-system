@@ -163,6 +163,12 @@ Run a local demo profile for tiny workflow smoke tests:
 python -m quant_replay_system.cli current-candidates --date 2024-05-20 --universe etf_core --top 5 --snapshot-manifest data\snapshots\example_snapshot_manifest.json --selection-profile demo
 ```
 
+For reviewed offline market update batches, `market-update-handoff` can generate the snapshot manifest and invoke the same demo validation chain:
+
+```cmd
+python -m quant_replay_system.cli market-update-handoff --symbol-manifest data\raw\manual_manifests\daily_market_symbols_offline_example.csv --universe data\raw\LOCAL_CSV\universe_overlay\<overlay_id>\raw_data.csv --trading-calendar data\raw\AKSHARE_OPTIONAL\trading_calendar\<run_id>\raw_data.csv --decision-date 2024-05-20 --universe-name etf_core --selection-profile demo --dry-run
+```
+
 The CLI prints the candidate count, `candidates.csv` path, report path, snapshot quality status when applicable, and:
 
 ```text
@@ -200,4 +206,5 @@ python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decis
 - If a market symbol is absent from the universe snapshot, the point-in-time factor dataset will be empty for that symbol. ETF workflows need ETF universe coverage, not stock-only universe coverage.
 - A reviewed ETF overlay can add ETF universe coverage, but the project does not infer or auto-approve ETF rows.
 - The `demo` selection profile is only for local artifact/workflow validation with tiny datasets; it is not a strategy recommendation and does not change scoring formulas.
+- `market-update-handoff` can include `WARN_ACCEPT` provisional rows for local validation, but those rows remain provisional and should not be treated as strategy recommendations.
 - Candidate scoring remains explainable MVP scoring, not machine learning.

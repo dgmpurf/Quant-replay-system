@@ -47,6 +47,7 @@ from quant_replay_system.market_cache_preflight import run_market_cache_prefligh
 from quant_replay_system.market_daily_update import run_market_daily_update
 from quant_replay_system.market_daily_update import run_market_daily_update_manifest
 from quant_replay_system.market_source_policy import run_market_source_policy_report
+from quant_replay_system.market_update_handoff import run_market_update_snapshot_handoff
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
 from quant_replay_system.paper_reconciliation import reconcile_paper_fills
@@ -453,6 +454,31 @@ def build_parser() -> argparse.ArgumentParser:
     market_daily_update.add_argument("--output-dir", help="Optional daily update report output directory")
     market_daily_update.add_argument("--config", help="Optional config YAML path")
     market_daily_update.set_defaults(handler=_handle_market_daily_update)
+
+    market_update_handoff = subparsers.add_parser(
+        "market-update-handoff",
+        help="Convert accepted reviewed offline market update rows into a local snapshot dry run",
+    )
+    market_update_handoff.add_argument("--symbol-manifest", help="Reviewed offline symbol manifest CSV")
+    market_update_handoff.add_argument("--market-daily-update-dir", help="Existing market-daily-update artifact directory")
+    market_update_handoff.add_argument("--universe", required=True, help="Universe raw_data.csv path")
+    market_update_handoff.add_argument("--trading-calendar", required=True, help="Trading calendar raw_data.csv path")
+    market_update_handoff.add_argument("--decision-date", required=True, help="Decision date, e.g. 2024-05-20")
+    market_update_handoff.add_argument("--universe-name", required=True, help="Universe name for current-candidates")
+    market_update_handoff.add_argument(
+        "--selection-profile",
+        choices=["default", "demo"],
+        default="demo",
+        help="Current-candidates selection profile for validation",
+    )
+    market_update_handoff.add_argument("--top", type=int, help="Candidate count override")
+    market_update_handoff.add_argument("--strict-accept-only", action="store_true", help="Exclude WARN_ACCEPT rows")
+    market_update_handoff.add_argument("--dry-run", action="store_true", help="Local dry-run; cache is never mutated")
+    market_update_handoff.add_argument("--run-pipeline", action="store_true", help="Run data-pipeline/snapshot/current-candidates validation")
+    market_update_handoff.add_argument("--skip-validation", action="store_true", help="Only build batch CSV and manifest")
+    market_update_handoff.add_argument("--output-dir", help="Optional handoff report output directory")
+    market_update_handoff.add_argument("--config", help="Optional config YAML path")
+    market_update_handoff.set_defaults(handler=_handle_market_update_handoff)
 
     market_cache_compare = subparsers.add_parser(
         "market-cache-compare",
@@ -1570,6 +1596,57 @@ def _handle_market_daily_update(args: argparse.Namespace) -> int:
     print(f"Report path: {result.artifact_paths['market_daily_update_report']}")
     print(f"Steps CSV path: {result.artifact_paths['market_daily_update_steps']}")
     print(f"Symbol results CSV path: {result.artifact_paths['market_daily_update_symbol_results']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_update_handoff(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "market_update_handoff": settings.market_update_handoff.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    run_validation = False if args.skip_validation else (True if args.run_pipeline else None)
+    result = run_market_update_snapshot_handoff(
+        symbol_manifest=args.symbol_manifest,
+        market_daily_update_dir=args.market_daily_update_dir,
+        universe=args.universe,
+        trading_calendar=args.trading_calendar,
+        decision_date=args.decision_date,
+        universe_name=args.universe_name,
+        selection_profile=args.selection_profile,
+        top_n=args.top,
+        strict_accept_only=bool(args.strict_accept_only),
+        dry_run=bool(args.dry_run),
+        run_validation=run_validation,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    current = result.current_candidate_result
+    pipeline = result.pipeline_result
+    snapshot = result.snapshot_quality_result
+    print(f"Market update handoff status: {result.status}")
+    print(f"handoff_id: {result.handoff_id}")
+    print(f"included_row_count: {result.included_row_count}")
+    print(f"batch_market_csv_path: {result.batch_market_csv_path or ''}")
+    print(f"generated_pipeline_manifest_path: {result.pipeline_manifest_path or ''}")
+    print(f"pipeline_id: {pipeline.pipeline_id if pipeline is not None else ''}")
+    print(f"pipeline_status: {pipeline.status if pipeline is not None else ''}")
+    print(f"snapshot_quality_status: {snapshot.status if snapshot is not None else ''}")
+    print(f"current_candidate_run_id: {current.run_id if current is not None else ''}")
+    print(f"factor_dataset_shape: {tuple(current.factor_dataset.shape) if current is not None else (0, 0)}")
+    print(f"scored_dataset_shape: {tuple(current.scored_dataset.shape) if current is not None else (0, 0)}")
+    print(f"candidates_shape: {tuple(current.candidates.shape) if current is not None else (0, 0)}")
+    print(f"candidate_count: {current.candidate_count if current is not None else 0}")
+    print(f"Report path: {result.artifact_paths['market_update_handoff_report']}")
+    print(f"Rows CSV path: {result.artifact_paths['market_update_handoff_rows']}")
+    print(f"Generated manifest artifact path: {result.artifact_paths['generated_pipeline_manifest']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

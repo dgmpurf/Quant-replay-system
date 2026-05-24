@@ -486,6 +486,19 @@ class MarketDailyUpdateSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketUpdateHandoffSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/market_update_handoff")
+    batch_output_dir: Path = Path("data/raw/manual_update_batches")
+    manifest_output_dir: Path = Path("data/raw/manual_manifests")
+    include_warn_accept: bool = True
+    run_pipeline_validation: bool = True
+    default_top_n: int = 5
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataPipelineSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/data_pipeline")
     raw_output_dir: Path = Path("data/raw")
@@ -670,6 +683,7 @@ class Settings(BaseModel):
     market_source_policy: MarketSourcePolicySettings = Field(default_factory=MarketSourcePolicySettings)
     market_cache_preflight: MarketCachePreflightSettings = Field(default_factory=MarketCachePreflightSettings)
     market_daily_update: MarketDailyUpdateSettings = Field(default_factory=MarketDailyUpdateSettings)
+    market_update_handoff: MarketUpdateHandoffSettings = Field(default_factory=MarketUpdateHandoffSettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
     universe_overlay: UniverseOverlaySettings = Field(default_factory=UniverseOverlaySettings)
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)
