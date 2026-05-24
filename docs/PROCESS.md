@@ -200,6 +200,8 @@ After major E2E workflow milestones, create a concise checkpoint document under 
 
 The checkpoint should summarize completed capabilities, the local command sequence, safety constraints, known limitations, validation expectations, and the recommended tag. These documents support the ChatGPT/user checkpoint decision and do not replace `python -m pytest`, `git status --short`, or secret/cache tracking checks.
 
+Before starting the next major engineering branch after a completed workflow milestone, Codex should add or update the checkpoint document so the user and ChatGPT have a stable summary for checkpoint, tag, or continuation decisions.
+
 ## 6. Pro Extended Usage Rules
 
 Pro Extended is not needed for:

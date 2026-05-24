@@ -179,6 +179,8 @@ For the end-to-end local research workflow smoke-test path, see [docs/local_rese
 
 For the v0.39.0 local research workflow checkpoint summary, see [docs/release_checkpoint_v0.39.0.md](docs/release_checkpoint_v0.39.0.md).
 
+For the v0.64.0 reviewed offline update to `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.64.0.md](docs/release_checkpoint_v0.64.0.md).
+
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
 Recommended next data-source engineering sequence:
@@ -309,6 +311,10 @@ The automated smoke-test version of this flow is documented in [docs/local_resea
 `v0.39.0` marks the first complete local-only research workflow checkpoint, covering local data preparation, snapshot quality, current candidates, paper review, paper reporting, fill reconciliation, and the unified `research-status` dashboard.
 
 See [docs/release_checkpoint_v0.39.0.md](docs/release_checkpoint_v0.39.0.md) for the milestone summary, local command sequence, safety guarantees, known limitations, and recommended tag.
+
+`v0.64.0` marks the reviewed offline market update to `research-status` integration checkpoint, covering market-cache preflight, offline reviewed symbol manifests, market-update-handoff, handoff index/health/status, current-candidates demo handoff, WATCH_ONLY paper workflow smoke testing, and exported dashboard field regression coverage.
+
+See [docs/release_checkpoint_v0.64.0.md](docs/release_checkpoint_v0.64.0.md) for the milestone summary, safety boundaries, validation baseline, known limitations, and recommended next engineering tasks.
 
 ## Project Layout
 
