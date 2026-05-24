@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from quant_replay_system.config import PaperTradingSettings, Settings, load_settings
-from quant_replay_system.data import load_market_data
+from quant_replay_system.data import load_market_data, read_csv_preserve_symbol_columns
 
 
 PAPER_TRADING_LIMITATIONS = [
@@ -936,7 +936,7 @@ def _candidates_to_frame(candidates: pd.DataFrame | str | Path | Any) -> pd.Data
     if isinstance(candidates, pd.DataFrame):
         return candidates.copy(deep=True)
     if isinstance(candidates, (str, Path)):
-        return pd.read_csv(candidates)
+        return read_csv_preserve_symbol_columns(candidates)
     for attr in ["selected_candidates", "candidates", "candidate_df"]:
         if hasattr(candidates, attr):
             value = getattr(candidates, attr)

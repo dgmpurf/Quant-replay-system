@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from quant_replay_system.config import CurrentToPaperReviewHandoffSettings, Settings, load_settings
+from quant_replay_system.data import read_csv_preserve_symbol_columns
 
 
 CURRENT_TO_PAPER_REVIEW_HANDOFF_LIMITATIONS = [
@@ -172,13 +173,16 @@ def load_paper_decisions_for_review_handoff(
         path = Path(decisions_path)
         if not path.exists():
             raise FileNotFoundError(f"Paper decisions CSV not found: {path}")
-        return _prepare_decisions(pd.read_csv(path)), {"source_type": "DECISIONS_CSV", "decisions_path": str(path)}, []
+        return _prepare_decisions(read_csv_preserve_symbol_columns(path)), {
+            "source_type": "DECISIONS_CSV",
+            "decisions_path": str(path),
+        }, []
 
     artifact_dir = Path(handoff_artifact_dir) if handoff_artifact_dir is not None else Path()
     decisions_csv, source_metadata, warnings = _resolve_decisions_from_artifact_dir(artifact_dir)
     if not decisions_csv.exists():
         raise FileNotFoundError(f"Paper decisions CSV not found from artifact directory: {decisions_csv}")
-    return _prepare_decisions(pd.read_csv(decisions_csv)), source_metadata, warnings
+    return _prepare_decisions(read_csv_preserve_symbol_columns(decisions_csv)), source_metadata, warnings
 
 
 def build_review_updates_template(

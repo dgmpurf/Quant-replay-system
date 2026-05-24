@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from quant_replay_system.config import PaperReviewSettings, Settings, load_settings
+from quant_replay_system.data import read_csv_preserve_symbol_columns
 
 
 REVIEW_STATUSES = {"PENDING_REVIEW", "APPROVED_FOR_PAPER", "REJECTED", "WATCH_ONLY"}
@@ -97,7 +98,7 @@ def load_paper_decisions(path: str | Path) -> pd.DataFrame:
     csv_path = Path(path)
     if not csv_path.exists():
         raise FileNotFoundError(f"Paper decisions CSV not found: {csv_path}")
-    return _prepare_decisions(pd.read_csv(csv_path))
+    return _prepare_decisions(read_csv_preserve_symbol_columns(csv_path))
 
 
 def apply_paper_review_updates(
@@ -511,7 +512,7 @@ def _load_frame(value: pd.DataFrame | str | Path) -> pd.DataFrame:
     path = Path(value)
     if not path.exists():
         raise FileNotFoundError(f"CSV not found: {path}")
-    return pd.read_csv(path)
+    return read_csv_preserve_symbol_columns(path)
 
 
 def _load_updates(value: pd.DataFrame | list[PaperReviewUpdate] | str | Path) -> pd.DataFrame:
@@ -522,7 +523,7 @@ def _load_updates(value: pd.DataFrame | list[PaperReviewUpdate] | str | Path) ->
     path = Path(value)
     if not path.exists():
         raise FileNotFoundError(f"Review updates CSV not found: {path}")
-    return pd.read_csv(path)
+    return read_csv_preserve_symbol_columns(path)
 
 
 def _prepare_decisions(decisions: pd.DataFrame) -> pd.DataFrame:

@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from quant_replay_system.config import PaperReviewTemplateHealthSettings, Settings, load_settings
+from quant_replay_system.data import read_csv_preserve_symbol_columns
 from quant_replay_system.paper_review import REVIEW_REASON_CODES, REVIEW_STATUSES
 
 
@@ -685,7 +686,7 @@ def _load_frame(value: pd.DataFrame | str | Path, *, label: str) -> pd.DataFrame
     path = Path(value)
     if not path.exists():
         raise FileNotFoundError(f"{label} CSV not found: {path}")
-    return pd.read_csv(path)
+    return read_csv_preserve_symbol_columns(path)
 
 
 def _load_optional_frame(value: pd.DataFrame | str | Path | None, *, label: str) -> pd.DataFrame | None:

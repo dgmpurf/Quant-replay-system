@@ -17,6 +17,7 @@ from quant_replay_system.current_candidate_artifact_index import (
     CURRENT_CANDIDATE_INDEX_COLUMNS,
     scan_current_candidate_artifacts,
 )
+from quant_replay_system.data import read_csv_preserve_symbol_columns
 from quant_replay_system.daily_paper_runner import DailyPaperRunResult, run_daily_paper_trading
 
 
@@ -526,7 +527,7 @@ def _selected_from_direct_candidates_path(
 ) -> SelectedCurrentCandidateArtifact:
     if not path.exists():
         raise FileNotFoundError(f"Candidate CSV not found: {path}")
-    candidates = pd.read_csv(path)
+    candidates = read_csv_preserve_symbol_columns(path)
     metadata_path = path.parent / "metadata.json"
     metadata = _load_json_if_exists(metadata_path)
     output_files = metadata.get("output_files") if isinstance(metadata.get("output_files"), dict) else {}

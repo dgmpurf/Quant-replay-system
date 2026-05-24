@@ -43,6 +43,21 @@ def test_review_handoff_creates_template_from_decisions_csv(tmp_path: Path) -> N
     assert result.template_path.exists()
 
 
+def test_review_handoff_preserves_leading_zero_symbols_from_decisions_csv(tmp_path: Path) -> None:
+    decisions_path = tmp_path / "decisions.csv"
+    decisions = _decisions()
+    decisions.loc[0, "symbol"] = "000001"
+    decisions.to_csv(decisions_path, index=False)
+
+    result = run_current_to_paper_review_handoff(
+        decisions_path=decisions_path,
+        output_dir=tmp_path / "review_handoff",
+        config=_settings(tmp_path),
+    )
+
+    assert result.review_updates_template.iloc[0]["symbol"] == "000001"
+
+
 def test_review_handoff_can_load_from_handoff_artifact_directory(tmp_path: Path) -> None:
     handoff = _current_to_paper_handoff(tmp_path)
 

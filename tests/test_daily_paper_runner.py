@@ -36,6 +36,28 @@ def test_runner_loads_candidates_from_csv(tmp_path: Path) -> None:
     assert result.decisions.iloc[0]["symbol"] == "AAA"
 
 
+def test_runner_preserves_leading_zero_symbols_from_candidate_csv(tmp_path: Path) -> None:
+    candidate_path = tmp_path / "candidates.csv"
+    candidates = _candidates()
+    candidates.loc[0, "symbol"] = "000001"
+    candidates.to_csv(candidate_path, index=False)
+
+    result = _run(tmp_path, candidates=None, candidates_path=candidate_path)
+
+    assert result.decisions.iloc[0]["symbol"] == "000001"
+
+
+def test_runner_preserves_leading_zero_symbols_from_reviewed_decisions_csv(tmp_path: Path) -> None:
+    reviewed_path = tmp_path / "reviewed_decisions.csv"
+    reviewed = _reviewed_decisions()
+    reviewed.loc[0, "symbol"] = "000001"
+    reviewed.to_csv(reviewed_path, index=False)
+
+    result = _run(tmp_path, candidates=None, reviewed_decisions_path=reviewed_path)
+
+    assert result.decisions.iloc[0]["symbol"] == "000001"
+
+
 def test_runner_handles_missing_optional_candidate_columns(tmp_path: Path) -> None:
     result = _run(tmp_path, candidates=pd.DataFrame([{"symbol": "AAA"}]), fills_path=tmp_path / "missing.csv")
 

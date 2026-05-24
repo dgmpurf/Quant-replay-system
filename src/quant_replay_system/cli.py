@@ -18,6 +18,7 @@ from quant_replay_system.current_candidate_artifact_index import build_current_c
 from quant_replay_system.current_candidates import generate_current_candidates
 from quant_replay_system.current_to_paper_handoff import run_current_to_paper_handoff
 from quant_replay_system.current_to_paper_review_handoff import run_current_to_paper_review_handoff
+from quant_replay_system.data import read_csv_preserve_symbol_columns
 from quant_replay_system.data_preparation_artifact_health import check_data_preparation_artifact_health
 from quant_replay_system.data_preparation_artifact_index import build_data_preparation_artifact_index
 from quant_replay_system.data_preparation_workflow_status import run_data_preparation_workflow_status
@@ -1039,7 +1040,11 @@ def _handle_reconcile_fills(args: argparse.Namespace) -> int:
                 )
             }
         )
-    result = reconcile_paper_fills(pd.read_csv(decisions_path), pd.read_csv(fills_path), settings=settings)
+    result = reconcile_paper_fills(
+        read_csv_preserve_symbol_columns(decisions_path),
+        read_csv_preserve_symbol_columns(fills_path),
+        settings=settings,
+    )
     print(f"Reconciliation status: {result.status}")
     print(f"issue_count: {result.issue_count}")
     print(f"error_count: {result.error_count}")
@@ -1088,8 +1093,8 @@ def _handle_review_decisions(args: argparse.Namespace) -> int:
                 )
             }
         )
-    decisions_frame = pd.read_csv(decisions_path)
-    updates_frame = pd.read_csv(updates_path)
+    decisions_frame = read_csv_preserve_symbol_columns(decisions_path)
+    updates_frame = read_csv_preserve_symbol_columns(updates_path)
     template_health_metadata = None
     if settings.paper_review.enable_template_health_check:
         health_result = check_review_template_health(
@@ -1151,8 +1156,8 @@ def _handle_review_template_health(args: argparse.Namespace) -> int:
         }
     )
     result = check_review_template_health(
-        pd.read_csv(updates_path),
-        decisions=pd.read_csv(decisions_path) if decisions_path is not None else None,
+        read_csv_preserve_symbol_columns(updates_path),
+        decisions=read_csv_preserve_symbol_columns(decisions_path) if decisions_path is not None else None,
         settings=settings,
     )
     print(f"Review template health status: {result.status}")

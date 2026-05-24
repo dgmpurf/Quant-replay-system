@@ -454,6 +454,17 @@ def test_load_paper_decisions_reads_csv(tmp_path: Path) -> None:
     assert "decision_id" in loaded.columns
 
 
+def test_load_paper_decisions_preserves_leading_zero_symbols(tmp_path: Path) -> None:
+    path = tmp_path / "decisions.csv"
+    decisions = _decisions()
+    decisions.loc[0, "symbol"] = "000001"
+    decisions.to_csv(path, index=False)
+
+    loaded = load_paper_decisions(path)
+
+    assert loaded.iloc[0]["symbol"] == "000001"
+
+
 def test_summarize_review_status_handles_empty_decisions() -> None:
     summary = summarize_review_status(pd.DataFrame())
 

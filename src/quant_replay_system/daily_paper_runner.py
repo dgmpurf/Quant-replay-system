@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from quant_replay_system.config import DailyPaperRunnerSettings, PaperTradingSettings, Settings, load_settings
-from quant_replay_system.data import load_market_data
+from quant_replay_system.data import load_market_data, read_csv_preserve_symbol_columns
 from quant_replay_system.paper_trading import (
     PAPER_TRADING_LIMITATIONS,
     build_closed_trades,
@@ -236,7 +236,7 @@ def load_candidates_for_paper_trading(
     path = Path(candidates_path)
     if not path.exists():
         raise FileNotFoundError(f"Candidate CSV not found: {path}")
-    return pd.read_csv(path)
+    return read_csv_preserve_symbol_columns(path)
 
 
 def load_reviewed_decisions_for_paper_trading(
@@ -262,7 +262,7 @@ def load_reviewed_decisions_for_paper_trading(
     path = Path(reviewed_decisions_path)
     if not path.exists():
         raise FileNotFoundError(f"Reviewed decisions CSV not found: {path}")
-    return _prepare_reviewed_decisions(pd.read_csv(path))
+    return _prepare_reviewed_decisions(read_csv_preserve_symbol_columns(path))
 
 
 def load_existing_paper_fills(fills_path: str | Path | None = None) -> tuple[pd.DataFrame, list[str]]:
@@ -288,7 +288,7 @@ def load_existing_paper_fills(fills_path: str | Path | None = None) -> tuple[pd.
     path = Path(fills_path)
     if not path.exists():
         return pd.DataFrame(columns=columns), [f"Fills file not found: {path}; continuing with empty paper fills."]
-    fills = pd.read_csv(path)
+    fills = read_csv_preserve_symbol_columns(path)
     if "fill_date" in fills.columns:
         fills["fill_date"] = pd.to_datetime(fills["fill_date"], errors="coerce").dt.normalize()
     for column in ["fill_price", "quantity", "gross_notional", "fees", "slippage", "net_cash_flow"]:
@@ -312,7 +312,7 @@ def load_mark_prices_for_paper_trading(
         path = Path(mark_prices)
         if not path.exists():
             raise FileNotFoundError(f"Mark prices CSV not found: {path}")
-        return pd.read_csv(path)
+        return read_csv_preserve_symbol_columns(path)
     return load_market_data(settings.data.mock_prices)
 
 

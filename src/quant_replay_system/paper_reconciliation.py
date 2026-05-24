@@ -18,6 +18,7 @@ from quant_replay_system.config import (
     Settings,
     load_settings,
 )
+from quant_replay_system.data import read_csv_preserve_symbol_columns
 
 
 RECONCILIATION_LIMITATIONS = [
@@ -574,7 +575,7 @@ def _load_frame(value: pd.DataFrame | str | Path) -> pd.DataFrame:
     path = Path(value)
     if not path.exists():
         raise FileNotFoundError(f"CSV not found: {path}")
-    return pd.read_csv(path)
+    return read_csv_preserve_symbol_columns(path)
 
 
 def _prepare_decisions(decisions: pd.DataFrame) -> pd.DataFrame:
