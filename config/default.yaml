@@ -432,6 +432,20 @@ market_daily_update:
   enable_live_trading: false
   enable_broker_api: false
 
+historical_backfill:
+  output_dir: outputs/reports/historical_backfill
+  default_required_fields:
+    - close
+    - volume
+    - amount
+  run_health_check: true
+  default_dry_run: true
+  fail_fast: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 market_update_handoff:
   output_dir: outputs/reports/market_update_handoff
   batch_output_dir: data/raw/manual_update_batches

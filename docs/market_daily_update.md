@@ -180,6 +180,8 @@ The metadata records input paths, row-level statuses, preflight status, whether 
 
 Use this workflow for incremental local market data maintenance after the initial historical backfill is already understood.
 
+For broader reviewed symbol/date ranges and chunked historical cache building, use [historical_backfill.md](historical_backfill.md). Historical backfill and daily update share the same preflight/cache safety gates, but backfill is intended for local research history construction rather than day-to-day maintenance.
+
 For a new source or source route, first run targeted health checks and comparison reports manually. Then use the daily update workflow to keep the cache write decision auditable.
 
 After cache query, research inputs still need:

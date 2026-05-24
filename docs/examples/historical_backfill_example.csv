@@ -1,0 +1,4 @@
+symbol,source,dataset_type,start_date,end_date,enabled,security_type,preferred_upstream,require_fields,reference_source,strict_provisional,chunk_days,raw_input,metadata_path,notes
+000001,AKSHARE_OPTIONAL,market,2024-01-01,2024-01-10,true,STOCK,TENCENT,"close,volume,amount",BAOSTOCK_OPTIONAL,false,5,,,AKShare Tencent stock historical backfill demo
+600000,BAOSTOCK_OPTIONAL,market,2024-01-01,2024-01-10,true,STOCK,BAOSTOCK,"close,volume,amount",AKSHARE_OPTIONAL,false,5,,,BaoStock stock historical backfill demo
+510300,AKSHARE_OPTIONAL,market,2024-01-01,2024-01-10,true,ETF,SINA,"close,volume,amount",,false,5,,,AKShare Sina ETF provisional backfill demo

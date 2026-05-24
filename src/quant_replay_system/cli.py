@@ -29,6 +29,7 @@ from quant_replay_system.data_pipeline import (
 from quant_replay_system.data_quality import run_data_quality_checks
 from quant_replay_system.data_source_health import run_data_source_health_check
 from quant_replay_system.data_sources import DataSourceRequest, run_data_source_fetch
+from quant_replay_system.historical_backfill import run_historical_backfill
 from quant_replay_system.data_ingestion import (
     ingest_benchmark_data_csv,
     ingest_corporate_actions_csv,
@@ -459,6 +460,21 @@ def build_parser() -> argparse.ArgumentParser:
     market_daily_update.add_argument("--output-dir", help="Optional daily update report output directory")
     market_daily_update.add_argument("--config", help="Optional config YAML path")
     market_daily_update.set_defaults(handler=_handle_market_daily_update)
+
+    historical_backfill = subparsers.add_parser(
+        "historical-backfill",
+        help="Run a local preflight-gated historical market backfill skeleton",
+    )
+    historical_backfill.add_argument("--manifest", required=True, help="Reviewed historical backfill CSV manifest")
+    historical_backfill.add_argument("--allow-real-data", action="store_true", help="Manual opt-in for real source fetch")
+    historical_backfill.add_argument("--dry-run", action="store_true", help="Run without cache write unless --accept-cache-write is also set")
+    historical_backfill.add_argument("--accept-cache-write", action="store_true", help="Explicitly allow accepted rows to be ingested into cache")
+    historical_backfill.add_argument("--fail-fast", action="store_true", help="Stop after the first failed task")
+    historical_backfill.add_argument("--cache-path", help="Optional market cache CSV path")
+    historical_backfill.add_argument("--raw-output-dir", help="Optional raw output root for data-source-fetch")
+    historical_backfill.add_argument("--output-dir", help="Optional historical backfill report output directory")
+    historical_backfill.add_argument("--config", help="Optional config YAML path")
+    historical_backfill.set_defaults(handler=_handle_historical_backfill)
 
     market_update_handoff = subparsers.add_parser(
         "market-update-handoff",
@@ -1644,6 +1660,58 @@ def _handle_market_daily_update(args: argparse.Namespace) -> int:
     print(f"Report path: {result.artifact_paths['market_daily_update_report']}")
     print(f"Steps CSV path: {result.artifact_paths['market_daily_update_steps']}")
     print(f"Symbol results CSV path: {result.artifact_paths['market_daily_update_symbol_results']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_historical_backfill(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "historical_backfill": settings.historical_backfill.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = run_historical_backfill(
+        args.manifest,
+        allow_real_data=bool(args.allow_real_data),
+        dry_run=True if args.dry_run else None,
+        accept_cache_write=bool(args.accept_cache_write),
+        fail_fast=True if args.fail_fast else None,
+        cache_path=args.cache_path,
+        raw_output_dir=args.raw_output_dir,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    counts = result.audit_metadata.get("task_result_counts", {})
+    fail_count = sum(
+        int(counts.get(status, 0))
+        for status in [
+            "FAIL",
+            "BLOCKED_NEEDS_ALLOW_REAL_DATA",
+            "BLOCKED_PREFLIGHT_REJECT",
+            "BLOCKED_MISSING_RAW_INPUT",
+        ]
+    )
+    print(f"Historical backfill status: {result.status}")
+    print(f"backfill_id: {result.backfill_id}")
+    print(f"manifest: {result.manifest_path}")
+    print(f"task_count: {result.task_count}")
+    print(f"pass_count: {counts.get('PASS', 0)}")
+    print(f"warn_count: {counts.get('WARN', 0)}")
+    print(f"fail_count: {fail_count}")
+    print(f"skipped_disabled_count: {counts.get('SKIPPED_DISABLED', 0)}")
+    print(f"blocked_needs_allow_real_data_count: {counts.get('BLOCKED_NEEDS_ALLOW_REAL_DATA', 0)}")
+    print(f"blocked_missing_raw_input_count: {counts.get('BLOCKED_MISSING_RAW_INPUT', 0)}")
+    print(f"blocked_preflight_reject_count: {counts.get('BLOCKED_PREFLIGHT_REJECT', 0)}")
+    print(f"cache_write_occurred: {result.cache_write_occurred}")
+    print(f"Report path: {result.artifact_paths['historical_backfill_report']}")
+    print(f"Tasks CSV path: {result.artifact_paths['historical_backfill_tasks']}")
+    print(f"Results CSV path: {result.artifact_paths['historical_backfill_results']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

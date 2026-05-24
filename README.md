@@ -135,6 +135,8 @@ For source-policy-aware acceptance checks before ingesting market rows into the 
 
 For a dry-run-first local market update wrapper that runs preflight before optional cache ingest, use `market-daily-update`; see [docs/market_daily_update.md](docs/market_daily_update.md).
 
+For a local-only historical backfill skeleton over a reviewed symbol/date manifest, use `historical-backfill`; see [docs/historical_backfill.md](docs/historical_backfill.md) and [docs/examples/historical_backfill_example.csv](docs/examples/historical_backfill_example.csv).
+
 For reviewed batch updates, `market-daily-update --symbol-manifest` reads a local CSV symbol list such as [docs/examples/daily_market_symbols_example.csv](docs/examples/daily_market_symbols_example.csv). It is still dry-run-first and not a scheduler.
 
 For deterministic offline batch smoke tests, use a manifest with `raw_input` and `metadata_path` columns such as [docs/examples/daily_market_symbols_offline_example.csv](docs/examples/daily_market_symbols_offline_example.csv). Offline manifests do not need `--allow-real-data`.

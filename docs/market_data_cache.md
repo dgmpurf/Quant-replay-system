@@ -58,6 +58,14 @@ python -m quant_replay_system.cli market-daily-update --symbol 000001 --start-da
 
 The update workflow does not write to the cache unless `--accept-cache-write` is explicitly supplied and preflight accepts the input.
 
+For reviewed historical ranges, use `historical-backfill`:
+
+```cmd
+python -m quant_replay_system.cli historical-backfill --manifest data\raw\manual_manifests\historical_backfill_example.csv --dry-run
+```
+
+Historical backfill can split manifest rows into date chunks, use reviewed offline raw files, and optionally ingest accepted chunks when `--accept-cache-write` is supplied. It is for local research history construction, not live trading or scheduling.
+
 For reviewed batches, use a symbol manifest:
 
 ```cmd
