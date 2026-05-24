@@ -42,6 +42,22 @@ Ingest a successful raw market file:
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
 ```
 
+Before ingesting new rows, run the source-policy-aware preflight:
+
+```cmd
+python -m quant_replay_system.cli market-cache-preflight --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json --require-fields close,volume,amount
+```
+
+The preflight returns `ACCEPT`, `WARN_ACCEPT`, or `REJECT`. It checks schema sanity, field reliability policy, optional health metadata, and optional cross-source comparison. It does not mutate the cache.
+
+For a dry-run-first wrapper around health/fetch-or-raw/preflight/status, use:
+
+```cmd
+python -m quant_replay_system.cli market-daily-update --symbol 000001 --start-date 2024-05-20 --end-date 2024-05-20 --source AKSHARE_OPTIONAL --raw-input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json --dry-run
+```
+
+The update workflow does not write to the cache unless `--accept-cache-write` is explicitly supplied and preflight accepts the input.
+
 BaoStock market output uses the same canonical raw market schema and can be cached the same way:
 
 ```cmd
@@ -208,6 +224,7 @@ Files:
 ```text
 data-source-health
 -> data-source-fetch
+-> market-cache-preflight
 -> market-cache-ingest
 -> market-cache-compare
 -> market-cache-query
@@ -217,11 +234,15 @@ data-source-health
 -> current-candidates
 ```
 
+For incremental local maintenance after initial source validation, `market-daily-update` can replace the first four manual steps while preserving the explicit cache-write gate.
+
 For AKShare, run health checks first so the route report identifies whether Tencent, Sina, or Eastmoney is usable. For BaoStock, run `data-source-health` first to confirm the market route is available. If an upstream fails, use a successful fallback route or reviewed `LOCAL_CSV`.
 
 ## Safety
 
 - No real network calls are made by the cache itself.
+- The daily update wrapper only performs real fetches when `--allow-real-data` is supplied.
+- The daily update wrapper only mutates cache when `--accept-cache-write` is supplied.
 - Automated tests use local/fake CSV data only.
 - Cached files are ignored by Git.
 - Cache outputs are not trading recommendations.

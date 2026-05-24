@@ -401,6 +401,36 @@ market_source_policy:
   enable_live_trading: false
   enable_broker_api: false
 
+market_cache_preflight:
+  output_dir: outputs/reports/market_cache_preflight
+  default_required_fields:
+    - close
+    - volume
+    - amount
+  require_available_time: true
+  strict_provisional: false
+  unstable_policy_action: WARN_ACCEPT
+  reject_on_comparison_fail: true
+  allow_first_window_pre_close_caveat: true
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+market_daily_update:
+  output_dir: outputs/reports/market_daily_update
+  default_required_fields:
+    - close
+    - volume
+    - amount
+  run_health_check: true
+  run_cache_status: true
+  default_dry_run: true
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 data_pipeline:
   output_dir: outputs/reports/data_pipeline
   raw_output_dir: data/raw

@@ -27,6 +27,10 @@ When multiple sources overlap in the cache, run `market-cache-compare` before us
 
 Use `market-source-policy` for machine-readable field reliability hints by source, upstream route, security type, and field. Health checks answer whether a route can fetch, comparisons answer whether overlapping rows agree, and the policy answers which fields are currently reliable, provisional, unavailable, unstable, or caveated.
 
+Use `market-cache-preflight` before cache ingestion when a raw market file needs an explicit local acceptance decision. The preflight combines schema sanity, source field policy, optional health metadata, and optional cache comparison into `ACCEPT`, `WARN_ACCEPT`, or `REJECT`. It does not mutate cache data and does not replace data-pipeline, data-quality, or snapshot-quality.
+
+Use `market-daily-update` for dry-run-first incremental local cache maintenance. It orchestrates health, fetch-or-existing-raw input, preflight, optional cache ingest, and cache status. It is not a scheduler or trading workflow, and cache writes require explicit `--accept-cache-write`.
+
 ## Source Categories
 
 ### Permanent Local Safety Path
@@ -89,6 +93,7 @@ Recommended use:
 ```cmd
 python -m quant_replay_system.cli data-source-health --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
 python -m quant_replay_system.cli data-source-fetch --source BAOSTOCK_OPTIONAL --dataset-type market --symbol 000001 --start-date 2024-01-01 --end-date 2024-05-20 --allow-real-data
+python -m quant_replay_system.cli market-cache-preflight --input data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\metadata.json --require-fields close,volume,amount
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\BAOSTOCK_OPTIONAL\market\<run_id>\metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 ```
@@ -194,6 +199,8 @@ data/raw/<source>/<dataset_type>/<run_id>/metadata.json
 For market data, successful canonical daily bars may then be cached locally:
 
 ```cmd
+python -m quant_replay_system.cli market-cache-preflight --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json --require-fields close,volume,amount --reference-source BAOSTOCK_OPTIONAL
+python -m quant_replay_system.cli market-daily-update --symbol 000001 --start-date 2024-05-20 --end-date 2024-05-20 --source AKSHARE_OPTIONAL --raw-input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json --dry-run
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data\raw\manual_cache\510300_market.csv

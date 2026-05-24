@@ -20,6 +20,8 @@ Route availability and field semantics differ by source, upstream, security type
 - `data-source-health` checks whether a route is available.
 - `market-cache-compare` checks whether overlapping cached rows agree.
 - `market-source-policy` reports which fields are considered reliable, provisional, unavailable, or caveated.
+- `market-cache-preflight` applies schema checks, this policy, optional health metadata, and optional comparison before cache ingest.
+- `market-daily-update` uses the preflight gate before optional cache ingest in the local update skeleton.
 - `data-pipeline`, `data-quality`, and `snapshot-quality` remain required before current-candidates or replay.
 
 ## CLI
@@ -89,6 +91,24 @@ Eastmoney:
 - `pre_close_caveat`
 
 These hints do not override comparison PASS/WARN/FAIL, data-quality, or snapshot-quality. They are research data preparation guidance.
+
+## Cache Acceptance Preflight
+
+Use `market-cache-preflight` before `market-cache-ingest` when a workflow needs an explicit acceptance decision:
+
+```cmd
+python -m quant_replay_system.cli market-cache-preflight --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json --require-fields close,volume,amount --reference-source BAOSTOCK_OPTIONAL
+```
+
+The preflight maps policy statuses as follows:
+
+- `RELIABLE`: passes for required fields.
+- `PROVISIONAL`: `WARN_ACCEPT` by default, `REJECT` with strict provisional mode.
+- `UNAVAILABLE` or `DO_NOT_USE`: `REJECT` for required fields.
+- `UNSTABLE`: warns or rejects according to config.
+- `CAVEAT_FIRST_WINDOW_ROW`: reported as a known caveat, not a full source failure by itself.
+
+`market-daily-update` can run this preflight as part of a local update plan. It does not write accepted rows unless `--accept-cache-write` is supplied.
 
 ## Known Limitations
 

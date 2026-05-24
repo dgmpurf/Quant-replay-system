@@ -459,6 +459,32 @@ class MarketSourcePolicySettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketCachePreflightSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/market_cache_preflight")
+    default_required_fields: list[str] = Field(default_factory=lambda: ["close", "volume", "amount"])
+    require_available_time: bool = True
+    strict_provisional: bool = False
+    unstable_policy_action: Literal["WARN_ACCEPT", "REJECT"] = "WARN_ACCEPT"
+    reject_on_comparison_fail: bool = True
+    allow_first_window_pre_close_caveat: bool = True
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class MarketDailyUpdateSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/market_daily_update")
+    default_required_fields: list[str] = Field(default_factory=lambda: ["close", "volume", "amount"])
+    run_health_check: bool = True
+    run_cache_status: bool = True
+    default_dry_run: bool = True
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class DataPipelineSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/data_pipeline")
     raw_output_dir: Path = Path("data/raw")
@@ -641,6 +667,8 @@ class Settings(BaseModel):
     market_data_cache: MarketDataCacheSettings = Field(default_factory=MarketDataCacheSettings)
     market_data_comparison: MarketDataComparisonSettings = Field(default_factory=MarketDataComparisonSettings)
     market_source_policy: MarketSourcePolicySettings = Field(default_factory=MarketSourcePolicySettings)
+    market_cache_preflight: MarketCachePreflightSettings = Field(default_factory=MarketCachePreflightSettings)
+    market_daily_update: MarketDailyUpdateSettings = Field(default_factory=MarketDailyUpdateSettings)
     data_pipeline: DataPipelineSettings = Field(default_factory=DataPipelineSettings)
     universe_overlay: UniverseOverlaySettings = Field(default_factory=UniverseOverlaySettings)
     data_preparation_artifact_index: DataPreparationArtifactIndexSettings = Field(default_factory=DataPreparationArtifactIndexSettings)

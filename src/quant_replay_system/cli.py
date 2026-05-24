@@ -43,6 +43,8 @@ from quant_replay_system.market_data_cache import (
     summarize_market_cache_status,
 )
 from quant_replay_system.market_data_comparison import run_market_source_comparison
+from quant_replay_system.market_cache_preflight import run_market_cache_preflight
+from quant_replay_system.market_daily_update import run_market_daily_update
 from quant_replay_system.market_source_policy import run_market_source_policy_report
 from quant_replay_system.paper_artifact_health import check_paper_artifact_health
 from quant_replay_system.paper_artifact_index import build_paper_artifact_index
@@ -403,6 +405,49 @@ def build_parser() -> argparse.ArgumentParser:
     market_cache_status.add_argument("--output-dir", help="Optional market cache report output directory")
     market_cache_status.add_argument("--config", help="Optional config YAML path")
     market_cache_status.set_defaults(handler=_handle_market_cache_status)
+
+    market_cache_preflight = subparsers.add_parser(
+        "market-cache-preflight",
+        help="Run source-policy-aware checks before market cache ingestion",
+    )
+    market_cache_preflight.add_argument("--input", required=True, help="Canonical market raw_data.csv path")
+    market_cache_preflight.add_argument("--metadata", help="Optional data-source metadata.json path")
+    market_cache_preflight.add_argument("--health-metadata", help="Optional data-source health metadata.json path")
+    market_cache_preflight.add_argument("--reference-source", help="Optional cached reference source for comparison")
+    market_cache_preflight.add_argument("--cache-path", help="Optional market cache CSV path for reference comparison")
+    market_cache_preflight.add_argument(
+        "--require-fields",
+        help="Comma-separated required fields, e.g. close,volume,amount",
+    )
+    market_cache_preflight.add_argument("--symbol", help="Optional symbol filter")
+    market_cache_preflight.add_argument("--start-date", help="Optional inclusive start date")
+    market_cache_preflight.add_argument("--end-date", help="Optional inclusive end date")
+    market_cache_preflight.add_argument("--strict-provisional", action="store_true", help="Reject provisional fields")
+    market_cache_preflight.add_argument("--output-dir", help="Optional preflight report output directory")
+    market_cache_preflight.add_argument("--config", help="Optional config YAML path")
+    market_cache_preflight.set_defaults(handler=_handle_market_cache_preflight)
+
+    market_daily_update = subparsers.add_parser(
+        "market-daily-update",
+        help="Run a local preflight-gated market cache update skeleton",
+    )
+    market_daily_update.add_argument("--source", required=True, help="Data source, e.g. AKSHARE_OPTIONAL")
+    market_daily_update.add_argument("--symbol", required=True, help="Market symbol, e.g. 000001")
+    market_daily_update.add_argument("--start-date", required=True, help="Inclusive start date")
+    market_daily_update.add_argument("--end-date", required=True, help="Inclusive end date")
+    market_daily_update.add_argument("--raw-input", help="Existing canonical raw_data.csv path")
+    market_daily_update.add_argument("--metadata", help="Optional metadata.json path for raw input")
+    market_daily_update.add_argument("--allow-real-data", action="store_true", help="Manual opt-in for real source fetch")
+    market_daily_update.add_argument("--dry-run", action="store_true", help="Run without cache write unless --accept-cache-write is also set")
+    market_daily_update.add_argument("--accept-cache-write", action="store_true", help="Explicitly allow accepted rows to be ingested into cache")
+    market_daily_update.add_argument("--reference-source", help="Optional cached reference source for preflight comparison")
+    market_daily_update.add_argument("--require-fields", help="Comma-separated required fields, e.g. close,volume,amount")
+    market_daily_update.add_argument("--cache-path", help="Optional market cache CSV path")
+    market_daily_update.add_argument("--raw-output-dir", help="Optional raw output root for data-source-fetch")
+    market_daily_update.add_argument("--revision-id", help="Optional revision id for fetched raw data")
+    market_daily_update.add_argument("--output-dir", help="Optional daily update report output directory")
+    market_daily_update.add_argument("--config", help="Optional config YAML path")
+    market_daily_update.set_defaults(handler=_handle_market_daily_update)
 
     market_cache_compare = subparsers.add_parser(
         "market-cache-compare",
@@ -1389,6 +1434,101 @@ def _handle_market_cache_status(args: argparse.Namespace) -> int:
     print(f"source_counts: {summary.get('source_counts', '{}')}")
     print(f"upstream_counts: {summary.get('upstream_counts', '{}')}")
     print(f"Report path: {result.artifact_paths['market_cache_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_cache_preflight(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.strict_provisional:
+        updates["strict_provisional"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "market_cache_preflight": settings.market_cache_preflight.model_copy(update=updates)
+            }
+        )
+    result = run_market_cache_preflight(
+        args.input,
+        metadata_path=args.metadata,
+        health_metadata_path=args.health_metadata,
+        reference_source=args.reference_source,
+        cache_path=args.cache_path,
+        required_fields=args.require_fields,
+        symbol=args.symbol,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        output_dir=args.output_dir,
+        strict_provisional=True if args.strict_provisional else None,
+        config=settings,
+    )
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Market cache preflight status: {result.status}")
+    print(f"preflight_id: {result.preflight_id}")
+    print(f"input_path: {result.input_path}")
+    print(f"source: {summary.get('source', '')}")
+    print(f"upstream_source: {summary.get('upstream_source', '')}")
+    print(f"symbol: {summary.get('symbol', '')}")
+    print(f"row_count: {summary.get('row_count', 0)}")
+    print(f"required_fields: {summary.get('required_fields', '')}")
+    print(f"reference_source: {summary.get('reference_source', '')}")
+    print(f"comparison_status: {summary.get('comparison_status', '')}")
+    print(f"issue_count: {summary.get('issue_count', 0)}")
+    print(f"warning_count: {summary.get('warning_count', 0)}")
+    print(f"error_count: {summary.get('error_count', 0)}")
+    print(f"Report path: {result.artifact_paths['market_cache_preflight_report']}")
+    print(f"Issues CSV path: {result.artifact_paths['market_cache_preflight_issues']}")
+    print(f"Summary CSV path: {result.artifact_paths['market_cache_preflight_summary']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "REJECT" else 1
+
+
+def _handle_market_daily_update(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "market_daily_update": settings.market_daily_update.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = run_market_daily_update(
+        source=args.source,
+        symbol=args.symbol,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        raw_input=args.raw_input,
+        metadata_path=args.metadata,
+        allow_real_data=bool(args.allow_real_data),
+        dry_run=True if args.dry_run else None,
+        accept_cache_write=bool(args.accept_cache_write),
+        reference_source=args.reference_source,
+        required_fields=args.require_fields,
+        cache_path=args.cache_path,
+        raw_output_dir=args.raw_output_dir,
+        revision_id=args.revision_id,
+        output_dir=args.output_dir,
+        config=settings,
+    )
+    print(f"Market daily update status: {result.status}")
+    print(f"update_id: {result.update_id}")
+    print(f"source: {result.request.source}")
+    print(f"symbol: {result.request.symbol}")
+    print(f"date_range: {result.request.start_date} to {result.request.end_date}")
+    print(f"raw_data_path: {result.raw_data_path or ''}")
+    print(f"metadata_path: {result.metadata_path or ''}")
+    print(f"preflight_status: {result.preflight_result.status if result.preflight_result is not None else ''}")
+    print(f"cache_write_occurred: {result.cache_write_occurred}")
+    print(f"Report path: {result.artifact_paths['market_daily_update_report']}")
+    print(f"Steps CSV path: {result.artifact_paths['market_daily_update_steps']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
