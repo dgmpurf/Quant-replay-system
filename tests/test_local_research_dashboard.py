@@ -164,6 +164,30 @@ def test_dashboard_writes_summary_csv_readable_by_pandas(tmp_path: Path) -> None
     assert exported.iloc[0]["workflow_stage"] == "CURRENT_CANDIDATES_READY"
 
 
+def test_dashboard_summary_csv_exports_market_update_handoff_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_update_handoff_artifact(
+        root,
+        handoff_id="handoff-export",
+        status="WARN",
+        pipeline_id="pipeline-export",
+        snapshot_quality_status="PASS",
+        current_candidate_run_id="candidate-export",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_market_update_handoff_id"] == "handoff-export"
+    assert row["market_update_handoff_status"] == "WARN"
+    assert row["market_update_handoff_stage"] == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+    assert "current-candidates artifact" in row["market_update_handoff_next_action"]
+    assert row["market_update_handoff_pipeline_id"] == "pipeline-export"
+    assert row["market_update_handoff_snapshot_quality_status"] == "PASS"
+    assert row["market_update_handoff_current_candidate_run_id"] == "candidate-export"
+
+
 def test_dashboard_writes_metadata_json(tmp_path: Path) -> None:
     root = _workflow_to_current_candidates(_reports_root(tmp_path))
 
@@ -174,6 +198,37 @@ def test_dashboard_writes_metadata_json(tmp_path: Path) -> None:
     assert metadata["live_trading_enabled"] is False
     assert metadata["broker_api_invoked"] is False
     assert metadata["network_api_calls_used_in_tests"] is False
+
+
+def test_dashboard_metadata_exports_market_update_handoff_fields_and_preserves_paper_priority(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _market_update_handoff_artifact(
+        root,
+        handoff_id="handoff-context",
+        status="WARN",
+        pipeline_id="pipeline-context",
+        snapshot_quality_status="PASS",
+        current_candidate_run_id="candidate-context",
+    )
+    _paper_workflow_status(root, status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    component_statuses = metadata["component_statuses"]
+
+    assert metadata["workflow_stage"] == "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
+    assert metadata["next_manual_action"] == "Review completed local research workflow artifacts."
+    assert metadata["latest_market_update_handoff_id"] == "handoff-context"
+    assert metadata["market_update_handoff_status"] == "WARN"
+    assert metadata["market_update_handoff_stage"] == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+    assert "current-candidates artifact" in metadata["market_update_handoff_next_action"]
+    assert metadata["market_update_handoff_pipeline_id"] == "pipeline-context"
+    assert metadata["market_update_handoff_snapshot_quality_status"] == "PASS"
+    assert metadata["market_update_handoff_current_candidate_run_id"] == "candidate-context"
+    assert component_statuses["latest_market_update_handoff_id"] == "handoff-context"
+    assert component_statuses["market_update_handoff_pipeline_id"] == "pipeline-context"
 
 
 def test_cli_research_status_works(tmp_path: Path, capsys) -> None:
@@ -421,6 +476,7 @@ def test_cli_research_status_prints_market_update_handoff_fields(tmp_path: Path,
     assert code == 0
     assert "latest_market_update_handoff_id: handoff-a" in output.out
     assert "market_update_handoff_status: WARN" in output.out
+    assert "market_update_handoff_stage: CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST" in output.out
     assert "market_update_handoff_current_candidate_run_id: candidate-a" in output.out
 
 
@@ -909,6 +965,128 @@ def _market_update_handoff_status(
         },
     )
     return folder
+
+
+def _market_update_handoff_artifact(
+    root: Path,
+    *,
+    handoff_id: str = "handoff-a",
+    status: str = "PASS",
+    pipeline_id: str = "pipeline-a",
+    snapshot_quality_status: str = "PASS",
+    current_candidate_run_id: str = "candidate-a",
+    candidate_count: int = 2,
+    created_at: str = f"{DECISION_DATE}T15:35:00",
+) -> Path:
+    artifact_dir = root / "market_update_handoff" / handoff_id
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    linked_dir = root / "market_update_handoff" / "_linked" / handoff_id
+    linked_dir.mkdir(parents=True, exist_ok=True)
+    no_live = "No live trading or broker API was invoked."
+
+    batch_market_csv = linked_dir / "market_raw_data.csv"
+    pd.DataFrame(
+        [
+            {
+                "symbol": "510300",
+                "trade_date": DECISION_DATE,
+                "open": 1.0,
+                "high": 1.1,
+                "low": 0.9,
+                "close": 1.0,
+                "volume": 1000,
+                "amount": 1000,
+                "available_time": f"{DECISION_DATE} 15:30:00",
+                "source": "AKSHARE_OPTIONAL",
+            }
+        ]
+    ).to_csv(batch_market_csv, index=False)
+    pipeline_manifest = linked_dir / "market_update_handoff_manifest.json"
+    pipeline_manifest.write_text(
+        json.dumps(
+            {
+                "datasets": [
+                    {"dataset_type": "market", "source": "LOCAL_CSV", "input_path": str(batch_market_csv)}
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    pipeline_report = linked_dir / "data_pipeline_report.md"
+    snapshot_manifest = linked_dir / "snapshot_manifest.json"
+    snapshot_report = linked_dir / "snapshot_quality_gate_report.md"
+    current_report = linked_dir / "current_candidates_report.md"
+    current_metadata = linked_dir / "current_candidate_metadata.json"
+    factor_dataset = linked_dir / "factor_dataset.csv"
+    scored_dataset = linked_dir / "scored_dataset.csv"
+    candidates = linked_dir / "candidates.csv"
+    pipeline_report.write_text(no_live, encoding="utf-8")
+    snapshot_manifest.write_text("{}", encoding="utf-8")
+    snapshot_report.write_text(no_live, encoding="utf-8")
+    current_report.write_text(no_live, encoding="utf-8")
+    current_metadata.write_text(json.dumps({"run_id": current_candidate_run_id}), encoding="utf-8")
+    pd.DataFrame([{"symbol": "510300"}] * candidate_count).to_csv(factor_dataset, index=False)
+    pd.DataFrame([{"symbol": "510300", "final_score": 50.0}] * candidate_count).to_csv(scored_dataset, index=False)
+    pd.DataFrame([{"symbol": "510300"}] * candidate_count).to_csv(candidates, index=False)
+
+    handoff_report = artifact_dir / "market_update_handoff_report.md"
+    handoff_rows = artifact_dir / "market_update_handoff_rows.csv"
+    manifest_artifact = artifact_dir / "generated_pipeline_manifest.json"
+    handoff_report.write_text(no_live, encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "symbol": "510300",
+                "included": True,
+                "handoff_status": "INCLUDED_WARN_ACCEPT" if status == "WARN" else "INCLUDED_ACCEPT",
+                "raw_data_path": str(batch_market_csv),
+            }
+        ]
+    ).to_csv(handoff_rows, index=False)
+    manifest_artifact.write_text(pipeline_manifest.read_text(encoding="utf-8"), encoding="utf-8")
+
+    _write_json(
+        artifact_dir / "metadata.json",
+        {
+            "handoff_id": handoff_id,
+            "status": status,
+            "created_at": created_at,
+            "summary": [{"included_row_count": 1}],
+            "batch_market_csv_path": str(batch_market_csv),
+            "generated_pipeline_manifest_path": str(pipeline_manifest),
+            "pipeline_id": pipeline_id,
+            "pipeline_status": "PASS",
+            "data_pipeline_report_path": str(pipeline_report),
+            "snapshot_manifest_path": str(snapshot_manifest),
+            "snapshot_quality_status": snapshot_quality_status,
+            "snapshot_quality_report_path": str(snapshot_report),
+            "current_candidate_run_id": current_candidate_run_id,
+            "current_candidate_artifact_paths": {
+                "current_candidates_report": str(current_report),
+                "metadata": str(current_metadata),
+                "factor_dataset": str(factor_dataset),
+                "scored_dataset": str(scored_dataset),
+                "candidates": str(candidates),
+            },
+            "factor_dataset_shape": [candidate_count, 1],
+            "scored_dataset_shape": [candidate_count, 2],
+            "candidates_shape": [candidate_count, 1],
+            "candidate_count": candidate_count,
+            "warnings": ["Provisional WARN_ACCEPT rows were included."] if status == "WARN" else [],
+            "artifact_paths": {
+                "market_update_handoff_report": str(handoff_report),
+                "market_update_handoff_rows": str(handoff_rows),
+                "generated_pipeline_manifest": str(manifest_artifact),
+                "metadata": str(artifact_dir / "metadata.json"),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "no_live_trading": True,
+            "no_broker_api": True,
+            "no_live_trading_statement": no_live,
+        },
+    )
+    return artifact_dir
 
 
 def _write_json(path: Path, payload: dict) -> None:
