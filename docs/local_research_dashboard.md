@@ -63,6 +63,22 @@ Market-cache-export is earlier than current-candidates, market-update-handoff, a
 
 These export fields do not imply automatic source selection. The reviewed cache export remains an explicit source/upstream selection layer, and `data-quality` plus `snapshot-quality` remain required before research use.
 
+## Active Snapshot Linkage
+
+`research-status` follows snapshot-quality evidence through the active workflow chain before falling back to standalone snapshot-quality artifacts. The priority order is:
+
+```text
+paper workflow
+-> current-candidates
+-> market-update-handoff
+-> market-cache-export
+-> standalone snapshot-quality
+```
+
+When an active linked chain reports `snapshot_quality_status=PASS`, older standalone `SNAPSHOT_QUALITY` warnings remain visible as context but do not force the final stage to `LOCAL_RESEARCH_NEEDS_ATTENTION`. If the active linked snapshot is `WARN`, the warning remains actionable. If it is `FAIL`, the dashboard records an active snapshot error and blocks progress.
+
+The summary CSV and metadata include `linked_snapshot_quality_status`, `active_snapshot_chain`, `active_snapshot_warning_count`, `active_snapshot_error_count`, `stale_snapshot_warning_count`, and `unrelated_snapshot_warning_count` so downstream dashboards can tell active snapshot problems from stale or unrelated local artifact warnings.
+
 ## Market Update Handoff Status
 
 `research-status` includes `market-update-handoff-status` as a pre-paper workflow component when those artifacts exist.
@@ -90,6 +106,11 @@ The same priority principle applies to historical backfill and reviewed cache ex
 - `EXPECTED_DEMO_WARNING`: expected in explicit local dry-run workflows, such as a `WATCH_ONLY` paper daily run with no fills.
 - `EXPECTED_REVIEWABLE_WARNING`: expected but reviewable local dry-run warnings, such as historical backfill WARN tasks from provisional ETF/Sina policy or a known first-window `pre_close` caveat.
 - `STALE_ARTIFACT_WARNING`: warning from an older dry-run artifact that is no longer part of the active workflow chain.
+- `ACTIVE_SNAPSHOT_WARNING`: warning from the snapshot linked to the active workflow chain.
+- `ACTIVE_SNAPSHOT_ERROR`: error from the snapshot linked to the active workflow chain.
+- `STALE_SNAPSHOT_WARNING` / `UNRELATED_SNAPSHOT_WARNING`: standalone snapshot-quality warning that remains visible but is not part of the active linked chain.
+- `LINKED_SNAPSHOT_PASS`: the active linked workflow snapshot passed.
+- `MISSING_LINKED_SNAPSHOT`: the active workflow exists but did not expose enough snapshot linkage metadata.
 - `ACTIONABLE_WARNING`: warning that should be reviewed before continuing.
 - `BLOCKING_ERROR`: missing, unreadable, or failed active artifacts.
 

@@ -197,6 +197,8 @@ For the v0.67.0 historical backfill status integration checkpoint summary, see [
 
 For the v0.70.0 reviewed market cache export to `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.70.0.md](docs/release_checkpoint_v0.70.0.md).
 
+For the v0.71.0 active snapshot warning actionability checkpoint summary, see [docs/release_checkpoint_v0.71.0.md](docs/release_checkpoint_v0.71.0.md).
+
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
 Recommended next data-source engineering sequence:
@@ -346,6 +348,10 @@ See [docs/release_checkpoint_v0.67.0.md](docs/release_checkpoint_v0.67.0.md) for
 `v0.70.0` marks the reviewed market cache export to `research-status` integration checkpoint, covering explicit source/upstream cache exports, duplicate-key protection, data-pipeline/data-quality/snapshot-quality validation, export index/health/status, and unified dashboard CSV/metadata regression coverage.
 
 See [docs/release_checkpoint_v0.70.0.md](docs/release_checkpoint_v0.70.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.71.0` marks the active snapshot warning actionability checkpoint, covering active snapshot chain selection in `research-status`, stale/unrelated snapshot warning classification, linked PASS/WARN/FAIL handling, and preservation of paper workflow priority.
+
+See [docs/release_checkpoint_v0.71.0.md](docs/release_checkpoint_v0.71.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

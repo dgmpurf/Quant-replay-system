@@ -150,6 +150,14 @@ The snapshot quality gate gives the project a clear preflight decision:
 
 This creates a single artifact-backed checkpoint before expensive research runs.
 
+## Research Status Linkage
+
+`research-status` may see several historical `snapshot-quality` artifacts under `outputs/reports/snapshot_quality/`. It keeps those artifacts visible, but it now distinguishes standalone snapshot warnings from the snapshot linked to the active workflow chain.
+
+If a reviewed cache export, market-update-handoff, current-candidates run, or paper workflow carries linked snapshot metadata and that linked snapshot status is `PASS`, older standalone snapshot `WARN` artifacts are treated as stale or unrelated context rather than active blockers. If the linked active snapshot is `WARN` or `FAIL`, the warning/error remains actionable and can drive the unified dashboard to `LOCAL_RESEARCH_NEEDS_ATTENTION`.
+
+When no active chain exposes snapshot linkage, `research-status` falls back to the latest standalone snapshot-quality artifact.
+
 ## Known MVP Limitations
 
 - The gate reports status; it does not repair bad data.

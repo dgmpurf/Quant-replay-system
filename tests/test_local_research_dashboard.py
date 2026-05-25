@@ -545,6 +545,8 @@ def test_dashboard_includes_market_cache_export_status_when_no_later_workflow_ex
     assert result.market_cache_export_data_pipeline_status == "PASS"
     assert result.market_cache_export_data_quality_status == "PASS"
     assert result.market_cache_export_snapshot_quality_status == "PASS"
+    assert result.linked_snapshot_quality_status == "PASS"
+    assert result.active_snapshot_chain == "MARKET_CACHE_EXPORT_STATUS"
     assert result.market_cache_export_snapshot_manifest_path.endswith("snapshot_manifest.json")
     assert "current-candidates" in result.next_manual_action
     assert export_row["warning_classification"] == ""
@@ -615,6 +617,88 @@ def test_dashboard_uses_latest_market_cache_export_when_older_export_failed(tmp_
     assert summary["blocking_error_count"] == 0
 
 
+def test_dashboard_active_export_snapshot_pass_not_overridden_by_stale_snapshot_warn(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(root, export_id="export-pass", status="PASS", snapshot_quality_status="PASS")
+    _snapshot_quality(root, status="WARN")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    snapshot_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "SNAPSHOT_QUALITY"].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "SNAPSHOT_READY_FROM_EXPORT"
+    assert result.next_manual_action == "Run current-candidates with the reviewed cache export snapshot manifest."
+    assert result.linked_snapshot_quality_status == "PASS"
+    assert result.active_snapshot_chain == "MARKET_CACHE_EXPORT_STATUS"
+    assert result.active_snapshot_warning_count == 0
+    assert result.active_snapshot_error_count == 0
+    assert result.unrelated_snapshot_warning_count > 0
+    assert snapshot_row["warning_classification"] == "LINKED_SNAPSHOT_PASS;UNRELATED_SNAPSHOT_WARNING"
+    assert summary["actionable_warning_count"] == 0
+    assert summary["blocking_error_count"] == 0
+
+
+def test_dashboard_active_export_snapshot_warn_remains_actionable(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(root, export_id="export-warn", status="PASS", snapshot_quality_status="WARN")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    snapshot_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "SNAPSHOT_QUALITY"].iloc[0]
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_NEEDS_ATTENTION"
+    assert result.linked_snapshot_quality_status == "WARN"
+    assert result.active_snapshot_chain == "MARKET_CACHE_EXPORT_STATUS"
+    assert result.active_snapshot_warning_count == 1
+    assert result.active_snapshot_error_count == 0
+    assert snapshot_row["warning_classification"] == "ACTIVE_SNAPSHOT_WARNING"
+    assert result.next_manual_action == "Review warnings/errors."
+
+
+def test_dashboard_active_export_snapshot_fail_is_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(root, export_id="export-fail-snapshot", status="PASS", snapshot_quality_status="FAIL")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    snapshot_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "SNAPSHOT_QUALITY"].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "LOCAL_RESEARCH_NEEDS_ATTENTION"
+    assert result.linked_snapshot_quality_status == "FAIL"
+    assert result.active_snapshot_error_count == 1
+    assert snapshot_row["warning_classification"] == "ACTIVE_SNAPSHOT_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+
+
+def test_dashboard_standalone_snapshot_warn_remains_actionable_without_active_chain(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _snapshot_quality(root, status="WARN")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    snapshot_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "SNAPSHOT_QUALITY"].iloc[0]
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_NEEDS_ATTENTION"
+    assert result.linked_snapshot_quality_status == "WARN"
+    assert result.active_snapshot_chain == "SNAPSHOT_QUALITY"
+    assert result.active_snapshot_warning_count == 1
+    assert snapshot_row["warning_classification"] == "ACTIVE_SNAPSHOT_WARNING"
+
+
+def test_dashboard_paper_priority_treats_unlinked_snapshot_warn_as_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _paper_workflow_status(root, status="PASS")
+    _snapshot_quality(root, status="WARN")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    snapshot_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "SNAPSHOT_QUALITY"].iloc[0]
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
+    assert result.paper_workflow_status == "PASS"
+    assert result.active_snapshot_chain == "PAPER_WORKFLOW_STATUS"
+    assert result.unrelated_snapshot_warning_count > 0
+    assert snapshot_row["warning_classification"] == "MISSING_LINKED_SNAPSHOT;UNRELATED_SNAPSHOT_WARNING"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+
+
 def test_dashboard_marks_active_failed_market_cache_export_as_actionable(tmp_path: Path) -> None:
     root = _reports_root(tmp_path)
     _market_cache_export_status(
@@ -656,6 +740,12 @@ def test_dashboard_summary_csv_exports_market_cache_export_fields(tmp_path: Path
     assert row["market_cache_export_snapshot_quality_status"] == "PASS"
     assert row["market_cache_export_snapshot_manifest_path"].endswith("snapshot_manifest.json")
     assert row["market_cache_export_report_path"]
+    assert row["linked_snapshot_quality_status"] == "PASS"
+    assert row["active_snapshot_chain"] == "MARKET_CACHE_EXPORT_STATUS"
+    assert row["active_snapshot_warning_count"] == "0"
+    assert row["active_snapshot_error_count"] == "0"
+    assert row["stale_snapshot_warning_count"] == "0"
+    assert row["unrelated_snapshot_warning_count"] == "0"
 
 
 def test_dashboard_metadata_exports_market_cache_export_fields(tmp_path: Path) -> None:
@@ -675,6 +765,12 @@ def test_dashboard_metadata_exports_market_cache_export_fields(tmp_path: Path) -
     assert metadata["market_cache_export_data_quality_status"] == "PASS"
     assert metadata["market_cache_export_snapshot_quality_status"] == "PASS"
     assert metadata["market_cache_export_snapshot_manifest_path"].endswith("snapshot_manifest.json")
+    assert metadata["linked_snapshot_quality_status"] == "PASS"
+    assert metadata["active_snapshot_chain"] == "MARKET_CACHE_EXPORT_STATUS"
+    assert metadata["active_snapshot_warning_count"] == 0
+    assert metadata["active_snapshot_error_count"] == 0
+    assert metadata["stale_snapshot_warning_count"] == 0
+    assert metadata["unrelated_snapshot_warning_count"] == 0
     assert component_statuses["latest_market_cache_export_id"] == "export-metadata"
     assert component_statuses["market_cache_export_pipeline_id"] == "pipeline-export-metadata"
 
@@ -692,6 +788,8 @@ def test_cli_research_status_prints_market_cache_export_fields(tmp_path: Path, c
     assert "market_cache_export_stage: SNAPSHOT_READY_FROM_EXPORT" in output.out
     assert "market_cache_export_pipeline_id: pipeline-export-cli" in output.out
     assert "market_cache_export_snapshot_quality_status: PASS" in output.out
+    assert "active_snapshot_chain: MARKET_CACHE_EXPORT_STATUS" in output.out
+    assert "linked_snapshot_quality_status: PASS" in output.out
 
 
 def test_cli_research_status_prints_historical_backfill_fields(tmp_path: Path, capsys) -> None:
@@ -1264,6 +1362,7 @@ def _market_cache_export_status(
     status: str = "PASS",
     workflow_stage: str = "SNAPSHOT_READY_FROM_EXPORT",
     health_status: str = "PASS",
+    snapshot_quality_status: str = "PASS",
     warning_count: int = 0,
     error_count: int = 0,
     created_at: str = f"{DECISION_DATE}T15:00:00",
@@ -1320,7 +1419,7 @@ def _market_cache_export_status(
                 "pipeline_id": f"pipeline-{export_id}",
                 "data_pipeline_status": "PASS",
                 "data_quality_status": "PASS",
-                "snapshot_quality_status": "PASS",
+                "snapshot_quality_status": snapshot_quality_status,
                 "snapshot_manifest_path": str(snapshot_manifest),
                 "health_status": health_status,
                 "issue_count": warning_count + error_count,

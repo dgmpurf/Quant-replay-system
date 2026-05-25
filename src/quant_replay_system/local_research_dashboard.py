@@ -42,6 +42,12 @@ DASHBOARD_COLUMNS = [
     "stale_warning_count",
     "actionable_warning_count",
     "blocking_error_count",
+    "linked_snapshot_quality_status",
+    "active_snapshot_chain",
+    "active_snapshot_warning_count",
+    "active_snapshot_error_count",
+    "stale_snapshot_warning_count",
+    "unrelated_snapshot_warning_count",
     "warning_classification",
     "next_action",
     "notes",
@@ -54,6 +60,12 @@ SUMMARY_COLUMNS = [
     "universe_name",
     "data_preparation_status",
     "snapshot_quality_status",
+    "linked_snapshot_quality_status",
+    "active_snapshot_chain",
+    "active_snapshot_warning_count",
+    "active_snapshot_error_count",
+    "stale_snapshot_warning_count",
+    "unrelated_snapshot_warning_count",
     "current_candidate_status",
     "current_candidate_health_status",
     "historical_backfill_status",
@@ -104,6 +116,12 @@ EXPECTED_REVIEWABLE_WARNING = "EXPECTED_REVIEWABLE_WARNING"
 STALE_ARTIFACT_WARNING = "STALE_ARTIFACT_WARNING"
 ACTIONABLE_WARNING = "ACTIONABLE_WARNING"
 BLOCKING_ERROR = "BLOCKING_ERROR"
+ACTIVE_SNAPSHOT_WARNING = "ACTIVE_SNAPSHOT_WARNING"
+ACTIVE_SNAPSHOT_ERROR = "ACTIVE_SNAPSHOT_ERROR"
+STALE_SNAPSHOT_WARNING = "STALE_SNAPSHOT_WARNING"
+UNRELATED_SNAPSHOT_WARNING = "UNRELATED_SNAPSHOT_WARNING"
+LINKED_SNAPSHOT_PASS = "LINKED_SNAPSHOT_PASS"
+MISSING_LINKED_SNAPSHOT = "MISSING_LINKED_SNAPSHOT"
 
 DEMO_WORKFLOW_NEXT_ACTION = (
     "Demo workflow validated; no fills were supplied. Proceed to paper-reconcile-fills only if you want "
@@ -175,6 +193,12 @@ class LocalResearchDashboardResult:
     universe_name: str
     data_preparation_status: str
     snapshot_quality_status: str
+    linked_snapshot_quality_status: str
+    active_snapshot_chain: str
+    active_snapshot_warning_count: int
+    active_snapshot_error_count: int
+    stale_snapshot_warning_count: int
+    unrelated_snapshot_warning_count: int
     current_candidate_status: str
     current_candidate_health_status: str
     historical_backfill_status: str
@@ -340,6 +364,12 @@ def run_local_research_dashboard(
         universe_name=str(summary.get("universe_name", "")),
         data_preparation_status=str(summary.get("data_preparation_status", "MISSING")),
         snapshot_quality_status=str(summary.get("snapshot_quality_status", "MISSING")),
+        linked_snapshot_quality_status=str(summary.get("linked_snapshot_quality_status", "")),
+        active_snapshot_chain=str(summary.get("active_snapshot_chain", "")),
+        active_snapshot_warning_count=_int_or_zero(summary.get("active_snapshot_warning_count")),
+        active_snapshot_error_count=_int_or_zero(summary.get("active_snapshot_error_count")),
+        stale_snapshot_warning_count=_int_or_zero(summary.get("stale_snapshot_warning_count")),
+        unrelated_snapshot_warning_count=_int_or_zero(summary.get("unrelated_snapshot_warning_count")),
         current_candidate_status=str(summary.get("current_candidate_status", "MISSING")),
         current_candidate_health_status=str(summary.get("current_candidate_health_status", "MISSING")),
         historical_backfill_status=str(summary.get("historical_backfill_status", "MISSING")),
@@ -620,8 +650,9 @@ def _classify_local_research_actionability(dashboard_frame: pd.DataFrame) -> pd.
     for row in frame.to_dict("records"):
         classified = dict(row)
         counts = _local_component_warning_actionability(classified, context)
+        classification_override = counts.pop("warning_classification_override", "")
         classified.update(counts)
-        classified["warning_classification"] = _classification_label(counts)
+        classified["warning_classification"] = classification_override or _classification_label(counts)
         records.append(classified)
     return _finalize_dashboard_frame(pd.DataFrame(records))
 
@@ -651,15 +682,16 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
     }
     post_cache_export_components = {
         "DATA_PREPARATION_WORKFLOW",
-        "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
         "MARKET_UPDATE_HANDOFF_STATUS",
         *paper_started_components,
     }
+    active_snapshot = _active_snapshot_context(by_component, paper_started_components)
     return {
         "active_current_run_id": _string_or_empty(current.get("latest_artifact_id")),
         "active_daily_id": _string_or_empty(daily.get("latest_artifact_id")),
+        "active_snapshot": active_snapshot,
         "watch_only_no_fills_demo": _is_watch_only_no_fills_daily(daily_metadata),
         "paper_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
@@ -673,6 +705,85 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_cache_export_components
         ),
+    }
+
+
+def _active_snapshot_context(
+    by_component: dict[str, dict[str, Any]],
+    paper_started_components: set[str],
+) -> dict[str, Any]:
+    paper_started = any(
+        _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+        for component in paper_started_components
+    )
+    candidates = _snapshot_context_from_component(
+        "CURRENT_CANDIDATES",
+        by_component.get("CURRENT_CANDIDATES", {}),
+        status_note_key="snapshot_quality_status",
+    )
+    handoff = _snapshot_context_from_component(
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        by_component.get("MARKET_UPDATE_HANDOFF_STATUS", {}),
+        status_note_key="snapshot_quality_status",
+    )
+    export = _snapshot_context_from_component(
+        "MARKET_CACHE_EXPORT_STATUS",
+        by_component.get("MARKET_CACHE_EXPORT_STATUS", {}),
+        status_note_key="snapshot_quality_status",
+    )
+    if paper_started:
+        return candidates or handoff or export or {
+            "active_snapshot_chain": "PAPER_WORKFLOW_STATUS",
+            "linked_snapshot_quality_status": "UNKNOWN",
+            "snapshot_quality_report_path": "",
+            "snapshot_manifest_path": "",
+        }
+    for context in [candidates, handoff, export]:
+        if context:
+            return context
+    snapshot = by_component.get("SNAPSHOT_QUALITY", {})
+    if _string_or_empty(snapshot.get("status")) != "MISSING":
+        return {
+            "active_snapshot_chain": "SNAPSHOT_QUALITY",
+            "linked_snapshot_quality_status": _string_or_empty(snapshot.get("status")),
+            "snapshot_quality_report_path": _string_or_empty(snapshot.get("report_path")),
+            "snapshot_manifest_path": "",
+        }
+    return {
+        "active_snapshot_chain": "",
+        "linked_snapshot_quality_status": "",
+        "snapshot_quality_report_path": "",
+        "snapshot_manifest_path": "",
+    }
+
+
+def _snapshot_context_from_component(
+    component: str,
+    row: dict[str, Any],
+    *,
+    status_note_key: str,
+) -> dict[str, Any]:
+    if _string_or_empty(row.get("status")) == "MISSING":
+        return {}
+    notes = row.get("notes")
+    status = _parse_note_value(notes, status_note_key)
+    report_path = _parse_note_value(notes, "snapshot_quality_report_path")
+    manifest_path = _parse_note_value(notes, "snapshot_manifest_path")
+    if component == "CURRENT_CANDIDATES":
+        metadata = _metadata_for_row(row)
+        snapshot_quality = (
+            metadata.get("snapshot_quality") if isinstance(metadata.get("snapshot_quality"), dict) else {}
+        )
+        status = status or _string_or_empty(snapshot_quality.get("status"))
+        report_path = report_path or _string_or_empty(snapshot_quality.get("report_path"))
+        manifest_path = manifest_path or _string_or_empty(snapshot_quality.get("snapshot_manifest_path"))
+    if not status and not report_path and not manifest_path:
+        return {}
+    return {
+        "active_snapshot_chain": component,
+        "linked_snapshot_quality_status": _string_or_empty(status) or "UNKNOWN",
+        "snapshot_quality_report_path": report_path,
+        "snapshot_manifest_path": manifest_path,
     }
 
 
@@ -701,6 +812,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
     if component == "HISTORICAL_BACKFILL_STATUS":
         return _historical_backfill_warning_actionability(row, context)
 
+    if component == "SNAPSHOT_QUALITY":
+        return _snapshot_quality_warning_actionability(row, context)
+
     if component == "CURRENT_CANDIDATE_HEALTH":
         issue_counts = _current_candidate_health_issue_actionability(row, context)
         if issue_counts is not None:
@@ -722,6 +836,127 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
         "stale_warning_count": stale_warning_count,
         "actionable_warning_count": actionable_warning_count,
         "blocking_error_count": blocking_error_count,
+    }
+
+
+def _snapshot_quality_warning_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    notes = row.get("notes")
+    stale_note_count = _parse_note_count(notes, "stale_warning_count") + _parse_note_count(notes, "stale_error_count")
+    active = context.get("active_snapshot") if isinstance(context.get("active_snapshot"), dict) else {}
+    active_chain = _string_or_empty(active.get("active_snapshot_chain"))
+    linked_status = _string_or_empty(active.get("linked_snapshot_quality_status")).upper()
+
+    if active_chain and active_chain != "SNAPSHOT_QUALITY":
+        if linked_status == "FAIL":
+            active_errors = max(error_count, 1)
+            return _snapshot_actionability_counts(
+                active_chain=active_chain,
+                linked_status=linked_status,
+                total_warning_count=warning_count,
+                active_snapshot_error_count=active_errors,
+                actionable_warning_count=warning_count,
+                blocking_error_count=active_errors,
+                warning_classification=ACTIVE_SNAPSHOT_ERROR,
+            )
+        if linked_status == "WARN":
+            active_warnings = max(warning_count, 1)
+            return _snapshot_actionability_counts(
+                active_chain=active_chain,
+                linked_status=linked_status,
+                total_warning_count=active_warnings,
+                active_snapshot_warning_count=active_warnings,
+                actionable_warning_count=active_warnings,
+                warning_classification=ACTIVE_SNAPSHOT_WARNING,
+            )
+        if linked_status == "PASS":
+            unrelated_count = max(warning_count + error_count + stale_note_count, 0)
+            labels = [LINKED_SNAPSHOT_PASS]
+            if unrelated_count:
+                labels.append(UNRELATED_SNAPSHOT_WARNING)
+            return _snapshot_actionability_counts(
+                active_chain=active_chain,
+                linked_status=linked_status,
+                total_warning_count=unrelated_count,
+                unrelated_snapshot_warning_count=unrelated_count,
+                warning_classification=";".join(labels),
+            )
+        missing_count = 1 if status in {"WARN", "FAIL"} or warning_count or error_count else 0
+        paper_context = active_chain == "PAPER_WORKFLOW_STATUS"
+        return _snapshot_actionability_counts(
+            active_chain=active_chain,
+            linked_status=linked_status or "UNKNOWN",
+            total_warning_count=missing_count,
+            unrelated_snapshot_warning_count=missing_count if paper_context else 0,
+            actionable_warning_count=0 if paper_context else missing_count,
+            blocking_error_count=0 if paper_context else (1 if status == "FAIL" or error_count else 0),
+            warning_classification=(
+                f"{MISSING_LINKED_SNAPSHOT};{UNRELATED_SNAPSHOT_WARNING}" if paper_context and missing_count else MISSING_LINKED_SNAPSHOT
+            ),
+        )
+
+    if status == "FAIL" or error_count:
+        active_errors = max(error_count, 1)
+        return _snapshot_actionability_counts(
+            active_chain=active_chain or "SNAPSHOT_QUALITY",
+            linked_status=linked_status or status,
+            total_warning_count=warning_count + stale_note_count,
+            active_snapshot_error_count=active_errors,
+            actionable_warning_count=warning_count,
+            stale_snapshot_warning_count=stale_note_count,
+            blocking_error_count=active_errors,
+            warning_classification=ACTIVE_SNAPSHOT_ERROR,
+        )
+    if status == "WARN" or warning_count:
+        active_warnings = max(warning_count, 1)
+        return _snapshot_actionability_counts(
+            active_chain=active_chain or "SNAPSHOT_QUALITY",
+            linked_status=linked_status or status,
+            total_warning_count=active_warnings + stale_note_count,
+            active_snapshot_warning_count=active_warnings,
+            stale_snapshot_warning_count=stale_note_count,
+            actionable_warning_count=active_warnings,
+            warning_classification=ACTIVE_SNAPSHOT_WARNING,
+        )
+    return _snapshot_actionability_counts(
+        active_chain=active_chain,
+        linked_status=linked_status,
+        total_warning_count=stale_note_count,
+        stale_snapshot_warning_count=stale_note_count,
+        warning_classification=STALE_SNAPSHOT_WARNING if stale_note_count else "",
+    )
+
+
+def _snapshot_actionability_counts(
+    *,
+    active_chain: str,
+    linked_status: str,
+    total_warning_count: int = 0,
+    active_snapshot_warning_count: int = 0,
+    active_snapshot_error_count: int = 0,
+    stale_snapshot_warning_count: int = 0,
+    unrelated_snapshot_warning_count: int = 0,
+    actionable_warning_count: int = 0,
+    blocking_error_count: int = 0,
+    warning_classification: str = "",
+) -> dict[str, Any]:
+    stale_warning_count = stale_snapshot_warning_count + unrelated_snapshot_warning_count
+    return {
+        "total_warning_count": total_warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": stale_warning_count,
+        "actionable_warning_count": actionable_warning_count,
+        "blocking_error_count": blocking_error_count,
+        "linked_snapshot_quality_status": linked_status,
+        "active_snapshot_chain": active_chain,
+        "active_snapshot_warning_count": active_snapshot_warning_count,
+        "active_snapshot_error_count": active_snapshot_error_count,
+        "stale_snapshot_warning_count": stale_snapshot_warning_count,
+        "unrelated_snapshot_warning_count": unrelated_snapshot_warning_count,
+        "warning_classification_override": warning_classification,
     }
 
 
@@ -1169,7 +1404,16 @@ def summarize_local_research_status(
 
     frame = _finalize_dashboard_frame(dashboard_frame)
     by_component = {row["component"]: row for row in frame.to_dict("records")}
-    active = frame.loc[frame["status"] != "MISSING"] if not frame.empty else pd.DataFrame()
+    if frame.empty:
+        active = pd.DataFrame()
+    else:
+        active = frame.loc[
+            (frame["status"] != "MISSING")
+            | (pd.to_numeric(frame.get("actionable_warning_count", 0), errors="coerce").fillna(0) > 0)
+            | (pd.to_numeric(frame.get("blocking_error_count", 0), errors="coerce").fillna(0) > 0)
+            | (pd.to_numeric(frame.get("active_snapshot_warning_count", 0), errors="coerce").fillna(0) > 0)
+            | (pd.to_numeric(frame.get("active_snapshot_error_count", 0), errors="coerce").fillna(0) > 0)
+        ]
     active_statuses = [str(row.get("status", "")).upper() for row in active.to_dict("records")]
     status_frame = frame.loc[
         ~(
@@ -1187,9 +1431,12 @@ def summarize_local_research_status(
     stale_pre_paper_fail_only = _only_stale_pre_paper_fail(frame, actionability)
     status = (
         "FAIL"
-        if ("FAIL" in active_statuses or error_count) and not stale_pre_paper_fail_only
+        if (
+            actionability["blocking_error_count"] > 0
+            or (("FAIL" in active_statuses or error_count) and not stale_pre_paper_fail_only)
+        )
         else "WARN"
-        if "WARN" in active_statuses or missing_count or warning_count
+        if actionability["actionable_warning_count"] > 0 or "WARN" in active_statuses or missing_count or warning_count
         else "PASS"
     )
     row = {
@@ -1199,6 +1446,12 @@ def summarize_local_research_status(
         "universe_name": _latest_universe_name(frame),
         "data_preparation_status": _component_status(by_component, "DATA_PREPARATION_WORKFLOW"),
         "snapshot_quality_status": _component_status(by_component, "SNAPSHOT_QUALITY"),
+        "linked_snapshot_quality_status": _linked_snapshot_quality_status_from_frame(frame),
+        "active_snapshot_chain": _active_snapshot_chain_from_frame(frame),
+        "active_snapshot_warning_count": _sum_int_column(frame, "active_snapshot_warning_count"),
+        "active_snapshot_error_count": _sum_int_column(frame, "active_snapshot_error_count"),
+        "stale_snapshot_warning_count": _sum_int_column(frame, "stale_snapshot_warning_count"),
+        "unrelated_snapshot_warning_count": _sum_int_column(frame, "unrelated_snapshot_warning_count"),
         "current_candidate_status": _component_status(by_component, "CURRENT_CANDIDATES"),
         "current_candidate_health_status": _component_status(by_component, "CURRENT_CANDIDATE_HEALTH"),
         "historical_backfill_status": _component_status(by_component, "HISTORICAL_BACKFILL_STATUS"),
@@ -1350,6 +1603,12 @@ def build_local_research_dashboard_metadata(
         "workflow_stage": result.workflow_stage,
         "latest_decision_date": result.latest_decision_date,
         "universe_name": result.universe_name,
+        "linked_snapshot_quality_status": result.linked_snapshot_quality_status,
+        "active_snapshot_chain": result.active_snapshot_chain,
+        "active_snapshot_warning_count": result.active_snapshot_warning_count,
+        "active_snapshot_error_count": result.active_snapshot_error_count,
+        "stale_snapshot_warning_count": result.stale_snapshot_warning_count,
+        "unrelated_snapshot_warning_count": result.unrelated_snapshot_warning_count,
         "latest_historical_backfill_id": result.latest_historical_backfill_id,
         "historical_backfill_status": result.historical_backfill_status,
         "historical_backfill_stage": result.historical_backfill_stage,
@@ -1418,6 +1677,12 @@ def render_local_research_dashboard_report(
                 "status",
                 "latest_decision_date",
                 "universe_name",
+                "linked_snapshot_quality_status",
+                "active_snapshot_chain",
+                "active_snapshot_warning_count",
+                "active_snapshot_error_count",
+                "stale_snapshot_warning_count",
+                "unrelated_snapshot_warning_count",
                 "historical_backfill_status",
                 "latest_historical_backfill_id",
                 "historical_backfill_stage",
@@ -1463,6 +1728,12 @@ def render_local_research_dashboard_report(
                 "stale_warning_count",
                 "actionable_warning_count",
                 "blocking_error_count",
+                "linked_snapshot_quality_status",
+                "active_snapshot_chain",
+                "active_snapshot_warning_count",
+                "active_snapshot_error_count",
+                "stale_snapshot_warning_count",
+                "unrelated_snapshot_warning_count",
                 "warning_classification",
                 "next_action",
                 "report_path",
@@ -1852,6 +2123,7 @@ def _market_cache_export_notes(metadata: dict[str, Any], summary: dict[str, Any]
         f"data_quality_status={_string_or_empty(summary.get('data_quality_status'))}; "
         f"snapshot_quality_status={_string_or_empty(summary.get('snapshot_quality_status'))}; "
         f"snapshot_manifest_path={_string_or_empty(summary.get('snapshot_manifest_path'))}; "
+        f"snapshot_quality_report_path={_string_or_empty(summary.get('snapshot_quality_report_path'))}; "
         f"generated_pipeline_manifest_path={_string_or_empty(summary.get('generated_pipeline_manifest_path'))}; "
         f"duplicate_key_count={_string_or_empty(summary.get('duplicate_key_count'))}; "
         f"health_status={_string_or_empty(summary.get('health_status'))}"
@@ -2203,6 +2475,12 @@ def _record(**values: Any) -> dict[str, Any]:
         "stale_warning_count": 0,
         "actionable_warning_count": 0,
         "blocking_error_count": 0,
+        "linked_snapshot_quality_status": "",
+        "active_snapshot_chain": "",
+        "active_snapshot_warning_count": 0,
+        "active_snapshot_error_count": 0,
+        "stale_snapshot_warning_count": 0,
+        "unrelated_snapshot_warning_count": 0,
         "warning_classification": "",
         "next_action": "",
         "notes": "",
@@ -2225,6 +2503,12 @@ def _record(**values: Any) -> dict[str, Any]:
     row["stale_warning_count"] = _int_or_zero(row.get("stale_warning_count"))
     row["actionable_warning_count"] = _int_or_zero(row.get("actionable_warning_count"))
     row["blocking_error_count"] = _int_or_zero(row.get("blocking_error_count"))
+    row["linked_snapshot_quality_status"] = _string_or_empty(row.get("linked_snapshot_quality_status"))
+    row["active_snapshot_chain"] = _string_or_empty(row.get("active_snapshot_chain"))
+    row["active_snapshot_warning_count"] = _int_or_zero(row.get("active_snapshot_warning_count"))
+    row["active_snapshot_error_count"] = _int_or_zero(row.get("active_snapshot_error_count"))
+    row["stale_snapshot_warning_count"] = _int_or_zero(row.get("stale_snapshot_warning_count"))
+    row["unrelated_snapshot_warning_count"] = _int_or_zero(row.get("unrelated_snapshot_warning_count"))
     row["warning_classification"] = _string_or_empty(row.get("warning_classification"))
     return row
 
@@ -2344,7 +2628,6 @@ def _has_post_cache_export_workflow_component(dashboard_frame: pd.DataFrame) -> 
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "DATA_PREPARATION_WORKFLOW",
-        "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
         "MARKET_UPDATE_HANDOFF_STATUS",
@@ -2366,7 +2649,13 @@ def _has_attention_status(dashboard_frame: pd.DataFrame) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)
     if frame.empty:
         return False
-    active = frame.loc[frame["status"] != "MISSING"]
+    active = frame.loc[
+        (frame["status"] != "MISSING")
+        | (pd.to_numeric(frame.get("actionable_warning_count", 0), errors="coerce").fillna(0) > 0)
+        | (pd.to_numeric(frame.get("blocking_error_count", 0), errors="coerce").fillna(0) > 0)
+        | (pd.to_numeric(frame.get("active_snapshot_warning_count", 0), errors="coerce").fillna(0) > 0)
+        | (pd.to_numeric(frame.get("active_snapshot_error_count", 0), errors="coerce").fillna(0) > 0)
+    ]
     if active.empty:
         return False
     totals = _warning_actionability_totals(active)
@@ -2404,6 +2693,32 @@ def _component_has_only_non_actionable_warnings(dashboard_frame: pd.DataFrame, c
 def _component_status(by_component: dict[str, dict[str, Any]], component: str) -> str:
     row = by_component.get(component, {})
     return _string_or_empty(row.get("status")) or "MISSING"
+
+
+def _linked_snapshot_quality_status_from_frame(frame: pd.DataFrame) -> str:
+    finalized = _finalize_dashboard_frame(frame)
+    rows = finalized.loc[finalized["component"] == "SNAPSHOT_QUALITY"]
+    if not rows.empty:
+        linked = _string_or_empty(rows.iloc[0].get("linked_snapshot_quality_status"))
+        if linked:
+            return linked
+    return ""
+
+
+def _active_snapshot_chain_from_frame(frame: pd.DataFrame) -> str:
+    finalized = _finalize_dashboard_frame(frame)
+    rows = finalized.loc[finalized["component"] == "SNAPSHOT_QUALITY"]
+    if not rows.empty:
+        chain = _string_or_empty(rows.iloc[0].get("active_snapshot_chain"))
+        if chain:
+            return chain
+    return ""
+
+
+def _sum_int_column(frame: pd.DataFrame, column: str) -> int:
+    if frame.empty or column not in frame.columns:
+        return 0
+    return int(pd.to_numeric(frame[column], errors="coerce").fillna(0).sum())
 
 
 def _latest_decision_date(frame: pd.DataFrame) -> str:

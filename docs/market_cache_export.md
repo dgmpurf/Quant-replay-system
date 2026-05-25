@@ -103,6 +103,8 @@ These views check artifact completeness and duplicate-key safety. They do not ce
 
 `research-status` also includes the latest `market-cache-export-status` fields as reviewed cache-to-snapshot context. If the latest export is `SNAPSHOT_READY_FROM_EXPORT`, the unified dashboard can recommend `current-candidates`; if later current-candidates or paper workflow artifacts already exist, those later stages keep priority and the export remains visible as context.
 
+The export's linked `snapshot_quality_status` is also used for snapshot warning actionability. A linked `PASS` prevents older unrelated standalone snapshot warnings from blocking the active reviewed export path; a linked `WARN` or `FAIL` remains actionable.
+
 ## Validation
 
 Before writing the reviewed export, the workflow checks:
