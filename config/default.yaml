@@ -339,6 +339,36 @@ market_cache_export:
   enable_live_trading: false
   enable_broker_api: false
 
+market_cache_export_index:
+  root_dir: outputs/reports/market_cache_export
+  output_dir: outputs/reports/market_cache_export/index
+  include_missing_metadata: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+market_cache_export_health:
+  index_path: outputs/reports/market_cache_export/index/market_cache_export_index.csv
+  root_dir: outputs/reports/market_cache_export
+  output_dir: outputs/reports/market_cache_export/health
+  strict: false
+  missing_no_live_statement_severity: WARN
+  missing_linked_artifact_severity: ERROR
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+market_cache_export_status:
+  root_dir: outputs/reports/market_cache_export
+  output_dir: outputs/reports/market_cache_export/status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 market_data_comparison:
   output_dir: outputs/reports/market_data_comparison
   price_abs_tolerance: 0.0001

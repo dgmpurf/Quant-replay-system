@@ -372,6 +372,39 @@ class MarketCacheExportSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketCacheExportIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/market_cache_export")
+    output_dir: Path = Path("outputs/reports/market_cache_export/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class MarketCacheExportHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/market_cache_export/index/market_cache_export_index.csv")
+    root_dir: Path = Path("outputs/reports/market_cache_export")
+    output_dir: Path = Path("outputs/reports/market_cache_export/health")
+    strict: bool = False
+    missing_no_live_statement_severity: Literal["WARN", "ERROR"] = "WARN"
+    missing_linked_artifact_severity: Literal["WARN", "ERROR"] = "ERROR"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class MarketCacheExportStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/market_cache_export")
+    output_dir: Path = Path("outputs/reports/market_cache_export/status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class MarketDataComparisonSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/market_data_comparison")
     price_abs_tolerance: float = Field(default=0.0001, ge=0)
@@ -774,6 +807,9 @@ class Settings(BaseModel):
     data_source_health: DataSourceHealthSettings = Field(default_factory=DataSourceHealthSettings)
     market_data_cache: MarketDataCacheSettings = Field(default_factory=MarketDataCacheSettings)
     market_cache_export: MarketCacheExportSettings = Field(default_factory=MarketCacheExportSettings)
+    market_cache_export_index: MarketCacheExportIndexSettings = Field(default_factory=MarketCacheExportIndexSettings)
+    market_cache_export_health: MarketCacheExportHealthSettings = Field(default_factory=MarketCacheExportHealthSettings)
+    market_cache_export_status: MarketCacheExportStatusSettings = Field(default_factory=MarketCacheExportStatusSettings)
     market_data_comparison: MarketDataComparisonSettings = Field(default_factory=MarketDataComparisonSettings)
     market_source_policy: MarketSourcePolicySettings = Field(default_factory=MarketSourcePolicySettings)
     market_cache_preflight: MarketCachePreflightSettings = Field(default_factory=MarketCachePreflightSettings)

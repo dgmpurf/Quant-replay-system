@@ -133,6 +133,8 @@ For caching successful canonical daily market bars and querying them into local 
 
 For exporting reviewed source/upstream cache selections into one data-pipeline-ready market CSV, use `market-cache-export`; see [docs/market_cache_export.md](docs/market_cache_export.md).
 
+To discover, check, and summarize reviewed cache exports before downstream snapshot workflows, use `market-cache-export-index`, `market-cache-export-health`, and `market-cache-export-status`; see [docs/market_cache_export.md#index-health-and-status](docs/market_cache_export.md#index-health-and-status).
+
 For source-policy-aware acceptance checks before ingesting market rows into the local cache, use `market-cache-preflight`; see [docs/market_cache_preflight.md](docs/market_cache_preflight.md).
 
 For a dry-run-first local market update wrapper that runs preflight before optional cache ingest, use `market-daily-update`; see [docs/market_daily_update.md](docs/market_daily_update.md).
@@ -219,6 +221,9 @@ python -m quant_replay_system.cli market-cache-ingest --input data/raw/AKSHARE_O
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --source AKSHARE_OPTIONAL --upstream-source SINA --output data/raw/manual_cache/510300_market.csv
 python -m quant_replay_system.cli market-cache-export --manifest data/raw/manual_manifests/reviewed_cache_export_example.csv --build-pipeline-manifest --universe data/raw/LOCAL_CSV/universe_overlay/<overlay_id>/raw_data.csv --trading-calendar data/raw/AKSHARE_OPTIONAL/trading_calendar/<run_id>/raw_data.csv
+python -m quant_replay_system.cli market-cache-export-index
+python -m quant_replay_system.cli market-cache-export-health
+python -m quant_replay_system.cli market-cache-export-status
 python -m quant_replay_system.cli universe-overlay --base-universe data/raw/AKSHARE_OPTIONAL/universe/<run_id>/raw_data.csv --overlay data/raw/manual_overlays/etf_universe_overlay.csv
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data/mock/prices.csv
 python -m quant_replay_system.cli paper-daily --date 2024-05-20 --candidates outputs/reports/replay_runs/example/candidates.csv

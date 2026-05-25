@@ -149,6 +149,16 @@ python -m quant_replay_system.cli market-cache-export --manifest data\raw\manual
 
 See [market_cache_export.md](market_cache_export.md).
 
+After creating reviewed exports, use the export artifact views before repeating downstream snapshot work:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-index
+python -m quant_replay_system.cli market-cache-export-health
+python -m quant_replay_system.cli market-cache-export-status
+```
+
+The index discovers reviewed export folders, health verifies exported CSV completeness and duplicate-key safety, and status summarizes whether the latest export is ready for `data-pipeline`, `data-quality`, `snapshot-quality`, or current-candidate use. These commands inspect local artifacts only and do not mutate the market cache.
+
 ## Compare Sources
 
 When the cache contains the same symbol/date from multiple sources, compare them before relying on combined cached data:

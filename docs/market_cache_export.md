@@ -68,6 +68,39 @@ The generated manifest uses `LOCAL_CSV` entries for:
 
 `market-cache-export` does not run `data-pipeline` automatically in v0.1.
 
+## Index, Health, And Status
+
+Reviewed export artifacts can be discovered and checked before downstream snapshot workflows:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-index
+python -m quant_replay_system.cli market-cache-export-health
+python -m quant_replay_system.cli market-cache-export-status
+```
+
+`market-cache-export-index` scans `outputs/reports/market_cache_export/` and writes:
+
+```text
+outputs/reports/market_cache_export/index/market_cache_export_index.csv
+outputs/reports/market_cache_export/index/market_cache_export_index_report.md
+outputs/reports/market_cache_export/index/metadata.json
+```
+
+The index records export id, exported market CSV path, row count, duplicate-key count, source/upstream selections, linked pipeline/data-quality/snapshot-quality statuses when available, and report paths.
+
+`market-cache-export-health` checks that metadata and reports are readable, the exported market CSV exists, required canonical market columns are present, and duplicate `symbol + trade_date` keys are absent. Linked pipeline, data-quality, and snapshot-quality reports are checked when the export index records those links.
+
+`market-cache-export-status` summarizes the latest export and next manual action. Typical stages include:
+
+- `CACHE_EXPORT_READY`
+- `PIPELINE_READY_FROM_EXPORT`
+- `DATA_QUALITY_READY_FROM_EXPORT`
+- `SNAPSHOT_READY_FROM_EXPORT`
+- `CACHE_EXPORT_HEALTH_WARN`
+- `CACHE_EXPORT_FAILED`
+
+These views check artifact completeness and duplicate-key safety. They do not certify source truth, alter cache data, choose a trusted source automatically, or run paper/live trading.
+
 ## Validation
 
 Before writing the reviewed export, the workflow checks:
