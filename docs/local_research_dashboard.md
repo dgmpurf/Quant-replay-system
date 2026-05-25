@@ -59,11 +59,11 @@ Cache writes remain explicit and manual. A `WARN` dry-run does not approve cache
 
 `research-status` includes `market-cache-export-plan-status` as policy recommendation context when those artifacts exist.
 
-The unified summary records the latest policy plan id, plan status/stage, recommendation counts, generated reviewed manifest path, linked downstream export id, linked downstream snapshot-quality status, and the plan's next manual action. When the plan stage is `SNAPSHOT_READY_FROM_POLICY_PLAN`, the dashboard understands that a policy recommendation plan exists, a reviewed manifest exists, and linked export/snapshot validation may already be ready.
+The unified summary records the latest policy plan id, plan status/stage, recommendation counts, source-comparison support counts, generated reviewed manifest path, linked downstream export id, linked downstream snapshot-quality status, and the plan's next manual action. When the plan stage is `SNAPSHOT_READY_FROM_POLICY_PLAN`, the dashboard understands that a policy recommendation plan exists, a reviewed manifest exists, and linked export/snapshot validation may already be ready.
 
 Policy-plan status is earlier than reviewed cache export, current-candidates, market-update-handoff, historical backfill context, and paper workflow in the unified dashboard. If those later artifacts exist, they take priority for the final `workflow_stage`; policy-plan fields remain visible as context. If a policy plan has active failures such as a missing generated manifest or missing explicit source/upstream fields and no later valid workflow supersedes it, `research-status` surfaces the plan failure as actionable.
 
-`PROVISIONAL` recommendations such as ETF/Sina remain visible as reviewable `WARN` signals. They are not hidden, converted to `PASS`, or treated as blocking errors by themselves. The policy plan does not export rows, mutate cache, or automatically choose a source for downstream use.
+`PROVISIONAL` recommendations such as ETF/Sina remain visible as reviewable `WARN` signals. If their comparison status is `UNAVAILABLE` because no second ETF reference source exists locally, the dashboard reports the unsupported count as context rather than treating it as a blocking error. A comparison `FAIL` for a recommended stock source remains actionable when the policy plan is the active stage. The policy plan does not export rows, mutate cache, or automatically choose a source for downstream use.
 
 ## Market Cache Export Status
 
@@ -140,6 +140,7 @@ Prior current-candidate health warnings from old dry runs can be classified as s
 - `BACKFILL_FAILED`: historical backfill has active failure and needs repair or rerun.
 - `POLICY_PLAN_READY_FOR_REVIEW`: policy recommendations exist and should be reviewed before export.
 - `POLICY_PLAN_WARNINGS_NEED_REVIEW`: policy recommendations have reviewable warnings, such as provisional ETF/Sina fields.
+- `POLICY_PLAN_COMPARISON_WARNINGS_NEED_REVIEW`: policy recommendations include source-comparison failures or warnings that should be reviewed before export.
 - `POLICY_PLAN_FAILED`: policy recommendation artifacts have active failures and need repair.
 - `REVIEWED_MANIFEST_READY`: generated reviewed cache export manifest exists and can be inspected before explicit export.
 - `EXPORT_READY_FROM_POLICY_PLAN`: linked export from the generated manifest exists.

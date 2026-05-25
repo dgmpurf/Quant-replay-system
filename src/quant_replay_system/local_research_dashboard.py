@@ -87,6 +87,13 @@ SUMMARY_COLUMNS = [
     "market_cache_export_plan_recommendation_count",
     "market_cache_export_plan_recommended_count",
     "market_cache_export_plan_warning_count",
+    "market_cache_export_plan_comparison_pass_count",
+    "market_cache_export_plan_comparison_warn_count",
+    "market_cache_export_plan_comparison_fail_count",
+    "market_cache_export_plan_comparison_unavailable_count",
+    "market_cache_export_plan_comparison_required_but_missing_count",
+    "market_cache_export_plan_comparison_supported_recommendation_count",
+    "market_cache_export_plan_comparison_unsupported_recommendation_count",
     "market_cache_export_plan_generated_manifest_path",
     "market_cache_export_plan_downstream_export_id",
     "market_cache_export_plan_downstream_snapshot_quality_status",
@@ -232,6 +239,13 @@ class LocalResearchDashboardResult:
     market_cache_export_plan_recommendation_count: int
     market_cache_export_plan_recommended_count: int
     market_cache_export_plan_warning_count: int
+    market_cache_export_plan_comparison_pass_count: int
+    market_cache_export_plan_comparison_warn_count: int
+    market_cache_export_plan_comparison_fail_count: int
+    market_cache_export_plan_comparison_unavailable_count: int
+    market_cache_export_plan_comparison_required_but_missing_count: int
+    market_cache_export_plan_comparison_supported_recommendation_count: int
+    market_cache_export_plan_comparison_unsupported_recommendation_count: int
     market_cache_export_plan_generated_manifest_path: str
     market_cache_export_plan_downstream_export_id: str
     market_cache_export_plan_downstream_snapshot_quality_status: str
@@ -427,6 +441,27 @@ def run_local_research_dashboard(
             summary.get("market_cache_export_plan_recommended_count")
         ),
         market_cache_export_plan_warning_count=_int_or_zero(summary.get("market_cache_export_plan_warning_count")),
+        market_cache_export_plan_comparison_pass_count=_int_or_zero(
+            summary.get("market_cache_export_plan_comparison_pass_count")
+        ),
+        market_cache_export_plan_comparison_warn_count=_int_or_zero(
+            summary.get("market_cache_export_plan_comparison_warn_count")
+        ),
+        market_cache_export_plan_comparison_fail_count=_int_or_zero(
+            summary.get("market_cache_export_plan_comparison_fail_count")
+        ),
+        market_cache_export_plan_comparison_unavailable_count=_int_or_zero(
+            summary.get("market_cache_export_plan_comparison_unavailable_count")
+        ),
+        market_cache_export_plan_comparison_required_but_missing_count=_int_or_zero(
+            summary.get("market_cache_export_plan_comparison_required_but_missing_count")
+        ),
+        market_cache_export_plan_comparison_supported_recommendation_count=_int_or_zero(
+            summary.get("market_cache_export_plan_comparison_supported_recommendation_count")
+        ),
+        market_cache_export_plan_comparison_unsupported_recommendation_count=_int_or_zero(
+            summary.get("market_cache_export_plan_comparison_unsupported_recommendation_count")
+        ),
         market_cache_export_plan_generated_manifest_path=str(
             summary.get("market_cache_export_plan_generated_manifest_path", "")
         ),
@@ -1525,6 +1560,7 @@ def infer_local_research_next_action(
         "BACKFILL_FAILED": "Review historical-backfill-health errors and repair or rerun the failed backfill.",
         "POLICY_PLAN_READY_FOR_REVIEW": "Review policy recommendations before generating or using a cache export manifest.",
         "POLICY_PLAN_WARNINGS_NEED_REVIEW": "Review PROVISIONAL policy warnings before running market-cache-export.",
+        "POLICY_PLAN_COMPARISON_WARNINGS_NEED_REVIEW": "Review source-comparison warnings before running market-cache-export.",
         "POLICY_PLAN_FAILED": "Review market-cache-export-plan-health errors before using the generated manifest.",
         "REVIEWED_MANIFEST_READY": "Review the generated manifest, then run market-cache-export explicitly.",
         "EXPORT_READY_FROM_POLICY_PLAN": "Run or inspect data-pipeline, data-quality, and snapshot-quality for the linked export.",
@@ -1676,6 +1712,48 @@ def summarize_local_research_status(
             _parse_note_value(
                 by_component.get("MARKET_CACHE_EXPORT_POLICY_STATUS", {}).get("notes"),
                 "recommended_with_warnings_count",
+            )
+        ),
+        "market_cache_export_plan_comparison_pass_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("MARKET_CACHE_EXPORT_POLICY_STATUS", {}).get("notes"),
+                "comparison_pass_count",
+            )
+        ),
+        "market_cache_export_plan_comparison_warn_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("MARKET_CACHE_EXPORT_POLICY_STATUS", {}).get("notes"),
+                "comparison_warn_count",
+            )
+        ),
+        "market_cache_export_plan_comparison_fail_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("MARKET_CACHE_EXPORT_POLICY_STATUS", {}).get("notes"),
+                "comparison_fail_count",
+            )
+        ),
+        "market_cache_export_plan_comparison_unavailable_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("MARKET_CACHE_EXPORT_POLICY_STATUS", {}).get("notes"),
+                "comparison_unavailable_count",
+            )
+        ),
+        "market_cache_export_plan_comparison_required_but_missing_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("MARKET_CACHE_EXPORT_POLICY_STATUS", {}).get("notes"),
+                "comparison_required_but_missing_count",
+            )
+        ),
+        "market_cache_export_plan_comparison_supported_recommendation_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("MARKET_CACHE_EXPORT_POLICY_STATUS", {}).get("notes"),
+                "comparison_supported_recommendation_count",
+            )
+        ),
+        "market_cache_export_plan_comparison_unsupported_recommendation_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("MARKET_CACHE_EXPORT_POLICY_STATUS", {}).get("notes"),
+                "comparison_unsupported_recommendation_count",
             )
         ),
         "market_cache_export_plan_generated_manifest_path": _parse_note_value(
@@ -1831,6 +1909,21 @@ def build_local_research_dashboard_metadata(
         "market_cache_export_plan_recommendation_count": result.market_cache_export_plan_recommendation_count,
         "market_cache_export_plan_recommended_count": result.market_cache_export_plan_recommended_count,
         "market_cache_export_plan_warning_count": result.market_cache_export_plan_warning_count,
+        "market_cache_export_plan_comparison_pass_count": result.market_cache_export_plan_comparison_pass_count,
+        "market_cache_export_plan_comparison_warn_count": result.market_cache_export_plan_comparison_warn_count,
+        "market_cache_export_plan_comparison_fail_count": result.market_cache_export_plan_comparison_fail_count,
+        "market_cache_export_plan_comparison_unavailable_count": (
+            result.market_cache_export_plan_comparison_unavailable_count
+        ),
+        "market_cache_export_plan_comparison_required_but_missing_count": (
+            result.market_cache_export_plan_comparison_required_but_missing_count
+        ),
+        "market_cache_export_plan_comparison_supported_recommendation_count": (
+            result.market_cache_export_plan_comparison_supported_recommendation_count
+        ),
+        "market_cache_export_plan_comparison_unsupported_recommendation_count": (
+            result.market_cache_export_plan_comparison_unsupported_recommendation_count
+        ),
         "market_cache_export_plan_generated_manifest_path": result.market_cache_export_plan_generated_manifest_path,
         "market_cache_export_plan_downstream_export_id": result.market_cache_export_plan_downstream_export_id,
         "market_cache_export_plan_downstream_snapshot_quality_status": (
@@ -1909,6 +2002,9 @@ def render_local_research_dashboard_report(
                 "market_cache_export_plan_stage",
                 "market_cache_export_plan_recommendation_count",
                 "market_cache_export_plan_warning_count",
+                "market_cache_export_plan_comparison_pass_count",
+                "market_cache_export_plan_comparison_fail_count",
+                "market_cache_export_plan_comparison_unavailable_count",
                 "market_cache_export_plan_downstream_export_id",
                 "market_cache_export_plan_downstream_snapshot_quality_status",
                 "market_cache_export_status",
@@ -2346,6 +2442,13 @@ def _market_cache_export_policy_notes(metadata: dict[str, Any], summary: dict[st
         f"recommendation_count={_string_or_empty(summary.get('recommendation_count'))}; "
         f"recommended_count={_string_or_empty(summary.get('recommended_count'))}; "
         f"recommended_with_warnings_count={_string_or_empty(summary.get('recommended_with_warnings_count'))}; "
+        f"comparison_pass_count={_string_or_empty(summary.get('comparison_pass_count'))}; "
+        f"comparison_warn_count={_string_or_empty(summary.get('comparison_warn_count'))}; "
+        f"comparison_fail_count={_string_or_empty(summary.get('comparison_fail_count'))}; "
+        f"comparison_unavailable_count={_string_or_empty(summary.get('comparison_unavailable_count'))}; "
+        f"comparison_required_but_missing_count={_string_or_empty(summary.get('comparison_required_but_missing_count'))}; "
+        f"comparison_supported_recommendation_count={_string_or_empty(summary.get('comparison_supported_recommendation_count'))}; "
+        f"comparison_unsupported_recommendation_count={_string_or_empty(summary.get('comparison_unsupported_recommendation_count'))}; "
         f"generated_reviewed_manifest_path={_string_or_empty(summary.get('generated_reviewed_manifest_path'))}; "
         f"downstream_export_id={_string_or_empty(summary.get('downstream_export_id'))}; "
         f"downstream_export_status={_string_or_empty(summary.get('downstream_export_status'))}; "

@@ -133,7 +133,7 @@ For caching successful canonical daily market bars and querying them into local 
 
 For exporting reviewed source/upstream cache selections into one data-pipeline-ready market CSV, use `market-cache-export`; see [docs/market_cache_export.md](docs/market_cache_export.md).
 
-For drafting reviewed cache export manifests from local cache coverage, source reliability policy, and inline source-comparison diagnostics, use `market-cache-export-plan`; the plan index/health/status views summarize comparison support before larger exports. See [docs/market_cache_export_policy.md](docs/market_cache_export_policy.md).
+For drafting reviewed cache export manifests from local cache coverage, source reliability policy, and inline source-comparison diagnostics, use `market-cache-export-plan`; the plan index/health/status views and unified `research-status` summarize comparison support before larger exports. See [docs/market_cache_export_policy.md](docs/market_cache_export_policy.md).
 
 To discover, check, and summarize policy-aware cache export recommendation plans, use `market-cache-export-plan-index`, `market-cache-export-plan-health`, and `market-cache-export-plan-status`; see [docs/market_cache_export_policy.md#index-health-and-status](docs/market_cache_export_policy.md#index-health-and-status).
 
@@ -206,6 +206,8 @@ For the v0.70.0 reviewed market cache export to `research-status` integration ch
 For the v0.71.0 active snapshot warning actionability checkpoint summary, see [docs/release_checkpoint_v0.71.0.md](docs/release_checkpoint_v0.71.0.md).
 
 For the v0.72.0 policy-aware reviewed cache export through `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.72.0.md](docs/release_checkpoint_v0.72.0.md).
+
+For the v0.73.0 policy-plan source comparison diagnostics through `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.73.0.md](docs/release_checkpoint_v0.73.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -364,6 +366,10 @@ See [docs/release_checkpoint_v0.71.0.md](docs/release_checkpoint_v0.71.0.md) for
 `v0.72.0` marks the policy-aware reviewed cache export through `research-status` integration checkpoint, covering policy-based source/upstream recommendations, generated reviewed export manifests, policy-plan index/health/status, reviewed export/snapshot linkage, and dashboard context that preserves later workflow priority.
 
 See [docs/release_checkpoint_v0.72.0.md](docs/release_checkpoint_v0.72.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.73.0` marks the policy-plan source comparison diagnostics through `research-status` integration checkpoint, covering comparison diagnostics in policy-plan recommendations, comparison PASS/WARN/FAIL/UNAVAILABLE summaries, artifact-view health/status integration, and dashboard CSV/metadata/CLI fields that preserve later workflow priority.
+
+See [docs/release_checkpoint_v0.73.0.md](docs/release_checkpoint_v0.73.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

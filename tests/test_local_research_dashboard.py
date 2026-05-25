@@ -766,6 +766,11 @@ def test_dashboard_includes_market_cache_export_plan_status_when_no_later_workfl
     assert result.market_cache_export_plan_recommendation_count == 2
     assert result.market_cache_export_plan_recommended_count == 1
     assert result.market_cache_export_plan_warning_count == 1
+    assert result.market_cache_export_plan_comparison_pass_count == 1
+    assert result.market_cache_export_plan_comparison_unavailable_count == 1
+    assert result.market_cache_export_plan_comparison_fail_count == 0
+    assert result.market_cache_export_plan_comparison_supported_recommendation_count == 1
+    assert result.market_cache_export_plan_comparison_unsupported_recommendation_count == 1
     assert result.market_cache_export_plan_downstream_export_id == "export-plan-a"
     assert result.market_cache_export_plan_downstream_snapshot_quality_status == "PASS"
     assert result.linked_snapshot_quality_status == "PASS"
@@ -773,6 +778,34 @@ def test_dashboard_includes_market_cache_export_plan_status_when_no_later_workfl
     assert "current-candidates" in result.next_manual_action
     assert plan_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
     assert summary["actionable_warning_count"] == 0
+
+
+def test_dashboard_marks_active_policy_plan_stock_comparison_fail_as_actionable(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(
+        root,
+        plan_id="plan-comparison-fail",
+        status="WARN",
+        workflow_stage="POLICY_PLAN_COMPARISON_WARNINGS_NEED_REVIEW",
+        warning_count=1,
+        comparison_pass_count=0,
+        comparison_fail_count=1,
+        comparison_unavailable_count=0,
+        comparison_supported_recommendation_count=1,
+        comparison_unsupported_recommendation_count=0,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_POLICY_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_NEEDS_ATTENTION"
+    assert result.latest_market_cache_export_plan_id == "plan-comparison-fail"
+    assert result.market_cache_export_plan_comparison_fail_count == 1
+    assert plan_row["warning_classification"] == "ACTIONABLE_WARNING"
+    assert summary["actionable_warning_count"] > 0
 
 
 def test_dashboard_preserves_market_cache_export_priority_with_policy_plan_context(tmp_path: Path) -> None:
@@ -788,6 +821,8 @@ def test_dashboard_preserves_market_cache_export_priority_with_policy_plan_conte
     assert result.workflow_stage == "SNAPSHOT_READY_FROM_EXPORT"
     assert result.market_cache_export_status == "PASS"
     assert result.latest_market_cache_export_plan_id == "plan-context"
+    assert result.market_cache_export_plan_comparison_pass_count == 1
+    assert result.market_cache_export_plan_comparison_unavailable_count == 1
     assert plan_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
     assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
 
@@ -803,6 +838,8 @@ def test_dashboard_preserves_paper_priority_with_market_cache_export_plan_contex
     assert result.paper_workflow_status == "PASS"
     assert result.latest_market_cache_export_plan_id == "plan-paper-context"
     assert result.market_cache_export_plan_status == "WARN"
+    assert result.market_cache_export_plan_comparison_pass_count == 1
+    assert result.market_cache_export_plan_comparison_unavailable_count == 1
     assert result.summary_frame.iloc[0]["stale_warning_count"] > 0
     assert "Review completed" in result.next_manual_action
 
@@ -878,6 +915,13 @@ def test_dashboard_summary_csv_exports_market_cache_export_plan_fields(tmp_path:
     assert row["market_cache_export_plan_recommendation_count"] == "2"
     assert row["market_cache_export_plan_recommended_count"] == "1"
     assert row["market_cache_export_plan_warning_count"] == "1"
+    assert row["market_cache_export_plan_comparison_pass_count"] == "1"
+    assert row["market_cache_export_plan_comparison_warn_count"] == "0"
+    assert row["market_cache_export_plan_comparison_fail_count"] == "0"
+    assert row["market_cache_export_plan_comparison_unavailable_count"] == "1"
+    assert row["market_cache_export_plan_comparison_required_but_missing_count"] == "0"
+    assert row["market_cache_export_plan_comparison_supported_recommendation_count"] == "1"
+    assert row["market_cache_export_plan_comparison_unsupported_recommendation_count"] == "1"
     assert row["market_cache_export_plan_generated_manifest_path"].endswith(
         "market_cache_export_recommended_plan-summary.csv"
     )
@@ -899,9 +943,18 @@ def test_dashboard_metadata_exports_market_cache_export_plan_fields(tmp_path: Pa
     assert metadata["market_cache_export_plan_recommendation_count"] == 2
     assert metadata["market_cache_export_plan_recommended_count"] == 1
     assert metadata["market_cache_export_plan_warning_count"] == 1
+    assert metadata["market_cache_export_plan_comparison_pass_count"] == 1
+    assert metadata["market_cache_export_plan_comparison_warn_count"] == 0
+    assert metadata["market_cache_export_plan_comparison_fail_count"] == 0
+    assert metadata["market_cache_export_plan_comparison_unavailable_count"] == 1
+    assert metadata["market_cache_export_plan_comparison_required_but_missing_count"] == 0
+    assert metadata["market_cache_export_plan_comparison_supported_recommendation_count"] == 1
+    assert metadata["market_cache_export_plan_comparison_unsupported_recommendation_count"] == 1
     assert metadata["market_cache_export_plan_downstream_export_id"] == "export-plan-metadata"
     assert metadata["market_cache_export_plan_downstream_snapshot_quality_status"] == "PASS"
     assert component_statuses["latest_market_cache_export_plan_id"] == "plan-metadata"
+    assert component_statuses["market_cache_export_plan_comparison_pass_count"] == 1
+    assert component_statuses["market_cache_export_plan_comparison_unavailable_count"] == 1
     assert component_statuses["market_cache_export_plan_generated_manifest_path"].endswith(
         "market_cache_export_recommended_plan-metadata.csv"
     )
@@ -962,6 +1015,8 @@ def test_cli_research_status_prints_market_cache_export_plan_fields(tmp_path: Pa
     assert "latest_market_cache_export_plan_id: plan-cli" in output.out
     assert "market_cache_export_plan_status: WARN" in output.out
     assert "market_cache_export_plan_stage: SNAPSHOT_READY_FROM_POLICY_PLAN" in output.out
+    assert "market_cache_export_plan_comparison_pass_count: 1" in output.out
+    assert "market_cache_export_plan_comparison_unavailable_count: 1" in output.out
     assert "market_cache_export_plan_downstream_export_id: export-plan-cli" in output.out
     assert "market_cache_export_plan_downstream_snapshot_quality_status: PASS" in output.out
 
@@ -1638,6 +1693,13 @@ def _market_cache_export_policy_status(
     health_status: str = "WARN",
     warning_count: int = 0,
     error_count: int = 0,
+    comparison_pass_count: int = 1,
+    comparison_warn_count: int = 0,
+    comparison_fail_count: int = 0,
+    comparison_unavailable_count: int = 1,
+    comparison_required_but_missing_count: int = 0,
+    comparison_supported_recommendation_count: int = 1,
+    comparison_unsupported_recommendation_count: int = 1,
     created_at: str = f"{DECISION_DATE}T14:50:00",
 ) -> Path:
     folder = root / "market_cache_export_policy" / "status" / f"status-{plan_id}"
@@ -1672,6 +1734,12 @@ def _market_cache_export_policy_status(
                 "warning_count": 0,
                 "error_count": 0,
                 "issue_count": 0,
+                "comparison_pass_count": comparison_pass_count,
+                "comparison_warn_count": comparison_warn_count,
+                "comparison_fail_count": comparison_fail_count,
+                "comparison_unavailable_count": comparison_unavailable_count,
+                "comparison_supported_recommendation_count": comparison_supported_recommendation_count,
+                "comparison_unsupported_recommendation_count": comparison_unsupported_recommendation_count,
             },
             {
                 "component": "MARKET_CACHE_EXPORT_POLICY_HEALTH",
@@ -1680,6 +1748,12 @@ def _market_cache_export_policy_status(
                 "warning_count": warning_count,
                 "error_count": error_count,
                 "issue_count": warning_count + error_count,
+                "comparison_pass_count": comparison_pass_count,
+                "comparison_warn_count": comparison_warn_count,
+                "comparison_fail_count": comparison_fail_count,
+                "comparison_unavailable_count": comparison_unavailable_count,
+                "comparison_supported_recommendation_count": comparison_supported_recommendation_count,
+                "comparison_unsupported_recommendation_count": comparison_unsupported_recommendation_count,
             },
             {
                 "component": "LATEST_MARKET_CACHE_EXPORT_POLICY_PLAN",
@@ -1688,6 +1762,12 @@ def _market_cache_export_policy_status(
                 "warning_count": warning_count,
                 "error_count": error_count,
                 "issue_count": warning_count + error_count,
+                "comparison_pass_count": comparison_pass_count,
+                "comparison_warn_count": comparison_warn_count,
+                "comparison_fail_count": comparison_fail_count,
+                "comparison_unavailable_count": comparison_unavailable_count,
+                "comparison_supported_recommendation_count": comparison_supported_recommendation_count,
+                "comparison_unsupported_recommendation_count": comparison_unsupported_recommendation_count,
             },
         ]
     ).to_csv(status_csv, index=False)
@@ -1702,6 +1782,13 @@ def _market_cache_export_policy_status(
                 "recommended_with_warnings_count": 1 if warning_count else 0,
                 "no_reliable_source_count": 0,
                 "no_cache_rows_count": 0,
+                "comparison_pass_count": comparison_pass_count,
+                "comparison_warn_count": comparison_warn_count,
+                "comparison_fail_count": comparison_fail_count,
+                "comparison_unavailable_count": comparison_unavailable_count,
+                "comparison_required_but_missing_count": comparison_required_but_missing_count,
+                "comparison_supported_recommendation_count": comparison_supported_recommendation_count,
+                "comparison_unsupported_recommendation_count": comparison_unsupported_recommendation_count,
                 "generated_reviewed_manifest_path": str(generated_manifest),
                 "downstream_export_id": downstream_export_id,
                 "downstream_export_status": "PASS",

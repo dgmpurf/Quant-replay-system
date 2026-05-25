@@ -223,11 +223,17 @@ The index and status summaries include comparison counts:
 - `market_cache_export_plan_status`
 - `market_cache_export_plan_stage`
 - `market_cache_export_plan_recommendation_count`
+- `market_cache_export_plan_comparison_pass_count`
+- `market_cache_export_plan_comparison_warn_count`
+- `market_cache_export_plan_comparison_fail_count`
+- `market_cache_export_plan_comparison_unavailable_count`
+- `market_cache_export_plan_comparison_supported_recommendation_count`
+- `market_cache_export_plan_comparison_unsupported_recommendation_count`
 - `market_cache_export_plan_generated_manifest_path`
 - `market_cache_export_plan_downstream_export_id`
 - `market_cache_export_plan_downstream_snapshot_quality_status`
 
-If the plan stage is `SNAPSHOT_READY_FROM_POLICY_PLAN`, the unified dashboard can recommend using the linked snapshot/export outputs for `current-candidates`. If a reviewed cache export, current-candidate run, market-update-handoff, historical-backfill context, or paper workflow is already more advanced, those later states keep priority and the policy plan remains visible as context.
+If the plan stage is `SNAPSHOT_READY_FROM_POLICY_PLAN`, the unified dashboard can recommend using the linked snapshot/export outputs for `current-candidates`. Comparison unavailable for provisional ETF/Sina recommendations remains visible as review context, while comparison failures for recommended stock sources remain actionable when the policy plan is the active stage. If a reviewed cache export, current-candidate run, market-update-handoff, historical-backfill context, or paper workflow is already more advanced, those later states keep priority and the policy plan remains visible as context.
 
 `PROVISIONAL` recommendations stay visible as reviewable warnings. They do not automatically approve an export, mutate cache, or become trading recommendations.
 

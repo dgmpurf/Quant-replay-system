@@ -1535,6 +1535,13 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"latest_market_cache_export_plan_id: {result.latest_market_cache_export_plan_id}")
     print(f"market_cache_export_plan_status: {result.market_cache_export_plan_status}")
     print(f"market_cache_export_plan_stage: {result.market_cache_export_plan_stage}")
+    print(f"market_cache_export_plan_comparison_pass_count: {result.market_cache_export_plan_comparison_pass_count}")
+    print(f"market_cache_export_plan_comparison_warn_count: {result.market_cache_export_plan_comparison_warn_count}")
+    print(f"market_cache_export_plan_comparison_fail_count: {result.market_cache_export_plan_comparison_fail_count}")
+    print(
+        "market_cache_export_plan_comparison_unavailable_count: "
+        f"{result.market_cache_export_plan_comparison_unavailable_count}"
+    )
     print(f"market_cache_export_plan_downstream_export_id: {result.market_cache_export_plan_downstream_export_id}")
     print(
         "market_cache_export_plan_downstream_snapshot_quality_status: "
