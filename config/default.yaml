@@ -323,6 +323,22 @@ market_data_cache:
   enable_live_trading: false
   enable_broker_api: false
 
+market_cache_export:
+  output_dir: outputs/reports/market_cache_export
+  export_output_dir: data/raw/manual_cache_exports
+  manifest_output_dir: data/raw/manual_manifests
+  default_required_fields:
+    - close
+    - volume
+    - amount
+  require_explicit_source: true
+  reject_duplicate_business_keys: true
+  fail_fast: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 market_data_comparison:
   output_dir: outputs/reports/market_data_comparison
   price_abs_tolerance: 0.0001

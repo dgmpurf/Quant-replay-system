@@ -35,6 +35,8 @@ Use `historical-backfill` for reviewed historical symbol/date manifests when bui
 
 Use `historical-backfill-index`, `historical-backfill-health`, and `historical-backfill-status` to discover, check, and summarize backfill artifacts before scaling up or approving any explicit cache write. These views check local artifact completeness and workflow stage; they do not replace preflight, data-quality, or snapshot-quality.
 
+Use `market-cache-export` when cached market data is ready to feed `data-pipeline`. The cache may contain multiple source variants for the same `symbol + trade_date`, so the export workflow requires reviewed `source` and `upstream_source` selections and rejects duplicate business keys before writing a pipeline-ready market CSV.
+
 For reviewed batches, use a local CSV symbol manifest with `market-daily-update --symbol-manifest`. Disabled rows are skipped, rows that need real fetches are blocked unless `--allow-real-data` is supplied, and cache writes remain explicit. This is controlled local data maintenance, not scheduling or automation.
 
 For deterministic local verification, use an offline reviewed symbol manifest with `raw_input` and `metadata_path` columns. Offline rows use reviewed local raw files, do not require `--allow-real-data`, and still pass through `market-cache-preflight` before any optional cache write.
@@ -214,6 +216,7 @@ python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data\raw\manual_cache\510300_market.csv
+python -m quant_replay_system.cli market-cache-export --manifest data\raw\manual_manifests\reviewed_cache_export_example.csv --build-pipeline-manifest --universe data\raw\LOCAL_CSV\universe_overlay\<overlay_id>\raw_data.csv --trading-calendar data\raw\AKSHARE_OPTIONAL\trading_calendar\<run_id>\raw_data.csv
 ```
 
 Then it must go through:

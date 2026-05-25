@@ -160,7 +160,7 @@ Data quality reports provide a checkpoint between ingestion and replay so bad fi
 - batch replays are calibrated,
 - paper trading decisions are reviewed.
 
-For market data exported from the local market cache, duplicate `symbol + trade_date` rows can appear when multiple source variants are queried together. Use `market-cache-query --source ... --upstream-source ...` to export one reviewed source/upstream before `data-pipeline`; data quality should continue to warn on duplicate business keys rather than silently choosing a source.
+For market data exported from the local market cache, duplicate `symbol + trade_date` rows can appear when multiple source variants are queried together. Use `market-cache-query --source ... --upstream-source ...` for a single-symbol slice, or `market-cache-export` for a reviewed multi-row export manifest, before `data-pipeline`. Data quality should continue to warn on duplicate business keys rather than silently choosing a source.
 
 ## Known MVP Limitations
 

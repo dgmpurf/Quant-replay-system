@@ -358,6 +358,20 @@ class MarketDataCacheSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketCacheExportSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/market_cache_export")
+    export_output_dir: Path = Path("data/raw/manual_cache_exports")
+    manifest_output_dir: Path = Path("data/raw/manual_manifests")
+    default_required_fields: list[str] = Field(default_factory=lambda: ["close", "volume", "amount"])
+    require_explicit_source: bool = True
+    reject_duplicate_business_keys: bool = True
+    fail_fast: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class MarketDataComparisonSettings(BaseModel):
     output_dir: Path = Path("outputs/reports/market_data_comparison")
     price_abs_tolerance: float = Field(default=0.0001, ge=0)
@@ -759,6 +773,7 @@ class Settings(BaseModel):
     data_sources: DataSourceSettings = Field(default_factory=DataSourceSettings)
     data_source_health: DataSourceHealthSettings = Field(default_factory=DataSourceHealthSettings)
     market_data_cache: MarketDataCacheSettings = Field(default_factory=MarketDataCacheSettings)
+    market_cache_export: MarketCacheExportSettings = Field(default_factory=MarketCacheExportSettings)
     market_data_comparison: MarketDataComparisonSettings = Field(default_factory=MarketDataComparisonSettings)
     market_source_policy: MarketSourcePolicySettings = Field(default_factory=MarketSourcePolicySettings)
     market_cache_preflight: MarketCachePreflightSettings = Field(default_factory=MarketCachePreflightSettings)

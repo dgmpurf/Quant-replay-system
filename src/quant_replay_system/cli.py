@@ -48,6 +48,7 @@ from quant_replay_system.market_data_cache import (
     query_market_cache,
     summarize_market_cache_status,
 )
+from quant_replay_system.market_cache_export import run_market_cache_export
 from quant_replay_system.market_data_comparison import run_market_source_comparison
 from quant_replay_system.market_cache_preflight import run_market_cache_preflight
 from quant_replay_system.market_daily_update import run_market_daily_update
@@ -411,6 +412,22 @@ def build_parser() -> argparse.ArgumentParser:
     market_cache_query.add_argument("--output", help="Optional output CSV path for query rows")
     market_cache_query.add_argument("--config", help="Optional config YAML path")
     market_cache_query.set_defaults(handler=_handle_market_cache_query)
+
+    market_cache_export = subparsers.add_parser(
+        "market-cache-export",
+        help="Export reviewed source/upstream cache selections into a pipeline-ready market CSV",
+    )
+    market_cache_export.add_argument("--manifest", required=True, help="Reviewed cache export CSV manifest")
+    market_cache_export.add_argument("--cache-path", help="Optional market cache CSV path")
+    market_cache_export.add_argument("--output-dir", help="Optional export report output directory")
+    market_cache_export.add_argument("--export-output-dir", help="Optional exported market CSV output root")
+    market_cache_export.add_argument("--manifest-output-dir", help="Optional generated pipeline manifest output root")
+    market_cache_export.add_argument("--build-pipeline-manifest", action="store_true", help="Write a LOCAL_CSV data-pipeline manifest")
+    market_cache_export.add_argument("--universe", help="Universe raw_data.csv path for generated pipeline manifest")
+    market_cache_export.add_argument("--trading-calendar", help="Trading calendar raw_data.csv path for generated pipeline manifest")
+    market_cache_export.add_argument("--fail-fast", action="store_true", help="Stop after the first failed manifest row")
+    market_cache_export.add_argument("--config", help="Optional config YAML path")
+    market_cache_export.set_defaults(handler=_handle_market_cache_export)
 
     market_cache_status = subparsers.add_parser(
         "market-cache-status",
@@ -1559,6 +1576,52 @@ def _handle_market_cache_query(args: argparse.Namespace) -> int:
     print(f"upstream_counts: {json.dumps(result.audit_metadata.get('upstream_counts', {}), sort_keys=True)}")
     if result.output_path is not None:
         print(f"output_path: {result.output_path}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_cache_export(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.export_output_dir:
+        updates["export_output_dir"] = Path(args.export_output_dir)
+    if args.manifest_output_dir:
+        updates["manifest_output_dir"] = Path(args.manifest_output_dir)
+    if args.fail_fast:
+        updates["fail_fast"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "market_cache_export": settings.market_cache_export.model_copy(update=updates)
+            }
+        )
+    result = run_market_cache_export(
+        args.manifest,
+        cache_path=args.cache_path,
+        output_dir=args.output_dir,
+        export_output_dir=args.export_output_dir,
+        manifest_output_dir=args.manifest_output_dir,
+        build_pipeline_manifest=bool(args.build_pipeline_manifest),
+        universe=args.universe,
+        trading_calendar=args.trading_calendar,
+        fail_fast=True if args.fail_fast else None,
+        config=settings,
+    )
+    print(f"Market cache export status: {result.status}")
+    print(f"export_id: {result.export_id}")
+    print(f"manifest: {result.manifest_path}")
+    print(f"exported_market_csv_path: {result.exported_market_csv_path}")
+    print(f"row_count: {result.row_count}")
+    print(f"duplicate_key_count: {result.duplicate_key_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"generated_pipeline_manifest_path: {result.pipeline_manifest_path or ''}")
+    print(f"Report path: {result.artifact_paths['market_cache_export_report']}")
+    print(f"Rows CSV path: {result.artifact_paths['market_cache_export_rows']}")
+    print(f"Issues CSV path: {result.artifact_paths['market_cache_export_issues']}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

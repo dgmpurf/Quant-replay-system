@@ -137,6 +137,18 @@ python -m quant_replay_system.cli data-pipeline --dataset-type market --source L
 
 For current candidates, use a manifest with market, universe, and trading-calendar paths.
 
+## Reviewed Export
+
+For multi-symbol or multi-range cache exports, use a reviewed source/upstream manifest instead of stitching together ad hoc queries:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export --manifest data\raw\manual_manifests\reviewed_cache_export_example.csv --build-pipeline-manifest --universe data\raw\LOCAL_CSV\universe_overlay\<overlay_id>\raw_data.csv --trading-calendar data\raw\AKSHARE_OPTIONAL\trading_calendar\<run_id>\raw_data.csv
+```
+
+`market-cache-export` reads the local cache, requires explicit `source` and `upstream_source` for each enabled manifest row, writes `data\raw\manual_cache_exports\<export_id>\market_raw_data.csv`, and rejects duplicate `symbol + trade_date` rows before pipeline use. It does not mutate the cache or choose a trusted source automatically.
+
+See [market_cache_export.md](market_cache_export.md).
+
 ## Compare Sources
 
 When the cache contains the same symbol/date from multiple sources, compare them before relying on combined cached data:
@@ -270,6 +282,8 @@ data-source-health
 
 For incremental local maintenance after initial source validation, `market-daily-update` can replace the first four manual steps while preserving the explicit cache-write gate.
 
+For reviewed exports into `data-pipeline`, use `market-cache-export` after cache comparison/source review when multiple cached source variants exist.
+
 For AKShare, run health checks first so the route report identifies whether Tencent, Sina, or Eastmoney is usable. For BaoStock, run `data-source-health` first to confirm the market route is available. If an upstream fails, use a successful fallback route or reviewed `LOCAL_CSV`.
 
 ## Safety
@@ -277,6 +291,7 @@ For AKShare, run health checks first so the route report identifies whether Tenc
 - No real network calls are made by the cache itself.
 - The daily update wrapper only performs real fetches when `--allow-real-data` is supplied.
 - The daily update wrapper only mutates cache when `--accept-cache-write` is supplied.
+- Reviewed cache export does not mutate cache.
 - Automated tests use local/fake CSV data only.
 - Cached files are ignored by Git.
 - Cache outputs are not trading recommendations.
