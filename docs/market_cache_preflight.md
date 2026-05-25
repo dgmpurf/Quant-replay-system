@@ -77,7 +77,7 @@ Optional comparison:
 - If `--reference-source` is supplied and matching cache rows exist, the preflight compares candidate rows to that reference source in memory.
 - Comparison PASS supports `ACCEPT`.
 - Comparison WARN supports `WARN_ACCEPT`.
-- Comparison FAIL produces `REJECT` unless all failures are the configured first-window `pre_close` caveat.
+- Comparison FAIL produces `REJECT` unless all failures are limited to the configured `pre_close` caveat and `pre_close` is not one of the required fields for that preflight. OHLC, volume, and amount mismatches still reject when comparison failure handling is enabled.
 
 ## Artifacts
 
@@ -117,7 +117,7 @@ For local incremental updates, `market-daily-update` wraps the health/fetch-or-r
 
 Offline reviewed symbol manifests can provide `raw_input` and `metadata_path` columns. Those rows do not require `--allow-real-data`, but the referenced raw file still goes through this preflight before any cache write.
 
-Historical backfills use the same protective gate. In an explicit cache-write backfill, accepted rows can be written while rows with `REJECT`/`BLOCKED_PREFLIGHT_REJECT` remain blocked. That produces a partial cache-write status rather than a corrupt-cache status when the rejected rows are limited to protective preflight failures and downstream reviewed export/snapshot validation passes. The rejected rows remain visible in status metadata and must be reviewed before rerun or broader expansion.
+Historical backfills use the same protective gate. In an explicit cache-write backfill, accepted rows can be written while rows with `REJECT`/`BLOCKED_PREFLIGHT_REJECT` remain blocked. That produces a partial cache-write status rather than a corrupt-cache status when the rejected rows are limited to protective preflight failures and downstream reviewed export/snapshot validation passes. The rejected rows remain visible in status metadata and must be reviewed before rerun or broader expansion. A non-required `pre_close`-only source comparison mismatch can be a reviewable known caveat, but required-field mismatches such as OHLC, volume, or amount remain blocking.
 
 ## Known Limitations
 

@@ -79,9 +79,12 @@ Use `market-source-policy` after health checks and source comparisons when a wor
 
 Tencent `stock_zh_a_hist_tx` returns a compact daily kline frame where AKShare names the sixth field `amount`; AKShare's public documentation marks that field's unit as `手`, so the adapter treats it as trading volume in hands rather than turnover amount. The adapter first attempts a guarded raw Tencent kline fetch for real manual AKShare runs because Tencent's raw response can include a later turnover-amount field. When raw turnover is verified, the adapter maps `volume_hands * 100` into canonical `volume` and `turnover_amount_10k_yuan * 10000` into canonical `amount`.
 
+Local BaoStock comparison diagnostics found that Tencent raw STAR Market (`688xxx`) rows can already expose the raw volume field in shares while the turnover amount remains in ten-thousand yuan. For those symbols the adapter keeps the raw volume value as canonical shares and emits `TENCENT_STAR_MARKET_VOLUME_INTERPRETED_AS_SHARES` instead of multiplying by 100. This is a narrow evidence-backed mapping rule for future fetches; it does not rewrite existing cache rows.
+
 Mapping warnings make the path explicit:
 
 - `TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES`
+- `TENCENT_STAR_MARKET_VOLUME_INTERPRETED_AS_SHARES`
 - `TENCENT_AMOUNT_CONVERTED_FROM_WAN_YUAN_TO_YUAN`
 - `TENCENT_AMOUNT_FIELD_INTERPRETED_AS_VOLUME_HANDS`
 - `TENCENT_TURNOVER_AMOUNT_FIELD_UNAVAILABLE`

@@ -59,6 +59,7 @@ AKShare/Tencent stock:
 
 - `open`, `high`, `low`, `close`, `volume`, and `amount` are `RELIABLE` for tested stock cases.
 - `amount` requires the raw Tencent turnover extraction path. AKShare's compact `stock_zh_a_hist_tx` DataFrame field named `amount` is volume in hands, not turnover amount.
+- STAR Market (`688xxx`) Tencent raw rows are handled with a narrow adapter rule when local comparison evidence shows the raw volume field is already in shares rather than hands.
 - `pre_close` is `CAVEAT_FIRST_WINDOW_ROW`.
 
 BaoStock stock:

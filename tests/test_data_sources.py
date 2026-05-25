@@ -655,6 +655,21 @@ def test_tencent_raw_list_maps_volume_and_turnover_amount() -> None:
     assert "TENCENT_AMOUNT_CONVERTED_FROM_WAN_YUAN_TO_YUAN" in warnings
 
 
+def test_tencent_raw_star_market_volume_is_interpreted_as_shares() -> None:
+    raw = [
+        ["2024-01-02", "53.02", "52.96", "53.27", "52.72", "13459147", {}, "0.60", "71379.28", ""]
+    ]
+
+    normalized = normalize_tencent_raw_market_output(raw, symbol="sh688981")
+    prepared, warnings = data_sources._prepare_tencent_stock_market_frame(normalized)
+
+    assert float(prepared.iloc[0]["volume"]) == 13459147
+    assert float(prepared.iloc[0]["amount"]) == 713792800
+    assert "TENCENT_STAR_MARKET_VOLUME_INTERPRETED_AS_SHARES" in warnings
+    assert "TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES" not in warnings
+    assert "TENCENT_AMOUNT_CONVERTED_FROM_WAN_YUAN_TO_YUAN" in warnings
+
+
 def test_fetch_tencent_stock_market_raw_parses_fake_payload(monkeypatch) -> None:
     class FakeResponse:
         text = (

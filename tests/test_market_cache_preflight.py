@@ -114,6 +114,90 @@ def test_preflight_known_first_window_pre_close_caveat_does_not_reject(tmp_path:
     assert result.comparison_summary_frame.iloc[0]["status"] == "FAIL"
 
 
+def test_preflight_non_required_pre_close_only_mismatch_does_not_reject(tmp_path: Path) -> None:
+    input_path = tmp_path / "raw_data.csv"
+    metadata_path = tmp_path / "metadata.json"
+    candidate = _market_frame(symbol="300750", source="BAOSTOCK_OPTIONAL", pre_close=10.0)
+    candidate.loc[1, "pre_close"] = 9.5
+    candidate.to_csv(input_path, index=False)
+    _metadata("BAOSTOCK_OPTIONAL", "BAOSTOCK", "query_history_k_data_plus").write_text_to(metadata_path)
+    _write_cache(
+        tmp_path,
+        [
+            _cache_row("AKSHARE_OPTIONAL", "TENCENT", "300750", "2024-01-02", pre_close=10.0),
+            _cache_row("AKSHARE_OPTIONAL", "TENCENT", "300750", "2024-01-03", pre_close=10.2),
+        ],
+    )
+
+    result = run_market_cache_preflight(
+        input_path,
+        metadata_path=metadata_path,
+        reference_source="AKSHARE_OPTIONAL",
+        required_fields=["close", "volume", "amount"],
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "WARN_ACCEPT"
+    assert "KNOWN_CAVEAT" in set(result.issues_frame["category"])
+    assert "COMPARISON_FAIL" not in set(result.issues_frame["category"])
+    assert result.error_count == 0
+
+
+def test_preflight_required_pre_close_mismatch_remains_rejected(tmp_path: Path) -> None:
+    input_path = tmp_path / "raw_data.csv"
+    metadata_path = tmp_path / "metadata.json"
+    candidate = _market_frame(symbol="300750", source="BAOSTOCK_OPTIONAL", pre_close=10.0)
+    candidate.loc[1, "pre_close"] = 9.5
+    candidate.to_csv(input_path, index=False)
+    _metadata("BAOSTOCK_OPTIONAL", "BAOSTOCK", "query_history_k_data_plus").write_text_to(metadata_path)
+    _write_cache(
+        tmp_path,
+        [
+            _cache_row("AKSHARE_OPTIONAL", "TENCENT", "300750", "2024-01-02", pre_close=10.0),
+            _cache_row("AKSHARE_OPTIONAL", "TENCENT", "300750", "2024-01-03", pre_close=10.2),
+        ],
+    )
+
+    result = run_market_cache_preflight(
+        input_path,
+        metadata_path=metadata_path,
+        reference_source="AKSHARE_OPTIONAL",
+        required_fields=["close", "volume", "amount", "pre_close"],
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "REJECT"
+    assert "COMPARISON_FAIL" in set(result.issues_frame["category"])
+
+
+def test_preflight_volume_mismatch_still_rejects(tmp_path: Path) -> None:
+    input_path = tmp_path / "raw_data.csv"
+    metadata_path = tmp_path / "metadata.json"
+    candidate = _market_frame(symbol="688981", source="BAOSTOCK_OPTIONAL")
+    candidate["volume"] = [100, 120]
+    candidate.to_csv(input_path, index=False)
+    _metadata("BAOSTOCK_OPTIONAL", "BAOSTOCK", "query_history_k_data_plus").write_text_to(metadata_path)
+    cache_rows = [
+        _cache_row("AKSHARE_OPTIONAL", "TENCENT", "688981", "2024-01-02"),
+        _cache_row("AKSHARE_OPTIONAL", "TENCENT", "688981", "2024-01-03"),
+    ]
+    cache_rows[0]["volume"] = 10000
+    cache_rows[1]["volume"] = 12000
+    _write_cache(tmp_path, cache_rows)
+
+    result = run_market_cache_preflight(
+        input_path,
+        metadata_path=metadata_path,
+        reference_source="AKSHARE_OPTIONAL",
+        required_fields=["close", "volume", "amount"],
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "REJECT"
+    assert "COMPARISON_FAIL" in set(result.issues_frame["category"])
+    assert result.comparison_summary_frame.iloc[0]["diagnostic_classification"] == "VOLUME_UNIT_MISMATCH"
+
+
 def test_preflight_optional_comparison_pass_supports_accept(tmp_path: Path) -> None:
     input_path = tmp_path / "raw_data.csv"
     metadata_path = tmp_path / "metadata.json"

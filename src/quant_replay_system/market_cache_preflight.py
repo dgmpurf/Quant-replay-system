@@ -261,6 +261,7 @@ def run_market_cache_preflight(
             cache_path=cache_path or project_settings.market_data_cache.cache_path,
             start_date=start_date,
             end_date=end_date,
+            required_fields=fields,
             settings=project_settings,
             preflight_settings=preflight_settings,
         )
@@ -542,6 +543,7 @@ def evaluate_optional_source_comparison(
     cache_path: str | Path,
     start_date: str | None,
     end_date: str | None,
+    required_fields: list[str] | None = None,
     settings: Settings,
     preflight_settings: MarketCachePreflightSettings,
 ) -> tuple[pd.DataFrame, pd.DataFrame, list[MarketCachePreflightIssue]]:
@@ -654,7 +656,12 @@ def evaluate_optional_source_comparison(
                 "WARN_ACCEPT",
             )
         )
-    elif _comparison_failures_are_known_caveats(comparison_frame, comparison_summary, preflight_settings):
+    elif _comparison_failures_are_known_caveats(
+        comparison_frame,
+        comparison_summary,
+        preflight_settings,
+        required_fields=required_fields or [],
+    ):
         issues.append(
             _issue(
                 "KNOWN_CAVEAT",
@@ -662,7 +669,7 @@ def evaluate_optional_source_comparison(
                 "pre_close",
                 symbol,
                 str(_first_failure_date(comparison_frame)),
-                "Optional source comparison failed only on first-window pre_close caveat.",
+                "Optional source comparison failed only on non-required pre_close caveat.",
                 "WARN_ACCEPT",
             )
         )
@@ -966,8 +973,13 @@ def _comparison_failures_are_known_caveats(
     comparison_frame: pd.DataFrame,
     summary_frame: pd.DataFrame,
     settings: MarketCachePreflightSettings,
+    *,
+    required_fields: list[str],
 ) -> bool:
     if not settings.allow_first_window_pre_close_caveat or comparison_frame.empty or summary_frame.empty:
+        return False
+    normalized_required = {str(field).strip().lower() for field in required_fields}
+    if "pre_close" in normalized_required:
         return False
     summary = summary_frame.iloc[0]
     if str(summary.get("pre_close_caveat", "")) != "CAVEAT_FIRST_WINDOW_ROW":
@@ -975,6 +987,9 @@ def _comparison_failures_are_known_caveats(
     failures = comparison_frame.loc[comparison_frame["tolerance_status"] == "FAIL"].copy()
     if failures.empty:
         return False
+    failure_fields = [set(_failure_fields_from_reason(str(row.get("tolerance_reason", "")))) for _index, row in failures.iterrows()]
+    if failure_fields and all(fields == {"pre_close"} for fields in failure_fields):
+        return True
     matched = comparison_frame.loc[comparison_frame["row_match_status"] == "MATCHED"].copy()
     if matched.empty:
         return False

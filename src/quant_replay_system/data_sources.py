@@ -1480,8 +1480,13 @@ def _prepare_tencent_stock_market_frame(frame: pd.DataFrame) -> tuple[pd.DataFra
     raw_hands_column = _first_existing_column(prepared, ["tencent_volume_hands"])
     raw_turnover_column = _first_existing_column(prepared, ["tencent_turnover_amount_10k_yuan"])
     if raw_hands_column is not None:
-        prepared["volume"] = pd.to_numeric(prepared[raw_hands_column], errors="coerce") * 100
-        warnings.append("TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES")
+        raw_volume_values = pd.to_numeric(prepared[raw_hands_column], errors="coerce")
+        if _tencent_raw_volume_field_is_shares(prepared):
+            prepared["volume"] = raw_volume_values
+            warnings.append("TENCENT_STAR_MARKET_VOLUME_INTERPRETED_AS_SHARES")
+        else:
+            prepared["volume"] = raw_volume_values * 100
+            warnings.append("TENCENT_VOLUME_CONVERTED_FROM_HANDS_TO_SHARES")
         raw_turnover_values = (
             pd.to_numeric(prepared[raw_turnover_column], errors="coerce")
             if raw_turnover_column is not None
@@ -1526,6 +1531,32 @@ def _prepare_tencent_stock_market_frame(frame: pd.DataFrame) -> tuple[pd.DataFra
     if str(volume_source) != "volume" and str(volume_source) != "amount" and volume_source in prepared.columns:
         prepared = prepared.drop(columns=[volume_source])
     return prepared, warnings
+
+
+def _tencent_raw_volume_field_is_shares(frame: pd.DataFrame) -> bool:
+    """Tencent raw STAR-market rows use share volume in local evidence."""
+
+    if "symbol" not in frame.columns or frame.empty:
+        return False
+    symbols = frame["symbol"].map(_exchange_prefixed_symbol_code).dropna().astype(str)
+    if symbols.empty:
+        return False
+    return bool(symbols.str.startswith("688").all())
+
+
+def _exchange_prefixed_symbol_code(value: Any) -> str:
+    text = str(value or "").strip().upper()
+    if not text:
+        return ""
+    if "." in text:
+        first, second = text.split(".", 1)
+        if first in {"SZ", "SH", "BJ"}:
+            text = second
+        elif second in {"SZ", "SH", "BJ"}:
+            text = first
+    elif text.startswith(("SZ", "SH", "BJ")) and len(text) > 2 and text[2:].isdigit():
+        text = text[2:]
+    return normalize_symbol_value(text)
 
 
 def _first_existing_column(frame: pd.DataFrame, candidates: list[str]) -> str | None:
