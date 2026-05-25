@@ -205,6 +205,8 @@ Before starting the next major engineering branch after a completed workflow mil
 
 Policy or dashboard semantics changes that affect source-selection recommendations, workflow-stage priority, warning actionability, cache-write partial/rejection actionability, or next manual action should also receive a checkpoint document before the next engineering branch, because they influence how downstream status consumers interpret local artifacts.
 
+Successful paper workflow smoke milestones should also receive checkpoint documents before larger universe expansion or fill-reconciliation testing, especially when they validate review statuses, no-trade safety boundaries, or `paper-workflow-status` / `research-status` decision semantics.
+
 ## 6. Pro Extended Usage Rules
 
 Pro Extended is not needed for:
