@@ -39,6 +39,14 @@ python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-dat
 python -m quant_replay_system.cli data-pipeline --dataset-type market --source LOCAL_CSV --input data\raw\manual_cache\510300_market.csv
 ```
 
+When the local cache contains multiple source variants for the same `symbol + trade_date`, export a single selected source/upstream for pipeline use:
+
+```cmd
+python -m quant_replay_system.cli market-cache-query --symbol 000001 --start-date 2024-01-02 --end-date 2024-01-05 --source AKSHARE_OPTIONAL --upstream-source TENCENT --output data\raw\manual_cache\000001_tencent_market.csv
+```
+
+The pipeline and data-quality checks intentionally keep the duplicate `symbol + trade_date` warning. Cache query filters are the explicit v0.1 way to choose one source path before building a pipeline manifest; the project does not silently choose a trusted source.
+
 See [market_data_cache.md](market_data_cache.md). The cache reduces repeated public endpoint calls but does not replace data-quality or snapshot-quality gates.
 
 Supported dataset types:

@@ -327,11 +327,13 @@ def query_market_cache(
     symbol: str,
     start_date: str | None = None,
     end_date: str | None = None,
+    source: str | None = None,
+    upstream_source: str | None = None,
     cache_path: str | Path | None = None,
     output_path: str | Path | None = None,
     config: Settings | MarketDataCacheSettings | dict[str, Any] | None = None,
 ) -> MarketDataCacheQueryResult:
-    """Query cached market bars by symbol and optional date range."""
+    """Query cached market bars by symbol, optional date range, and optional source filters."""
 
     project_settings, cache_settings = _resolve_settings(config)
     if cache_settings.enable_live_trading or cache_settings.enable_broker_api:
@@ -342,16 +344,30 @@ def query_market_cache(
     frame = load_market_cache(path, config=project_settings)
     normalized_symbol = normalize_symbol_series(pd.Series([symbol])).iloc[0]
     result = frame.loc[frame["symbol"] == normalized_symbol].copy()
+    source_filter = _normalize_optional_filter(source)
+    upstream_filter = _normalize_optional_filter(upstream_source)
     if start_date:
         start = pd.to_datetime(start_date, errors="raise").normalize()
         result = result.loc[pd.to_datetime(result["trade_date"], errors="coerce") >= start]
     if end_date:
         end = pd.to_datetime(end_date, errors="raise").normalize()
         result = result.loc[pd.to_datetime(result["trade_date"], errors="coerce") <= end]
+    if source_filter:
+        result = result.loc[result["source"].astype(str) == source_filter]
+    if upstream_filter:
+        result = result.loc[result["upstream_source"].fillna("").astype(str) == upstream_filter]
     result = _sort_cache_frame(result)
+    source_counts = _value_counts(result, "source")
+    upstream_counts = _value_counts(result, "upstream_source")
     output = Path(output_path) if output_path is not None else None
     if output is not None:
         _write_cache_frame(result, output)
+    warning_filters = []
+    if source_filter:
+        warning_filters.append(f"source={source_filter}")
+    if upstream_filter:
+        warning_filters.append(f"upstream_source={upstream_filter}")
+    warning_suffix = f" with filters {', '.join(warning_filters)}" if warning_filters else ""
     return MarketDataCacheQueryResult(
         status="PASS" if not result.empty else "WARN",
         cache_path=path,
@@ -360,7 +376,7 @@ def query_market_cache(
         end_date=end_date,
         result_frame=result,
         output_path=output,
-        warnings=[] if not result.empty else [f"No cached rows matched symbol={normalized_symbol}"],
+        warnings=[] if not result.empty else [f"No cached rows matched symbol={normalized_symbol}{warning_suffix}"],
         known_limitations=MARKET_CACHE_LIMITATIONS,
         audit_metadata={
             "operation": "query",
@@ -368,7 +384,14 @@ def query_market_cache(
             "symbol": normalized_symbol,
             "start_date": start_date or "",
             "end_date": end_date or "",
+            "source_filter": source_filter or "",
+            "upstream_source_filter": upstream_filter or "",
             "row_count": len(result),
+            "symbol_count": int(result["symbol"].nunique()) if not result.empty else 0,
+            "min_trade_date": str(result["trade_date"].min()) if not result.empty else "",
+            "max_trade_date": str(result["trade_date"].max()) if not result.empty else "",
+            "source_counts": source_counts,
+            "upstream_counts": upstream_counts,
             "output_path": output,
             "live_trading_enabled": False,
             "broker_api_invoked": False,
@@ -539,6 +562,17 @@ def build_market_cache_summary_frame(
             }
         ]
     )
+
+
+def _normalize_optional_filter(value: str | None) -> str:
+    return str(value).strip() if value is not None else ""
+
+
+def _value_counts(frame: pd.DataFrame, column: str) -> dict[str, int]:
+    if frame.empty or column not in frame.columns:
+        return {}
+    values = frame[column].fillna("").astype(str)
+    return {str(key): int(value) for key, value in values.value_counts().sort_index().items()}
 
 
 def resolve_market_cache_artifact_paths(

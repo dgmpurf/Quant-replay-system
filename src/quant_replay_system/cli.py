@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -404,6 +405,8 @@ def build_parser() -> argparse.ArgumentParser:
     market_cache_query.add_argument("--symbol", required=True, help="Symbol to query, e.g. 510300")
     market_cache_query.add_argument("--start-date", help="Optional inclusive start date")
     market_cache_query.add_argument("--end-date", help="Optional inclusive end date")
+    market_cache_query.add_argument("--source", help="Optional exact source filter, e.g. AKSHARE_OPTIONAL")
+    market_cache_query.add_argument("--upstream-source", help="Optional exact upstream source filter, e.g. TENCENT")
     market_cache_query.add_argument("--cache-path", help="Optional market cache CSV path")
     market_cache_query.add_argument("--output", help="Optional output CSV path for query rows")
     market_cache_query.add_argument("--config", help="Optional config YAML path")
@@ -1535,6 +1538,8 @@ def _handle_market_cache_query(args: argparse.Namespace) -> int:
         symbol=args.symbol,
         start_date=args.start_date,
         end_date=args.end_date,
+        source=args.source,
+        upstream_source=args.upstream_source,
         cache_path=args.cache_path,
         output_path=args.output,
         config=settings,
@@ -1542,11 +1547,16 @@ def _handle_market_cache_query(args: argparse.Namespace) -> int:
     print(f"Market cache query status: {result.status}")
     print(f"cache_path: {result.cache_path}")
     print(f"symbol: {result.symbol}")
+    print(f"source_filter: {result.audit_metadata.get('source_filter', '')}")
+    print(f"upstream_source_filter: {result.audit_metadata.get('upstream_source_filter', '')}")
     print(f"row_count: {result.row_count}")
+    print(f"symbol_count: {result.audit_metadata.get('symbol_count', 0)}")
     if not result.result_frame.empty:
         print(f"date_range: {result.result_frame['trade_date'].min()} to {result.result_frame['trade_date'].max()}")
     else:
         print("date_range: ")
+    print(f"source_counts: {json.dumps(result.audit_metadata.get('source_counts', {}), sort_keys=True)}")
+    print(f"upstream_counts: {json.dumps(result.audit_metadata.get('upstream_counts', {}), sort_keys=True)}")
     if result.output_path is not None:
         print(f"output_path: {result.output_path}")
     for warning in result.warnings:

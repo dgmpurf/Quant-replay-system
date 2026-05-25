@@ -77,6 +77,79 @@ def test_query_returns_requested_symbol_and_date_range(tmp_path: Path) -> None:
     assert result.result_frame.iloc[0]["symbol"] == "510300"
 
 
+def test_query_without_source_filters_keeps_all_cached_source_variants(tmp_path: Path) -> None:
+    _ingest_multi_source_cache(tmp_path)
+
+    result = query_market_cache(
+        symbol="000001",
+        start_date="2024-01-02",
+        end_date="2024-01-03",
+        config=_settings(tmp_path),
+    )
+
+    assert result.status == "PASS"
+    assert result.row_count == 4
+    assert result.result_frame["symbol"].tolist() == ["000001", "000001", "000001", "000001"]
+    assert set(result.result_frame["source"]) == {"AKSHARE_OPTIONAL", "BAOSTOCK_OPTIONAL"}
+    assert int(result.result_frame.duplicated(["symbol", "trade_date"]).sum()) == 2
+
+
+def test_query_filters_by_source_only(tmp_path: Path) -> None:
+    _ingest_multi_source_cache(tmp_path)
+
+    result = query_market_cache(
+        symbol="000001",
+        start_date="2024-01-02",
+        end_date="2024-01-03",
+        source="AKSHARE_OPTIONAL",
+        config=_settings(tmp_path),
+    )
+
+    assert result.row_count == 2
+    assert set(result.result_frame["source"]) == {"AKSHARE_OPTIONAL"}
+    assert set(result.result_frame["upstream_source"]) == {"TENCENT"}
+    assert result.audit_metadata["source_filter"] == "AKSHARE_OPTIONAL"
+    assert result.audit_metadata["source_counts"] == {"AKSHARE_OPTIONAL": 2}
+
+
+def test_query_filters_by_upstream_source_only(tmp_path: Path) -> None:
+    _ingest_multi_source_cache(tmp_path)
+
+    result = query_market_cache(
+        symbol="000001",
+        start_date="2024-01-02",
+        end_date="2024-01-03",
+        upstream_source="BAOSTOCK",
+        config=_settings(tmp_path),
+    )
+
+    assert result.row_count == 2
+    assert set(result.result_frame["source"]) == {"BAOSTOCK_OPTIONAL"}
+    assert set(result.result_frame["upstream_source"]) == {"BAOSTOCK"}
+    assert result.audit_metadata["upstream_source_filter"] == "BAOSTOCK"
+    assert result.audit_metadata["upstream_counts"] == {"BAOSTOCK": 2}
+
+
+def test_query_filters_by_source_and_upstream_source_and_avoids_duplicate_business_keys(tmp_path: Path) -> None:
+    _ingest_multi_source_cache(tmp_path)
+
+    result = query_market_cache(
+        symbol="000001",
+        start_date="2024-01-02",
+        end_date="2024-01-03",
+        source="AKSHARE_OPTIONAL",
+        upstream_source="TENCENT",
+        config=_settings(tmp_path),
+    )
+
+    assert result.row_count == 2
+    assert result.result_frame["symbol"].tolist() == ["000001", "000001"]
+    assert set(result.result_frame["source"]) == {"AKSHARE_OPTIONAL"}
+    assert set(result.result_frame["upstream_source"]) == {"TENCENT"}
+    assert int(result.result_frame.duplicated(["symbol", "trade_date"]).sum()) == 0
+    assert result.audit_metadata["symbol_count"] == 1
+
+
 def test_query_writes_output_csv(tmp_path: Path) -> None:
     input_path = tmp_path / "raw_data.csv"
     output_path = tmp_path / "query.csv"
@@ -168,14 +241,18 @@ def test_baostock_canonical_output_can_be_ingested_into_market_cache(tmp_path: P
 
 def test_cli_market_cache_ingest_query_and_status_work(tmp_path: Path, capsys) -> None:
     input_path = tmp_path / "raw_data.csv"
+    metadata_path = tmp_path / "metadata.json"
     query_path = tmp_path / "query.csv"
     _market_frame().to_csv(input_path, index=False)
+    _metadata("SINA", "fund_etf_hist_sina").write_text_to(metadata_path)
 
     code = cli.main(
         [
             "market-cache-ingest",
             "--input",
             str(input_path),
+            "--metadata",
+            str(metadata_path),
             "--cache-path",
             str(tmp_path / "cache" / "daily_bars.csv"),
             "--output-dir",
@@ -196,6 +273,10 @@ def test_cli_market_cache_ingest_query_and_status_work(tmp_path: Path, capsys) -
             "2024-01-01",
             "--end-date",
             "2024-05-20",
+            "--source",
+            "AKSHARE_OPTIONAL",
+            "--upstream-source",
+            "SINA",
             "--cache-path",
             str(tmp_path / "cache" / "daily_bars.csv"),
             "--output",
@@ -205,6 +286,10 @@ def test_cli_market_cache_ingest_query_and_status_work(tmp_path: Path, capsys) -
     query_output = capsys.readouterr()
     assert code == 0
     assert "Market cache query status: PASS" in query_output.out
+    assert "source_filter: AKSHARE_OPTIONAL" in query_output.out
+    assert "upstream_source_filter: SINA" in query_output.out
+    assert 'source_counts: {"AKSHARE_OPTIONAL": 1}' in query_output.out
+    assert 'upstream_counts: {"SINA": 1}' in query_output.out
     assert query_path.exists()
 
     code = cli.main(
@@ -290,6 +375,28 @@ def _market_frame() -> pd.DataFrame:
             },
         ]
     )
+
+
+def _ingest_multi_source_cache(tmp_path: Path) -> None:
+    akshare_input = tmp_path / "akshare_raw_data.csv"
+    akshare_metadata = tmp_path / "akshare_metadata.json"
+    baostock_input = tmp_path / "baostock_raw_data.csv"
+    baostock_metadata = tmp_path / "baostock_metadata.json"
+
+    akshare = _market_frame().iloc[[0, 1]].copy()
+    akshare.to_csv(akshare_input, index=False)
+    _metadata("TENCENT", "stock_zh_a_hist_tx").write_text_to(akshare_metadata)
+    ingest_market_cache_csv(akshare_input, metadata_path=akshare_metadata, config=_settings(tmp_path))
+
+    baostock = akshare.copy()
+    baostock["source"] = "BAOSTOCK_OPTIONAL"
+    baostock["volume"] = baostock["volume"] + 1
+    baostock["amount"] = baostock["amount"] + 1
+    baostock.to_csv(baostock_input, index=False)
+    _metadata("BAOSTOCK", "query_history_k_data_plus", source="BAOSTOCK_OPTIONAL").write_text_to(
+        baostock_metadata
+    )
+    ingest_market_cache_csv(baostock_input, metadata_path=baostock_metadata, config=_settings(tmp_path))
 
 
 class _Metadata:

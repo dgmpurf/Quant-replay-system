@@ -120,6 +120,15 @@ Query cached bars into a local CSV that can be used by `LOCAL_CSV` pipeline mode
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data\raw\manual_cache\510300_market.csv
 ```
 
+The cache can intentionally contain multiple source variants for the same `symbol + trade_date`, for example AKShare/Tencent and BaoStock rows for the same stock. `data-pipeline` expects one market row per `symbol + trade_date`, so use explicit source filters when exporting slices for pipeline use:
+
+```cmd
+python -m quant_replay_system.cli market-cache-query --symbol 000001 --start-date 2024-01-02 --end-date 2024-01-05 --source AKSHARE_OPTIONAL --upstream-source TENCENT --output data\raw\manual_cache\000001_tencent_market.csv
+python -m quant_replay_system.cli market-cache-query --symbol 000001 --start-date 2024-01-02 --end-date 2024-01-05 --source BAOSTOCK_OPTIONAL --upstream-source BAOSTOCK --output data\raw\manual_cache\000001_baostock_market.csv
+```
+
+Without `--source` or `--upstream-source`, the query keeps existing behavior and returns all matching cached source variants. It does not silently deduplicate or choose a trusted source.
+
 Then use the output path in `data-pipeline`:
 
 ```cmd
@@ -197,6 +206,7 @@ The CLI prints:
 - row count
 - symbol count
 - date range
+- source filter and upstream-source filter when querying
 - source counts
 - upstream counts
 - report path
