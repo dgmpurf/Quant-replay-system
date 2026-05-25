@@ -224,6 +224,7 @@ def summarize_market_cache_export_status(
                 "data_pipeline_status": str(latest.get("data_pipeline_status", "")),
                 "data_quality_status": str(latest.get("data_quality_status", "")),
                 "snapshot_quality_status": str(latest.get("snapshot_quality_status", "")),
+                "snapshot_manifest_path": str(latest.get("snapshot_manifest_path", "")),
                 "health_status": health_result.status,
                 "issue_count": health_result.issue_count,
                 "warning_count": health_result.warning_count,

@@ -101,6 +101,8 @@ The index records export id, exported market CSV path, row count, duplicate-key 
 
 These views check artifact completeness and duplicate-key safety. They do not certify source truth, alter cache data, choose a trusted source automatically, or run paper/live trading.
 
+`research-status` also includes the latest `market-cache-export-status` fields as reviewed cache-to-snapshot context. If the latest export is `SNAPSHOT_READY_FROM_EXPORT`, the unified dashboard can recommend `current-candidates`; if later current-candidates or paper workflow artifacts already exist, those later stages keep priority and the export remains visible as context.
+
 ## Validation
 
 Before writing the reviewed export, the workflow checks:

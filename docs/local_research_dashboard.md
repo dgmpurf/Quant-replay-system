@@ -26,6 +26,7 @@ The dashboard scans metadata under:
 
 ```text
 outputs/reports/historical_backfill/status/
+outputs/reports/market_cache_export/status/
 outputs/reports/data_preparation/workflow_status/
 outputs/reports/snapshot_quality/
 outputs/reports/market_update_handoff/status/
@@ -52,6 +53,16 @@ Historical backfill is earlier than data-pipeline, market-update-handoff, curren
 
 Cache writes remain explicit and manual. A `WARN` dry-run does not approve cache mutation; review WARN tasks and rerun with `--accept-cache-write` only after manual approval.
 
+## Market Cache Export Status
+
+`research-status` includes `market-cache-export-status` as the reviewed cache-to-snapshot preparation component when those artifacts exist.
+
+The unified summary records the latest export id, export status/stage, linked pipeline id, linked data-pipeline/data-quality/snapshot-quality statuses, linked snapshot manifest path, and export report path. When the export stage is `SNAPSHOT_READY_FROM_EXPORT`, the dashboard understands that a reviewed cache export has already produced snapshot-ready local data and recommends running `current-candidates` from that snapshot unless a later workflow artifact already exists.
+
+Market-cache-export is earlier than current-candidates, market-update-handoff, and paper workflow. If those later artifacts exist, they take priority for the final `workflow_stage`; cache-export fields remain visible as context. If the latest active cache export has health failures or duplicate-key errors and no later valid workflow supersedes it, `research-status` surfaces the export failure as actionable.
+
+These export fields do not imply automatic source selection. The reviewed cache export remains an explicit source/upstream selection layer, and `data-quality` plus `snapshot-quality` remain required before research use.
+
 ## Market Update Handoff Status
 
 `research-status` includes `market-update-handoff-status` as a pre-paper workflow component when those artifacts exist.
@@ -70,7 +81,7 @@ Stale artifacts are still useful audit evidence. They remain available in paper 
 
 If a paper workflow has already advanced beyond the market-update-handoff stage, the paper workflow state takes precedence. Older handoff warnings or failures remain visible as stale audit context and do not move the active stage back to "run current-to-paper."
 
-The same priority principle applies to historical backfill: historical WARN/FAIL context remains visible, but it does not regress a more advanced valid paper workflow stage.
+The same priority principle applies to historical backfill and reviewed cache exports: earlier WARN/FAIL context remains visible, but it does not regress a more advanced valid paper workflow stage.
 
 ## Warning Actionability
 
@@ -93,6 +104,12 @@ Prior current-candidate health warnings from old dry runs can be classified as s
 - `BACKFILL_CACHE_WRITE_READY`: historical backfill passed and could be considered for explicit cache write after manual review.
 - `BACKFILL_COMPLETED`: historical backfill cache write occurred; run cache status and downstream data quality before research use.
 - `BACKFILL_FAILED`: historical backfill has active failure and needs repair or rerun.
+- `CACHE_EXPORT_READY`: reviewed cache export exists and is ready for downstream validation.
+- `PIPELINE_READY_FROM_EXPORT`: data-pipeline has run from the reviewed cache export.
+- `DATA_QUALITY_READY_FROM_EXPORT`: data-quality has passed for the reviewed cache export pipeline output.
+- `SNAPSHOT_READY_FROM_EXPORT`: snapshot-quality passed for the reviewed cache export and current-candidates is next.
+- `CACHE_EXPORT_HEALTH_WARN`: reviewed cache export has warnings that should be inspected before downstream use.
+- `CACHE_EXPORT_FAILED`: reviewed cache export has active health or duplicate-key failures.
 - `DATA_PREPARATION_READY`: data preparation status exists; current candidates are next.
 - `SNAPSHOT_READY`: snapshot quality exists; current candidates are next.
 - `CURRENT_CANDIDATES_READY`: current-candidate artifacts exist; index/health checks are next.

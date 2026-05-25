@@ -12,6 +12,7 @@ import pandas as pd
 
 from quant_replay_system.config import LocalResearchDashboardSettings, Settings, load_settings
 from quant_replay_system.historical_backfill_status import run_historical_backfill_status
+from quant_replay_system.market_cache_export_status import run_market_cache_export_status
 from quant_replay_system.market_update_handoff_status import run_market_update_handoff_status
 
 
@@ -66,6 +67,16 @@ SUMMARY_COLUMNS = [
     "historical_backfill_skipped_count",
     "historical_backfill_cache_write_occurred",
     "historical_backfill_report_path",
+    "market_cache_export_status",
+    "latest_market_cache_export_id",
+    "market_cache_export_stage",
+    "market_cache_export_next_action",
+    "market_cache_export_pipeline_id",
+    "market_cache_export_data_pipeline_status",
+    "market_cache_export_data_quality_status",
+    "market_cache_export_snapshot_quality_status",
+    "market_cache_export_snapshot_manifest_path",
+    "market_cache_export_report_path",
     "market_update_handoff_status",
     "latest_market_update_handoff_id",
     "market_update_handoff_stage",
@@ -105,6 +116,7 @@ STALE_ONLY_NEXT_ACTION = (
 
 COMPONENTS = [
     "HISTORICAL_BACKFILL_STATUS",
+    "MARKET_CACHE_EXPORT_STATUS",
     "DATA_PREPARATION_WORKFLOW",
     "SNAPSHOT_QUALITY",
     "CURRENT_CANDIDATES",
@@ -121,6 +133,7 @@ COMPONENTS = [
 
 WORKFLOW_AREAS = {
     "HISTORICAL_BACKFILL_STATUS": "HISTORICAL_BACKFILL",
+    "MARKET_CACHE_EXPORT_STATUS": "MARKET_CACHE_EXPORT",
     "DATA_PREPARATION_WORKFLOW": "DATA_PREPARATION",
     "SNAPSHOT_QUALITY": "DATA_PREPARATION",
     "CURRENT_CANDIDATES": "CURRENT_CANDIDATES",
@@ -175,6 +188,16 @@ class LocalResearchDashboardResult:
     historical_backfill_skipped_count: int
     historical_backfill_cache_write_occurred: bool
     historical_backfill_report_path: str
+    market_cache_export_status: str
+    latest_market_cache_export_id: str
+    market_cache_export_stage: str
+    market_cache_export_next_action: str
+    market_cache_export_pipeline_id: str
+    market_cache_export_data_pipeline_status: str
+    market_cache_export_data_quality_status: str
+    market_cache_export_snapshot_quality_status: str
+    market_cache_export_snapshot_manifest_path: str
+    market_cache_export_report_path: str
     market_update_handoff_status: str
     latest_market_update_handoff_id: str
     market_update_handoff_stage: str
@@ -202,6 +225,7 @@ def run_local_research_dashboard(
     *,
     root: str | Path | None = None,
     historical_backfill_root: str | Path | None = None,
+    market_cache_export_root: str | Path | None = None,
     data_preparation_root: str | Path | None = None,
     current_candidates_root: str | Path | None = None,
     market_update_handoff_root: str | Path | None = None,
@@ -223,6 +247,11 @@ def run_local_research_dashboard(
         if historical_backfill_root is not None
         else dashboard_settings.historical_backfill_root
     )
+    effective_market_cache_export_root = (
+        Path(market_cache_export_root)
+        if market_cache_export_root is not None
+        else dashboard_settings.market_cache_export_root
+    )
     effective_data_prep_root = (
         Path(data_preparation_root)
         if data_preparation_root is not None
@@ -243,6 +272,8 @@ def run_local_research_dashboard(
     if root is not None:
         if historical_backfill_root is None:
             effective_historical_backfill_root = effective_root / "historical_backfill"
+        if market_cache_export_root is None:
+            effective_market_cache_export_root = effective_root / "market_cache_export"
         if data_preparation_root is None:
             effective_data_prep_root = effective_root / "data_preparation"
         if current_candidates_root is None:
@@ -255,6 +286,7 @@ def run_local_research_dashboard(
     scan = scan_local_research_workflow_artifacts(
         root=effective_root,
         historical_backfill_root=effective_historical_backfill_root,
+        market_cache_export_root=effective_market_cache_export_root,
         data_preparation_root=effective_data_prep_root,
         current_candidates_root=effective_current_root,
         market_update_handoff_root=effective_market_update_handoff_root,
@@ -286,6 +318,7 @@ def run_local_research_dashboard(
         "dashboard_id": dashboard_id,
         "root_dir": effective_root,
         "historical_backfill_root": effective_historical_backfill_root,
+        "market_cache_export_root": effective_market_cache_export_root,
         "data_preparation_root": effective_data_prep_root,
         "current_candidates_root": effective_current_root,
         "market_update_handoff_root": effective_market_update_handoff_root,
@@ -320,6 +353,18 @@ def run_local_research_dashboard(
         historical_backfill_skipped_count=_int_or_zero(summary.get("historical_backfill_skipped_count")),
         historical_backfill_cache_write_occurred=bool(summary.get("historical_backfill_cache_write_occurred", False)),
         historical_backfill_report_path=str(summary.get("historical_backfill_report_path", "")),
+        market_cache_export_status=str(summary.get("market_cache_export_status", "MISSING")),
+        latest_market_cache_export_id=str(summary.get("latest_market_cache_export_id", "")),
+        market_cache_export_stage=str(summary.get("market_cache_export_stage", "")),
+        market_cache_export_next_action=str(summary.get("market_cache_export_next_action", "")),
+        market_cache_export_pipeline_id=str(summary.get("market_cache_export_pipeline_id", "")),
+        market_cache_export_data_pipeline_status=str(summary.get("market_cache_export_data_pipeline_status", "")),
+        market_cache_export_data_quality_status=str(summary.get("market_cache_export_data_quality_status", "")),
+        market_cache_export_snapshot_quality_status=str(
+            summary.get("market_cache_export_snapshot_quality_status", "")
+        ),
+        market_cache_export_snapshot_manifest_path=str(summary.get("market_cache_export_snapshot_manifest_path", "")),
+        market_cache_export_report_path=str(summary.get("market_cache_export_report_path", "")),
         market_update_handoff_status=str(summary.get("market_update_handoff_status", "MISSING")),
         latest_market_update_handoff_id=str(summary.get("latest_market_update_handoff_id", "")),
         market_update_handoff_stage=str(summary.get("market_update_handoff_stage", "")),
@@ -356,6 +401,7 @@ def scan_local_research_workflow_artifacts(
     *,
     root: str | Path,
     historical_backfill_root: str | Path,
+    market_cache_export_root: str | Path,
     data_preparation_root: str | Path,
     current_candidates_root: str | Path,
     market_update_handoff_root: str | Path,
@@ -367,6 +413,7 @@ def scan_local_research_workflow_artifacts(
 
     root_path = Path(root)
     historical_root = Path(historical_backfill_root)
+    market_cache_export_path = Path(market_cache_export_root)
     data_prep_root = Path(data_preparation_root)
     current_root = Path(current_candidates_root)
     market_update_root = Path(market_update_handoff_root)
@@ -376,6 +423,7 @@ def scan_local_research_workflow_artifacts(
     records: list[dict[str, Any]] = []
 
     records.extend(_scan_historical_backfill_status(historical_root))
+    records.extend(_scan_market_cache_export_status(market_cache_export_path))
     records.extend(_scan_data_preparation_workflow_status(data_prep_root, requested_date, requested_universe))
     records.extend(_scan_snapshot_quality(root_path / "snapshot_quality", requested_date))
     records.extend(_scan_current_candidates(current_root, requested_date, requested_universe))
@@ -593,6 +641,15 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "PAPER_WORKFLOW_STATUS",
     }
     post_backfill_components = {
+        "MARKET_CACHE_EXPORT_STATUS",
+        "DATA_PREPARATION_WORKFLOW",
+        "SNAPSHOT_QUALITY",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
+    post_cache_export_components = {
         "DATA_PREPARATION_WORKFLOW",
         "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
@@ -611,6 +668,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "post_backfill_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_backfill_components
+        ),
+        "post_cache_export_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_cache_export_components
         ),
     }
 
@@ -633,6 +694,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "MARKET_UPDATE_HANDOFF_STATUS":
         return _market_update_handoff_warning_actionability(row, context)
+
+    if component == "MARKET_CACHE_EXPORT_STATUS":
+        return _market_cache_export_warning_actionability(row, context)
 
     if component == "HISTORICAL_BACKFILL_STATUS":
         return _historical_backfill_warning_actionability(row, context)
@@ -699,6 +763,52 @@ def _market_update_handoff_warning_actionability(row: dict[str, Any], context: d
             "expected_reviewable_warning_count": 0,
             "expected_demo_warning_count": expected_count,
             "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
+def _market_cache_export_warning_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stale_count = _parse_note_count(row.get("notes"), "stale_warning_count") + _parse_note_count(
+        row.get("notes"),
+        "stale_error_count",
+    )
+    if context.get("post_cache_export_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count + stale_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if stale_count:
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
             "actionable_warning_count": 0,
             "blocking_error_count": 0,
         }
@@ -941,6 +1051,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
 
     statuses = _status_by_component(dashboard_frame)
     if _has_attention_status(dashboard_frame):
+        if (
+            not _has_post_cache_export_workflow_component(dashboard_frame)
+            and statuses["MARKET_CACHE_EXPORT_STATUS"] == "FAIL"
+        ):
+            return "CACHE_EXPORT_FAILED"
         if not _has_post_backfill_workflow_component(dashboard_frame) and statuses["HISTORICAL_BACKFILL_STATUS"] == "FAIL":
             return "BACKFILL_FAILED"
         return "LOCAL_RESEARCH_NEEDS_ATTENTION"
@@ -966,6 +1081,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _historical_backfill_stage_from_frame(dashboard_frame)
     ):
         return _historical_backfill_stage_from_frame(dashboard_frame)
+    if (
+        not _has_post_cache_export_workflow_component(dashboard_frame)
+        and statuses["MARKET_CACHE_EXPORT_STATUS"] in {"PASS", "WARN", "READY"}
+        and _market_cache_export_stage_from_frame(dashboard_frame)
+    ):
+        return _market_cache_export_stage_from_frame(dashboard_frame)
     if statuses["CURRENT_CANDIDATES"] == "MISSING":
         if statuses["SNAPSHOT_QUALITY"] != "MISSING":
             return "SNAPSHOT_READY"
@@ -1015,6 +1136,12 @@ def infer_local_research_next_action(
         "BACKFILL_CACHE_WRITE_READY": "Review index and health artifacts, then consider explicit --accept-cache-write if the backfill is approved.",
         "BACKFILL_COMPLETED": "Run market-cache-status, then data-pipeline/data-quality/snapshot-quality before research use.",
         "BACKFILL_FAILED": "Review historical-backfill-health errors and repair or rerun the failed backfill.",
+        "CACHE_EXPORT_READY": "Run data-pipeline with the generated reviewed cache export manifest.",
+        "PIPELINE_READY_FROM_EXPORT": "Run data-quality and snapshot-quality for the reviewed cache export.",
+        "DATA_QUALITY_READY_FROM_EXPORT": "Run snapshot-quality for the reviewed cache export snapshot manifest.",
+        "SNAPSHOT_READY_FROM_EXPORT": "Run current-candidates with the reviewed cache export snapshot manifest.",
+        "CACHE_EXPORT_HEALTH_WARN": "Review market-cache-export-health warnings before downstream snapshot workflows.",
+        "CACHE_EXPORT_FAILED": "Review market-cache-export-health errors before using this export downstream.",
         "SNAPSHOT_READY": "Run current-candidates.",
         "CURRENT_CANDIDATES_READY": "Run current-candidates-index.",
         "CURRENT_CANDIDATES_HEALTH_READY": "Run current-to-paper.",
@@ -1046,7 +1173,9 @@ def summarize_local_research_status(
     active_statuses = [str(row.get("status", "")).upper() for row in active.to_dict("records")]
     status_frame = frame.loc[
         ~(
-            frame["component"].isin({"MARKET_UPDATE_HANDOFF_STATUS", "HISTORICAL_BACKFILL_STATUS"})
+            frame["component"].isin(
+                {"MARKET_UPDATE_HANDOFF_STATUS", "HISTORICAL_BACKFILL_STATUS", "MARKET_CACHE_EXPORT_STATUS"}
+            )
             & (frame["status"] == "MISSING")
         )
     ]
@@ -1103,6 +1232,40 @@ def summarize_local_research_status(
         ),
         "historical_backfill_report_path": _string_or_empty(
             by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("report_path")
+        ),
+        "market_cache_export_status": _component_status(by_component, "MARKET_CACHE_EXPORT_STATUS"),
+        "latest_market_cache_export_id": _string_or_empty(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("latest_artifact_id")
+        ),
+        "market_cache_export_stage": _string_or_empty(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("stage")
+        ),
+        "market_cache_export_next_action": _parse_note_value(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "market_cache_export_pipeline_id": _parse_note_value(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("notes"),
+            "pipeline_id",
+        ),
+        "market_cache_export_data_pipeline_status": _parse_note_value(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("notes"),
+            "data_pipeline_status",
+        ),
+        "market_cache_export_data_quality_status": _parse_note_value(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("notes"),
+            "data_quality_status",
+        ),
+        "market_cache_export_snapshot_quality_status": _parse_note_value(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("notes"),
+            "snapshot_quality_status",
+        ),
+        "market_cache_export_snapshot_manifest_path": _parse_note_value(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("notes"),
+            "snapshot_manifest_path",
+        ),
+        "market_cache_export_report_path": _string_or_empty(
+            by_component.get("MARKET_CACHE_EXPORT_STATUS", {}).get("report_path")
         ),
         "market_update_handoff_status": _component_status(by_component, "MARKET_UPDATE_HANDOFF_STATUS"),
         "latest_market_update_handoff_id": _string_or_empty(
@@ -1198,6 +1361,16 @@ def build_local_research_dashboard_metadata(
         "historical_backfill_skipped_count": result.historical_backfill_skipped_count,
         "historical_backfill_cache_write_occurred": result.historical_backfill_cache_write_occurred,
         "historical_backfill_report_path": result.historical_backfill_report_path,
+        "latest_market_cache_export_id": result.latest_market_cache_export_id,
+        "market_cache_export_status": result.market_cache_export_status,
+        "market_cache_export_stage": result.market_cache_export_stage,
+        "market_cache_export_next_action": result.market_cache_export_next_action,
+        "market_cache_export_pipeline_id": result.market_cache_export_pipeline_id,
+        "market_cache_export_data_pipeline_status": result.market_cache_export_data_pipeline_status,
+        "market_cache_export_data_quality_status": result.market_cache_export_data_quality_status,
+        "market_cache_export_snapshot_quality_status": result.market_cache_export_snapshot_quality_status,
+        "market_cache_export_snapshot_manifest_path": result.market_cache_export_snapshot_manifest_path,
+        "market_cache_export_report_path": result.market_cache_export_report_path,
         "latest_market_update_handoff_id": result.latest_market_update_handoff_id,
         "market_update_handoff_status": result.market_update_handoff_status,
         "market_update_handoff_stage": result.market_update_handoff_stage,
@@ -1250,6 +1423,11 @@ def render_local_research_dashboard_report(
                 "historical_backfill_stage",
                 "historical_backfill_task_count",
                 "historical_backfill_cache_write_occurred",
+                "market_cache_export_status",
+                "latest_market_cache_export_id",
+                "market_cache_export_stage",
+                "market_cache_export_pipeline_id",
+                "market_cache_export_snapshot_quality_status",
                 "market_update_handoff_status",
                 "latest_market_update_handoff_id",
                 "market_update_handoff_stage",
@@ -1555,6 +1733,127 @@ def _historical_backfill_notes(metadata: dict[str, Any], summary: dict[str, Any]
         f"fail_count={_string_or_empty(summary.get('fail_count'))}; "
         f"skipped_count={_string_or_empty(summary.get('skipped_count'))}; "
         f"cache_write_occurred={_string_or_empty(summary.get('cache_write_occurred'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}"
+    )
+
+
+def _scan_market_cache_export_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_market_cache_export_status_record(root)
+    if computed is not None:
+        return [computed]
+
+    scan_root = root if root.name == "status" else root / "status"
+    records = []
+    for metadata_path in _metadata_paths(scan_root, "metadata.json"):
+        metadata = _load_json_or_none(metadata_path)
+        if metadata is None or not metadata.get("status_id"):
+            continue
+        output_files = _output_files(metadata)
+        summary = _first_csv_record(output_files.get("market_cache_export_status_summary"))
+        status_rows = _csv_records(output_files.get("market_cache_export_status_csv"))
+        latest_status_row = next(
+            (
+                row
+                for row in status_rows
+                if _string_or_empty(row.get("component")) == "LATEST_MARKET_CACHE_EXPORT"
+            ),
+            {},
+        )
+        status_text = _string_or_empty(metadata.get("status")) or _string_or_empty(summary.get("status")) or "READY"
+        stage = _string_or_empty(metadata.get("workflow_stage")) or _string_or_empty(summary.get("workflow_stage"))
+        latest_export_id = _string_or_empty(metadata.get("latest_export_id")) or _string_or_empty(
+            summary.get("latest_export_id")
+        )
+        warning_count = (
+            _int_or_zero(summary.get("warning_count"))
+            + _int_or_zero(latest_status_row.get("warning_count"))
+            + (len(metadata.get("warnings", [])) if isinstance(metadata.get("warnings"), list) else 0)
+        )
+        if status_text == "WARN" and warning_count == 0:
+            warning_count = 1
+        records.append(
+            _record(
+                workflow_area="MARKET_CACHE_EXPORT",
+                component="MARKET_CACHE_EXPORT_STATUS",
+                status=status_text,
+                stage=stage or "CACHE_EXPORT_READY",
+                latest_artifact_id=latest_export_id or _string_or_empty(metadata.get("status_id")) or metadata_path.parent.name,
+                report_path=output_files.get(
+                    "market_cache_export_status_report",
+                    metadata_path.parent / "market_cache_export_status_report.md",
+                ),
+                metadata_path=metadata_path,
+                issue_count=_int_or_zero(summary.get("issue_count")),
+                warning_count=warning_count,
+                error_count=max(
+                    _int_or_zero(summary.get("error_count")),
+                    _int_or_zero(latest_status_row.get("error_count")),
+                ),
+                notes=_market_cache_export_notes(metadata, summary),
+                created_at=metadata.get("created_at"),
+            )
+        )
+    return records
+
+
+def _computed_market_cache_export_status_record(root: Path) -> dict[str, Any] | None:
+    export_root = root.parent if root.name == "status" else root
+    if not export_root.exists():
+        return None
+    try:
+        result = run_market_cache_export_status(
+            root=export_root,
+            output_dir=export_root / "status",
+            config={"write_artifacts": False},
+        )
+    except Exception:
+        return None
+    if not result.latest_export_id:
+        return None
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    latest_status_row = {}
+    if not result.status_frame.empty:
+        latest_rows = result.status_frame.loc[result.status_frame["component"] == "LATEST_MARKET_CACHE_EXPORT"]
+        if not latest_rows.empty:
+            latest_status_row = latest_rows.iloc[0].to_dict()
+    warning_count = (
+        _int_or_zero(summary.get("warning_count"))
+        + _int_or_zero(latest_status_row.get("warning_count"))
+        + len(result.warnings)
+    )
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="MARKET_CACHE_EXPORT",
+        component="MARKET_CACHE_EXPORT_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_export_id,
+        report_path=result.artifact_paths.get("market_cache_export_status_report", ""),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=_int_or_zero(summary.get("issue_count")),
+        warning_count=warning_count,
+        error_count=max(
+            _int_or_zero(summary.get("error_count")),
+            _int_or_zero(latest_status_row.get("error_count")),
+        ),
+        notes=_market_cache_export_notes(
+            {"next_manual_action": result.next_manual_action},
+            summary,
+        ),
+    )
+
+
+def _market_cache_export_notes(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_string_or_empty(metadata.get('next_manual_action'))}; "
+        f"pipeline_id={_string_or_empty(summary.get('pipeline_id'))}; "
+        f"data_pipeline_status={_string_or_empty(summary.get('data_pipeline_status'))}; "
+        f"data_quality_status={_string_or_empty(summary.get('data_quality_status'))}; "
+        f"snapshot_quality_status={_string_or_empty(summary.get('snapshot_quality_status'))}; "
+        f"snapshot_manifest_path={_string_or_empty(summary.get('snapshot_manifest_path'))}; "
+        f"generated_pipeline_manifest_path={_string_or_empty(summary.get('generated_pipeline_manifest_path'))}; "
+        f"duplicate_key_count={_string_or_empty(summary.get('duplicate_key_count'))}; "
         f"health_status={_string_or_empty(summary.get('health_status'))}"
     )
 
@@ -1949,6 +2248,12 @@ def _component_next_action(component: str, status: str) -> str:
             if status == "MISSING"
             else "Review historical-backfill-status before any cache write."
         )
+    if component == "MARKET_CACHE_EXPORT_STATUS":
+        return (
+            "Run market-cache-export with a reviewed source/upstream manifest."
+            if status == "MISSING"
+            else "Use the reviewed cache export snapshot for current-candidates."
+        )
     if component == "DATA_PREPARATION_WORKFLOW":
         return "Run data-prep-status." if status == "MISSING" else "Run current-candidates."
     if component == "SNAPSHOT_QUALITY":
@@ -1996,6 +2301,14 @@ def _market_update_handoff_stage_from_frame(dashboard_frame: pd.DataFrame) -> st
     return _string_or_empty(rows.iloc[0].get("stage"))
 
 
+def _market_cache_export_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "MARKET_CACHE_EXPORT_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
 def _historical_backfill_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "HISTORICAL_BACKFILL_STATUS"]
@@ -2005,6 +2318,29 @@ def _historical_backfill_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
 
 
 def _has_post_backfill_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "MARKET_CACHE_EXPORT_STATUS",
+        "DATA_PREPARATION_WORKFLOW",
+        "SNAPSHOT_QUALITY",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_cache_export_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "DATA_PREPARATION_WORKFLOW",
@@ -2127,7 +2463,11 @@ def _only_stale_pre_paper_fail(frame: pd.DataFrame, actionability: dict[str, int
     failing = finalized.loc[finalized["status"] == "FAIL"]
     if failing.empty:
         return False
-    stale_pre_paper_components = {"MARKET_UPDATE_HANDOFF_STATUS", "HISTORICAL_BACKFILL_STATUS"}
+    stale_pre_paper_components = {
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "HISTORICAL_BACKFILL_STATUS",
+        "MARKET_CACHE_EXPORT_STATUS",
+    }
     return (
         set(failing["component"].astype(str)).issubset(stale_pre_paper_components)
         and actionability.get("blocking_error_count", 0) == 0

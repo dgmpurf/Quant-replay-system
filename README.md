@@ -135,6 +135,8 @@ For exporting reviewed source/upstream cache selections into one data-pipeline-r
 
 To discover, check, and summarize reviewed cache exports before downstream snapshot workflows, use `market-cache-export-index`, `market-cache-export-health`, and `market-cache-export-status`; see [docs/market_cache_export.md#index-health-and-status](docs/market_cache_export.md#index-health-and-status).
 
+`research-status` includes the latest `market-cache-export-status` as reviewed cache-to-snapshot context, while still letting later current-candidates, market-update-handoff, or paper workflow artifacts take priority; see [docs/local_research_dashboard.md#market-cache-export-status](docs/local_research_dashboard.md#market-cache-export-status).
+
 For source-policy-aware acceptance checks before ingesting market rows into the local cache, use `market-cache-preflight`; see [docs/market_cache_preflight.md](docs/market_cache_preflight.md).
 
 For a dry-run-first local market update wrapper that runs preflight before optional cache ingest, use `market-daily-update`; see [docs/market_daily_update.md](docs/market_daily_update.md).
@@ -192,6 +194,8 @@ For the v0.39.0 local research workflow checkpoint summary, see [docs/release_ch
 For the v0.64.0 reviewed offline update to `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.64.0.md](docs/release_checkpoint_v0.64.0.md).
 
 For the v0.67.0 historical backfill status integration checkpoint summary, see [docs/release_checkpoint_v0.67.0.md](docs/release_checkpoint_v0.67.0.md).
+
+For the v0.70.0 reviewed market cache export to `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.70.0.md](docs/release_checkpoint_v0.70.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -338,6 +342,10 @@ See [docs/release_checkpoint_v0.64.0.md](docs/release_checkpoint_v0.64.0.md) for
 `v0.67.0` marks the historical backfill status integration checkpoint, covering the historical-backfill skeleton, index, health, status, and unified `research-status` dashboard integration while preserving later paper workflow priority.
 
 See [docs/release_checkpoint_v0.67.0.md](docs/release_checkpoint_v0.67.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.70.0` marks the reviewed market cache export to `research-status` integration checkpoint, covering explicit source/upstream cache exports, duplicate-key protection, data-pipeline/data-quality/snapshot-quality validation, export index/health/status, and unified dashboard CSV/metadata regression coverage.
+
+See [docs/release_checkpoint_v0.70.0.md](docs/release_checkpoint_v0.70.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

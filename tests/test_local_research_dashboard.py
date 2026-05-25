@@ -527,6 +527,173 @@ def test_dashboard_metadata_exports_historical_backfill_fields(tmp_path: Path) -
     assert component_statuses["expected_reviewable_warning_count"] == 1
 
 
+def test_dashboard_includes_market_cache_export_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(root, export_id="export-a", status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    export_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "SNAPSHOT_READY_FROM_EXPORT"
+    assert result.market_cache_export_status == "PASS"
+    assert result.latest_market_cache_export_id == "export-a"
+    assert result.market_cache_export_stage == "SNAPSHOT_READY_FROM_EXPORT"
+    assert result.market_cache_export_pipeline_id == "pipeline-export-a"
+    assert result.market_cache_export_data_pipeline_status == "PASS"
+    assert result.market_cache_export_data_quality_status == "PASS"
+    assert result.market_cache_export_snapshot_quality_status == "PASS"
+    assert result.market_cache_export_snapshot_manifest_path.endswith("snapshot_manifest.json")
+    assert "current-candidates" in result.next_manual_action
+    assert export_row["warning_classification"] == ""
+    assert summary["market_cache_export_report_path"]
+
+
+def test_dashboard_preserves_current_candidate_priority_with_market_cache_export_context(tmp_path: Path) -> None:
+    root = _workflow_to_current_candidates(_reports_root(tmp_path))
+    _market_cache_export_status(root, export_id="export-context", status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "CURRENT_CANDIDATES_READY"
+    assert result.current_candidate_status == "READY"
+    assert result.latest_market_cache_export_id == "export-context"
+    assert result.market_cache_export_status == "PASS"
+    assert result.market_cache_export_snapshot_quality_status == "PASS"
+
+
+def test_dashboard_preserves_paper_priority_with_market_cache_export_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(root, export_id="export-paper-context", status="FAIL", error_count=1)
+    _paper_workflow_status(root, status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    export_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
+    assert result.status == "WARN"
+    assert result.paper_workflow_status == "PASS"
+    assert result.latest_market_cache_export_id == "export-paper-context"
+    assert export_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Review completed" in result.next_manual_action
+
+
+def test_dashboard_uses_latest_market_cache_export_when_older_export_failed(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(
+        root,
+        export_id="export-old",
+        status="FAIL",
+        workflow_stage="CACHE_EXPORT_FAILED",
+        health_status="FAIL",
+        error_count=1,
+        created_at=f"{DECISION_DATE}T14:00:00",
+    )
+    _market_cache_export_status(
+        root,
+        export_id="export-new",
+        status="PASS",
+        created_at=f"{DECISION_DATE}T15:00:00",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    export_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "SNAPSHOT_READY_FROM_EXPORT"
+    assert result.latest_market_cache_export_id == "export-new"
+    assert result.market_cache_export_status == "PASS"
+    assert export_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "stale_error_count=" in export_row["notes"]
+    assert summary["stale_warning_count"] > 0
+    assert summary["blocking_error_count"] == 0
+
+
+def test_dashboard_marks_active_failed_market_cache_export_as_actionable(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(
+        root,
+        export_id="export-fail",
+        status="FAIL",
+        workflow_stage="CACHE_EXPORT_FAILED",
+        health_status="FAIL",
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    export_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "CACHE_EXPORT_FAILED"
+    assert result.latest_market_cache_export_id == "export-fail"
+    assert export_row["warning_classification"] == "BLOCKING_ERROR"
+    assert "market-cache-export-health errors" in result.next_manual_action
+
+
+def test_dashboard_summary_csv_exports_market_cache_export_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(root, export_id="export-summary", status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_market_cache_export_id"] == "export-summary"
+    assert row["market_cache_export_status"] == "PASS"
+    assert row["market_cache_export_stage"] == "SNAPSHOT_READY_FROM_EXPORT"
+    assert "current-candidates" in row["market_cache_export_next_action"]
+    assert row["market_cache_export_pipeline_id"] == "pipeline-export-summary"
+    assert row["market_cache_export_data_pipeline_status"] == "PASS"
+    assert row["market_cache_export_data_quality_status"] == "PASS"
+    assert row["market_cache_export_snapshot_quality_status"] == "PASS"
+    assert row["market_cache_export_snapshot_manifest_path"].endswith("snapshot_manifest.json")
+    assert row["market_cache_export_report_path"]
+
+
+def test_dashboard_metadata_exports_market_cache_export_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(root, export_id="export-metadata", status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    component_statuses = metadata["component_statuses"]
+
+    assert metadata["latest_market_cache_export_id"] == "export-metadata"
+    assert metadata["market_cache_export_status"] == "PASS"
+    assert metadata["market_cache_export_stage"] == "SNAPSHOT_READY_FROM_EXPORT"
+    assert "current-candidates" in metadata["market_cache_export_next_action"]
+    assert metadata["market_cache_export_pipeline_id"] == "pipeline-export-metadata"
+    assert metadata["market_cache_export_data_pipeline_status"] == "PASS"
+    assert metadata["market_cache_export_data_quality_status"] == "PASS"
+    assert metadata["market_cache_export_snapshot_quality_status"] == "PASS"
+    assert metadata["market_cache_export_snapshot_manifest_path"].endswith("snapshot_manifest.json")
+    assert component_statuses["latest_market_cache_export_id"] == "export-metadata"
+    assert component_statuses["market_cache_export_pipeline_id"] == "pipeline-export-metadata"
+
+
+def test_cli_research_status_prints_market_cache_export_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_status(root, export_id="export-cli", status="PASS")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_market_cache_export_id: export-cli" in output.out
+    assert "market_cache_export_status: PASS" in output.out
+    assert "market_cache_export_stage: SNAPSHOT_READY_FROM_EXPORT" in output.out
+    assert "market_cache_export_pipeline_id: pipeline-export-cli" in output.out
+    assert "market_cache_export_snapshot_quality_status: PASS" in output.out
+
+
 def test_cli_research_status_prints_historical_backfill_fields(tmp_path: Path, capsys) -> None:
     root = _reports_root(tmp_path)
     _historical_backfill_status(root, backfill_id="backfill-cli", status="WARN", warning_count=1)
@@ -1081,6 +1248,105 @@ def _historical_backfill_status(
                 "historical_backfill_status_report": str(report),
                 "historical_backfill_status_csv": str(status_csv),
                 "historical_backfill_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _market_cache_export_status(
+    root: Path,
+    *,
+    export_id: str = "export-a",
+    status: str = "PASS",
+    workflow_stage: str = "SNAPSHOT_READY_FROM_EXPORT",
+    health_status: str = "PASS",
+    warning_count: int = 0,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:00:00",
+) -> Path:
+    folder = root / "market_cache_export" / "status" / f"status-{export_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "market_cache_export_status_report.md"
+    status_csv = folder / "market_cache_export_status.csv"
+    summary_csv = folder / "market_cache_export_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    snapshot_manifest = root / "market_cache_export" / export_id / "snapshot_manifest.json"
+    export_report = root / "market_cache_export" / export_id / "market_cache_export_report.md"
+    next_action = "Use the snapshot manifest for current-candidates or link this export into research-status."
+    report.write_text("No live trading or broker API was invoked.", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "component": "MARKET_CACHE_EXPORT_INDEX",
+                "status": "PASS",
+                "latest_export_id": export_id,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "MARKET_CACHE_EXPORT_HEALTH",
+                "status": health_status,
+                "latest_export_id": export_id,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "issue_count": warning_count + error_count,
+            },
+            {
+                "component": "LATEST_MARKET_CACHE_EXPORT",
+                "status": status,
+                "latest_export_id": export_id,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "issue_count": warning_count + error_count,
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "latest_export_id": export_id,
+                "exported_row_count": 93,
+                "duplicate_key_count": 0,
+                "generated_pipeline_manifest_path": str(
+                    root / "market_cache_export" / export_id / "market_cache_export_manifest.json"
+                ),
+                "pipeline_id": f"pipeline-{export_id}",
+                "data_pipeline_status": "PASS",
+                "data_quality_status": "PASS",
+                "snapshot_quality_status": "PASS",
+                "snapshot_manifest_path": str(snapshot_manifest),
+                "health_status": health_status,
+                "issue_count": warning_count + error_count,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "next_manual_action": next_action,
+                "report_path": str(export_report),
+                "no_live_trading": True,
+                "no_broker_api": True,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{export_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_export_id": export_id,
+            "next_manual_action": next_action,
+            "warnings": ["Reviewed cache export needs attention."] if warning_count else [],
+            "output_files": {
+                "market_cache_export_status_report": str(report),
+                "market_cache_export_status_csv": str(status_csv),
+                "market_cache_export_status_summary": str(summary_csv),
                 "metadata": str(metadata_path),
             },
             "live_trading_enabled": False,
