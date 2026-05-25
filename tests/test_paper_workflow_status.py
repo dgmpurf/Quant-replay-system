@@ -291,6 +291,58 @@ def test_dashboard_prefers_review_artifacts_linked_from_latest_daily_reviewed_de
     assert int(result.summary_frame.iloc[0]["stale_warning_count"]) > 0
 
 
+def test_dashboard_prefers_larger_reviewed_daily_when_created_at_ties(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="health-small", status="PASS")
+    small_review = _paper_review(
+        root,
+        review_id="review-small",
+        template_health={
+            "template_health_check_id": "health-small",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "health-small" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    _review_template_health(root, health_id="health-large", status="PASS")
+    large_review = _paper_review(
+        root,
+        review_id="review-large",
+        template_health={
+            "template_health_check_id": "health-large",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "health-large" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    _daily_paper(
+        root,
+        journal_id="journal-small",
+        reviewed_decisions_path=small_review / "reviewed_decisions.csv",
+        decision_count=1,
+    )
+    _daily_paper(
+        root,
+        journal_id="journal-large",
+        reviewed_decisions_path=large_review / "reviewed_decisions.csv",
+        decision_count=9,
+    )
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    by_component = {row["component"]: row for row in result.status_frame.to_dict("records")}
+
+    assert by_component["DAILY_PAPER"]["latest_artifact_id"] == "journal-large"
+    assert by_component["PAPER_REVIEW"]["latest_artifact_id"] == "review-large"
+
+
 def test_dashboard_active_linked_review_health_warn_drives_stage(tmp_path: Path) -> None:
     root = _workflow_to_review_template(_reports_root(tmp_path))
     _review_template_health(root, health_id="health-stale-pass", status="PASS")
@@ -375,11 +427,169 @@ def test_dashboard_expected_demo_empty_fills_warning_changes_next_action(tmp_pat
 
     assert result.status == "WARN"
     assert result.next_manual_action != "Review warnings/errors in workflow status and health reports."
-    assert "Demo workflow validated" in result.next_manual_action
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
     assert by_component["PAPER_ARTIFACT_HEALTH"]["warning_classification"] == "EXPECTED_DEMO_WARNING"
     assert summary["expected_demo_warning_count"] == 1
     assert summary["actionable_warning_count"] == 0
     assert summary["blocking_error_count"] == 0
+
+
+def test_dashboard_watch_only_no_fills_demo_has_specific_stage(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidate(root)
+    _current_candidate_index(root)
+    _current_candidate_health(root, status="PASS")
+    _current_to_paper_handoff(
+        root,
+        warnings=[
+            "Health check skipped for direct candidates_path handoff.",
+            "No fills_path provided; continuing with empty paper fills.",
+            "Reconciliation: No fills supplied for reconciliation.",
+            "1 decision(s) pending manual review.",
+            "No manual paper fills loaded.",
+        ],
+    )
+    _review_template(root)
+    _review_template_health(root, health_id="template-health-a", status="PASS")
+    active_review = _paper_review(
+        root,
+        template_health={
+            "template_health_check_id": "template-health-a",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "template-health-a" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    _daily_paper(
+        root,
+        reviewed_decisions_path=active_review / "reviewed_decisions.csv",
+        decision_count=1,
+        fill_count=0,
+        open_position_count=0,
+        closed_trade_count=0,
+        manual_review_status_summary={"WATCH_ONLY": 1},
+        warnings=[
+            "No fills_path provided; continuing with empty paper fills.",
+            "Reconciliation: No fills supplied for reconciliation.",
+            "No manual paper fills loaded.",
+        ],
+    )
+    _reconciliation(root, status="PASS")
+    _paper_artifact_index(root)
+    _paper_artifact_health_with_issues(
+        root,
+        status="WARN",
+        issues=[
+            {
+                "artifact_type": "DAILY",
+                "artifact_id": "journal-a",
+                "path_field": "fills_path",
+                "path_value": str(root / "paper_trading" / "daily" / f"{DECISION_DATE}_journal-a" / "fills.csv"),
+                "severity": "WARN",
+                "issue_code": "CSV_EMPTY",
+                "issue_message": "Required CSV artifact has no rows.",
+                "suggested_action": "Confirm whether an empty artifact is expected.",
+            }
+        ],
+    )
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    summary = result.summary_frame.iloc[0].to_dict()
+    by_component = {row["component"]: row for row in result.status_frame.to_dict("records")}
+
+    assert result.status == "WARN"
+    assert result.workflow_stage == "WATCH_ONLY_DEMO_VALIDATED_NO_FILLS"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+    assert summary["watch_only_count"] == 1
+    assert summary["approved_count"] == 0
+    assert summary["open_position_count"] == 0
+    assert summary["closed_trade_count"] == 0
+    assert summary["paper_demo_validated"] is True
+    assert summary["expected_no_fills_warning_count"] == 3
+    assert summary["actionable_warning_count"] == 0
+    assert summary["blocking_error_count"] == 0
+    assert by_component["CURRENT_TO_PAPER_HANDOFF"]["warning_classification"] == "EXPECTED_DEMO_WARNING"
+
+
+def test_dashboard_approved_for_paper_prevents_watch_only_demo_stage(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="template-health-a", status="PASS")
+    active_review = _paper_review(
+        root,
+        manual_review_status="APPROVED_FOR_PAPER",
+        template_health={
+            "template_health_check_id": "template-health-a",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "template-health-a" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    _daily_paper(
+        root,
+        reviewed_decisions_path=active_review / "reviewed_decisions.csv",
+        decision_count=1,
+        fill_count=0,
+        open_position_count=0,
+        closed_trade_count=0,
+        manual_review_status_summary={"APPROVED_FOR_PAPER": 1},
+    )
+    _reconciliation(root, status="PASS")
+    _paper_artifact_index(root)
+    _paper_artifact_health(root, status="PASS")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "WORKFLOW_NEEDS_ATTENTION"
+    assert result.next_manual_action == "Review warnings/errors in workflow status and health reports."
+    assert summary["paper_demo_validated"] is False
+    assert summary["approved_count"] == 1
+    assert summary["actionable_warning_count"] > 0
+
+
+def test_dashboard_unexpected_open_positions_prevent_watch_only_demo_stage(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="template-health-a", status="PASS")
+    active_review = _paper_review(
+        root,
+        template_health={
+            "template_health_check_id": "template-health-a",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "template-health-a" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    _daily_paper(
+        root,
+        reviewed_decisions_path=active_review / "reviewed_decisions.csv",
+        decision_count=1,
+        fill_count=0,
+        open_position_count=1,
+        closed_trade_count=0,
+        manual_review_status_summary={"WATCH_ONLY": 1},
+    )
+    _reconciliation(root, status="PASS")
+    _paper_artifact_index(root)
+    _paper_artifact_health(root, status="PASS")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage != "WATCH_ONLY_DEMO_VALIDATED_NO_FILLS"
+    assert summary["paper_demo_validated"] is False
+    assert summary["open_position_count"] == 1
 
 
 def test_dashboard_unreadable_active_artifact_remains_blocking_error(tmp_path: Path) -> None:
@@ -501,7 +711,7 @@ def _current_candidate_health(root: Path, *, status: str = "PASS") -> Path:
     return folder
 
 
-def _current_to_paper_handoff(root: Path) -> Path:
+def _current_to_paper_handoff(root: Path, *, warnings: list[str] | None = None) -> Path:
     folder = root / "current_to_paper_handoff" / "handoff-a"
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "handoff_report.md"
@@ -516,7 +726,7 @@ def _current_to_paper_handoff(root: Path) -> Path:
             "selected_run_id": "run-a",
             "paper_journal_id": "journal-a",
             "output_files": {"handoff_report": str(report)},
-            "warnings": [],
+            "warnings": warnings or [],
         },
     )
     return folder
@@ -574,6 +784,8 @@ def _paper_review(
     review_id: str = "review-a",
     template_health: dict | None = None,
     warnings: list[str] | None = None,
+    manual_review_status: str = "WATCH_ONLY",
+    action: str = "SKIP",
 ) -> Path:
     folder = root / "paper_trading" / "reviews" / review_id
     folder.mkdir(parents=True, exist_ok=True)
@@ -585,7 +797,8 @@ def _paper_review(
             {
                 "decision_id": "d1",
                 "symbol": "510300",
-                "manual_review_status": "WATCH_ONLY",
+                "action": action,
+                "manual_review_status": manual_review_status,
             }
         ]
     ).to_csv(reviewed, index=False)
@@ -607,26 +820,45 @@ def _paper_review(
     return folder
 
 
-def _daily_paper(root: Path, *, reviewed_decisions_path: Path | None = None) -> Path:
-    folder = root / "paper_trading" / "daily" / f"{DECISION_DATE}_journal-a"
+def _daily_paper(
+    root: Path,
+    *,
+    journal_id: str = "journal-a",
+    reviewed_decisions_path: Path | None = None,
+    decision_count: int | None = None,
+    fill_count: int | None = None,
+    open_position_count: int | None = None,
+    closed_trade_count: int | None = None,
+    manual_review_status_summary: dict[str, int] | None = None,
+    warnings: list[str] | None = None,
+) -> Path:
+    folder = root / "paper_trading" / "daily" / f"{DECISION_DATE}_{journal_id}"
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "paper_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
-    _write_json(
-        folder / "metadata.json",
-        {
+    metadata = {
             "paper_date": DECISION_DATE,
-            "journal_id": "journal-a",
+            "journal_id": journal_id,
             "created_at": f"{DECISION_DATE}T16:30:00",
             "reviewed_decisions_used": True,
             "reconciliation": {"status": "", "issue_count": 0, "error_count": 0, "warning_count": 0},
             "output_files": {"paper_report": str(report), "decisions": str(folder / "decisions.csv")},
-            "warnings": [],
+            "warnings": warnings or [],
             "live_trading_enabled": False,
             "broker_api_invoked": False,
             "paper_trading_only": True,
-        },
-    )
+        }
+    if decision_count is not None:
+        metadata["decision_count"] = decision_count
+    if fill_count is not None:
+        metadata["fill_count"] = fill_count
+    if open_position_count is not None:
+        metadata["open_position_count"] = open_position_count
+    if closed_trade_count is not None:
+        metadata["closed_trade_count"] = closed_trade_count
+    if manual_review_status_summary is not None:
+        metadata["manual_review_status_summary"] = manual_review_status_summary
+    _write_json(folder / "metadata.json", metadata)
     if reviewed_decisions_path is not None:
         metadata_path = folder / "metadata.json"
         metadata = json.loads(metadata_path.read_text(encoding="utf-8"))

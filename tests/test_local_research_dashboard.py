@@ -351,8 +351,8 @@ def test_dashboard_inherits_expected_demo_warning_actionability_from_paper_workf
         actionable_warning_count=0,
         blocking_error_count=0,
         next_manual_action=(
-            "Demo workflow validated; no fills were supplied. Proceed to paper-reconcile-fills only if you want "
-            "to test fills, or return to data-source strategy."
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
         ),
     )
 
@@ -362,7 +362,7 @@ def test_dashboard_inherits_expected_demo_warning_actionability_from_paper_workf
 
     assert result.status == "WARN"
     assert result.workflow_stage == "PAPER_WORKFLOW_READY"
-    assert "Demo workflow validated" in result.next_manual_action
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
     assert paper_row["warning_classification"] == "EXPECTED_DEMO_WARNING"
     assert summary["expected_demo_warning_count"] == 1
     assert summary["actionable_warning_count"] == 0

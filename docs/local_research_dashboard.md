@@ -114,6 +114,8 @@ If a paper workflow has already advanced beyond the market-update-handoff stage,
 
 The same priority principle applies to historical backfill and reviewed cache exports: earlier WARN/FAIL context remains visible, but it does not regress a more advanced valid paper workflow stage.
 
+When `paper-workflow-status` reports a reviewed WATCH_ONLY/no-fills demo state, `research-status` inherits the expected demo warning classification and keeps the next action on the demo paper workflow path. This means no-fills warnings stay visible, but they are not presented as generic broken-artifact warnings when there are zero approvals, zero open positions, zero closed trades, and no broker/live-trading markers.
+
 ## Warning Actionability
 
 `research-status` preserves raw warning counts and adds actionability counts inherited from component dashboards where available:

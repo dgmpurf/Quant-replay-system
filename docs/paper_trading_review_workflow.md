@@ -19,6 +19,8 @@ This keeps the paper journal auditable and prevents fills from being entered aga
 
 The fill recorder and reconciliation logic require `APPROVED_FOR_PAPER` by default.
 
+`WATCH_ONLY` is useful for local workflow smoke tests. A reviewed decision set with all rows marked `WATCH_ONLY`, zero approvals, no fills, and no open or closed positions can validate that current-candidates artifacts pass through paper handoff, review, and daily reporting. It does not approve paper trades, and fills against `WATCH_ONLY` decisions still fail reconciliation by default.
+
 ## Review Reason Codes
 
 Supported reason codes:
@@ -124,6 +126,8 @@ The intended local workflow is:
 6. Generate daily paper reports.
 
 Fills against `REJECTED`, `WATCH_ONLY`, or `PENDING_REVIEW` decisions fail reconciliation by default.
+
+For WATCH_ONLY/no-fills smoke runs, no-fills warnings are expected unless fill reconciliation is explicitly being tested. They should remain visible in reports but should not be confused with broken workflow artifacts when `paper-workflow-status` classifies the run as `WATCH_ONLY_DEMO_VALIDATED_NO_FILLS`.
 
 ## Artifacts
 

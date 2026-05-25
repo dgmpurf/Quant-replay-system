@@ -150,8 +150,8 @@ LINKED_SNAPSHOT_PASS = "LINKED_SNAPSHOT_PASS"
 MISSING_LINKED_SNAPSHOT = "MISSING_LINKED_SNAPSHOT"
 
 DEMO_WORKFLOW_NEXT_ACTION = (
-    "Demo workflow validated; no fills were supplied. Proceed to paper-reconcile-fills only if you want "
-    "to test fills, or return to data-source strategy."
+    "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+    "only if testing fills, or return to data-source / strategy research."
 )
 
 STALE_ONLY_NEXT_ACTION = (
@@ -660,8 +660,25 @@ def _active_daily_record(frame: pd.DataFrame) -> dict[str, Any] | None:
         return None
     reviewed_rows = daily_rows.loc[daily_rows["status"] == "REVIEWED_READY"]
     if not reviewed_rows.empty:
-        return _latest_record(reviewed_rows)
-    return _latest_record(daily_rows)
+        return _latest_daily_record(reviewed_rows)
+    return _latest_daily_record(daily_rows)
+
+
+def _latest_daily_record(frame: pd.DataFrame) -> dict[str, Any]:
+    sortable = frame.copy(deep=True)
+    sortable["_sort_date"] = sortable["decision_date"].map(lambda value: _date_string(value))
+    sortable["_sort_created"] = sortable["created_at"].map(_string_or_empty)
+    sortable["_sort_decision_count"] = sortable["metadata_path"].map(
+        lambda value: _int_or_zero(_metadata_for_row({"metadata_path": value}).get("decision_count"))
+    )
+    sortable = sortable.sort_values(
+        ["_sort_date", "_sort_created", "_sort_decision_count", "latest_artifact_id", "metadata_path"],
+        na_position="last",
+    )
+    return sortable.iloc[-1].drop(
+        labels=["_sort_date", "_sort_created", "_sort_decision_count"],
+        errors="ignore",
+    ).to_dict()
 
 
 def _review_record_linked_to_daily(frame: pd.DataFrame, daily: dict[str, Any]) -> dict[str, Any] | None:

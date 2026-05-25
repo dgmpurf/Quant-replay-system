@@ -76,6 +76,8 @@ Reports and metadata include:
 
 If only expected demo or stale warnings are present, the dashboard keeps the raw `WARN` signal but changes the next manual action to explain that the local demo workflow was validated and that no fills were supplied. Actionable warnings and blocking errors still produce the normal review/fix prompts.
 
+When a daily paper artifact used reviewed decisions, every final reviewed decision is `WATCH_ONLY`, no `APPROVED_FOR_PAPER` status appears, decision actions are `SKIP`/`NO_TRADE` compatible, and open/closed positions are zero, expected no-fills warnings can be classified as a validated local smoke state. This state proves artifact handoff and review plumbing only; it is not a trade approval and does not mark fills as supplied.
+
 ## Stage Meanings
 
 - `NO_CURRENT_CANDIDATES`: no current-candidate artifact found.
@@ -87,6 +89,7 @@ If only expected demo or stale warnings are present, the dashboard keeps the raw
 - `REVIEW_READY`: reviewed decisions exist and can feed `paper-daily`.
 - `DAILY_PAPER_READY`: daily paper report exists and fills/reconciliation are next.
 - `RECONCILIATION_READY`: reconciliation exists and artifact index/health checks are next.
+- `WATCH_ONLY_DEMO_VALIDATED_NO_FILLS`: reviewed WATCH_ONLY decisions flowed through `paper-daily` with zero approvals, zero open positions, zero closed trades, and only expected no-fills demo warnings.
 - `WORKFLOW_COMPLETE`: the discovered workflow appears complete and health checks pass.
 - `WORKFLOW_NEEDS_ATTENTION`: one or more explicit failures or warnings need review.
 
@@ -103,7 +106,7 @@ The dashboard recommends one next step based on the inferred stage:
 - Enter manual fills CSV or run `paper-reconcile-fills`.
 - Run `paper-index` and `paper-health-check`.
 - Review warnings/errors.
-- Treat expected no-fills demo warnings as validation notes instead of active blockers.
+- Treat expected WATCH_ONLY/no-fills demo warnings as validation notes instead of active blockers.
 
 These are workflow prompts, not trading instructions.
 
@@ -138,6 +141,7 @@ The CLI prints:
 - overall status,
 - workflow stage,
 - latest decision date,
+- WATCH_ONLY, approval, open-position, and closed-trade counts when available,
 - next manual action,
 - report path,
 - `No live trading or broker API was invoked.`

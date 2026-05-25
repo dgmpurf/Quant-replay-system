@@ -74,6 +74,8 @@ New decisions default to `PENDING_REVIEW`.
 
 By default, fills can only be recorded for decisions whose `manual_review_status` is `APPROVED_FOR_PAPER`. This prevents a pending, rejected, or watch-only candidate from accidentally becoming a paper position.
 
+For local smoke testing, a full decision set may be reviewed as `WATCH_ONLY` and then passed into `paper-daily --reviewed-decisions` with no fills. That validates artifact handoff and reporting only. It should produce zero approvals, zero open positions, and zero closed trades; expected no-fills warnings remain visible.
+
 ## Paper Fills
 
 `record_paper_fill(...)` appends a manual hypothetical fill.
@@ -172,6 +174,8 @@ The daily summary includes:
 - `warnings`
 
 The markdown report includes an explicit statement that no broker or live trading integration was invoked.
+
+When `paper-workflow-status` sees a reviewed WATCH_ONLY/no-fills demo run, it can report `WATCH_ONLY_DEMO_VALIDATED_NO_FILLS`. This is a workflow validation state, not a fill, position, or trade approval state.
 
 ## Configuration
 

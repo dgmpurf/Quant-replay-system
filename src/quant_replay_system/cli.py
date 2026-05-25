@@ -1467,6 +1467,12 @@ def _handle_paper_workflow_status(args: argparse.Namespace) -> int:
     print(f"Workflow status: {result.status}")
     print(f"workflow_stage: {result.workflow_stage}")
     print(f"latest_decision_date: {result.latest_decision_date}")
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"watch_only_count: {summary.get('watch_only_count', 0)}")
+    print(f"approved_count: {summary.get('approved_count', 0)}")
+    print(f"open_position_count: {summary.get('open_position_count', 0)}")
+    print(f"closed_trade_count: {summary.get('closed_trade_count', 0)}")
+    print(f"paper_demo_validated: {summary.get('paper_demo_validated', False)}")
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['paper_workflow_status_report']}")
     for warning in result.warnings:
