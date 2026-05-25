@@ -165,6 +165,69 @@ def test_historical_backfill_status_reviewable_next_action_for_warn_dry_run(tmp_
     assert "--accept-cache-write" in result.next_manual_action
 
 
+def test_historical_backfill_status_classifies_partial_cache_write_rejections(tmp_path: Path) -> None:
+    root = tmp_path / "historical_backfill"
+    _write_partial_backfill_artifact(root, "bf_partial")
+
+    result = run_historical_backfill_status(root=root, output_dir=tmp_path / "status", config=_settings(tmp_path, root))
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.status == "WARN"
+    assert result.workflow_stage == "BACKFILL_PARTIAL_WITH_REJECTIONS"
+    assert "Review rejected rows" in result.next_manual_action
+    assert summary["accepted_task_count"] == 1
+    assert summary["rejected_task_count"] == 1
+    assert summary["preflight_rejected_count"] == 1
+    assert summary["comparison_failed_count"] == 1
+    assert summary["cache_write_partial"] is True
+    assert summary["rejected_symbols"] == "300750"
+    assert summary["rejected_sources"] == "BAOSTOCK_OPTIONAL"
+    assert "COMPARISON_FAIL" in summary["rejected_issue_categories"]
+
+
+def test_historical_backfill_status_keeps_all_rejected_rows_blocking(tmp_path: Path) -> None:
+    root = tmp_path / "historical_backfill"
+    _write_all_rejected_backfill_artifact(root, "bf_all_rejected")
+
+    result = run_historical_backfill_status(root=root, output_dir=tmp_path / "status", config=_settings(tmp_path, root))
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "BACKFILL_FAILED"
+    assert "failed backfill" in result.next_manual_action
+    assert summary["accepted_task_count"] == 0
+    assert summary["rejected_task_count"] == 2
+    assert summary["cache_write_partial"] is False
+
+
+def test_historical_backfill_status_metadata_preserves_rejected_rows(tmp_path: Path) -> None:
+    root = tmp_path / "historical_backfill"
+    _write_partial_backfill_artifact(root, "bf_partial_metadata")
+
+    result = run_historical_backfill_status(root=root, output_dir=tmp_path / "status", config=_settings(tmp_path, root))
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert metadata["status"] == "WARN"
+    assert metadata["workflow_stage"] == "BACKFILL_PARTIAL_WITH_REJECTIONS"
+    assert metadata["accepted_task_count"] == 1
+    assert metadata["rejected_task_count"] == 1
+    assert metadata["preflight_rejected_count"] == 1
+    assert metadata["comparison_failed_count"] == 1
+    assert metadata["cache_write_partial"] is True
+    assert metadata["rejected_symbols"] == "300750"
+
+
+def test_historical_backfill_health_still_surfaces_partial_artifact_issues(tmp_path: Path) -> None:
+    root = tmp_path / "historical_backfill"
+    artifact = _write_partial_backfill_artifact(root, "bf_partial_missing_report")
+    (artifact / "historical_backfill_report.md").unlink()
+
+    result = check_historical_backfill_health(root=root, output_dir=tmp_path / "health", settings=_settings(tmp_path, root))
+
+    assert result.status == "FAIL"
+    assert "MISSING_REPORT" in result.health_frame["issue_code"].tolist()
+
+
 def test_cli_historical_backfill_index_works(tmp_path: Path, capsys) -> None:
     root = tmp_path / "historical_backfill"
     _write_fake_backfill_artifact(root, "bf_pass")
@@ -223,6 +286,7 @@ def test_cli_historical_backfill_status_works(tmp_path: Path, capsys) -> None:
     assert code == 0
     assert "Historical backfill workflow status: PASS" in output.out
     assert "workflow_stage: BACKFILL_CACHE_WRITE_READY" in output.out
+    assert "rejected_task_count: 0" in output.out
 
 
 def test_historical_backfill_artifact_views_are_local_only(tmp_path: Path) -> None:
@@ -336,6 +400,120 @@ def _write_fake_backfill_artifact(
     return artifact_dir
 
 
+def _write_partial_backfill_artifact(root: Path, backfill_id: str) -> Path:
+    artifact = _write_fake_backfill_artifact(
+        root,
+        backfill_id,
+        status="FAIL",
+        result_statuses=["WARN", "BLOCKED_PREFLIGHT_REJECT"],
+        cache_write_occurred=True,
+        warnings=["One source row was blocked by preflight comparison."],
+    )
+    preflight_report = _write_fake_preflight_issue(artifact, "task_2", "300750")
+    rows = [
+        _result_row(
+            "task_1",
+            2,
+            "000002",
+            "WARN",
+            cache_write_occurred=True,
+            preflight_status="WARN_ACCEPT",
+            message="accepted with reviewable warning",
+        ),
+        _result_row(
+            "task_2",
+            3,
+            "300750",
+            "BLOCKED_PREFLIGHT_REJECT",
+            source="BAOSTOCK_OPTIONAL",
+            preflight_status="REJECT",
+            error_count=1,
+            message="COMPARISON_FAIL rejected before cache ingest",
+            preflight_report_path=str(preflight_report),
+        ),
+    ]
+    pd.DataFrame(rows, columns=HISTORICAL_BACKFILL_RESULT_COLUMNS).to_csv(
+        artifact / "historical_backfill_results.csv",
+        index=False,
+    )
+    metadata_path = artifact / "metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["task_result_counts"] = {"WARN": 1, "BLOCKED_PREFLIGHT_REJECT": 1}
+    metadata["task_count"] = 2
+    metadata["cache_write_occurred"] = True
+    metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
+    return artifact
+
+
+def _write_all_rejected_backfill_artifact(root: Path, backfill_id: str) -> Path:
+    artifact = _write_fake_backfill_artifact(
+        root,
+        backfill_id,
+        status="FAIL",
+        result_statuses=["BLOCKED_PREFLIGHT_REJECT", "BLOCKED_PREFLIGHT_REJECT"],
+    )
+    first_preflight = _write_fake_preflight_issue(artifact, "task_1", "300750")
+    second_preflight = _write_fake_preflight_issue(artifact, "task_2", "688981")
+    rows = [
+        _result_row(
+            "task_1",
+            2,
+            "300750",
+            "BLOCKED_PREFLIGHT_REJECT",
+            source="BAOSTOCK_OPTIONAL",
+            preflight_status="REJECT",
+            error_count=1,
+            message="COMPARISON_FAIL rejected before cache ingest",
+            preflight_report_path=str(first_preflight),
+        ),
+        _result_row(
+            "task_2",
+            3,
+            "688981",
+            "BLOCKED_PREFLIGHT_REJECT",
+            source="BAOSTOCK_OPTIONAL",
+            preflight_status="REJECT",
+            error_count=1,
+            message="COMPARISON_FAIL rejected before cache ingest",
+            preflight_report_path=str(second_preflight),
+        ),
+    ]
+    pd.DataFrame(rows, columns=HISTORICAL_BACKFILL_RESULT_COLUMNS).to_csv(
+        artifact / "historical_backfill_results.csv",
+        index=False,
+    )
+    metadata_path = artifact / "metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["task_result_counts"] = {"BLOCKED_PREFLIGHT_REJECT": 2}
+    metadata["task_count"] = 2
+    metadata["cache_write_occurred"] = False
+    metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
+    return artifact
+
+
+def _write_fake_preflight_issue(artifact: Path, task_id: str, symbol: str) -> Path:
+    preflight_dir = artifact / f"preflight_{task_id}"
+    preflight_dir.mkdir(parents=True, exist_ok=True)
+    report_path = preflight_dir / "market_cache_preflight_report.md"
+    report_path.write_text("No live trading or broker API was invoked.", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "category": "COMPARISON_FAIL",
+                "severity": "ERROR",
+                "field": "close",
+                "symbol": symbol,
+                "trade_date": "2024-01-02",
+                "message": "comparison failed",
+                "decision_impact": "Reject cache ingest for this source row.",
+                "no_live_trading": True,
+                "no_broker_api": True,
+            }
+        ]
+    ).to_csv(preflight_dir / "market_cache_preflight_issues.csv", index=False)
+    return report_path
+
+
 def _task_row(task_id: str, manifest_row: int, symbol: str, security_type: str) -> dict:
     return {
         "task_id": task_id,
@@ -362,29 +540,41 @@ def _task_row(task_id: str, manifest_row: int, symbol: str, security_type: str) 
     }
 
 
-def _result_row(task_id: str, manifest_row: int, symbol: str, status: str) -> dict:
+def _result_row(
+    task_id: str,
+    manifest_row: int,
+    symbol: str,
+    status: str,
+    *,
+    source: str = "AKSHARE_OPTIONAL",
+    cache_write_occurred: bool = False,
+    preflight_status: str | None = None,
+    error_count: int | None = None,
+    message: str = "test fixture",
+    preflight_report_path: str = "outputs/reports/fake/preflight_report.md",
+) -> dict:
     return {
         "task_id": task_id,
         "manifest_row": manifest_row,
         "symbol": symbol,
-        "source": "AKSHARE_OPTIONAL",
+        "source": source,
         "dataset_type": "market",
         "chunk_start_date": "2024-01-01",
         "chunk_end_date": "2024-01-10",
         "status": status,
-        "preflight_status": "WARN_ACCEPT" if status == "WARN" else "ACCEPT",
+        "preflight_status": preflight_status or ("WARN_ACCEPT" if status == "WARN" else "ACCEPT"),
         "health_status": "",
-        "cache_write_occurred": False,
+        "cache_write_occurred": cache_write_occurred,
         "raw_data_path": f"data/raw/fake/{symbol}/raw_data.csv",
         "metadata_path": f"data/raw/fake/{symbol}/metadata.json",
         "health_report_path": "",
-        "preflight_report_path": "outputs/reports/fake/preflight_report.md",
+        "preflight_report_path": preflight_report_path,
         "cache_report_path": "",
         "row_count": 10,
         "issue_count": 1 if status == "WARN" else 0,
         "warning_count": 1 if status == "WARN" else 0,
-        "error_count": 0,
-        "message": "test fixture",
+        "error_count": 0 if error_count is None else error_count,
+        "message": message,
         "no_live_trading": True,
         "no_broker_api": True,
     }

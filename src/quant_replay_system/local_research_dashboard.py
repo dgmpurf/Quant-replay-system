@@ -79,6 +79,14 @@ SUMMARY_COLUMNS = [
     "historical_backfill_fail_count",
     "historical_backfill_skipped_count",
     "historical_backfill_cache_write_occurred",
+    "historical_backfill_accepted_task_count",
+    "historical_backfill_rejected_task_count",
+    "historical_backfill_preflight_rejected_count",
+    "historical_backfill_comparison_failed_count",
+    "historical_backfill_cache_write_partial",
+    "historical_backfill_rejected_symbols",
+    "historical_backfill_rejected_sources",
+    "historical_backfill_rejected_issue_categories",
     "historical_backfill_report_path",
     "market_cache_export_plan_status",
     "latest_market_cache_export_plan_id",
@@ -231,6 +239,14 @@ class LocalResearchDashboardResult:
     historical_backfill_fail_count: int
     historical_backfill_skipped_count: int
     historical_backfill_cache_write_occurred: bool
+    historical_backfill_accepted_task_count: int
+    historical_backfill_rejected_task_count: int
+    historical_backfill_preflight_rejected_count: int
+    historical_backfill_comparison_failed_count: int
+    historical_backfill_cache_write_partial: bool
+    historical_backfill_rejected_symbols: str
+    historical_backfill_rejected_sources: str
+    historical_backfill_rejected_issue_categories: str
     historical_backfill_report_path: str
     market_cache_export_plan_status: str
     latest_market_cache_export_plan_id: str
@@ -429,6 +445,18 @@ def run_local_research_dashboard(
         historical_backfill_fail_count=_int_or_zero(summary.get("historical_backfill_fail_count")),
         historical_backfill_skipped_count=_int_or_zero(summary.get("historical_backfill_skipped_count")),
         historical_backfill_cache_write_occurred=bool(summary.get("historical_backfill_cache_write_occurred", False)),
+        historical_backfill_accepted_task_count=_int_or_zero(summary.get("historical_backfill_accepted_task_count")),
+        historical_backfill_rejected_task_count=_int_or_zero(summary.get("historical_backfill_rejected_task_count")),
+        historical_backfill_preflight_rejected_count=_int_or_zero(
+            summary.get("historical_backfill_preflight_rejected_count")
+        ),
+        historical_backfill_comparison_failed_count=_int_or_zero(
+            summary.get("historical_backfill_comparison_failed_count")
+        ),
+        historical_backfill_cache_write_partial=bool(summary.get("historical_backfill_cache_write_partial", False)),
+        historical_backfill_rejected_symbols=str(summary.get("historical_backfill_rejected_symbols", "")),
+        historical_backfill_rejected_sources=str(summary.get("historical_backfill_rejected_sources", "")),
+        historical_backfill_rejected_issue_categories=str(summary.get("historical_backfill_rejected_issue_categories", "")),
         historical_backfill_report_path=str(summary.get("historical_backfill_report_path", "")),
         market_cache_export_plan_status=str(summary.get("market_cache_export_plan_status", "MISSING")),
         latest_market_cache_export_plan_id=str(summary.get("latest_market_cache_export_plan_id", "")),
@@ -1257,7 +1285,7 @@ def _historical_backfill_warning_actionability(row: dict[str, Any], context: dic
             "actionable_warning_count": warning_count,
             "blocking_error_count": max(error_count, 1),
         }
-    if status == "WARN" and stage == "BACKFILL_WARNINGS_NEED_REVIEW":
+    if status == "WARN" and stage in {"BACKFILL_WARNINGS_NEED_REVIEW", "BACKFILL_PARTIAL_WITH_REJECTIONS"}:
         expected_count = max(warning_count, 1)
         return {
             "total_warning_count": expected_count,
@@ -1439,7 +1467,11 @@ def _parse_note_value(notes: Any, key: str) -> str:
     if not text:
         return ""
     prefix = f"{key}="
-    for part in text.replace(",", ";").split(";"):
+    for part in text.split(";"):
+        item = part.strip()
+        if item.startswith(prefix):
+            return item[len(prefix) :].strip()
+    for part in text.split(","):
         item = part.strip()
         if item.startswith(prefix):
             return item[len(prefix) :].strip()
@@ -1555,6 +1587,7 @@ def infer_local_research_next_action(
         "DATA_PREPARATION_READY": "Run current-candidates.",
         "BACKFILL_DRY_RUN_READY": "Review historical-backfill dry-run artifacts before any cache write.",
         "BACKFILL_WARNINGS_NEED_REVIEW": "Review WARN tasks and only rerun with --accept-cache-write after manual approval.",
+        "BACKFILL_PARTIAL_WITH_REJECTIONS": "Review rejected rows; accepted rows were cache-written. Use reviewed export/snapshot path if downstream validation passed.",
         "BACKFILL_CACHE_WRITE_READY": "Review index and health artifacts, then consider explicit --accept-cache-write if the backfill is approved.",
         "BACKFILL_COMPLETED": "Run market-cache-status, then data-pipeline/data-quality/snapshot-quality before research use.",
         "BACKFILL_FAILED": "Review historical-backfill-health errors and repair or rerun the failed backfill.",
@@ -1681,6 +1714,39 @@ def summarize_local_research_status(
         ),
         "historical_backfill_cache_write_occurred": _bool_from_text(
             _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "cache_write_occurred")
+        ),
+        "historical_backfill_accepted_task_count": _int_or_zero(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "accepted_task_count")
+        ),
+        "historical_backfill_rejected_task_count": _int_or_zero(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "rejected_task_count")
+        ),
+        "historical_backfill_preflight_rejected_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"),
+                "preflight_rejected_count",
+            )
+        ),
+        "historical_backfill_comparison_failed_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"),
+                "comparison_failed_count",
+            )
+        ),
+        "historical_backfill_cache_write_partial": _bool_from_text(
+            _parse_note_value(by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"), "cache_write_partial")
+        ),
+        "historical_backfill_rejected_symbols": _parse_note_value(
+            by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"),
+            "rejected_symbols",
+        ),
+        "historical_backfill_rejected_sources": _parse_note_value(
+            by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"),
+            "rejected_sources",
+        ),
+        "historical_backfill_rejected_issue_categories": _parse_note_value(
+            by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("notes"),
+            "rejected_issue_categories",
         ),
         "historical_backfill_report_path": _string_or_empty(
             by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("report_path")
@@ -1901,6 +1967,14 @@ def build_local_research_dashboard_metadata(
         "historical_backfill_fail_count": result.historical_backfill_fail_count,
         "historical_backfill_skipped_count": result.historical_backfill_skipped_count,
         "historical_backfill_cache_write_occurred": result.historical_backfill_cache_write_occurred,
+        "historical_backfill_accepted_task_count": result.historical_backfill_accepted_task_count,
+        "historical_backfill_rejected_task_count": result.historical_backfill_rejected_task_count,
+        "historical_backfill_preflight_rejected_count": result.historical_backfill_preflight_rejected_count,
+        "historical_backfill_comparison_failed_count": result.historical_backfill_comparison_failed_count,
+        "historical_backfill_cache_write_partial": result.historical_backfill_cache_write_partial,
+        "historical_backfill_rejected_symbols": result.historical_backfill_rejected_symbols,
+        "historical_backfill_rejected_sources": result.historical_backfill_rejected_sources,
+        "historical_backfill_rejected_issue_categories": result.historical_backfill_rejected_issue_categories,
         "historical_backfill_report_path": result.historical_backfill_report_path,
         "latest_market_cache_export_plan_id": result.latest_market_cache_export_plan_id,
         "market_cache_export_plan_status": result.market_cache_export_plan_status,
@@ -1997,6 +2071,10 @@ def render_local_research_dashboard_report(
                 "historical_backfill_stage",
                 "historical_backfill_task_count",
                 "historical_backfill_cache_write_occurred",
+                "historical_backfill_cache_write_partial",
+                "historical_backfill_rejected_task_count",
+                "historical_backfill_comparison_failed_count",
+                "historical_backfill_rejected_symbols",
                 "market_cache_export_plan_status",
                 "latest_market_cache_export_plan_id",
                 "market_cache_export_plan_stage",
@@ -2323,6 +2401,14 @@ def _historical_backfill_notes(metadata: dict[str, Any], summary: dict[str, Any]
         f"fail_count={_string_or_empty(summary.get('fail_count'))}; "
         f"skipped_count={_string_or_empty(summary.get('skipped_count'))}; "
         f"cache_write_occurred={_string_or_empty(summary.get('cache_write_occurred'))}; "
+        f"accepted_task_count={_string_or_empty(summary.get('accepted_task_count'))}; "
+        f"rejected_task_count={_string_or_empty(summary.get('rejected_task_count'))}; "
+        f"preflight_rejected_count={_string_or_empty(summary.get('preflight_rejected_count'))}; "
+        f"comparison_failed_count={_string_or_empty(summary.get('comparison_failed_count'))}; "
+        f"cache_write_partial={_string_or_empty(summary.get('cache_write_partial'))}; "
+        f"rejected_symbols={_string_or_empty(summary.get('rejected_symbols'))}; "
+        f"rejected_sources={_string_or_empty(summary.get('rejected_sources'))}; "
+        f"rejected_issue_categories={_string_or_empty(summary.get('rejected_issue_categories'))}; "
         f"health_status={_string_or_empty(summary.get('health_status'))}"
     )
 

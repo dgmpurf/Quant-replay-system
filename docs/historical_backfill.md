@@ -146,13 +146,18 @@ Health checks artifact integrity only. They do not certify strategy quality or m
 - `NO_BACKFILL_ARTIFACTS`
 - `BACKFILL_DRY_RUN_READY`
 - `BACKFILL_WARNINGS_NEED_REVIEW`
+- `BACKFILL_PARTIAL_WITH_REJECTIONS`
 - `BACKFILL_FAILED`
 - `BACKFILL_CACHE_WRITE_READY`
 - `BACKFILL_COMPLETED`
 
 A dry-run with expected provisional or known-caveat warnings should be reviewed as `BACKFILL_WARNINGS_NEED_REVIEW`; it is not automatically approved for cache write. Only rerun with `--accept-cache-write` after manual review.
 
-`research-status` includes the latest `historical-backfill-status` as a history/cache-building component. It exposes the latest backfill id, stage, task counts, cache-write flag, and next manual action. Later data-preparation, market-update-handoff, current-candidates, or paper workflow artifacts can take priority for the final unified workflow stage, but historical backfill remains visible as context.
+An explicit cache-write run can be classified as `BACKFILL_PARTIAL_WITH_REJECTIONS` when some tasks were accepted and written while other rows were blocked by protective preflight rejection, such as `COMPARISON_FAIL`. The rejected rows remain failures and must be reviewed, but accepted rows are not treated as corrupt merely because the batch also blocked unsafe source rows. The status metadata and reports preserve `accepted_task_count`, `rejected_task_count`, `preflight_rejected_count`, `comparison_failed_count`, `cache_write_partial`, rejected symbols, rejected sources, and rejected issue categories.
+
+If all rows are rejected, no cache write occurs when one was expected, artifacts are unreadable, metadata is missing, or a runtime failure occurred, the status remains `BACKFILL_FAILED`.
+
+`research-status` includes the latest `historical-backfill-status` as a history/cache-building component. It exposes the latest backfill id, stage, task counts, cache-write flag, partial cache-write/rejection fields, and next manual action. Later reviewed export, data-preparation, market-update-handoff, current-candidates, or paper workflow artifacts can take priority for the final unified workflow stage, but historical backfill remains visible as context.
 
 ## Safety Boundaries
 

@@ -487,6 +487,73 @@ def test_dashboard_marks_active_failed_historical_backfill_as_actionable(tmp_pat
     assert "failed backfill" in result.next_manual_action
 
 
+def test_dashboard_treats_partial_backfill_rejections_as_reviewable(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _historical_backfill_status(
+        root,
+        status="WARN",
+        workflow_stage="BACKFILL_PARTIAL_WITH_REJECTIONS",
+        health_status="PASS",
+        warning_count=1,
+        cache_write_occurred=True,
+        accepted_task_count=8,
+        rejected_task_count=2,
+        preflight_rejected_count=2,
+        comparison_failed_count=2,
+        cache_write_partial=True,
+        rejected_symbols="300750,688981",
+        rejected_sources="BAOSTOCK_OPTIONAL",
+        rejected_issue_categories="BLOCKED_PREFLIGHT_REJECT,COMPARISON_FAIL",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    backfill_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "HISTORICAL_BACKFILL_STATUS"
+    ].iloc[0]
+
+    assert result.status == "WARN"
+    assert result.workflow_stage == "BACKFILL_PARTIAL_WITH_REJECTIONS"
+    assert result.historical_backfill_cache_write_partial is True
+    assert result.historical_backfill_accepted_task_count == 8
+    assert result.historical_backfill_rejected_task_count == 2
+    assert result.historical_backfill_preflight_rejected_count == 2
+    assert result.historical_backfill_comparison_failed_count == 2
+    assert result.historical_backfill_rejected_symbols == "300750,688981"
+    assert backfill_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "Review rejected rows" in result.next_manual_action
+
+
+def test_dashboard_preserves_paper_priority_with_partial_backfill_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _historical_backfill_status(
+        root,
+        status="WARN",
+        workflow_stage="BACKFILL_PARTIAL_WITH_REJECTIONS",
+        health_status="PASS",
+        warning_count=1,
+        cache_write_occurred=True,
+        accepted_task_count=8,
+        rejected_task_count=2,
+        preflight_rejected_count=2,
+        comparison_failed_count=2,
+        cache_write_partial=True,
+        rejected_symbols="300750,688981",
+        rejected_sources="BAOSTOCK_OPTIONAL",
+        rejected_issue_categories="BLOCKED_PREFLIGHT_REJECT,COMPARISON_FAIL",
+    )
+    _paper_workflow_status(root, status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    backfill_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "HISTORICAL_BACKFILL_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
+    assert result.historical_backfill_stage == "BACKFILL_PARTIAL_WITH_REJECTIONS"
+    assert result.historical_backfill_rejected_task_count == 2
+    assert backfill_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+
+
 def test_dashboard_summary_csv_exports_historical_backfill_fields(tmp_path: Path) -> None:
     root = _reports_root(tmp_path)
     _historical_backfill_status(root, backfill_id="backfill-export", status="WARN", warning_count=1)
@@ -505,6 +572,8 @@ def test_dashboard_summary_csv_exports_historical_backfill_fields(tmp_path: Path
     assert row["historical_backfill_fail_count"] == "0"
     assert row["historical_backfill_skipped_count"] == "0"
     assert row["historical_backfill_cache_write_occurred"] == "False"
+    assert row["historical_backfill_rejected_task_count"] == "0"
+    assert row["historical_backfill_cache_write_partial"] == "False"
     assert row["historical_backfill_report_path"]
 
 
@@ -523,6 +592,8 @@ def test_dashboard_metadata_exports_historical_backfill_fields(tmp_path: Path) -
     assert metadata["historical_backfill_task_count"] == 6
     assert metadata["historical_backfill_warn_count"] == 3
     assert metadata["historical_backfill_cache_write_occurred"] is False
+    assert metadata["historical_backfill_rejected_task_count"] == 0
+    assert metadata["historical_backfill_cache_write_partial"] is False
     assert component_statuses["latest_historical_backfill_id"] == "backfill-metadata"
     assert component_statuses["expected_reviewable_warning_count"] == 1
 
@@ -1032,6 +1103,7 @@ def test_cli_research_status_prints_historical_backfill_fields(tmp_path: Path, c
     assert "latest_historical_backfill_id: backfill-cli" in output.out
     assert "historical_backfill_status: WARN" in output.out
     assert "historical_backfill_stage: BACKFILL_WARNINGS_NEED_REVIEW" in output.out
+    assert "historical_backfill_rejected_task_count: 0" in output.out
 
 
 def test_dashboard_does_not_regress_from_paper_workflow_to_market_update_handoff(tmp_path: Path) -> None:
@@ -1502,6 +1574,15 @@ def _historical_backfill_status(
     health_status: str = "WARN",
     warning_count: int = 0,
     error_count: int = 0,
+    cache_write_occurred: bool = False,
+    accepted_task_count: int = 0,
+    rejected_task_count: int = 0,
+    preflight_rejected_count: int = 0,
+    comparison_failed_count: int = 0,
+    cache_write_partial: bool = False,
+    rejected_symbols: str = "",
+    rejected_sources: str = "",
+    rejected_issue_categories: str = "",
     created_at: str = f"{DECISION_DATE}T14:30:00",
 ) -> Path:
     folder = root / "historical_backfill" / "status" / f"status-{backfill_id}"
@@ -1510,7 +1591,11 @@ def _historical_backfill_status(
     status_csv = folder / "historical_backfill_status.csv"
     summary_csv = folder / "historical_backfill_status_summary.csv"
     metadata_path = folder / "metadata.json"
-    next_action = "Review WARN tasks and only rerun with --accept-cache-write after manual approval."
+    next_action = (
+        "Review rejected rows; accepted rows were cache-written. Use reviewed export/snapshot path if downstream validation passed."
+        if workflow_stage == "BACKFILL_PARTIAL_WITH_REJECTIONS"
+        else "Review WARN tasks and only rerun with --accept-cache-write after manual approval."
+    )
     report.write_text("No live trading or broker API was invoked.", encoding="utf-8")
     pd.DataFrame(
         [
@@ -1551,7 +1636,15 @@ def _historical_backfill_status(
                 "warn_count": 3 if status == "WARN" else 0,
                 "fail_count": 1 if status == "FAIL" else 0,
                 "skipped_count": 0,
-                "cache_write_occurred": False,
+                "cache_write_occurred": cache_write_occurred,
+                "accepted_task_count": accepted_task_count,
+                "rejected_task_count": rejected_task_count,
+                "preflight_rejected_count": preflight_rejected_count,
+                "comparison_failed_count": comparison_failed_count,
+                "cache_write_partial": cache_write_partial,
+                "rejected_symbols": rejected_symbols,
+                "rejected_sources": rejected_sources,
+                "rejected_issue_categories": rejected_issue_categories,
                 "health_status": health_status,
                 "issue_count": warning_count + error_count,
                 "warning_count": warning_count,
@@ -1570,6 +1663,14 @@ def _historical_backfill_status(
             "workflow_stage": workflow_stage,
             "latest_backfill_id": backfill_id,
             "next_manual_action": next_action,
+            "accepted_task_count": accepted_task_count,
+            "rejected_task_count": rejected_task_count,
+            "preflight_rejected_count": preflight_rejected_count,
+            "comparison_failed_count": comparison_failed_count,
+            "cache_write_partial": cache_write_partial,
+            "rejected_symbols": rejected_symbols,
+            "rejected_sources": rejected_sources,
+            "rejected_issue_categories": rejected_issue_categories,
             "warnings": ["Expected dry-run WARN tasks need review."] if warning_count else [],
             "output_files": {
                 "historical_backfill_status_report": str(report),

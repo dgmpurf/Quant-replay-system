@@ -209,6 +209,8 @@ For the v0.72.0 policy-aware reviewed cache export through `research-status` int
 
 For the v0.73.0 policy-plan source comparison diagnostics through `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.73.0.md](docs/release_checkpoint_v0.73.0.md).
 
+For the v0.74.0 partial historical backfill cache-write actionability checkpoint summary, see [docs/release_checkpoint_v0.74.0.md](docs/release_checkpoint_v0.74.0.md).
+
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
 Recommended next data-source engineering sequence:
@@ -370,6 +372,10 @@ See [docs/release_checkpoint_v0.72.0.md](docs/release_checkpoint_v0.72.0.md) for
 `v0.73.0` marks the policy-plan source comparison diagnostics through `research-status` integration checkpoint, covering comparison diagnostics in policy-plan recommendations, comparison PASS/WARN/FAIL/UNAVAILABLE summaries, artifact-view health/status integration, and dashboard CSV/metadata/CLI fields that preserve later workflow priority.
 
 See [docs/release_checkpoint_v0.73.0.md](docs/release_checkpoint_v0.73.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.74.0` marks the partial historical backfill cache-write actionability checkpoint, covering protective preflight rejection classification, `BACKFILL_PARTIAL_WITH_REJECTIONS`, rejected row status fields, and `research-status` context that preserves later paper workflow priority.
+
+See [docs/release_checkpoint_v0.74.0.md](docs/release_checkpoint_v0.74.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

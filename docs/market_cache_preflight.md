@@ -117,6 +117,8 @@ For local incremental updates, `market-daily-update` wraps the health/fetch-or-r
 
 Offline reviewed symbol manifests can provide `raw_input` and `metadata_path` columns. Those rows do not require `--allow-real-data`, but the referenced raw file still goes through this preflight before any cache write.
 
+Historical backfills use the same protective gate. In an explicit cache-write backfill, accepted rows can be written while rows with `REJECT`/`BLOCKED_PREFLIGHT_REJECT` remain blocked. That produces a partial cache-write status rather than a corrupt-cache status when the rejected rows are limited to protective preflight failures and downstream reviewed export/snapshot validation passes. The rejected rows remain visible in status metadata and must be reviewed before rerun or broader expansion.
+
 ## Known Limitations
 
 - v0.1 preflight is an acceptance aid, not data certification.

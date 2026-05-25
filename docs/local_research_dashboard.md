@@ -49,7 +49,9 @@ It reads existing local `metadata.json` or `handoff_metadata.json` files only. I
 
 `research-status` includes `historical-backfill-status` as a history/cache-building component when those artifacts exist.
 
-The unified summary records the latest backfill id, backfill status/stage, next manual action, task counts, pass/warn/fail/skipped counts, cache-write flag, and report path. When the backfill stage is `BACKFILL_WARNINGS_NEED_REVIEW`, the dashboard shows the warnings as expected reviewable dry-run warnings rather than live-trading or broker failures.
+The unified summary records the latest backfill id, backfill status/stage, next manual action, task counts, pass/warn/fail/skipped counts, cache-write flag, partial cache-write fields, rejected row counts, rejected symbols/sources, rejected issue categories, and report path. When the backfill stage is `BACKFILL_WARNINGS_NEED_REVIEW`, the dashboard shows the warnings as expected reviewable dry-run warnings rather than live-trading or broker failures.
+
+When an explicit cache-write run accepts some rows and blocks others through protective preflight rejection, the dashboard can show `BACKFILL_PARTIAL_WITH_REJECTIONS`. This is review-required context, not automatic success: rejected rows remain visible and should not be rerun until their comparison/preflight issue is reviewed. If a later reviewed export, snapshot, current-candidates, or paper workflow path has already passed, the partial backfill context does not regress the final dashboard stage.
 
 Historical backfill is earlier than data-pipeline, market-update-handoff, current-candidates, and paper workflow. If later workflow artifacts exist, those later stages take priority for the final `workflow_stage`; historical backfill fields remain visible as context. If historical backfill has active failures and no later valid workflow supersedes it, `research-status` surfaces the failure as actionable.
 
@@ -135,6 +137,7 @@ Prior current-candidate health warnings from old dry runs can be classified as s
 
 - `NO_DATA`: no useful local workflow artifacts were found.
 - `BACKFILL_WARNINGS_NEED_REVIEW`: historical backfill dry-run completed with reviewable warnings; review before any cache write.
+- `BACKFILL_PARTIAL_WITH_REJECTIONS`: explicit historical backfill wrote accepted rows while protective preflight rejected other rows; review rejected rows before expanding or rerunning.
 - `BACKFILL_CACHE_WRITE_READY`: historical backfill passed and could be considered for explicit cache write after manual review.
 - `BACKFILL_COMPLETED`: historical backfill cache write occurred; run cache status and downstream data quality before research use.
 - `BACKFILL_FAILED`: historical backfill has active failure and needs repair or rerun.
