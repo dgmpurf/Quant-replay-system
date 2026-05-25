@@ -395,6 +395,38 @@ class MarketCacheExportPolicySettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketCacheExportPolicyIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/market_cache_export_policy")
+    output_dir: Path = Path("outputs/reports/market_cache_export_policy/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class MarketCacheExportPolicyHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/market_cache_export_policy/index/market_cache_export_policy_index.csv")
+    root_dir: Path = Path("outputs/reports/market_cache_export_policy")
+    output_dir: Path = Path("outputs/reports/market_cache_export_policy/health")
+    strict: bool = False
+    missing_no_live_statement_severity: Literal["WARN", "ERROR"] = "WARN"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class MarketCacheExportPolicyStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/market_cache_export_policy")
+    output_dir: Path = Path("outputs/reports/market_cache_export_policy/status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class MarketCacheExportIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/market_cache_export")
     output_dir: Path = Path("outputs/reports/market_cache_export/index")
@@ -832,6 +864,9 @@ class Settings(BaseModel):
     market_data_cache: MarketDataCacheSettings = Field(default_factory=MarketDataCacheSettings)
     market_cache_export: MarketCacheExportSettings = Field(default_factory=MarketCacheExportSettings)
     market_cache_export_policy: MarketCacheExportPolicySettings = Field(default_factory=MarketCacheExportPolicySettings)
+    market_cache_export_policy_index: MarketCacheExportPolicyIndexSettings = Field(default_factory=MarketCacheExportPolicyIndexSettings)
+    market_cache_export_policy_health: MarketCacheExportPolicyHealthSettings = Field(default_factory=MarketCacheExportPolicyHealthSettings)
+    market_cache_export_policy_status: MarketCacheExportPolicyStatusSettings = Field(default_factory=MarketCacheExportPolicyStatusSettings)
     market_cache_export_index: MarketCacheExportIndexSettings = Field(default_factory=MarketCacheExportIndexSettings)
     market_cache_export_health: MarketCacheExportHealthSettings = Field(default_factory=MarketCacheExportHealthSettings)
     market_cache_export_status: MarketCacheExportStatusSettings = Field(default_factory=MarketCacheExportStatusSettings)

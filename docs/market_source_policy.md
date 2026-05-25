@@ -103,6 +103,16 @@ python -m quant_replay_system.cli market-cache-export-plan --manifest data\raw\m
 
 The generated manifest is explicit and reviewable. It is not an automatic trusted-source decision. `PROVISIONAL` ETF/Sina rows are emitted with warnings unless `--strict-reliable` is used.
 
+Use the policy-plan artifact views to discover and inspect generated recommendations:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-plan-index
+python -m quant_replay_system.cli market-cache-export-plan-health
+python -m quant_replay_system.cli market-cache-export-plan-status
+```
+
+`PROVISIONAL` recommendations are expected to remain visible as `WARN` health/status signals.
+
 ## Cache Acceptance Preflight
 
 Use `market-cache-preflight` before `market-cache-ingest` when a workflow needs an explicit acceptance decision:

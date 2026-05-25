@@ -80,6 +80,16 @@ The planner is recommendation-only by default. It writes `data\raw\manual_manife
 
 `PROVISIONAL` recommendations, such as AKShare/Sina ETF rows, remain warnings. Strict mode is available with `--strict-reliable`. See [market_cache_export_policy.md](market_cache_export_policy.md).
 
+After generating policy plans, use the plan artifact views before larger reviewed exports:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-plan-index
+python -m quant_replay_system.cli market-cache-export-plan-health
+python -m quant_replay_system.cli market-cache-export-plan-status
+```
+
+These commands inspect recommendation artifacts and generated reviewed manifests. They do not run export automatically or mutate cache.
+
 ## Index, Health, And Status
 
 Reviewed export artifacts can be discovered and checked before downstream snapshot workflows:

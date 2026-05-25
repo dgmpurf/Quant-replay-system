@@ -81,6 +81,42 @@ Run the reviewed export only after inspecting the generated manifest:
 python -m quant_replay_system.cli market-cache-export --manifest data\raw\manual_manifests\market_cache_export_recommended_<plan_id>.csv
 ```
 
+## Index, Health, And Status
+
+Recommendation plan artifacts can be discovered and checked before larger reviewed exports:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-plan-index
+python -m quant_replay_system.cli market-cache-export-plan-health
+python -m quant_replay_system.cli market-cache-export-plan-status
+```
+
+`market-cache-export-plan-index` scans `outputs/reports/market_cache_export_policy/` and writes:
+
+```text
+outputs/reports/market_cache_export_policy/index/market_cache_export_policy_index.csv
+outputs/reports/market_cache_export_policy/index/market_cache_export_policy_index_report.md
+outputs/reports/market_cache_export_policy/index/metadata.json
+```
+
+The index records plan id, status, recommendation counts, generated reviewed manifest path, symbols, date range, and linked downstream export/pipeline/snapshot fields when a later export can be discovered.
+
+`market-cache-export-plan-health` checks that metadata, report, recommendations CSV, issues CSV, and generated reviewed manifest are readable. It also checks that enabled generated manifest rows preserve symbol strings and include explicit `source` and `upstream_source`.
+
+`RECOMMENDED_WITH_WARNINGS` rows, such as ETF/Sina `PROVISIONAL` recommendations, are reported as `WARN`, not hidden and not upgraded to `PASS`. Missing generated manifests or enabled rows without explicit source/upstream are `FAIL`.
+
+`market-cache-export-plan-status` summarizes the latest plan and next manual action. Typical stages include:
+
+- `NO_POLICY_PLAN_ARTIFACTS`
+- `POLICY_PLAN_READY_FOR_REVIEW`
+- `POLICY_PLAN_WARNINGS_NEED_REVIEW`
+- `POLICY_PLAN_FAILED`
+- `REVIEWED_MANIFEST_READY`
+- `EXPORT_READY_FROM_POLICY_PLAN`
+- `SNAPSHOT_READY_FROM_POLICY_PLAN`
+
+These views do not run exports, mutate cache, fetch data, or automate source selection.
+
 ## Recommendation Statuses
 
 - `RECOMMENDED`: cached rows exist and required field reliability is acceptable without warnings.
@@ -117,6 +153,7 @@ ETF/Sina recommendations remain `PROVISIONAL` warnings until another reliable ET
 
 - `market-source-policy` records field reliability.
 - `market-cache-export-plan` recommends reviewed selections from local cache rows and policy.
+- `market-cache-export-plan-index`, `market-cache-export-plan-health`, and `market-cache-export-plan-status` make recommendation plans discoverable and reviewable.
 - `market-cache-export` exports reviewed selections into one market CSV.
 - `data-quality` still enforces duplicate-key checks.
 - `snapshot-quality` still gates the processed snapshot.

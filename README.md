@@ -135,6 +135,8 @@ For exporting reviewed source/upstream cache selections into one data-pipeline-r
 
 For drafting reviewed cache export manifests from local cache coverage and source reliability policy, use `market-cache-export-plan`; see [docs/market_cache_export_policy.md](docs/market_cache_export_policy.md).
 
+To discover, check, and summarize policy-aware cache export recommendation plans, use `market-cache-export-plan-index`, `market-cache-export-plan-health`, and `market-cache-export-plan-status`; see [docs/market_cache_export_policy.md#index-health-and-status](docs/market_cache_export_policy.md#index-health-and-status).
+
 To discover, check, and summarize reviewed cache exports before downstream snapshot workflows, use `market-cache-export-index`, `market-cache-export-health`, and `market-cache-export-status`; see [docs/market_cache_export.md#index-health-and-status](docs/market_cache_export.md#index-health-and-status).
 
 `research-status` includes the latest `market-cache-export-status` as reviewed cache-to-snapshot context, while still letting later current-candidates, market-update-handoff, or paper workflow artifacts take priority; see [docs/local_research_dashboard.md#market-cache-export-status](docs/local_research_dashboard.md#market-cache-export-status).
