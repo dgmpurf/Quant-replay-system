@@ -203,7 +203,7 @@ The checkpoint should summarize completed capabilities, the local command sequen
 
 Before starting the next major engineering branch after a completed workflow milestone, Codex should add or update the checkpoint document so the user and ChatGPT have a stable summary for checkpoint, tag, or continuation decisions.
 
-Dashboard semantics changes that affect workflow-stage priority, warning actionability, or next manual action should also receive a checkpoint document before the next engineering branch, because they influence how downstream status consumers interpret local artifacts.
+Policy or dashboard semantics changes that affect source-selection recommendations, workflow-stage priority, warning actionability, or next manual action should also receive a checkpoint document before the next engineering branch, because they influence how downstream status consumers interpret local artifacts.
 
 ## 6. Pro Extended Usage Rules
 

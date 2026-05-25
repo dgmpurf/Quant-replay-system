@@ -748,6 +748,165 @@ def test_dashboard_summary_csv_exports_market_cache_export_fields(tmp_path: Path
     assert row["unrelated_snapshot_warning_count"] == "0"
 
 
+def test_dashboard_includes_market_cache_export_plan_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(root, plan_id="plan-a", status="WARN", warning_count=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_POLICY_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.workflow_stage == "SNAPSHOT_READY_FROM_POLICY_PLAN"
+    assert result.status == "WARN"
+    assert result.latest_market_cache_export_plan_id == "plan-a"
+    assert result.market_cache_export_plan_status == "WARN"
+    assert result.market_cache_export_plan_stage == "SNAPSHOT_READY_FROM_POLICY_PLAN"
+    assert result.market_cache_export_plan_recommendation_count == 2
+    assert result.market_cache_export_plan_recommended_count == 1
+    assert result.market_cache_export_plan_warning_count == 1
+    assert result.market_cache_export_plan_downstream_export_id == "export-plan-a"
+    assert result.market_cache_export_plan_downstream_snapshot_quality_status == "PASS"
+    assert result.linked_snapshot_quality_status == "PASS"
+    assert result.active_snapshot_chain == "MARKET_CACHE_EXPORT_POLICY_STATUS"
+    assert "current-candidates" in result.next_manual_action
+    assert plan_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert summary["actionable_warning_count"] == 0
+
+
+def test_dashboard_preserves_market_cache_export_priority_with_policy_plan_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(root, plan_id="plan-context", status="FAIL", error_count=1)
+    _market_cache_export_status(root, export_id="export-context", status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_POLICY_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "SNAPSHOT_READY_FROM_EXPORT"
+    assert result.market_cache_export_status == "PASS"
+    assert result.latest_market_cache_export_plan_id == "plan-context"
+    assert plan_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+
+
+def test_dashboard_preserves_paper_priority_with_market_cache_export_plan_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(root, plan_id="plan-paper-context", status="WARN", warning_count=1)
+    _paper_workflow_status(root, status="PASS")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
+    assert result.paper_workflow_status == "PASS"
+    assert result.latest_market_cache_export_plan_id == "plan-paper-context"
+    assert result.market_cache_export_plan_status == "WARN"
+    assert result.summary_frame.iloc[0]["stale_warning_count"] > 0
+    assert "Review completed" in result.next_manual_action
+
+
+def test_dashboard_marks_active_failed_market_cache_export_plan_as_actionable(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(
+        root,
+        plan_id="plan-fail",
+        status="FAIL",
+        workflow_stage="POLICY_PLAN_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_POLICY_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "POLICY_PLAN_FAILED"
+    assert result.latest_market_cache_export_plan_id == "plan-fail"
+    assert plan_row["warning_classification"] == "BLOCKING_ERROR"
+    assert "market-cache-export-plan-health errors" in result.next_manual_action
+
+
+def test_dashboard_uses_latest_market_cache_export_plan_when_older_plan_failed(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(
+        root,
+        plan_id="plan-old",
+        status="FAIL",
+        workflow_stage="POLICY_PLAN_FAILED",
+        health_status="FAIL",
+        error_count=1,
+        created_at=f"{DECISION_DATE}T14:00:00",
+    )
+    _market_cache_export_policy_status(
+        root,
+        plan_id="plan-new",
+        status="WARN",
+        workflow_stage="SNAPSHOT_READY_FROM_POLICY_PLAN",
+        warning_count=1,
+        created_at=f"{DECISION_DATE}T15:00:00",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MARKET_CACHE_EXPORT_POLICY_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "SNAPSHOT_READY_FROM_POLICY_PLAN"
+    assert result.latest_market_cache_export_plan_id == "plan-new"
+    assert result.market_cache_export_plan_status == "WARN"
+    assert plan_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "stale_error_count=" in plan_row["notes"]
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+
+
+def test_dashboard_summary_csv_exports_market_cache_export_plan_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(root, plan_id="plan-summary", status="WARN", warning_count=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_market_cache_export_plan_id"] == "plan-summary"
+    assert row["market_cache_export_plan_status"] == "WARN"
+    assert row["market_cache_export_plan_stage"] == "SNAPSHOT_READY_FROM_POLICY_PLAN"
+    assert row["market_cache_export_plan_recommendation_count"] == "2"
+    assert row["market_cache_export_plan_recommended_count"] == "1"
+    assert row["market_cache_export_plan_warning_count"] == "1"
+    assert row["market_cache_export_plan_generated_manifest_path"].endswith(
+        "market_cache_export_recommended_plan-summary.csv"
+    )
+    assert row["market_cache_export_plan_downstream_export_id"] == "export-plan-summary"
+    assert row["market_cache_export_plan_downstream_snapshot_quality_status"] == "PASS"
+
+
+def test_dashboard_metadata_exports_market_cache_export_plan_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(root, plan_id="plan-metadata", status="WARN", warning_count=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    component_statuses = metadata["component_statuses"]
+
+    assert metadata["latest_market_cache_export_plan_id"] == "plan-metadata"
+    assert metadata["market_cache_export_plan_status"] == "WARN"
+    assert metadata["market_cache_export_plan_stage"] == "SNAPSHOT_READY_FROM_POLICY_PLAN"
+    assert metadata["market_cache_export_plan_recommendation_count"] == 2
+    assert metadata["market_cache_export_plan_recommended_count"] == 1
+    assert metadata["market_cache_export_plan_warning_count"] == 1
+    assert metadata["market_cache_export_plan_downstream_export_id"] == "export-plan-metadata"
+    assert metadata["market_cache_export_plan_downstream_snapshot_quality_status"] == "PASS"
+    assert component_statuses["latest_market_cache_export_plan_id"] == "plan-metadata"
+    assert component_statuses["market_cache_export_plan_generated_manifest_path"].endswith(
+        "market_cache_export_recommended_plan-metadata.csv"
+    )
+
+
 def test_dashboard_metadata_exports_market_cache_export_fields(tmp_path: Path) -> None:
     root = _reports_root(tmp_path)
     _market_cache_export_status(root, export_id="export-metadata", status="PASS")
@@ -790,6 +949,21 @@ def test_cli_research_status_prints_market_cache_export_fields(tmp_path: Path, c
     assert "market_cache_export_snapshot_quality_status: PASS" in output.out
     assert "active_snapshot_chain: MARKET_CACHE_EXPORT_STATUS" in output.out
     assert "linked_snapshot_quality_status: PASS" in output.out
+
+
+def test_cli_research_status_prints_market_cache_export_plan_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _market_cache_export_policy_status(root, plan_id="plan-cli", status="WARN", warning_count=1)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_market_cache_export_plan_id: plan-cli" in output.out
+    assert "market_cache_export_plan_status: WARN" in output.out
+    assert "market_cache_export_plan_stage: SNAPSHOT_READY_FROM_POLICY_PLAN" in output.out
+    assert "market_cache_export_plan_downstream_export_id: export-plan-cli" in output.out
+    assert "market_cache_export_plan_downstream_snapshot_quality_status: PASS" in output.out
 
 
 def test_cli_research_status_prints_historical_backfill_fields(tmp_path: Path, capsys) -> None:
@@ -1446,6 +1620,118 @@ def _market_cache_export_status(
                 "market_cache_export_status_report": str(report),
                 "market_cache_export_status_csv": str(status_csv),
                 "market_cache_export_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _market_cache_export_policy_status(
+    root: Path,
+    *,
+    plan_id: str = "plan-a",
+    status: str = "WARN",
+    workflow_stage: str = "SNAPSHOT_READY_FROM_POLICY_PLAN",
+    health_status: str = "WARN",
+    warning_count: int = 0,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T14:50:00",
+) -> Path:
+    folder = root / "market_cache_export_policy" / "status" / f"status-{plan_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "market_cache_export_policy_status_report.md"
+    status_csv = folder / "market_cache_export_policy_status.csv"
+    summary_csv = folder / "market_cache_export_policy_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    generated_manifest = root / "market_cache_export_policy" / "_manifests" / f"market_cache_export_recommended_{plan_id}.csv"
+    downstream_export_id = f"export-{plan_id}"
+    next_action = "Review policy warnings, then use the linked snapshot/export outputs for downstream research if appropriate."
+    report.write_text("No live trading or broker API was invoked.", encoding="utf-8")
+    generated_manifest.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "symbol": "000001",
+                "start_date": "2024-01-02",
+                "end_date": "2024-01-05",
+                "source": "AKSHARE_OPTIONAL",
+                "upstream_source": "TENCENT",
+                "enabled": "true",
+            }
+        ]
+    ).to_csv(generated_manifest, index=False)
+    pd.DataFrame(
+        [
+            {
+                "component": "MARKET_CACHE_EXPORT_POLICY_INDEX",
+                "status": "PASS",
+                "latest_plan_id": plan_id,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "MARKET_CACHE_EXPORT_POLICY_HEALTH",
+                "status": health_status,
+                "latest_plan_id": plan_id,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "issue_count": warning_count + error_count,
+            },
+            {
+                "component": "LATEST_MARKET_CACHE_EXPORT_POLICY_PLAN",
+                "status": status,
+                "latest_plan_id": plan_id,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "issue_count": warning_count + error_count,
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "latest_plan_id": plan_id,
+                "recommendation_count": 2,
+                "recommended_count": 1,
+                "recommended_with_warnings_count": 1 if warning_count else 0,
+                "no_reliable_source_count": 0,
+                "no_cache_rows_count": 0,
+                "generated_reviewed_manifest_path": str(generated_manifest),
+                "downstream_export_id": downstream_export_id,
+                "downstream_export_status": "PASS",
+                "downstream_pipeline_id": f"pipeline-{plan_id}",
+                "downstream_snapshot_quality_status": "PASS",
+                "health_status": health_status,
+                "issue_count": warning_count + error_count,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "next_manual_action": next_action,
+                "report_path": str(root / "market_cache_export_policy" / plan_id / "market_cache_export_policy_report.md"),
+                "no_live_trading": True,
+                "no_broker_api": True,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{plan_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_plan_id": plan_id,
+            "next_manual_action": next_action,
+            "warnings": ["PROVISIONAL recommendation needs review."] if warning_count else [],
+            "output_files": {
+                "market_cache_export_policy_status_report": str(report),
+                "market_cache_export_policy_status_csv": str(status_csv),
+                "market_cache_export_policy_status_summary": str(summary_csv),
                 "metadata": str(metadata_path),
             },
             "live_trading_enabled": False,

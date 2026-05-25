@@ -154,10 +154,27 @@ ETF/Sina recommendations remain `PROVISIONAL` warnings until another reliable ET
 - `market-source-policy` records field reliability.
 - `market-cache-export-plan` recommends reviewed selections from local cache rows and policy.
 - `market-cache-export-plan-index`, `market-cache-export-plan-health`, and `market-cache-export-plan-status` make recommendation plans discoverable and reviewable.
+- `research-status` includes the latest policy-plan status as recommendation context.
 - `market-cache-export` exports reviewed selections into one market CSV.
 - `data-quality` still enforces duplicate-key checks.
 - `snapshot-quality` still gates the processed snapshot.
-- `research-status` reports downstream workflow readiness.
+- `research-status` reports downstream workflow readiness and keeps policy-plan warnings visible without letting them override newer reviewed export, current-candidate, or paper workflow states.
+
+## Research Status Integration
+
+`research-status` reads the latest `market-cache-export-plan-status` artifact and exports policy-plan context fields such as:
+
+- `latest_market_cache_export_plan_id`
+- `market_cache_export_plan_status`
+- `market_cache_export_plan_stage`
+- `market_cache_export_plan_recommendation_count`
+- `market_cache_export_plan_generated_manifest_path`
+- `market_cache_export_plan_downstream_export_id`
+- `market_cache_export_plan_downstream_snapshot_quality_status`
+
+If the plan stage is `SNAPSHOT_READY_FROM_POLICY_PLAN`, the unified dashboard can recommend using the linked snapshot/export outputs for `current-candidates`. If a reviewed cache export, current-candidate run, market-update-handoff, historical-backfill context, or paper workflow is already more advanced, those later states keep priority and the policy plan remains visible as context.
+
+`PROVISIONAL` recommendations stay visible as reviewable warnings. They do not automatically approve an export, mutate cache, or become trading recommendations.
 
 ## Known Limitations
 

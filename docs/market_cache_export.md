@@ -127,6 +127,8 @@ These views check artifact completeness and duplicate-key safety. They do not ce
 
 The export's linked `snapshot_quality_status` is also used for snapshot warning actionability. A linked `PASS` prevents older unrelated standalone snapshot warnings from blocking the active reviewed export path; a linked `WARN` or `FAIL` remains actionable.
 
+If a reviewed export came from `market-cache-export-plan`, `research-status` can also show the policy-plan context. The policy-plan fields explain which recommendations generated the reviewed manifest, but they do not replace the reviewed export status or automatically choose sources.
+
 ## Validation
 
 Before writing the reviewed export, the workflow checks:

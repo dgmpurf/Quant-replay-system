@@ -678,6 +678,7 @@ data_preparation_workflow_status:
 local_research_dashboard:
   root_dir: outputs/reports
   historical_backfill_root: outputs/reports/historical_backfill
+  market_cache_export_policy_root: outputs/reports/market_cache_export_policy
   market_cache_export_root: outputs/reports/market_cache_export
   data_preparation_root: outputs/reports/data_preparation
   current_candidates_root: outputs/reports/current_candidates

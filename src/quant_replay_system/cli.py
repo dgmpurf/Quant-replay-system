@@ -335,6 +335,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     research_status.add_argument("--root", help="Reports root directory")
     research_status.add_argument("--historical-backfill-root", help="Historical-backfill artifact root directory")
+    research_status.add_argument(
+        "--market-cache-export-policy-root",
+        help="Market-cache-export policy recommendation artifact root directory",
+    )
     research_status.add_argument("--market-cache-export-root", help="Market-cache-export artifact root directory")
     research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
     research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
@@ -1482,6 +1486,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["root_dir"] = Path(args.root)
     if args.historical_backfill_root:
         updates["historical_backfill_root"] = Path(args.historical_backfill_root)
+    if args.market_cache_export_policy_root:
+        updates["market_cache_export_policy_root"] = Path(args.market_cache_export_policy_root)
     if args.market_cache_export_root:
         updates["market_cache_export_root"] = Path(args.market_cache_export_root)
     if args.data_preparation_root:
@@ -1502,6 +1508,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     result = run_local_research_dashboard(
         root=args.root,
         historical_backfill_root=args.historical_backfill_root,
+        market_cache_export_policy_root=args.market_cache_export_policy_root,
         market_cache_export_root=args.market_cache_export_root,
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
@@ -1525,6 +1532,14 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"historical_backfill_status: {result.historical_backfill_status}")
     print(f"historical_backfill_stage: {result.historical_backfill_stage}")
     print(f"historical_backfill_cache_write_occurred: {result.historical_backfill_cache_write_occurred}")
+    print(f"latest_market_cache_export_plan_id: {result.latest_market_cache_export_plan_id}")
+    print(f"market_cache_export_plan_status: {result.market_cache_export_plan_status}")
+    print(f"market_cache_export_plan_stage: {result.market_cache_export_plan_stage}")
+    print(f"market_cache_export_plan_downstream_export_id: {result.market_cache_export_plan_downstream_export_id}")
+    print(
+        "market_cache_export_plan_downstream_snapshot_quality_status: "
+        f"{result.market_cache_export_plan_downstream_snapshot_quality_status}"
+    )
     print(f"latest_market_cache_export_id: {result.latest_market_cache_export_id}")
     print(f"market_cache_export_status: {result.market_cache_export_status}")
     print(f"market_cache_export_stage: {result.market_cache_export_stage}")

@@ -137,6 +137,8 @@ For drafting reviewed cache export manifests from local cache coverage and sourc
 
 To discover, check, and summarize policy-aware cache export recommendation plans, use `market-cache-export-plan-index`, `market-cache-export-plan-health`, and `market-cache-export-plan-status`; see [docs/market_cache_export_policy.md#index-health-and-status](docs/market_cache_export_policy.md#index-health-and-status).
 
+`research-status` includes the latest `market-cache-export-plan-status` as policy recommendation context, while still letting reviewed exports, current-candidates, market-update-handoff, historical-backfill context, and paper workflow artifacts take priority; see [docs/local_research_dashboard.md#market-cache-export-plan-status](docs/local_research_dashboard.md#market-cache-export-plan-status).
+
 To discover, check, and summarize reviewed cache exports before downstream snapshot workflows, use `market-cache-export-index`, `market-cache-export-health`, and `market-cache-export-status`; see [docs/market_cache_export.md#index-health-and-status](docs/market_cache_export.md#index-health-and-status).
 
 `research-status` includes the latest `market-cache-export-status` as reviewed cache-to-snapshot context, while still letting later current-candidates, market-update-handoff, or paper workflow artifacts take priority; see [docs/local_research_dashboard.md#market-cache-export-status](docs/local_research_dashboard.md#market-cache-export-status).
@@ -202,6 +204,8 @@ For the v0.67.0 historical backfill status integration checkpoint summary, see [
 For the v0.70.0 reviewed market cache export to `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.70.0.md](docs/release_checkpoint_v0.70.0.md).
 
 For the v0.71.0 active snapshot warning actionability checkpoint summary, see [docs/release_checkpoint_v0.71.0.md](docs/release_checkpoint_v0.71.0.md).
+
+For the v0.72.0 policy-aware reviewed cache export through `research-status` integration checkpoint summary, see [docs/release_checkpoint_v0.72.0.md](docs/release_checkpoint_v0.72.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -356,6 +360,10 @@ See [docs/release_checkpoint_v0.70.0.md](docs/release_checkpoint_v0.70.0.md) for
 `v0.71.0` marks the active snapshot warning actionability checkpoint, covering active snapshot chain selection in `research-status`, stale/unrelated snapshot warning classification, linked PASS/WARN/FAIL handling, and preservation of paper workflow priority.
 
 See [docs/release_checkpoint_v0.71.0.md](docs/release_checkpoint_v0.71.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.72.0` marks the policy-aware reviewed cache export through `research-status` integration checkpoint, covering policy-based source/upstream recommendations, generated reviewed export manifests, policy-plan index/health/status, reviewed export/snapshot linkage, and dashboard context that preserves later workflow priority.
+
+See [docs/release_checkpoint_v0.72.0.md](docs/release_checkpoint_v0.72.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

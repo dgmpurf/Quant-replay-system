@@ -749,6 +749,7 @@ class DataPreparationWorkflowStatusSettings(BaseModel):
 class LocalResearchDashboardSettings(BaseModel):
     root_dir: Path = Path("outputs/reports")
     historical_backfill_root: Path = Path("outputs/reports/historical_backfill")
+    market_cache_export_policy_root: Path = Path("outputs/reports/market_cache_export_policy")
     market_cache_export_root: Path = Path("outputs/reports/market_cache_export")
     data_preparation_root: Path = Path("outputs/reports/data_preparation")
     current_candidates_root: Path = Path("outputs/reports/current_candidates")
