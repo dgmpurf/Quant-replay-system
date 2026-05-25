@@ -68,6 +68,18 @@ The generated manifest uses `LOCAL_CSV` entries for:
 
 `market-cache-export` does not run `data-pipeline` automatically in v0.1.
 
+## Policy-aware Planning
+
+Use `market-cache-export-plan` when you want the system to inspect local cache coverage and `market-source-policy` before drafting a reviewed export manifest:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-plan --manifest data\raw\manual_manifests\market_cache_export_policy_request_example.csv
+```
+
+The planner is recommendation-only by default. It writes `data\raw\manual_manifests\market_cache_export_recommended_<plan_id>.csv`, which is compatible with `market-cache-export`, but the user must review the generated source/upstream selections before using it.
+
+`PROVISIONAL` recommendations, such as AKShare/Sina ETF rows, remain warnings. Strict mode is available with `--strict-reliable`. See [market_cache_export_policy.md](market_cache_export_policy.md).
+
 ## Index, Health, And Status
 
 Reviewed export artifacts can be discovered and checked before downstream snapshot workflows:
@@ -155,6 +167,7 @@ Generated `data/raw`, `data/processed`, `data/cache`, and `outputs` artifacts sh
 - `data-quality` still owns duplicate-key detection for processed data.
 - `snapshot-quality` still checks the full processed snapshot.
 - Source policy may inform the review, but v0.1 requires explicit source/upstream selection.
+- `market-cache-export-plan` can draft explicit selections from source policy and cache coverage, but the generated manifest remains reviewed input and should be inspected before export.
 
 ## Safety
 

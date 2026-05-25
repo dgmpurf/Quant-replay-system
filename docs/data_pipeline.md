@@ -51,9 +51,17 @@ For reviewed multi-symbol exports, use `market-cache-export` with a reviewed sou
 python -m quant_replay_system.cli market-cache-export --manifest data\raw\manual_manifests\reviewed_cache_export_example.csv --build-pipeline-manifest --universe data\raw\LOCAL_CSV\universe_overlay\<overlay_id>\raw_data.csv --trading-calendar data\raw\AKSHARE_OPTIONAL\trading_calendar\<run_id>\raw_data.csv
 ```
 
+If you want a policy-aware draft of the reviewed source/upstream manifest, run:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-plan --manifest data\raw\manual_manifests\market_cache_export_policy_request_example.csv
+```
+
+Review the generated manifest before passing it to `market-cache-export`.
+
 The pipeline and data-quality checks intentionally keep the duplicate `symbol + trade_date` warning. Cache query filters and reviewed cache export are the explicit v0.1 ways to choose source paths before building pipeline inputs; the project does not silently choose a trusted source.
 
-See [market_data_cache.md](market_data_cache.md) and [market_cache_export.md](market_cache_export.md). The cache reduces repeated public endpoint calls but does not replace data-quality or snapshot-quality gates.
+See [market_data_cache.md](market_data_cache.md), [market_cache_export.md](market_cache_export.md), and [market_cache_export_policy.md](market_cache_export_policy.md). The cache reduces repeated public endpoint calls but does not replace data-quality or snapshot-quality gates.
 
 Supported dataset types:
 

@@ -51,6 +51,7 @@ from quant_replay_system.market_data_cache import (
 from quant_replay_system.market_cache_export import run_market_cache_export
 from quant_replay_system.market_cache_export_health import check_market_cache_export_health
 from quant_replay_system.market_cache_export_index import build_market_cache_export_index
+from quant_replay_system.market_cache_export_policy import run_market_cache_export_policy_plan
 from quant_replay_system.market_cache_export_status import run_market_cache_export_status
 from quant_replay_system.market_data_comparison import run_market_source_comparison
 from quant_replay_system.market_cache_preflight import run_market_cache_preflight
@@ -432,6 +433,23 @@ def build_parser() -> argparse.ArgumentParser:
     market_cache_export.add_argument("--fail-fast", action="store_true", help="Stop after the first failed manifest row")
     market_cache_export.add_argument("--config", help="Optional config YAML path")
     market_cache_export.set_defaults(handler=_handle_market_cache_export)
+
+    market_cache_export_plan = subparsers.add_parser(
+        "market-cache-export-plan",
+        help="Plan a reviewed cache export using local cache coverage and source field policy",
+    )
+    market_cache_export_plan.add_argument("--manifest", required=True, help="Policy export request CSV manifest")
+    market_cache_export_plan.add_argument("--cache-path", help="Optional market cache CSV path")
+    market_cache_export_plan.add_argument("--output-dir", help="Optional policy plan report output directory")
+    market_cache_export_plan.add_argument("--manifest-output-dir", help="Optional recommended manifest output root")
+    market_cache_export_plan.add_argument(
+        "--strict-reliable",
+        action="store_true",
+        help="Require every requested field to be RELIABLE; reject PROVISIONAL/UNKNOWN/caveat fields",
+    )
+    market_cache_export_plan.add_argument("--fail-fast", action="store_true", help="Stop after the first failed request row")
+    market_cache_export_plan.add_argument("--config", help="Optional config YAML path")
+    market_cache_export_plan.set_defaults(handler=_handle_market_cache_export_plan)
 
     market_cache_export_index = subparsers.add_parser(
         "market-cache-export-index",
@@ -1672,6 +1690,61 @@ def _handle_market_cache_export(args: argparse.Namespace) -> int:
     print(f"Report path: {result.artifact_paths['market_cache_export_report']}")
     print(f"Rows CSV path: {result.artifact_paths['market_cache_export_rows']}")
     print(f"Issues CSV path: {result.artifact_paths['market_cache_export_issues']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    return 0 if result.status != "FAIL" else 1
+
+
+def _handle_market_cache_export_plan(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.manifest_output_dir:
+        updates["manifest_output_dir"] = Path(args.manifest_output_dir)
+    if args.strict_reliable:
+        updates["strict_reliable"] = True
+    if args.fail_fast:
+        updates["fail_fast"] = True
+    if updates:
+        settings = settings.model_copy(
+            update={
+                "market_cache_export_policy": settings.market_cache_export_policy.model_copy(update=updates)
+            }
+        )
+    result = run_market_cache_export_policy_plan(
+        args.manifest,
+        cache_path=args.cache_path,
+        output_dir=args.output_dir,
+        manifest_output_dir=args.manifest_output_dir,
+        strict_reliable=True if args.strict_reliable else None,
+        fail_fast=True if args.fail_fast else None,
+        config=settings,
+    )
+    status_counts = {}
+    if not result.recommendations_frame.empty:
+        status_counts = {
+            str(key): int(value)
+            for key, value in result.recommendations_frame["status"].value_counts().sort_index().items()
+        }
+    print(f"Market cache export plan status: {result.status}")
+    print(f"plan_id: {result.plan_id}")
+    print(f"manifest: {result.manifest_path}")
+    print(f"generated_reviewed_manifest_path: {result.recommended_manifest_path}")
+    print(f"recommendation_count: {result.recommendation_count}")
+    print(f"status_counts: {json.dumps(status_counts, sort_keys=True)}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"Report path: {result.artifact_paths['market_cache_export_policy_report']}")
+    print(f"Recommendations CSV path: {result.artifact_paths['market_cache_export_policy_recommendations']}")
+    print(f"Issues CSV path: {result.artifact_paths['market_cache_export_policy_issues']}")
+    for row in result.recommendations_frame.to_dict("records"):
+        if row.get("status") in {"RECOMMENDED", "RECOMMENDED_WITH_WARNINGS"}:
+            print(
+                "RECOMMENDATION: "
+                f"{row.get('symbol')} -> {row.get('recommended_source')}/{row.get('recommended_upstream_source')} "
+                f"({row.get('status')})"
+            )
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

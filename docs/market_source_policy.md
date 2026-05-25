@@ -22,6 +22,7 @@ Route availability and field semantics differ by source, upstream, security type
 - `market-source-policy` reports which fields are considered reliable, provisional, unavailable, or caveated.
 - `market-cache-preflight` applies schema checks, this policy, optional health metadata, and optional comparison before cache ingest.
 - `market-daily-update` uses the preflight gate before optional cache ingest in the local update skeleton.
+- `market-cache-export-plan` uses the policy to recommend reviewed source/upstream selections from existing cache rows.
 - `data-pipeline`, `data-quality`, and `snapshot-quality` remain required before current-candidates or replay.
 
 ## CLI
@@ -91,6 +92,16 @@ Eastmoney:
 - `pre_close_caveat`
 
 These hints do not override comparison PASS/WARN/FAIL, data-quality, or snapshot-quality. They are research data preparation guidance.
+
+## Reviewed Cache Export Planning
+
+`market-cache-export-plan` applies this policy to local cache coverage and writes a recommended `market-cache-export` manifest:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-plan --manifest data\raw\manual_manifests\market_cache_export_policy_request_example.csv
+```
+
+The generated manifest is explicit and reviewable. It is not an automatic trusted-source decision. `PROVISIONAL` ETF/Sina rows are emitted with warnings unless `--strict-reliable` is used.
 
 ## Cache Acceptance Preflight
 

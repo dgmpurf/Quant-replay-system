@@ -339,6 +339,26 @@ market_cache_export:
   enable_live_trading: false
   enable_broker_api: false
 
+market_cache_export_policy:
+  output_dir: outputs/reports/market_cache_export_policy
+  manifest_output_dir: data/raw/manual_manifests
+  default_required_fields:
+    - close
+    - volume
+    - amount
+  source_preference:
+    STOCK:
+      - [AKSHARE_OPTIONAL, TENCENT]
+      - [BAOSTOCK_OPTIONAL, BAOSTOCK]
+    ETF:
+      - [AKSHARE_OPTIONAL, SINA]
+  strict_reliable: false
+  fail_fast: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 market_cache_export_index:
   root_dir: outputs/reports/market_cache_export
   output_dir: outputs/reports/market_cache_export/index

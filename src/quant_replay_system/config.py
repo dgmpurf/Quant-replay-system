@@ -372,6 +372,29 @@ class MarketCacheExportSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class MarketCacheExportPolicySettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/market_cache_export_policy")
+    manifest_output_dir: Path = Path("data/raw/manual_manifests")
+    default_required_fields: list[str] = Field(default_factory=lambda: ["close", "volume", "amount"])
+    source_preference: dict[str, list[list[str]]] = Field(
+        default_factory=lambda: {
+            "STOCK": [
+                ["AKSHARE_OPTIONAL", "TENCENT"],
+                ["BAOSTOCK_OPTIONAL", "BAOSTOCK"],
+            ],
+            "ETF": [
+                ["AKSHARE_OPTIONAL", "SINA"],
+            ],
+        }
+    )
+    strict_reliable: bool = False
+    fail_fast: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class MarketCacheExportIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/market_cache_export")
     output_dir: Path = Path("outputs/reports/market_cache_export/index")
@@ -808,6 +831,7 @@ class Settings(BaseModel):
     data_source_health: DataSourceHealthSettings = Field(default_factory=DataSourceHealthSettings)
     market_data_cache: MarketDataCacheSettings = Field(default_factory=MarketDataCacheSettings)
     market_cache_export: MarketCacheExportSettings = Field(default_factory=MarketCacheExportSettings)
+    market_cache_export_policy: MarketCacheExportPolicySettings = Field(default_factory=MarketCacheExportPolicySettings)
     market_cache_export_index: MarketCacheExportIndexSettings = Field(default_factory=MarketCacheExportIndexSettings)
     market_cache_export_health: MarketCacheExportHealthSettings = Field(default_factory=MarketCacheExportHealthSettings)
     market_cache_export_status: MarketCacheExportStatusSettings = Field(default_factory=MarketCacheExportStatusSettings)

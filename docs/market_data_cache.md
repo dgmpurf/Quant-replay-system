@@ -147,6 +147,14 @@ python -m quant_replay_system.cli market-cache-export --manifest data\raw\manual
 
 `market-cache-export` reads the local cache, requires explicit `source` and `upstream_source` for each enabled manifest row, writes `data\raw\manual_cache_exports\<export_id>\market_raw_data.csv`, and rejects duplicate `symbol + trade_date` rows before pipeline use. It does not mutate the cache or choose a trusted source automatically.
 
+To draft an explicit reviewed manifest from local cache coverage and field reliability policy, use:
+
+```cmd
+python -m quant_replay_system.cli market-cache-export-plan --manifest data\raw\manual_manifests\market_cache_export_policy_request_example.csv
+```
+
+The planner writes a recommended manifest for review. It does not export, mutate cache, or silently choose a source for downstream workflows.
+
 See [market_cache_export.md](market_cache_export.md).
 
 After creating reviewed exports, use the export artifact views before repeating downstream snapshot work:
@@ -292,7 +300,7 @@ data-source-health
 
 For incremental local maintenance after initial source validation, `market-daily-update` can replace the first four manual steps while preserving the explicit cache-write gate.
 
-For reviewed exports into `data-pipeline`, use `market-cache-export` after cache comparison/source review when multiple cached source variants exist.
+For reviewed exports into `data-pipeline`, use `market-cache-export` after cache comparison/source review when multiple cached source variants exist. Use `market-cache-export-plan` first if you want a policy-aware draft manifest, then inspect it before exporting.
 
 For AKShare, run health checks first so the route report identifies whether Tencent, Sina, or Eastmoney is usable. For BaoStock, run `data-source-health` first to confirm the market route is available. If an upstream fails, use a successful fallback route or reviewed `LOCAL_CSV`.
 

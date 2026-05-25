@@ -37,6 +37,8 @@ Use `historical-backfill-index`, `historical-backfill-health`, and `historical-b
 
 Use `market-cache-export` when cached market data is ready to feed `data-pipeline`. The cache may contain multiple source variants for the same `symbol + trade_date`, so the export workflow requires reviewed `source` and `upstream_source` selections and rejects duplicate business keys before writing a pipeline-ready market CSV.
 
+Use `market-cache-export-plan` to draft those reviewed selections from local cache coverage and `market-source-policy`. The planner is recommendation-only by default: it writes a generated manifest for review, keeps `PROVISIONAL` recommendations visible as warnings, and does not mutate cache or run downstream workflows.
+
 For reviewed batches, use a local CSV symbol manifest with `market-daily-update --symbol-manifest`. Disabled rows are skipped, rows that need real fetches are blocked unless `--allow-real-data` is supplied, and cache writes remain explicit. This is controlled local data maintenance, not scheduling or automation.
 
 For deterministic local verification, use an offline reviewed symbol manifest with `raw_input` and `metadata_path` columns. Offline rows use reviewed local raw files, do not require `--allow-real-data`, and still pass through `market-cache-preflight` before any optional cache write.
@@ -216,6 +218,7 @@ python -m quant_replay_system.cli market-daily-update --symbol-manifest data\raw
 python -m quant_replay_system.cli market-cache-ingest --input data\raw\AKSHARE_OPTIONAL\market\<run_id>\raw_data.csv --metadata data\raw\AKSHARE_OPTIONAL\market\<run_id>\metadata.json
 python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-a AKSHARE_OPTIONAL --source-b BAOSTOCK_OPTIONAL
 python -m quant_replay_system.cli market-cache-query --symbol 510300 --start-date 2024-01-01 --end-date 2024-05-20 --output data\raw\manual_cache\510300_market.csv
+python -m quant_replay_system.cli market-cache-export-plan --manifest data\raw\manual_manifests\market_cache_export_policy_request_example.csv
 python -m quant_replay_system.cli market-cache-export --manifest data\raw\manual_manifests\reviewed_cache_export_example.csv --build-pipeline-manifest --universe data\raw\LOCAL_CSV\universe_overlay\<overlay_id>\raw_data.csv --trading-calendar data\raw\AKSHARE_OPTIONAL\trading_calendar\<run_id>\raw_data.csv
 ```
 
@@ -250,3 +253,4 @@ Do not use raw vendor output directly for replay, current candidates, or paper w
 - Raw data quality is source-dependent and must always be checked locally.
 - Sina/Tencent/Eastmoney AKShare routes can differ in adjustment, amount, volume, and date coverage semantics; compare and quality-check outputs before research use.
 - Cache comparison is diagnostic only; it does not resolve which source should be trusted or mutate cached data.
+- Policy-aware cache export planning drafts source/upstream selections, but the generated manifest remains reviewed input and is not an automatic trusted-source decision.
