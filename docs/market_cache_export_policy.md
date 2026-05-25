@@ -173,6 +173,28 @@ For ETF rows where only AKShare/Sina exists, `comparison_status=UNAVAILABLE` rec
 
 Comparison diagnostics are evidence only. They do not certify source truth, mutate cache, auto-approve the generated manifest, bypass data-quality, or bypass snapshot-quality.
 
+## Artifact Views
+
+Use the policy-plan artifact views to review recommendation plans before scaling them:
+
+```powershell
+python -m quant_replay_system.cli market-cache-export-plan-index
+python -m quant_replay_system.cli market-cache-export-plan-health
+python -m quant_replay_system.cli market-cache-export-plan-status
+```
+
+The index and status summaries include comparison counts:
+
+- `comparison_pass_count`
+- `comparison_warn_count`
+- `comparison_fail_count`
+- `comparison_unavailable_count`
+- `comparison_required_but_missing_count`
+- `comparison_supported_recommendation_count`
+- `comparison_unsupported_recommendation_count`
+
+`comparison_status=PASS` is healthy. `comparison_status=UNAVAILABLE` for `PROVISIONAL` ETF/Sina rows is a reviewable warning, not a system failure, when no second ETF reference source exists locally. A comparison `FAIL` for a recommended stock source is actionable and must be reviewed before the generated manifest is used.
+
 ## Safety
 
 - Source selection is recommendation-only by default.

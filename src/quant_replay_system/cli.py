@@ -1827,6 +1827,11 @@ def _handle_market_cache_export_plan_index(args: argparse.Namespace) -> int:
     print(f"Index report path: {result.artifact_paths['market_cache_export_policy_index_report']}")
     print(f"Index CSV path: {result.artifact_paths['market_cache_export_policy_index_csv']}")
     print(f"artifact_count: {result.artifact_count}")
+    if not result.index_frame.empty:
+        print(f"comparison_pass_count: {_sum_cli_column(result.index_frame, 'comparison_pass_count')}")
+        print(f"comparison_warn_count: {_sum_cli_column(result.index_frame, 'comparison_warn_count')}")
+        print(f"comparison_fail_count: {_sum_cli_column(result.index_frame, 'comparison_fail_count')}")
+        print(f"comparison_unavailable_count: {_sum_cli_column(result.index_frame, 'comparison_unavailable_count')}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
@@ -1858,6 +1863,11 @@ def _handle_market_cache_export_plan_health(args: argparse.Namespace) -> int:
     print(f"issue_count: {result.issue_count}")
     print(f"error_count: {result.error_count}")
     print(f"warning_count: {result.warning_count}")
+    health_summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"comparison_pass_count: {health_summary.get('comparison_pass_count', 0)}")
+    print(f"comparison_warn_count: {health_summary.get('comparison_warn_count', 0)}")
+    print(f"comparison_fail_count: {health_summary.get('comparison_fail_count', 0)}")
+    print(f"comparison_unavailable_count: {health_summary.get('comparison_unavailable_count', 0)}")
     print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
     print(f"Report path: {result.artifact_paths['market_cache_export_policy_health_report']}")
     for warning in result.warnings:
@@ -1894,6 +1904,10 @@ def _handle_market_cache_export_plan_status(args: argparse.Namespace) -> int:
     print(f"recommendation_count: {summary.get('recommendation_count', 0)}")
     print(f"recommended_count: {summary.get('recommended_count', 0)}")
     print(f"recommended_with_warnings_count: {summary.get('recommended_with_warnings_count', 0)}")
+    print(f"comparison_pass_count: {summary.get('comparison_pass_count', 0)}")
+    print(f"comparison_warn_count: {summary.get('comparison_warn_count', 0)}")
+    print(f"comparison_fail_count: {summary.get('comparison_fail_count', 0)}")
+    print(f"comparison_unavailable_count: {summary.get('comparison_unavailable_count', 0)}")
     print(f"generated_reviewed_manifest_path: {summary.get('generated_reviewed_manifest_path', '')}")
     print(f"downstream_export_id: {summary.get('downstream_export_id', '')}")
     print(f"downstream_snapshot_quality_status: {summary.get('downstream_snapshot_quality_status', '')}")
@@ -2974,6 +2988,12 @@ def _print_ingestion_result(result) -> int:
 
 def _row_numbers(index: pd.Index) -> str:
     return ", ".join(str(int(value) + 2) for value in index)
+
+
+def _sum_cli_column(frame: pd.DataFrame, column: str) -> int:
+    if frame.empty or column not in frame.columns:
+        return 0
+    return int(pd.to_numeric(frame[column], errors="coerce").fillna(0).sum())
 
 
 if __name__ == "__main__":

@@ -38,6 +38,13 @@ INDEX_COLUMNS = [
     "recommended_with_warnings_count",
     "no_reliable_source_count",
     "no_cache_rows_count",
+    "comparison_pass_count",
+    "comparison_warn_count",
+    "comparison_fail_count",
+    "comparison_unavailable_count",
+    "comparison_required_but_missing_count",
+    "comparison_supported_recommendation_count",
+    "comparison_unsupported_recommendation_count",
     "generated_reviewed_manifest_path",
     "report_path",
     "recommendations_path",
@@ -186,6 +193,7 @@ def build_market_cache_export_policy_index_metadata(
         "index_id": _generate_index_id(result.index_frame, result.audit_metadata),
         "artifact_count": result.artifact_count,
         "root_dir": str(result.audit_metadata.get("root_dir", "")),
+        "comparison_totals": _comparison_totals(result.index_frame),
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
@@ -225,6 +233,9 @@ def render_market_cache_export_policy_index_report(
                 "recommendation_count",
                 "recommended_count",
                 "recommended_with_warnings_count",
+                "comparison_pass_count",
+                "comparison_fail_count",
+                "comparison_unavailable_count",
                 "downstream_export_id",
                 "downstream_snapshot_quality_status",
                 "report_path",
@@ -298,8 +309,10 @@ def _row_from_metadata(
         or _string(paths.get("recommended_manifest"))
     )
     recommendations = metadata.get("recommendations", []) if isinstance(metadata.get("recommendations"), list) else []
-    counts = _recommendation_counts(recommendations, recommendations_path)
-    coverage = _coverage_from_recommendations(recommendations)
+    recommendation_frame = _recommendations_frame(recommendations, recommendations_path)
+    counts = _recommendation_counts(recommendation_frame)
+    comparison = _comparison_counts(recommendation_frame)
+    coverage = _coverage_from_recommendations(recommendation_frame)
     downstream = _linked_export_fields(generated_manifest, project_settings)
     return {
         "plan_id": plan_id,
@@ -312,6 +325,13 @@ def _row_from_metadata(
         "recommended_with_warnings_count": counts["recommended_with_warnings_count"],
         "no_reliable_source_count": counts["no_reliable_source_count"],
         "no_cache_rows_count": counts["no_cache_rows_count"],
+        "comparison_pass_count": comparison["comparison_pass_count"],
+        "comparison_warn_count": comparison["comparison_warn_count"],
+        "comparison_fail_count": comparison["comparison_fail_count"],
+        "comparison_unavailable_count": comparison["comparison_unavailable_count"],
+        "comparison_required_but_missing_count": comparison["comparison_required_but_missing_count"],
+        "comparison_supported_recommendation_count": comparison["comparison_supported_recommendation_count"],
+        "comparison_unsupported_recommendation_count": comparison["comparison_unsupported_recommendation_count"],
         "generated_reviewed_manifest_path": generated_manifest,
         "report_path": str(report_path),
         "recommendations_path": str(recommendations_path),
@@ -331,13 +351,17 @@ def _row_from_metadata(
     }
 
 
-def _recommendation_counts(recommendations: list[Any], recommendations_path: Path) -> dict[str, int]:
+def _recommendations_frame(recommendations: list[Any], recommendations_path: Path) -> pd.DataFrame:
     frame = pd.DataFrame([row for row in recommendations if isinstance(row, dict)])
     if frame.empty and recommendations_path.exists():
         try:
             frame = read_csv_preserve_symbol_columns(recommendations_path, keep_default_na=False)
         except Exception:
             frame = pd.DataFrame()
+    return frame
+
+
+def _recommendation_counts(frame: pd.DataFrame) -> dict[str, int]:
     if frame.empty or "status" not in frame.columns:
         return {
             "recommendation_count": 0,
@@ -356,8 +380,45 @@ def _recommendation_counts(recommendations: list[Any], recommendations_path: Pat
     }
 
 
-def _coverage_from_recommendations(recommendations: list[Any]) -> dict[str, str]:
-    frame = pd.DataFrame([row for row in recommendations if isinstance(row, dict)])
+def _comparison_counts(frame: pd.DataFrame) -> dict[str, int]:
+    empty = {
+        "comparison_pass_count": 0,
+        "comparison_warn_count": 0,
+        "comparison_fail_count": 0,
+        "comparison_unavailable_count": 0,
+        "comparison_required_but_missing_count": 0,
+        "comparison_supported_recommendation_count": 0,
+        "comparison_unsupported_recommendation_count": 0,
+    }
+    if frame.empty or "status" not in frame.columns:
+        return empty
+    statuses = frame["status"].astype(str).str.upper()
+    acceptable = statuses.isin({"RECOMMENDED", "RECOMMENDED_WITH_WARNINGS"})
+    if "comparison_status" not in frame.columns:
+        return empty
+    comparison_statuses = frame["comparison_status"].fillna("").astype(str).str.strip().str.upper()
+    missing = acceptable & comparison_statuses.eq("")
+    unavailable = acceptable & comparison_statuses.eq("UNAVAILABLE")
+    supported = acceptable & comparison_statuses.isin({"PASS", "WARN", "FAIL"})
+    unsupported = acceptable & (unavailable | missing)
+    security = (
+        frame["security_type"].fillna("").astype(str).str.upper()
+        if "security_type" in frame.columns
+        else pd.Series([""] * len(frame), index=frame.index)
+    )
+    required_missing = missing | (acceptable & security.eq("STOCK") & unavailable)
+    return {
+        "comparison_pass_count": int((acceptable & comparison_statuses.eq("PASS")).sum()),
+        "comparison_warn_count": int((acceptable & comparison_statuses.eq("WARN")).sum()),
+        "comparison_fail_count": int((acceptable & comparison_statuses.eq("FAIL")).sum()),
+        "comparison_unavailable_count": int(unavailable.sum()),
+        "comparison_required_but_missing_count": int(required_missing.sum()),
+        "comparison_supported_recommendation_count": int(supported.sum()),
+        "comparison_unsupported_recommendation_count": int(unsupported.sum()),
+    }
+
+
+def _coverage_from_recommendations(frame: pd.DataFrame) -> dict[str, str]:
     if frame.empty:
         return {"symbols": "", "min_start_date": "", "max_end_date": ""}
     symbols = sorted(str(value).strip() for value in frame.get("symbol", pd.Series(dtype="object")).tolist() if str(value).strip())
@@ -532,6 +593,19 @@ def _sanitize_dataframe_for_export(frame: pd.DataFrame) -> pd.DataFrame:
         if output[column].dtype == "object":
             output[column] = output[column].map(lambda value: "" if pd.isna(value) else value)
     return output
+
+
+def _comparison_totals(frame: pd.DataFrame) -> dict[str, int]:
+    columns = [
+        "comparison_pass_count",
+        "comparison_warn_count",
+        "comparison_fail_count",
+        "comparison_unavailable_count",
+        "comparison_required_but_missing_count",
+        "comparison_supported_recommendation_count",
+        "comparison_unsupported_recommendation_count",
+    ]
+    return {column: int(pd.to_numeric(frame.get(column, pd.Series(dtype="object")), errors="coerce").fillna(0).sum()) for column in columns}
 
 
 def _markdown_table(frame: pd.DataFrame, columns: list[str]) -> str:

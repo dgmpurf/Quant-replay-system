@@ -93,7 +93,11 @@ def check_market_cache_export_policy_health(
     health_frame = build_market_cache_export_policy_health_frame(index_frame, settings=health_settings)
     if load_issues:
         health_frame = _finalize_health_frame(pd.concat([pd.DataFrame(load_issues), health_frame], ignore_index=True))
-    summary_frame = summarize_market_cache_export_policy_health(health_frame, checked_artifact_count=len(index_frame))
+    summary_frame = summarize_market_cache_export_policy_health(
+        health_frame,
+        checked_artifact_count=len(index_frame),
+        index_df=index_frame,
+    )
     status = str(summary_frame.iloc[0]["status"]) if not summary_frame.empty else "PASS"
     health_check_id = generate_market_cache_export_policy_health_id(
         index_frame,
@@ -151,6 +155,7 @@ def build_market_cache_export_policy_health_frame(
         if recommendations is not None:
             _check_recommendation_counts(row, metadata, recommendations, issues)
             _check_recommendation_warnings(row, recommendations, issues)
+            _check_comparison_diagnostics(row, recommendations, issues, cfg)
         if manifest is not None:
             _check_manifest_schema(row, manifest, issues)
             _check_manifest_symbols(row, manifest, issues)
@@ -185,8 +190,10 @@ def summarize_market_cache_export_policy_health(
     health_frame: pd.DataFrame,
     *,
     checked_artifact_count: int,
+    index_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     frame = _finalize_health_frame(health_frame)
+    comparison = _comparison_totals(index_df)
     error_count = int((frame["severity"] == "ERROR").sum()) if not frame.empty else 0
     warning_count = int((frame["severity"] == "WARN").sum()) if not frame.empty else 0
     status = "FAIL" if error_count else ("WARN" if warning_count else "PASS")
@@ -198,6 +205,7 @@ def summarize_market_cache_export_policy_health(
                 "issue_count": int(len(frame)),
                 "error_count": error_count,
                 "warning_count": warning_count,
+                **comparison,
                 "no_live_trading": True,
                 "no_broker_api": True,
             }
@@ -233,6 +241,8 @@ def write_market_cache_export_policy_health_artifacts(
         "issue_count": result.issue_count,
         "error_count": result.error_count,
         "warning_count": result.warning_count,
+        "summary": result.summary_frame.to_dict("records")[0] if not result.summary_frame.empty else {},
+        "comparison_issue_counts": _issue_code_counts(result.health_frame, prefix="COMPARISON"),
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
@@ -375,7 +385,7 @@ def _check_recommendation_warnings(
         status = _string(item.get("status")).upper()
         warnings = _string(item.get("warnings"))
         symbol = _string(item.get("symbol"))
-        if status == "RECOMMENDED_WITH_WARNINGS" or "PROVISIONAL" in warnings.upper():
+        if "PROVISIONAL" in warnings.upper():
             issues.append(
                 _issue(
                     _string(row.get("plan_id")),
@@ -384,6 +394,18 @@ def _check_recommendation_warnings(
                     "WARN",
                     "PROVISIONAL_RECOMMENDATION",
                     f"Recommendation for {symbol} has reviewable policy warnings: {warnings or status}.",
+                    "Review the generated manifest notes before export.",
+                )
+            )
+        elif status == "RECOMMENDED_WITH_WARNINGS":
+            issues.append(
+                _issue(
+                    _string(row.get("plan_id")),
+                    "recommendations_path",
+                    _string(row.get("recommendations_path")),
+                    "WARN",
+                    "POLICY_RECOMMENDATION_WARNING",
+                    f"Recommendation for {symbol} has reviewable warnings: {warnings or status}.",
                     "Review the generated manifest notes before export.",
                 )
             )
@@ -397,6 +419,77 @@ def _check_recommendation_warnings(
                     "NO_RELIABLE_SOURCE",
                     f"Recommendation for {symbol} found no reliable source.",
                     "Backfill another source, review policy, or leave the row disabled.",
+                )
+            )
+
+
+def _check_comparison_diagnostics(
+    row: dict[str, Any],
+    recommendations: pd.DataFrame,
+    issues: list[dict[str, Any]],
+    settings: MarketCacheExportPolicyHealthSettings,
+) -> None:
+    if recommendations.empty or "status" not in recommendations.columns:
+        return
+    comparison_columns = [column for column in recommendations.columns if str(column).startswith("comparison_")]
+    if not comparison_columns:
+        return
+    for item in recommendations.to_dict("records"):
+        status = _string(item.get("status")).upper()
+        if status not in {"RECOMMENDED", "RECOMMENDED_WITH_WARNINGS"}:
+            continue
+        symbol = _string(item.get("symbol"))
+        comparison_status = _string(item.get("comparison_status")).upper()
+        security_type = _string(item.get("security_type")).upper()
+        warnings = _string(item.get("warnings")).upper()
+        if not comparison_status:
+            issues.append(
+                _issue(
+                    _string(row.get("plan_id")),
+                    "recommendations_path",
+                    _string(row.get("recommendations_path")),
+                    "WARN",
+                    "COMPARISON_MISSING",
+                    f"Recommendation for {symbol} is missing comparison diagnostics.",
+                    "Regenerate the policy plan to include source-comparison diagnostics.",
+                )
+            )
+        elif comparison_status == "UNAVAILABLE":
+            issue_code = "PROVISIONAL_WITHOUT_REFERENCE" if security_type == "ETF" and "PROVISIONAL" in warnings else "COMPARISON_UNAVAILABLE"
+            issues.append(
+                _issue(
+                    _string(row.get("plan_id")),
+                    "recommendations_path",
+                    _string(row.get("recommendations_path")),
+                    "WARN",
+                    issue_code,
+                    f"Recommendation for {symbol} has comparison_status=UNAVAILABLE.",
+                    "Review source policy warnings; this can be expected for ETF/Sina when no second ETF source exists.",
+                )
+            )
+        elif comparison_status == "WARN":
+            issues.append(
+                _issue(
+                    _string(row.get("plan_id")),
+                    "recommendations_path",
+                    _string(row.get("recommendations_path")),
+                    "WARN",
+                    "COMPARISON_WARN",
+                    f"Recommendation for {symbol} has comparison warnings.",
+                    "Review source-only rows or tolerance warnings before export.",
+                )
+            )
+        elif comparison_status == "FAIL":
+            severity = "ERROR" if settings.strict else "WARN"
+            issues.append(
+                _issue(
+                    _string(row.get("plan_id")),
+                    "recommendations_path",
+                    _string(row.get("recommendations_path")),
+                    severity,
+                    "ACTIONABLE_COMPARISON_FAILURE",
+                    f"Recommendation for {symbol} failed required-field source comparison.",
+                    "Review the compared source rows before using the generated manifest.",
                 )
             )
 
@@ -661,6 +754,33 @@ def _prepare_index_frame(index_df: pd.DataFrame) -> pd.DataFrame:
         if column not in frame.columns:
             frame[column] = ""
     return frame[INDEX_COLUMNS].reset_index(drop=True)
+
+
+def _comparison_totals(index_df: pd.DataFrame | None) -> dict[str, int]:
+    columns = [
+        "comparison_pass_count",
+        "comparison_warn_count",
+        "comparison_fail_count",
+        "comparison_unavailable_count",
+        "comparison_required_but_missing_count",
+        "comparison_supported_recommendation_count",
+        "comparison_unsupported_recommendation_count",
+    ]
+    if index_df is None:
+        return {column: 0 for column in columns}
+    frame = index_df.copy(deep=True)
+    return {
+        column: int(pd.to_numeric(frame.get(column, pd.Series(dtype="object")), errors="coerce").fillna(0).sum())
+        for column in columns
+    }
+
+
+def _issue_code_counts(frame: pd.DataFrame, *, prefix: str) -> dict[str, int]:
+    if frame.empty or "issue_code" not in frame.columns:
+        return {}
+    codes = frame["issue_code"].astype(str)
+    filtered = codes.loc[codes.str.startswith(prefix)]
+    return {str(key): int(value) for key, value in filtered.value_counts().sort_index().items()}
 
 
 def _coerce_settings(

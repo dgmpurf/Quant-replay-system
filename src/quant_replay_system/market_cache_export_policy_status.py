@@ -30,6 +30,12 @@ STATUS_COLUMNS = [
     "issue_count",
     "warning_count",
     "error_count",
+    "comparison_pass_count",
+    "comparison_warn_count",
+    "comparison_fail_count",
+    "comparison_unavailable_count",
+    "comparison_supported_recommendation_count",
+    "comparison_unsupported_recommendation_count",
     "next_action",
     "notes",
 ]
@@ -163,6 +169,12 @@ def build_market_cache_export_policy_status_frame(
             "issue_count": 0,
             "warning_count": 0,
             "error_count": 0,
+            "comparison_pass_count": _sum_column(index_frame, "comparison_pass_count"),
+            "comparison_warn_count": _sum_column(index_frame, "comparison_warn_count"),
+            "comparison_fail_count": _sum_column(index_frame, "comparison_fail_count"),
+            "comparison_unavailable_count": _sum_column(index_frame, "comparison_unavailable_count"),
+            "comparison_supported_recommendation_count": _sum_column(index_frame, "comparison_supported_recommendation_count"),
+            "comparison_unsupported_recommendation_count": _sum_column(index_frame, "comparison_unsupported_recommendation_count"),
             "next_action": "Run market-cache-export-plan-health.",
             "notes": f"{len(index_frame)} policy plan artifact(s) indexed.",
         },
@@ -175,6 +187,12 @@ def build_market_cache_export_policy_status_frame(
             "issue_count": health_result.issue_count,
             "warning_count": health_result.warning_count,
             "error_count": health_result.error_count,
+            "comparison_pass_count": _summary_value(health_result, "comparison_pass_count"),
+            "comparison_warn_count": _summary_value(health_result, "comparison_warn_count"),
+            "comparison_fail_count": _summary_value(health_result, "comparison_fail_count"),
+            "comparison_unavailable_count": _summary_value(health_result, "comparison_unavailable_count"),
+            "comparison_supported_recommendation_count": _summary_value(health_result, "comparison_supported_recommendation_count"),
+            "comparison_unsupported_recommendation_count": _summary_value(health_result, "comparison_unsupported_recommendation_count"),
             "next_action": "Repair missing or malformed policy plan artifacts." if health_result.status == "FAIL" else "",
             "notes": f"{health_result.checked_artifact_count} policy plan artifact(s) checked.",
         },
@@ -189,6 +207,12 @@ def build_market_cache_export_policy_status_frame(
             "error_count": int(_number(latest.get("no_reliable_source_count", 0)) + _number(latest.get("no_cache_rows_count", 0)))
             if latest
             else 0,
+            "comparison_pass_count": int(_number(latest.get("comparison_pass_count", 0))) if latest else 0,
+            "comparison_warn_count": int(_number(latest.get("comparison_warn_count", 0))) if latest else 0,
+            "comparison_fail_count": int(_number(latest.get("comparison_fail_count", 0))) if latest else 0,
+            "comparison_unavailable_count": int(_number(latest.get("comparison_unavailable_count", 0))) if latest else 0,
+            "comparison_supported_recommendation_count": int(_number(latest.get("comparison_supported_recommendation_count", 0))) if latest else 0,
+            "comparison_unsupported_recommendation_count": int(_number(latest.get("comparison_unsupported_recommendation_count", 0))) if latest else 0,
             "next_action": "",
             "notes": _latest_notes(latest),
         },
@@ -226,6 +250,21 @@ def summarize_market_cache_export_policy_status(
                 else 0,
                 "no_reliable_source_count": int(_number(latest.get("no_reliable_source_count", 0))) if latest else 0,
                 "no_cache_rows_count": int(_number(latest.get("no_cache_rows_count", 0))) if latest else 0,
+                "comparison_pass_count": int(_number(latest.get("comparison_pass_count", 0))) if latest else 0,
+                "comparison_warn_count": int(_number(latest.get("comparison_warn_count", 0))) if latest else 0,
+                "comparison_fail_count": int(_number(latest.get("comparison_fail_count", 0))) if latest else 0,
+                "comparison_unavailable_count": int(_number(latest.get("comparison_unavailable_count", 0))) if latest else 0,
+                "comparison_required_but_missing_count": int(_number(latest.get("comparison_required_but_missing_count", 0)))
+                if latest
+                else 0,
+                "comparison_supported_recommendation_count": int(_number(latest.get("comparison_supported_recommendation_count", 0)))
+                if latest
+                else 0,
+                "comparison_unsupported_recommendation_count": int(
+                    _number(latest.get("comparison_unsupported_recommendation_count", 0))
+                )
+                if latest
+                else 0,
                 "generated_reviewed_manifest_path": str(latest.get("generated_reviewed_manifest_path", "")),
                 "downstream_export_id": str(latest.get("downstream_export_id", "")),
                 "downstream_export_status": str(latest.get("downstream_export_status", "")),
@@ -249,6 +288,8 @@ def infer_market_cache_export_policy_stage(latest: dict[str, Any], health_status
         return "NO_POLICY_PLAN_ARTIFACTS"
     if health_status == "FAIL" or str(latest.get("status", "")).upper() == "FAIL":
         return "POLICY_PLAN_FAILED"
+    if int(_number(latest.get("comparison_fail_count", 0))) > 0:
+        return "POLICY_PLAN_COMPARISON_WARNINGS_NEED_REVIEW"
     if str(latest.get("downstream_snapshot_quality_status", "")).upper() == "PASS":
         return "SNAPSHOT_READY_FROM_POLICY_PLAN"
     if str(latest.get("downstream_export_status", "")).upper() == "PASS":
@@ -269,12 +310,14 @@ def infer_market_cache_export_policy_next_action(
         return "Run market-cache-export-plan with a reviewed policy request manifest."
     if health_status == "FAIL" or workflow_stage == "POLICY_PLAN_FAILED":
         return "Review market-cache-export-plan-health errors before using the generated manifest."
+    if workflow_stage == "POLICY_PLAN_COMPARISON_WARNINGS_NEED_REVIEW":
+        return "Review source-comparison failures before using the generated manifest or linked export outputs."
     if workflow_stage == "SNAPSHOT_READY_FROM_POLICY_PLAN":
-        return "Review policy warnings, then use the linked snapshot/export outputs for downstream research if appropriate."
+        return "Review comparison and PROVISIONAL policy warnings, then use the linked snapshot/export outputs if appropriate."
     if workflow_stage == "EXPORT_READY_FROM_POLICY_PLAN":
         return "Run or inspect data-pipeline, data-quality, and snapshot-quality for the linked export."
     if workflow_stage == "POLICY_PLAN_WARNINGS_NEED_REVIEW":
-        return "Review PROVISIONAL or policy warnings in the generated manifest before running market-cache-export."
+        return "Review PROVISIONAL, comparison, or policy warnings in the generated manifest before running market-cache-export."
     if workflow_stage == "REVIEWED_MANIFEST_READY":
         return "Review the generated manifest, then run market-cache-export explicitly."
     return "Review policy recommendations before generating or using a cache export manifest."
@@ -307,6 +350,7 @@ def write_market_cache_export_policy_status_artifacts(
         "workflow_stage": result.workflow_stage,
         "latest_plan_id": result.latest_plan_id,
         "next_manual_action": result.next_manual_action,
+        "summary": result.summary_frame.to_dict("records")[0] if not result.summary_frame.empty else {},
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
@@ -366,10 +410,26 @@ def _latest_notes(latest: dict[str, Any]) -> str:
     return (
         f"recommendation_count={latest.get('recommendation_count', '')}; "
         f"recommended_with_warnings_count={latest.get('recommended_with_warnings_count', '')}; "
+        f"comparison_pass_count={latest.get('comparison_pass_count', '')}; "
+        f"comparison_fail_count={latest.get('comparison_fail_count', '')}; "
+        f"comparison_unavailable_count={latest.get('comparison_unavailable_count', '')}; "
         f"generated_manifest={latest.get('generated_reviewed_manifest_path', '')}; "
         f"downstream_export_id={latest.get('downstream_export_id', '')}; "
         f"downstream_snapshot_quality_status={latest.get('downstream_snapshot_quality_status', '')}"
     )
+
+
+def _sum_column(frame: pd.DataFrame, column: str) -> int:
+    if frame.empty or column not in frame.columns:
+        return 0
+    return int(pd.to_numeric(frame[column], errors="coerce").fillna(0).sum())
+
+
+def _summary_value(health_result: Any, column: str) -> int:
+    frame = getattr(health_result, "summary_frame", pd.DataFrame())
+    if frame.empty or column not in frame.columns:
+        return 0
+    return int(_number(frame.iloc[0].get(column, 0)))
 
 
 def _resolve_settings(

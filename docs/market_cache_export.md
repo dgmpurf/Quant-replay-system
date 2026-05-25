@@ -88,7 +88,7 @@ python -m quant_replay_system.cli market-cache-export-plan-health
 python -m quant_replay_system.cli market-cache-export-plan-status
 ```
 
-These commands inspect recommendation artifacts and generated reviewed manifests. They do not run export automatically or mutate cache.
+These commands inspect recommendation artifacts and generated reviewed manifests. They now summarize comparison PASS/WARN/FAIL/UNAVAILABLE counts so reviewers can see whether recommended sources were supported by local cross-source evidence before opening detailed reports. Comparison unavailable for provisional ETF/Sina rows remains a visible review warning, not automatic approval or a system failure. The commands do not run export automatically or mutate cache.
 
 ## Index, Health, And Status
 
