@@ -26,6 +26,54 @@ def test_policy_plan_recommends_tencent_for_stock_when_reliable_and_available(tm
     assert row["recommended_source"] == "AKSHARE_OPTIONAL"
     assert row["recommended_upstream_source"] == "TENCENT"
     assert row["symbol"] == "000001"
+    assert bool(row["comparison_available"]) is True
+    assert row["comparison_reference_source"] == "BAOSTOCK_OPTIONAL"
+    assert row["comparison_reference_upstream"] == "BAOSTOCK"
+    assert row["comparison_status"] == "PASS"
+    assert int(row["comparison_matched_rows"]) == 2
+    assert row["comparison_diagnostic_classification"] == "NO_UNIT_MISMATCH"
+
+
+def test_policy_plan_downgrades_stock_recommendation_when_comparison_fails(tmp_path: Path) -> None:
+    _ingest_cache_rows_with_values(
+        tmp_path,
+        [
+            ("000001", "AKSHARE_OPTIONAL", "TENCENT", 10.2),
+            ("000001", "BAOSTOCK_OPTIONAL", "BAOSTOCK", 11.0),
+        ],
+    )
+    request = _request_manifest(tmp_path, [_request_row("000001", "STOCK")])
+
+    result = run_market_cache_export_policy_plan(request, config=_settings(tmp_path))
+    row = result.recommendations_frame.iloc[0].to_dict()
+
+    assert result.status == "WARN"
+    assert row["status"] == "RECOMMENDED_WITH_WARNINGS"
+    assert row["recommended_source"] == "AKSHARE_OPTIONAL"
+    assert bool(row["comparison_available"]) is True
+    assert row["comparison_status"] == "FAIL"
+    assert int(row["comparison_matched_rows"]) == 2
+    assert "Comparison against BAOSTOCK_OPTIONAL/BAOSTOCK failed" in row["warnings"]
+
+
+def test_policy_plan_required_field_comparison_ignores_non_required_pre_close_caveat(tmp_path: Path) -> None:
+    _ingest_cache_rows_with_pre_close_values(
+        tmp_path,
+        [
+            ("000001", "AKSHARE_OPTIONAL", "TENCENT", 10.0),
+            ("000001", "BAOSTOCK_OPTIONAL", "BAOSTOCK", 9.5),
+        ],
+    )
+    request = _request_manifest(tmp_path, [_request_row("000001", "STOCK")])
+
+    result = run_market_cache_export_policy_plan(request, config=_settings(tmp_path))
+    row = result.recommendations_frame.iloc[0].to_dict()
+
+    assert result.status == "PASS"
+    assert row["status"] == "RECOMMENDED"
+    assert row["comparison_status"] == "PASS"
+    assert int(row["comparison_matched_rows"]) == 2
+    assert row["warnings"] == ""
 
 
 def test_policy_plan_recommends_baostock_for_stock_when_akshare_unavailable(tmp_path: Path) -> None:
@@ -53,6 +101,10 @@ def test_policy_plan_recommends_sina_etf_with_warning_when_provisional(tmp_path:
     assert row["recommended_source"] == "AKSHARE_OPTIONAL"
     assert row["recommended_upstream_source"] == "SINA"
     assert "PROVISIONAL" in row["warnings"]
+    assert bool(row["comparison_available"]) is False
+    assert row["comparison_status"] == "UNAVAILABLE"
+    assert row["comparison_diagnostic_classification"] == "NO_REFERENCE_SOURCE"
+    assert "No comparison reference" in row["comparison_warning_reason"]
 
 
 def test_policy_plan_rejects_baostock_etf_when_policy_unavailable(tmp_path: Path) -> None:
@@ -117,7 +169,7 @@ def test_policy_request_loading_preserves_leading_zero_symbols(tmp_path: Path) -
 
 
 def test_cli_market_cache_export_plan_works(tmp_path: Path, monkeypatch, capsys) -> None:
-    _ingest_cache_rows(tmp_path, [("000001", "AKSHARE_OPTIONAL", "TENCENT")])
+    _ingest_cache_rows(tmp_path, [("000001", "AKSHARE_OPTIONAL", "TENCENT"), ("000001", "BAOSTOCK_OPTIONAL", "BAOSTOCK")])
     request = _request_manifest(tmp_path, [_request_row("000001", "STOCK")])
     monkeypatch.setattr("quant_replay_system.cli.load_settings", lambda path: _settings(tmp_path))
 
@@ -128,6 +180,7 @@ def test_cli_market_cache_export_plan_works(tmp_path: Path, monkeypatch, capsys)
     assert "Market cache export plan status: PASS" in output.out
     assert "generated_reviewed_manifest_path:" in output.out
     assert "RECOMMENDATION: 000001 -> AKSHARE_OPTIONAL/TENCENT" in output.out
+    assert "comparison=PASS vs BAOSTOCK_OPTIONAL/BAOSTOCK" in output.out
     assert "No live trading or broker API was invoked." in output.out
 
 
@@ -213,15 +266,33 @@ def _ingest_cache_rows(tmp_path: Path, rows: list[tuple[str, str, str]]) -> None
         ingest_market_cache_csv(input_path, metadata_path=metadata_path, config=_settings(tmp_path))
 
 
-def _market_frame(symbol: str, source: str) -> pd.DataFrame:
+def _ingest_cache_rows_with_values(tmp_path: Path, rows: list[tuple[str, str, str, float]]) -> None:
+    for index, (symbol, source, upstream_source, close) in enumerate(rows):
+        input_path = tmp_path / f"{source}_{upstream_source}_{index}.csv"
+        metadata_path = tmp_path / f"{source}_{upstream_source}_{index}.json"
+        _market_frame(symbol, source, close=close).to_csv(input_path, index=False)
+        _metadata(source, upstream_source).write_text_to(metadata_path)
+        ingest_market_cache_csv(input_path, metadata_path=metadata_path, config=_settings(tmp_path))
+
+
+def _ingest_cache_rows_with_pre_close_values(tmp_path: Path, rows: list[tuple[str, str, str, float]]) -> None:
+    for index, (symbol, source, upstream_source, pre_close) in enumerate(rows):
+        input_path = tmp_path / f"{source}_{upstream_source}_{index}.csv"
+        metadata_path = tmp_path / f"{source}_{upstream_source}_{index}.json"
+        _market_frame(symbol, source, pre_close=pre_close).to_csv(input_path, index=False)
+        _metadata(source, upstream_source).write_text_to(metadata_path)
+        ingest_market_cache_csv(input_path, metadata_path=metadata_path, config=_settings(tmp_path))
+
+
+def _market_frame(symbol: str, source: str, *, close: float = 10.2, pre_close: float = 10.0) -> pd.DataFrame:
     base = {
         "open": 10.0,
-        "high": 10.5,
+        "high": max(10.5, close),
         "low": 9.8,
-        "close": 10.2,
+        "close": close,
         "volume": 1000,
         "amount": 10200,
-        "pre_close": 10.0,
+        "pre_close": pre_close,
         "adj_factor": 1.0,
         "is_suspended": False,
         "limit_up": "",

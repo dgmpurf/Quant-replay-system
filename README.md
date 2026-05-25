@@ -133,7 +133,7 @@ For caching successful canonical daily market bars and querying them into local 
 
 For exporting reviewed source/upstream cache selections into one data-pipeline-ready market CSV, use `market-cache-export`; see [docs/market_cache_export.md](docs/market_cache_export.md).
 
-For drafting reviewed cache export manifests from local cache coverage and source reliability policy, use `market-cache-export-plan`; see [docs/market_cache_export_policy.md](docs/market_cache_export_policy.md).
+For drafting reviewed cache export manifests from local cache coverage, source reliability policy, and inline source-comparison diagnostics, use `market-cache-export-plan`; see [docs/market_cache_export_policy.md](docs/market_cache_export_policy.md).
 
 To discover, check, and summarize policy-aware cache export recommendation plans, use `market-cache-export-plan-index`, `market-cache-export-plan-health`, and `market-cache-export-plan-status`; see [docs/market_cache_export_policy.md#index-health-and-status](docs/market_cache_export_policy.md#index-health-and-status).
 

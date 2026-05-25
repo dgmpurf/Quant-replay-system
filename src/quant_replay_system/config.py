@@ -387,6 +387,18 @@ class MarketCacheExportPolicySettings(BaseModel):
             ],
         }
     )
+    require_comparison_for_reliable_stock: bool = False
+    comparison_reference_preference: dict[str, list[list[str]]] = Field(
+        default_factory=lambda: {
+            "STOCK": [
+                ["BAOSTOCK_OPTIONAL", "BAOSTOCK"],
+                ["AKSHARE_OPTIONAL", "TENCENT"],
+            ],
+            "ETF": [
+                ["BAOSTOCK_OPTIONAL", "BAOSTOCK"],
+            ],
+        }
+    )
     strict_reliable: bool = False
     fail_fast: bool = False
     config_version: str = "mvp"

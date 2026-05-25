@@ -153,7 +153,7 @@ To draft an explicit reviewed manifest from local cache coverage and field relia
 python -m quant_replay_system.cli market-cache-export-plan --manifest data\raw\manual_manifests\market_cache_export_policy_request_example.csv
 ```
 
-The planner writes a recommended manifest for review. It does not export, mutate cache, or silently choose a source for downstream workflows.
+The planner writes a recommended manifest for review. It also records comparison diagnostics when another cache source/upstream is available for the same symbol/date range. Comparison actionability follows the request's `required_fields`, so a non-required caveat does not by itself approve or reject a reviewed export row. It does not export, mutate cache, auto-approve recommendations, or silently choose a source for downstream workflows.
 
 See [market_cache_export.md](market_cache_export.md).
 
@@ -300,7 +300,7 @@ data-source-health
 
 For incremental local maintenance after initial source validation, `market-daily-update` can replace the first four manual steps while preserving the explicit cache-write gate.
 
-For reviewed exports into `data-pipeline`, use `market-cache-export` after cache comparison/source review when multiple cached source variants exist. Use `market-cache-export-plan` first if you want a policy-aware draft manifest, then inspect it before exporting.
+For reviewed exports into `data-pipeline`, use `market-cache-export` after cache comparison/source review when multiple cached source variants exist. Use `market-cache-export-plan` first if you want a policy-aware draft manifest with inline comparison diagnostics, then inspect it before exporting.
 
 For AKShare, run health checks first so the route report identifies whether Tencent, Sina, or Eastmoney is usable. For BaoStock, run `data-source-health` first to confirm the market route is available. If an upstream fails, use a successful fallback route or reviewed `LOCAL_CSV`.
 
@@ -314,6 +314,7 @@ For AKShare, run health checks first so the route report identifies whether Tenc
 - Cached files are ignored by Git.
 - Cache outputs are not trading recommendations.
 - Source comparison reports are diagnostics only and do not certify data quality.
+- Policy-plan comparison diagnostics are also diagnostics only; they provide evidence for manifest review and never approve a source automatically.
 - No live trading is implemented.
 - No broker API is invoked.
 - No automated order placement is added.

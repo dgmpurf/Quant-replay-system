@@ -14,6 +14,7 @@ The policy-aware planner bridges that gap:
 reviewed policy request manifest
 -> inspect local cache coverage
 -> inspect market-source-policy field reliability
+-> attach source-comparison diagnostics when another cache source exists
 -> recommend source/upstream selections
 -> write a reviewed export manifest
 -> user reviews manifest
@@ -140,6 +141,38 @@ AKSHARE_OPTIONAL / SINA
 
 ETF/Sina recommendations remain `PROVISIONAL` warnings until another reliable ETF reference source is available. BaoStock ETF rows are not recommended while the policy marks ETF fields `UNAVAILABLE`.
 
+## Source Comparison Diagnostics
+
+Policy-plan recommendations include comparison diagnostics when another cache source/upstream is available for the same symbol and date range. These diagnostics reuse the market cache comparison logic and are written into:
+
+```text
+outputs/reports/market_cache_export_policy/<plan_id>/market_cache_export_policy_recommendations.csv
+outputs/reports/market_cache_export_policy/<plan_id>/metadata.json
+outputs/reports/market_cache_export_policy/<plan_id>/market_cache_export_policy_report.md
+```
+
+Recommendation fields include:
+
+- `comparison_available`
+- `comparison_reference_source`
+- `comparison_reference_upstream`
+- `comparison_status`
+- `comparison_matched_rows`
+- `comparison_source_only_rows`
+- `comparison_max_close_diff_pct`
+- `comparison_median_volume_ratio`
+- `comparison_median_amount_ratio`
+- `comparison_diagnostic_classification`
+- `comparison_warning_reason`
+
+The policy-plan `comparison_status` is evaluated against the request's `required_fields`. Broader comparison context can still show caveats for non-required fields such as `pre_close`, but those caveats do not downgrade a `close,volume,amount` recommendation by themselves.
+
+For stock rows with multiple reliable cached candidates, a passing comparison keeps the recommendation as `RECOMMENDED`. A `WARN` or `FAIL` comparison downgrades the row to `RECOMMENDED_WITH_WARNINGS` so the generated manifest remains reviewable but not silently approved.
+
+For ETF rows where only AKShare/Sina exists, `comparison_status=UNAVAILABLE` records that no second source is present. This is expected while BaoStock ETF coverage is unavailable locally. The recommendation remains `RECOMMENDED_WITH_WARNINGS` because ETF/Sina field reliability is still `PROVISIONAL`.
+
+Comparison diagnostics are evidence only. They do not certify source truth, mutate cache, auto-approve the generated manifest, bypass data-quality, or bypass snapshot-quality.
+
 ## Safety
 
 - Source selection is recommendation-only by default.
@@ -152,7 +185,7 @@ ETF/Sina recommendations remain `PROVISIONAL` warnings until another reliable ET
 ## Relationship To Other Checks
 
 - `market-source-policy` records field reliability.
-- `market-cache-export-plan` recommends reviewed selections from local cache rows and policy.
+- `market-cache-export-plan` recommends reviewed selections from local cache rows and policy, with comparison diagnostics when a viable reference source exists.
 - `market-cache-export-plan-index`, `market-cache-export-plan-health`, and `market-cache-export-plan-status` make recommendation plans discoverable and reviewable.
 - `research-status` includes the latest policy-plan status as recommendation context.
 - `market-cache-export` exports reviewed selections into one market CSV.
@@ -179,7 +212,7 @@ If the plan stage is `SNAPSHOT_READY_FROM_POLICY_PLAN`, the unified dashboard ca
 ## Known Limitations
 
 - v0.1 uses simple reliability ranking and configured source preference order.
-- It does not compare sources during planning.
+- It compares recommended rows against one available reference source when practical; it does not perform exhaustive pairwise source comparison during planning.
 - It does not certify that a source is true or strategy-ready.
 - It does not automatically run `market-cache-export` in the default path.
 - It does not implement automatic policy-aware source selection for production workflows.

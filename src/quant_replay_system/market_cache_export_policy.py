@@ -13,6 +13,10 @@ import pandas as pd
 from quant_replay_system.config import MarketCacheExportPolicySettings, Settings, load_settings
 from quant_replay_system.data import normalize_symbol_value, read_csv_preserve_symbol_columns
 from quant_replay_system.market_data_cache import load_market_cache
+from quant_replay_system.market_data_comparison import (
+    build_market_source_comparison_frame,
+    summarize_market_source_comparison,
+)
 from quant_replay_system.market_source_policy import (
     MarketFieldReliability,
     get_market_source_policy,
@@ -44,6 +48,17 @@ POLICY_EXPORT_RECOMMENDATION_COLUMNS = [
     "min_trade_date",
     "max_trade_date",
     "candidate_count",
+    "comparison_available",
+    "comparison_reference_source",
+    "comparison_reference_upstream",
+    "comparison_status",
+    "comparison_matched_rows",
+    "comparison_source_only_rows",
+    "comparison_max_close_diff_pct",
+    "comparison_median_volume_ratio",
+    "comparison_median_amount_ratio",
+    "comparison_diagnostic_classification",
+    "comparison_warning_reason",
     "policy_statuses",
     "warnings",
     "reason",
@@ -139,6 +154,17 @@ class MarketCacheExportPolicyRecommendation:
     min_trade_date: str = ""
     max_trade_date: str = ""
     candidate_count: int = 0
+    comparison_available: bool = False
+    comparison_reference_source: str = ""
+    comparison_reference_upstream: str = ""
+    comparison_status: str = ""
+    comparison_matched_rows: int = 0
+    comparison_source_only_rows: int = 0
+    comparison_max_close_diff_pct: float | str = ""
+    comparison_median_volume_ratio: float | str = ""
+    comparison_median_amount_ratio: float | str = ""
+    comparison_diagnostic_classification: str = ""
+    comparison_warning_reason: str = ""
     policy_statuses: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     reason: str = ""
@@ -159,6 +185,17 @@ class MarketCacheExportPolicyRecommendation:
             "min_trade_date": self.min_trade_date,
             "max_trade_date": self.max_trade_date,
             "candidate_count": int(self.candidate_count),
+            "comparison_available": bool(self.comparison_available),
+            "comparison_reference_source": self.comparison_reference_source,
+            "comparison_reference_upstream": self.comparison_reference_upstream,
+            "comparison_status": self.comparison_status,
+            "comparison_matched_rows": int(self.comparison_matched_rows),
+            "comparison_source_only_rows": int(self.comparison_source_only_rows),
+            "comparison_max_close_diff_pct": self.comparison_max_close_diff_pct,
+            "comparison_median_volume_ratio": self.comparison_median_volume_ratio,
+            "comparison_median_amount_ratio": self.comparison_median_amount_ratio,
+            "comparison_diagnostic_classification": self.comparison_diagnostic_classification,
+            "comparison_warning_reason": self.comparison_warning_reason,
             "policy_statuses": json.dumps(self.policy_statuses, sort_keys=True),
             "warnings": " | ".join(self.warnings),
             "reason": self.reason,
@@ -418,6 +455,7 @@ def build_policy_export_recommendations(
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Build recommendation rows, reviewed manifest rows, and issues."""
 
+    project_settings = _resolve_project_settings(config)
     recommendations: list[MarketCacheExportPolicyRecommendation] = []
     issues: list[MarketCacheExportPolicyIssue] = []
 
@@ -438,7 +476,7 @@ def build_policy_export_recommendations(
             )
             continue
 
-        candidates = find_available_cache_sources_for_symbol(request, cache_path=cache_path, config=config)
+        candidates = find_available_cache_sources_for_symbol(request, cache_path=cache_path, config=project_settings)
         if not candidates:
             issue = MarketCacheExportPolicyIssue(
                 category="NO_CACHE_ROWS",
@@ -460,7 +498,7 @@ def build_policy_export_recommendations(
             request,
             candidates,
             strict_reliable=strict_reliable,
-            config=config,
+            config=project_settings,
         )
         accepted = [item for item in scored if not item["rejected"] and int(item["score"]) > 0]
         if not accepted:
@@ -503,6 +541,16 @@ def build_policy_export_recommendations(
         best = accepted[0]
         candidate = best["candidate"]
         warnings = list(best["warnings"])
+        comparison = build_policy_source_comparison_diagnostics(
+            request,
+            recommended_candidate=candidate,
+            candidates=candidates,
+            cache_path=cache_path,
+            config=project_settings,
+        )
+        comparison_warning = comparison.get("comparison_warning_reason", "")
+        if _comparison_warning_is_actionable(request, comparison, project_settings.market_cache_export_policy):
+            warnings.append(str(comparison_warning))
         status = "RECOMMENDED_WITH_WARNINGS" if warnings else "RECOMMENDED"
         if warnings:
             issues.append(
@@ -532,6 +580,19 @@ def build_policy_export_recommendations(
                 min_trade_date=candidate.min_trade_date,
                 max_trade_date=candidate.max_trade_date,
                 candidate_count=len(candidates),
+                comparison_available=bool(comparison.get("comparison_available", False)),
+                comparison_reference_source=str(comparison.get("comparison_reference_source", "")),
+                comparison_reference_upstream=str(comparison.get("comparison_reference_upstream", "")),
+                comparison_status=str(comparison.get("comparison_status", "")),
+                comparison_matched_rows=int(comparison.get("comparison_matched_rows", 0) or 0),
+                comparison_source_only_rows=int(comparison.get("comparison_source_only_rows", 0) or 0),
+                comparison_max_close_diff_pct=comparison.get("comparison_max_close_diff_pct", ""),
+                comparison_median_volume_ratio=comparison.get("comparison_median_volume_ratio", ""),
+                comparison_median_amount_ratio=comparison.get("comparison_median_amount_ratio", ""),
+                comparison_diagnostic_classification=str(
+                    comparison.get("comparison_diagnostic_classification", "")
+                ),
+                comparison_warning_reason=str(comparison.get("comparison_warning_reason", "")),
                 policy_statuses=best["policy_statuses"],
                 warnings=warnings,
                 reason=_recommendation_reason(candidate, best),
@@ -547,6 +608,134 @@ def build_policy_export_recommendations(
     )
     issue_frame = _finalize_issues(pd.DataFrame([issue.as_row() for issue in issues]))
     return recommendation_frame, manifest_frame, issue_frame
+
+
+def build_policy_source_comparison_diagnostics(
+    request: MarketCacheExportPolicyRequest,
+    *,
+    recommended_candidate: MarketCacheSourceCandidate,
+    candidates: list[MarketCacheSourceCandidate],
+    cache_path: str | Path | None = None,
+    config: Settings | dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build inline comparison diagnostics for one policy recommendation."""
+
+    project_settings = _resolve_project_settings(config)
+    reference = _select_comparison_reference(
+        request,
+        recommended_candidate=recommended_candidate,
+        candidates=candidates,
+        settings=project_settings.market_cache_export_policy,
+    )
+    if reference is None:
+        return {
+            "comparison_available": False,
+            "comparison_reference_source": "",
+            "comparison_reference_upstream": "",
+            "comparison_status": "UNAVAILABLE",
+            "comparison_matched_rows": 0,
+            "comparison_source_only_rows": 0,
+            "comparison_max_close_diff_pct": "",
+            "comparison_median_volume_ratio": "",
+            "comparison_median_amount_ratio": "",
+            "comparison_diagnostic_classification": "NO_REFERENCE_SOURCE",
+            "comparison_warning_reason": "No comparison reference source/upstream is available in cache.",
+        }
+
+    path = Path(cache_path) if cache_path is not None else project_settings.market_data_cache.cache_path
+    cache_frame = _comparison_cache_frame_for_pairs(
+        request,
+        recommended_candidate=recommended_candidate,
+        reference_candidate=reference,
+        cache_path=path,
+        config=project_settings,
+    )
+    comparison_frame = build_market_source_comparison_frame(
+        cache_frame,
+        symbol=request.symbol,
+        source_a=recommended_candidate.source,
+        source_b=reference.source,
+        settings=project_settings.market_data_comparison,
+    )
+    summary = summarize_market_source_comparison(
+        comparison_frame,
+        comparison_id="policy_plan_inline",
+        cache_path=path,
+        symbol=request.symbol,
+        source_a=recommended_candidate.source,
+        source_b=reference.source,
+        start_date=request.start_date,
+        end_date=request.end_date,
+        settings=project_settings.market_data_comparison,
+        policy_config=project_settings,
+    )
+    row = summary.iloc[0].to_dict() if not summary.empty else {}
+    source_only = int(row.get("source_a_only_count", 0) or 0) + int(row.get("source_b_only_count", 0) or 0)
+    status = _required_field_comparison_status(
+        comparison_frame,
+        required_fields=request.required_fields,
+        settings=project_settings.market_data_comparison,
+    )
+    warning_reason = ""
+    if status == "FAIL":
+        warning_reason = (
+            f"Comparison against {reference.source}/{reference.upstream_source} failed; "
+            "review source differences before using the generated manifest."
+        )
+    elif status == "WARN":
+        warning_reason = (
+            f"Comparison against {reference.source}/{reference.upstream_source} produced warnings; "
+            "review source-only rows or tolerance warnings before using the generated manifest."
+        )
+    return {
+        "comparison_available": True,
+        "comparison_reference_source": reference.source,
+        "comparison_reference_upstream": reference.upstream_source,
+        "comparison_status": status,
+        "comparison_matched_rows": int(row.get("matched_row_count", 0) or 0),
+        "comparison_source_only_rows": source_only,
+        "comparison_max_close_diff_pct": row.get("max_close_diff_pct", ""),
+        "comparison_median_volume_ratio": row.get("median_volume_ratio", ""),
+        "comparison_median_amount_ratio": row.get("median_amount_ratio", ""),
+        "comparison_diagnostic_classification": row.get("diagnostic_classification", ""),
+        "comparison_warning_reason": warning_reason,
+    }
+
+
+def _required_field_comparison_status(
+    comparison_frame: pd.DataFrame,
+    *,
+    required_fields: list[str],
+    settings: Any,
+) -> str:
+    if comparison_frame.empty:
+        return "WARN"
+    frame = comparison_frame.copy(deep=True)
+    if frame["row_match_status"].isin(["SOURCE_A_ONLY", "SOURCE_B_ONLY"]).any():
+        return "WARN"
+    matched = frame.loc[frame["row_match_status"] == "MATCHED"].copy()
+    if matched.empty:
+        return "WARN"
+    for field in required_fields:
+        field_name = str(field or "").strip().lower()
+        if field_name in {"open", "high", "low", "close", "pre_close", "adj_factor"}:
+            abs_diff = pd.to_numeric(matched.get(f"{field_name}_diff", pd.Series(dtype="float64")), errors="coerce").abs()
+            pct_diff = pd.to_numeric(
+                matched.get(f"{field_name}_diff_pct", pd.Series(dtype="float64")),
+                errors="coerce",
+            ).abs()
+            failures = (abs_diff > settings.price_abs_tolerance) & (pct_diff > settings.price_pct_tolerance)
+            if bool(failures.fillna(False).any()):
+                return "FAIL"
+        elif field_name in {"volume", "amount"}:
+            threshold = settings.volume_pct_tolerance if field_name == "volume" else settings.amount_pct_tolerance
+            pct_diff = pd.to_numeric(
+                matched.get(f"{field_name}_diff_pct", pd.Series(dtype="float64")),
+                errors="coerce",
+            ).abs()
+            if bool((pct_diff > threshold).fillna(False).any()):
+                return "FAIL"
+    return "PASS"
 
 
 def run_market_cache_export_policy_plan(
@@ -749,10 +938,92 @@ def generate_market_cache_export_policy_plan_id(
             for row in requests
         ],
         "source_preference": settings.source_preference,
+        "require_comparison_for_reliable_stock": settings.require_comparison_for_reliable_stock,
+        "comparison_reference_preference": settings.comparison_reference_preference,
         "config_version": settings.config_version,
     }
     encoded = json.dumps(_json_safe(payload), sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()[:12]
+
+
+def _select_comparison_reference(
+    request: MarketCacheExportPolicyRequest,
+    *,
+    recommended_candidate: MarketCacheSourceCandidate,
+    candidates: list[MarketCacheSourceCandidate],
+    settings: MarketCacheExportPolicySettings,
+) -> MarketCacheSourceCandidate | None:
+    references = [
+        candidate
+        for candidate in candidates
+        if not (
+            candidate.source == recommended_candidate.source
+            and candidate.upstream_source == recommended_candidate.upstream_source
+        )
+    ]
+    if not references:
+        return None
+    if request.reference_source:
+        explicit = [candidate for candidate in references if candidate.source == request.reference_source]
+        if explicit:
+            return sorted(explicit, key=lambda item: (-item.row_count, item.source, item.upstream_source))[0]
+    preference = settings.comparison_reference_preference.get(request.security_type.upper(), [])
+    return sorted(
+        references,
+        key=lambda item: (
+            _preference_index(item.source, item.upstream_source, preference),
+            -item.row_count,
+            item.source,
+            item.upstream_source,
+        ),
+    )[0]
+
+
+def _comparison_cache_frame_for_pairs(
+    request: MarketCacheExportPolicyRequest,
+    *,
+    recommended_candidate: MarketCacheSourceCandidate,
+    reference_candidate: MarketCacheSourceCandidate,
+    cache_path: Path,
+    config: Settings,
+) -> pd.DataFrame:
+    frame = load_market_cache(cache_path, config=config)
+    if frame.empty:
+        return frame
+    output = frame.copy(deep=True)
+    output["symbol"] = output["symbol"].astype(str).map(normalize_symbol_value)
+    output["source"] = output["source"].astype(str).str.strip().str.upper()
+    output["upstream_source"] = output["upstream_source"].fillna("").astype(str).str.strip().str.upper()
+    dates = pd.to_datetime(output["trade_date"], errors="coerce")
+    mask = output["symbol"].eq(request.symbol)
+    if request.start_date:
+        mask &= dates >= pd.to_datetime(request.start_date, errors="raise").normalize()
+    if request.end_date:
+        mask &= dates <= pd.to_datetime(request.end_date, errors="raise").normalize()
+    recommended_mask = output["source"].eq(recommended_candidate.source) & output["upstream_source"].eq(
+        recommended_candidate.upstream_source
+    )
+    reference_mask = output["source"].eq(reference_candidate.source) & output["upstream_source"].eq(
+        reference_candidate.upstream_source
+    )
+    return output.loc[mask & (recommended_mask | reference_mask)].reset_index(drop=True)
+
+
+def _comparison_warning_is_actionable(
+    request: MarketCacheExportPolicyRequest,
+    comparison: dict[str, Any],
+    settings: MarketCacheExportPolicySettings,
+) -> bool:
+    status = str(comparison.get("comparison_status", "")).upper()
+    if status in {"WARN", "FAIL"}:
+        return True
+    if (
+        status == "UNAVAILABLE"
+        and request.security_type.upper() == "STOCK"
+        and settings.require_comparison_for_reliable_stock
+    ):
+        return True
+    return False
 
 
 def _recommendation_from_issue(

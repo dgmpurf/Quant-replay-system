@@ -1790,10 +1790,14 @@ def _handle_market_cache_export_plan(args: argparse.Namespace) -> int:
     print(f"Issues CSV path: {result.artifact_paths['market_cache_export_policy_issues']}")
     for row in result.recommendations_frame.to_dict("records"):
         if row.get("status") in {"RECOMMENDED", "RECOMMENDED_WITH_WARNINGS"}:
+            comparison = row.get("comparison_status", "")
+            reference = ""
+            if row.get("comparison_reference_source"):
+                reference = f" vs {row.get('comparison_reference_source')}/{row.get('comparison_reference_upstream')}"
             print(
                 "RECOMMENDATION: "
                 f"{row.get('symbol')} -> {row.get('recommended_source')}/{row.get('recommended_upstream_source')} "
-                f"({row.get('status')})"
+                f"({row.get('status')}); comparison={comparison}{reference}"
             )
     for warning in result.warnings:
         print(f"WARNING: {warning}")

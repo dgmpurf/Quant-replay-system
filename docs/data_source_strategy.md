@@ -37,7 +37,9 @@ Use `historical-backfill-index`, `historical-backfill-health`, and `historical-b
 
 Use `market-cache-export` when cached market data is ready to feed `data-pipeline`. The cache may contain multiple source variants for the same `symbol + trade_date`, so the export workflow requires reviewed `source` and `upstream_source` selections and rejects duplicate business keys before writing a pipeline-ready market CSV.
 
-Use `market-cache-export-plan` to draft those reviewed selections from local cache coverage and `market-source-policy`. The planner is recommendation-only by default: it writes a generated manifest for review, keeps `PROVISIONAL` recommendations visible as warnings, and does not mutate cache or run downstream workflows.
+Use `market-cache-export-plan` to draft those reviewed selections from local cache coverage and `market-source-policy`. The planner is recommendation-only by default: it writes a generated manifest for review, attaches source-comparison diagnostics when another cache source exists, keeps `PROVISIONAL` recommendations visible as warnings, and does not mutate cache or run downstream workflows.
+
+Policy-plan comparison actionability follows the request's required fields. Non-required caveats remain visible as diagnostic context, while ETF/Sina rows may remain review-required with `comparison_status=UNAVAILABLE` when no second ETF cache source exists.
 
 For reviewed batches, use a local CSV symbol manifest with `market-daily-update --symbol-manifest`. Disabled rows are skipped, rows that need real fetches are blocked unless `--allow-real-data` is supplied, and cache writes remain explicit. This is controlled local data maintenance, not scheduling or automation.
 
@@ -111,6 +113,8 @@ python -m quant_replay_system.cli market-cache-compare --symbol 000001 --source-
 ```
 
 If prices match but volume or amount differ, review the comparison diagnostics before deciding whether a source-specific normalization rule is justified. Stable ratios can suggest a unit scale, while unstable ratios usually point to source semantics, adjustment, or field-definition differences. Do not auto-correct cached data from diagnostics alone.
+
+Policy-aware cache export plans include a compact version of these diagnostics in each recommendation row when a viable reference source exists. A passing comparison can support a stock recommendation, while a warning/failing comparison keeps the row review-required. ETF/Sina recommendations may still show comparison unavailable because BaoStock ETF rows are unavailable locally; that is a review signal, not a system failure.
 
 AKShare/Tencent market history has a known source-specific field semantic: `stock_zh_a_hist_tx` exposes the sixth kline field as `amount`, and AKShare documents that field as volume in hands. The adapter maps that field to canonical volume in shares and records mapping warnings. For real manual runs, it also tries a guarded raw Tencent kline path before AKShare's truncated DataFrame path; if the raw turnover field is present, it maps turnover amount from 10k yuan into canonical yuan. If raw turnover is unavailable, the adapter leaves amount unavailable rather than fabricating it. Continue to compare Tencent against BaoStock/Sina when amount or liquidity features depend on turnover value.
 
@@ -253,4 +257,4 @@ Do not use raw vendor output directly for replay, current candidates, or paper w
 - Raw data quality is source-dependent and must always be checked locally.
 - Sina/Tencent/Eastmoney AKShare routes can differ in adjustment, amount, volume, and date coverage semantics; compare and quality-check outputs before research use.
 - Cache comparison is diagnostic only; it does not resolve which source should be trusted or mutate cached data.
-- Policy-aware cache export planning drafts source/upstream selections, but the generated manifest remains reviewed input and is not an automatic trusted-source decision.
+- Policy-aware cache export planning drafts source/upstream selections and comparison diagnostics, but the generated manifest remains reviewed input and is not an automatic trusted-source decision.

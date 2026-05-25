@@ -352,6 +352,13 @@ market_cache_export_policy:
       - [BAOSTOCK_OPTIONAL, BAOSTOCK]
     ETF:
       - [AKSHARE_OPTIONAL, SINA]
+  require_comparison_for_reliable_stock: false
+  comparison_reference_preference:
+    STOCK:
+      - [BAOSTOCK_OPTIONAL, BAOSTOCK]
+      - [AKSHARE_OPTIONAL, TENCENT]
+    ETF:
+      - [BAOSTOCK_OPTIONAL, BAOSTOCK]
   strict_reliable: false
   fail_fast: false
   config_version: mvp
