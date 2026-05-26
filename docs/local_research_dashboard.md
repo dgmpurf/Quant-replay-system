@@ -108,6 +108,8 @@ For paper trading components, `research-status` uses the same active reviewed-fl
 
 When the latest daily paper artifact used reviewed decisions, the dashboard follows `reviewed_decisions_path` to the matching paper review artifact and then uses that review's linked template-health metadata. This prevents an older unrelated warning template from making the active paper workflow look stale.
 
+The dashboard also follows the reconciliation `report_path` recorded by the active daily paper metadata. A failed reconciliation artifact that was created as a separate synthetic/manual diagnostic remains discoverable, but it is not treated as the active paper workflow blocker unless it is linked to the active daily run. Active linked reconciliation failures still produce actionable failure status.
+
 Stale artifacts are still useful audit evidence. They remain available in paper indexes and health reports, and stale warning counts may be noted, but the unified dashboard stage follows the active daily reviewed workflow chain.
 
 If a paper workflow has already advanced beyond the market-update-handoff stage, the paper workflow state takes precedence. Older handoff warnings or failures remain visible as stale audit context and do not move the active stage back to "run current-to-paper."

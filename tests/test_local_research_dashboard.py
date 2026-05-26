@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -339,6 +340,48 @@ def test_dashboard_prefers_active_review_chain_over_stale_warn_artifacts(tmp_pat
     assert int(result.summary_frame.iloc[0]["stale_warning_count"]) > 0
 
 
+def test_dashboard_prefers_active_reconciliation_over_unlinked_diagnostic_failure(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="health-active", status="PASS")
+    active_review = _paper_review(
+        root,
+        review_id="review-active",
+        template_health={
+            "template_health_check_id": "health-active",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "health-active" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    active_reconciliation = _reconciliation(root, reconciliation_id="recon-active", status="PASS")
+    _reconciliation(
+        root,
+        reconciliation_id="recon-diagnostic",
+        status="FAIL",
+        errors=1,
+        created_at=f"{DECISION_DATE}T16:20:00",
+    )
+    _daily_paper(
+        root,
+        reviewed_decisions_path=active_review / "reviewed_decisions.csv",
+        reconciliation_report_path=active_reconciliation / "reconciliation_report.md",
+        reconciliation_status="PASS",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    by_component = {row["component"]: row for row in result.dashboard_frame.to_dict("records")}
+
+    assert by_component["RECONCILIATION"]["latest_artifact_id"] == "recon-active"
+    assert by_component["RECONCILIATION"]["status"] == "PASS"
+    assert result.reconciliation_status == "PASS"
+    assert result.status != "FAIL"
+    assert result.workflow_stage != "LOCAL_RESEARCH_NEEDS_ATTENTION"
+
+
 def test_dashboard_inherits_expected_demo_warning_actionability_from_paper_workflow_status(tmp_path: Path) -> None:
     root = _workflow_to_daily(_reports_root(tmp_path))
     _reconciliation(root, status="PASS")
@@ -366,6 +409,44 @@ def test_dashboard_inherits_expected_demo_warning_actionability_from_paper_workf
     assert paper_row["warning_classification"] == "EXPECTED_DEMO_WARNING"
     assert summary["expected_demo_warning_count"] == 1
     assert summary["actionable_warning_count"] == 0
+
+
+def test_dashboard_prefers_newer_paper_workflow_status_artifact_when_created_at_is_deterministic(
+    tmp_path: Path,
+) -> None:
+    root = _workflow_to_daily(_reports_root(tmp_path))
+    _reconciliation(root, status="PASS")
+    stale = _paper_workflow_status(
+        root,
+        workflow_status_id="workflow-status-stale",
+        status="FAIL",
+        workflow_stage="WORKFLOW_NEEDS_ATTENTION",
+        blocking_error_count=1,
+        next_manual_action="Review warnings/errors in workflow status and health reports.",
+        created_at="1970-01-01T00:00:00+00:00",
+    )
+    latest = _paper_workflow_status(
+        root,
+        workflow_status_id="workflow-status-latest",
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+        created_at="1970-01-01T00:00:00+00:00",
+    )
+    os.utime(stale / "metadata.json", (100, 100))
+    os.utime(latest / "metadata.json", (200, 200))
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    paper_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "PAPER_WORKFLOW_STATUS"].iloc[0]
+
+    assert paper_row["latest_artifact_id"] == "workflow-status-latest"
+    assert result.paper_workflow_status == "WARN"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
 
 
 def test_dashboard_classifies_prior_current_candidate_health_warning_as_stale(tmp_path: Path) -> None:
@@ -1465,11 +1546,28 @@ def _paper_review(
     return folder
 
 
-def _daily_paper(root: Path, *, reviewed_decisions_path: Path | None = None) -> Path:
+def _daily_paper(
+    root: Path,
+    *,
+    reviewed_decisions_path: Path | None = None,
+    reconciliation_report_path: Path | None = None,
+    reconciliation_status: str = "",
+    reconciliation_issue_count: int = 0,
+    reconciliation_error_count: int = 0,
+    reconciliation_warning_count: int = 0,
+) -> Path:
     folder = root / "paper_trading" / "daily" / f"{DECISION_DATE}_journal-a"
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "paper_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    reconciliation = {
+        "status": reconciliation_status,
+        "issue_count": reconciliation_issue_count,
+        "error_count": reconciliation_error_count,
+        "warning_count": reconciliation_warning_count,
+    }
+    if reconciliation_report_path is not None:
+        reconciliation["report_path"] = str(reconciliation_report_path)
     _write_json(
         folder / "metadata.json",
         {
@@ -1477,7 +1575,7 @@ def _daily_paper(root: Path, *, reviewed_decisions_path: Path | None = None) -> 
             "journal_id": "journal-a",
             "created_at": f"{DECISION_DATE}T16:05:00",
             "reviewed_decisions_used": True,
-            "reconciliation": {"status": "", "issue_count": 0, "error_count": 0, "warning_count": 0},
+            "reconciliation": reconciliation,
             "output_files": {"paper_report": str(report), "decisions": str(folder / "decisions.csv")},
             "warnings": [],
             "live_trading_enabled": False,
@@ -1494,16 +1592,24 @@ def _daily_paper(root: Path, *, reviewed_decisions_path: Path | None = None) -> 
     return folder
 
 
-def _reconciliation(root: Path, *, status: str = "PASS", errors: int = 0, warnings: int = 0) -> Path:
-    folder = root / "paper_trading" / "reconciliation" / "recon-a"
+def _reconciliation(
+    root: Path,
+    *,
+    reconciliation_id: str = "recon-a",
+    status: str = "PASS",
+    errors: int = 0,
+    warnings: int = 0,
+    created_at: str | None = None,
+) -> Path:
+    folder = root / "paper_trading" / "reconciliation" / reconciliation_id
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "reconciliation_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
     _write_json(
         folder / "metadata.json",
         {
-            "reconciliation_id": "recon-a",
-            "created_at": f"{DECISION_DATE}T16:10:00",
+            "reconciliation_id": reconciliation_id,
+            "created_at": created_at or f"{DECISION_DATE}T16:10:00",
             "status": status,
             "issue_count": errors + warnings,
             "error_count": errors,
@@ -1521,6 +1627,7 @@ def _reconciliation(root: Path, *, status: str = "PASS", errors: int = 0, warnin
 def _paper_workflow_status(
     root: Path,
     *,
+    workflow_status_id: str = "paper-workflow-status-a",
     status: str = "PASS",
     workflow_stage: str | None = None,
     expected_demo_warning_count: int = 0,
@@ -1528,8 +1635,9 @@ def _paper_workflow_status(
     actionable_warning_count: int = 0,
     blocking_error_count: int = 0,
     next_manual_action: str = "Review completed workflow artifacts.",
+    created_at: str | None = None,
 ) -> Path:
-    folder = root / "paper_trading" / "workflow_status" / "paper-workflow-status-a"
+    folder = root / "paper_trading" / "workflow_status" / workflow_status_id
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "paper_workflow_status_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
@@ -1538,8 +1646,8 @@ def _paper_workflow_status(
     _write_json(
         folder / "metadata.json",
         {
-            "workflow_status_id": "paper-workflow-status-a",
-            "created_at": f"{DECISION_DATE}T16:15:00",
+            "workflow_status_id": workflow_status_id,
+            "created_at": created_at or f"{DECISION_DATE}T16:15:00",
             "status": status,
             "workflow_stage": resolved_stage,
             "latest_decision_date": DECISION_DATE,

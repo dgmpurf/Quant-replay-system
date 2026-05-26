@@ -207,6 +207,8 @@ Policy or dashboard semantics changes that affect source-selection recommendatio
 
 Successful paper workflow smoke milestones should also receive checkpoint documents before larger universe expansion or fill-reconciliation testing, especially when they validate review statuses, no-trade safety boundaries, or `paper-workflow-status` / `research-status` decision semantics.
 
+Safety/actionability semantics around paper fills and reconciliation diagnostics should also receive checkpoint documents before expanding fill testing, especially when they change how active versus diagnostic failures affect `paper-workflow-status` or `research-status`.
+
 ## 6. Pro Extended Usage Rules
 
 Pro Extended is not needed for:

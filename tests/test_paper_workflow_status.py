@@ -515,6 +515,100 @@ def test_dashboard_watch_only_no_fills_demo_has_specific_stage(tmp_path: Path) -
     assert by_component["CURRENT_TO_PAPER_HANDOFF"]["warning_classification"] == "EXPECTED_DEMO_WARNING"
 
 
+def test_dashboard_scopes_unlinked_watch_only_reconciliation_failure_as_diagnostic(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="template-health-a", status="PASS")
+    active_review = _paper_review(
+        root,
+        template_health={
+            "template_health_check_id": "template-health-a",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "template-health-a" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    active_reconciliation = _reconciliation(root, reconciliation_id="recon-active", status="PASS")
+    _reconciliation(root, reconciliation_id="recon-diagnostic", status="FAIL", created_at=f"{DECISION_DATE}T16:45:00")
+    _daily_paper(
+        root,
+        reviewed_decisions_path=active_review / "reviewed_decisions.csv",
+        reconciliation_report_path=active_reconciliation / "reconciliation_report.md",
+        reconciliation_status="PASS",
+        decision_count=1,
+        fill_count=0,
+        open_position_count=0,
+        closed_trade_count=0,
+        manual_review_status_summary={"WATCH_ONLY": 1},
+        warnings=[
+            "No fills_path provided; continuing with empty paper fills.",
+            "Reconciliation: No fills supplied for reconciliation.",
+            "No manual paper fills loaded.",
+        ],
+    )
+    _paper_artifact_index(root)
+    _paper_artifact_health(root, status="PASS")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    summary = result.summary_frame.iloc[0].to_dict()
+    by_component = {row["component"]: row for row in result.status_frame.to_dict("records")}
+
+    assert result.workflow_stage == "WATCH_ONLY_DEMO_VALIDATED_NO_FILLS"
+    assert by_component["RECONCILIATION"]["latest_artifact_id"] == "recon-active"
+    assert by_component["RECONCILIATION"]["status"] == "PASS"
+    assert by_component["RECONCILIATION"]["diagnostic_reconciliation_failure_count"] == 1
+    assert by_component["RECONCILIATION"]["active_reconciliation_error_count"] == 0
+    assert summary["diagnostic_reconciliation_failure_count"] == 1
+    assert summary["active_reconciliation_error_count"] == 0
+    assert summary["paper_demo_validated"] is True
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_linked_active_reconciliation_failure_remains_blocking(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="template-health-a", status="PASS")
+    active_review = _paper_review(
+        root,
+        template_health={
+            "template_health_check_id": "template-health-a",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "template-health-a" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    active_reconciliation = _reconciliation(root, reconciliation_id="recon-active", status="FAIL")
+    _daily_paper(
+        root,
+        reviewed_decisions_path=active_review / "reviewed_decisions.csv",
+        reconciliation_report_path=active_reconciliation / "reconciliation_report.md",
+        reconciliation_status="FAIL",
+        reconciliation_issue_count=1,
+        reconciliation_error_count=1,
+        decision_count=1,
+        fill_count=0,
+        open_position_count=0,
+        closed_trade_count=0,
+        manual_review_status_summary={"WATCH_ONLY": 1},
+    )
+    _paper_artifact_index(root)
+    _paper_artifact_health(root, status="PASS")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    summary = result.summary_frame.iloc[0].to_dict()
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "WORKFLOW_NEEDS_ATTENTION"
+    assert summary["active_reconciliation_error_count"] == 1
+    assert summary["diagnostic_reconciliation_failure_count"] == 0
+
+
 def test_dashboard_approved_for_paper_prevents_watch_only_demo_stage(tmp_path: Path) -> None:
     root = _workflow_to_review_template(_reports_root(tmp_path))
     _review_template_health(root, health_id="template-health-a", status="PASS")
@@ -831,17 +925,30 @@ def _daily_paper(
     closed_trade_count: int | None = None,
     manual_review_status_summary: dict[str, int] | None = None,
     warnings: list[str] | None = None,
+    reconciliation_report_path: Path | None = None,
+    reconciliation_status: str = "",
+    reconciliation_issue_count: int = 0,
+    reconciliation_error_count: int = 0,
+    reconciliation_warning_count: int = 0,
 ) -> Path:
     folder = root / "paper_trading" / "daily" / f"{DECISION_DATE}_{journal_id}"
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "paper_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    reconciliation = {
+        "status": reconciliation_status,
+        "issue_count": reconciliation_issue_count,
+        "error_count": reconciliation_error_count,
+        "warning_count": reconciliation_warning_count,
+    }
+    if reconciliation_report_path is not None:
+        reconciliation["report_path"] = str(reconciliation_report_path)
     metadata = {
             "paper_date": DECISION_DATE,
             "journal_id": journal_id,
             "created_at": f"{DECISION_DATE}T16:30:00",
             "reviewed_decisions_used": True,
-            "reconciliation": {"status": "", "issue_count": 0, "error_count": 0, "warning_count": 0},
+            "reconciliation": reconciliation,
             "output_files": {"paper_report": str(report), "decisions": str(folder / "decisions.csv")},
             "warnings": warnings or [],
             "live_trading_enabled": False,
@@ -868,16 +975,22 @@ def _daily_paper(
     return folder
 
 
-def _reconciliation(root: Path, *, status: str = "PASS") -> Path:
-    folder = root / "paper_trading" / "reconciliation" / "recon-a"
+def _reconciliation(
+    root: Path,
+    *,
+    reconciliation_id: str = "recon-a",
+    status: str = "PASS",
+    created_at: str | None = None,
+) -> Path:
+    folder = root / "paper_trading" / "reconciliation" / reconciliation_id
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "reconciliation_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
     _write_json(
         folder / "metadata.json",
         {
-            "reconciliation_id": "recon-a",
-            "created_at": f"{DECISION_DATE}T16:35:00",
+            "reconciliation_id": reconciliation_id,
+            "created_at": created_at or f"{DECISION_DATE}T16:35:00",
             "status": status,
             "issue_count": 0 if status == "PASS" else 1,
             "error_count": 1 if status == "FAIL" else 0,

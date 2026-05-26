@@ -129,6 +129,8 @@ Fills against `REJECTED`, `WATCH_ONLY`, or `PENDING_REVIEW` decisions fail recon
 
 For WATCH_ONLY/no-fills smoke runs, no-fills warnings are expected unless fill reconciliation is explicitly being tested. They should remain visible in reports but should not be confused with broken workflow artifacts when `paper-workflow-status` classifies the run as `WATCH_ONLY_DEMO_VALIDATED_NO_FILLS`.
 
+Synthetic/manual reconciliation diagnostics can intentionally prove that fills against `WATCH_ONLY` decisions are rejected with `DECISION_NOT_APPROVED`. Those failed diagnostics are audit artifacts, not approvals. When they are not linked to the active daily paper run, `paper-workflow-status` keeps them visible as diagnostic reconciliation failures without letting them override the active WATCH_ONLY/no-fills demo state. A failed reconciliation linked to the active daily run remains actionable.
+
 ## Artifacts
 
 Default output folder:

@@ -36,6 +36,8 @@ STATUS_COLUMNS = [
     "stale_warning_count",
     "actionable_warning_count",
     "blocking_error_count",
+    "diagnostic_reconciliation_failure_count",
+    "active_reconciliation_error_count",
     "warning_classification",
     "next_action",
     "notes",
@@ -61,6 +63,8 @@ SUMMARY_COLUMNS = [
     "actionable_warning_count",
     "actionable_paper_warning_count",
     "blocking_error_count",
+    "diagnostic_reconciliation_failure_count",
+    "active_reconciliation_error_count",
     "watch_only_count",
     "approved_count",
     "open_position_count",
@@ -333,6 +337,9 @@ def _active_reviewed_paper_chain(frame: pd.DataFrame) -> dict[str, dict[str, Any
             "REVIEW_TEMPLATE_HEALTH",
             notes="No linked paper review artifact was available for template health selection.",
         )
+    reconciliation = _reconciliation_record_linked_to_daily(frame, daily)
+    if reconciliation is not None:
+        chain["RECONCILIATION"] = reconciliation
     return chain
 
 
@@ -422,6 +429,46 @@ def _template_health_record_linked_to_review(frame: pd.DataFrame, review: dict[s
     return None
 
 
+def _reconciliation_record_linked_to_daily(frame: pd.DataFrame, daily: dict[str, Any]) -> dict[str, Any] | None:
+    daily_metadata = _metadata_for_row(daily)
+    reconciliation = daily_metadata.get("reconciliation") if isinstance(daily_metadata.get("reconciliation"), dict) else {}
+    report_path = _string_or_empty(reconciliation.get("report_path"))
+    reconciliation_id = _string_or_empty(reconciliation.get("reconciliation_id")) or _artifact_id_from_path(report_path)
+    reconciliation_rows = frame.loc[frame["component"] == "RECONCILIATION"]
+
+    matches = []
+    for row in reconciliation_rows.to_dict("records"):
+        row_metadata = _metadata_for_row(row)
+        row_output = _output_files(row_metadata).get("reconciliation_report")
+        row_id = (
+            _string_or_empty(row_metadata.get("reconciliation_id"))
+            or _string_or_empty(row.get("latest_artifact_id"))
+            or _artifact_id_from_path(row.get("metadata_path"))
+        )
+        if (report_path and (_paths_match(row.get("report_path"), report_path) or _paths_match(row_output, report_path))) or (
+            reconciliation_id and row_id == reconciliation_id
+        ):
+            matches.append(row)
+    if matches:
+        return _latest_record(pd.DataFrame(matches))
+
+    status = _string_or_empty(reconciliation.get("status"))
+    if status:
+        return _record(
+            component="RECONCILIATION",
+            status=status,
+            latest_artifact_id=reconciliation_id,
+            report_path=report_path,
+            metadata_path="",
+            issue_count=_int_or_zero(reconciliation.get("issue_count")),
+            warning_count=_int_or_zero(reconciliation.get("warning_count")),
+            error_count=_int_or_zero(reconciliation.get("error_count")),
+            notes="linked_from_active_daily_metadata",
+            created_at=daily.get("created_at"),
+        )
+    return None
+
+
 def _linked_missing_component(component: str, active_chain: dict[str, dict[str, Any]]) -> dict[str, Any] | None:
     if component == "PAPER_REVIEW" and "PAPER_REVIEW_MISSING" in active_chain:
         return active_chain["PAPER_REVIEW_MISSING"]
@@ -435,8 +482,10 @@ def _annotate_stale_component_warnings(selected: dict[str, Any], component_rows:
         return selected
     selected_path = _string_or_empty(selected.get("metadata_path"))
     selected_id = _string_or_empty(selected.get("latest_artifact_id"))
+    selected_component = _string_or_empty(selected.get("component"))
     stale_warning_count = 0
     stale_error_count = 0
+    diagnostic_reconciliation_failure_count = 0
     for row in component_rows.to_dict("records"):
         same_path = selected_path and _string_or_empty(row.get("metadata_path")) == selected_path
         same_id = selected_id and _string_or_empty(row.get("latest_artifact_id")) == selected_id
@@ -448,12 +497,22 @@ def _annotate_stale_component_warnings(selected: dict[str, Any], component_rows:
             stale_warning_count += 1
         if _string_or_empty(row.get("status")) == "FAIL":
             stale_error_count += 1
+            if selected_component == "RECONCILIATION":
+                diagnostic_reconciliation_failure_count += 1
     if not stale_warning_count and not stale_error_count:
-        return selected
-    annotated = selected.copy()
-    notes = _string_or_empty(annotated.get("notes"))
-    stale_note = f"stale_warning_count={stale_warning_count}; stale_error_count={stale_error_count}"
-    annotated["notes"] = f"{notes}; {stale_note}" if notes else stale_note
+        annotated = selected.copy()
+    else:
+        annotated = selected.copy()
+        notes = _string_or_empty(annotated.get("notes"))
+        stale_note = f"stale_warning_count={stale_warning_count}; stale_error_count={stale_error_count}"
+        annotated["notes"] = f"{notes}; {stale_note}" if notes else stale_note
+    if selected_component == "RECONCILIATION":
+        annotated["diagnostic_reconciliation_failure_count"] = diagnostic_reconciliation_failure_count
+        annotated["active_reconciliation_error_count"] = (
+            max(_int_or_zero(annotated.get("error_count")), 1)
+            if _string_or_empty(annotated.get("status")) == "FAIL"
+            else 0
+        )
     return annotated
 
 
@@ -995,6 +1054,7 @@ def summarize_paper_workflow_status(
         ["CURRENT_CANDIDATE_HEALTH", "PAPER_ARTIFACT_HEALTH"],
         missing_value="MISSING",
     )
+    reconciliation = by_component.get("RECONCILIATION", {})
     row = {
         "workflow_stage": workflow_stage,
         "status": status,
@@ -1015,6 +1075,12 @@ def summarize_paper_workflow_status(
         "actionable_warning_count": actionability["actionable_warning_count"],
         "actionable_paper_warning_count": actionability["actionable_warning_count"],
         "blocking_error_count": actionability["blocking_error_count"],
+        "diagnostic_reconciliation_failure_count": _int_or_zero(
+            reconciliation.get("diagnostic_reconciliation_failure_count")
+        ),
+        "active_reconciliation_error_count": _int_or_zero(
+            reconciliation.get("active_reconciliation_error_count")
+        ),
         "watch_only_count": demo_details["watch_only_count"],
         "approved_count": demo_details["approved_count"],
         "open_position_count": demo_details["open_position_count"],
@@ -1075,6 +1141,10 @@ def build_paper_workflow_status_metadata(
         "actionable_warning_count": _int_or_zero(summary.get("actionable_warning_count")),
         "actionable_paper_warning_count": _int_or_zero(summary.get("actionable_paper_warning_count")),
         "blocking_error_count": _int_or_zero(summary.get("blocking_error_count")),
+        "diagnostic_reconciliation_failure_count": _int_or_zero(
+            summary.get("diagnostic_reconciliation_failure_count")
+        ),
+        "active_reconciliation_error_count": _int_or_zero(summary.get("active_reconciliation_error_count")),
         "watch_only_count": _int_or_zero(summary.get("watch_only_count")),
         "approved_count": _int_or_zero(summary.get("approved_count")),
         "open_position_count": _int_or_zero(summary.get("open_position_count")),
@@ -1118,6 +1188,8 @@ def render_paper_workflow_status_report(
                 "stale_warning_count",
                 "actionable_warning_count",
                 "blocking_error_count",
+                "diagnostic_reconciliation_failure_count",
+                "active_reconciliation_error_count",
                 "watch_only_count",
                 "approved_count",
                 "open_position_count",
@@ -1144,6 +1216,8 @@ def render_paper_workflow_status_report(
                 "stale_warning_count",
                 "actionable_warning_count",
                 "blocking_error_count",
+                "diagnostic_reconciliation_failure_count",
+                "active_reconciliation_error_count",
                 "warning_classification",
                 "next_action",
                 "report_path",
@@ -1479,6 +1553,8 @@ def _record(**values: Any) -> dict[str, Any]:
         "stale_warning_count": 0,
         "actionable_warning_count": 0,
         "blocking_error_count": 0,
+        "diagnostic_reconciliation_failure_count": 0,
+        "active_reconciliation_error_count": 0,
         "warning_classification": "",
         "next_action": "",
         "notes": "",
@@ -1498,6 +1574,8 @@ def _record(**values: Any) -> dict[str, Any]:
     row["stale_warning_count"] = _int_or_zero(row.get("stale_warning_count"))
     row["actionable_warning_count"] = _int_or_zero(row.get("actionable_warning_count"))
     row["blocking_error_count"] = _int_or_zero(row.get("blocking_error_count"))
+    row["diagnostic_reconciliation_failure_count"] = _int_or_zero(row.get("diagnostic_reconciliation_failure_count"))
+    row["active_reconciliation_error_count"] = _int_or_zero(row.get("active_reconciliation_error_count"))
     row["warning_classification"] = _string_or_empty(row.get("warning_classification"))
     return row
 

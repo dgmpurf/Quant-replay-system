@@ -651,6 +651,9 @@ def _active_reviewed_paper_chain(frame: pd.DataFrame) -> dict[str, dict[str, Any
             "REVIEW_TEMPLATE_HEALTH",
             notes="No linked paper review artifact was available for template health selection.",
         )
+    reconciliation = _reconciliation_record_linked_to_daily(frame, daily)
+    if reconciliation is not None:
+        chain["RECONCILIATION"] = reconciliation
     return chain
 
 
@@ -738,6 +741,48 @@ def _template_health_record_linked_to_review(frame: pd.DataFrame, review: dict[s
             error_count=_int_or_zero(template_health.get("template_health_error_count")),
             notes="linked_from_active_paper_review_metadata",
             created_at=review.get("created_at"),
+        )
+    return None
+
+
+def _reconciliation_record_linked_to_daily(frame: pd.DataFrame, daily: dict[str, Any]) -> dict[str, Any] | None:
+    daily_metadata = _metadata_for_row(daily)
+    reconciliation = daily_metadata.get("reconciliation") if isinstance(daily_metadata.get("reconciliation"), dict) else {}
+    report_path = _string_or_empty(reconciliation.get("report_path"))
+    reconciliation_id = _string_or_empty(reconciliation.get("reconciliation_id")) or _artifact_id_from_path(report_path)
+    reconciliation_rows = frame.loc[frame["component"] == "RECONCILIATION"]
+
+    matches = []
+    for row in reconciliation_rows.to_dict("records"):
+        row_metadata = _metadata_for_row(row)
+        row_output = _output_files(row_metadata).get("reconciliation_report")
+        row_id = (
+            _string_or_empty(row_metadata.get("reconciliation_id"))
+            or _string_or_empty(row.get("latest_artifact_id"))
+            or _artifact_id_from_path(row.get("metadata_path"))
+        )
+        if (report_path and (_paths_match(row.get("report_path"), report_path) or _paths_match(row_output, report_path))) or (
+            reconciliation_id and row_id == reconciliation_id
+        ):
+            matches.append(row)
+    if matches:
+        return _latest_record(pd.DataFrame(matches))
+
+    status = _string_or_empty(reconciliation.get("status"))
+    if status:
+        return _record(
+            workflow_area="PAPER_TRADING",
+            component="RECONCILIATION",
+            status=status,
+            stage="RECONCILIATION_READY",
+            latest_artifact_id=reconciliation_id,
+            report_path=report_path,
+            metadata_path="",
+            issue_count=_int_or_zero(reconciliation.get("issue_count")),
+            warning_count=_int_or_zero(reconciliation.get("warning_count")),
+            error_count=_int_or_zero(reconciliation.get("error_count")),
+            notes="linked_from_active_daily_metadata",
+            created_at=daily.get("created_at"),
         )
     return None
 
@@ -2967,10 +3012,20 @@ def _scan_paper_workflow_status(root: Path, decision_date: str) -> list[dict[str
                 actionable_warning_count=_int_or_zero(count_source.get("actionable_warning_count")),
                 blocking_error_count=_int_or_zero(count_source.get("blocking_error_count")),
                 notes=f"next_manual_action={_string_or_empty(metadata.get('next_manual_action'))}",
-                created_at=metadata.get("created_at"),
+                created_at=_created_at_or_artifact_mtime(metadata_path, metadata),
             )
         )
     return records
+
+
+def _created_at_or_artifact_mtime(metadata_path: Path, metadata: dict[str, Any]) -> str:
+    created_at = _string_or_empty(metadata.get("created_at"))
+    if created_at and not created_at.startswith("1970-01-01T00:00:00"):
+        return created_at
+    try:
+        return f"mtime:{metadata_path.stat().st_mtime_ns:020d}"
+    except OSError:
+        return created_at
 
 
 def _health_records(

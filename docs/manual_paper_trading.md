@@ -76,6 +76,8 @@ By default, fills can only be recorded for decisions whose `manual_review_status
 
 For local smoke testing, a full decision set may be reviewed as `WATCH_ONLY` and then passed into `paper-daily --reviewed-decisions` with no fills. That validates artifact handoff and reporting only. It should produce zero approvals, zero open positions, and zero closed trades; expected no-fills warnings remain visible.
 
+Synthetic fill reconciliation tests may deliberately submit a local fill against a `WATCH_ONLY` decision to confirm that reconciliation rejects it. That failure should remain in the audit trail, but it is not a live order, not an approval, and not a paper position. Paper workflow status treats unlinked synthetic/manual diagnostics separately from the reconciliation report linked to the active daily paper run.
+
 ## Paper Fills
 
 `record_paper_fill(...)` appends a manual hypothetical fill.

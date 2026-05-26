@@ -1473,6 +1473,8 @@ def _handle_paper_workflow_status(args: argparse.Namespace) -> int:
     print(f"open_position_count: {summary.get('open_position_count', 0)}")
     print(f"closed_trade_count: {summary.get('closed_trade_count', 0)}")
     print(f"paper_demo_validated: {summary.get('paper_demo_validated', False)}")
+    print(f"diagnostic_reconciliation_failure_count: {summary.get('diagnostic_reconciliation_failure_count', 0)}")
+    print(f"active_reconciliation_error_count: {summary.get('active_reconciliation_error_count', 0)}")
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['paper_workflow_status_report']}")
     for warning in result.warnings:

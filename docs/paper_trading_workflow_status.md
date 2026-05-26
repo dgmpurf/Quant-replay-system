@@ -55,6 +55,8 @@ When daily paper artifacts exist, the dashboard first selects the latest relevan
 
 If that daily metadata includes `reviewed_decisions_path`, the dashboard follows that path back to the matching paper review artifact and then to the template-health artifact recorded in the review metadata. This keeps the active workflow status aligned with the reviewed decisions that the daily paper report actually used.
 
+If the active daily metadata records a reconciliation `report_path`, the dashboard also follows that path to choose the active reconciliation artifact. Other reconciliation artifacts remain visible as audit evidence. A failed synthetic/manual diagnostics reconciliation that is not linked to the active daily run is counted in `diagnostic_reconciliation_failure_count`, while `active_reconciliation_error_count` stays zero. A failed reconciliation that is linked to the active daily run still blocks the workflow.
+
 Older review or template-health artifacts remain discoverable through `paper-index` and `paper-health-check`, and stale warnings can appear in component notes. They do not define the active workflow stage when a later linked reviewed flow is available.
 
 ## Warning Actionability
@@ -73,6 +75,8 @@ Reports and metadata include:
 - `stale_warning_count`
 - `actionable_warning_count`
 - `blocking_error_count`
+- `diagnostic_reconciliation_failure_count`
+- `active_reconciliation_error_count`
 
 If only expected demo or stale warnings are present, the dashboard keeps the raw `WARN` signal but changes the next manual action to explain that the local demo workflow was validated and that no fills were supplied. Actionable warnings and blocking errors still produce the normal review/fix prompts.
 
@@ -142,6 +146,7 @@ The CLI prints:
 - workflow stage,
 - latest decision date,
 - WATCH_ONLY, approval, open-position, and closed-trade counts when available,
+- diagnostic versus active reconciliation failure counts,
 - next manual action,
 - report path,
 - `No live trading or broker API was invoked.`
