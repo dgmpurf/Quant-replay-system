@@ -109,6 +109,7 @@ signal_advisory_status:
 
 single_symbol_advisory:
   output_dir: outputs/reports/single_symbol_advisory
+  answer_output_dir: outputs/reports/single_symbol_advisory_answer
   default_validity_days: 1
   config_version: mvp
   write_artifacts: true

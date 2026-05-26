@@ -8,6 +8,7 @@ from quant_replay_system.config import load_settings
 from quant_replay_system.single_symbol_advisory import (
     SINGLE_SYMBOL_ADVISORY_COLUMNS,
     build_single_symbol_advisory,
+    build_single_symbol_advisory_answer,
 )
 
 
@@ -151,6 +152,113 @@ def test_cli_single_symbol_advisory_works(tmp_path: Path, capsys) -> None:
     assert "No alert message was sent." in output.out
 
 
+def test_question_style_answer_preserves_leading_zero_and_avoids_real_buy_sell_instruction(tmp_path: Path) -> None:
+    candidates, metadata = _write_demo_candidate_artifacts(tmp_path)
+    settings = _settings(tmp_path)
+    advisory = build_single_symbol_advisory(
+        "000001",
+        candidates_path=candidates,
+        metadata_path=metadata,
+        settings=settings,
+    )
+
+    answer = build_single_symbol_advisory_answer(
+        advisory,
+        question="should I buy?",
+        answer_style="detailed",
+        settings=settings,
+    )
+    text = answer.artifact_paths["single_symbol_advisory_answer"].read_text(encoding="utf-8")
+
+    assert answer.symbol == "000001"
+    assert "Symbol: `000001`" in text
+    assert "buy now" not in text.lower()
+    assert "sell now" not in text.lower()
+    assert "Demo-only review" in text
+    assert "not a real trading recommendation" in text
+    assert "Manual confirmation required: `True`" in text
+    assert "Auto-order allowed: `False`" in text
+
+
+def test_question_style_not_found_answer_does_not_invent_recommendation(tmp_path: Path) -> None:
+    candidates, metadata = _write_demo_candidate_artifacts(tmp_path)
+    settings = _settings(tmp_path)
+    advisory = build_single_symbol_advisory(
+        "999999",
+        candidates_path=candidates,
+        metadata_path=metadata,
+        settings=settings,
+    )
+
+    answer = build_single_symbol_advisory_answer(
+        advisory,
+        question="should I buy?",
+        settings=settings,
+    )
+    payload = json.loads(answer.artifact_paths["single_symbol_advisory_answer_json"].read_text(encoding="utf-8"))
+    text = answer.artifact_paths["single_symbol_advisory_answer"].read_text(encoding="utf-8")
+
+    assert advisory.status == "NOT_FOUND"
+    assert answer.advisory_action == "NO_ACTION"
+    assert "cannot review this symbol" in answer.short_answer
+    assert "No recommendation was invented" in text
+    assert payload["auto_order_allowed"] is False
+    assert payload["no_live_trading"] is True
+    assert payload["no_broker_api"] is True
+    assert payload["no_message_sent"] is True
+
+
+def test_cli_single_symbol_question_style_writes_answer(tmp_path: Path, capsys) -> None:
+    candidates, metadata = _write_demo_candidate_artifacts(tmp_path)
+
+    code = cli.main(
+        [
+            "single-symbol-advisory",
+            "--symbol",
+            "000001",
+            "--candidates",
+            str(candidates),
+            "--metadata",
+            str(metadata),
+            "--output-dir",
+            str(tmp_path / "single_symbol_advisory"),
+            "--answer-output-dir",
+            str(tmp_path / "single_symbol_advisory_answer"),
+            "--question",
+            "should I buy?",
+            "--question-style",
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "answer_run_id:" in output.out
+    assert "answer_path:" in output.out
+    assert "short_answer:" in output.out
+    assert "No alert message was sent." in output.out
+
+
+def test_question_style_answer_records_no_message_or_external_api_use(tmp_path: Path) -> None:
+    candidates, metadata = _write_demo_candidate_artifacts(tmp_path)
+    settings = _settings(tmp_path)
+    advisory = build_single_symbol_advisory(
+        "000001",
+        candidates_path=candidates,
+        metadata_path=metadata,
+        settings=settings,
+    )
+
+    answer = build_single_symbol_advisory_answer(advisory, settings=settings)
+    metadata_payload = json.loads(answer.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert metadata_payload["message_sent"] is False
+    assert metadata_payload["llm_api_called"] is False
+    assert metadata_payload["external_api_called"] is False
+    assert metadata_payload["broker_api_invoked"] is False
+    assert metadata_payload["live_trading_enabled"] is False
+    assert metadata_payload["approved_for_paper_applied"] is False
+
+
 def test_no_live_trading_broker_network_or_message_sending(tmp_path: Path) -> None:
     candidates, metadata = _write_demo_candidate_artifacts(tmp_path)
 
@@ -173,7 +281,11 @@ def _settings(tmp_path: Path):
     return settings.model_copy(
         update={
             "single_symbol_advisory": settings.single_symbol_advisory.model_copy(
-                update={"output_dir": tmp_path / "single_symbol_advisory", "write_artifacts": True}
+                update={
+                    "output_dir": tmp_path / "single_symbol_advisory",
+                    "answer_output_dir": tmp_path / "single_symbol_advisory_answer",
+                    "write_artifacts": True,
+                }
             )
         }
     )

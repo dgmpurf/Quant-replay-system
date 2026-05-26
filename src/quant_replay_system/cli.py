@@ -77,6 +77,7 @@ from quant_replay_system.signal_advisory_health import check_signal_advisory_hea
 from quant_replay_system.signal_advisory_index import build_signal_advisory_index
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
 from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory
+from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory_answer
 from quant_replay_system.single_symbol_advisory_health import check_single_symbol_advisory_health
 from quant_replay_system.single_symbol_advisory_index import build_single_symbol_advisory_index
 from quant_replay_system.single_symbol_advisory_status import run_single_symbol_advisory_status
@@ -279,6 +280,19 @@ def build_parser() -> argparse.ArgumentParser:
     single_symbol_advisory.add_argument("--snapshot-manifest", help="Optional snapshot manifest path")
     single_symbol_advisory.add_argument("--date", help="Optional advisory date")
     single_symbol_advisory.add_argument("--output-dir", help="Optional single-symbol advisory output directory")
+    single_symbol_advisory.add_argument("--answer-output-dir", help="Optional question-style answer output directory")
+    single_symbol_advisory.add_argument("--question", help="Optional user question to echo in question-style output")
+    single_symbol_advisory.add_argument(
+        "--answer-style",
+        choices=["concise", "detailed"],
+        default="concise",
+        help="Question-style answer rendering depth",
+    )
+    single_symbol_advisory.add_argument(
+        "--question-style",
+        action="store_true",
+        help="Write a deterministic local question-style answer. No LLM or message delivery is used.",
+    )
     single_symbol_advisory.add_argument(
         "--alert-preview",
         action="store_true",
@@ -1364,6 +1378,19 @@ def _handle_single_symbol_advisory(args: argparse.Namespace) -> int:
     print(f"no_live_trading: {result.no_live_trading}")
     print(f"no_broker_api: {result.no_broker_api}")
     print(f"no_message_sent: {result.no_message_sent}")
+    if args.question_style:
+        answer = build_single_symbol_advisory_answer(
+            result,
+            question=args.question,
+            answer_style=args.answer_style,
+            output_dir=args.answer_output_dir,
+            settings=settings,
+        )
+        print(f"answer_run_id: {answer.answer_run_id}")
+        print(f"answer_path: {answer.artifact_paths['single_symbol_advisory_answer']}")
+        print(f"answer_json_path: {answer.artifact_paths['single_symbol_advisory_answer_json']}")
+        print(f"answer_metadata_path: {answer.artifact_paths['metadata']}")
+        print(f"short_answer: {answer.short_answer}")
     for issue in result.issues:
         print(f"{issue.severity}: {issue.category}: {issue.message}")
     print("No live trading or broker API was invoked.")

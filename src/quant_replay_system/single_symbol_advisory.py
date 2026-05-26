@@ -104,6 +104,22 @@ class SingleSymbolAdvisoryArtifactPaths:
 
 
 @dataclass(frozen=True)
+class SingleSymbolAdvisoryAnswerPaths:
+    artifact_dir: Path
+    single_symbol_advisory_answer: Path
+    single_symbol_advisory_answer_json: Path
+    metadata: Path
+
+    def as_dict(self) -> dict[str, Path]:
+        return {
+            "artifact_dir": self.artifact_dir,
+            "single_symbol_advisory_answer": self.single_symbol_advisory_answer,
+            "single_symbol_advisory_answer_json": self.single_symbol_advisory_answer_json,
+            "metadata": self.metadata,
+        }
+
+
+@dataclass(frozen=True)
 class SingleSymbolContext:
     symbol: str
     selected_row: dict[str, Any] | None
@@ -188,6 +204,26 @@ class SingleSymbolAdvisoryResult:
             "no_broker_api": self.no_broker_api,
             "no_message_sent": self.no_message_sent,
         }
+
+
+@dataclass(frozen=True)
+class SingleSymbolAdvisoryAnswerResult:
+    answer_run_id: str
+    advisory_run_id: str
+    symbol: str
+    status: str
+    advisory_action: str
+    question: str
+    answer_style: str
+    short_answer: str
+    answer_body: str
+    requires_manual_confirmation: bool
+    auto_order_allowed: bool
+    no_live_trading: bool
+    no_broker_api: bool
+    no_message_sent: bool
+    artifact_paths: dict[str, Path]
+    audit_metadata: dict[str, Any]
 
 
 def build_single_symbol_advisory(
@@ -532,6 +568,250 @@ def render_single_symbol_alert_preview(result: SingleSymbolAdvisoryResult) -> st
     return "\n".join(lines)
 
 
+def build_single_symbol_advisory_answer(
+    result: SingleSymbolAdvisoryResult,
+    *,
+    question: str | None = None,
+    answer_style: str = "concise",
+    output_dir: str | Path | None = None,
+    settings: Settings | SingleSymbolAdvisorySettings | str | Path | None = None,
+) -> SingleSymbolAdvisoryAnswerResult:
+    """Render and write a deterministic question-style local advisory answer."""
+
+    project_settings, advisory_settings = _resolve_settings(settings)
+    if advisory_settings.enable_live_trading or advisory_settings.enable_broker_api:
+        raise ValueError("Single-symbol advisory answer cannot enable live trading or broker API access")
+    if advisory_settings.enable_alert_delivery:
+        raise ValueError("Single-symbol advisory answer does not deliver messages")
+    if advisory_settings.auto_order_allowed:
+        raise ValueError("Single-symbol advisory answer cannot allow automatic order placement")
+    normalized_style = str(answer_style or "concise").strip().lower()
+    if normalized_style not in {"concise", "detailed"}:
+        raise ValueError("answer_style must be 'concise' or 'detailed'")
+    effective_output_dir = Path(output_dir) if output_dir is not None else advisory_settings.answer_output_dir
+    question_text = str(question or "").strip()
+    answer_run_id = generate_single_symbol_advisory_answer_run_id(
+        advisory_run_id=result.advisory_run_id,
+        symbol=result.symbol,
+        question=question_text,
+        answer_style=normalized_style,
+        config_version=advisory_settings.config_version,
+    )
+    paths = resolve_single_symbol_advisory_answer_paths(effective_output_dir, answer_run_id)
+    short_answer = _question_style_short_answer(result)
+    answer_body = render_single_symbol_advisory_answer(
+        result,
+        answer_run_id=answer_run_id,
+        question=question_text,
+        answer_style=normalized_style,
+        short_answer=short_answer,
+    )
+    answer = SingleSymbolAdvisoryAnswerResult(
+        answer_run_id=answer_run_id,
+        advisory_run_id=result.advisory_run_id,
+        symbol=result.symbol,
+        status=result.status,
+        advisory_action=result.advisory_action,
+        question=question_text,
+        answer_style=normalized_style,
+        short_answer=short_answer,
+        answer_body=answer_body,
+        requires_manual_confirmation=result.requires_manual_confirmation,
+        auto_order_allowed=False,
+        no_live_trading=True,
+        no_broker_api=True,
+        no_message_sent=True,
+        artifact_paths=paths.as_dict(),
+        audit_metadata={
+            "answer_run_id_source": "single_symbol_advisory_answer_v0.1",
+            "advisory_run_id": result.advisory_run_id,
+            "symbol": result.symbol,
+            "question": question_text,
+            "answer_style": normalized_style,
+            "status": result.status,
+            "advisory_action": result.advisory_action,
+            "demo_mode": result.demo_mode,
+            "not_strategy_recommendation": result.not_strategy_recommendation,
+            "requires_manual_confirmation": True,
+            "auto_order_allowed": False,
+            "no_live_trading": True,
+            "no_broker_api": True,
+            "no_message_sent": True,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "approved_for_paper_applied": False,
+            "external_api_called": False,
+            "llm_api_called": False,
+            "config_summary": {
+                "config_version": advisory_settings.config_version,
+                "answer_output_dir": str(effective_output_dir),
+            },
+        },
+    )
+    if project_settings.single_symbol_advisory.write_artifacts and advisory_settings.write_artifacts:
+        write_single_symbol_advisory_answer_artifacts(answer, result)
+    return answer
+
+
+def render_single_symbol_advisory_answer(
+    result: SingleSymbolAdvisoryResult,
+    *,
+    answer_run_id: str,
+    question: str,
+    answer_style: str,
+    short_answer: str,
+) -> str:
+    """Render a local deterministic answer to a one-symbol review question."""
+
+    score_text = "not available" if result.final_score is None else f"{result.final_score:.6f}"
+    question_text = question or "Single-symbol advisory review"
+    lines = [
+        f"# Single-Symbol Advisory Answer: {result.symbol}",
+        "",
+        "This is a local deterministic rendering of a single-symbol advisory artifact. It is not LLM-generated.",
+        "It is not an order, approval, broker instruction, or message-delivery workflow.",
+        "",
+        "## Question",
+        "",
+        question_text,
+        "",
+        "## Short Answer",
+        "",
+        short_answer,
+        "",
+        "## Advisory Context",
+        "",
+        f"- Symbol: `{result.symbol}`",
+        f"- Advisory action: `{result.advisory_action}`",
+        f"- Status: `{result.status}`",
+        f"- Score: `{score_text}`",
+        f"- Current action: `{result.current_action or 'UNKNOWN'}`",
+        f"- Score action: `{result.score_action or 'UNKNOWN'}`",
+        f"- Selection profile: `{result.selection_profile or 'UNKNOWN'}`",
+        f"- Demo mode: `{result.demo_mode}`",
+        f"- Not strategy recommendation: `{result.not_strategy_recommendation}`",
+        "",
+        "## Why",
+        "",
+        result.reason_summary,
+        "",
+        "## Risk And Data Caveats",
+        "",
+        f"- Risk notes: {result.risk_notes}",
+        f"- Data/source caveats: {result.data_quality_notes}",
+        "",
+        "## Timing And Conditions",
+        "",
+        f"- Entry consideration: {result.entry_condition}",
+        f"- Exit consideration: {result.exit_condition}",
+        f"- Invalidation condition: {result.invalidation_condition}",
+        f"- Valid until: `{result.valid_until}`",
+        "",
+        "## Safety",
+        "",
+        f"- Manual confirmation required: `{result.requires_manual_confirmation}`",
+        "- Auto-order allowed: `False`",
+        "- No live trading: `True`",
+        "- No broker API: `True`",
+        "- No message sent: `True`",
+    ]
+    if result.demo_mode or result.not_strategy_recommendation or result.advisory_action == "DEMO_ONLY":
+        lines.extend(
+            [
+                "",
+                "## Demo Boundary",
+                "",
+                "Demo-only review: this artifact is suitable for workflow validation, not a real trading recommendation.",
+            ]
+        )
+    if result.status == "NOT_FOUND":
+        lines.extend(
+            [
+                "",
+                "## Missing Symbol Boundary",
+                "",
+                "I cannot review this symbol from the provided local artifact because it is not present. No recommendation was invented.",
+            ]
+        )
+    if answer_style == "detailed":
+        lines.extend(
+            [
+                "",
+                "## Supporting Factors",
+                "",
+                result.supporting_factors or "No supporting factor details were available in the source row.",
+                "",
+                "## Source",
+                "",
+                f"- Advisory run id: `{result.advisory_run_id}`",
+                f"- Answer run id: `{answer_run_id}`",
+                f"- Source artifact path: `{result.source_artifact_path or ''}`",
+                f"- Source candidate run id: `{result.source_candidate_run_id}`",
+            ]
+        )
+    return "\n".join(lines)
+
+
+def write_single_symbol_advisory_answer_artifacts(
+    answer: SingleSymbolAdvisoryAnswerResult,
+    advisory: SingleSymbolAdvisoryResult,
+) -> dict[str, Path]:
+    """Write local question-style answer markdown, JSON, and metadata."""
+
+    paths = SingleSymbolAdvisoryAnswerPaths(**answer.artifact_paths)
+    paths.artifact_dir.mkdir(parents=True, exist_ok=True)
+    paths.single_symbol_advisory_answer.write_text(answer.answer_body, encoding="utf-8")
+    payload = _single_symbol_advisory_answer_payload(answer, advisory)
+    paths.single_symbol_advisory_answer_json.write_text(
+        json.dumps(_json_safe(payload), indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    metadata = build_single_symbol_advisory_answer_metadata(answer, advisory, paths)
+    paths.metadata.write_text(json.dumps(_json_safe(metadata), indent=2, sort_keys=True), encoding="utf-8")
+    return paths.as_dict()
+
+
+def build_single_symbol_advisory_answer_metadata(
+    answer: SingleSymbolAdvisoryAnswerResult,
+    advisory: SingleSymbolAdvisoryResult,
+    paths: SingleSymbolAdvisoryAnswerPaths,
+) -> dict[str, Any]:
+    """Build metadata.json for a question-style advisory answer."""
+
+    return {
+        "answer_run_id": answer.answer_run_id,
+        "created_at": advisory.advisory_date.isoformat(),
+        "advisory_run_id": answer.advisory_run_id,
+        "symbol": answer.symbol,
+        "status": answer.status,
+        "advisory_action": answer.advisory_action,
+        "question": answer.question,
+        "answer_style": answer.answer_style,
+        "short_answer": answer.short_answer,
+        "requires_manual_confirmation": True,
+        "auto_order_allowed": False,
+        "no_live_trading": True,
+        "no_broker_api": True,
+        "no_message_sent": True,
+        "message_delivery_enabled": False,
+        "message_sent": False,
+        "live_trading_enabled": False,
+        "broker_api_invoked": False,
+        "approved_for_paper_applied": False,
+        "llm_api_called": False,
+        "external_api_called": False,
+        "demo_mode": advisory.demo_mode,
+        "not_strategy_recommendation": advisory.not_strategy_recommendation,
+        "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
+        "source_advisory_artifacts": {
+            key: str(value) for key, value in advisory.artifact_paths.items() if key != "artifact_dir"
+        },
+        "audit_metadata": answer.audit_metadata,
+    }
+
+
 def build_single_symbol_advisory_metadata(
     result: SingleSymbolAdvisoryResult,
     paths: SingleSymbolAdvisoryArtifactPaths,
@@ -603,6 +883,37 @@ def resolve_single_symbol_advisory_artifact_paths(
         single_symbol_advisory_csv=artifact_dir / "single_symbol_advisory.csv",
         metadata=artifact_dir / "metadata.json",
         alert_preview=artifact_dir / "alert_preview.md" if include_alert_preview else None,
+    )
+
+
+def generate_single_symbol_advisory_answer_run_id(
+    *,
+    advisory_run_id: str,
+    symbol: str,
+    question: str,
+    answer_style: str,
+    config_version: str,
+) -> str:
+    payload = {
+        "advisory_run_id": advisory_run_id,
+        "symbol": normalize_symbol_value(symbol),
+        "question": question,
+        "answer_style": answer_style,
+        "config_version": config_version,
+    }
+    return _hash_payload(payload, length=12)
+
+
+def resolve_single_symbol_advisory_answer_paths(
+    output_dir: str | Path,
+    answer_run_id: str,
+) -> SingleSymbolAdvisoryAnswerPaths:
+    artifact_dir = Path(output_dir) / answer_run_id
+    return SingleSymbolAdvisoryAnswerPaths(
+        artifact_dir=artifact_dir,
+        single_symbol_advisory_answer=artifact_dir / "single_symbol_advisory_answer.md",
+        single_symbol_advisory_answer_json=artifact_dir / "single_symbol_advisory_answer.json",
+        metadata=artifact_dir / "metadata.json",
     )
 
 
@@ -906,6 +1217,54 @@ def _build_result_payload(result: SingleSymbolAdvisoryResult) -> dict[str, Any]:
         "audit_metadata": result.audit_metadata,
         "source_row": result.source_row or {},
     }
+
+
+def _single_symbol_advisory_answer_payload(
+    answer: SingleSymbolAdvisoryAnswerResult,
+    advisory: SingleSymbolAdvisoryResult,
+) -> dict[str, Any]:
+    return {
+        "answer_run_id": answer.answer_run_id,
+        "advisory_run_id": answer.advisory_run_id,
+        "symbol": answer.symbol,
+        "status": answer.status,
+        "advisory_action": answer.advisory_action,
+        "question": answer.question,
+        "answer_style": answer.answer_style,
+        "short_answer": answer.short_answer,
+        "answer_body": answer.answer_body,
+        "requires_manual_confirmation": answer.requires_manual_confirmation,
+        "auto_order_allowed": answer.auto_order_allowed,
+        "no_live_trading": answer.no_live_trading,
+        "no_broker_api": answer.no_broker_api,
+        "no_message_sent": answer.no_message_sent,
+        "advisory_record": advisory.as_record(),
+        "artifact_paths": {key: str(value) for key, value in answer.artifact_paths.items()},
+        "audit_metadata": answer.audit_metadata,
+    }
+
+
+def _question_style_short_answer(result: SingleSymbolAdvisoryResult) -> str:
+    if result.status == "NOT_FOUND":
+        return (
+            "I cannot review this symbol from the provided local artifact because it is not present; "
+            "no recommendation was invented."
+        )
+    if result.advisory_action == "BLOCKED":
+        return "The local artifact marks this symbol as blocked; review the risk/data issue before considering any action."
+    if result.demo_mode or result.not_strategy_recommendation or result.advisory_action == "DEMO_ONLY":
+        return "Demo-only review for workflow validation; do not treat this as a real trading recommendation."
+    if result.advisory_action == "NO_ACTION":
+        return "The local artifact does not support an action; wait or review manually with newer evidence."
+    if result.advisory_action == "WATCH":
+        return "Watch-only review; manual confirmation and fresher evidence are required before any action."
+    if result.advisory_action == "REVIEW_BUY_CANDIDATE":
+        return "Review-buy candidate only; manual confirmation is required and no automatic order is allowed."
+    if result.advisory_action == "REVIEW_SELL_CANDIDATE":
+        return "Review-sell candidate only; manual confirmation is required and no automatic order is allowed."
+    if result.advisory_action == "HOLD_REVIEW":
+        return "Hold-review context only; manual confirmation is required before changing any position state."
+    return "Review-only advisory context; manual confirmation is required and no automatic order is allowed."
 
 
 def _resolve_settings(

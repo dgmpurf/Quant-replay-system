@@ -65,4 +65,6 @@ The v0.1 implementation is local artifact only. It does not fetch data, send mes
 
 Single-symbol advisory index, health, and status views make repeated one-symbol reviews discoverable and safety-checkable before any future delivery or automation layer. Unified `research-status` includes the latest one-symbol context while preserving later paper workflow priority. This helps preserve the distinction between a review artifact, a missing-symbol result, and executable guidance.
 
+Question-style single-symbol answers provide an intermediate local rendering layer: they turn existing advisory artifacts into a plain answer with reasons, risk notes, timing, invalidation, and safety boundaries. The v0.1 implementation is deterministic and does not call an LLM, send messages, or create execution instructions.
+
 Future versions may add conversational natural-language review, richer risk context, and human-approved alert delivery while preserving the same safety boundary.

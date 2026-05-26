@@ -132,6 +132,7 @@ class SignalAdvisoryStatusSettings(BaseModel):
 
 class SingleSymbolAdvisorySettings(BaseModel):
     output_dir: Path = Path("outputs/reports/single_symbol_advisory")
+    answer_output_dir: Path = Path("outputs/reports/single_symbol_advisory_answer")
     default_validity_days: int = Field(default=1, ge=0)
     config_version: str = "mvp"
     write_artifacts: bool = True

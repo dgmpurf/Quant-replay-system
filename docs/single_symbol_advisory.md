@@ -105,6 +105,35 @@ python -m quant_replay_system.cli single-symbol-advisory --symbol 000001 --candi
 
 The CLI prints the advisory run id, status, symbol, advisory action, artifact paths, and safety flags.
 
+## Question-Style Answer
+
+Use `--question-style` to render a deterministic local answer from the same single-symbol advisory result:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory --symbol 000001 --candidates outputs\reports\current_candidates\2024-05-20_etf_core_f484cd4648\candidates.csv --alert-preview --question-style --question "should I buy?"
+```
+
+Optional flags:
+
+- `--question "<text>"` stores and echoes the user question.
+- `--answer-style concise|detailed` controls how much local context is rendered.
+- `--answer-output-dir <dir>` overrides the answer artifact root.
+
+Question-style answers are local rendering artifacts. They do not call an LLM, parse natural language beyond echoing the question, fetch data, send messages, place orders, or connect to brokers.
+
+Artifacts are written under:
+
+```text
+outputs/reports/single_symbol_advisory_answer/<answer_run_id>/
+  single_symbol_advisory_answer.md
+  single_symbol_advisory_answer.json
+  metadata.json
+```
+
+The answer includes symbol, advisory action, short answer, reason, score/action context, risk notes, data/source caveats, entry and exit considerations, invalidation condition, validity, manual-confirmation requirement, and no-auto-order/no-live/no-broker/no-message safety fields.
+
+Demo answers explicitly remain workflow validation only. A `NOT_FOUND` answer says the symbol cannot be reviewed from the provided local artifact and no recommendation was invented.
+
 ## Index, Health, And Status
 
 Use `single-symbol-advisory-index` to discover local one-symbol review runs:
