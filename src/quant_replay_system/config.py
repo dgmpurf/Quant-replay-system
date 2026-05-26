@@ -208,6 +208,19 @@ class SingleSymbolAdvisoryAnswerStatusSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class AdvisoryConversationSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/advisory_conversation")
+    answer_style: Literal["concise", "detailed"] = "concise"
+    parser_type: str = "deterministic_rule_based"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+    enable_message_delivery: Literal[False] = False
+    enable_llm_api: Literal[False] = False
+    auto_order_allowed: Literal[False] = False
+
+
 class CurrentCandidateArtifactIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/current_candidates")
     output_dir: Path = Path("outputs/reports/current_candidates/index")
@@ -993,6 +1006,7 @@ class Settings(BaseModel):
     single_symbol_advisory_answer_index: SingleSymbolAdvisoryAnswerIndexSettings = Field(default_factory=SingleSymbolAdvisoryAnswerIndexSettings)
     single_symbol_advisory_answer_health: SingleSymbolAdvisoryAnswerHealthSettings = Field(default_factory=SingleSymbolAdvisoryAnswerHealthSettings)
     single_symbol_advisory_answer_status: SingleSymbolAdvisoryAnswerStatusSettings = Field(default_factory=SingleSymbolAdvisoryAnswerStatusSettings)
+    advisory_conversation: AdvisoryConversationSettings = Field(default_factory=AdvisoryConversationSettings)
     current_candidate_artifact_index: CurrentCandidateArtifactIndexSettings = Field(default_factory=CurrentCandidateArtifactIndexSettings)
     current_candidate_artifact_health: CurrentCandidateArtifactHealthSettings = Field(default_factory=CurrentCandidateArtifactHealthSettings)
     current_to_paper_handoff: CurrentToPaperHandoffSettings = Field(default_factory=CurrentToPaperHandoffSettings)

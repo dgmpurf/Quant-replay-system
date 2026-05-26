@@ -215,6 +215,8 @@ Single-symbol advisory and other product-layer advisory milestones should also r
 
 Question-style advisory response and answer dashboard/research-status milestones should receive checkpoint documents before adding conversational NLP, LLM integration, delivery channels, or automation, because they define the boundary between deterministic local answers, human confirmation, dashboard actionability, and any future generated-language or message-delivery layer.
 
+Local-only conversational advisory facade milestones should also receive checkpoint documents before adding richer NLP, LLM integration, message delivery, or automation, because they define how natural-language user questions are routed to deterministic local advisory artifacts without changing trading state.
+
 ## 6. Pro Extended Usage Rules
 
 Pro Extended is not needed for:

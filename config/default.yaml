@@ -176,6 +176,18 @@ single_symbol_advisory_answer_status:
   enable_live_trading: false
   enable_broker_api: false
 
+advisory_conversation:
+  output_dir: outputs/reports/advisory_conversation
+  answer_style: concise
+  parser_type: deterministic_rule_based
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+  enable_message_delivery: false
+  enable_llm_api: false
+  auto_order_allowed: false
+
 current_candidate_artifact_index:
   root_dir: outputs/reports/current_candidates
   output_dir: outputs/reports/current_candidates/index

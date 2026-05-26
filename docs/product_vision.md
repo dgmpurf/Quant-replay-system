@@ -69,6 +69,8 @@ Question-style single-symbol answers provide an intermediate local rendering lay
 
 Question-style answer index, health, and status views make repeated local answers discoverable and safety-checkable. Unified `research-status` includes the latest answer context, including safe `NOT_FOUND` outcomes and demo-only disclaimers, while preserving later paper workflow priority.
 
+The local-only conversational advisory facade adds a deterministic routing layer for simple Chinese/English questions. It extracts a symbol and intent, then calls the existing single-symbol advisory answer workflow. This is not an LLM system, does not fetch data, does not send messages, and does not change trading state.
+
 Question-style answer index, health, and status views make repeated answer artifacts discoverable and safety-checkable. They verify local-only boundaries such as no LLM/API calls, no message sending, no auto-order, and safe `NOT_FOUND` behavior before any future conversational or delivery layer is considered.
 
 Future versions may add conversational natural-language review, richer risk context, and human-approved alert delivery while preserving the same safety boundary.

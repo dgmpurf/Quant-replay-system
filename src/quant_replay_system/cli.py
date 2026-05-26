@@ -13,6 +13,7 @@ import pandas as pd
 
 from quant_replay_system.batch_replay import run_batch_replay
 from quant_replay_system.calibration import run_parameter_calibration
+from quant_replay_system.advisory_conversation import run_advisory_conversation
 from quant_replay_system.config import load_settings
 from quant_replay_system.current_candidate_artifact_health import check_current_candidate_artifact_health
 from quant_replay_system.current_candidate_artifact_index import build_current_candidate_artifact_index
@@ -375,6 +376,27 @@ def build_parser() -> argparse.ArgumentParser:
     single_symbol_advisory_answer_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
     single_symbol_advisory_answer_status.add_argument("--config", help="Optional config YAML path")
     single_symbol_advisory_answer_status.set_defaults(handler=_handle_single_symbol_advisory_answer_status)
+
+    advisory_conversation = subparsers.add_parser(
+        "advisory-conversation",
+        help="Parse a local advisory question and route it to deterministic single-symbol advisory answer artifacts",
+    )
+    advisory_conversation.add_argument("--question", required=True, help="User question to parse locally")
+    advisory_conversation.add_argument("--candidates", help="Optional current-candidates candidates.csv path")
+    advisory_conversation.add_argument("--scored-dataset", help="Optional scored_dataset.csv path")
+    advisory_conversation.add_argument("--factor-dataset", help="Optional factor_dataset.csv path")
+    advisory_conversation.add_argument("--signals", help="Optional signal advisory signals.csv path")
+    advisory_conversation.add_argument("--metadata", help="Optional source metadata.json path")
+    advisory_conversation.add_argument("--snapshot-manifest", help="Optional snapshot manifest path")
+    advisory_conversation.add_argument(
+        "--answer-style",
+        choices=["concise", "detailed"],
+        default=None,
+        help="Question-style answer rendering depth",
+    )
+    advisory_conversation.add_argument("--output-dir", help="Optional advisory conversation output directory")
+    advisory_conversation.add_argument("--config", help="Optional config YAML path")
+    advisory_conversation.set_defaults(handler=_handle_advisory_conversation)
 
     current_to_paper = subparsers.add_parser(
         "current-to-paper",
@@ -1619,6 +1641,58 @@ def _handle_single_symbol_advisory_answer_status(args: argparse.Namespace) -> in
         return 1
     if result.status == "WARN" and args.strict:
         return 1
+    return 0
+
+
+def _handle_advisory_conversation(args: argparse.Namespace) -> int:
+    if not args.candidates and not args.scored_dataset and not args.signals:
+        raise ValueError("Provide at least one of --candidates, --scored-dataset, or --signals")
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {}
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    if args.answer_style:
+        updates["answer_style"] = args.answer_style
+    if updates:
+        settings = settings.model_copy(
+            update={"advisory_conversation": settings.advisory_conversation.model_copy(update=updates)}
+        )
+    result = run_advisory_conversation(
+        question=args.question,
+        candidates_path=args.candidates,
+        scored_dataset_path=args.scored_dataset,
+        factor_dataset_path=args.factor_dataset,
+        signals_path=args.signals,
+        metadata_path=args.metadata,
+        snapshot_manifest_path=args.snapshot_manifest,
+        answer_style=args.answer_style,
+        output_dir=args.output_dir,
+        settings=settings,
+    )
+    print(f"conversation_run_id: {result.conversation_run_id}")
+    print(f"status: {result.status}")
+    print(f"original_question: {result.original_question}")
+    print(f"parsed_symbol: {result.parsed_symbol}")
+    print(f"parsed_intent: {result.parsed_intent}")
+    print(f"parser_type: {result.parser_type}")
+    print(f"advisory_action: {result.advisory_action}")
+    print(f"answer_summary: {result.answer_summary}")
+    print(f"linked_advisory_run_id: {result.linked_advisory_run_id}")
+    print(f"linked_answer_run_id: {result.linked_answer_run_id}")
+    print(f"linked_answer_markdown_path: {result.linked_answer_markdown_path}")
+    print(f"report_path: {result.artifact_paths['advisory_conversation_report']}")
+    print(f"json_path: {result.artifact_paths['advisory_conversation_json']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"requires_manual_confirmation: {result.requires_manual_confirmation}")
+    print(f"auto_order_allowed: {result.auto_order_allowed}")
+    print(f"no_live_trading: {result.no_live_trading}")
+    print(f"no_broker_api: {result.no_broker_api}")
+    print(f"no_message_sent: {result.no_message_sent}")
+    print(f"llm_api_called: {result.llm_api_called}")
+    print(f"external_api_called: {result.external_api_called}")
+    if result.parse_result.issue:
+        print(f"WARNING: {result.parse_result.issue}")
+    print("No live trading, broker API, order placement, LLM API, external API, or message delivery was invoked.")
     return 0
 
 

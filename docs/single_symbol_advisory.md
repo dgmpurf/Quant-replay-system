@@ -203,6 +203,8 @@ Expected stages include:
 
 `research-status` includes the latest `single-symbol-advisory-answer-status` as question-style advisory context. The unified dashboard exposes the latest answered symbol, answer action, question, health status, demo safety flags, and markdown answer path while preserving later paper workflow or broader advisory workflow priority. A latest `NOT_FOUND` answer remains visible but does not become a trading recommendation or active blocker when no advice was invented.
 
+For simple user-style questions, `advisory-conversation` provides a deterministic local facade over the same answer workflow. It extracts a six-digit symbol and basic buy/sell/watch/hold intent, then routes to `single-symbol-advisory` and question-style answer artifacts. It is not an LLM chat system and does not fetch data, send messages, or place orders. See [advisory_conversation.md](advisory_conversation.md).
+
 ## Index, Health, And Status
 
 Use `single-symbol-advisory-index` to discover local one-symbol review runs:
