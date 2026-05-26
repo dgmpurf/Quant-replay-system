@@ -1247,6 +1247,118 @@ def test_cli_research_status_prints_market_update_handoff_fields(tmp_path: Path,
     assert "market_update_handoff_current_candidate_run_id: candidate-a" in output.out
 
 
+def test_dashboard_includes_signal_advisory_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_advisory_status(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.latest_signal_run_id == "signal-a"
+    assert result.signal_advisory_status == "WARN"
+    assert result.signal_advisory_stage == "DEMO_SIGNAL_ADVISORY_VALIDATED"
+    assert result.signal_health_status == "PASS"
+    assert result.signal_count == 9
+    assert result.demo_signal_count == 9
+    assert result.workflow_stage == "DEMO_SIGNAL_ADVISORY_VALIDATED"
+    assert "DEMO_ONLY" in result.advisory_action_counts
+    assert "Review local alert preview" in result.next_manual_action
+
+
+def test_dashboard_signal_demo_is_visible_but_not_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_advisory_status(root, status="WARN", workflow_stage="DEMO_SIGNAL_ADVISORY_VALIDATED", warning_count=1)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    signal_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "SIGNAL_ADVISORY_STATUS"].iloc[0]
+
+    assert signal_row["warning_classification"] == "EXPECTED_DEMO_WARNING"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+    assert "REVIEW_BUY_CANDIDATE\": 0" in result.advisory_action_counts
+    assert "REVIEW_SELL_CANDIDATE\": 0" in result.advisory_action_counts
+
+
+def test_dashboard_preserves_later_paper_priority_over_signal_advisory_demo(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_advisory_status(root, status="WARN", warning_count=1)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.latest_signal_run_id == "signal-a"
+    assert result.signal_advisory_stage == "DEMO_SIGNAL_ADVISORY_VALIDATED"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_failed_signal_health_is_actionable_when_active(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_advisory_status(
+        root,
+        status="FAIL",
+        workflow_stage="SIGNAL_ADVISORY_FAILED",
+        health_status="FAIL",
+        error_count=1,
+        warning_count=0,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    signal_row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "SIGNAL_ADVISORY_STATUS"].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "SIGNAL_ADVISORY_FAILED"
+    assert signal_row["warning_classification"] == "BLOCKING_ERROR"
+    assert "Repair signal advisory artifacts" in result.next_manual_action
+
+
+def test_dashboard_exports_signal_advisory_fields_to_summary_and_metadata(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_advisory_status(root, signal_id="signal-export")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_signal_run_id"] == "signal-export"
+    assert row["signal_advisory_status"] == "WARN"
+    assert row["signal_advisory_stage"] == "DEMO_SIGNAL_ADVISORY_VALIDATED"
+    assert row["signal_health_status"] == "PASS"
+    assert row["signal_count"] == "9"
+    assert row["demo_signal_count"] == "9"
+    assert row["source_candidate_run_id"] == "candidate-a"
+    assert row["selection_profile"] == "demo"
+    assert row["demo_mode"] == "True"
+    assert row["not_strategy_recommendation"] == "True"
+    assert metadata["latest_signal_run_id"] == "signal-export"
+    assert metadata["signal_health_status"] == "PASS"
+    assert metadata["demo_mode"] is True
+    assert metadata["component_statuses"]["latest_signal_run_id"] == "signal-export"
+
+
+def test_cli_research_status_prints_signal_advisory_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _signal_advisory_status(root, signal_id="signal-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_signal_run_id: signal-cli" in output.out
+    assert "signal_advisory_status: WARN" in output.out
+    assert "signal_advisory_stage: DEMO_SIGNAL_ADVISORY_VALIDATED" in output.out
+    assert "signal_health_status: PASS" in output.out
+    assert "demo_mode: True" in output.out
+
+
 def _reports_root(tmp_path: Path) -> Path:
     root = tmp_path / "reports"
     root.mkdir(parents=True, exist_ok=True)
@@ -2032,6 +2144,108 @@ def _market_cache_export_policy_status(
             },
             "live_trading_enabled": False,
             "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _signal_advisory_status(
+    root: Path,
+    *,
+    signal_id: str = "signal-a",
+    status: str = "WARN",
+    workflow_stage: str = "DEMO_SIGNAL_ADVISORY_VALIDATED",
+    health_status: str = "PASS",
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:42:00",
+) -> Path:
+    folder = root / "signals" / "status" / f"status-{signal_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "signal_advisory_status_report.md"
+    status_csv = folder / "signal_advisory_status.csv"
+    summary_csv = folder / "signal_advisory_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    alert_preview = root / "signals" / signal_id / "signal_alert_preview.md"
+    signal_report = root / "signals" / signal_id / "signal_advisory_report.md"
+    next_action = (
+        "Review local alert preview; do not treat DEMO_ONLY signals as strategy recommendations."
+        if workflow_stage == "DEMO_SIGNAL_ADVISORY_VALIDATED"
+        else "Repair signal advisory artifacts before using alert previews."
+        if status == "FAIL"
+        else "Review local alert preview and require manual confirmation before any human action."
+    )
+    report.write_text("No live trading, broker API, order placement, or message delivery was invoked.", encoding="utf-8")
+    alert_preview.parent.mkdir(parents=True, exist_ok=True)
+    alert_preview.write_text("Manual confirmation required. No auto-order.", encoding="utf-8")
+    signal_report.write_text("Signals are advisory artifacts, not orders.", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "component": "SIGNAL_ADVISORY",
+                "status": "READY",
+                "latest_artifact_id": signal_id,
+                "signal_count": 9,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "SIGNAL_ADVISORY_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "signal-health-a",
+                "signal_count": 9,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "workflow_stage": workflow_stage,
+                "status": status,
+                "latest_signal_run_id": signal_id,
+                "latest_status": "READY",
+                "health_status": health_status,
+                "signal_count": 9,
+                "demo_signal_count": 9,
+                "watch_count": 0,
+                "review_buy_candidate_count": 0,
+                "review_sell_candidate_count": 0,
+                "blocked_count": 0,
+                "source_candidate_run_id": "candidate-a",
+                "selection_profile": "demo",
+                "demo_mode": True,
+                "not_strategy_recommendation": True,
+                "alert_preview_path": str(alert_preview),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{signal_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_signal_run_id": signal_id,
+            "health_status": health_status,
+            "signal_count": 9,
+            "next_manual_action": next_action,
+            "warnings": ["Latest signal advisory artifact is DEMO_ONLY."] if warning_count else [],
+            "output_files": {
+                "signal_advisory_status_report": str(report),
+                "signal_advisory_status_csv": str(status_csv),
+                "signal_advisory_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
         },
     )
     return folder

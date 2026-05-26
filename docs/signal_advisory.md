@@ -172,6 +172,10 @@ python -m quant_replay_system.cli signal-advisory-status
 
 The status view reports the latest signal run, health status, action counts, workflow stage, and next manual action. For demo-only runs, the expected stage is `DEMO_SIGNAL_ADVISORY_VALIDATED` and the next action reminds the user to review the local alert preview without treating `DEMO_ONLY` signals as strategy recommendations.
 
+`research-status` also includes the latest signal advisory status as contextual advisory evidence. It exports fields such as `latest_signal_run_id`, `signal_advisory_status`, `signal_advisory_stage`, `signal_health_status`, signal counts, advisory action counts, source current-candidate run id, selection profile, demo flags, and `alert_preview_path`.
+
+Signal advisory context does not approve or send anything. If a later WATCH_ONLY paper workflow already exists, `research-status` keeps the later paper stage as the final workflow stage while still showing the latest advisory run. If signal advisory is the active stage and health fails because a safety boundary is broken, the failure remains actionable.
+
 ## Future Alert Delivery
 
 Future SMS, email, Telegram, WeChat, or webhook delivery should consume the generated signal artifacts. Delivery must not change trading state, approve paper trades, create orders, or bypass manual confirmation.

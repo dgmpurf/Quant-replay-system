@@ -15,6 +15,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
+- Has a signal advisory run produced local alert-preview context?
 - Has the current-to-paper handoff run?
 - Has the paper review template been created and checked?
 - Have reviewed decisions, daily paper reports, and reconciliation artifacts been produced?
@@ -34,6 +35,7 @@ outputs/reports/snapshot_quality/
 outputs/reports/market_update_handoff/status/
 outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
+outputs/reports/signals/status/
 outputs/reports/current_to_paper_handoff/
 outputs/reports/current_to_paper_review_handoff/
 outputs/reports/paper_trading/review_template_health/
@@ -76,6 +78,16 @@ The unified summary records the latest export id, export status/stage, linked pi
 Market-cache-export is earlier than current-candidates, market-update-handoff, and paper workflow. If those later artifacts exist, they take priority for the final `workflow_stage`; cache-export fields remain visible as context. If the latest active cache export has health failures or duplicate-key errors and no later valid workflow supersedes it, `research-status` surfaces the export failure as actionable.
 
 These export fields do not imply automatic source selection. The reviewed cache export remains an explicit source/upstream selection layer, and `data-quality` plus `snapshot-quality` remain required before research use.
+
+## Signal Advisory Status
+
+`research-status` includes `signal-advisory-status` as advisory context when signal artifacts exist.
+
+The unified summary records the latest signal run id, advisory status/stage, signal health status, signal count, demo signal count, advisory action counts, alert preview path, source current-candidate run id, selection profile, demo mode, and `not_strategy_recommendation` flag. The alert preview remains local markdown only; the dashboard does not send SMS, email, Telegram, WeChat, webhooks, or broker instructions.
+
+When signal advisory reports `DEMO_SIGNAL_ADVISORY_VALIDATED`, the dashboard treats the warning as expected demo context. `DEMO_ONLY` remains visible, does not become BUY/SELL guidance, and still requires manual review of the local alert preview. If no later workflow exists, the final stage can be `DEMO_SIGNAL_ADVISORY_VALIDATED` or `SIGNAL_ADVISORY_READY_FOR_REVIEW`.
+
+Signal advisory is earlier than market-update handoff and paper workflow. If later paper workflow artifacts exist, those later stages take priority for the final `workflow_stage`; signal advisory fields remain visible as context. If signal health fails because advisory safety fields are unsafe, such as `auto_order_allowed=true`, missing manual confirmation, missing no-live-trading metadata, or message-delivery metadata, `research-status` surfaces the failure as actionable when signal advisory is the active stage.
 
 ## Active Snapshot Linkage
 
@@ -158,6 +170,10 @@ Prior current-candidate health warnings from old dry runs can be classified as s
 - `PIPELINE_READY_FROM_EXPORT`: data-pipeline has run from the reviewed cache export.
 - `DATA_QUALITY_READY_FROM_EXPORT`: data-quality has passed for the reviewed cache export pipeline output.
 - `SNAPSHOT_READY_FROM_EXPORT`: snapshot-quality passed for the reviewed cache export and current-candidates is next.
+- `SIGNAL_ADVISORY_READY_FOR_REVIEW`: advisory signals exist and the local alert preview should be reviewed manually.
+- `DEMO_SIGNAL_ADVISORY_VALIDATED`: demo-only advisory signals and alert preview exist; this is workflow validation only, not strategy advice.
+- `SIGNAL_ADVISORY_HEALTH_WARN`: advisory artifacts have health warnings that should be reviewed before using alert previews.
+- `SIGNAL_ADVISORY_FAILED`: advisory artifacts have active safety or artifact failures and need repair.
 - `CACHE_EXPORT_HEALTH_WARN`: reviewed cache export has warnings that should be inspected before downstream use.
 - `CACHE_EXPORT_FAILED`: reviewed cache export has active health or duplicate-key failures.
 - `DATA_PREPARATION_READY`: data preparation status exists; current candidates are next.

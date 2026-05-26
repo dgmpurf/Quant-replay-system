@@ -209,7 +209,7 @@ Successful paper workflow smoke milestones should also receive checkpoint docume
 
 Safety/actionability semantics around paper fills and reconciliation diagnostics should also receive checkpoint documents before expanding fill testing, especially when they change explicit artifact-scope behavior or how active versus diagnostic failures affect `paper-workflow-status` or `research-status`.
 
-Signal advisory and alert-preview milestones should receive checkpoint documents before adding real delivery channels or automation, because they define the boundary between research signals, human confirmation, message previews, and any future execution assistant.
+Signal advisory, alert-preview, and `research-status` advisory-integration milestones should receive checkpoint documents before adding real delivery channels or automation, because they define the boundary between research signals, human confirmation, message previews, dashboard actionability, and any future execution assistant.
 
 ## 6. Pro Extended Usage Rules
 

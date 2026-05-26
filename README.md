@@ -92,6 +92,8 @@ For turning current-candidates artifacts into local advisory signals and alert p
 
 To discover, check, and summarize local signal advisory artifacts before any future alert-delivery work, use `signal-advisory-index`, `signal-advisory-health`, and `signal-advisory-status`; see [docs/signal_advisory.md#index-health-and-status](docs/signal_advisory.md#index-health-and-status).
 
+`research-status` includes the latest `signal-advisory-status` as advisory context, including signal counts, demo-only state, health status, and local alert-preview path, while preserving later paper workflow priority; see [docs/local_research_dashboard.md#signal-advisory-status](docs/local_research_dashboard.md#signal-advisory-status).
+
 For indexing generated current-candidate runs, see [docs/current_candidate_artifact_index.md](docs/current_candidate_artifact_index.md).
 
 For checking generated current-candidate artifact health, see [docs/current_candidate_artifact_health.md](docs/current_candidate_artifact_health.md).
@@ -225,6 +227,8 @@ For the v0.76.0 synthetic fill reconciliation diagnostics and paper workflow sta
 For the v0.77.0 explicit diagnostic reconciliation artifact scope support checkpoint summary, see [docs/release_checkpoint_v0.77.0.md](docs/release_checkpoint_v0.77.0.md).
 
 For the v0.78.0 Signal Advisory Contract and Alert Preview checkpoint summary, see [docs/release_checkpoint_v0.78.0.md](docs/release_checkpoint_v0.78.0.md).
+
+For the v0.80.0 Signal Advisory Artifact Views and Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.80.0.md](docs/release_checkpoint_v0.80.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -403,6 +407,10 @@ See [docs/release_checkpoint_v0.76.0.md](docs/release_checkpoint_v0.76.0.md) for
 `v0.77.0` marks the explicit diagnostic reconciliation artifact scope support checkpoint, covering `paper-reconcile-fills --artifact-scope diagnostic`, persisted diagnostic metadata, active versus diagnostic reconciliation behavior, and dashboard preservation of the active WATCH_ONLY/no-fills paper workflow.
 
 See [docs/release_checkpoint_v0.77.0.md](docs/release_checkpoint_v0.77.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.80.0` marks the signal advisory artifact views and `research-status` integration checkpoint, covering advisory index/health/status, dashboard signal context fields, local alert-preview visibility, demo-only actionability, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v0.80.0.md](docs/release_checkpoint_v0.80.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

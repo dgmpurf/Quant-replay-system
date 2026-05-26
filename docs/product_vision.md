@@ -32,6 +32,7 @@ Future human-confirmed execution assistance should preserve auditability:
 - scoring and candidate context,
 - signal contract fields,
 - signal index, health, and status evidence,
+- unified `research-status` context for signal advisory, alert-preview, and later paper workflow priority,
 - manual review identity and reason,
 - paper or execution-state transition,
 - safety flags and no-auto-order status.
