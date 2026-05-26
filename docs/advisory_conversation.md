@@ -84,6 +84,76 @@ When parsing succeeds, the metadata links to the generated single-symbol advisor
 - `linked_answer_run_id`
 - `linked_answer_markdown_path`
 
+## Index, Health, And Status
+
+Use `advisory-conversation-index` to discover local conversational advisory runs:
+
+```cmd
+python -m quant_replay_system.cli advisory-conversation-index
+```
+
+The index scans `outputs/reports/advisory_conversation/` and writes:
+
+```text
+outputs/reports/advisory_conversation/index/
+  advisory_conversation_index.csv
+  advisory_conversation_index_report.md
+  metadata.json
+```
+
+Use `advisory-conversation-health` to check deterministic parser and safety boundaries:
+
+```cmd
+python -m quant_replay_system.cli advisory-conversation-health
+```
+
+Health checks verify:
+
+- metadata, conversation JSON, and report files exist and are readable,
+- required conversation fields are present,
+- parsed symbols such as `000001` remain six-digit strings,
+- `llm_api_called=false`,
+- `external_api_called=false`,
+- `no_message_sent=true`,
+- `no_live_trading=true`,
+- `no_broker_api=true`,
+- `auto_order_allowed=false`,
+- `PARSE_FAILED` does not invent a symbol or recommendation,
+- `NOT_FOUND` does not invent a recommendation,
+- demo conversations do not produce real buy/sell guidance,
+- linked answer markdown exists when the conversation status is `READY`,
+- no delivery metadata is present.
+
+Health artifacts are written under:
+
+```text
+outputs/reports/advisory_conversation/health/<health_id>/
+  advisory_conversation_health_report.md
+  advisory_conversation_health_issues.csv
+  advisory_conversation_health_summary.csv
+  metadata.json
+```
+
+Use `advisory-conversation-status` to summarize the latest conversational advisory run:
+
+```cmd
+python -m quant_replay_system.cli advisory-conversation-status
+```
+
+The status view reports the latest conversation run id, original question, parsed symbol, parsed intent, advisory action, parser type, health status, linked answer path, workflow stage, and next manual action.
+
+Expected stages include:
+
+- `NO_ADVISORY_CONVERSATION_ARTIFACTS`
+- `ADVISORY_CONVERSATION_READY_FOR_REVIEW`
+- `ADVISORY_CONVERSATION_PARSE_FAILED`
+- `ADVISORY_CONVERSATION_NOT_FOUND`
+- `ADVISORY_CONVERSATION_HEALTH_WARN`
+- `ADVISORY_CONVERSATION_FAILED`
+- `DEMO_ADVISORY_CONVERSATION_VALIDATED`
+
+`PARSE_FAILED` and `NOT_FOUND` remain safe when no recommendation is invented. Demo conversations remain workflow validation only, and the conversation status layer is still local observability, not an LLM, delivery channel, or order-execution workflow.
+
 ## Safety Boundaries
 
 - The conversation response is not an order.

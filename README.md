@@ -104,6 +104,8 @@ To discover, check, and summarize deterministic question-style answer artifacts,
 
 For simple Chinese/English user-style questions such as `000001 现在能不能买？` or `Should I sell 510300?`, use `advisory-conversation`; see [docs/advisory_conversation.md](docs/advisory_conversation.md). This is deterministic local parsing and routing only: no LLM/API calls, no message delivery, no broker access, and no order placement.
 
+To discover, check, and summarize local conversational advisory runs, use `advisory-conversation-index`, `advisory-conversation-health`, and `advisory-conversation-status`; see [docs/advisory_conversation.md#index-health-and-status](docs/advisory_conversation.md#index-health-and-status).
+
 To discover, check, and summarize repeated single-symbol advisory reviews, use `single-symbol-advisory-index`, `single-symbol-advisory-health`, and `single-symbol-advisory-status`; see [docs/single_symbol_advisory.md#index-health-and-status](docs/single_symbol_advisory.md#index-health-and-status).
 
 `research-status` includes the latest `single-symbol-advisory-status` as one-symbol advisory context, including the latest symbol, advisory action, health status, demo safety flags, and local alert preview path, while preserving later paper workflow priority; see [docs/local_research_dashboard.md#single-symbol-advisory-status](docs/local_research_dashboard.md#single-symbol-advisory-status).
@@ -253,6 +255,8 @@ For the v0.83.0 Question-style Single-Symbol Advisory Response checkpoint summar
 For the v0.84.0 Question-style Single-Symbol Advisory Answer Artifact Views and Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.84.0.md](docs/release_checkpoint_v0.84.0.md).
 
 For the v0.85.0 Local-only Conversational Advisory Facade checkpoint summary, see [docs/release_checkpoint_v0.85.0.md](docs/release_checkpoint_v0.85.0.md).
+
+For the v0.86.0 Advisory Conversation Artifact Index / Health / Status checkpoint summary, see [docs/release_checkpoint_v0.86.0.md](docs/release_checkpoint_v0.86.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -455,6 +459,10 @@ See [docs/release_checkpoint_v0.84.0.md](docs/release_checkpoint_v0.84.0.md) for
 `v0.85.0` marks the local-only conversational advisory facade checkpoint, covering deterministic Chinese/English question parsing, six-digit symbol extraction, simple intent classification, routing to single-symbol advisory answers, safe `PARSE_FAILED` / `NOT_FOUND` behavior, and no LLM/API/message/order execution.
 
 See [docs/release_checkpoint_v0.85.0.md](docs/release_checkpoint_v0.85.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.86.0` marks the advisory conversation artifact views checkpoint, covering conversation index/health/status, deterministic parsed-question artifact discovery, safety checks for no LLM/API/message/trading behavior, safe `PARSE_FAILED` and `NOT_FOUND` handling, and linked single-symbol answer visibility.
+
+See [docs/release_checkpoint_v0.86.0.md](docs/release_checkpoint_v0.86.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

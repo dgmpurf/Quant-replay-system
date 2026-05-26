@@ -188,6 +188,34 @@ advisory_conversation:
   enable_llm_api: false
   auto_order_allowed: false
 
+advisory_conversation_index:
+  root_dir: outputs/reports/advisory_conversation
+  output_dir: outputs/reports/advisory_conversation/index
+  include_missing_metadata: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+advisory_conversation_health:
+  index_path: outputs/reports/advisory_conversation/index/advisory_conversation_index.csv
+  root_dir: outputs/reports/advisory_conversation
+  output_dir: outputs/reports/advisory_conversation/health
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+advisory_conversation_status:
+  root_dir: outputs/reports/advisory_conversation
+  output_dir: outputs/reports/advisory_conversation/status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 current_candidate_artifact_index:
   root_dir: outputs/reports/current_candidates
   output_dir: outputs/reports/current_candidates/index

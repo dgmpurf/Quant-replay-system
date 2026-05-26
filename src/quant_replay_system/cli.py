@@ -14,6 +14,9 @@ import pandas as pd
 from quant_replay_system.batch_replay import run_batch_replay
 from quant_replay_system.calibration import run_parameter_calibration
 from quant_replay_system.advisory_conversation import run_advisory_conversation
+from quant_replay_system.advisory_conversation_health import check_advisory_conversation_health
+from quant_replay_system.advisory_conversation_index import build_advisory_conversation_index
+from quant_replay_system.advisory_conversation_status import run_advisory_conversation_status
 from quant_replay_system.config import load_settings
 from quant_replay_system.current_candidate_artifact_health import check_current_candidate_artifact_health
 from quant_replay_system.current_candidate_artifact_index import build_current_candidate_artifact_index
@@ -397,6 +400,42 @@ def build_parser() -> argparse.ArgumentParser:
     advisory_conversation.add_argument("--output-dir", help="Optional advisory conversation output directory")
     advisory_conversation.add_argument("--config", help="Optional config YAML path")
     advisory_conversation.set_defaults(handler=_handle_advisory_conversation)
+
+    advisory_conversation_index = subparsers.add_parser(
+        "advisory-conversation-index",
+        help="Build a local index of advisory conversation artifact folders",
+    )
+    advisory_conversation_index.add_argument("--root", help="Advisory conversation artifact root directory")
+    advisory_conversation_index.add_argument("--output-dir", help="Optional conversation index output directory")
+    advisory_conversation_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Index folders missing metadata.json",
+    )
+    advisory_conversation_index.add_argument("--config", help="Optional config YAML path")
+    advisory_conversation_index.set_defaults(handler=_handle_advisory_conversation_index)
+
+    advisory_conversation_health = subparsers.add_parser(
+        "advisory-conversation-health",
+        help="Check local advisory conversation artifact file health and safety flags",
+    )
+    advisory_conversation_health.add_argument("--index", help="Advisory conversation artifact index CSV path")
+    advisory_conversation_health.add_argument("--root", help="Advisory conversation artifact root directory")
+    advisory_conversation_health.add_argument("--output-dir", help="Optional conversation health-check output directory")
+    advisory_conversation_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    advisory_conversation_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    advisory_conversation_health.add_argument("--config", help="Optional config YAML path")
+    advisory_conversation_health.set_defaults(handler=_handle_advisory_conversation_health)
+
+    advisory_conversation_status = subparsers.add_parser(
+        "advisory-conversation-status",
+        help="Build a local advisory conversation status dashboard",
+    )
+    advisory_conversation_status.add_argument("--root", help="Advisory conversation artifact root directory")
+    advisory_conversation_status.add_argument("--output-dir", help="Optional conversation status output directory")
+    advisory_conversation_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
+    advisory_conversation_status.add_argument("--config", help="Optional config YAML path")
+    advisory_conversation_status.set_defaults(handler=_handle_advisory_conversation_status)
 
     current_to_paper = subparsers.add_parser(
         "current-to-paper",
@@ -1693,6 +1732,92 @@ def _handle_advisory_conversation(args: argparse.Namespace) -> int:
     if result.parse_result.issue:
         print(f"WARNING: {result.parse_result.issue}")
     print("No live trading, broker API, order placement, LLM API, external API, or message delivery was invoked.")
+    return 0
+
+
+def _handle_advisory_conversation_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"include_missing_metadata": bool(args.include_missing_metadata)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"advisory_conversation_index": settings.advisory_conversation_index.model_copy(update=updates)}
+    )
+    result = build_advisory_conversation_index(settings=settings)
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['advisory_conversation_index_report']}")
+    print(f"Index CSV path: {result.artifact_paths['advisory_conversation_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, LLM/API call, external API call, or message delivery was invoked.")
+    return 0
+
+
+def _handle_advisory_conversation_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"advisory_conversation_health": settings.advisory_conversation_health.model_copy(update=updates)}
+    )
+    result = check_advisory_conversation_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['advisory_conversation_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, LLM/API call, external API call, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_advisory_conversation_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"advisory_conversation_status": settings.advisory_conversation_status.model_copy(update=updates)}
+    )
+    result = run_advisory_conversation_status(root=args.root, output_dir=args.output_dir, config=settings)
+    print(f"Status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_conversation_run_id: {result.latest_conversation_run_id}")
+    print(f"latest_original_question: {result.latest_original_question}")
+    print(f"latest_parsed_symbol: {result.latest_parsed_symbol}")
+    print(f"latest_parsed_intent: {result.latest_parsed_intent}")
+    print(f"latest_advisory_action: {result.latest_advisory_action}")
+    print(f"health_status: {result.health_status}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['advisory_conversation_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, LLM/API call, external API call, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
     return 0
 
 
