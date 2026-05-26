@@ -462,6 +462,7 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument("--market-cache-export-root", help="Market-cache-export artifact root directory")
     research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
     research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
+    research_status.add_argument("--single-symbol-advisory-root", help="Single-symbol advisory artifact root directory")
     research_status.add_argument("--market-update-handoff-root", help="Market-update-handoff artifact root directory")
     research_status.add_argument("--paper-trading-root", help="Paper trading artifact root directory")
     research_status.add_argument("--decision-date", help="Optional decision date filter")
@@ -1876,6 +1877,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["data_preparation_root"] = Path(args.data_preparation_root)
     if args.current_candidates_root:
         updates["current_candidates_root"] = Path(args.current_candidates_root)
+    if args.single_symbol_advisory_root:
+        updates["single_symbol_advisory_root"] = Path(args.single_symbol_advisory_root)
     if args.market_update_handoff_root:
         updates["market_update_handoff_root"] = Path(args.market_update_handoff_root)
     if args.paper_trading_root:
@@ -1894,6 +1897,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         market_cache_export_root=args.market_cache_export_root,
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
+        single_symbol_advisory_root=args.single_symbol_advisory_root,
         market_update_handoff_root=args.market_update_handoff_root,
         paper_trading_root=args.paper_trading_root,
         decision_date=args.decision_date,
@@ -1954,6 +1958,20 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"selection_profile: {result.selection_profile}")
     print(f"demo_mode: {result.demo_mode}")
     print(f"not_strategy_recommendation: {result.not_strategy_recommendation}")
+    print(f"latest_single_symbol_advisory_run_id: {result.latest_single_symbol_advisory_run_id}")
+    print(f"latest_single_symbol_advisory_symbol: {result.latest_single_symbol_advisory_symbol}")
+    print(f"single_symbol_advisory_status: {result.single_symbol_advisory_status}")
+    print(f"single_symbol_advisory_stage: {result.single_symbol_advisory_stage}")
+    print(f"single_symbol_advisory_action: {result.single_symbol_advisory_action}")
+    print(f"single_symbol_advisory_health_status: {result.single_symbol_advisory_health_status}")
+    print(f"single_symbol_advisory_final_score: {result.single_symbol_advisory_final_score}")
+    print(f"single_symbol_advisory_demo_mode: {result.single_symbol_advisory_demo_mode}")
+    print(
+        "single_symbol_advisory_not_strategy_recommendation: "
+        f"{result.single_symbol_advisory_not_strategy_recommendation}"
+    )
+    print(f"single_symbol_advisory_alert_preview_path: {result.single_symbol_advisory_alert_preview_path}")
+    print(f"single_symbol_advisory_next_action: {result.single_symbol_advisory_next_action}")
     print(f"latest_market_update_handoff_id: {result.latest_market_update_handoff_id}")
     print(f"market_update_handoff_status: {result.market_update_handoff_status}")
     print(f"market_update_handoff_stage: {result.market_update_handoff_stage}")

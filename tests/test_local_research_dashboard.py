@@ -1359,6 +1359,146 @@ def test_cli_research_status_prints_signal_advisory_fields(tmp_path: Path, capsy
     assert "demo_mode: True" in output.out
 
 
+def test_dashboard_includes_single_symbol_advisory_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _single_symbol_advisory_status(root, advisory_id="single-000001", symbol="000001")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.latest_single_symbol_advisory_run_id == "single-000001"
+    assert result.latest_single_symbol_advisory_symbol == "000001"
+    assert result.single_symbol_advisory_status == "WARN"
+    assert result.single_symbol_advisory_stage == "DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED"
+    assert result.single_symbol_advisory_action == "DEMO_ONLY"
+    assert result.single_symbol_advisory_health_status == "PASS"
+    assert result.single_symbol_advisory_demo_mode is True
+    assert result.single_symbol_advisory_not_strategy_recommendation is True
+    assert result.workflow_stage == "DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED"
+    assert "Review local single-symbol advisory preview" in result.next_manual_action
+
+
+def test_dashboard_single_symbol_not_found_is_visible_but_not_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _single_symbol_advisory_status(
+        root,
+        advisory_id="single-missing",
+        symbol="999999",
+        status="WARN",
+        workflow_stage="SINGLE_SYMBOL_ADVISORY_NOT_FOUND",
+        latest_status="NOT_FOUND",
+        advisory_action="NO_ACTION",
+        final_score="",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    advisory_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "SINGLE_SYMBOL_ADVISORY_STATUS"
+    ].iloc[0]
+
+    assert result.latest_single_symbol_advisory_symbol == "999999"
+    assert result.single_symbol_advisory_action == "NO_ACTION"
+    assert result.workflow_stage == "SINGLE_SYMBOL_ADVISORY_NOT_FOUND"
+    assert result.status == "WARN"
+    assert advisory_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+    assert "no recommendation was invented" in result.next_manual_action
+
+
+def test_dashboard_failed_single_symbol_health_is_actionable_when_active(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _single_symbol_advisory_status(
+        root,
+        advisory_id="single-fail",
+        status="FAIL",
+        workflow_stage="SINGLE_SYMBOL_ADVISORY_FAILED",
+        health_status="FAIL",
+        error_count=1,
+        warning_count=0,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    advisory_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "SINGLE_SYMBOL_ADVISORY_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "SINGLE_SYMBOL_ADVISORY_FAILED"
+    assert advisory_row["warning_classification"] == "BLOCKING_ERROR"
+    assert "Repair single-symbol advisory artifacts" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_single_symbol_not_found(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _single_symbol_advisory_status(
+        root,
+        advisory_id="single-missing",
+        symbol="999999",
+        workflow_stage="SINGLE_SYMBOL_ADVISORY_NOT_FOUND",
+        latest_status="NOT_FOUND",
+        advisory_action="NO_ACTION",
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    advisory_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "SINGLE_SYMBOL_ADVISORY_STATUS"
+    ].iloc[0]
+
+    assert result.latest_single_symbol_advisory_symbol == "999999"
+    assert result.single_symbol_advisory_stage == "SINGLE_SYMBOL_ADVISORY_NOT_FOUND"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert advisory_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_single_symbol_advisory_fields_to_summary_and_metadata(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _single_symbol_advisory_status(root, advisory_id="single-export", symbol="000001")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_single_symbol_advisory_run_id"] == "single-export"
+    assert row["latest_single_symbol_advisory_symbol"] == "000001"
+    assert row["single_symbol_advisory_status"] == "WARN"
+    assert row["single_symbol_advisory_stage"] == "DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED"
+    assert row["single_symbol_advisory_action"] == "DEMO_ONLY"
+    assert row["single_symbol_advisory_health_status"] == "PASS"
+    assert row["single_symbol_advisory_demo_mode"] == "True"
+    assert row["single_symbol_advisory_not_strategy_recommendation"] == "True"
+    assert metadata["latest_single_symbol_advisory_run_id"] == "single-export"
+    assert metadata["latest_single_symbol_advisory_symbol"] == "000001"
+    assert metadata["single_symbol_advisory_health_status"] == "PASS"
+    assert metadata["single_symbol_advisory_demo_mode"] is True
+    assert metadata["component_statuses"]["latest_single_symbol_advisory_symbol"] == "000001"
+
+
+def test_cli_research_status_prints_single_symbol_advisory_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _single_symbol_advisory_status(root, advisory_id="single-cli", symbol="000001")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_single_symbol_advisory_run_id: single-cli" in output.out
+    assert "latest_single_symbol_advisory_symbol: 000001" in output.out
+    assert "single_symbol_advisory_status: WARN" in output.out
+    assert "single_symbol_advisory_stage: DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED" in output.out
+    assert "single_symbol_advisory_health_status: PASS" in output.out
+
+
 def _reports_root(tmp_path: Path) -> Path:
     root = tmp_path / "reports"
     root.mkdir(parents=True, exist_ok=True)
@@ -2240,6 +2380,110 @@ def _signal_advisory_status(
                 "signal_advisory_status_report": str(report),
                 "signal_advisory_status_csv": str(status_csv),
                 "signal_advisory_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+        },
+    )
+    return folder
+
+
+def _single_symbol_advisory_status(
+    root: Path,
+    *,
+    advisory_id: str = "single-a",
+    symbol: str = "000001",
+    status: str = "WARN",
+    workflow_stage: str = "DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED",
+    latest_status: str = "READY",
+    advisory_action: str = "DEMO_ONLY",
+    health_status: str = "PASS",
+    final_score: str = "55.6",
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:43:00",
+) -> Path:
+    folder = root / "single_symbol_advisory" / "status" / f"status-{advisory_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "single_symbol_advisory_status_report.md"
+    status_csv = folder / "single_symbol_advisory_status.csv"
+    summary_csv = folder / "single_symbol_advisory_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    alert_preview = root / "single_symbol_advisory" / advisory_id / "alert_preview.md"
+    advisory_report = root / "single_symbol_advisory" / advisory_id / "single_symbol_advisory_report.md"
+    next_action = (
+        "Review local single-symbol alert preview; do not treat DEMO_ONLY output as a strategy recommendation."
+        if workflow_stage == "DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED"
+        else "Symbol was not found in the provided local artifact; provide a relevant candidates/scored/signals artifact before reviewing."
+        if workflow_stage == "SINGLE_SYMBOL_ADVISORY_NOT_FOUND"
+        else "Repair single-symbol advisory artifacts before using this review."
+        if status == "FAIL"
+        else "Review local single-symbol advisory report; manual confirmation remains required."
+    )
+    report.write_text("No live trading, broker API, order placement, or message delivery was invoked.", encoding="utf-8")
+    alert_preview.parent.mkdir(parents=True, exist_ok=True)
+    alert_preview.write_text("Manual confirmation required. No auto-order.", encoding="utf-8")
+    advisory_report.write_text("Single-symbol advisory is not an order.", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "component": "SINGLE_SYMBOL_ADVISORY",
+                "status": latest_status,
+                "latest_artifact_id": advisory_id,
+                "symbol": symbol,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "SINGLE_SYMBOL_ADVISORY_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "single-health-a",
+                "symbol": symbol,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "workflow_stage": workflow_stage,
+                "status": status,
+                "latest_advisory_run_id": advisory_id,
+                "latest_symbol": symbol,
+                "latest_status": latest_status,
+                "latest_advisory_action": advisory_action,
+                "health_status": health_status,
+                "final_score": final_score,
+                "demo_mode": True,
+                "not_strategy_recommendation": True,
+                "alert_preview_path": str(alert_preview),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{advisory_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_advisory_run_id": advisory_id,
+            "latest_symbol": symbol,
+            "latest_advisory_action": advisory_action,
+            "health_status": health_status,
+            "next_manual_action": next_action,
+            "warnings": ["Latest single-symbol advisory artifact is review-only."] if warning_count else [],
+            "output_files": {
+                "single_symbol_advisory_status_report": str(report),
+                "single_symbol_advisory_status_csv": str(status_csv),
+                "single_symbol_advisory_status_summary": str(summary_csv),
                 "metadata": str(metadata_path),
             },
             "live_trading_enabled": False,

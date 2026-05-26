@@ -32,7 +32,7 @@ Future human-confirmed execution assistance should preserve auditability:
 - scoring and candidate context,
 - signal contract fields,
 - signal index, health, and status evidence,
-- unified `research-status` context for signal advisory, alert-preview, and later paper workflow priority,
+- unified `research-status` context for signal advisory, single-symbol review, alert-preview, and later paper workflow priority,
 - manual review identity and reason,
 - paper or execution-state transition,
 - safety flags and no-auto-order status.
@@ -63,6 +63,6 @@ That feature should return:
 
 The v0.1 implementation is local artifact only. It does not fetch data, send messages, approve paper trades, or connect to brokers. Demo or unvalidated signals are not presented as strategy recommendations, and every output keeps manual confirmation and no-auto-order safety fields.
 
-Single-symbol advisory index, health, and status views make repeated one-symbol reviews discoverable and safety-checkable before any future delivery or automation layer. They help preserve the distinction between a review artifact, a missing-symbol result, and executable guidance.
+Single-symbol advisory index, health, and status views make repeated one-symbol reviews discoverable and safety-checkable before any future delivery or automation layer. Unified `research-status` includes the latest one-symbol context while preserving later paper workflow priority. This helps preserve the distinction between a review artifact, a missing-symbol result, and executable guidance.
 
 Future versions may add conversational natural-language review, richer risk context, and human-approved alert delivery while preserving the same safety boundary.

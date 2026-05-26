@@ -170,6 +170,8 @@ Expected stages include:
 
 `NOT_FOUND` is safe when no recommendation is invented. Demo reviews remain workflow validation only and should not be treated as strategy recommendations.
 
+`research-status` includes the latest `single-symbol-advisory-status` as advisory context. The unified dashboard exposes the latest reviewed symbol, action, health status, score, demo flags, and alert preview path while preserving later paper workflow or broader signal workflow priority. A latest `NOT_FOUND` review remains visible but does not become a trading recommendation or active blocker when no advice was invented.
+
 ## Safety Contract
 
 Every output records:

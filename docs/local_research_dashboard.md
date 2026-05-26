@@ -16,6 +16,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
 - Has a signal advisory run produced local alert-preview context?
+- Has a single-symbol advisory review been produced for the latest requested symbol?
 - Has the current-to-paper handoff run?
 - Has the paper review template been created and checked?
 - Have reviewed decisions, daily paper reports, and reconciliation artifacts been produced?
@@ -36,6 +37,7 @@ outputs/reports/market_update_handoff/status/
 outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
 outputs/reports/signals/status/
+outputs/reports/single_symbol_advisory/status/
 outputs/reports/current_to_paper_handoff/
 outputs/reports/current_to_paper_review_handoff/
 outputs/reports/paper_trading/review_template_health/
@@ -88,6 +90,16 @@ The unified summary records the latest signal run id, advisory status/stage, sig
 When signal advisory reports `DEMO_SIGNAL_ADVISORY_VALIDATED`, the dashboard treats the warning as expected demo context. `DEMO_ONLY` remains visible, does not become BUY/SELL guidance, and still requires manual review of the local alert preview. If no later workflow exists, the final stage can be `DEMO_SIGNAL_ADVISORY_VALIDATED` or `SIGNAL_ADVISORY_READY_FOR_REVIEW`.
 
 Signal advisory is earlier than market-update handoff and paper workflow. If later paper workflow artifacts exist, those later stages take priority for the final `workflow_stage`; signal advisory fields remain visible as context. If signal health fails because advisory safety fields are unsafe, such as `auto_order_allowed=true`, missing manual confirmation, missing no-live-trading metadata, or message-delivery metadata, `research-status` surfaces the failure as actionable when signal advisory is the active stage.
+
+## Single-Symbol Advisory Status
+
+`research-status` includes `single-symbol-advisory-status` as one-symbol advisory context when review artifacts exist.
+
+The unified summary records the latest advisory run id, latest symbol, advisory status/stage/action, health status, final score, demo flags, alert preview path, and the single-symbol review's next manual action. The alert preview remains local markdown only; the dashboard does not send messages, place orders, connect to brokers, or treat the review as execution approval.
+
+When the latest review reports `DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED`, the dashboard treats the warning as expected demo context. `DEMO_ONLY` remains visible and does not become BUY/SELL guidance. When the latest review reports `SINGLE_SYMBOL_ADVISORY_NOT_FOUND`, the dashboard treats it as safe reviewable context as long as no recommendation was invented.
+
+Single-symbol advisory is context below broader workflow stages such as reviewed cache export, current-candidates, signal advisory, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to the one-symbol review; the single-symbol fields remain visible for audit. If single-symbol advisory health fails because safety fields are unsafe, such as `auto_order_allowed=true`, missing no-live-trading/no-broker/no-message-sent metadata, demo BUY/SELL leakage, or `NOT_FOUND` with invented advice, `research-status` surfaces the failure as actionable when single-symbol advisory is the active stage.
 
 ## Active Snapshot Linkage
 
@@ -174,6 +186,11 @@ Prior current-candidate health warnings from old dry runs can be classified as s
 - `DEMO_SIGNAL_ADVISORY_VALIDATED`: demo-only advisory signals and alert preview exist; this is workflow validation only, not strategy advice.
 - `SIGNAL_ADVISORY_HEALTH_WARN`: advisory artifacts have health warnings that should be reviewed before using alert previews.
 - `SIGNAL_ADVISORY_FAILED`: advisory artifacts have active safety or artifact failures and need repair.
+- `SINGLE_SYMBOL_ADVISORY_READY_FOR_REVIEW`: one-symbol advisory review exists and should be reviewed manually.
+- `DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED`: demo-only one-symbol advisory exists; this is workflow validation only, not strategy advice.
+- `SINGLE_SYMBOL_ADVISORY_NOT_FOUND`: requested symbol was absent from the provided local artifact and no recommendation was invented.
+- `SINGLE_SYMBOL_ADVISORY_HEALTH_WARN`: one-symbol advisory artifacts have health warnings that should be reviewed before use.
+- `SINGLE_SYMBOL_ADVISORY_FAILED`: one-symbol advisory artifacts have active safety or artifact failures and need repair.
 - `CACHE_EXPORT_HEALTH_WARN`: reviewed cache export has warnings that should be inspected before downstream use.
 - `CACHE_EXPORT_FAILED`: reviewed cache export has active health or duplicate-key failures.
 - `DATA_PREPARATION_READY`: data preparation status exists; current candidates are next.
