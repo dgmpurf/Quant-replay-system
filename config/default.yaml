@@ -77,6 +77,36 @@ signal_advisory:
   enable_broker_api: false
   auto_order_allowed: false
 
+signal_advisory_index:
+  root_dir: outputs/reports/signals
+  output_dir: outputs/reports/signals/index
+  include_missing_metadata: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+signal_advisory_health:
+  index_path: outputs/reports/signals/index/signal_advisory_index.csv
+  root_dir: outputs/reports/signals
+  output_dir: outputs/reports/signals/health
+  strict: false
+  require_alert_preview: true
+  missing_alert_preview_severity: WARN
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+signal_advisory_status:
+  root_dir: outputs/reports/signals
+  output_dir: outputs/reports/signals/status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 current_candidate_artifact_index:
   root_dir: outputs/reports/current_candidates
   output_dir: outputs/reports/current_candidates/index

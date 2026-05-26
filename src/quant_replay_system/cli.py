@@ -73,6 +73,9 @@ from quant_replay_system.paper_review_template_health import check_review_templa
 from quant_replay_system.paper_workflow_status import run_paper_workflow_status
 from quant_replay_system.replay_run import run_replay
 from quant_replay_system.signal_advisory import build_signal_advisory_from_candidates
+from quant_replay_system.signal_advisory_health import check_signal_advisory_health
+from quant_replay_system.signal_advisory_index import build_signal_advisory_index
+from quant_replay_system.signal_advisory_status import run_signal_advisory_status
 from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
 from quant_replay_system.snapshot_quality_preflight import SnapshotQualityPreflightError
 from quant_replay_system.universe_overlay import run_universe_overlay
@@ -226,6 +229,38 @@ def build_parser() -> argparse.ArgumentParser:
     )
     signal_advisory.add_argument("--config", help="Optional config YAML path")
     signal_advisory.set_defaults(handler=_handle_signal_advisory)
+
+    signal_advisory_index = subparsers.add_parser(
+        "signal-advisory-index",
+        help="Build a local index of signal advisory artifact folders",
+    )
+    signal_advisory_index.add_argument("--root", help="Signal advisory artifact root directory")
+    signal_advisory_index.add_argument("--output-dir", help="Optional index output directory")
+    signal_advisory_index.add_argument("--include-missing-metadata", action="store_true", help="Index folders missing metadata.json")
+    signal_advisory_index.add_argument("--config", help="Optional config YAML path")
+    signal_advisory_index.set_defaults(handler=_handle_signal_advisory_index)
+
+    signal_advisory_health = subparsers.add_parser(
+        "signal-advisory-health",
+        help="Check local signal advisory artifact file health and safety flags",
+    )
+    signal_advisory_health.add_argument("--index", help="Signal advisory artifact index CSV path")
+    signal_advisory_health.add_argument("--root", help="Signal advisory artifact root directory")
+    signal_advisory_health.add_argument("--output-dir", help="Optional health-check output directory")
+    signal_advisory_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    signal_advisory_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    signal_advisory_health.add_argument("--config", help="Optional config YAML path")
+    signal_advisory_health.set_defaults(handler=_handle_signal_advisory_health)
+
+    signal_advisory_status = subparsers.add_parser(
+        "signal-advisory-status",
+        help="Build a local signal advisory status dashboard",
+    )
+    signal_advisory_status.add_argument("--root", help="Signal advisory artifact root directory")
+    signal_advisory_status.add_argument("--output-dir", help="Optional status output directory")
+    signal_advisory_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
+    signal_advisory_status.add_argument("--config", help="Optional config YAML path")
+    signal_advisory_status.set_defaults(handler=_handle_signal_advisory_status)
 
     current_to_paper = subparsers.add_parser(
         "current-to-paper",
@@ -1139,6 +1174,89 @@ def _handle_signal_advisory(args: argparse.Namespace) -> int:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
     print("No alert message was sent. No automated order placement was invoked.")
+    return 0
+
+
+def _handle_signal_advisory_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"include_missing_metadata": bool(args.include_missing_metadata)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"signal_advisory_index": settings.signal_advisory_index.model_copy(update=updates)}
+    )
+    result = build_signal_advisory_index(settings=settings)
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['signal_advisory_index_report']}")
+    print(f"Index CSV path: {result.artifact_paths['signal_advisory_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    return 0
+
+
+def _handle_signal_advisory_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"signal_advisory_health": settings.signal_advisory_health.model_copy(update=updates)}
+    )
+    result = check_signal_advisory_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['signal_advisory_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_signal_advisory_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"signal_advisory_status": settings.signal_advisory_status.model_copy(update=updates)}
+    )
+    result = run_signal_advisory_status(root=args.root, output_dir=args.output_dir, config=settings)
+    print(f"Status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_signal_run_id: {result.latest_signal_run_id}")
+    print(f"signal_count: {result.signal_count}")
+    print(f"health_status: {result.health_status}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['signal_advisory_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
     return 0
 
 

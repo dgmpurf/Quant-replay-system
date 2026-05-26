@@ -1,0 +1,607 @@
+"""Local-only workflow status for signal advisory artifacts."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
+
+from quant_replay_system.config import Settings, SignalAdvisoryStatusSettings, load_settings
+from quant_replay_system.signal_advisory_health import check_signal_advisory_health
+from quant_replay_system.signal_advisory_index import scan_signal_advisory_artifacts
+
+
+SIGNAL_ADVISORY_STATUS_LIMITATIONS = [
+    "Scans local signal advisory metadata only.",
+    "Does not regenerate candidates, signals, reports, or alert previews.",
+    "Does not send messages, place orders, call brokers, or enable live trading.",
+    "Stage inference is conservative when artifacts are missing or health checks fail.",
+]
+
+STATUS_COLUMNS = [
+    "component",
+    "status",
+    "latest_artifact_id",
+    "report_path",
+    "metadata_path",
+    "signal_count",
+    "issue_count",
+    "warning_count",
+    "error_count",
+    "next_action",
+    "notes",
+]
+
+SUMMARY_COLUMNS = [
+    "workflow_stage",
+    "status",
+    "latest_signal_run_id",
+    "latest_status",
+    "health_status",
+    "signal_count",
+    "demo_signal_count",
+    "watch_count",
+    "review_buy_candidate_count",
+    "review_sell_candidate_count",
+    "blocked_count",
+    "source_candidate_run_id",
+    "selection_profile",
+    "demo_mode",
+    "not_strategy_recommendation",
+    "alert_preview_path",
+    "next_manual_action",
+]
+
+NO_SIGNAL_STAGE = "NO_SIGNAL_ADVISORY_ARTIFACTS"
+READY_STAGE = "SIGNAL_ADVISORY_READY_FOR_REVIEW"
+HEALTH_WARN_STAGE = "SIGNAL_ADVISORY_HEALTH_WARN"
+FAILED_STAGE = "SIGNAL_ADVISORY_FAILED"
+DEMO_VALIDATED_STAGE = "DEMO_SIGNAL_ADVISORY_VALIDATED"
+
+DEMO_VALIDATED_NEXT_ACTION = (
+    "Review local alert preview; do not treat DEMO_ONLY signals as strategy recommendations."
+)
+
+
+@dataclass(frozen=True)
+class SignalAdvisoryStatusPaths:
+    artifact_dir: Path
+    signal_advisory_status_report: Path
+    signal_advisory_status_csv: Path
+    signal_advisory_status_summary: Path
+    metadata: Path
+
+    def as_dict(self) -> dict[str, Path]:
+        return {
+            "artifact_dir": self.artifact_dir,
+            "signal_advisory_status_report": self.signal_advisory_status_report,
+            "signal_advisory_status_csv": self.signal_advisory_status_csv,
+            "signal_advisory_status_summary": self.signal_advisory_status_summary,
+            "metadata": self.metadata,
+        }
+
+
+@dataclass(frozen=True)
+class SignalAdvisoryStatusResult:
+    status_id: str
+    status: str
+    workflow_stage: str
+    latest_signal_run_id: str
+    health_status: str
+    signal_count: int
+    next_manual_action: str
+    status_frame: pd.DataFrame
+    summary_frame: pd.DataFrame
+    artifact_paths: dict[str, Path]
+    warnings: list[str]
+    known_limitations: list[str]
+    audit_metadata: dict[str, Any]
+
+
+def run_signal_advisory_status(
+    *,
+    root: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    config: Settings | SignalAdvisoryStatusSettings | dict[str, Any] | str | Path | None = None,
+) -> SignalAdvisoryStatusResult:
+    """Scan local signal advisory artifacts and write a status dashboard."""
+
+    project_settings, status_settings = _resolve_settings(config)
+    if status_settings.enable_live_trading or status_settings.enable_broker_api:
+        raise ValueError("Signal advisory status cannot enable live trading or broker API access")
+
+    effective_root = Path(root) if root is not None else status_settings.root_dir
+    effective_output_dir = Path(output_dir) if output_dir is not None else status_settings.output_dir
+    index_frame = scan_signal_advisory_artifacts(effective_root)
+    health_settings = project_settings.signal_advisory_health.model_copy(
+        update={
+            "root_dir": effective_root,
+            "write_artifacts": False,
+        }
+    )
+    health_result = check_signal_advisory_health(index_df=index_frame, settings=health_settings)
+    status_frame = build_signal_advisory_status_frame(index_frame, health_result=health_result)
+    summary_frame = summarize_signal_advisory_status(index_frame, health_result=health_result)
+    summary = summary_frame.iloc[0].to_dict()
+    status_id = generate_signal_advisory_status_id(
+        index_frame,
+        health_status=health_result.status,
+        config_version=status_settings.config_version,
+    )
+    paths = resolve_signal_advisory_status_paths(effective_output_dir, status_id)
+    warnings = _status_warnings(index_frame, health_result, str(summary.get("workflow_stage", "")))
+    audit_metadata = {
+        "status_id": status_id,
+        "root_dir": effective_root,
+        "workflow_stage": summary.get("workflow_stage", ""),
+        "status": summary.get("status", ""),
+        "latest_signal_run_id": summary.get("latest_signal_run_id", ""),
+        "health_status": health_result.status if len(index_frame) else "MISSING",
+        "strict": status_settings.strict,
+        "config_version": status_settings.config_version,
+        "live_trading_enabled": False,
+        "broker_api_invoked": False,
+        "message_delivery_enabled": False,
+        "signal_advisory_artifacts_only": True,
+    }
+    result = SignalAdvisoryStatusResult(
+        status_id=status_id,
+        status=str(summary.get("status", "WARN")),
+        workflow_stage=str(summary.get("workflow_stage", NO_SIGNAL_STAGE)),
+        latest_signal_run_id=str(summary.get("latest_signal_run_id", "")),
+        health_status=str(summary.get("health_status", "")),
+        signal_count=_to_int(summary.get("signal_count")) or 0,
+        next_manual_action=str(summary.get("next_manual_action", "")),
+        status_frame=status_frame,
+        summary_frame=summary_frame,
+        artifact_paths=paths.as_dict(),
+        warnings=warnings,
+        known_limitations=SIGNAL_ADVISORY_STATUS_LIMITATIONS,
+        audit_metadata=audit_metadata,
+    )
+    if status_settings.write_artifacts:
+        write_signal_advisory_status_artifacts(result)
+    return result
+
+
+def build_signal_advisory_status_frame(
+    index_frame: pd.DataFrame,
+    *,
+    health_result,
+) -> pd.DataFrame:
+    """Build component-level signal advisory status rows."""
+
+    rows: list[dict[str, Any]] = []
+    latest = _latest_signal_row(index_frame)
+    if latest is None:
+        rows.append(
+            _status_row(
+                component="SIGNAL_ADVISORY",
+                status="MISSING",
+                next_action="Run signal-advisory from a reviewed current-candidates artifact.",
+                notes="No signal advisory artifacts were found.",
+            )
+        )
+    else:
+        rows.append(
+            _status_row(
+                component="SIGNAL_ADVISORY",
+                status=_string_or_empty(latest.get("status")) or "READY",
+                latest_artifact_id=_string_or_empty(latest.get("signal_run_id")),
+                report_path=_string_or_empty(latest.get("report_path")),
+                metadata_path=_string_or_empty(latest.get("metadata_path")),
+                signal_count=_to_int(latest.get("signal_count")) or 0,
+                next_action="Review local alert preview before any human action.",
+                notes="Latest local signal advisory artifact.",
+            )
+        )
+    rows.append(
+        _status_row(
+            component="SIGNAL_ADVISORY_HEALTH",
+            status=health_result.status if len(index_frame) else "MISSING",
+            latest_artifact_id=getattr(health_result, "health_check_id", ""),
+            report_path=str(health_result.artifact_paths.get("signal_advisory_health_report", "")),
+            metadata_path=str(health_result.artifact_paths.get("metadata", "")),
+            issue_count=health_result.issue_count,
+            warning_count=health_result.warning_count,
+            error_count=health_result.error_count,
+            next_action=_health_next_action(health_result.status if len(index_frame) else "MISSING"),
+            notes="Current in-memory health evaluation for signal advisory artifacts.",
+        )
+    )
+    return _finalize_status_frame(pd.DataFrame(rows))
+
+
+def summarize_signal_advisory_status(
+    index_frame: pd.DataFrame,
+    *,
+    health_result,
+) -> pd.DataFrame:
+    """Summarize the latest signal advisory state."""
+
+    latest = _latest_signal_row(index_frame)
+    if latest is None:
+        return pd.DataFrame(
+            [
+                _summary_row(
+                    workflow_stage=NO_SIGNAL_STAGE,
+                    status="WARN",
+                    health_status="MISSING",
+                    next_manual_action="Run signal-advisory from a reviewed current-candidates artifact.",
+                )
+            ]
+        )
+
+    latest_health_status = str(health_result.status)
+    signal_count = _to_int(latest.get("signal_count")) or 0
+    demo_count = _to_int(latest.get("demo_signal_count")) or 0
+    demo_mode = _to_bool(latest.get("demo_mode"))
+    not_strategy = _to_bool(latest.get("not_strategy_recommendation"))
+
+    if latest_health_status == "FAIL":
+        stage = FAILED_STAGE
+        status = "FAIL"
+        next_action = "Repair signal advisory artifacts before using alert previews."
+    elif latest_health_status == "WARN":
+        stage = HEALTH_WARN_STAGE
+        status = "WARN"
+        next_action = "Review signal advisory health warnings before using alert previews."
+    elif signal_count > 0 and (demo_mode or not_strategy) and demo_count == signal_count:
+        stage = DEMO_VALIDATED_STAGE
+        status = "WARN"
+        next_action = DEMO_VALIDATED_NEXT_ACTION
+    else:
+        stage = READY_STAGE
+        status = "PASS"
+        next_action = "Review local alert preview and require manual confirmation before any human action."
+
+    return pd.DataFrame(
+        [
+            _summary_row(
+                workflow_stage=stage,
+                status=status,
+                latest_signal_run_id=_string_or_empty(latest.get("signal_run_id")),
+                latest_status=_string_or_empty(latest.get("status")) or "READY",
+                health_status=latest_health_status,
+                signal_count=signal_count,
+                demo_signal_count=demo_count,
+                watch_count=_to_int(latest.get("watch_count")) or 0,
+                review_buy_candidate_count=_to_int(latest.get("review_buy_candidate_count")) or 0,
+                review_sell_candidate_count=_to_int(latest.get("review_sell_candidate_count")) or 0,
+                blocked_count=_to_int(latest.get("blocked_count")) or 0,
+                source_candidate_run_id=_string_or_empty(latest.get("source_candidate_run_id")),
+                selection_profile=_string_or_empty(latest.get("selection_profile")),
+                demo_mode=demo_mode,
+                not_strategy_recommendation=not_strategy,
+                alert_preview_path=_string_or_empty(latest.get("alert_preview_path")),
+                next_manual_action=next_action,
+            )
+        ]
+    )
+
+
+def resolve_signal_advisory_status_paths(
+    output_dir: str | Path,
+    status_id: str,
+) -> SignalAdvisoryStatusPaths:
+    """Resolve stable signal advisory status artifact paths."""
+
+    artifact_dir = Path(output_dir) / status_id
+    return SignalAdvisoryStatusPaths(
+        artifact_dir=artifact_dir,
+        signal_advisory_status_report=artifact_dir / "signal_advisory_status_report.md",
+        signal_advisory_status_csv=artifact_dir / "signal_advisory_status.csv",
+        signal_advisory_status_summary=artifact_dir / "signal_advisory_status_summary.csv",
+        metadata=artifact_dir / "metadata.json",
+    )
+
+
+def write_signal_advisory_status_artifacts(result: SignalAdvisoryStatusResult) -> dict[str, Path]:
+    """Write signal advisory status CSVs, report, and metadata."""
+
+    paths = SignalAdvisoryStatusPaths(**result.artifact_paths)
+    paths.artifact_dir.mkdir(parents=True, exist_ok=True)
+    _export_dataframe(result.status_frame, paths.signal_advisory_status_csv)
+    _export_dataframe(result.summary_frame, paths.signal_advisory_status_summary)
+    metadata = build_signal_advisory_status_metadata(result, paths)
+    paths.metadata.write_text(json.dumps(_json_safe(metadata), indent=2, sort_keys=True), encoding="utf-8")
+    paths.signal_advisory_status_report.write_text(
+        render_signal_advisory_status_report(result, metadata),
+        encoding="utf-8",
+    )
+    return paths.as_dict()
+
+
+def build_signal_advisory_status_metadata(
+    result: SignalAdvisoryStatusResult,
+    paths: SignalAdvisoryStatusPaths,
+) -> dict[str, Any]:
+    """Build metadata for signal advisory status artifacts."""
+
+    return {
+        "status_id": result.status_id,
+        "created_at": "1970-01-01T00:00:00+00:00",
+        "status": result.status,
+        "workflow_stage": result.workflow_stage,
+        "latest_signal_run_id": result.latest_signal_run_id,
+        "health_status": result.health_status,
+        "signal_count": result.signal_count,
+        "next_manual_action": result.next_manual_action,
+        "config_summary": {
+            "root_dir": str(result.audit_metadata.get("root_dir", "")),
+            "strict": bool(result.audit_metadata.get("strict", False)),
+            "config_version": result.audit_metadata.get("config_version", ""),
+        },
+        "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
+        "warnings": result.warnings,
+        "known_limitations": result.known_limitations,
+        "live_trading_enabled": False,
+        "broker_api_invoked": False,
+        "message_delivery_enabled": False,
+        "message_sent": False,
+        "signal_advisory_artifacts_only": True,
+        "no_live_trading_statement": "No live trading, broker API, order placement, or message delivery was invoked.",
+    }
+
+
+def render_signal_advisory_status_report(
+    result: SignalAdvisoryStatusResult,
+    metadata: dict[str, Any] | None = None,
+) -> str:
+    """Render signal advisory status markdown."""
+
+    _ = metadata
+    lines = [
+        f"# Signal Advisory Status: {result.status_id}",
+        "",
+        "No live trading, broker API, order placement, or message delivery was invoked. This status dashboard summarizes local signal advisory artifacts only.",
+        "",
+        "## Summary",
+        "",
+        _markdown_table(result.summary_frame, SUMMARY_COLUMNS),
+        "",
+        "## Components",
+        "",
+        _markdown_table(result.status_frame, STATUS_COLUMNS),
+        "",
+        "## Warnings",
+        "",
+        _warnings_section(result.warnings),
+        "",
+        "## Known MVP Limitations",
+        "",
+        "\n".join(f"- {item}" for item in result.known_limitations),
+        "",
+    ]
+    return "\n".join(str(line) for line in lines)
+
+
+def generate_signal_advisory_status_id(
+    index_frame: pd.DataFrame,
+    *,
+    health_status: str,
+    config_version: str,
+) -> str:
+    """Generate a deterministic status id."""
+
+    latest = _latest_signal_row(index_frame)
+    payload = {
+        "latest_signal_run_id": "" if latest is None else _string_or_empty(latest.get("signal_run_id")),
+        "artifact_count": len(index_frame),
+        "health_status": health_status,
+        "config_version": config_version,
+    }
+    return _hash_payload(payload, length=12)
+
+
+def _latest_signal_row(index_frame: pd.DataFrame) -> dict[str, Any] | None:
+    if index_frame.empty:
+        return None
+    frame = index_frame.copy(deep=True)
+    for column in ["created_at", "signal_run_id"]:
+        if column not in frame.columns:
+            frame[column] = ""
+    frame["_created_sort"] = frame["created_at"].astype(str)
+    return frame.sort_values(["_created_sort", "signal_run_id"], na_position="last").iloc[-1].to_dict()
+
+
+def _health_next_action(status: str) -> str:
+    if status == "FAIL":
+        return "Repair signal advisory health errors."
+    if status == "WARN":
+        return "Review signal advisory health warnings."
+    if status == "PASS":
+        return "Review local alert preview."
+    return "Run signal-advisory-health."
+
+
+def _status_warnings(index_frame: pd.DataFrame, health_result, workflow_stage: str) -> list[str]:
+    warnings: list[str] = []
+    if index_frame.empty:
+        warnings.append("No signal advisory artifacts were found.")
+    if workflow_stage == DEMO_VALIDATED_STAGE:
+        warnings.append("Latest signal advisory artifact is DEMO_ONLY; it is workflow validation only and not a strategy recommendation.")
+    for warning in getattr(health_result, "warnings", []) or []:
+        warnings.append(f"Health warning: {warning}")
+    return warnings
+
+
+def _status_row(**values: Any) -> dict[str, Any]:
+    row = {column: "" for column in STATUS_COLUMNS}
+    row.update(values)
+    return row
+
+
+def _summary_row(**values: Any) -> dict[str, Any]:
+    row = {column: "" for column in SUMMARY_COLUMNS}
+    row.update(values)
+    return row
+
+
+def _finalize_status_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    status = frame.copy(deep=True)
+    for column in STATUS_COLUMNS:
+        if column not in status.columns:
+            status[column] = ""
+    if status.empty:
+        return status[STATUS_COLUMNS]
+    return status[STATUS_COLUMNS].reset_index(drop=True)
+
+
+def _resolve_settings(
+    config: Settings | SignalAdvisoryStatusSettings | dict[str, Any] | str | Path | None,
+) -> tuple[Settings, SignalAdvisoryStatusSettings]:
+    if config is None:
+        project = load_settings(Path("config/default.yaml"))
+        return project, project.signal_advisory_status
+    if isinstance(config, Settings):
+        return config, config.signal_advisory_status
+    if isinstance(config, SignalAdvisoryStatusSettings):
+        project = load_settings(Path("config/default.yaml"))
+        return project.model_copy(update={"signal_advisory_status": config}), config
+    if isinstance(config, dict):
+        project = load_settings(Path("config/default.yaml"))
+        payload = dict(project.signal_advisory_status.model_dump())
+        payload.update(config)
+        status_settings = SignalAdvisoryStatusSettings(**payload)
+        return project.model_copy(update={"signal_advisory_status": status_settings}), status_settings
+    project = load_settings(Path(config))
+    return project, project.signal_advisory_status
+
+
+def _to_int(value: Any) -> int | None:
+    if not _present(value):
+        return None
+    try:
+        return int(float(str(value)))
+    except (TypeError, ValueError):
+        return None
+
+
+def _to_bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    text = _string_or_empty(value).strip().lower()
+    return text in {"true", "1", "yes", "y"}
+
+
+def _string_or_empty(value: Any) -> str:
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    return str(value)
+
+
+def _present(value: Any) -> bool:
+    return _string_or_empty(value).strip() != ""
+
+
+def _hash_payload(payload: dict[str, Any], length: int) -> str:
+    encoded = json.dumps(_json_safe(payload), sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:length]
+
+
+def _export_dataframe(frame: pd.DataFrame, path: Path) -> None:
+    export = _sanitize_dataframe_for_export(frame)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    export.to_csv(path, index=False)
+
+
+def _sanitize_dataframe_for_export(frame: pd.DataFrame) -> pd.DataFrame:
+    export = frame.copy(deep=True)
+    for column in export.columns:
+        if pd.api.types.is_datetime64_any_dtype(export[column]):
+            export[column] = export[column].dt.strftime("%Y-%m-%d %H:%M:%S")
+        elif export[column].dtype == "object":
+            export[column] = export[column].map(_cell_to_export_value)
+    return export
+
+
+def _cell_to_export_value(value: Any) -> Any:
+    if isinstance(value, (dict, list, tuple)):
+        return json.dumps(_json_safe(value), sort_keys=True)
+    if isinstance(value, (pd.Timestamp, Path)):
+        return str(value)
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    return value
+
+
+def _markdown_table(frame: pd.DataFrame, columns: list[str], max_rows: int = 50) -> str:
+    available = [column for column in columns if column in frame.columns]
+    if frame.empty or not available:
+        return "_No rows._"
+    table = frame[available].head(max_rows).copy()
+    rows = [
+        "| " + " | ".join(available) + " |",
+        "| " + " | ".join("---" for _ in available) + " |",
+    ]
+    for record in table.to_dict("records"):
+        rows.append("| " + " | ".join(_format_markdown_value(record[column]) for column in available) + " |")
+    return "\n".join(rows)
+
+
+def _warnings_section(warnings: list[str]) -> str:
+    if not warnings:
+        return "- None"
+    return "\n".join(f"- {warning}" for warning in warnings)
+
+
+def _format_markdown_value(value: Any) -> str:
+    if isinstance(value, float):
+        if pd.isna(value):
+            return ""
+        return f"{value:.6f}"
+    if isinstance(value, (dict, list, tuple)):
+        return json.dumps(_json_safe(value), sort_keys=True).replace("|", "\\|")
+    if isinstance(value, (pd.Timestamp, Path)):
+        return str(value)
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    return str(value).replace("|", "\\|").replace("\n", " ")
+
+
+def _json_safe(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, pd.Timestamp):
+        if pd.isna(value):
+            return None
+        return value.isoformat()
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, (np.integer,)):
+        return int(value)
+    if isinstance(value, (np.floating,)):
+        if np.isnan(value):
+            return None
+        return float(value)
+    if isinstance(value, float) and np.isnan(value):
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+    return value

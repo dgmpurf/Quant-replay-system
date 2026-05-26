@@ -118,6 +118,60 @@ python -m quant_replay_system.cli signal-advisory --candidates outputs\reports\c
 
 The CLI prints the signal run id, signal count, advisory action counts, artifact paths, and local-only safety statements.
 
+## Index, Health, And Status
+
+Use `signal-advisory-index` to discover local advisory runs:
+
+```cmd
+python -m quant_replay_system.cli signal-advisory-index
+```
+
+The index scans `outputs/reports/signals/` and writes:
+
+```text
+outputs/reports/signals/index/
+  signal_advisory_index.csv
+  signal_advisory_index_report.md
+  metadata.json
+```
+
+Use `signal-advisory-health` to check file completeness and safety boundaries:
+
+```cmd
+python -m quant_replay_system.cli signal-advisory-health
+```
+
+Health checks verify:
+
+- `metadata.json` is readable,
+- `signals.csv` exists and has the required signal contract columns,
+- report and alert preview markdown exist,
+- symbols such as `000001` keep leading zeros,
+- `requires_manual_confirmation=true`,
+- `auto_order_allowed=false`,
+- `no_live_trading=true`,
+- `no_broker_api=true`,
+- demo/not-strategy signals remain `DEMO_ONLY` or `WATCH`,
+- message delivery is not detected.
+
+Health artifacts are written under:
+
+```text
+outputs/reports/signals/health/<health_id>/
+  signal_advisory_health_report.md
+  signal_advisory_health_issues.csv
+  signal_advisory_health_summary.csv
+  metadata.json
+```
+
+Use `signal-advisory-status` to summarize the latest advisory state:
+
+```cmd
+python -m quant_replay_system.cli signal-advisory-status
+```
+
+The status view reports the latest signal run, health status, action counts, workflow stage, and next manual action. For demo-only runs, the expected stage is `DEMO_SIGNAL_ADVISORY_VALIDATED` and the next action reminds the user to review the local alert preview without treating `DEMO_ONLY` signals as strategy recommendations.
+
 ## Future Alert Delivery
 
 Future SMS, email, Telegram, WeChat, or webhook delivery should consume the generated signal artifacts. Delivery must not change trading state, approve paper trades, create orders, or bypass manual confirmation.
@@ -139,3 +193,4 @@ Any future delivery workflow should keep a separate audit trail for:
 - Does not integrate with brokers.
 - Does not create positions, fills, or paper approvals.
 - Non-demo advisory labels are structure for future review workflows and still require manual confirmation.
+- Index, health, and status views inspect local artifacts only; they do not send alerts or repair broken runs.

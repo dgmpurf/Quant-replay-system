@@ -97,6 +97,39 @@ class SignalAdvisorySettings(BaseModel):
     auto_order_allowed: Literal[False] = False
 
 
+class SignalAdvisoryIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/signals")
+    output_dir: Path = Path("outputs/reports/signals/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class SignalAdvisoryHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/signals/index/signal_advisory_index.csv")
+    root_dir: Path = Path("outputs/reports/signals")
+    output_dir: Path = Path("outputs/reports/signals/health")
+    strict: bool = False
+    require_alert_preview: bool = True
+    missing_alert_preview_severity: Literal["WARN", "ERROR"] = "WARN"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class SignalAdvisoryStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/signals")
+    output_dir: Path = Path("outputs/reports/signals/status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class CurrentCandidateArtifactIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/current_candidates")
     output_dir: Path = Path("outputs/reports/current_candidates/index")
@@ -869,6 +902,9 @@ class Settings(BaseModel):
     candidate_selection: CandidateSelectionSettings = Field(default_factory=CandidateSelectionSettings)
     current_candidates: CurrentCandidateSettings = Field(default_factory=CurrentCandidateSettings)
     signal_advisory: SignalAdvisorySettings = Field(default_factory=SignalAdvisorySettings)
+    signal_advisory_index: SignalAdvisoryIndexSettings = Field(default_factory=SignalAdvisoryIndexSettings)
+    signal_advisory_health: SignalAdvisoryHealthSettings = Field(default_factory=SignalAdvisoryHealthSettings)
+    signal_advisory_status: SignalAdvisoryStatusSettings = Field(default_factory=SignalAdvisoryStatusSettings)
     current_candidate_artifact_index: CurrentCandidateArtifactIndexSettings = Field(default_factory=CurrentCandidateArtifactIndexSettings)
     current_candidate_artifact_health: CurrentCandidateArtifactHealthSettings = Field(default_factory=CurrentCandidateArtifactHealthSettings)
     current_to_paper_handoff: CurrentToPaperHandoffSettings = Field(default_factory=CurrentToPaperHandoffSettings)
