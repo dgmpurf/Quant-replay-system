@@ -17,7 +17,7 @@ Given a local snapshot and an as-of date, which symbols pass the current researc
 The output is designed to feed the manual paper trading workflow:
 
 ```text
-local snapshot -> current-candidates -> candidates.csv -> paper-review-decisions -> paper-daily
+local snapshot -> current-candidates -> candidates.csv -> signal-advisory -> human review / paper workflow
 ```
 
 ## Relationship To Replay
@@ -54,6 +54,18 @@ The demo profile is not a strategy recommendation. Demo candidates are marked in
 - `selection_reason=DEMO_PROFILE_SELECTED_FOR_WORKFLOW_VALIDATION` when the row did not pass default thresholds
 
 Demo selection does not change score calculation and does not select `BLOCKED` rows.
+
+## Signal Advisory Handoff
+
+Use `signal-advisory` when a current-candidates artifact should be converted into local advisory signals and alert preview text before any human action:
+
+```cmd
+python -m quant_replay_system.cli signal-advisory --candidates outputs\reports\current_candidates\example\candidates.csv --alert-preview
+```
+
+The advisory output is local-only. It writes `signals.csv`, `signal_alert_preview.md`, `signal_advisory_report.md`, and `metadata.json` under `outputs/reports/signals/<signal_run_id>/`.
+
+Signals are not orders and do not approve paper trades. Demo candidates remain `DEMO_ONLY` workflow validation artifacts, keep `not_strategy_recommendation=true`, require manual confirmation, and set `auto_order_allowed=false`.
 
 ## Snapshot Quality Preflight
 
@@ -206,5 +218,6 @@ python -m quant_replay_system.cli paper-daily --date 2024-05-20 --reviewed-decis
 - If a market symbol is absent from the universe snapshot, the point-in-time factor dataset will be empty for that symbol. ETF workflows need ETF universe coverage, not stock-only universe coverage.
 - A reviewed ETF overlay can add ETF universe coverage, but the project does not infer or auto-approve ETF rows.
 - The `demo` selection profile is only for local artifact/workflow validation with tiny datasets; it is not a strategy recommendation and does not change scoring formulas.
+- `signal-advisory` can render alert previews from demo candidates, but those previews are workflow validation only and are not sent as messages.
 - `market-update-handoff` can include `WARN_ACCEPT` provisional rows for local validation, but those rows remain provisional and should not be treated as strategy recommendations.
 - Candidate scoring remains explainable MVP scoring, not machine learning.

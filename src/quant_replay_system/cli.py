@@ -72,6 +72,7 @@ from quant_replay_system.paper_review import apply_paper_review_updates
 from quant_replay_system.paper_review_template_health import check_review_template_health
 from quant_replay_system.paper_workflow_status import run_paper_workflow_status
 from quant_replay_system.replay_run import run_replay
+from quant_replay_system.signal_advisory import build_signal_advisory_from_candidates
 from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
 from quant_replay_system.snapshot_quality_preflight import SnapshotQualityPreflightError
 from quant_replay_system.universe_overlay import run_universe_overlay
@@ -209,6 +210,22 @@ def build_parser() -> argparse.ArgumentParser:
     current_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
     current_health.add_argument("--config", help="Optional config YAML path")
     current_health.set_defaults(handler=_handle_current_candidates_health)
+
+    signal_advisory = subparsers.add_parser(
+        "signal-advisory",
+        help="Build local advisory signals and alert previews from current-candidates artifacts",
+    )
+    signal_advisory.add_argument("--candidates", required=True, help="Current-candidates candidates.csv path")
+    signal_advisory.add_argument("--candidate-report", help="Optional current_candidates_report.md path")
+    signal_advisory.add_argument("--metadata", help="Optional current-candidates metadata.json path")
+    signal_advisory.add_argument("--output-dir", help="Optional signal advisory output directory")
+    signal_advisory.add_argument(
+        "--alert-preview",
+        action="store_true",
+        help="Print local alert preview artifact path. No message is sent.",
+    )
+    signal_advisory.add_argument("--config", help="Optional config YAML path")
+    signal_advisory.set_defaults(handler=_handle_signal_advisory)
 
     current_to_paper = subparsers.add_parser(
         "current-to-paper",
@@ -1089,6 +1106,39 @@ def _handle_current_candidates_health(args: argparse.Namespace) -> int:
         return 1
     if result.status == "WARN" and args.strict and not args.allow_warn:
         return 1
+    return 0
+
+
+def _handle_signal_advisory(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "signal_advisory": settings.signal_advisory.model_copy(update={"output_dir": Path(args.output_dir)})
+            }
+        )
+    result = build_signal_advisory_from_candidates(
+        args.candidates,
+        candidate_report_path=args.candidate_report,
+        metadata_path=args.metadata,
+        settings=settings,
+    )
+    print(f"signal_run_id: {result.signal_run_id}")
+    print(f"source_candidate_run_id: {result.source_candidate_run_id}")
+    print(f"signal_count: {result.signal_count}")
+    print("advisory_action_counts:")
+    for action, count in result.advisory_action_counts.items():
+        if count:
+            print(f"  {action}: {count}")
+    print(f"signals_path: {result.artifact_paths['signals']}")
+    print(f"report_path: {result.artifact_paths['signal_advisory_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    if args.alert_preview:
+        print(f"alert_preview_path: {result.artifact_paths['signal_alert_preview']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    print("No alert message was sent. No automated order placement was invoked.")
     return 0
 
 

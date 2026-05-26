@@ -65,6 +65,18 @@ current_candidates:
   enable_live_trading: false
   enable_broker_api: false
 
+signal_advisory:
+  output_dir: outputs/reports/signals
+  default_validity_days: 1
+  medium_confidence_score: 60
+  high_confidence_score: 80
+  config_version: mvp
+  write_artifacts: true
+  enable_alert_delivery: false
+  enable_live_trading: false
+  enable_broker_api: false
+  auto_order_allowed: false
+
 current_candidate_artifact_index:
   root_dir: outputs/reports/current_candidates
   output_dir: outputs/reports/current_candidates/index

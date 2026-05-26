@@ -20,6 +20,7 @@ Included now:
 - Data preparation artifact index and health check for pipeline, quality, snapshot, and current-candidate outputs.
 - Data preparation workflow status dashboard for the latest local data-prep stage and next manual action.
 - Current/as-of-date candidate generation from local snapshots for paper-trading review.
+- Signal advisory contract and local alert preview artifacts from current-candidates outputs.
 - Current candidate artifact index and health check for local candidate run navigation.
 - Current-candidate to paper-trading handoff helper for healthy local candidate artifacts.
 - Current-candidate to paper-review handoff helper for manual review update templates.
@@ -71,6 +72,8 @@ For quick, full, E2E, and duration-profiled test commands, see [docs/testing_str
 
 For the standard reusable Codex prompt structure for future tasks, see [docs/CODEX_PROMPT_STANDARD.md](docs/CODEX_PROMPT_STANDARD.md).
 
+For the product vision around research, signal advisory, human-confirmed execution assistance, later-stage automation, and later-stage international expansion, see [docs/product_vision.md](docs/product_vision.md).
+
 For local CSV ingestion, validation, and processed snapshot manifests, see [docs/data_ingestion.md](docs/data_ingestion.md).
 
 For processed data quality summaries before replay, see [docs/data_quality.md](docs/data_quality.md).
@@ -84,6 +87,8 @@ For CLI flags that enable snapshot preflight on replay-like workflows, see [docs
 For current/as-of-date candidate generation from local snapshots, see [docs/current_candidate_generation.md](docs/current_candidate_generation.md).
 
 `current-candidates --selection-profile demo` is available for tiny local artifact/workflow validation only. The default selection profile and research thresholds remain unchanged, and demo candidates are marked as not strategy recommendations.
+
+For turning current-candidates artifacts into local advisory signals and alert previews without message delivery or execution, see [docs/signal_advisory.md](docs/signal_advisory.md).
 
 For indexing generated current-candidate runs, see [docs/current_candidate_artifact_index.md](docs/current_candidate_artifact_index.md).
 
@@ -216,6 +221,8 @@ For the v0.75.0 9-symbol policy-aware export to WATCH_ONLY paper workflow valida
 For the v0.76.0 synthetic fill reconciliation diagnostics and paper workflow status actionability checkpoint summary, see [docs/release_checkpoint_v0.76.0.md](docs/release_checkpoint_v0.76.0.md).
 
 For the v0.77.0 explicit diagnostic reconciliation artifact scope support checkpoint summary, see [docs/release_checkpoint_v0.77.0.md](docs/release_checkpoint_v0.77.0.md).
+
+For the v0.78.0 Signal Advisory Contract and Alert Preview checkpoint summary, see [docs/release_checkpoint_v0.78.0.md](docs/release_checkpoint_v0.78.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 

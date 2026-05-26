@@ -9,10 +9,12 @@ It is local-only. It does not connect to brokers, place orders, automate executi
 The handoff helper connects two existing workflows:
 
 ```text
-current-candidates -> current-candidates-index -> current-candidates-health -> current-to-paper -> paper-review-decisions
+current-candidates -> signal-advisory -> current-to-paper -> paper-review-decisions
 ```
 
 It makes the selected current-candidate source explicit, records handoff metadata, and writes a small audit report before manual review and fills continue.
+
+`signal-advisory` is an optional local advisory layer before paper handoff. It renders auditable signals and alert preview text from `candidates.csv`, but it does not send messages, approve paper trades, create orders, or call brokers.
 
 ## Direct Candidates Path Flow
 
@@ -161,4 +163,5 @@ python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs\repo
 - Direct `candidates.csv` mode skips health checks by default.
 - Manual review is still required before fills should be entered.
 - Demo current-candidate files can be handed off for local workflow validation, but they remain explicitly marked as demo/not strategy recommendations.
+- Signal advisory previews can be generated before handoff, but they remain advisory artifacts and do not replace paper review.
 - No live trading or broker API integration is implemented.

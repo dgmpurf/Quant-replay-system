@@ -84,6 +84,19 @@ class CurrentCandidateSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class SignalAdvisorySettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/signals")
+    default_validity_days: int = Field(default=1, ge=0)
+    medium_confidence_score: float = Field(default=60.0, ge=0, le=100)
+    high_confidence_score: float = Field(default=80.0, ge=0, le=100)
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_alert_delivery: Literal[False] = False
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+    auto_order_allowed: Literal[False] = False
+
+
 class CurrentCandidateArtifactIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/current_candidates")
     output_dir: Path = Path("outputs/reports/current_candidates/index")
@@ -855,6 +868,7 @@ class Settings(BaseModel):
     score_engine: ScoreEngineSettings = Field(default_factory=ScoreEngineSettings)
     candidate_selection: CandidateSelectionSettings = Field(default_factory=CandidateSelectionSettings)
     current_candidates: CurrentCandidateSettings = Field(default_factory=CurrentCandidateSettings)
+    signal_advisory: SignalAdvisorySettings = Field(default_factory=SignalAdvisorySettings)
     current_candidate_artifact_index: CurrentCandidateArtifactIndexSettings = Field(default_factory=CurrentCandidateArtifactIndexSettings)
     current_candidate_artifact_health: CurrentCandidateArtifactHealthSettings = Field(default_factory=CurrentCandidateArtifactHealthSettings)
     current_to_paper_handoff: CurrentToPaperHandoffSettings = Field(default_factory=CurrentToPaperHandoffSettings)
