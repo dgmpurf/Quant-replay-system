@@ -67,6 +67,14 @@ The advisory output is local-only. It writes `signals.csv`, `signal_alert_previe
 
 Signals are not orders and do not approve paper trades. Demo candidates remain `DEMO_ONLY` workflow validation artifacts, keep `not_strategy_recommendation=true`, require manual confirmation, and set `auto_order_allowed=false`.
 
+For a focused review of one symbol from a generated `candidates.csv`, use `single-symbol-advisory`:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory --symbol 000001 --candidates outputs\reports\current_candidates\example\candidates.csv --alert-preview
+```
+
+The single-symbol advisory report uses local artifacts only, preserves leading-zero symbols, returns `NOT_FOUND` instead of inventing recommendations, and keeps demo output as workflow validation rather than strategy advice.
+
 ## Snapshot Quality Preflight
 
 If `snapshot_manifest_path` is supplied, snapshot preflight runs by default according to current-candidate settings:

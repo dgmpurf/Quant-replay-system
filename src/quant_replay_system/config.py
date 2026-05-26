@@ -130,6 +130,17 @@ class SignalAdvisoryStatusSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class SingleSymbolAdvisorySettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/single_symbol_advisory")
+    default_validity_days: int = Field(default=1, ge=0)
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_alert_delivery: Literal[False] = False
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+    auto_order_allowed: Literal[False] = False
+
+
 class CurrentCandidateArtifactIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/current_candidates")
     output_dir: Path = Path("outputs/reports/current_candidates/index")
@@ -906,6 +917,7 @@ class Settings(BaseModel):
     signal_advisory_index: SignalAdvisoryIndexSettings = Field(default_factory=SignalAdvisoryIndexSettings)
     signal_advisory_health: SignalAdvisoryHealthSettings = Field(default_factory=SignalAdvisoryHealthSettings)
     signal_advisory_status: SignalAdvisoryStatusSettings = Field(default_factory=SignalAdvisoryStatusSettings)
+    single_symbol_advisory: SingleSymbolAdvisorySettings = Field(default_factory=SingleSymbolAdvisorySettings)
     current_candidate_artifact_index: CurrentCandidateArtifactIndexSettings = Field(default_factory=CurrentCandidateArtifactIndexSettings)
     current_candidate_artifact_health: CurrentCandidateArtifactHealthSettings = Field(default_factory=CurrentCandidateArtifactHealthSettings)
     current_to_paper_handoff: CurrentToPaperHandoffSettings = Field(default_factory=CurrentToPaperHandoffSettings)

@@ -94,6 +94,8 @@ To discover, check, and summarize local signal advisory artifacts before any fut
 
 `research-status` includes the latest `signal-advisory-status` as advisory context, including signal counts, demo-only state, health status, and local alert-preview path, while preserving later paper workflow priority; see [docs/local_research_dashboard.md#signal-advisory-status](docs/local_research_dashboard.md#signal-advisory-status).
 
+For asking a focused local question about one symbol from existing candidate or signal artifacts, use `single-symbol-advisory`; see [docs/single_symbol_advisory.md](docs/single_symbol_advisory.md).
+
 For indexing generated current-candidate runs, see [docs/current_candidate_artifact_index.md](docs/current_candidate_artifact_index.md).
 
 For checking generated current-candidate artifact health, see [docs/current_candidate_artifact_health.md](docs/current_candidate_artifact_health.md).
@@ -229,6 +231,8 @@ For the v0.77.0 explicit diagnostic reconciliation artifact scope support checkp
 For the v0.78.0 Signal Advisory Contract and Alert Preview checkpoint summary, see [docs/release_checkpoint_v0.78.0.md](docs/release_checkpoint_v0.78.0.md).
 
 For the v0.80.0 Signal Advisory Artifact Views and Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.80.0.md](docs/release_checkpoint_v0.80.0.md).
+
+For the v0.81.0 Single-Symbol Advisory Review checkpoint summary, see [docs/release_checkpoint_v0.81.0.md](docs/release_checkpoint_v0.81.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -411,6 +415,10 @@ See [docs/release_checkpoint_v0.77.0.md](docs/release_checkpoint_v0.77.0.md) for
 `v0.80.0` marks the signal advisory artifact views and `research-status` integration checkpoint, covering advisory index/health/status, dashboard signal context fields, local alert-preview visibility, demo-only actionability, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v0.80.0.md](docs/release_checkpoint_v0.80.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.81.0` marks the Single-Symbol Advisory Review checkpoint, covering focused one-symbol lookup from local artifacts, leading-zero symbol preservation, `DEMO_ONLY` / `NOT_FOUND` / `BLOCKED` / `NO_ACTION` behavior, local alert preview, and manual-confirmation safety flags.
+
+See [docs/release_checkpoint_v0.81.0.md](docs/release_checkpoint_v0.81.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

@@ -118,6 +118,18 @@ python -m quant_replay_system.cli signal-advisory --candidates outputs\reports\c
 
 The CLI prints the signal run id, signal count, advisory action counts, artifact paths, and local-only safety statements.
 
+## Single-Symbol Advisory Review
+
+Use `single-symbol-advisory` when the user wants a focused local review of one symbol from existing candidate, scored, or signal artifacts:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory --symbol 000001 --candidates outputs\reports\current_candidates\example\candidates.csv --alert-preview
+```
+
+The single-symbol workflow preserves symbol strings such as `000001`, returns `NOT_FOUND` when the symbol is absent, and writes report/CSV/JSON/metadata artifacts under `outputs/reports/single_symbol_advisory/<advisory_run_id>/`.
+
+It is still advisory only. Demo rows remain `DEMO_ONLY`, blocked rows remain `BLOCKED`, manual confirmation is required, `auto_order_allowed=false`, and no message is sent.
+
 ## Index, Health, And Status
 
 Use `signal-advisory-index` to discover local advisory runs:

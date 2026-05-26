@@ -211,6 +211,8 @@ Safety/actionability semantics around paper fills and reconciliation diagnostics
 
 Signal advisory, alert-preview, and `research-status` advisory-integration milestones should receive checkpoint documents before adding real delivery channels or automation, because they define the boundary between research signals, human confirmation, message previews, dashboard actionability, and any future execution assistant.
 
+Single-symbol advisory and other product-layer advisory milestones should also receive checkpoint documents before adding delivery channels, conversational review, non-demo action semantics, or automation, because they define how user-facing watch/buy-review/sell-review questions remain advisory rather than executable.
+
 ## 6. Pro Extended Usage Rules
 
 Pro Extended is not needed for:

@@ -107,6 +107,16 @@ signal_advisory_status:
   enable_live_trading: false
   enable_broker_api: false
 
+single_symbol_advisory:
+  output_dir: outputs/reports/single_symbol_advisory
+  default_validity_days: 1
+  config_version: mvp
+  write_artifacts: true
+  enable_alert_delivery: false
+  enable_live_trading: false
+  enable_broker_api: false
+  auto_order_allowed: false
+
 current_candidate_artifact_index:
   root_dir: outputs/reports/current_candidates
   output_dir: outputs/reports/current_candidates/index

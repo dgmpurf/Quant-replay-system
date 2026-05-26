@@ -76,6 +76,7 @@ from quant_replay_system.signal_advisory import build_signal_advisory_from_candi
 from quant_replay_system.signal_advisory_health import check_signal_advisory_health
 from quant_replay_system.signal_advisory_index import build_signal_advisory_index
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
+from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory
 from quant_replay_system.snapshot_quality_gate import run_snapshot_quality_gate
 from quant_replay_system.snapshot_quality_preflight import SnapshotQualityPreflightError
 from quant_replay_system.universe_overlay import run_universe_overlay
@@ -261,6 +262,27 @@ def build_parser() -> argparse.ArgumentParser:
     signal_advisory_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
     signal_advisory_status.add_argument("--config", help="Optional config YAML path")
     signal_advisory_status.set_defaults(handler=_handle_signal_advisory_status)
+
+    single_symbol_advisory = subparsers.add_parser(
+        "single-symbol-advisory",
+        help="Build a local advisory review for one symbol from existing artifacts",
+    )
+    single_symbol_advisory.add_argument("--symbol", required=True, help="Symbol to review; preserved as text")
+    single_symbol_advisory.add_argument("--candidates", help="Optional current-candidates candidates.csv path")
+    single_symbol_advisory.add_argument("--scored-dataset", help="Optional scored_dataset.csv path")
+    single_symbol_advisory.add_argument("--factor-dataset", help="Optional factor_dataset.csv path")
+    single_symbol_advisory.add_argument("--signals", help="Optional signal advisory signals.csv path")
+    single_symbol_advisory.add_argument("--metadata", help="Optional source metadata.json path")
+    single_symbol_advisory.add_argument("--snapshot-manifest", help="Optional snapshot manifest path")
+    single_symbol_advisory.add_argument("--date", help="Optional advisory date")
+    single_symbol_advisory.add_argument("--output-dir", help="Optional single-symbol advisory output directory")
+    single_symbol_advisory.add_argument(
+        "--alert-preview",
+        action="store_true",
+        help="Write a local alert preview markdown file. No message is sent.",
+    )
+    single_symbol_advisory.add_argument("--config", help="Optional config YAML path")
+    single_symbol_advisory.set_defaults(handler=_handle_single_symbol_advisory)
 
     current_to_paper = subparsers.add_parser(
         "current-to-paper",
@@ -1257,6 +1279,55 @@ def _handle_signal_advisory_status(args: argparse.Namespace) -> int:
         return 1
     if result.status == "WARN" and args.strict:
         return 1
+    return 0
+
+
+def _handle_single_symbol_advisory(args: argparse.Namespace) -> int:
+    if not args.candidates and not args.scored_dataset and not args.signals:
+        raise ValueError("Provide at least one of --candidates, --scored-dataset, or --signals")
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "single_symbol_advisory": settings.single_symbol_advisory.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = build_single_symbol_advisory(
+        args.symbol,
+        candidates_path=args.candidates,
+        scored_dataset_path=args.scored_dataset,
+        factor_dataset_path=args.factor_dataset,
+        signals_path=args.signals,
+        metadata_path=args.metadata,
+        snapshot_manifest_path=args.snapshot_manifest,
+        advisory_date=args.date,
+        alert_preview=bool(args.alert_preview),
+        settings=settings,
+    )
+    print(f"advisory_run_id: {result.advisory_run_id}")
+    print(f"status: {result.status}")
+    print(f"symbol: {result.symbol}")
+    print(f"advisory_action: {result.advisory_action}")
+    print(f"final_score: {'' if result.final_score is None else result.final_score}")
+    print(f"source_candidate_run_id: {result.source_candidate_run_id}")
+    print(f"source_artifact_path: {result.source_artifact_path or ''}")
+    print(f"report_path: {result.artifact_paths['single_symbol_advisory_report']}")
+    print(f"csv_path: {result.artifact_paths['single_symbol_advisory_csv']}")
+    print(f"json_path: {result.artifact_paths['single_symbol_advisory_json']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    if args.alert_preview and "alert_preview" in result.artifact_paths:
+        print(f"alert_preview_path: {result.artifact_paths['alert_preview']}")
+    print(f"requires_manual_confirmation: {result.requires_manual_confirmation}")
+    print(f"auto_order_allowed: {result.auto_order_allowed}")
+    print(f"no_live_trading: {result.no_live_trading}")
+    print(f"no_broker_api: {result.no_broker_api}")
+    print(f"no_message_sent: {result.no_message_sent}")
+    for issue in result.issues:
+        print(f"{issue.severity}: {issue.category}: {issue.message}")
+    print("No live trading or broker API was invoked.")
+    print("No alert message was sent. No automated order placement was invoked.")
     return 0
 
 

@@ -47,9 +47,9 @@ Any future automation must remain gated by explicit configuration, safety tests,
 
 International market expansion is also later-stage work. The current data contracts, cache policy, and quality gates are built around the local China A-share research workflow. New markets should be added through explicit source policy, schema, calendar, symbol, and quality-gate reviews.
 
-## Future Single-Symbol Review
+## Single-Symbol Review
 
-A future advisory feature may let the user input a single symbol and ask whether to buy, sell, hold, watch, or ignore it.
+The single-symbol advisory workflow lets the user input one symbol and ask whether to buy, sell, hold, watch, or ignore it using existing local artifacts.
 
 That feature should return:
 
@@ -61,4 +61,6 @@ That feature should return:
 - risk notes,
 - manual confirmation requirement.
 
-It should still avoid automatic orders and should not present demo or unvalidated signals as strategy recommendations.
+The v0.1 implementation is local artifact only. It does not fetch data, send messages, approve paper trades, or connect to brokers. Demo or unvalidated signals are not presented as strategy recommendations, and every output keeps manual confirmation and no-auto-order safety fields.
+
+Future versions may add conversational natural-language review, richer risk context, and human-approved alert delivery while preserving the same safety boundary.
