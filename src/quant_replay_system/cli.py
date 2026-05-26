@@ -78,6 +78,9 @@ from quant_replay_system.signal_advisory_index import build_signal_advisory_inde
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
 from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory
 from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory_answer
+from quant_replay_system.single_symbol_advisory_answer_health import check_single_symbol_advisory_answer_health
+from quant_replay_system.single_symbol_advisory_answer_index import build_single_symbol_advisory_answer_index
+from quant_replay_system.single_symbol_advisory_answer_status import run_single_symbol_advisory_answer_status
 from quant_replay_system.single_symbol_advisory_health import check_single_symbol_advisory_health
 from quant_replay_system.single_symbol_advisory_index import build_single_symbol_advisory_index
 from quant_replay_system.single_symbol_advisory_status import run_single_symbol_advisory_status
@@ -336,6 +339,42 @@ def build_parser() -> argparse.ArgumentParser:
     single_symbol_advisory_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
     single_symbol_advisory_status.add_argument("--config", help="Optional config YAML path")
     single_symbol_advisory_status.set_defaults(handler=_handle_single_symbol_advisory_status)
+
+    single_symbol_advisory_answer_index = subparsers.add_parser(
+        "single-symbol-advisory-answer-index",
+        help="Build a local index of question-style single-symbol advisory answer folders",
+    )
+    single_symbol_advisory_answer_index.add_argument("--root", help="Single-symbol advisory answer artifact root directory")
+    single_symbol_advisory_answer_index.add_argument("--output-dir", help="Optional answer index output directory")
+    single_symbol_advisory_answer_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Index answer folders missing metadata.json",
+    )
+    single_symbol_advisory_answer_index.add_argument("--config", help="Optional config YAML path")
+    single_symbol_advisory_answer_index.set_defaults(handler=_handle_single_symbol_advisory_answer_index)
+
+    single_symbol_advisory_answer_health = subparsers.add_parser(
+        "single-symbol-advisory-answer-health",
+        help="Check local question-style answer artifact file health and safety flags",
+    )
+    single_symbol_advisory_answer_health.add_argument("--index", help="Single-symbol advisory answer artifact index CSV path")
+    single_symbol_advisory_answer_health.add_argument("--root", help="Single-symbol advisory answer artifact root directory")
+    single_symbol_advisory_answer_health.add_argument("--output-dir", help="Optional answer health-check output directory")
+    single_symbol_advisory_answer_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    single_symbol_advisory_answer_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    single_symbol_advisory_answer_health.add_argument("--config", help="Optional config YAML path")
+    single_symbol_advisory_answer_health.set_defaults(handler=_handle_single_symbol_advisory_answer_health)
+
+    single_symbol_advisory_answer_status = subparsers.add_parser(
+        "single-symbol-advisory-answer-status",
+        help="Build a local question-style answer status dashboard",
+    )
+    single_symbol_advisory_answer_status.add_argument("--root", help="Single-symbol advisory answer artifact root directory")
+    single_symbol_advisory_answer_status.add_argument("--output-dir", help="Optional answer status output directory")
+    single_symbol_advisory_answer_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
+    single_symbol_advisory_answer_status.add_argument("--config", help="Optional config YAML path")
+    single_symbol_advisory_answer_status.set_defaults(handler=_handle_single_symbol_advisory_answer_status)
 
     current_to_paper = subparsers.add_parser(
         "current-to-paper",
@@ -1475,6 +1514,103 @@ def _handle_single_symbol_advisory_status(args: argparse.Namespace) -> int:
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading, broker API, order placement, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
+    return 0
+
+
+def _handle_single_symbol_advisory_answer_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"include_missing_metadata": bool(args.include_missing_metadata)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "single_symbol_advisory_answer_index": settings.single_symbol_advisory_answer_index.model_copy(
+                update=updates
+            )
+        }
+    )
+    result = build_single_symbol_advisory_answer_index(settings=settings)
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['single_symbol_advisory_answer_index_report']}")
+    print(f"Index CSV path: {result.artifact_paths['single_symbol_advisory_answer_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, LLM API, or message delivery was invoked.")
+    return 0
+
+
+def _handle_single_symbol_advisory_answer_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "single_symbol_advisory_answer_health": settings.single_symbol_advisory_answer_health.model_copy(
+                update=updates
+            )
+        }
+    )
+    result = check_single_symbol_advisory_answer_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['single_symbol_advisory_answer_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, LLM API, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_single_symbol_advisory_answer_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "single_symbol_advisory_answer_status": settings.single_symbol_advisory_answer_status.model_copy(
+                update=updates
+            )
+        }
+    )
+    result = run_single_symbol_advisory_answer_status(root=args.root, output_dir=args.output_dir, config=settings)
+    print(f"Status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_answer_run_id: {result.latest_answer_run_id}")
+    print(f"latest_advisory_run_id: {result.latest_advisory_run_id}")
+    print(f"latest_symbol: {result.latest_symbol}")
+    print(f"latest_advisory_action: {result.latest_advisory_action}")
+    print(f"health_status: {result.health_status}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['single_symbol_advisory_answer_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, LLM API, or message delivery was invoked.")
     if result.status == "FAIL":
         return 1
     if result.status == "WARN" and args.strict:

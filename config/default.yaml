@@ -148,6 +148,34 @@ single_symbol_advisory_status:
   enable_live_trading: false
   enable_broker_api: false
 
+single_symbol_advisory_answer_index:
+  root_dir: outputs/reports/single_symbol_advisory_answer
+  output_dir: outputs/reports/single_symbol_advisory_answer/index
+  include_missing_metadata: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+single_symbol_advisory_answer_health:
+  index_path: outputs/reports/single_symbol_advisory_answer/index/single_symbol_advisory_answer_index.csv
+  root_dir: outputs/reports/single_symbol_advisory_answer
+  output_dir: outputs/reports/single_symbol_advisory_answer/health
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+single_symbol_advisory_answer_status:
+  root_dir: outputs/reports/single_symbol_advisory_answer
+  output_dir: outputs/reports/single_symbol_advisory_answer/status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 current_candidate_artifact_index:
   root_dir: outputs/reports/current_candidates
   output_dir: outputs/reports/current_candidates/index

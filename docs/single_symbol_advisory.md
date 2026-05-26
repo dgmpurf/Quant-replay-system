@@ -134,6 +134,73 @@ The answer includes symbol, advisory action, short answer, reason, score/action 
 
 Demo answers explicitly remain workflow validation only. A `NOT_FOUND` answer says the symbol cannot be reviewed from the provided local artifact and no recommendation was invented.
 
+### Question-Style Answer Index, Health, And Status
+
+Use `single-symbol-advisory-answer-index` to discover deterministic local answer runs:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory-answer-index
+```
+
+The answer index scans `outputs/reports/single_symbol_advisory_answer/` and writes:
+
+```text
+outputs/reports/single_symbol_advisory_answer/index/
+  single_symbol_advisory_answer_index.csv
+  single_symbol_advisory_answer_index_report.md
+  metadata.json
+```
+
+Use `single-symbol-advisory-answer-health` to check answer artifact completeness and safety boundaries:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory-answer-health
+```
+
+Health checks verify:
+
+- metadata, markdown answer, and JSON answer files exist and are readable,
+- required answer fields are present,
+- leading-zero symbols such as `000001` remain strings,
+- `requires_manual_confirmation=true`,
+- `auto_order_allowed=false`,
+- `no_live_trading=true`,
+- `no_broker_api=true`,
+- `no_message_sent=true`,
+- `llm_api_called=false`,
+- demo answers do not contain real buy/sell instructions,
+- `NOT_FOUND` answers do not invent recommendations,
+- no message-delivery metadata is present.
+
+Health artifacts are written under:
+
+```text
+outputs/reports/single_symbol_advisory_answer/health/<health_id>/
+  single_symbol_advisory_answer_health_report.md
+  single_symbol_advisory_answer_health_issues.csv
+  single_symbol_advisory_answer_health_summary.csv
+  metadata.json
+```
+
+Use `single-symbol-advisory-answer-status` to summarize the latest question-style answer:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory-answer-status
+```
+
+The status view reports the latest answer run id, advisory run id, symbol, source status, advisory action, question, answer style, health status, demo flags, markdown answer path, workflow stage, and next manual action.
+
+Expected stages include:
+
+- `NO_SINGLE_SYMBOL_ADVISORY_ANSWER_ARTIFACTS`
+- `SINGLE_SYMBOL_ADVISORY_ANSWER_READY_FOR_REVIEW`
+- `SINGLE_SYMBOL_ADVISORY_ANSWER_NOT_FOUND`
+- `SINGLE_SYMBOL_ADVISORY_ANSWER_HEALTH_WARN`
+- `SINGLE_SYMBOL_ADVISORY_ANSWER_FAILED`
+- `DEMO_SINGLE_SYMBOL_ADVISORY_ANSWER_VALIDATED`
+
+`NOT_FOUND` remains safe when no recommendation is invented. Demo answers remain workflow validation only, and the answer status layer is still local observability, not message delivery or order execution.
+
 ## Index, Health, And Status
 
 Use `single-symbol-advisory-index` to discover local one-symbol review runs:

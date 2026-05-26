@@ -98,6 +98,8 @@ For asking a focused local question about one symbol from existing candidate or 
 
 For a local deterministic answer to a user-style question such as "should I buy?", add `--question-style` to `single-symbol-advisory`; see [docs/single_symbol_advisory.md#question-style-answer](docs/single_symbol_advisory.md#question-style-answer). This is not LLM-based and does not send messages or place orders.
 
+To discover, check, and summarize deterministic question-style answer artifacts, use `single-symbol-advisory-answer-index`, `single-symbol-advisory-answer-health`, and `single-symbol-advisory-answer-status`; see [docs/single_symbol_advisory.md#question-style-answer-index-health-and-status](docs/single_symbol_advisory.md#question-style-answer-index-health-and-status).
+
 To discover, check, and summarize repeated single-symbol advisory reviews, use `single-symbol-advisory-index`, `single-symbol-advisory-health`, and `single-symbol-advisory-status`; see [docs/single_symbol_advisory.md#index-health-and-status](docs/single_symbol_advisory.md#index-health-and-status).
 
 `research-status` includes the latest `single-symbol-advisory-status` as one-symbol advisory context, including the latest symbol, advisory action, health status, demo safety flags, and local alert preview path, while preserving later paper workflow priority; see [docs/local_research_dashboard.md#single-symbol-advisory-status](docs/local_research_dashboard.md#single-symbol-advisory-status).
