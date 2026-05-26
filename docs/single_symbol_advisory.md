@@ -105,6 +105,71 @@ python -m quant_replay_system.cli single-symbol-advisory --symbol 000001 --candi
 
 The CLI prints the advisory run id, status, symbol, advisory action, artifact paths, and safety flags.
 
+## Index, Health, And Status
+
+Use `single-symbol-advisory-index` to discover local one-symbol review runs:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory-index
+```
+
+The index scans `outputs/reports/single_symbol_advisory/` and writes:
+
+```text
+outputs/reports/single_symbol_advisory/index/
+  single_symbol_advisory_index.csv
+  single_symbol_advisory_index_report.md
+  metadata.json
+```
+
+Use `single-symbol-advisory-health` to check artifact completeness and safety boundaries:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory-health
+```
+
+Health checks verify:
+
+- metadata, JSON, CSV, report, and requested alert preview files exist,
+- required advisory fields are present,
+- leading-zero symbols such as `000001` remain strings,
+- `requires_manual_confirmation=true`,
+- `auto_order_allowed=false`,
+- `no_live_trading=true`,
+- `no_broker_api=true`,
+- `no_message_sent=true`,
+- demo reviews do not produce real buy or sell guidance,
+- `NOT_FOUND` reviews do not invent recommendations.
+
+Health artifacts are written under:
+
+```text
+outputs/reports/single_symbol_advisory/health/<health_id>/
+  single_symbol_advisory_health_report.md
+  single_symbol_advisory_health_issues.csv
+  single_symbol_advisory_health_summary.csv
+  metadata.json
+```
+
+Use `single-symbol-advisory-status` to summarize the latest one-symbol review:
+
+```cmd
+python -m quant_replay_system.cli single-symbol-advisory-status
+```
+
+The status view reports the latest advisory run id, symbol, status, advisory action, health status, final score, demo flags, alert preview path, workflow stage, and next manual action.
+
+Expected stages include:
+
+- `NO_SINGLE_SYMBOL_ADVISORY_ARTIFACTS`
+- `SINGLE_SYMBOL_ADVISORY_READY_FOR_REVIEW`
+- `SINGLE_SYMBOL_ADVISORY_NOT_FOUND`
+- `SINGLE_SYMBOL_ADVISORY_HEALTH_WARN`
+- `SINGLE_SYMBOL_ADVISORY_FAILED`
+- `DEMO_SINGLE_SYMBOL_ADVISORY_VALIDATED`
+
+`NOT_FOUND` is safe when no recommendation is invented. Demo reviews remain workflow validation only and should not be treated as strategy recommendations.
+
 ## Safety Contract
 
 Every output records:

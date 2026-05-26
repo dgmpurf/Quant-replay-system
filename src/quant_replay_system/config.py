@@ -141,6 +141,39 @@ class SingleSymbolAdvisorySettings(BaseModel):
     auto_order_allowed: Literal[False] = False
 
 
+class SingleSymbolAdvisoryIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/single_symbol_advisory")
+    output_dir: Path = Path("outputs/reports/single_symbol_advisory/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class SingleSymbolAdvisoryHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/single_symbol_advisory/index/single_symbol_advisory_index.csv")
+    root_dir: Path = Path("outputs/reports/single_symbol_advisory")
+    output_dir: Path = Path("outputs/reports/single_symbol_advisory/health")
+    strict: bool = False
+    require_alert_preview: bool = True
+    missing_alert_preview_severity: Literal["WARN", "ERROR"] = "WARN"
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class SingleSymbolAdvisoryStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/single_symbol_advisory")
+    output_dir: Path = Path("outputs/reports/single_symbol_advisory/status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class CurrentCandidateArtifactIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/current_candidates")
     output_dir: Path = Path("outputs/reports/current_candidates/index")
@@ -918,6 +951,9 @@ class Settings(BaseModel):
     signal_advisory_health: SignalAdvisoryHealthSettings = Field(default_factory=SignalAdvisoryHealthSettings)
     signal_advisory_status: SignalAdvisoryStatusSettings = Field(default_factory=SignalAdvisoryStatusSettings)
     single_symbol_advisory: SingleSymbolAdvisorySettings = Field(default_factory=SingleSymbolAdvisorySettings)
+    single_symbol_advisory_index: SingleSymbolAdvisoryIndexSettings = Field(default_factory=SingleSymbolAdvisoryIndexSettings)
+    single_symbol_advisory_health: SingleSymbolAdvisoryHealthSettings = Field(default_factory=SingleSymbolAdvisoryHealthSettings)
+    single_symbol_advisory_status: SingleSymbolAdvisoryStatusSettings = Field(default_factory=SingleSymbolAdvisoryStatusSettings)
     current_candidate_artifact_index: CurrentCandidateArtifactIndexSettings = Field(default_factory=CurrentCandidateArtifactIndexSettings)
     current_candidate_artifact_health: CurrentCandidateArtifactHealthSettings = Field(default_factory=CurrentCandidateArtifactHealthSettings)
     current_to_paper_handoff: CurrentToPaperHandoffSettings = Field(default_factory=CurrentToPaperHandoffSettings)

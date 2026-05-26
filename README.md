@@ -96,6 +96,8 @@ To discover, check, and summarize local signal advisory artifacts before any fut
 
 For asking a focused local question about one symbol from existing candidate or signal artifacts, use `single-symbol-advisory`; see [docs/single_symbol_advisory.md](docs/single_symbol_advisory.md).
 
+To discover, check, and summarize repeated single-symbol advisory reviews, use `single-symbol-advisory-index`, `single-symbol-advisory-health`, and `single-symbol-advisory-status`; see [docs/single_symbol_advisory.md#index-health-and-status](docs/single_symbol_advisory.md#index-health-and-status).
+
 For indexing generated current-candidate runs, see [docs/current_candidate_artifact_index.md](docs/current_candidate_artifact_index.md).
 
 For checking generated current-candidate artifact health, see [docs/current_candidate_artifact_health.md](docs/current_candidate_artifact_health.md).

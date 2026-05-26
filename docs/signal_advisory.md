@@ -130,6 +130,8 @@ The single-symbol workflow preserves symbol strings such as `000001`, returns `N
 
 It is still advisory only. Demo rows remain `DEMO_ONLY`, blocked rows remain `BLOCKED`, manual confirmation is required, `auto_order_allowed=false`, and no message is sent.
 
+Repeated single-symbol reviews can be discovered and checked with `single-symbol-advisory-index`, `single-symbol-advisory-health`, and `single-symbol-advisory-status`. These views keep missing-symbol and demo outputs visible without turning them into executable guidance.
+
 ## Index, Health, And Status
 
 Use `signal-advisory-index` to discover local advisory runs:

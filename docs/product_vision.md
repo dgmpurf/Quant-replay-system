@@ -63,4 +63,6 @@ That feature should return:
 
 The v0.1 implementation is local artifact only. It does not fetch data, send messages, approve paper trades, or connect to brokers. Demo or unvalidated signals are not presented as strategy recommendations, and every output keeps manual confirmation and no-auto-order safety fields.
 
+Single-symbol advisory index, health, and status views make repeated one-symbol reviews discoverable and safety-checkable before any future delivery or automation layer. They help preserve the distinction between a review artifact, a missing-symbol result, and executable guidance.
+
 Future versions may add conversational natural-language review, richer risk context, and human-approved alert delivery while preserving the same safety boundary.
