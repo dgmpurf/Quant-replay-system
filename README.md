@@ -215,6 +215,8 @@ For the v0.75.0 9-symbol policy-aware export to WATCH_ONLY paper workflow valida
 
 For the v0.76.0 synthetic fill reconciliation diagnostics and paper workflow status actionability checkpoint summary, see [docs/release_checkpoint_v0.76.0.md](docs/release_checkpoint_v0.76.0.md).
 
+For the v0.77.0 explicit diagnostic reconciliation artifact scope support checkpoint summary, see [docs/release_checkpoint_v0.77.0.md](docs/release_checkpoint_v0.77.0.md).
+
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
 Recommended next data-source engineering sequence:
@@ -388,6 +390,10 @@ See [docs/release_checkpoint_v0.75.0.md](docs/release_checkpoint_v0.75.0.md) for
 `v0.76.0` marks the synthetic fill reconciliation diagnostics and paper workflow status actionability checkpoint, covering enforced WATCH_ONLY fill rejection, `DECISION_NOT_APPROVED`, diagnostic versus active reconciliation scoping, zero approvals, zero positions, and `research-status` preservation of the active paper workflow.
 
 See [docs/release_checkpoint_v0.76.0.md](docs/release_checkpoint_v0.76.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.77.0` marks the explicit diagnostic reconciliation artifact scope support checkpoint, covering `paper-reconcile-fills --artifact-scope diagnostic`, persisted diagnostic metadata, active versus diagnostic reconciliation behavior, and dashboard preservation of the active WATCH_ONLY/no-fills paper workflow.
+
+See [docs/release_checkpoint_v0.77.0.md](docs/release_checkpoint_v0.77.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

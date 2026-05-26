@@ -78,6 +78,8 @@ For local smoke testing, a full decision set may be reviewed as `WATCH_ONLY` and
 
 Synthetic fill reconciliation tests may deliberately submit a local fill against a `WATCH_ONLY` decision to confirm that reconciliation rejects it. That failure should remain in the audit trail, but it is not a live order, not an approval, and not a paper position. Paper workflow status treats unlinked synthetic/manual diagnostics separately from the reconciliation report linked to the active daily paper run.
 
+Use `paper-reconcile-fills --artifact-scope diagnostic` for synthetic/manual diagnostics that are intentionally outside the active workflow. Diagnostic scoped failures remain visible in reconciliation artifacts and status dashboards, but they do not define the active paper workflow state unless they are linked to the active daily paper run. The default scope is `active`, and active reconciliation failures remain blocking.
+
 ## Paper Fills
 
 `record_paper_fill(...)` appends a manual hypothetical fill.

@@ -87,6 +87,14 @@ Use `--allow-fail` to write a failure report but return exit code `0`:
 python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs\reports\paper_trading\daily\example\decisions.csv --fills data\paper\fills.csv --allow-fail
 ```
 
+Use `--artifact-scope diagnostic` for synthetic/manual diagnostics that intentionally test rejection behavior outside the active workflow:
+
+```cmd
+python -m quant_replay_system.cli paper-reconcile-fills --decisions outputs\reports\paper_trading\reviews\example\reviewed_decisions.csv --fills outputs\reports\manual_diagnostics\synthetic_fills.csv --artifact-scope diagnostic --diagnostic-reason "synthetic fill smoke" --allow-fail
+```
+
+Diagnostic scoped artifacts still write `FAIL` reports when validation fails, but status dashboards count them as diagnostic context unless they are linked to the active daily paper run. The default scope is `active`, and active reconciliation failures remain blocking.
+
 ## Artifacts
 
 Default output folder:
@@ -100,6 +108,8 @@ outputs/reports/paper_trading/reconciliation/<reconciliation_id>/
 ```
 
 The reconciliation ID is deterministic from decision IDs, fill IDs, symbols, and config version.
+
+Metadata includes `artifact_scope`, `diagnostic_artifact`, `active_workflow_artifact`, `diagnostic_reason`, `no_live_trading`, and `no_broker_api`.
 
 ## Known MVP Limitations
 

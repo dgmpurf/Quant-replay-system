@@ -567,6 +567,60 @@ def test_dashboard_scopes_unlinked_watch_only_reconciliation_failure_as_diagnost
     assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
 
 
+def test_dashboard_explicit_diagnostic_reconciliation_failure_is_not_active_blocking(tmp_path: Path) -> None:
+    root = _workflow_to_review_template(_reports_root(tmp_path))
+    _review_template_health(root, health_id="template-health-a", status="PASS")
+    active_review = _paper_review(
+        root,
+        template_health={
+            "template_health_check_id": "template-health-a",
+            "template_health_status": "PASS",
+            "template_health_report_path": str(
+                root / "paper_trading" / "review_template_health" / "template-health-a" / "review_template_health_report.md"
+            ),
+            "template_health_issue_count": 0,
+            "template_health_error_count": 0,
+            "template_health_warning_count": 0,
+        },
+    )
+    active_reconciliation = _reconciliation(root, reconciliation_id="recon-active", status="PASS")
+    _reconciliation(
+        root,
+        reconciliation_id="recon-diagnostic",
+        status="FAIL",
+        created_at=f"{DECISION_DATE}T16:45:00",
+        artifact_scope="diagnostic",
+        diagnostic_reason="synthetic fill smoke",
+    )
+    _daily_paper(
+        root,
+        reviewed_decisions_path=active_review / "reviewed_decisions.csv",
+        reconciliation_report_path=active_reconciliation / "reconciliation_report.md",
+        reconciliation_status="PASS",
+        decision_count=1,
+        fill_count=0,
+        open_position_count=0,
+        closed_trade_count=0,
+        manual_review_status_summary={"WATCH_ONLY": 1},
+        warnings=[
+            "No fills_path provided; continuing with empty paper fills.",
+            "Reconciliation: No fills supplied for reconciliation.",
+            "No manual paper fills loaded.",
+        ],
+    )
+    _paper_artifact_index(root)
+    _paper_artifact_health(root, status="PASS")
+
+    result = run_paper_workflow_status(root=root, output_dir=tmp_path / "status")
+    summary = result.summary_frame.iloc[0].to_dict()
+    by_component = {row["component"]: row for row in result.status_frame.to_dict("records")}
+
+    assert result.workflow_stage == "WATCH_ONLY_DEMO_VALIDATED_NO_FILLS"
+    assert by_component["RECONCILIATION"]["status"] == "PASS"
+    assert summary["diagnostic_reconciliation_failure_count"] == 1
+    assert summary["active_reconciliation_error_count"] == 0
+
+
 def test_dashboard_linked_active_reconciliation_failure_remains_blocking(tmp_path: Path) -> None:
     root = _workflow_to_review_template(_reports_root(tmp_path))
     _review_template_health(root, health_id="template-health-a", status="PASS")
@@ -981,27 +1035,32 @@ def _reconciliation(
     reconciliation_id: str = "recon-a",
     status: str = "PASS",
     created_at: str | None = None,
+    artifact_scope: str | None = None,
+    diagnostic_reason: str = "",
 ) -> Path:
     folder = root / "paper_trading" / "reconciliation" / reconciliation_id
     folder.mkdir(parents=True, exist_ok=True)
     report = folder / "reconciliation_report.md"
     report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
-    _write_json(
-        folder / "metadata.json",
-        {
-            "reconciliation_id": reconciliation_id,
-            "created_at": created_at or f"{DECISION_DATE}T16:35:00",
-            "status": status,
-            "issue_count": 0 if status == "PASS" else 1,
-            "error_count": 1 if status == "FAIL" else 0,
-            "warning_count": 1 if status == "WARN" else 0,
-            "output_files": {"reconciliation_report": str(report)},
-            "warnings": [],
-            "live_trading_enabled": False,
-            "broker_api_invoked": False,
-            "paper_trading_only": True,
-        },
-    )
+    metadata = {
+        "reconciliation_id": reconciliation_id,
+        "created_at": created_at or f"{DECISION_DATE}T16:35:00",
+        "status": status,
+        "issue_count": 0 if status == "PASS" else 1,
+        "error_count": 1 if status == "FAIL" else 0,
+        "warning_count": 1 if status == "WARN" else 0,
+        "output_files": {"reconciliation_report": str(report)},
+        "warnings": [],
+        "live_trading_enabled": False,
+        "broker_api_invoked": False,
+        "paper_trading_only": True,
+    }
+    if artifact_scope is not None:
+        metadata["artifact_scope"] = artifact_scope
+        metadata["diagnostic_artifact"] = artifact_scope == "diagnostic"
+        metadata["active_workflow_artifact"] = artifact_scope == "active"
+        metadata["diagnostic_reason"] = diagnostic_reason
+    _write_json(folder / "metadata.json", metadata)
     return folder
 
 

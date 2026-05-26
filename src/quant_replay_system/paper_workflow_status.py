@@ -294,7 +294,12 @@ def build_paper_workflow_status_frame(
         if component_rows.empty:
             rows.append(_missing_status_row(component))
             continue
-        latest = active_chain.get(component, _latest_record(component_rows)).copy()
+        if component in active_chain:
+            latest = active_chain[component].copy()
+        elif component == "RECONCILIATION":
+            latest = _latest_reconciliation_record(component_rows).copy()
+        else:
+            latest = _latest_record(component_rows).copy()
         latest = _annotate_stale_component_warnings(latest, component_rows)
         latest["next_action"] = _component_next_action(component, latest.get("status", ""))
         rows.append(latest)
@@ -483,9 +488,16 @@ def _annotate_stale_component_warnings(selected: dict[str, Any], component_rows:
     selected_path = _string_or_empty(selected.get("metadata_path"))
     selected_id = _string_or_empty(selected.get("latest_artifact_id"))
     selected_component = _string_or_empty(selected.get("component"))
+    selected_is_diagnostic = _reconciliation_is_diagnostic(selected) if selected_component == "RECONCILIATION" else False
     stale_warning_count = 0
     stale_error_count = 0
-    diagnostic_reconciliation_failure_count = 0
+    diagnostic_reconciliation_failure_count = (
+        1
+        if selected_component == "RECONCILIATION"
+        and selected_is_diagnostic
+        and _string_or_empty(selected.get("status")) == "FAIL"
+        else 0
+    )
     for row in component_rows.to_dict("records"):
         same_path = selected_path and _string_or_empty(row.get("metadata_path")) == selected_path
         same_id = selected_id and _string_or_empty(row.get("latest_artifact_id")) == selected_id
@@ -498,7 +510,8 @@ def _annotate_stale_component_warnings(selected: dict[str, Any], component_rows:
         if _string_or_empty(row.get("status")) == "FAIL":
             stale_error_count += 1
             if selected_component == "RECONCILIATION":
-                diagnostic_reconciliation_failure_count += 1
+                if _reconciliation_is_diagnostic(row) or not selected_is_diagnostic:
+                    diagnostic_reconciliation_failure_count += 1
     if not stale_warning_count and not stale_error_count:
         annotated = selected.copy()
     else:
@@ -510,7 +523,7 @@ def _annotate_stale_component_warnings(selected: dict[str, Any], component_rows:
         annotated["diagnostic_reconciliation_failure_count"] = diagnostic_reconciliation_failure_count
         annotated["active_reconciliation_error_count"] = (
             max(_int_or_zero(annotated.get("error_count")), 1)
-            if _string_or_empty(annotated.get("status")) == "FAIL"
+            if _string_or_empty(annotated.get("status")) == "FAIL" and not selected_is_diagnostic
             else 0
         )
     return annotated
@@ -556,11 +569,14 @@ def _component_warning_actionability(row: dict[str, Any], context: dict[str, Any
     warning_count = _int_or_zero(row.get("warning_count"))
     error_count = _int_or_zero(row.get("error_count"))
     stale_warning_count = _parse_note_count(row.get("notes"), "stale_warning_count")
+    diagnostic_reconciliation = component == "RECONCILIATION" and _reconciliation_is_diagnostic(row)
     blocking_error_count = error_count
     if _string_or_empty(row.get("status")) == "FAIL":
         blocking_error_count = max(blocking_error_count, 1)
     if _string_or_empty(row.get("status")) == "MISSING" and "linked to active" in _string_or_empty(row.get("notes")):
         blocking_error_count = max(blocking_error_count, 1)
+    if diagnostic_reconciliation:
+        blocking_error_count = 0
 
     if component == "PAPER_ARTIFACT_HEALTH":
         issue_counts = _paper_artifact_health_issue_actionability(row, context)
@@ -967,7 +983,8 @@ def infer_paper_workflow_stage(status_frame: pd.DataFrame) -> str:
         return "REVIEW_READY"
     if statuses["RECONCILIATION"] == "MISSING":
         return "DAILY_PAPER_READY"
-    if statuses["RECONCILIATION"] in {"FAIL", "WARN"}:
+    reconciliation_row = _component_row(status_frame, "RECONCILIATION")
+    if statuses["RECONCILIATION"] in {"FAIL", "WARN"} and not _reconciliation_is_diagnostic(reconciliation_row):
         return "WORKFLOW_NEEDS_ATTENTION"
     if statuses["PAPER_ARTIFACT_INDEX"] == "MISSING" or statuses["PAPER_ARTIFACT_HEALTH"] == "MISSING":
         return "RECONCILIATION_READY"
@@ -1024,7 +1041,14 @@ def summarize_paper_workflow_status(
 
     frame = _finalize_status_frame(status_frame)
     by_component = {row["component"]: row for row in frame.to_dict("records")}
-    explicit_statuses = [str(row.get("status", "")).upper() for row in frame.to_dict("records")]
+    explicit_statuses = [
+        "WARN"
+        if row.get("component") == "RECONCILIATION"
+        and _reconciliation_is_diagnostic(row)
+        and str(row.get("status", "")).upper() == "FAIL"
+        else str(row.get("status", "")).upper()
+        for row in frame.to_dict("records")
+    ]
     missing_count = explicit_statuses.count("MISSING")
     error_count = int(pd.to_numeric(frame["error_count"], errors="coerce").fillna(0).sum()) if not frame.empty else 0
     warning_count = int(pd.to_numeric(frame["warning_count"], errors="coerce").fillna(0).sum()) if not frame.empty else 0
@@ -1639,6 +1663,12 @@ def _component_status(by_component: dict[str, dict[str, Any]], component: str) -
     return _string_or_empty(row.get("status")) or "MISSING"
 
 
+def _component_row(status_frame: pd.DataFrame, component: str) -> dict[str, Any]:
+    frame = _finalize_status_frame(status_frame)
+    rows = frame.loc[frame["component"] == component]
+    return rows.iloc[0].to_dict() if not rows.empty else {}
+
+
 def _latest_decision_date(frame: pd.DataFrame) -> str:
     dates = sorted(_date_string(value) for value in frame.get("decision_date", pd.Series(dtype="object")).tolist() if _date_string(value))
     return dates[-1] if dates else ""
@@ -1749,6 +1779,20 @@ def _latest_record(frame: pd.DataFrame) -> dict[str, Any]:
         na_position="last",
     )
     return sortable.iloc[-1].drop(labels=["_sort_date", "_sort_created"], errors="ignore").to_dict()
+
+
+def _latest_reconciliation_record(frame: pd.DataFrame) -> dict[str, Any]:
+    active_rows = [row for row in frame.to_dict("records") if not _reconciliation_is_diagnostic(row)]
+    if active_rows:
+        return _latest_record(pd.DataFrame(active_rows))
+    return _latest_record(frame)
+
+
+def _reconciliation_is_diagnostic(row: dict[str, Any]) -> bool:
+    if _string_or_empty(row.get("component")) != "RECONCILIATION":
+        return False
+    metadata = _metadata_for_row(row)
+    return _string_or_empty(metadata.get("artifact_scope")).lower() == "diagnostic" or metadata.get("diagnostic_artifact") is True
 
 
 def _finalize_scan_frame(frame: pd.DataFrame) -> pd.DataFrame:

@@ -57,6 +57,8 @@ If that daily metadata includes `reviewed_decisions_path`, the dashboard follows
 
 If the active daily metadata records a reconciliation `report_path`, the dashboard also follows that path to choose the active reconciliation artifact. Other reconciliation artifacts remain visible as audit evidence. A failed synthetic/manual diagnostics reconciliation that is not linked to the active daily run is counted in `diagnostic_reconciliation_failure_count`, while `active_reconciliation_error_count` stays zero. A failed reconciliation that is linked to the active daily run still blocks the workflow.
 
+Reconciliation artifacts can now declare their scope explicitly. `artifact_scope=diagnostic` marks a synthetic/manual diagnostic artifact; `artifact_scope=active` is the default and keeps failures blocking. Older artifacts without `artifact_scope` remain backward compatible and continue to use active-chain linkage and stale-artifact context.
+
 Older review or template-health artifacts remain discoverable through `paper-index` and `paper-health-check`, and stale warnings can appear in component notes. They do not define the active workflow stage when a later linked reviewed flow is available.
 
 ## Warning Actionability

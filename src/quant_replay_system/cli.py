@@ -264,6 +264,13 @@ def build_parser() -> argparse.ArgumentParser:
     reconcile.add_argument("--decisions", required=True, help="Paper decisions CSV path")
     reconcile.add_argument("--fills", required=True, help="Manual fills CSV path")
     reconcile.add_argument("--output-dir", help="Optional reconciliation output directory")
+    reconcile.add_argument(
+        "--artifact-scope",
+        choices=["active", "diagnostic"],
+        default="active",
+        help="Whether the reconciliation artifact belongs to the active workflow or diagnostic audit context",
+    )
+    reconcile.add_argument("--diagnostic-reason", help="Optional reason for diagnostic reconciliation artifacts")
     reconcile.add_argument("--config", help="Optional config YAML path")
     reconcile.add_argument("--allow-fail", action="store_true", help="Exit zero even when reconciliation status is FAIL")
     reconcile.set_defaults(handler=_handle_reconcile_fills)
@@ -1245,11 +1252,16 @@ def _handle_reconcile_fills(args: argparse.Namespace) -> int:
         read_csv_preserve_symbol_columns(decisions_path),
         read_csv_preserve_symbol_columns(fills_path),
         settings=settings,
+        artifact_scope=args.artifact_scope,
+        diagnostic_reason=args.diagnostic_reason,
     )
     print(f"Reconciliation status: {result.status}")
     print(f"issue_count: {result.issue_count}")
     print(f"error_count: {result.error_count}")
     print(f"warning_count: {result.warning_count}")
+    print(f"artifact_scope: {result.audit_metadata.get('artifact_scope', 'active')}")
+    if result.audit_metadata.get("diagnostic_reason"):
+        print(f"diagnostic_reason: {result.audit_metadata['diagnostic_reason']}")
     print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
     print(f"Report path: {result.artifact_paths['reconciliation_report']}")
     for warning in result.warnings:

@@ -608,7 +608,12 @@ def build_local_research_dashboard_frame(
         if component_rows.empty:
             rows.append(_missing_dashboard_row(component))
             continue
-        latest = active_chain.get(component, _latest_record(component_rows)).copy()
+        if component in active_chain:
+            latest = active_chain[component].copy()
+        elif component == "RECONCILIATION":
+            latest = _latest_reconciliation_record(component_rows).copy()
+        else:
+            latest = _latest_record(component_rows).copy()
         latest = _annotate_stale_component_warnings(latest, component_rows)
         latest["next_action"] = _component_next_action(component, latest.get("status", ""))
         rows.append(latest)
@@ -3562,6 +3567,20 @@ def _latest_record(frame: pd.DataFrame) -> dict[str, Any]:
         na_position="last",
     )
     return sortable.iloc[-1].drop(labels=["_sort_date", "_sort_created"], errors="ignore").to_dict()
+
+
+def _latest_reconciliation_record(frame: pd.DataFrame) -> dict[str, Any]:
+    active_rows = [row for row in frame.to_dict("records") if not _reconciliation_is_diagnostic(row)]
+    if active_rows:
+        return _latest_record(pd.DataFrame(active_rows))
+    return _latest_record(frame)
+
+
+def _reconciliation_is_diagnostic(row: dict[str, Any]) -> bool:
+    if _string_or_empty(row.get("component")) != "RECONCILIATION":
+        return False
+    metadata = _metadata_for_row(row)
+    return _string_or_empty(metadata.get("artifact_scope")).lower() == "diagnostic" or metadata.get("diagnostic_artifact") is True
 
 
 def _finalize_scan_frame(frame: pd.DataFrame) -> pd.DataFrame:

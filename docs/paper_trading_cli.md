@@ -70,11 +70,15 @@ Options:
 - `--fills` required manual fills CSV.
 - `--output-dir` optional reconciliation artifact output directory.
 - `--config` optional config YAML path.
+- `--artifact-scope` optional `active` or `diagnostic`; defaults to `active`.
+- `--diagnostic-reason` optional note for diagnostic reconciliation artifacts.
 - `--allow-fail` exits with status `0` even if reconciliation status is `FAIL`.
 
 The command checks decision/fill matching, approval status, side, quantity, price, gross notional, cash-flow sign, oversells, negative cash, duplicate fill IDs, and required fill columns.
 
 It exits non-zero on `FAIL` unless `--allow-fail` is passed.
+
+Use `--artifact-scope diagnostic` only for synthetic/manual diagnostics. Diagnostic failures remain visible but do not define the active paper workflow state unless linked to the active daily paper run. Active scoped reconciliation failures remain blocking.
 
 ## paper-review-decisions
 

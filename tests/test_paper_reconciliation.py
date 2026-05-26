@@ -191,6 +191,35 @@ def test_reconciliation_artifacts_are_written_and_readable(tmp_path: Path) -> No
     assert isinstance(issues, pd.DataFrame)
     assert summary.iloc[0]["status"] == "PASS"
     assert metadata["status"] == "PASS"
+    assert metadata["artifact_scope"] == "active"
+    assert metadata["diagnostic_artifact"] is False
+    assert metadata["active_workflow_artifact"] is True
+    assert metadata["no_live_trading"] is True
+    assert metadata["no_broker_api"] is True
+
+
+def test_reconciliation_diagnostic_scope_metadata_is_written(tmp_path: Path) -> None:
+    decisions = _decisions(status="WATCH_ONLY")
+    fills = _manual_fill(decisions)
+
+    result = reconcile_paper_fills(
+        decisions,
+        fills,
+        settings=_settings(tmp_path),
+        artifact_scope="diagnostic",
+        diagnostic_reason="synthetic fill smoke",
+    )
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.status == "FAIL"
+    assert _has_issue(result, "DECISION_NOT_APPROVED")
+    assert metadata["artifact_scope"] == "diagnostic"
+    assert metadata["diagnostic_artifact"] is True
+    assert metadata["active_workflow_artifact"] is False
+    assert metadata["diagnostic_reason"] == "synthetic fill smoke"
+    assert metadata["no_live_trading"] is True
+    assert metadata["no_broker_api"] is True
+    assert result.audit_metadata["artifact_scope"] == "diagnostic"
 
 
 def test_daily_paper_runner_records_reconciliation_path_and_status(tmp_path: Path) -> None:
@@ -280,6 +309,39 @@ def test_cli_paper_reconcile_fills_allow_fail_exits_zero_with_fail_report(tmp_pa
     assert "Reconciliation status: FAIL" in output.out
 
 
+def test_cli_paper_reconcile_fills_diagnostic_scope_writes_metadata(tmp_path: Path, capsys) -> None:
+    decisions_path, fills_path = _write_decisions_and_fills(tmp_path, status="WATCH_ONLY")
+
+    code = cli.main(
+        [
+            "paper-reconcile-fills",
+            "--decisions",
+            str(decisions_path),
+            "--fills",
+            str(fills_path),
+            "--output-dir",
+            str(tmp_path / "reconciliation"),
+            "--artifact-scope",
+            "diagnostic",
+            "--diagnostic-reason",
+            "synthetic fill smoke",
+            "--allow-fail",
+        ]
+    )
+    output = capsys.readouterr()
+    metadata_paths = list((tmp_path / "reconciliation").glob("*/metadata.json"))
+    assert metadata_paths
+    metadata = json.loads(metadata_paths[0].read_text(encoding="utf-8"))
+
+    assert code == 0
+    assert "Reconciliation status: FAIL" in output.out
+    assert "artifact_scope: diagnostic" in output.out
+    assert metadata["artifact_scope"] == "diagnostic"
+    assert metadata["diagnostic_artifact"] is True
+    assert metadata["active_workflow_artifact"] is False
+    assert metadata["diagnostic_reason"] == "synthetic fill smoke"
+
+
 def test_reconciliation_no_broker_or_live_trading_integration_is_invoked(tmp_path: Path) -> None:
     result = reconcile_paper_fills(_decisions(), _valid_buy_fill(_decisions()), settings=_settings(tmp_path))
 
@@ -296,9 +358,9 @@ def _has_issue(result: PaperReconciliationResult, issue_code: str, *, severity: 
     return issue_code in set(frame["issue_code"])
 
 
-def _write_decisions_and_fills(tmp_path: Path) -> tuple[Path, Path]:
-    decisions = _decisions()
-    fills = _valid_buy_fill(decisions)
+def _write_decisions_and_fills(tmp_path: Path, *, status: str = "APPROVED_FOR_PAPER") -> tuple[Path, Path]:
+    decisions = _decisions(status=status)
+    fills = _valid_buy_fill(decisions) if status == "APPROVED_FOR_PAPER" else _manual_fill(decisions)
     decisions_path = tmp_path / "decisions.csv"
     fills_path = tmp_path / "fills.csv"
     decisions.to_csv(decisions_path, index=False)

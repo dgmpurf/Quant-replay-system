@@ -61,6 +61,8 @@ ISSUE_CODES = {
     "MISSING_REQUIRED_COLUMN",
 }
 
+ARTIFACT_SCOPES = {"active", "diagnostic"}
+
 
 @dataclass(frozen=True)
 class PaperReconciliationArtifactPaths:
@@ -100,10 +102,14 @@ def reconcile_paper_fills(
     fills: pd.DataFrame | str | Path,
     settings: Settings | PaperTradingSettings | PaperReconciliationSettings | dict[str, Any] | None = None,
     initial_cash: float | None = None,
+    artifact_scope: str = "active",
+    diagnostic_reason: str | None = None,
 ) -> PaperReconciliationResult:
     """Reconcile paper fills against decisions and write optional artifacts."""
 
     project_settings, paper_settings, reconciliation_settings = _resolve_settings(settings)
+    resolved_scope = _normalize_artifact_scope(artifact_scope)
+    resolved_reason = str(diagnostic_reason or "").strip()
     if paper_settings.enable_live_trading or paper_settings.enable_broker_api:
         raise ValueError("Paper reconciliation cannot enable live trading or broker API access")
     if reconciliation_settings.enable_live_trading or reconciliation_settings.enable_broker_api:
@@ -125,6 +131,8 @@ def reconcile_paper_fills(
         decisions_frame,
         fills_raw,
         config_version=reconciliation_settings.config_version,
+        artifact_scope=resolved_scope,
+        diagnostic_reason=resolved_reason,
     )
     paths = resolve_reconciliation_artifact_paths(reconciliation_settings.output_dir, reconciliation_id)
     warnings = []
@@ -135,8 +143,14 @@ def reconcile_paper_fills(
         "decision_rows": len(decisions_frame),
         "fill_rows": len(fills_raw),
         "status": status,
+        "artifact_scope": resolved_scope,
+        "diagnostic_artifact": resolved_scope == "diagnostic",
+        "active_workflow_artifact": resolved_scope == "active",
+        "diagnostic_reason": resolved_reason,
         "live_trading_enabled": False,
         "broker_api_invoked": False,
+        "no_live_trading": True,
+        "no_broker_api": True,
         "paper_trading_only": True,
     }
     result = PaperReconciliationResult(
@@ -394,11 +408,15 @@ def generate_reconciliation_id(
     fills: pd.DataFrame,
     *,
     config_version: str = "mvp",
+    artifact_scope: str = "active",
+    diagnostic_reason: str | None = None,
 ) -> str:
     """Generate a deterministic reconciliation id."""
 
     decision_frame = _prepare_decisions(decisions)
     fill_frame = fills.copy(deep=True) if fills is not None else pd.DataFrame()
+    resolved_scope = _normalize_artifact_scope(artifact_scope)
+    resolved_reason = str(diagnostic_reason or "").strip()
     payload = {
         "decision_ids": sorted(str(value) for value in decision_frame.get("decision_id", pd.Series(dtype="object")).dropna().unique()),
         "fill_ids": sorted(str(value) for value in fill_frame.get("fill_id", pd.Series(dtype="object")).dropna().unique()),
@@ -408,6 +426,9 @@ def generate_reconciliation_id(
         ),
         "config_version": config_version,
     }
+    if resolved_scope != "active" or resolved_reason:
+        payload["artifact_scope"] = resolved_scope
+        payload["diagnostic_reason"] = resolved_reason
     return _hash_payload(payload, length=10)
 
 
@@ -456,6 +477,8 @@ def build_reconciliation_metadata(
 ) -> dict[str, Any]:
     """Build reconciliation metadata."""
 
+    artifact_scope = _normalize_artifact_scope(result.audit_metadata.get("artifact_scope", "active"))
+    diagnostic_reason = str(result.audit_metadata.get("diagnostic_reason") or "").strip()
     return {
         "reconciliation_id": result.reconciliation_id,
         "created_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -463,11 +486,17 @@ def build_reconciliation_metadata(
         "issue_count": result.issue_count,
         "error_count": result.error_count,
         "warning_count": result.warning_count,
+        "artifact_scope": artifact_scope,
+        "diagnostic_artifact": artifact_scope == "diagnostic",
+        "active_workflow_artifact": artifact_scope == "active",
+        "diagnostic_reason": diagnostic_reason,
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
         "live_trading_enabled": False,
         "broker_api_invoked": False,
+        "no_live_trading": True,
+        "no_broker_api": True,
         "paper_trading_only": True,
     }
 
@@ -483,6 +512,13 @@ def render_reconciliation_report(result: PaperReconciliationResult) -> str:
         "## Summary",
         "",
         _markdown_table(result.summary_frame, ["status", "issue_count", "error_count", "warning_count", "info_count", "issue_code"]),
+        "",
+        "## Artifact Scope",
+        "",
+        f"- Scope: `{_normalize_artifact_scope(result.audit_metadata.get('artifact_scope', 'active'))}`",
+        f"- Diagnostic artifact: `{bool(result.audit_metadata.get('diagnostic_artifact', False))}`",
+        f"- Active workflow artifact: `{bool(result.audit_metadata.get('active_workflow_artifact', True))}`",
+        f"- Diagnostic reason: `{str(result.audit_metadata.get('diagnostic_reason') or '').strip()}`",
         "",
         "## Issues",
         "",
@@ -512,6 +548,13 @@ def render_reconciliation_report(result: PaperReconciliationResult) -> str:
         "",
     ]
     return "\n".join(str(line) for line in lines)
+
+
+def _normalize_artifact_scope(value: Any) -> str:
+    scope = str(value or "active").strip().lower()
+    if scope not in ARTIFACT_SCOPES:
+        raise ValueError(f"Unsupported reconciliation artifact scope: {value!r}")
+    return scope
 
 
 def _resolve_settings(
