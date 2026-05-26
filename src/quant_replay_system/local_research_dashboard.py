@@ -16,6 +16,7 @@ from quant_replay_system.market_cache_export_policy_status import run_market_cac
 from quant_replay_system.market_cache_export_status import run_market_cache_export_status
 from quant_replay_system.market_update_handoff_status import run_market_update_handoff_status
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
+from quant_replay_system.single_symbol_advisory_answer_status import run_single_symbol_advisory_answer_status
 from quant_replay_system.single_symbol_advisory_status import run_single_symbol_advisory_status
 
 
@@ -95,6 +96,18 @@ SUMMARY_COLUMNS = [
     "single_symbol_advisory_not_strategy_recommendation",
     "single_symbol_advisory_alert_preview_path",
     "single_symbol_advisory_next_action",
+    "single_symbol_advisory_answer_status",
+    "latest_single_symbol_advisory_answer_run_id",
+    "latest_single_symbol_advisory_answer_symbol",
+    "single_symbol_advisory_answer_stage",
+    "single_symbol_advisory_answer_action",
+    "single_symbol_advisory_answer_health_status",
+    "single_symbol_advisory_answer_question",
+    "single_symbol_advisory_answer_style",
+    "single_symbol_advisory_answer_demo_mode",
+    "single_symbol_advisory_answer_not_strategy_recommendation",
+    "single_symbol_advisory_answer_markdown_path",
+    "single_symbol_advisory_answer_next_action",
     "historical_backfill_status",
     "latest_historical_backfill_id",
     "historical_backfill_stage",
@@ -194,6 +207,7 @@ COMPONENTS = [
     "CURRENT_CANDIDATE_HEALTH",
     "SIGNAL_ADVISORY_STATUS",
     "SINGLE_SYMBOL_ADVISORY_STATUS",
+    "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
     "MARKET_UPDATE_HANDOFF_STATUS",
     "CURRENT_TO_PAPER_HANDOFF",
     "CURRENT_TO_PAPER_REVIEW_HANDOFF",
@@ -214,6 +228,7 @@ WORKFLOW_AREAS = {
     "CURRENT_CANDIDATE_HEALTH": "CURRENT_CANDIDATES",
     "SIGNAL_ADVISORY_STATUS": "SIGNAL_ADVISORY",
     "SINGLE_SYMBOL_ADVISORY_STATUS": "SINGLE_SYMBOL_ADVISORY",
+    "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS": "SINGLE_SYMBOL_ADVISORY_ANSWER",
     "MARKET_UPDATE_HANDOFF_STATUS": "MARKET_UPDATE_HANDOFF",
     "CURRENT_TO_PAPER_HANDOFF": "PAPER_TRADING",
     "CURRENT_TO_PAPER_REVIEW_HANDOFF": "PAPER_TRADING",
@@ -283,6 +298,18 @@ class LocalResearchDashboardResult:
     single_symbol_advisory_not_strategy_recommendation: bool
     single_symbol_advisory_alert_preview_path: str
     single_symbol_advisory_next_action: str
+    single_symbol_advisory_answer_status: str
+    latest_single_symbol_advisory_answer_run_id: str
+    latest_single_symbol_advisory_answer_symbol: str
+    single_symbol_advisory_answer_stage: str
+    single_symbol_advisory_answer_action: str
+    single_symbol_advisory_answer_health_status: str
+    single_symbol_advisory_answer_question: str
+    single_symbol_advisory_answer_style: str
+    single_symbol_advisory_answer_demo_mode: bool
+    single_symbol_advisory_answer_not_strategy_recommendation: bool
+    single_symbol_advisory_answer_markdown_path: str
+    single_symbol_advisory_answer_next_action: str
     historical_backfill_status: str
     latest_historical_backfill_id: str
     historical_backfill_stage: str
@@ -362,6 +389,7 @@ def run_local_research_dashboard(
     current_candidates_root: str | Path | None = None,
     signal_advisory_root: str | Path | None = None,
     single_symbol_advisory_root: str | Path | None = None,
+    single_symbol_advisory_answer_root: str | Path | None = None,
     market_update_handoff_root: str | Path | None = None,
     paper_trading_root: str | Path | None = None,
     output_dir: str | Path | None = None,
@@ -411,6 +439,11 @@ def run_local_research_dashboard(
         if single_symbol_advisory_root is not None
         else dashboard_settings.single_symbol_advisory_root
     )
+    effective_single_symbol_advisory_answer_root = (
+        Path(single_symbol_advisory_answer_root)
+        if single_symbol_advisory_answer_root is not None
+        else dashboard_settings.single_symbol_advisory_answer_root
+    )
     effective_market_update_handoff_root = (
         Path(market_update_handoff_root)
         if market_update_handoff_root is not None
@@ -433,6 +466,8 @@ def run_local_research_dashboard(
             effective_signal_advisory_root = effective_root / "signals"
         if single_symbol_advisory_root is None:
             effective_single_symbol_advisory_root = effective_root / "single_symbol_advisory"
+        if single_symbol_advisory_answer_root is None:
+            effective_single_symbol_advisory_answer_root = effective_root / "single_symbol_advisory_answer"
         if market_update_handoff_root is None:
             effective_market_update_handoff_root = effective_root / "market_update_handoff"
         if paper_trading_root is None:
@@ -447,6 +482,7 @@ def run_local_research_dashboard(
         current_candidates_root=effective_current_root,
         signal_advisory_root=effective_signal_advisory_root,
         single_symbol_advisory_root=effective_single_symbol_advisory_root,
+        single_symbol_advisory_answer_root=effective_single_symbol_advisory_answer_root,
         market_update_handoff_root=effective_market_update_handoff_root,
         paper_trading_root=effective_paper_root,
         decision_date=decision_date,
@@ -482,6 +518,7 @@ def run_local_research_dashboard(
         "current_candidates_root": effective_current_root,
         "signal_advisory_root": effective_signal_advisory_root,
         "single_symbol_advisory_root": effective_single_symbol_advisory_root,
+        "single_symbol_advisory_answer_root": effective_single_symbol_advisory_answer_root,
         "market_update_handoff_root": effective_market_update_handoff_root,
         "paper_trading_root": effective_paper_root,
         "decision_date_filter": _date_string(decision_date),
@@ -537,6 +574,34 @@ def run_local_research_dashboard(
             summary.get("single_symbol_advisory_alert_preview_path", "")
         ),
         single_symbol_advisory_next_action=str(summary.get("single_symbol_advisory_next_action", "")),
+        single_symbol_advisory_answer_status=str(
+            summary.get("single_symbol_advisory_answer_status", "MISSING")
+        ),
+        latest_single_symbol_advisory_answer_run_id=str(
+            summary.get("latest_single_symbol_advisory_answer_run_id", "")
+        ),
+        latest_single_symbol_advisory_answer_symbol=str(
+            summary.get("latest_single_symbol_advisory_answer_symbol", "")
+        ),
+        single_symbol_advisory_answer_stage=str(summary.get("single_symbol_advisory_answer_stage", "")),
+        single_symbol_advisory_answer_action=str(summary.get("single_symbol_advisory_answer_action", "")),
+        single_symbol_advisory_answer_health_status=str(
+            summary.get("single_symbol_advisory_answer_health_status", "")
+        ),
+        single_symbol_advisory_answer_question=str(summary.get("single_symbol_advisory_answer_question", "")),
+        single_symbol_advisory_answer_style=str(summary.get("single_symbol_advisory_answer_style", "")),
+        single_symbol_advisory_answer_demo_mode=_bool_from_text(
+            summary.get("single_symbol_advisory_answer_demo_mode")
+        ),
+        single_symbol_advisory_answer_not_strategy_recommendation=_bool_from_text(
+            summary.get("single_symbol_advisory_answer_not_strategy_recommendation")
+        ),
+        single_symbol_advisory_answer_markdown_path=str(
+            summary.get("single_symbol_advisory_answer_markdown_path", "")
+        ),
+        single_symbol_advisory_answer_next_action=str(
+            summary.get("single_symbol_advisory_answer_next_action", "")
+        ),
         historical_backfill_status=str(summary.get("historical_backfill_status", "MISSING")),
         latest_historical_backfill_id=str(summary.get("latest_historical_backfill_id", "")),
         historical_backfill_stage=str(summary.get("historical_backfill_stage", "")),
@@ -655,6 +720,7 @@ def scan_local_research_workflow_artifacts(
     current_candidates_root: str | Path,
     signal_advisory_root: str | Path,
     single_symbol_advisory_root: str | Path,
+    single_symbol_advisory_answer_root: str | Path,
     market_update_handoff_root: str | Path,
     paper_trading_root: str | Path,
     decision_date: str | pd.Timestamp | None = None,
@@ -670,6 +736,7 @@ def scan_local_research_workflow_artifacts(
     current_root = Path(current_candidates_root)
     signal_root = Path(signal_advisory_root)
     single_symbol_root = Path(single_symbol_advisory_root)
+    single_symbol_answer_root = Path(single_symbol_advisory_answer_root)
     market_update_root = Path(market_update_handoff_root)
     paper_root = Path(paper_trading_root)
     requested_date = _date_string(decision_date)
@@ -685,6 +752,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_current_candidate_health(current_root / "health"))
     records.extend(_scan_signal_advisory_status(signal_root))
     records.extend(_scan_single_symbol_advisory_status(single_symbol_root))
+    records.extend(_scan_single_symbol_advisory_answer_status(single_symbol_answer_root))
     records.extend(_scan_market_update_handoff_status(market_update_root))
     records.extend(_scan_current_to_paper_handoff(root_path / "current_to_paper_handoff", requested_date, requested_universe))
     records.extend(_scan_current_to_paper_review_handoff(root_path / "current_to_paper_review_handoff"))
@@ -980,7 +1048,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "MARKET_UPDATE_HANDOFF_STATUS",
         *paper_started_components,
     }
-    post_backfill_components = {
+    post_single_symbol_answer_components = {
         "MARKET_CACHE_EXPORT_POLICY_STATUS",
         "MARKET_CACHE_EXPORT_STATUS",
         "DATA_PREPARATION_WORKFLOW",
@@ -992,12 +1060,26 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "MARKET_UPDATE_HANDOFF_STATUS",
         *paper_started_components,
     }
+    post_backfill_components = {
+        "MARKET_CACHE_EXPORT_POLICY_STATUS",
+        "MARKET_CACHE_EXPORT_STATUS",
+        "DATA_PREPARATION_WORKFLOW",
+        "SNAPSHOT_QUALITY",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
     post_cache_export_components = {
         "DATA_PREPARATION_WORKFLOW",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
         "MARKET_UPDATE_HANDOFF_STATUS",
         *paper_started_components,
     }
@@ -1010,6 +1092,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "CURRENT_CANDIDATE_HEALTH",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
         "MARKET_UPDATE_HANDOFF_STATUS",
         *paper_started_components,
     }
@@ -1042,6 +1125,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "post_single_symbol_advisory_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_single_symbol_advisory_components
+        ),
+        "post_single_symbol_answer_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_single_symbol_answer_components
         ),
     }
 
@@ -1176,6 +1263,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "SINGLE_SYMBOL_ADVISORY_STATUS":
         return _single_symbol_advisory_warning_actionability(row, context)
+
+    if component == "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS":
+        return _single_symbol_advisory_answer_warning_actionability(row, context)
 
     expected_demo_warning_count = _expected_demo_warning_count(row, context, warning_count)
     actionable_warning_count = max(warning_count - expected_demo_warning_count, 0)
@@ -1442,6 +1532,63 @@ def _single_symbol_advisory_warning_actionability(row: dict[str, Any], context: 
             "blocking_error_count": 0,
         }
     if status == "WARN" and stage == "SINGLE_SYMBOL_ADVISORY_NOT_FOUND":
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
+def _single_symbol_advisory_answer_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if context.get("post_single_symbol_answer_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage == "DEMO_SINGLE_SYMBOL_ADVISORY_ANSWER_VALIDATED":
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": expected_count,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "WARN" and stage == "SINGLE_SYMBOL_ADVISORY_ANSWER_NOT_FOUND":
         expected_count = max(warning_count, 1)
         return {
             "total_warning_count": expected_count,
@@ -1824,6 +1971,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             and statuses["SINGLE_SYMBOL_ADVISORY_STATUS"] == "FAIL"
         ):
             return "SINGLE_SYMBOL_ADVISORY_FAILED"
+        if (
+            not _has_post_single_symbol_advisory_answer_workflow_component(dashboard_frame)
+            and statuses["SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS"] == "FAIL"
+        ):
+            return "SINGLE_SYMBOL_ADVISORY_ANSWER_FAILED"
         return "LOCAL_RESEARCH_NEEDS_ATTENTION"
     if statuses["PAPER_WORKFLOW_STATUS"] == "PASS":
         return "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
@@ -1853,6 +2005,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _single_symbol_advisory_stage_from_frame(dashboard_frame)
     ):
         return _single_symbol_advisory_stage_from_frame(dashboard_frame)
+    if (
+        not _has_post_single_symbol_advisory_answer_workflow_component(dashboard_frame)
+        and statuses["SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS"] in {"PASS", "WARN", "READY"}
+        and _single_symbol_advisory_answer_stage_from_frame(dashboard_frame)
+    ):
+        return _single_symbol_advisory_answer_stage_from_frame(dashboard_frame)
     if (
         not _has_post_policy_plan_workflow_component(dashboard_frame)
         and statuses["MARKET_CACHE_EXPORT_POLICY_STATUS"] in {"PASS", "WARN", "READY"}
@@ -1946,6 +2104,11 @@ def infer_local_research_next_action(
         "SINGLE_SYMBOL_ADVISORY_NOT_FOUND": "Provide a relevant local artifact before reviewing this symbol; no recommendation was invented.",
         "SINGLE_SYMBOL_ADVISORY_HEALTH_WARN": "Review single-symbol advisory health warnings before using this review.",
         "SINGLE_SYMBOL_ADVISORY_FAILED": "Repair single-symbol advisory artifacts before using this review.",
+        "DEMO_SINGLE_SYMBOL_ADVISORY_ANSWER_VALIDATED": "Review local question-style answer; do not treat DEMO_ONLY output as a strategy recommendation.",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_READY_FOR_REVIEW": "Review local question-style answer; manual confirmation remains required.",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_NOT_FOUND": "Provide a relevant local artifact before answering this symbol; no recommendation was invented.",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_HEALTH_WARN": "Review question-style answer health warnings before using this response.",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_FAILED": "Repair question-style answer artifacts before using this response.",
         "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST": "Run current-to-paper on the latest current-candidates artifact, then continue paper review smoke testing.",
         "PAPER_HANDOFF_READY": "Run current-to-paper-review.",
         "REVIEW_TEMPLATE_READY": "Manually edit review_updates_template.csv.",
@@ -1991,6 +2154,7 @@ def summarize_local_research_status(
                     "MARKET_CACHE_EXPORT_STATUS",
                     "SIGNAL_ADVISORY_STATUS",
                     "SINGLE_SYMBOL_ADVISORY_STATUS",
+                    "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
                 }
             )
             & (frame["status"] == "MISSING")
@@ -2111,6 +2275,56 @@ def summarize_local_research_status(
         ),
         "single_symbol_advisory_next_action": _parse_note_value(
             by_component.get("SINGLE_SYMBOL_ADVISORY_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "single_symbol_advisory_answer_status": _component_status(
+            by_component,
+            "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        ),
+        "latest_single_symbol_advisory_answer_run_id": _string_or_empty(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_single_symbol_advisory_answer_symbol": _parse_note_value(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
+            "latest_symbol",
+        ),
+        "single_symbol_advisory_answer_stage": _string_or_empty(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("stage")
+        ),
+        "single_symbol_advisory_answer_action": _parse_note_value(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
+            "advisory_action",
+        ),
+        "single_symbol_advisory_answer_health_status": _parse_note_value(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "single_symbol_advisory_answer_question": _parse_note_value(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
+            "question",
+        ),
+        "single_symbol_advisory_answer_style": _parse_note_value(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
+            "answer_style",
+        ),
+        "single_symbol_advisory_answer_demo_mode": _bool_from_text(
+            _parse_note_value(
+                by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
+                "demo_mode",
+            )
+        ),
+        "single_symbol_advisory_answer_not_strategy_recommendation": _bool_from_text(
+            _parse_note_value(
+                by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
+                "not_strategy_recommendation",
+            )
+        ),
+        "single_symbol_advisory_answer_markdown_path": _parse_note_value(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
+            "answer_markdown_path",
+        ),
+        "single_symbol_advisory_answer_next_action": _parse_note_value(
+            by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "historical_backfill_status": _component_status(by_component, "HISTORICAL_BACKFILL_STATUS"),
@@ -2473,6 +2687,20 @@ def build_local_research_dashboard_metadata(
         ),
         "single_symbol_advisory_alert_preview_path": result.single_symbol_advisory_alert_preview_path,
         "single_symbol_advisory_next_action": result.single_symbol_advisory_next_action,
+        "latest_single_symbol_advisory_answer_run_id": result.latest_single_symbol_advisory_answer_run_id,
+        "latest_single_symbol_advisory_answer_symbol": result.latest_single_symbol_advisory_answer_symbol,
+        "single_symbol_advisory_answer_status": result.single_symbol_advisory_answer_status,
+        "single_symbol_advisory_answer_stage": result.single_symbol_advisory_answer_stage,
+        "single_symbol_advisory_answer_action": result.single_symbol_advisory_answer_action,
+        "single_symbol_advisory_answer_health_status": result.single_symbol_advisory_answer_health_status,
+        "single_symbol_advisory_answer_question": result.single_symbol_advisory_answer_question,
+        "single_symbol_advisory_answer_style": result.single_symbol_advisory_answer_style,
+        "single_symbol_advisory_answer_demo_mode": result.single_symbol_advisory_answer_demo_mode,
+        "single_symbol_advisory_answer_not_strategy_recommendation": (
+            result.single_symbol_advisory_answer_not_strategy_recommendation
+        ),
+        "single_symbol_advisory_answer_markdown_path": result.single_symbol_advisory_answer_markdown_path,
+        "single_symbol_advisory_answer_next_action": result.single_symbol_advisory_answer_next_action,
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -2561,6 +2789,13 @@ def render_local_research_dashboard_report(
                 "single_symbol_advisory_action",
                 "single_symbol_advisory_health_status",
                 "single_symbol_advisory_alert_preview_path",
+                "single_symbol_advisory_answer_status",
+                "latest_single_symbol_advisory_answer_run_id",
+                "latest_single_symbol_advisory_answer_symbol",
+                "single_symbol_advisory_answer_stage",
+                "single_symbol_advisory_answer_action",
+                "single_symbol_advisory_answer_health_status",
+                "single_symbol_advisory_answer_markdown_path",
                 "total_warning_count",
                 "expected_reviewable_warning_count",
                 "expected_demo_warning_count",
@@ -2996,6 +3231,122 @@ def _single_symbol_advisory_notes(metadata: dict[str, Any], summary: dict[str, A
         f"demo_mode={_string_or_empty(summary.get('demo_mode'))}; "
         f"not_strategy_recommendation={_string_or_empty(summary.get('not_strategy_recommendation'))}; "
         f"alert_preview_path={_string_or_empty(summary.get('alert_preview_path'))}"
+    )
+
+
+def _scan_single_symbol_advisory_answer_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_single_symbol_advisory_answer_status_record(root)
+    if computed is not None:
+        return [computed]
+
+    scan_root = root if root.name == "status" else root / "status"
+    records = []
+    for metadata_path in _metadata_paths(scan_root, "metadata.json"):
+        metadata = _load_json_or_none(metadata_path)
+        if metadata is None or not metadata.get("status_id"):
+            continue
+        output_files = _output_files(metadata)
+        summary = _first_csv_record(output_files.get("single_symbol_advisory_answer_status_summary"))
+        status_rows = _csv_records(output_files.get("single_symbol_advisory_answer_status_csv"))
+        health_row = next(
+            (
+                row
+                for row in status_rows
+                if _string_or_empty(row.get("component")) == "SINGLE_SYMBOL_ADVISORY_ANSWER_HEALTH"
+            ),
+            {},
+        )
+        status_text = _string_or_empty(metadata.get("status")) or _string_or_empty(summary.get("status")) or "READY"
+        stage = _string_or_empty(metadata.get("workflow_stage")) or _string_or_empty(summary.get("workflow_stage"))
+        latest_answer_run_id = _string_or_empty(metadata.get("latest_answer_run_id")) or _string_or_empty(
+            summary.get("latest_answer_run_id")
+        )
+        warning_count = (
+            _int_or_zero(summary.get("warning_count"))
+            + _int_or_zero(health_row.get("warning_count"))
+            + (len(metadata.get("warnings", [])) if isinstance(metadata.get("warnings"), list) else 0)
+        )
+        if status_text == "WARN" and warning_count == 0:
+            warning_count = 1
+        records.append(
+            _record(
+                workflow_area="SINGLE_SYMBOL_ADVISORY_ANSWER",
+                component="SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+                status=status_text,
+                stage=stage or "SINGLE_SYMBOL_ADVISORY_ANSWER_READY_FOR_REVIEW",
+                latest_artifact_id=latest_answer_run_id
+                or _string_or_empty(metadata.get("status_id"))
+                or metadata_path.parent.name,
+                report_path=output_files.get(
+                    "single_symbol_advisory_answer_status_report",
+                    metadata_path.parent / "single_symbol_advisory_answer_status_report.md",
+                ),
+                metadata_path=metadata_path,
+                issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+                warning_count=warning_count,
+                error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+                notes=_single_symbol_advisory_answer_notes(metadata, summary),
+                created_at=metadata.get("created_at"),
+            )
+        )
+    return records
+
+
+def _computed_single_symbol_advisory_answer_status_record(root: Path) -> dict[str, Any] | None:
+    answer_root = root.parent if root.name == "status" else root
+    if not answer_root.exists():
+        return None
+    try:
+        result = run_single_symbol_advisory_answer_status(
+            root=answer_root,
+            output_dir=answer_root / "status",
+            config={"write_artifacts": False},
+        )
+    except Exception:
+        return None
+    if not result.latest_answer_run_id:
+        return None
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    health_row = {}
+    if not result.status_frame.empty:
+        health_rows = result.status_frame.loc[
+            result.status_frame["component"] == "SINGLE_SYMBOL_ADVISORY_ANSWER_HEALTH"
+        ]
+        if not health_rows.empty:
+            health_row = health_rows.iloc[0].to_dict()
+    warning_count = (
+        _int_or_zero(summary.get("warning_count"))
+        + _int_or_zero(health_row.get("warning_count"))
+        + len(result.warnings)
+    )
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="SINGLE_SYMBOL_ADVISORY_ANSWER",
+        component="SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_answer_run_id,
+        report_path=result.artifact_paths.get("single_symbol_advisory_answer_status_report", ""),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+        warning_count=warning_count,
+        error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+        notes=_single_symbol_advisory_answer_notes({"next_manual_action": result.next_manual_action}, summary),
+    )
+
+
+def _single_symbol_advisory_answer_notes(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(metadata.get('next_manual_action'))}; "
+        f"latest_symbol={_string_or_empty(summary.get('latest_symbol'))}; "
+        f"advisory_action={_string_or_empty(summary.get('latest_advisory_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"question={_note_safe_text(summary.get('latest_question'))}; "
+        f"answer_style={_string_or_empty(summary.get('answer_style'))}; "
+        f"demo_mode={_string_or_empty(summary.get('demo_mode'))}; "
+        f"not_strategy_recommendation={_string_or_empty(summary.get('not_strategy_recommendation'))}; "
+        f"answer_markdown_path={_string_or_empty(summary.get('answer_markdown_path'))}"
     )
 
 
@@ -3899,6 +4250,14 @@ def _single_symbol_advisory_stage_from_frame(dashboard_frame: pd.DataFrame) -> s
     return _string_or_empty(rows.iloc[0].get("stage"))
 
 
+def _single_symbol_advisory_answer_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
 def _has_post_backfill_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
@@ -4001,6 +4360,32 @@ def _has_post_single_symbol_advisory_workflow_component(dashboard_frame: pd.Data
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
         "SIGNAL_ADVISORY_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_single_symbol_advisory_answer_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "MARKET_CACHE_EXPORT_POLICY_STATUS",
+        "MARKET_CACHE_EXPORT_STATUS",
+        "DATA_PREPARATION_WORKFLOW",
+        "SNAPSHOT_QUALITY",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
         "MARKET_UPDATE_HANDOFF_STATUS",
         "CURRENT_TO_PAPER_HANDOFF",
         "CURRENT_TO_PAPER_REVIEW_HANDOFF",

@@ -100,6 +100,8 @@ For a local deterministic answer to a user-style question such as "should I buy?
 
 To discover, check, and summarize deterministic question-style answer artifacts, use `single-symbol-advisory-answer-index`, `single-symbol-advisory-answer-health`, and `single-symbol-advisory-answer-status`; see [docs/single_symbol_advisory.md#question-style-answer-index-health-and-status](docs/single_symbol_advisory.md#question-style-answer-index-health-and-status).
 
+`research-status` includes the latest `single-symbol-advisory-answer-status` as question-style advisory context, including the latest answered symbol, answer action, health status, demo safety flags, and local markdown answer path, while preserving later paper workflow priority; see [docs/local_research_dashboard.md#single-symbol-advisory-answer-status](docs/local_research_dashboard.md#single-symbol-advisory-answer-status).
+
 To discover, check, and summarize repeated single-symbol advisory reviews, use `single-symbol-advisory-index`, `single-symbol-advisory-health`, and `single-symbol-advisory-status`; see [docs/single_symbol_advisory.md#index-health-and-status](docs/single_symbol_advisory.md#index-health-and-status).
 
 `research-status` includes the latest `single-symbol-advisory-status` as one-symbol advisory context, including the latest symbol, advisory action, health status, demo safety flags, and local alert preview path, while preserving later paper workflow priority; see [docs/local_research_dashboard.md#single-symbol-advisory-status](docs/local_research_dashboard.md#single-symbol-advisory-status).
@@ -245,6 +247,8 @@ For the v0.81.0 Single-Symbol Advisory Review checkpoint summary, see [docs/rele
 For the v0.82.0 Single-Symbol Advisory Artifact Views and Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.82.0.md](docs/release_checkpoint_v0.82.0.md).
 
 For the v0.83.0 Question-style Single-Symbol Advisory Response checkpoint summary, see [docs/release_checkpoint_v0.83.0.md](docs/release_checkpoint_v0.83.0.md).
+
+For the v0.84.0 Question-style Single-Symbol Advisory Answer Artifact Views and Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.84.0.md](docs/release_checkpoint_v0.84.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -439,6 +443,10 @@ See [docs/release_checkpoint_v0.82.0.md](docs/release_checkpoint_v0.82.0.md) for
 `v0.83.0` marks the question-style single-symbol advisory response checkpoint, covering deterministic local answers, markdown/json/metadata answer artifacts, demo-only answer safety, safe `NOT_FOUND` behavior, no LLM/API calls, and no message/order execution.
 
 See [docs/release_checkpoint_v0.83.0.md](docs/release_checkpoint_v0.83.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.84.0` marks the question-style single-symbol advisory answer artifact views and `research-status` integration checkpoint, covering answer index/health/status, dashboard answer context fields, demo-only and safe `NOT_FOUND` actionability, no LLM/message/order execution, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v0.84.0.md](docs/release_checkpoint_v0.84.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

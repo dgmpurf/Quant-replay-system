@@ -67,6 +67,8 @@ Single-symbol advisory index, health, and status views make repeated one-symbol 
 
 Question-style single-symbol answers provide an intermediate local rendering layer: they turn existing advisory artifacts into a plain answer with reasons, risk notes, timing, invalidation, and safety boundaries. The v0.1 implementation is deterministic and does not call an LLM, send messages, or create execution instructions.
 
+Question-style answer index, health, and status views make repeated local answers discoverable and safety-checkable. Unified `research-status` includes the latest answer context, including safe `NOT_FOUND` outcomes and demo-only disclaimers, while preserving later paper workflow priority.
+
 Question-style answer index, health, and status views make repeated answer artifacts discoverable and safety-checkable. They verify local-only boundaries such as no LLM/API calls, no message sending, no auto-order, and safe `NOT_FOUND` behavior before any future conversational or delivery layer is considered.
 
 Future versions may add conversational natural-language review, richer risk context, and human-approved alert delivery while preserving the same safety boundary.

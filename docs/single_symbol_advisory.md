@@ -201,6 +201,8 @@ Expected stages include:
 
 `NOT_FOUND` remains safe when no recommendation is invented. Demo answers remain workflow validation only, and the answer status layer is still local observability, not message delivery or order execution.
 
+`research-status` includes the latest `single-symbol-advisory-answer-status` as question-style advisory context. The unified dashboard exposes the latest answered symbol, answer action, question, health status, demo safety flags, and markdown answer path while preserving later paper workflow or broader advisory workflow priority. A latest `NOT_FOUND` answer remains visible but does not become a trading recommendation or active blocker when no advice was invented.
+
 ## Index, Health, And Status
 
 Use `single-symbol-advisory-index` to discover local one-symbol review runs:

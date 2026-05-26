@@ -802,6 +802,7 @@ local_research_dashboard:
   current_candidates_root: outputs/reports/current_candidates
   signal_advisory_root: outputs/reports/signals
   single_symbol_advisory_root: outputs/reports/single_symbol_advisory
+  single_symbol_advisory_answer_root: outputs/reports/single_symbol_advisory_answer
   market_update_handoff_root: outputs/reports/market_update_handoff
   paper_trading_root: outputs/reports/paper_trading
   output_dir: outputs/reports/local_research_dashboard

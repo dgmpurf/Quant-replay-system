@@ -516,6 +516,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
     research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
     research_status.add_argument("--single-symbol-advisory-root", help="Single-symbol advisory artifact root directory")
+    research_status.add_argument(
+        "--single-symbol-advisory-answer-root",
+        help="Question-style single-symbol advisory answer artifact root directory",
+    )
     research_status.add_argument("--market-update-handoff-root", help="Market-update-handoff artifact root directory")
     research_status.add_argument("--paper-trading-root", help="Paper trading artifact root directory")
     research_status.add_argument("--decision-date", help="Optional decision date filter")
@@ -2042,6 +2046,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["current_candidates_root"] = Path(args.current_candidates_root)
     if args.single_symbol_advisory_root:
         updates["single_symbol_advisory_root"] = Path(args.single_symbol_advisory_root)
+    if args.single_symbol_advisory_answer_root:
+        updates["single_symbol_advisory_answer_root"] = Path(args.single_symbol_advisory_answer_root)
     if args.market_update_handoff_root:
         updates["market_update_handoff_root"] = Path(args.market_update_handoff_root)
     if args.paper_trading_root:
@@ -2061,6 +2067,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
         single_symbol_advisory_root=args.single_symbol_advisory_root,
+        single_symbol_advisory_answer_root=args.single_symbol_advisory_answer_root,
         market_update_handoff_root=args.market_update_handoff_root,
         paper_trading_root=args.paper_trading_root,
         decision_date=args.decision_date,
@@ -2135,6 +2142,21 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"single_symbol_advisory_alert_preview_path: {result.single_symbol_advisory_alert_preview_path}")
     print(f"single_symbol_advisory_next_action: {result.single_symbol_advisory_next_action}")
+    print(f"latest_single_symbol_advisory_answer_run_id: {result.latest_single_symbol_advisory_answer_run_id}")
+    print(f"latest_single_symbol_advisory_answer_symbol: {result.latest_single_symbol_advisory_answer_symbol}")
+    print(f"single_symbol_advisory_answer_status: {result.single_symbol_advisory_answer_status}")
+    print(f"single_symbol_advisory_answer_stage: {result.single_symbol_advisory_answer_stage}")
+    print(f"single_symbol_advisory_answer_action: {result.single_symbol_advisory_answer_action}")
+    print(f"single_symbol_advisory_answer_health_status: {result.single_symbol_advisory_answer_health_status}")
+    print(f"single_symbol_advisory_answer_question: {result.single_symbol_advisory_answer_question}")
+    print(f"single_symbol_advisory_answer_style: {result.single_symbol_advisory_answer_style}")
+    print(f"single_symbol_advisory_answer_demo_mode: {result.single_symbol_advisory_answer_demo_mode}")
+    print(
+        "single_symbol_advisory_answer_not_strategy_recommendation: "
+        f"{result.single_symbol_advisory_answer_not_strategy_recommendation}"
+    )
+    print(f"single_symbol_advisory_answer_markdown_path: {result.single_symbol_advisory_answer_markdown_path}")
+    print(f"single_symbol_advisory_answer_next_action: {result.single_symbol_advisory_answer_next_action}")
     print(f"latest_market_update_handoff_id: {result.latest_market_update_handoff_id}")
     print(f"market_update_handoff_status: {result.market_update_handoff_status}")
     print(f"market_update_handoff_stage: {result.market_update_handoff_stage}")

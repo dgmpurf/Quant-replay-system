@@ -213,7 +213,7 @@ Signal advisory, alert-preview, and `research-status` advisory-integration miles
 
 Single-symbol advisory and other product-layer advisory milestones should also receive checkpoint documents before adding delivery channels, conversational review, non-demo action semantics, or automation, because they define how user-facing watch/buy-review/sell-review questions remain advisory rather than executable.
 
-Question-style advisory response milestones should receive checkpoint documents before adding conversational NLP, LLM integration, delivery channels, or automation, because they define the boundary between deterministic local answers, human confirmation, and any future generated-language or message-delivery layer.
+Question-style advisory response and answer dashboard/research-status milestones should receive checkpoint documents before adding conversational NLP, LLM integration, delivery channels, or automation, because they define the boundary between deterministic local answers, human confirmation, dashboard actionability, and any future generated-language or message-delivery layer.
 
 ## 6. Pro Extended Usage Rules
 
