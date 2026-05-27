@@ -882,6 +882,7 @@ local_research_dashboard:
   market_cache_export_root: outputs/reports/market_cache_export
   data_preparation_root: outputs/reports/data_preparation
   current_candidates_root: outputs/reports/current_candidates
+  signal_semantics_root: outputs/reports/signal_semantics
   signal_advisory_root: outputs/reports/signals
   single_symbol_advisory_root: outputs/reports/single_symbol_advisory
   single_symbol_advisory_answer_root: outputs/reports/single_symbol_advisory_answer

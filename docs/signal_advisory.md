@@ -35,6 +35,8 @@ The semantics policy blocks failed risk/data/snapshot rows, forces demo/not-stra
 
 Semantics runs can be discovered and safety-checked with `signal-semantics-index`, `signal-semantics-health`, and `signal-semantics-status`. These views verify demo safety, no-auto-order flags, no live/broker/message metadata, required output columns, leading-zero symbols, and blocked-row reasons before semantics labels are consumed by downstream advisory workflows.
 
+`research-status` also includes `signal-semantics-status` as advisory-policy context before signal advisory. It shows the latest semantics run id, health status, advisory label counts, profile, input path, and report path. Review labels remain manual-review context only, and later signal/paper workflow stages keep priority.
+
 ## Contract
 
 Each signal includes:

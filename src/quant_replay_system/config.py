@@ -979,6 +979,7 @@ class LocalResearchDashboardSettings(BaseModel):
     market_cache_export_root: Path = Path("outputs/reports/market_cache_export")
     data_preparation_root: Path = Path("outputs/reports/data_preparation")
     current_candidates_root: Path = Path("outputs/reports/current_candidates")
+    signal_semantics_root: Path = Path("outputs/reports/signal_semantics")
     signal_advisory_root: Path = Path("outputs/reports/signals")
     single_symbol_advisory_root: Path = Path("outputs/reports/single_symbol_advisory")
     single_symbol_advisory_answer_root: Path = Path("outputs/reports/single_symbol_advisory_answer")

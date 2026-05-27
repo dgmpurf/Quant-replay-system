@@ -95,6 +95,8 @@ For the deterministic policy that maps candidate/scored rows into safe advisory 
 
 To discover, check, and summarize local signal semantics artifacts before wiring semantics into broader advisory or dashboard flows, use `signal-semantics-index`, `signal-semantics-health`, and `signal-semantics-status`; see [docs/signal_semantics.md#index-health-and-status](docs/signal_semantics.md#index-health-and-status).
 
+`research-status` includes the latest `signal-semantics-status` as advisory-policy context, including action counts, health status, profile, input path, and report path. `REVIEW_BUY_CANDIDATE` remains a human-review label, not an order, while later paper workflow priority is preserved; see [docs/local_research_dashboard.md#signal-semantics-status](docs/local_research_dashboard.md#signal-semantics-status).
+
 To discover, check, and summarize local signal advisory artifacts before any future alert-delivery work, use `signal-advisory-index`, `signal-advisory-health`, and `signal-advisory-status`; see [docs/signal_advisory.md#index-health-and-status](docs/signal_advisory.md#index-health-and-status).
 
 `research-status` includes the latest `signal-advisory-status` as advisory context, including signal counts, demo-only state, health status, and local alert-preview path, while preserving later paper workflow priority; see [docs/local_research_dashboard.md#signal-advisory-status](docs/local_research_dashboard.md#signal-advisory-status).
@@ -268,6 +270,8 @@ For the v0.86.0 Advisory Conversation Artifact Index / Health / Status checkpoin
 For the v0.87.0 Advisory Conversation Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.87.0.md](docs/release_checkpoint_v0.87.0.md).
 
 For the v0.88.0 Signal Advisory Semantics Policy checkpoint summary, see [docs/release_checkpoint_v0.88.0.md](docs/release_checkpoint_v0.88.0.md).
+
+For the v0.89.0 Signal Semantics Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.89.0.md](docs/release_checkpoint_v0.89.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -482,6 +486,10 @@ See [docs/release_checkpoint_v0.87.0.md](docs/release_checkpoint_v0.87.0.md) for
 `v0.88.0` marks the Signal Advisory Semantics Policy checkpoint, covering deterministic advisory label mapping, demo-only safety, structural non-demo review labels, risk/data/snapshot gates, leading-zero symbol preservation, and no-auto-order safety fields.
 
 See [docs/release_checkpoint_v0.88.0.md](docs/release_checkpoint_v0.88.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.89.0` marks the Signal Semantics Research Status Integration checkpoint, covering signal-semantics index/health/status observability, dashboard action-count visibility, human-review-only `REVIEW_BUY_CANDIDATE` semantics, demo-only safety, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v0.89.0.md](docs/release_checkpoint_v0.89.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

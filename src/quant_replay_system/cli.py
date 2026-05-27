@@ -635,6 +635,7 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument("--market-cache-export-root", help="Market-cache-export artifact root directory")
     research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
     research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
+    research_status.add_argument("--signal-semantics-root", help="Signal semantics artifact root directory")
     research_status.add_argument("--single-symbol-advisory-root", help="Single-symbol advisory artifact root directory")
     research_status.add_argument(
         "--single-symbol-advisory-answer-root",
@@ -2443,6 +2444,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["data_preparation_root"] = Path(args.data_preparation_root)
     if args.current_candidates_root:
         updates["current_candidates_root"] = Path(args.current_candidates_root)
+    if args.signal_semantics_root:
+        updates["signal_semantics_root"] = Path(args.signal_semantics_root)
     if args.single_symbol_advisory_root:
         updates["single_symbol_advisory_root"] = Path(args.single_symbol_advisory_root)
     if args.single_symbol_advisory_answer_root:
@@ -2467,6 +2470,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         market_cache_export_root=args.market_cache_export_root,
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
+        signal_semantics_root=args.signal_semantics_root,
         single_symbol_advisory_root=args.single_symbol_advisory_root,
         single_symbol_advisory_answer_root=args.single_symbol_advisory_answer_root,
         advisory_conversation_root=args.advisory_conversation_root,
@@ -2517,6 +2521,22 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"market_cache_export_stage: {result.market_cache_export_stage}")
     print(f"market_cache_export_pipeline_id: {result.market_cache_export_pipeline_id}")
     print(f"market_cache_export_snapshot_quality_status: {result.market_cache_export_snapshot_quality_status}")
+    print(f"latest_signal_semantics_run_id: {result.latest_signal_semantics_run_id}")
+    print(f"signal_semantics_status: {result.signal_semantics_status}")
+    print(f"signal_semantics_stage: {result.signal_semantics_stage}")
+    print(f"signal_semantics_health_status: {result.signal_semantics_health_status}")
+    print(f"signal_semantics_demo_only_count: {result.signal_semantics_demo_only_count}")
+    print(f"signal_semantics_watch_count: {result.signal_semantics_watch_count}")
+    print(f"signal_semantics_review_buy_candidate_count: {result.signal_semantics_review_buy_candidate_count}")
+    print(f"signal_semantics_review_sell_candidate_count: {result.signal_semantics_review_sell_candidate_count}")
+    print(f"signal_semantics_hold_review_count: {result.signal_semantics_hold_review_count}")
+    print(f"signal_semantics_no_action_count: {result.signal_semantics_no_action_count}")
+    print(f"signal_semantics_blocked_count: {result.signal_semantics_blocked_count}")
+    print(f"signal_semantics_issue_count: {result.signal_semantics_issue_count}")
+    print(f"signal_semantics_profile: {result.signal_semantics_profile}")
+    print(f"signal_semantics_input_path: {result.signal_semantics_input_path}")
+    print(f"signal_semantics_report_path: {result.signal_semantics_report_path}")
+    print(f"signal_semantics_next_action: {result.signal_semantics_next_action}")
     print(f"latest_signal_run_id: {result.latest_signal_run_id}")
     print(f"signal_advisory_status: {result.signal_advisory_status}")
     print(f"signal_advisory_stage: {result.signal_advisory_stage}")

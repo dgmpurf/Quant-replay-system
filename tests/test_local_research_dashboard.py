@@ -1247,6 +1247,174 @@ def test_cli_research_status_prints_market_update_handoff_fields(tmp_path: Path,
     assert "market_update_handoff_current_candidate_run_id: candidate-a" in output.out
 
 
+def test_dashboard_includes_signal_semantics_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_semantics_status(root, semantics_id="semantics-reviewed")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    semantics_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "SIGNAL_SEMANTICS_STATUS"
+    ].iloc[0]
+
+    assert result.latest_signal_semantics_run_id == "semantics-reviewed"
+    assert result.signal_semantics_status == "WARN"
+    assert result.signal_semantics_stage == "SIGNAL_SEMANTICS_READY_FOR_REVIEW"
+    assert result.signal_semantics_health_status == "PASS"
+    assert result.signal_semantics_review_buy_candidate_count == 1
+    assert result.signal_semantics_watch_count == 1
+    assert result.signal_semantics_blocked_count == 2
+    assert result.signal_semantics_issue_count == 2
+    assert result.signal_semantics_profile == "reviewed_local_v0"
+    assert result.workflow_stage == "SIGNAL_SEMANTICS_READY_FOR_REVIEW"
+    assert semantics_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "REVIEW_BUY_CANDIDATE is not an order" in result.next_manual_action
+    assert "auto-order remains disabled" in result.next_manual_action
+
+
+def test_dashboard_signal_semantics_demo_is_visible_but_not_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_semantics_status(
+        root,
+        semantics_id="semantics-demo",
+        workflow_stage="DEMO_SIGNAL_SEMANTICS_VALIDATED",
+        profile="demo",
+        row_count=9,
+        demo_only_count=9,
+        review_buy_candidate_count=0,
+        review_sell_candidate_count=0,
+        watch_count=0,
+        blocked_count=0,
+        issue_count=0,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    semantics_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "SIGNAL_SEMANTICS_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "DEMO_SIGNAL_SEMANTICS_VALIDATED"
+    assert result.signal_semantics_demo_only_count == 9
+    assert result.signal_semantics_review_buy_candidate_count == 0
+    assert result.signal_semantics_review_sell_candidate_count == 0
+    assert semantics_row["warning_classification"] == "EXPECTED_DEMO_WARNING"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+    assert "DEMO_ONLY labels" in result.next_manual_action
+
+
+def test_dashboard_failed_signal_semantics_health_is_actionable_when_active(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_semantics_status(
+        root,
+        semantics_id="semantics-fail",
+        status="FAIL",
+        workflow_stage="SIGNAL_SEMANTICS_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    semantics_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "SIGNAL_SEMANTICS_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "SIGNAL_SEMANTICS_FAILED"
+    assert semantics_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+    assert "Repair signal semantics artifacts" in result.next_manual_action
+
+
+def test_dashboard_demo_signal_semantics_buy_sell_leakage_is_actionable(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_semantics_status(
+        root,
+        semantics_id="semantics-unsafe-demo",
+        status="FAIL",
+        workflow_stage="SIGNAL_SEMANTICS_FAILED",
+        health_status="FAIL",
+        profile="demo",
+        row_count=2,
+        demo_only_count=1,
+        review_buy_candidate_count=1,
+        review_sell_candidate_count=0,
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "SIGNAL_SEMANTICS_FAILED"
+    assert result.signal_semantics_profile == "demo"
+    assert result.signal_semantics_review_buy_candidate_count == 1
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+
+
+def test_dashboard_preserves_later_paper_priority_over_signal_semantics_review_labels(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_semantics_status(root, semantics_id="semantics-reviewed")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    semantics_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "SIGNAL_SEMANTICS_STATUS"
+    ].iloc[0]
+
+    assert result.latest_signal_semantics_run_id == "semantics-reviewed"
+    assert result.signal_semantics_stage == "SIGNAL_SEMANTICS_READY_FOR_REVIEW"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert semantics_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_signal_semantics_fields_to_summary_and_metadata(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _signal_semantics_status(root, semantics_id="semantics-export")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_signal_semantics_run_id"] == "semantics-export"
+    assert row["signal_semantics_status"] == "WARN"
+    assert row["signal_semantics_stage"] == "SIGNAL_SEMANTICS_READY_FOR_REVIEW"
+    assert row["signal_semantics_health_status"] == "PASS"
+    assert row["signal_semantics_review_buy_candidate_count"] == "1"
+    assert row["signal_semantics_watch_count"] == "1"
+    assert row["signal_semantics_blocked_count"] == "2"
+    assert row["signal_semantics_profile"] == "reviewed_local_v0"
+    assert metadata["latest_signal_semantics_run_id"] == "semantics-export"
+    assert metadata["signal_semantics_health_status"] == "PASS"
+    assert metadata["signal_semantics_review_buy_candidate_count"] == 1
+    assert metadata["component_statuses"]["latest_signal_semantics_run_id"] == "semantics-export"
+
+
+def test_cli_research_status_prints_signal_semantics_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _signal_semantics_status(root, semantics_id="semantics-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_signal_semantics_run_id: semantics-cli" in output.out
+    assert "signal_semantics_status: WARN" in output.out
+    assert "signal_semantics_stage: SIGNAL_SEMANTICS_READY_FOR_REVIEW" in output.out
+    assert "signal_semantics_health_status: PASS" in output.out
+    assert "signal_semantics_review_buy_candidate_count: 1" in output.out
+
+
 def test_dashboard_includes_signal_advisory_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
     root = _reports_root(tmp_path)
     _signal_advisory_status(root)
@@ -2615,6 +2783,126 @@ def _market_cache_export_policy_status(
             },
             "live_trading_enabled": False,
             "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _signal_semantics_status(
+    root: Path,
+    *,
+    semantics_id: str = "semantics-a",
+    status: str = "WARN",
+    workflow_stage: str = "SIGNAL_SEMANTICS_READY_FOR_REVIEW",
+    health_status: str = "PASS",
+    row_count: int = 4,
+    demo_only_count: int = 0,
+    watch_count: int = 1,
+    review_buy_candidate_count: int = 1,
+    review_sell_candidate_count: int = 0,
+    hold_review_count: int = 0,
+    no_action_count: int = 0,
+    blocked_count: int = 2,
+    issue_count: int = 2,
+    profile: str = "reviewed_local_v0",
+    input_path: str = "outputs/reports/manual_diagnostics/signal_semantics_synthetic_reviewed_fixture.csv",
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:41:00",
+) -> Path:
+    folder = root / "signal_semantics" / "status" / f"status-{semantics_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "signal_semantics_status_report.md"
+    status_csv = folder / "signal_semantics_status.csv"
+    summary_csv = folder / "signal_semantics_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    semantics_report = root / "signal_semantics" / semantics_id / "signal_semantics_report.md"
+    next_action = (
+        "Demo signal semantics validated; do not treat DEMO_ONLY labels as strategy recommendations."
+        if workflow_stage == "DEMO_SIGNAL_SEMANTICS_VALIDATED"
+        else "Repair signal semantics artifacts before using advisory labels."
+        if status == "FAIL"
+        else "Review signal semantics labels manually; REVIEW_BUY_CANDIDATE is not an order and auto-order remains disabled."
+    )
+    report.write_text(
+        "No live trading, broker API, order placement, or message delivery was invoked.",
+        encoding="utf-8",
+    )
+    semantics_report.parent.mkdir(parents=True, exist_ok=True)
+    semantics_report.write_text(
+        "Signal semantics labels are advisory human-review labels, not orders.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "SIGNAL_SEMANTICS",
+                "status": "READY" if status != "FAIL" else "FAIL",
+                "latest_artifact_id": semantics_id,
+                "row_count": row_count,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": issue_count,
+            },
+            {
+                "component": "SIGNAL_SEMANTICS_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "semantics-health-a",
+                "row_count": row_count,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "workflow_stage": workflow_stage,
+                "status": status,
+                "latest_semantics_run_id": semantics_id,
+                "latest_status": "READY" if status != "FAIL" else "FAIL",
+                "health_status": health_status,
+                "row_count": row_count,
+                "demo_only_count": demo_only_count,
+                "watch_count": watch_count,
+                "review_buy_candidate_count": review_buy_candidate_count,
+                "review_sell_candidate_count": review_sell_candidate_count,
+                "hold_review_count": hold_review_count,
+                "no_action_count": no_action_count,
+                "blocked_count": blocked_count,
+                "issue_count": issue_count,
+                "profile": profile,
+                "input_path": input_path,
+                "input_type": "candidates",
+                "report_path": str(semantics_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{semantics_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_semantics_run_id": semantics_id,
+            "health_status": health_status,
+            "row_count": row_count,
+            "next_manual_action": next_action,
+            "warnings": ["Latest signal semantics artifact is review-only."] if warning_count else [],
+            "output_files": {
+                "signal_semantics_status_report": str(report),
+                "signal_semantics_status_csv": str(status_csv),
+                "signal_semantics_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "auto_order_allowed": False,
         },
     )
     return folder

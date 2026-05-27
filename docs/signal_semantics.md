@@ -160,6 +160,25 @@ Expected stages include:
 
 For a demo-only run, the expected stage is `DEMO_SIGNAL_SEMANTICS_VALIDATED`, and the next action reminds the user not to treat `DEMO_ONLY` labels as strategy recommendations. For non-demo structural runs, the status may be ready for review, but labels still require manual confirmation and do not permit auto-order.
 
+## Research Status Integration
+
+`research-status` includes the latest `signal-semantics-status` as advisory-policy context. The unified dashboard exports:
+
+- `latest_signal_semantics_run_id`
+- `signal_semantics_status`
+- `signal_semantics_stage`
+- `signal_semantics_health_status`
+- action counts for `DEMO_ONLY`, `WATCH`, `REVIEW_BUY_CANDIDATE`, `REVIEW_SELL_CANDIDATE`, `HOLD_REVIEW`, `NO_ACTION`, and `BLOCKED`
+- `signal_semantics_issue_count`
+- `signal_semantics_profile`
+- `signal_semantics_input_path`
+- `signal_semantics_report_path`
+- `signal_semantics_next_action`
+
+When the latest run is `SIGNAL_SEMANTICS_READY_FOR_REVIEW`, the dashboard treats review labels as manual review context. `REVIEW_BUY_CANDIDATE` remains a human-review candidate, not an order, and auto-order remains disabled. When the latest run is `DEMO_SIGNAL_SEMANTICS_VALIDATED`, the dashboard keeps demo rows as `DEMO_ONLY` workflow validation, not strategy recommendations.
+
+Later workflow stages such as signal advisory, single-symbol advisory, advisory conversation, market-update handoff, and paper workflow take priority for the final `workflow_stage`. Signal semantics fields remain visible for audit. Active semantics health failures remain actionable when no later valid workflow supersedes them.
+
 ## Artifacts
 
 Artifacts are written under:

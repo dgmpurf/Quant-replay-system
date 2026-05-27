@@ -15,6 +15,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
+- Has signal semantics mapped scores into advisory labels safely?
 - Has a signal advisory run produced local alert-preview context?
 - Has a single-symbol advisory review been produced for the latest requested symbol?
 - Has a question-style single-symbol answer been rendered for the latest requested symbol?
@@ -38,6 +39,7 @@ outputs/reports/snapshot_quality/
 outputs/reports/market_update_handoff/status/
 outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
+outputs/reports/signal_semantics/status/
 outputs/reports/signals/status/
 outputs/reports/single_symbol_advisory/status/
 outputs/reports/single_symbol_advisory_answer/status/
@@ -84,6 +86,16 @@ The unified summary records the latest export id, export status/stage, linked pi
 Market-cache-export is earlier than current-candidates, market-update-handoff, and paper workflow. If those later artifacts exist, they take priority for the final `workflow_stage`; cache-export fields remain visible as context. If the latest active cache export has health failures or duplicate-key errors and no later valid workflow supersedes it, `research-status` surfaces the export failure as actionable.
 
 These export fields do not imply automatic source selection. The reviewed cache export remains an explicit source/upstream selection layer, and `data-quality` plus `snapshot-quality` remain required before research use.
+
+## Signal Semantics Status
+
+`research-status` includes `signal-semantics-status` as advisory-policy context when semantics artifacts exist.
+
+The unified summary records the latest semantics run id, semantics status/stage, health status, action counts, issue count, profile, input path, report path, and the semantics layer's next manual action. Semantics labels are local advisory-policy labels only. `REVIEW_BUY_CANDIDATE` means human review candidate, not an order, paper approval, broker instruction, or automatic execution.
+
+When signal semantics reports `DEMO_SIGNAL_SEMANTICS_VALIDATED`, the dashboard treats the warning as expected demo context. Demo semantics remain `DEMO_ONLY` and do not become real BUY/SELL guidance. When signal semantics reports `SIGNAL_SEMANTICS_READY_FOR_REVIEW`, review labels remain visible as manual review context, with auto-order disabled.
+
+Signal semantics is earlier than signal advisory, single-symbol advisory, advisory conversation, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to signal semantics; semantics fields remain visible for audit. If semantics health fails because safety boundaries are broken, such as `auto_order_allowed=true`, missing no-live/no-broker metadata, `APPROVED_FOR_PAPER`, message-delivery metadata, missing required files, or demo BUY/SELL leakage, `research-status` surfaces the failure as actionable when semantics is the active stage.
 
 ## Signal Advisory Status
 
@@ -206,6 +218,10 @@ Prior current-candidate health warnings from old dry runs can be classified as s
 - `PIPELINE_READY_FROM_EXPORT`: data-pipeline has run from the reviewed cache export.
 - `DATA_QUALITY_READY_FROM_EXPORT`: data-quality has passed for the reviewed cache export pipeline output.
 - `SNAPSHOT_READY_FROM_EXPORT`: snapshot-quality passed for the reviewed cache export and current-candidates is next.
+- `SIGNAL_SEMANTICS_READY_FOR_REVIEW`: semantics labels exist and should be reviewed manually; `REVIEW_BUY_CANDIDATE` is not an order.
+- `DEMO_SIGNAL_SEMANTICS_VALIDATED`: demo-only semantics labels exist; this is workflow validation only, not strategy advice.
+- `SIGNAL_SEMANTICS_HEALTH_WARN`: semantics artifacts have health warnings that should be reviewed before using advisory labels.
+- `SIGNAL_SEMANTICS_FAILED`: semantics artifacts have active safety or artifact failures and need repair.
 - `SIGNAL_ADVISORY_READY_FOR_REVIEW`: advisory signals exist and the local alert preview should be reviewed manually.
 - `DEMO_SIGNAL_ADVISORY_VALIDATED`: demo-only advisory signals and alert preview exist; this is workflow validation only, not strategy advice.
 - `SIGNAL_ADVISORY_HEALTH_WARN`: advisory artifacts have health warnings that should be reviewed before using alert previews.
