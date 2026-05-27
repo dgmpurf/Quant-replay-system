@@ -1616,11 +1616,20 @@ def _handle_signal_advisory_status(args: argparse.Namespace) -> int:
         update={"signal_advisory_status": settings.signal_advisory_status.model_copy(update=updates)}
     )
     result = run_signal_advisory_status(root=args.root, output_dir=args.output_dir, config=settings)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
     print(f"Status: {result.status}")
     print(f"workflow_stage: {result.workflow_stage}")
     print(f"latest_signal_run_id: {result.latest_signal_run_id}")
     print(f"signal_count: {result.signal_count}")
     print(f"health_status: {result.health_status}")
+    print(f"semantics_policy_source: {summary.get('semantics_policy_source', '')}")
+    print(f"semantics_policy_version: {summary.get('semantics_policy_version', '')}")
+    print(f"semantics_action: {summary.get('semantics_action', '')}")
+    print(f"semantics_provenance_present: {summary.get('semantics_provenance_present', '')}")
+    print(
+        "semantics_missing_provenance_legacy_warning_only: "
+        f"{summary.get('semantics_missing_provenance_legacy_warning_only', '')}"
+    )
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['signal_advisory_status_report']}")
     for warning in result.warnings:
@@ -1761,12 +1770,21 @@ def _handle_single_symbol_advisory_status(args: argparse.Namespace) -> int:
         update={"single_symbol_advisory_status": settings.single_symbol_advisory_status.model_copy(update=updates)}
     )
     result = run_single_symbol_advisory_status(root=args.root, output_dir=args.output_dir, config=settings)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
     print(f"Status: {result.status}")
     print(f"workflow_stage: {result.workflow_stage}")
     print(f"latest_advisory_run_id: {result.latest_advisory_run_id}")
     print(f"latest_symbol: {result.latest_symbol}")
     print(f"latest_advisory_action: {result.latest_advisory_action}")
     print(f"health_status: {result.health_status}")
+    print(f"semantics_policy_source: {summary.get('semantics_policy_source', '')}")
+    print(f"semantics_policy_version: {summary.get('semantics_policy_version', '')}")
+    print(f"semantics_action: {summary.get('semantics_action', '')}")
+    print(f"semantics_provenance_present: {summary.get('semantics_provenance_present', '')}")
+    print(
+        "semantics_missing_provenance_legacy_warning_only: "
+        f"{summary.get('semantics_missing_provenance_legacy_warning_only', '')}"
+    )
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['single_symbol_advisory_status_report']}")
     for warning in result.warnings:
@@ -1857,6 +1875,7 @@ def _handle_single_symbol_advisory_answer_status(args: argparse.Namespace) -> in
         }
     )
     result = run_single_symbol_advisory_answer_status(root=args.root, output_dir=args.output_dir, config=settings)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
     print(f"Status: {result.status}")
     print(f"workflow_stage: {result.workflow_stage}")
     print(f"latest_answer_run_id: {result.latest_answer_run_id}")
@@ -1864,6 +1883,14 @@ def _handle_single_symbol_advisory_answer_status(args: argparse.Namespace) -> in
     print(f"latest_symbol: {result.latest_symbol}")
     print(f"latest_advisory_action: {result.latest_advisory_action}")
     print(f"health_status: {result.health_status}")
+    print(f"semantics_policy_source: {summary.get('semantics_policy_source', '')}")
+    print(f"semantics_policy_version: {summary.get('semantics_policy_version', '')}")
+    print(f"semantics_action: {summary.get('semantics_action', '')}")
+    print(f"semantics_provenance_present: {summary.get('semantics_provenance_present', '')}")
+    print(
+        "semantics_missing_provenance_legacy_warning_only: "
+        f"{summary.get('semantics_missing_provenance_legacy_warning_only', '')}"
+    )
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['single_symbol_advisory_answer_status_report']}")
     for warning in result.warnings:
@@ -2009,6 +2036,14 @@ def _handle_advisory_conversation_status(args: argparse.Namespace) -> int:
     print(f"no_live_trading: {summary.get('no_live_trading', False)}")
     print(f"no_broker_api: {summary.get('no_broker_api', False)}")
     print(f"auto_order_allowed: {summary.get('auto_order_allowed', False)}")
+    print(f"semantics_policy_source: {summary.get('semantics_policy_source', '')}")
+    print(f"semantics_policy_version: {summary.get('semantics_policy_version', '')}")
+    print(f"semantics_action: {summary.get('semantics_action', '')}")
+    print(f"semantics_provenance_present: {summary.get('semantics_provenance_present', '')}")
+    print(
+        "semantics_missing_provenance_legacy_warning_only: "
+        f"{summary.get('semantics_missing_provenance_legacy_warning_only', '')}"
+    )
     print(f"linked_answer_markdown_path: {summary.get('linked_answer_markdown_path', '')}")
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['advisory_conversation_status_report']}")
@@ -2550,6 +2585,14 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"selection_profile: {result.selection_profile}")
     print(f"demo_mode: {result.demo_mode}")
     print(f"not_strategy_recommendation: {result.not_strategy_recommendation}")
+    print(f"signal_advisory_semantics_policy_source: {result.signal_advisory_semantics_policy_source}")
+    print(f"signal_advisory_semantics_policy_version: {result.signal_advisory_semantics_policy_version}")
+    print(f"signal_advisory_semantics_action: {result.signal_advisory_semantics_action}")
+    print(f"signal_advisory_semantics_provenance_present: {result.signal_advisory_semantics_provenance_present}")
+    print(
+        "signal_advisory_semantics_missing_provenance_legacy_warning_only: "
+        f"{result.signal_advisory_semantics_missing_provenance_legacy_warning_only}"
+    )
     print(f"latest_single_symbol_advisory_run_id: {result.latest_single_symbol_advisory_run_id}")
     print(f"latest_single_symbol_advisory_symbol: {result.latest_single_symbol_advisory_symbol}")
     print(f"single_symbol_advisory_status: {result.single_symbol_advisory_status}")
@@ -2564,6 +2607,23 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"single_symbol_advisory_alert_preview_path: {result.single_symbol_advisory_alert_preview_path}")
     print(f"single_symbol_advisory_next_action: {result.single_symbol_advisory_next_action}")
+    print(
+        "single_symbol_advisory_semantics_policy_source: "
+        f"{result.single_symbol_advisory_semantics_policy_source}"
+    )
+    print(
+        "single_symbol_advisory_semantics_policy_version: "
+        f"{result.single_symbol_advisory_semantics_policy_version}"
+    )
+    print(f"single_symbol_advisory_semantics_action: {result.single_symbol_advisory_semantics_action}")
+    print(
+        "single_symbol_advisory_semantics_provenance_present: "
+        f"{result.single_symbol_advisory_semantics_provenance_present}"
+    )
+    print(
+        "single_symbol_advisory_semantics_missing_provenance_legacy_warning_only: "
+        f"{result.single_symbol_advisory_semantics_missing_provenance_legacy_warning_only}"
+    )
     print(f"latest_single_symbol_advisory_answer_run_id: {result.latest_single_symbol_advisory_answer_run_id}")
     print(f"latest_single_symbol_advisory_answer_symbol: {result.latest_single_symbol_advisory_answer_symbol}")
     print(f"single_symbol_advisory_answer_status: {result.single_symbol_advisory_answer_status}")
@@ -2579,6 +2639,26 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"single_symbol_advisory_answer_markdown_path: {result.single_symbol_advisory_answer_markdown_path}")
     print(f"single_symbol_advisory_answer_next_action: {result.single_symbol_advisory_answer_next_action}")
+    print(
+        "single_symbol_advisory_answer_semantics_policy_source: "
+        f"{result.single_symbol_advisory_answer_semantics_policy_source}"
+    )
+    print(
+        "single_symbol_advisory_answer_semantics_policy_version: "
+        f"{result.single_symbol_advisory_answer_semantics_policy_version}"
+    )
+    print(
+        "single_symbol_advisory_answer_semantics_action: "
+        f"{result.single_symbol_advisory_answer_semantics_action}"
+    )
+    print(
+        "single_symbol_advisory_answer_semantics_provenance_present: "
+        f"{result.single_symbol_advisory_answer_semantics_provenance_present}"
+    )
+    print(
+        "single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only: "
+        f"{result.single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only}"
+    )
     print(f"latest_advisory_conversation_run_id: {result.latest_advisory_conversation_run_id}")
     print(f"advisory_conversation_original_question: {result.advisory_conversation_original_question}")
     print(f"advisory_conversation_parsed_symbol: {result.advisory_conversation_parsed_symbol}")
@@ -2595,6 +2675,20 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"advisory_conversation_auto_order_allowed: {result.advisory_conversation_auto_order_allowed}")
     print(f"advisory_conversation_linked_answer_path: {result.advisory_conversation_linked_answer_path}")
     print(f"advisory_conversation_next_action: {result.advisory_conversation_next_action}")
+    print(f"advisory_conversation_semantics_policy_source: {result.advisory_conversation_semantics_policy_source}")
+    print(f"advisory_conversation_semantics_policy_version: {result.advisory_conversation_semantics_policy_version}")
+    print(f"advisory_conversation_semantics_action: {result.advisory_conversation_semantics_action}")
+    print(
+        "advisory_conversation_semantics_provenance_present: "
+        f"{result.advisory_conversation_semantics_provenance_present}"
+    )
+    print(
+        "advisory_conversation_semantics_missing_provenance_legacy_warning_only: "
+        f"{result.advisory_conversation_semantics_missing_provenance_legacy_warning_only}"
+    )
+    print(f"latest_semantics_action: {result.latest_semantics_action}")
+    print(f"semantics_provenance_present: {result.semantics_provenance_present}")
+    print(f"semantics_provenance_missing_legacy_count: {result.semantics_provenance_missing_legacy_count}")
     print(f"latest_market_update_handoff_id: {result.latest_market_update_handoff_id}")
     print(f"market_update_handoff_status: {result.market_update_handoff_status}")
     print(f"market_update_handoff_stage: {result.market_update_handoff_stage}")

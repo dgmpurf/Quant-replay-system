@@ -175,6 +175,8 @@ outputs/reports/signals/index/
   metadata.json
 ```
 
+Index rows include shared signal semantics provenance when present: policy source, policy version, classifier, settings profile, semantics action/reason, and semantics safety flags. Legacy artifacts without provenance remain indexable with blank provenance fields and are handled by health as warning context.
+
 Use `signal-advisory-health` to check file completeness and safety boundaries:
 
 ```cmd
@@ -210,7 +212,7 @@ Use `signal-advisory-status` to summarize the latest advisory state:
 python -m quant_replay_system.cli signal-advisory-status
 ```
 
-The status view reports the latest signal run, health status, action counts, workflow stage, and next manual action. For demo-only runs, the expected stage is `DEMO_SIGNAL_ADVISORY_VALIDATED` and the next action reminds the user to review the local alert preview without treating `DEMO_ONLY` signals as strategy recommendations.
+The status view reports the latest signal run, health status, action counts, shared semantics provenance summary, workflow stage, and next manual action. For demo-only runs, the expected stage is `DEMO_SIGNAL_ADVISORY_VALIDATED` and the next action reminds the user to review the local alert preview without treating `DEMO_ONLY` signals as strategy recommendations.
 
 `research-status` also includes the latest signal advisory status as contextual advisory evidence. It exports fields such as `latest_signal_run_id`, `signal_advisory_status`, `signal_advisory_stage`, `signal_health_status`, signal counts, advisory action counts, source current-candidate run id, selection profile, demo flags, and `alert_preview_path`.
 

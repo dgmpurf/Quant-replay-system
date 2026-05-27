@@ -29,6 +29,28 @@ SIGNAL_SEMANTICS_POLICY_SOURCE = "signal_semantics"
 SIGNAL_SEMANTICS_POLICY_VERSION = "v0.1"
 SIGNAL_SEMANTICS_CLASSIFIER = "classify_signal_semantics_action"
 
+SIGNAL_SEMANTICS_PROVENANCE_FIELDS = [
+    "semantics_policy_source",
+    "semantics_policy_version",
+    "semantics_classifier",
+    "semantics_settings_profile",
+    "semantics_action",
+    "semantics_reason",
+    "semantics_manual_confirmation_required",
+    "semantics_auto_order_allowed",
+    "semantics_no_live_trading",
+    "semantics_no_broker_api",
+]
+
+SIGNAL_SEMANTICS_PROVENANCE_BOOL_FIELDS = {
+    "semantics_manual_confirmation_required",
+    "semantics_auto_order_allowed",
+    "semantics_no_live_trading",
+    "semantics_no_broker_api",
+    "semantics_provenance_present",
+    "semantics_missing_provenance_legacy_warning_only",
+}
+
 SIGNAL_SEMANTICS_COLUMNS = [
     "semantics_run_id",
     "source_row_index",
@@ -311,6 +333,23 @@ def build_signal_semantics_provenance(
         "semantics_no_live_trading": True,
         "semantics_no_broker_api": True,
     }
+
+
+def extract_signal_semantics_provenance(payload: dict[str, Any] | None) -> dict[str, Any]:
+    """Extract the shared provenance fields from local artifact metadata."""
+
+    source = payload if isinstance(payload, dict) else {}
+    return {field: source.get(field, "") for field in SIGNAL_SEMANTICS_PROVENANCE_FIELDS}
+
+
+def signal_semantics_provenance_present(payload: dict[str, Any] | None) -> bool:
+    """Return whether a payload contains the current shared provenance identity."""
+
+    source = payload if isinstance(payload, dict) else {}
+    return any(
+        str(source.get(field, "")).strip()
+        for field in ("semantics_policy_source", "semantics_policy_version", "semantics_classifier", "semantics_action")
+    )
 
 
 def evaluate_signal_semantics_frame(

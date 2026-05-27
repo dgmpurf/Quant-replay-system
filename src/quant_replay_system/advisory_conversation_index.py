@@ -12,6 +12,12 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.config import AdvisoryConversationIndexSettings, Settings, load_settings
+from quant_replay_system.signal_semantics import (
+    SIGNAL_SEMANTICS_PROVENANCE_BOOL_FIELDS,
+    SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    extract_signal_semantics_provenance,
+    signal_semantics_provenance_present,
+)
 
 
 ADVISORY_CONVERSATION_INDEX_LIMITATIONS = [
@@ -38,6 +44,9 @@ ADVISORY_CONVERSATION_INDEX_COLUMNS = [
     "no_live_trading",
     "no_broker_api",
     "auto_order_allowed",
+    *SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    "semantics_provenance_present",
+    "semantics_missing_provenance_legacy_warning_only",
     "report_path",
     "conversation_json_path",
     "metadata_path",
@@ -264,6 +273,8 @@ def _scan_artifact_rows(root: Path, *, include_missing_metadata: bool) -> tuple[
 
 def _row_from_metadata(artifact_dir: Path, metadata_path: Path, metadata: dict[str, Any]) -> dict[str, Any]:
     output_files = metadata.get("output_files", {}) if isinstance(metadata.get("output_files"), dict) else {}
+    provenance = extract_signal_semantics_provenance(metadata)
+    provenance_present = signal_semantics_provenance_present(metadata)
     return {
         "artifact_type": "ADVISORY_CONVERSATION",
         "conversation_run_id": _string_or_empty(metadata.get("conversation_run_id")) or artifact_dir.name,
@@ -282,6 +293,9 @@ def _row_from_metadata(artifact_dir: Path, metadata_path: Path, metadata: dict[s
         "no_live_trading": _to_bool(metadata.get("no_live_trading")),
         "no_broker_api": _to_bool(metadata.get("no_broker_api")),
         "auto_order_allowed": _to_bool(metadata.get("auto_order_allowed")),
+        **provenance,
+        "semantics_provenance_present": provenance_present,
+        "semantics_missing_provenance_legacy_warning_only": not provenance_present,
         "report_path": _string_or_empty(output_files.get("advisory_conversation_report")),
         "conversation_json_path": _string_or_empty(output_files.get("advisory_conversation_json")),
         "metadata_path": str(metadata_path),
@@ -326,6 +340,7 @@ _BOOL_COLUMNS = {
     "no_live_trading",
     "no_broker_api",
     "auto_order_allowed",
+    *SIGNAL_SEMANTICS_PROVENANCE_BOOL_FIELDS,
 }
 
 

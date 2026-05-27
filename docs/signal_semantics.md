@@ -65,6 +65,8 @@ Every output row keeps:
 
 Downstream health checks validate this provenance. Legacy artifacts that predate provenance may produce `MISSING_SEMANTICS_PROVENANCE` warnings, while unsafe provenance such as `semantics_auto_order_allowed=true`, an unexpected policy source, or missing no-live/no-broker assertions is treated as a failure.
 
+Downstream advisory index and status views also surface the shared provenance fields for the latest signal advisory, single-symbol advisory, question-style answer, and advisory-conversation artifacts. Missing provenance on legacy artifacts remains warning context; unsafe provenance remains a health failure.
+
 ## Configuration
 
 Default settings live in `config/default.yaml`:
@@ -180,10 +182,16 @@ For a demo-only run, the expected stage is `DEMO_SIGNAL_SEMANTICS_VALIDATED`, an
 - `signal_semantics_input_path`
 - `signal_semantics_report_path`
 - `signal_semantics_next_action`
+- downstream advisory provenance fields such as `signal_advisory_semantics_policy_source`, `single_symbol_advisory_semantics_policy_source`, `single_symbol_advisory_answer_semantics_policy_source`, and `advisory_conversation_semantics_policy_source`
+- `latest_semantics_action`
+- `semantics_provenance_present`
+- `semantics_provenance_missing_legacy_count`
 
 When the latest run is `SIGNAL_SEMANTICS_READY_FOR_REVIEW`, the dashboard treats review labels as manual review context. `REVIEW_BUY_CANDIDATE` remains a human-review candidate, not an order, and auto-order remains disabled. When the latest run is `DEMO_SIGNAL_SEMANTICS_VALIDATED`, the dashboard keeps demo rows as `DEMO_ONLY` workflow validation, not strategy recommendations.
 
-Later workflow stages such as signal advisory, single-symbol advisory, advisory conversation, market-update handoff, and paper workflow take priority for the final `workflow_stage`. Signal semantics fields remain visible for audit. Active semantics health failures remain actionable when no later valid workflow supersedes them.
+Later workflow stages such as signal advisory, single-symbol advisory, advisory conversation, market-update handoff, and paper workflow take priority for the final `workflow_stage`. Signal semantics fields and downstream provenance fields remain visible for audit. Active semantics health failures remain actionable when no later valid workflow supersedes them.
+
+Provenance visibility is not trading approval. It records the classifier and policy version behind advisory labels so downstream reviews can be audited. Legacy artifacts that predate provenance remain readable and may appear as missing-provenance context; unsafe provenance remains a health failure.
 
 ## Artifacts
 

@@ -103,6 +103,11 @@ SUMMARY_COLUMNS = [
     "selection_profile",
     "demo_mode",
     "not_strategy_recommendation",
+    "signal_advisory_semantics_policy_source",
+    "signal_advisory_semantics_policy_version",
+    "signal_advisory_semantics_action",
+    "signal_advisory_semantics_provenance_present",
+    "signal_advisory_semantics_missing_provenance_legacy_warning_only",
     "single_symbol_advisory_status",
     "latest_single_symbol_advisory_run_id",
     "latest_single_symbol_advisory_symbol",
@@ -114,6 +119,11 @@ SUMMARY_COLUMNS = [
     "single_symbol_advisory_not_strategy_recommendation",
     "single_symbol_advisory_alert_preview_path",
     "single_symbol_advisory_next_action",
+    "single_symbol_advisory_semantics_policy_source",
+    "single_symbol_advisory_semantics_policy_version",
+    "single_symbol_advisory_semantics_action",
+    "single_symbol_advisory_semantics_provenance_present",
+    "single_symbol_advisory_semantics_missing_provenance_legacy_warning_only",
     "single_symbol_advisory_answer_status",
     "latest_single_symbol_advisory_answer_run_id",
     "latest_single_symbol_advisory_answer_symbol",
@@ -126,6 +136,11 @@ SUMMARY_COLUMNS = [
     "single_symbol_advisory_answer_not_strategy_recommendation",
     "single_symbol_advisory_answer_markdown_path",
     "single_symbol_advisory_answer_next_action",
+    "single_symbol_advisory_answer_semantics_policy_source",
+    "single_symbol_advisory_answer_semantics_policy_version",
+    "single_symbol_advisory_answer_semantics_action",
+    "single_symbol_advisory_answer_semantics_provenance_present",
+    "single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only",
     "advisory_conversation_status",
     "latest_advisory_conversation_run_id",
     "advisory_conversation_original_question",
@@ -142,6 +157,14 @@ SUMMARY_COLUMNS = [
     "advisory_conversation_auto_order_allowed",
     "advisory_conversation_linked_answer_path",
     "advisory_conversation_next_action",
+    "advisory_conversation_semantics_policy_source",
+    "advisory_conversation_semantics_policy_version",
+    "advisory_conversation_semantics_action",
+    "advisory_conversation_semantics_provenance_present",
+    "advisory_conversation_semantics_missing_provenance_legacy_warning_only",
+    "latest_semantics_action",
+    "semantics_provenance_present",
+    "semantics_provenance_missing_legacy_count",
     "historical_backfill_status",
     "latest_historical_backfill_id",
     "historical_backfill_stage",
@@ -341,6 +364,11 @@ class LocalResearchDashboardResult:
     selection_profile: str
     demo_mode: bool
     not_strategy_recommendation: bool
+    signal_advisory_semantics_policy_source: str
+    signal_advisory_semantics_policy_version: str
+    signal_advisory_semantics_action: str
+    signal_advisory_semantics_provenance_present: bool
+    signal_advisory_semantics_missing_provenance_legacy_warning_only: bool
     single_symbol_advisory_status: str
     latest_single_symbol_advisory_run_id: str
     latest_single_symbol_advisory_symbol: str
@@ -352,6 +380,11 @@ class LocalResearchDashboardResult:
     single_symbol_advisory_not_strategy_recommendation: bool
     single_symbol_advisory_alert_preview_path: str
     single_symbol_advisory_next_action: str
+    single_symbol_advisory_semantics_policy_source: str
+    single_symbol_advisory_semantics_policy_version: str
+    single_symbol_advisory_semantics_action: str
+    single_symbol_advisory_semantics_provenance_present: bool
+    single_symbol_advisory_semantics_missing_provenance_legacy_warning_only: bool
     single_symbol_advisory_answer_status: str
     latest_single_symbol_advisory_answer_run_id: str
     latest_single_symbol_advisory_answer_symbol: str
@@ -364,6 +397,11 @@ class LocalResearchDashboardResult:
     single_symbol_advisory_answer_not_strategy_recommendation: bool
     single_symbol_advisory_answer_markdown_path: str
     single_symbol_advisory_answer_next_action: str
+    single_symbol_advisory_answer_semantics_policy_source: str
+    single_symbol_advisory_answer_semantics_policy_version: str
+    single_symbol_advisory_answer_semantics_action: str
+    single_symbol_advisory_answer_semantics_provenance_present: bool
+    single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only: bool
     advisory_conversation_status: str
     latest_advisory_conversation_run_id: str
     advisory_conversation_original_question: str
@@ -380,6 +418,14 @@ class LocalResearchDashboardResult:
     advisory_conversation_auto_order_allowed: bool
     advisory_conversation_linked_answer_path: str
     advisory_conversation_next_action: str
+    advisory_conversation_semantics_policy_source: str
+    advisory_conversation_semantics_policy_version: str
+    advisory_conversation_semantics_action: str
+    advisory_conversation_semantics_provenance_present: bool
+    advisory_conversation_semantics_missing_provenance_legacy_warning_only: bool
+    latest_semantics_action: str
+    semantics_provenance_present: bool
+    semantics_provenance_missing_legacy_count: int
     historical_backfill_status: str
     latest_historical_backfill_id: str
     historical_backfill_stage: str
@@ -669,6 +715,19 @@ def run_local_research_dashboard(
         selection_profile=str(summary.get("selection_profile", "")),
         demo_mode=_bool_from_text(summary.get("demo_mode")),
         not_strategy_recommendation=_bool_from_text(summary.get("not_strategy_recommendation")),
+        signal_advisory_semantics_policy_source=str(
+            summary.get("signal_advisory_semantics_policy_source", "")
+        ),
+        signal_advisory_semantics_policy_version=str(
+            summary.get("signal_advisory_semantics_policy_version", "")
+        ),
+        signal_advisory_semantics_action=str(summary.get("signal_advisory_semantics_action", "")),
+        signal_advisory_semantics_provenance_present=_bool_from_text(
+            summary.get("signal_advisory_semantics_provenance_present")
+        ),
+        signal_advisory_semantics_missing_provenance_legacy_warning_only=_bool_from_text(
+            summary.get("signal_advisory_semantics_missing_provenance_legacy_warning_only")
+        ),
         single_symbol_advisory_status=str(summary.get("single_symbol_advisory_status", "MISSING")),
         latest_single_symbol_advisory_run_id=str(summary.get("latest_single_symbol_advisory_run_id", "")),
         latest_single_symbol_advisory_symbol=str(summary.get("latest_single_symbol_advisory_symbol", "")),
@@ -684,6 +743,19 @@ def run_local_research_dashboard(
             summary.get("single_symbol_advisory_alert_preview_path", "")
         ),
         single_symbol_advisory_next_action=str(summary.get("single_symbol_advisory_next_action", "")),
+        single_symbol_advisory_semantics_policy_source=str(
+            summary.get("single_symbol_advisory_semantics_policy_source", "")
+        ),
+        single_symbol_advisory_semantics_policy_version=str(
+            summary.get("single_symbol_advisory_semantics_policy_version", "")
+        ),
+        single_symbol_advisory_semantics_action=str(summary.get("single_symbol_advisory_semantics_action", "")),
+        single_symbol_advisory_semantics_provenance_present=_bool_from_text(
+            summary.get("single_symbol_advisory_semantics_provenance_present")
+        ),
+        single_symbol_advisory_semantics_missing_provenance_legacy_warning_only=_bool_from_text(
+            summary.get("single_symbol_advisory_semantics_missing_provenance_legacy_warning_only")
+        ),
         single_symbol_advisory_answer_status=str(
             summary.get("single_symbol_advisory_answer_status", "MISSING")
         ),
@@ -712,6 +784,21 @@ def run_local_research_dashboard(
         single_symbol_advisory_answer_next_action=str(
             summary.get("single_symbol_advisory_answer_next_action", "")
         ),
+        single_symbol_advisory_answer_semantics_policy_source=str(
+            summary.get("single_symbol_advisory_answer_semantics_policy_source", "")
+        ),
+        single_symbol_advisory_answer_semantics_policy_version=str(
+            summary.get("single_symbol_advisory_answer_semantics_policy_version", "")
+        ),
+        single_symbol_advisory_answer_semantics_action=str(
+            summary.get("single_symbol_advisory_answer_semantics_action", "")
+        ),
+        single_symbol_advisory_answer_semantics_provenance_present=_bool_from_text(
+            summary.get("single_symbol_advisory_answer_semantics_provenance_present")
+        ),
+        single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only=_bool_from_text(
+            summary.get("single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only")
+        ),
         advisory_conversation_status=str(summary.get("advisory_conversation_status", "MISSING")),
         latest_advisory_conversation_run_id=str(summary.get("latest_advisory_conversation_run_id", "")),
         advisory_conversation_original_question=str(summary.get("advisory_conversation_original_question", "")),
@@ -730,6 +817,24 @@ def run_local_research_dashboard(
         ),
         advisory_conversation_linked_answer_path=str(summary.get("advisory_conversation_linked_answer_path", "")),
         advisory_conversation_next_action=str(summary.get("advisory_conversation_next_action", "")),
+        advisory_conversation_semantics_policy_source=str(
+            summary.get("advisory_conversation_semantics_policy_source", "")
+        ),
+        advisory_conversation_semantics_policy_version=str(
+            summary.get("advisory_conversation_semantics_policy_version", "")
+        ),
+        advisory_conversation_semantics_action=str(summary.get("advisory_conversation_semantics_action", "")),
+        advisory_conversation_semantics_provenance_present=_bool_from_text(
+            summary.get("advisory_conversation_semantics_provenance_present")
+        ),
+        advisory_conversation_semantics_missing_provenance_legacy_warning_only=_bool_from_text(
+            summary.get("advisory_conversation_semantics_missing_provenance_legacy_warning_only")
+        ),
+        latest_semantics_action=str(summary.get("latest_semantics_action", "")),
+        semantics_provenance_present=_bool_from_text(summary.get("semantics_provenance_present")),
+        semantics_provenance_missing_legacy_count=_int_or_zero(
+            summary.get("semantics_provenance_missing_legacy_count")
+        ),
         historical_backfill_status=str(summary.get("historical_backfill_status", "MISSING")),
         latest_historical_backfill_id=str(summary.get("latest_historical_backfill_id", "")),
         historical_backfill_stage=str(summary.get("historical_backfill_stage", "")),
@@ -2219,6 +2324,36 @@ def _parse_note_value(notes: Any, key: str) -> str:
     return ""
 
 
+def _component_semantics_provenance(by_component: dict[str, dict[str, Any]], component: str) -> dict[str, str]:
+    notes = by_component.get(component, {}).get("notes")
+    return {
+        "policy_source": _parse_note_value(notes, "semantics_policy_source"),
+        "policy_version": _parse_note_value(notes, "semantics_policy_version"),
+        "action": _parse_note_value(notes, "semantics_action"),
+        "provenance_present": _parse_note_value(notes, "semantics_provenance_present"),
+        "missing_provenance_legacy_warning_only": _parse_note_value(
+            notes,
+            "semantics_missing_provenance_legacy_warning_only",
+        ),
+    }
+
+
+def _first_present_text(*values: Any) -> str:
+    for value in values:
+        text = _string_or_empty(value)
+        if text:
+            return text
+    return ""
+
+
+def _semantics_legacy_missing_count(*component_summaries: dict[str, str]) -> int:
+    return sum(
+        1
+        for summary in component_summaries
+        if _bool_from_text(summary.get("missing_provenance_legacy_warning_only"))
+    )
+
+
 def _actionability_count_keys() -> list[str]:
     return [
         "total_warning_count",
@@ -2496,6 +2631,40 @@ def summarize_local_research_status(
         if actionability["actionable_warning_count"] > 0 or "WARN" in active_statuses or missing_count or warning_count
         else "PASS"
     )
+    signal_advisory_semantics = _component_semantics_provenance(by_component, "SIGNAL_ADVISORY_STATUS")
+    single_symbol_advisory_semantics = _component_semantics_provenance(
+        by_component,
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+    )
+    single_symbol_answer_semantics = _component_semantics_provenance(
+        by_component,
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+    )
+    advisory_conversation_semantics = _component_semantics_provenance(
+        by_component,
+        "ADVISORY_CONVERSATION_STATUS",
+    )
+    latest_semantics_action = _first_present_text(
+        advisory_conversation_semantics["action"],
+        single_symbol_answer_semantics["action"],
+        single_symbol_advisory_semantics["action"],
+        signal_advisory_semantics["action"],
+    )
+    semantics_provenance_present = any(
+        _bool_from_text(summary["provenance_present"])
+        for summary in (
+            advisory_conversation_semantics,
+            single_symbol_answer_semantics,
+            single_symbol_advisory_semantics,
+            signal_advisory_semantics,
+        )
+    )
+    semantics_missing_legacy_count = _semantics_legacy_missing_count(
+        advisory_conversation_semantics,
+        single_symbol_answer_semantics,
+        single_symbol_advisory_semantics,
+        signal_advisory_semantics,
+    )
     row = {
         "workflow_stage": workflow_stage,
         "status": status,
@@ -2614,6 +2783,15 @@ def summarize_local_research_status(
                 "not_strategy_recommendation",
             )
         ),
+        "signal_advisory_semantics_policy_source": signal_advisory_semantics["policy_source"],
+        "signal_advisory_semantics_policy_version": signal_advisory_semantics["policy_version"],
+        "signal_advisory_semantics_action": signal_advisory_semantics["action"],
+        "signal_advisory_semantics_provenance_present": _bool_from_text(
+            signal_advisory_semantics["provenance_present"]
+        ),
+        "signal_advisory_semantics_missing_provenance_legacy_warning_only": _bool_from_text(
+            signal_advisory_semantics["missing_provenance_legacy_warning_only"]
+        ),
         "single_symbol_advisory_status": _component_status(by_component, "SINGLE_SYMBOL_ADVISORY_STATUS"),
         "latest_single_symbol_advisory_run_id": _string_or_empty(
             by_component.get("SINGLE_SYMBOL_ADVISORY_STATUS", {}).get("latest_artifact_id")
@@ -2653,6 +2831,15 @@ def summarize_local_research_status(
         "single_symbol_advisory_next_action": _parse_note_value(
             by_component.get("SINGLE_SYMBOL_ADVISORY_STATUS", {}).get("notes"),
             "next_manual_action",
+        ),
+        "single_symbol_advisory_semantics_policy_source": single_symbol_advisory_semantics["policy_source"],
+        "single_symbol_advisory_semantics_policy_version": single_symbol_advisory_semantics["policy_version"],
+        "single_symbol_advisory_semantics_action": single_symbol_advisory_semantics["action"],
+        "single_symbol_advisory_semantics_provenance_present": _bool_from_text(
+            single_symbol_advisory_semantics["provenance_present"]
+        ),
+        "single_symbol_advisory_semantics_missing_provenance_legacy_warning_only": _bool_from_text(
+            single_symbol_advisory_semantics["missing_provenance_legacy_warning_only"]
         ),
         "single_symbol_advisory_answer_status": _component_status(
             by_component,
@@ -2703,6 +2890,15 @@ def summarize_local_research_status(
         "single_symbol_advisory_answer_next_action": _parse_note_value(
             by_component.get("SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS", {}).get("notes"),
             "next_manual_action",
+        ),
+        "single_symbol_advisory_answer_semantics_policy_source": single_symbol_answer_semantics["policy_source"],
+        "single_symbol_advisory_answer_semantics_policy_version": single_symbol_answer_semantics["policy_version"],
+        "single_symbol_advisory_answer_semantics_action": single_symbol_answer_semantics["action"],
+        "single_symbol_advisory_answer_semantics_provenance_present": _bool_from_text(
+            single_symbol_answer_semantics["provenance_present"]
+        ),
+        "single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only": _bool_from_text(
+            single_symbol_answer_semantics["missing_provenance_legacy_warning_only"]
         ),
         "advisory_conversation_status": _component_status(by_component, "ADVISORY_CONVERSATION_STATUS"),
         "latest_advisory_conversation_run_id": _string_or_empty(
@@ -2758,6 +2954,18 @@ def summarize_local_research_status(
             by_component.get("ADVISORY_CONVERSATION_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
+        "advisory_conversation_semantics_policy_source": advisory_conversation_semantics["policy_source"],
+        "advisory_conversation_semantics_policy_version": advisory_conversation_semantics["policy_version"],
+        "advisory_conversation_semantics_action": advisory_conversation_semantics["action"],
+        "advisory_conversation_semantics_provenance_present": _bool_from_text(
+            advisory_conversation_semantics["provenance_present"]
+        ),
+        "advisory_conversation_semantics_missing_provenance_legacy_warning_only": _bool_from_text(
+            advisory_conversation_semantics["missing_provenance_legacy_warning_only"]
+        ),
+        "latest_semantics_action": latest_semantics_action,
+        "semantics_provenance_present": semantics_provenance_present,
+        "semantics_provenance_missing_legacy_count": semantics_missing_legacy_count,
         "historical_backfill_status": _component_status(by_component, "HISTORICAL_BACKFILL_STATUS"),
         "latest_historical_backfill_id": _string_or_empty(
             by_component.get("HISTORICAL_BACKFILL_STATUS", {}).get("latest_artifact_id")
@@ -3121,6 +3329,13 @@ def build_local_research_dashboard_metadata(
         "selection_profile": result.selection_profile,
         "demo_mode": result.demo_mode,
         "not_strategy_recommendation": result.not_strategy_recommendation,
+        "signal_advisory_semantics_policy_source": result.signal_advisory_semantics_policy_source,
+        "signal_advisory_semantics_policy_version": result.signal_advisory_semantics_policy_version,
+        "signal_advisory_semantics_action": result.signal_advisory_semantics_action,
+        "signal_advisory_semantics_provenance_present": result.signal_advisory_semantics_provenance_present,
+        "signal_advisory_semantics_missing_provenance_legacy_warning_only": (
+            result.signal_advisory_semantics_missing_provenance_legacy_warning_only
+        ),
         "latest_single_symbol_advisory_run_id": result.latest_single_symbol_advisory_run_id,
         "latest_single_symbol_advisory_symbol": result.latest_single_symbol_advisory_symbol,
         "single_symbol_advisory_status": result.single_symbol_advisory_status,
@@ -3134,6 +3349,15 @@ def build_local_research_dashboard_metadata(
         ),
         "single_symbol_advisory_alert_preview_path": result.single_symbol_advisory_alert_preview_path,
         "single_symbol_advisory_next_action": result.single_symbol_advisory_next_action,
+        "single_symbol_advisory_semantics_policy_source": result.single_symbol_advisory_semantics_policy_source,
+        "single_symbol_advisory_semantics_policy_version": result.single_symbol_advisory_semantics_policy_version,
+        "single_symbol_advisory_semantics_action": result.single_symbol_advisory_semantics_action,
+        "single_symbol_advisory_semantics_provenance_present": (
+            result.single_symbol_advisory_semantics_provenance_present
+        ),
+        "single_symbol_advisory_semantics_missing_provenance_legacy_warning_only": (
+            result.single_symbol_advisory_semantics_missing_provenance_legacy_warning_only
+        ),
         "latest_single_symbol_advisory_answer_run_id": result.latest_single_symbol_advisory_answer_run_id,
         "latest_single_symbol_advisory_answer_symbol": result.latest_single_symbol_advisory_answer_symbol,
         "single_symbol_advisory_answer_status": result.single_symbol_advisory_answer_status,
@@ -3148,6 +3372,19 @@ def build_local_research_dashboard_metadata(
         ),
         "single_symbol_advisory_answer_markdown_path": result.single_symbol_advisory_answer_markdown_path,
         "single_symbol_advisory_answer_next_action": result.single_symbol_advisory_answer_next_action,
+        "single_symbol_advisory_answer_semantics_policy_source": (
+            result.single_symbol_advisory_answer_semantics_policy_source
+        ),
+        "single_symbol_advisory_answer_semantics_policy_version": (
+            result.single_symbol_advisory_answer_semantics_policy_version
+        ),
+        "single_symbol_advisory_answer_semantics_action": result.single_symbol_advisory_answer_semantics_action,
+        "single_symbol_advisory_answer_semantics_provenance_present": (
+            result.single_symbol_advisory_answer_semantics_provenance_present
+        ),
+        "single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only": (
+            result.single_symbol_advisory_answer_semantics_missing_provenance_legacy_warning_only
+        ),
         "latest_advisory_conversation_run_id": result.latest_advisory_conversation_run_id,
         "advisory_conversation_original_question": result.advisory_conversation_original_question,
         "advisory_conversation_parsed_symbol": result.advisory_conversation_parsed_symbol,
@@ -3164,6 +3401,18 @@ def build_local_research_dashboard_metadata(
         "advisory_conversation_auto_order_allowed": result.advisory_conversation_auto_order_allowed,
         "advisory_conversation_linked_answer_path": result.advisory_conversation_linked_answer_path,
         "advisory_conversation_next_action": result.advisory_conversation_next_action,
+        "advisory_conversation_semantics_policy_source": result.advisory_conversation_semantics_policy_source,
+        "advisory_conversation_semantics_policy_version": result.advisory_conversation_semantics_policy_version,
+        "advisory_conversation_semantics_action": result.advisory_conversation_semantics_action,
+        "advisory_conversation_semantics_provenance_present": (
+            result.advisory_conversation_semantics_provenance_present
+        ),
+        "advisory_conversation_semantics_missing_provenance_legacy_warning_only": (
+            result.advisory_conversation_semantics_missing_provenance_legacy_warning_only
+        ),
+        "latest_semantics_action": result.latest_semantics_action,
+        "semantics_provenance_present": result.semantics_provenance_present,
+        "semantics_provenance_missing_legacy_count": result.semantics_provenance_missing_legacy_count,
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -3253,6 +3502,10 @@ def render_local_research_dashboard_report(
                 "signal_health_status",
                 "signal_count",
                 "demo_signal_count",
+                "signal_advisory_semantics_policy_source",
+                "signal_advisory_semantics_policy_version",
+                "signal_advisory_semantics_action",
+                "signal_advisory_semantics_provenance_present",
                 "alert_preview_path",
                 "single_symbol_advisory_status",
                 "latest_single_symbol_advisory_run_id",
@@ -3260,6 +3513,9 @@ def render_local_research_dashboard_report(
                 "single_symbol_advisory_stage",
                 "single_symbol_advisory_action",
                 "single_symbol_advisory_health_status",
+                "single_symbol_advisory_semantics_policy_source",
+                "single_symbol_advisory_semantics_action",
+                "single_symbol_advisory_semantics_provenance_present",
                 "single_symbol_advisory_alert_preview_path",
                 "single_symbol_advisory_answer_status",
                 "latest_single_symbol_advisory_answer_run_id",
@@ -3267,6 +3523,9 @@ def render_local_research_dashboard_report(
                 "single_symbol_advisory_answer_stage",
                 "single_symbol_advisory_answer_action",
                 "single_symbol_advisory_answer_health_status",
+                "single_symbol_advisory_answer_semantics_policy_source",
+                "single_symbol_advisory_answer_semantics_action",
+                "single_symbol_advisory_answer_semantics_provenance_present",
                 "single_symbol_advisory_answer_markdown_path",
                 "advisory_conversation_status",
                 "latest_advisory_conversation_run_id",
@@ -3278,7 +3537,13 @@ def render_local_research_dashboard_report(
                 "advisory_conversation_health_status",
                 "advisory_conversation_llm_api_called",
                 "advisory_conversation_no_message_sent",
+                "advisory_conversation_semantics_policy_source",
+                "advisory_conversation_semantics_action",
+                "advisory_conversation_semantics_provenance_present",
                 "advisory_conversation_linked_answer_path",
+                "latest_semantics_action",
+                "semantics_provenance_present",
+                "semantics_provenance_missing_legacy_count",
                 "total_warning_count",
                 "expected_reviewable_warning_count",
                 "expected_demo_warning_count",
@@ -3585,7 +3850,27 @@ def _signal_advisory_notes(metadata: dict[str, Any], summary: dict[str, Any]) ->
         f"source_candidate_run_id={_string_or_empty(summary.get('source_candidate_run_id'))}; "
         f"selection_profile={_string_or_empty(summary.get('selection_profile'))}; "
         f"demo_mode={_string_or_empty(summary.get('demo_mode'))}; "
-        f"not_strategy_recommendation={_string_or_empty(summary.get('not_strategy_recommendation'))}"
+        f"not_strategy_recommendation={_string_or_empty(summary.get('not_strategy_recommendation'))}; "
+        f"{_semantics_provenance_notes(summary)}"
+    )
+
+
+def _semantics_provenance_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"semantics_policy_source={_string_or_empty(summary.get('semantics_policy_source'))}; "
+        f"semantics_policy_version={_string_or_empty(summary.get('semantics_policy_version'))}; "
+        f"semantics_classifier={_string_or_empty(summary.get('semantics_classifier'))}; "
+        f"semantics_settings_profile={_string_or_empty(summary.get('semantics_settings_profile'))}; "
+        f"semantics_action={_string_or_empty(summary.get('semantics_action'))}; "
+        f"semantics_reason={_note_safe_text(summary.get('semantics_reason'))}; "
+        "semantics_manual_confirmation_required="
+        f"{_string_or_empty(summary.get('semantics_manual_confirmation_required'))}; "
+        f"semantics_auto_order_allowed={_string_or_empty(summary.get('semantics_auto_order_allowed'))}; "
+        f"semantics_no_live_trading={_string_or_empty(summary.get('semantics_no_live_trading'))}; "
+        f"semantics_no_broker_api={_string_or_empty(summary.get('semantics_no_broker_api'))}; "
+        f"semantics_provenance_present={_string_or_empty(summary.get('semantics_provenance_present'))}; "
+        "semantics_missing_provenance_legacy_warning_only="
+        f"{_string_or_empty(summary.get('semantics_missing_provenance_legacy_warning_only'))}"
     )
 
 
@@ -3831,7 +4116,8 @@ def _single_symbol_advisory_notes(metadata: dict[str, Any], summary: dict[str, A
         f"final_score={_string_or_empty(summary.get('final_score'))}; "
         f"demo_mode={_string_or_empty(summary.get('demo_mode'))}; "
         f"not_strategy_recommendation={_string_or_empty(summary.get('not_strategy_recommendation'))}; "
-        f"alert_preview_path={_string_or_empty(summary.get('alert_preview_path'))}"
+        f"alert_preview_path={_string_or_empty(summary.get('alert_preview_path'))}; "
+        f"{_semantics_provenance_notes(summary)}"
     )
 
 
@@ -3947,7 +4233,8 @@ def _single_symbol_advisory_answer_notes(metadata: dict[str, Any], summary: dict
         f"answer_style={_string_or_empty(summary.get('answer_style'))}; "
         f"demo_mode={_string_or_empty(summary.get('demo_mode'))}; "
         f"not_strategy_recommendation={_string_or_empty(summary.get('not_strategy_recommendation'))}; "
-        f"answer_markdown_path={_string_or_empty(summary.get('answer_markdown_path'))}"
+        f"answer_markdown_path={_string_or_empty(summary.get('answer_markdown_path'))}; "
+        f"{_semantics_provenance_notes(summary)}"
     )
 
 
@@ -4065,7 +4352,8 @@ def _advisory_conversation_notes(metadata: dict[str, Any], summary: dict[str, An
         f"no_live_trading={_string_or_empty(summary.get('no_live_trading'))}; "
         f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
         f"auto_order_allowed={_string_or_empty(summary.get('auto_order_allowed'))}; "
-        f"linked_answer_markdown_path={_string_or_empty(summary.get('linked_answer_markdown_path'))}"
+        f"linked_answer_markdown_path={_string_or_empty(summary.get('linked_answer_markdown_path'))}; "
+        f"{_semantics_provenance_notes(summary)}"
     )
 
 

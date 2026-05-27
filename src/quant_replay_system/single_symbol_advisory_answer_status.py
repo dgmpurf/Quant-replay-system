@@ -11,6 +11,10 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.config import Settings, SingleSymbolAdvisoryAnswerStatusSettings, load_settings
+from quant_replay_system.signal_semantics import (
+    SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    signal_semantics_provenance_present,
+)
 from quant_replay_system.single_symbol_advisory_answer_health import check_single_symbol_advisory_answer_health
 from quant_replay_system.single_symbol_advisory_answer_index import scan_single_symbol_advisory_answer_artifacts
 
@@ -48,6 +52,9 @@ SUMMARY_COLUMNS = [
     "health_status",
     "demo_mode",
     "not_strategy_recommendation",
+    *SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    "semantics_provenance_present",
+    "semantics_missing_provenance_legacy_warning_only",
     "answer_markdown_path",
     "next_manual_action",
 ]
@@ -266,6 +273,7 @@ def summarize_single_symbol_advisory_answer_status(index_frame: pd.DataFrame, *,
                 health_status=health_status,
                 demo_mode=demo_mode,
                 not_strategy_recommendation=not_strategy,
+                **_provenance_summary(latest),
                 answer_markdown_path=_string_or_empty(latest.get("answer_markdown_path")),
                 next_manual_action=next_action,
             )
@@ -307,6 +315,7 @@ def build_single_symbol_advisory_answer_status_metadata(
     result: SingleSymbolAdvisoryAnswerStatusResult,
     paths: SingleSymbolAdvisoryAnswerStatusPaths,
 ) -> dict[str, Any]:
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
     return {
         "status_id": result.status_id,
         "created_at": "1970-01-01T00:00:00+00:00",
@@ -318,6 +327,7 @@ def build_single_symbol_advisory_answer_status_metadata(
         "latest_advisory_action": result.latest_advisory_action,
         "health_status": result.health_status,
         "next_manual_action": result.next_manual_action,
+        **_metadata_provenance(summary),
         "config_summary": {
             "root_dir": str(result.audit_metadata.get("root_dir", "")),
             "strict": bool(result.audit_metadata.get("strict", False)),
@@ -426,6 +436,27 @@ def _summary_row(**values: Any) -> dict[str, Any]:
     row = {column: "" for column in SUMMARY_COLUMNS}
     row.update(values)
     return row
+
+
+def _provenance_summary(row: dict[str, Any]) -> dict[str, Any]:
+    present = _to_bool(row.get("semantics_provenance_present")) or signal_semantics_provenance_present(row)
+    legacy_warning_only = _to_bool(row.get("semantics_missing_provenance_legacy_warning_only")) if not present else False
+    return {
+        **{field: _string_or_empty(row.get(field)) for field in SIGNAL_SEMANTICS_PROVENANCE_FIELDS},
+        "semantics_provenance_present": present,
+        "semantics_missing_provenance_legacy_warning_only": legacy_warning_only,
+    }
+
+
+def _metadata_provenance(summary: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **{field: summary.get(field, "") for field in SIGNAL_SEMANTICS_PROVENANCE_FIELDS},
+        "semantics_provenance_present": summary.get("semantics_provenance_present", ""),
+        "semantics_missing_provenance_legacy_warning_only": summary.get(
+            "semantics_missing_provenance_legacy_warning_only",
+            "",
+        ),
+    }
 
 
 def _finalize_status_frame(frame: pd.DataFrame) -> pd.DataFrame:

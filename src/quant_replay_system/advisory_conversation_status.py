@@ -13,6 +13,10 @@ import pandas as pd
 from quant_replay_system.advisory_conversation_health import check_advisory_conversation_health
 from quant_replay_system.advisory_conversation_index import scan_advisory_conversation_artifacts
 from quant_replay_system.config import AdvisoryConversationStatusSettings, Settings, load_settings
+from quant_replay_system.signal_semantics import (
+    SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    signal_semantics_provenance_present,
+)
 
 
 ADVISORY_CONVERSATION_STATUS_LIMITATIONS = [
@@ -50,6 +54,9 @@ SUMMARY_COLUMNS = [
     "no_live_trading",
     "no_broker_api",
     "auto_order_allowed",
+    *SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    "semantics_provenance_present",
+    "semantics_missing_provenance_legacy_warning_only",
     "linked_answer_markdown_path",
     "next_manual_action",
 ]
@@ -273,6 +280,7 @@ def summarize_advisory_conversation_status(index_frame: pd.DataFrame, *, health_
                 no_live_trading=_to_bool(latest.get("no_live_trading")),
                 no_broker_api=_to_bool(latest.get("no_broker_api")),
                 auto_order_allowed=_to_bool(latest.get("auto_order_allowed")),
+                **_provenance_summary(latest),
                 linked_answer_markdown_path=_string_or_empty(latest.get("linked_answer_markdown_path")),
                 next_manual_action=next_action,
             )
@@ -309,6 +317,7 @@ def build_advisory_conversation_status_metadata(
     result: AdvisoryConversationStatusResult,
     paths: AdvisoryConversationStatusPaths,
 ) -> dict[str, Any]:
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
     return {
         "status_id": result.status_id,
         "created_at": "1970-01-01T00:00:00+00:00",
@@ -321,6 +330,7 @@ def build_advisory_conversation_status_metadata(
         "latest_advisory_action": result.latest_advisory_action,
         "health_status": result.health_status,
         "next_manual_action": result.next_manual_action,
+        **_metadata_provenance(summary),
         "output_files": {key: str(value) for key, value in paths.as_dict().items() if key != "artifact_dir"},
         "warnings": result.warnings,
         "known_limitations": result.known_limitations,
@@ -439,6 +449,27 @@ def _summary_row(**overrides: Any) -> dict[str, Any]:
     row = {column: "" for column in SUMMARY_COLUMNS}
     row.update(overrides)
     return row
+
+
+def _provenance_summary(row: dict[str, Any]) -> dict[str, Any]:
+    present = _to_bool(row.get("semantics_provenance_present")) or signal_semantics_provenance_present(row)
+    legacy_warning_only = _to_bool(row.get("semantics_missing_provenance_legacy_warning_only")) if not present else False
+    return {
+        **{field: _string_or_empty(row.get(field)) for field in SIGNAL_SEMANTICS_PROVENANCE_FIELDS},
+        "semantics_provenance_present": present,
+        "semantics_missing_provenance_legacy_warning_only": legacy_warning_only,
+    }
+
+
+def _metadata_provenance(summary: dict[str, Any]) -> dict[str, Any]:
+    return {
+        **{field: summary.get(field, "") for field in SIGNAL_SEMANTICS_PROVENANCE_FIELDS},
+        "semantics_provenance_present": summary.get("semantics_provenance_present", ""),
+        "semantics_missing_provenance_legacy_warning_only": summary.get(
+            "semantics_missing_provenance_legacy_warning_only",
+            "",
+        ),
+    }
 
 
 def _health_next_action(status: str) -> str:

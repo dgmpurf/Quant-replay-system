@@ -12,6 +12,11 @@ import numpy as np
 import pandas as pd
 
 from quant_replay_system.config import Settings, SignalAdvisoryIndexSettings, load_settings
+from quant_replay_system.signal_semantics import (
+    SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    extract_signal_semantics_provenance,
+    signal_semantics_provenance_present,
+)
 
 
 SIGNAL_ADVISORY_INDEX_LIMITATIONS = [
@@ -36,6 +41,9 @@ SIGNAL_ADVISORY_INDEX_COLUMNS = [
     "selection_profile",
     "demo_mode",
     "not_strategy_recommendation",
+    *SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    "semantics_provenance_present",
+    "semantics_missing_provenance_legacy_warning_only",
     "signals_csv_path",
     "alert_preview_path",
     "report_path",
@@ -280,6 +288,8 @@ def _scan_artifact_rows(root: Path, *, include_missing_metadata: bool) -> tuple[
 def _row_from_metadata(artifact_dir: Path, metadata_path: Path, metadata: dict[str, Any]) -> dict[str, Any]:
     output_files = metadata.get("output_files") if isinstance(metadata.get("output_files"), dict) else {}
     counts = metadata.get("advisory_action_counts") if isinstance(metadata.get("advisory_action_counts"), dict) else {}
+    provenance = extract_signal_semantics_provenance(metadata)
+    provenance_present = signal_semantics_provenance_present(metadata)
     return _base_row(
         artifact_type="SIGNAL_ADVISORY",
         signal_run_id=_string_or_empty(metadata.get("signal_run_id")) or artifact_dir.name,
@@ -295,6 +305,9 @@ def _row_from_metadata(artifact_dir: Path, metadata_path: Path, metadata: dict[s
         selection_profile=_string_or_empty(metadata.get("selection_profile")),
         demo_mode=_bool_or_blank(metadata.get("demo_mode")),
         not_strategy_recommendation=_bool_or_blank(metadata.get("not_strategy_recommendation")),
+        **provenance,
+        semantics_provenance_present=provenance_present,
+        semantics_missing_provenance_legacy_warning_only=not provenance_present,
         signals_csv_path=_metadata_path(output_files, "signals", artifact_dir / "signals.csv"),
         alert_preview_path=_metadata_path(output_files, "signal_alert_preview", artifact_dir / "signal_alert_preview.md"),
         report_path=_metadata_path(output_files, "signal_advisory_report", artifact_dir / "signal_advisory_report.md"),

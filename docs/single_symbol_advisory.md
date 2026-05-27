@@ -157,6 +157,8 @@ outputs/reports/single_symbol_advisory_answer/index/
   metadata.json
 ```
 
+Answer index rows include shared signal semantics provenance when present. Legacy answer artifacts without provenance remain readable with blank provenance fields and health warning context.
+
 Use `single-symbol-advisory-answer-health` to check answer artifact completeness and safety boundaries:
 
 ```cmd
@@ -194,7 +196,7 @@ Use `single-symbol-advisory-answer-status` to summarize the latest question-styl
 python -m quant_replay_system.cli single-symbol-advisory-answer-status
 ```
 
-The status view reports the latest answer run id, advisory run id, symbol, source status, advisory action, question, answer style, health status, demo flags, markdown answer path, workflow stage, and next manual action.
+The status view reports the latest answer run id, advisory run id, symbol, source status, advisory action, question, answer style, health status, demo flags, shared semantics provenance summary, markdown answer path, workflow stage, and next manual action.
 
 Expected stages include:
 
@@ -227,6 +229,8 @@ outputs/reports/single_symbol_advisory/index/
   single_symbol_advisory_index_report.md
   metadata.json
 ```
+
+Index rows include shared signal semantics provenance when present. Legacy single-symbol advisory artifacts without provenance remain readable with blank provenance fields and health warning context.
 
 Use `single-symbol-advisory-health` to check artifact completeness and safety boundaries:
 
@@ -263,7 +267,7 @@ Use `single-symbol-advisory-status` to summarize the latest one-symbol review:
 python -m quant_replay_system.cli single-symbol-advisory-status
 ```
 
-The status view reports the latest advisory run id, symbol, status, advisory action, health status, final score, demo flags, alert preview path, workflow stage, and next manual action.
+The status view reports the latest advisory run id, symbol, status, advisory action, health status, final score, demo flags, shared semantics provenance summary, alert preview path, workflow stage, and next manual action.
 
 Expected stages include:
 

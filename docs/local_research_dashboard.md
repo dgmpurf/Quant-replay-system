@@ -97,6 +97,23 @@ When signal semantics reports `DEMO_SIGNAL_SEMANTICS_VALIDATED`, the dashboard t
 
 Signal semantics is earlier than signal advisory, single-symbol advisory, advisory conversation, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to signal semantics; semantics fields remain visible for audit. If semantics health fails because safety boundaries are broken, such as `auto_order_allowed=true`, missing no-live/no-broker metadata, `APPROVED_FOR_PAPER`, message-delivery metadata, missing required files, or demo BUY/SELL leakage, `research-status` surfaces the failure as actionable when semantics is the active stage.
 
+## Shared Semantics Provenance
+
+`research-status` also exposes shared signal semantics provenance from downstream advisory status views. The summary CSV, metadata, markdown report, and CLI output include provenance context for signal advisory, single-symbol advisory, question-style single-symbol answers, and advisory conversation artifacts:
+
+- `signal_advisory_semantics_policy_source`
+- `signal_advisory_semantics_policy_version`
+- `single_symbol_advisory_semantics_policy_source`
+- `single_symbol_advisory_answer_semantics_policy_source`
+- `advisory_conversation_semantics_policy_source`
+- `latest_semantics_action`
+- `semantics_provenance_present`
+- `semantics_provenance_missing_legacy_count`
+
+These fields are audit metadata only. They show which shared classifier produced or informed the latest advisory label; they do not approve trading, paper execution, broker access, message delivery, or automatic order placement.
+
+Legacy artifacts that predate provenance remain readable. Missing legacy provenance is visible through the `*_semantics_missing_provenance_legacy_warning_only` fields and the aggregate missing count, but it does not override a later valid paper workflow. Unsafe provenance detected by health checks, such as semantics auto-order being allowed or a mismatched semantics policy source, remains actionable when that advisory layer is the active stage.
+
 ## Signal Advisory Status
 
 `research-status` includes `signal-advisory-status` as advisory context when signal artifacts exist.

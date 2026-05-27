@@ -19,6 +19,11 @@ def test_single_symbol_advisory_answer_index_detects_artifacts(tmp_path: Path) -
     assert row["advisory_run_id"] == "adv001"
     assert row["symbol"] == "000001"
     assert row["advisory_action"] == "DEMO_ONLY"
+    assert row["semantics_policy_source"] == "signal_semantics"
+    assert row["semantics_policy_version"] == "v0.1"
+    assert row["semantics_action"] == "DEMO_ONLY"
+    assert bool(row["semantics_provenance_present"]) is True
+    assert bool(row["semantics_missing_provenance_legacy_warning_only"]) is False
 
 
 def test_single_symbol_advisory_answer_index_handles_no_artifacts(tmp_path: Path) -> None:
@@ -54,9 +59,14 @@ def test_single_symbol_advisory_answer_health_warns_when_legacy_provenance_missi
     _write_answer_artifact(root, "ans001", advisory_run_id="adv001", symbol="000001", include_semantics_provenance=False)
 
     result = check_single_symbol_advisory_answer_health(root=root, output_dir=tmp_path / "health")
+    index = build_single_symbol_advisory_answer_index(root=root, output_dir=tmp_path / "index")
 
     assert result.status == "WARN"
     assert "MISSING_SEMANTICS_PROVENANCE" in set(result.health_frame["issue_code"])
+    legacy_row = index.index_frame.iloc[0]
+    assert legacy_row["semantics_policy_source"] == ""
+    assert bool(legacy_row["semantics_provenance_present"]) is False
+    assert bool(legacy_row["semantics_missing_provenance_legacy_warning_only"]) is True
 
 
 def test_single_symbol_advisory_answer_health_fails_when_semantics_auto_order_allowed(tmp_path: Path) -> None:
@@ -188,6 +198,12 @@ def test_single_symbol_advisory_answer_status_summarizes_latest_answer(tmp_path:
     assert result.latest_symbol == "510300"
     assert result.workflow_stage == "DEMO_SINGLE_SYMBOL_ADVISORY_ANSWER_VALIDATED"
     assert result.status == "WARN"
+    summary = result.summary_frame.iloc[0]
+    assert summary["semantics_policy_source"] == "signal_semantics"
+    assert summary["semantics_policy_version"] == "v0.1"
+    assert summary["semantics_action"] == "DEMO_ONLY"
+    assert bool(summary["semantics_provenance_present"]) is True
+    assert bool(summary["semantics_missing_provenance_legacy_warning_only"]) is False
 
 
 def test_single_symbol_advisory_answer_status_handles_no_artifacts(tmp_path: Path) -> None:
@@ -239,6 +255,8 @@ def test_cli_single_symbol_advisory_answer_index_health_status_work(tmp_path: Pa
     assert "Health status: PASS" in health_output.out
     assert status_code == 0
     assert "workflow_stage: DEMO_SINGLE_SYMBOL_ADVISORY_ANSWER_VALIDATED" in status_output.out
+    assert "semantics_policy_source: signal_semantics" in status_output.out
+    assert "semantics_provenance_present: True" in status_output.out
     assert "No live trading, broker API, order placement, LLM API, or message delivery was invoked." in status_output.out
 
 

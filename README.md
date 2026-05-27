@@ -279,6 +279,8 @@ For the v0.90.0 Shared Signal Semantics Wiring Across Advisory Layers checkpoint
 
 For the v0.91.0 Shared Signal Semantics Provenance Metadata checkpoint summary, see [docs/release_checkpoint_v0.91.0.md](docs/release_checkpoint_v0.91.0.md).
 
+For the v0.92.0 Shared Signal Semantics Provenance Visibility checkpoint summary, see [docs/release_checkpoint_v0.92.0.md](docs/release_checkpoint_v0.92.0.md).
+
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
 Recommended next data-source engineering sequence:
@@ -504,6 +506,10 @@ See [docs/release_checkpoint_v0.90.0.md](docs/release_checkpoint_v0.90.0.md) for
 `v0.91.0` marks the Shared Signal Semantics Provenance Metadata checkpoint, covering provenance fields in downstream advisory artifacts, health checks for missing or unsafe provenance, legacy missing-provenance warnings, and preservation of no-auto-order/no-broker/no-live-trading/no-message safety boundaries.
 
 See [docs/release_checkpoint_v0.91.0.md](docs/release_checkpoint_v0.91.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.92.0` marks the Shared Signal Semantics Provenance Visibility checkpoint, covering provenance visibility in advisory index/status views and unified `research-status`, regenerated provenance-bearing single-symbol artifacts, warning-only legacy provenance context, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v0.92.0.md](docs/release_checkpoint_v0.92.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

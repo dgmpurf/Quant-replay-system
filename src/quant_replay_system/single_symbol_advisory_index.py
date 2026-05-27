@@ -11,6 +11,11 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.config import Settings, SingleSymbolAdvisoryIndexSettings, load_settings
+from quant_replay_system.signal_semantics import (
+    SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    extract_signal_semantics_provenance,
+    signal_semantics_provenance_present,
+)
 
 
 SINGLE_SYMBOL_ADVISORY_INDEX_LIMITATIONS = [
@@ -37,6 +42,9 @@ SINGLE_SYMBOL_ADVISORY_INDEX_COLUMNS = [
     "no_live_trading",
     "no_broker_api",
     "no_message_sent",
+    *SIGNAL_SEMANTICS_PROVENANCE_FIELDS,
+    "semantics_provenance_present",
+    "semantics_missing_provenance_legacy_warning_only",
     "report_path",
     "advisory_json_path",
     "advisory_csv_path",
@@ -268,6 +276,8 @@ def _scan_artifact_rows(root: Path, *, include_missing_metadata: bool) -> tuple[
 
 def _row_from_metadata(artifact_dir: Path, metadata_path: Path, metadata: dict[str, Any]) -> dict[str, Any]:
     output_files = metadata.get("output_files") if isinstance(metadata.get("output_files"), dict) else {}
+    provenance = extract_signal_semantics_provenance(metadata)
+    provenance_present = signal_semantics_provenance_present(metadata)
     return _base_row(
         artifact_type="SINGLE_SYMBOL_ADVISORY",
         advisory_run_id=_string_or_empty(metadata.get("advisory_run_id")) or artifact_dir.name,
@@ -285,6 +295,9 @@ def _row_from_metadata(artifact_dir: Path, metadata_path: Path, metadata: dict[s
         no_live_trading=_bool_or_blank(metadata.get("no_live_trading")),
         no_broker_api=_bool_or_blank(metadata.get("no_broker_api")),
         no_message_sent=_bool_or_blank(metadata.get("no_message_sent")),
+        **provenance,
+        semantics_provenance_present=provenance_present,
+        semantics_missing_provenance_legacy_warning_only=not provenance_present,
         report_path=_metadata_path(output_files, "single_symbol_advisory_report", artifact_dir / "single_symbol_advisory_report.md"),
         advisory_json_path=_metadata_path(output_files, "single_symbol_advisory_json", artifact_dir / "single_symbol_advisory.json"),
         advisory_csv_path=_metadata_path(output_files, "single_symbol_advisory_csv", artifact_dir / "single_symbol_advisory.csv"),

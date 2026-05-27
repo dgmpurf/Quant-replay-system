@@ -105,6 +105,8 @@ outputs/reports/advisory_conversation/index/
   metadata.json
 ```
 
+Conversation index rows include shared signal semantics provenance when present. Legacy conversation artifacts without provenance remain readable with blank provenance fields and health warning context.
+
 Use `advisory-conversation-health` to check deterministic parser and safety boundaries:
 
 ```cmd
@@ -144,7 +146,7 @@ Use `advisory-conversation-status` to summarize the latest conversational adviso
 python -m quant_replay_system.cli advisory-conversation-status
 ```
 
-The status view reports the latest conversation run id, original question, parsed symbol, parsed intent, advisory action, parser type, health status, linked answer path, workflow stage, and next manual action.
+The status view reports the latest conversation run id, original question, parsed symbol, parsed intent, advisory action, parser type, health status, shared semantics provenance summary, linked answer path, workflow stage, and next manual action.
 
 Expected stages include:
 
