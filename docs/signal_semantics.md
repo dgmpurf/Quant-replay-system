@@ -23,6 +23,8 @@ It answers:
 - what risks and caveats should remain visible,
 - whether manual confirmation and no-auto-order safety fields are preserved.
 
+`signal-advisory` and `single-symbol-advisory` now call this policy internally when classifying generated advisory actions, while preserving their existing CSV, report, preview, answer, and metadata fields. Standalone `signal-semantics` runs remain useful for audit/index/health/status views, but they are not required before running those advisory commands. Question-style answers and advisory-conversation outputs consume the single-symbol advisory result, so they reflect the same shared semantics without adding a separate classifier.
+
 ## Advisory Labels
 
 Supported labels:

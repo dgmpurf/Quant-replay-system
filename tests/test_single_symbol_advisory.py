@@ -9,6 +9,7 @@ from quant_replay_system.single_symbol_advisory import (
     SINGLE_SYMBOL_ADVISORY_COLUMNS,
     build_single_symbol_advisory,
     build_single_symbol_advisory_answer,
+    classify_single_symbol_advisory_action,
 )
 
 
@@ -47,6 +48,28 @@ def test_demo_candidate_becomes_demo_only_not_real_buy(tmp_path: Path) -> None:
     assert result.no_live_trading is True
     assert result.no_broker_api is True
     assert result.no_message_sent is True
+
+
+def test_single_symbol_synthetic_non_demo_high_score_can_be_review_buy_candidate_manual_only(tmp_path: Path) -> None:
+    candidates, metadata = _write_non_demo_candidate_artifacts(
+        tmp_path,
+        row_updates={"final_score": 82.5, "score_action": "OBSERVE", "action": "OBSERVE"},
+    )
+
+    result = build_single_symbol_advisory(
+        "000001",
+        candidates_path=candidates,
+        metadata_path=metadata,
+        settings=_settings(tmp_path),
+    )
+
+    assert result.advisory_action == "REVIEW_BUY_CANDIDATE"
+    assert result.requires_manual_confirmation is True
+    assert result.auto_order_allowed is False
+    assert result.no_live_trading is True
+    assert result.no_broker_api is True
+    assert result.no_message_sent is True
+    assert "Manual research review required" in result.reason_summary
 
 
 def test_missing_symbol_returns_not_found_without_invented_recommendation(tmp_path: Path) -> None:
@@ -90,6 +113,29 @@ def test_blocked_source_row_produces_blocked(tmp_path: Path) -> None:
     assert result.auto_order_allowed is False
 
 
+def test_failed_risk_semantics_produces_blocked(tmp_path: Path) -> None:
+    candidates, metadata = _write_non_demo_candidate_artifacts(
+        tmp_path,
+        row_updates={
+            "risk_precheck_status": "FAIL",
+            "risk_precheck_reason": "risk gate failed",
+            "score_action": "PAPER_TRADE",
+            "action": "PAPER_TRADE",
+            "final_score": 91.0,
+        },
+    )
+
+    result = build_single_symbol_advisory(
+        "000001",
+        candidates_path=candidates,
+        metadata_path=metadata,
+        settings=_settings(tmp_path),
+    )
+
+    assert result.advisory_action == "BLOCKED"
+    assert result.auto_order_allowed is False
+
+
 def test_no_trade_source_row_produces_no_action(tmp_path: Path) -> None:
     candidates, metadata = _write_non_demo_candidate_artifacts(
         tmp_path,
@@ -105,6 +151,21 @@ def test_no_trade_source_row_produces_no_action(tmp_path: Path) -> None:
 
     assert result.advisory_action == "NO_ACTION"
     assert result.requires_manual_confirmation is True
+
+
+def test_single_symbol_classifier_uses_conservative_semantics_fallback() -> None:
+    row = {
+        "symbol": "000001",
+        "selection_profile": "default",
+        "demo_mode": False,
+        "not_strategy_recommendation": False,
+        "final_score": 42.0,
+        "score_action": "",
+        "action": "",
+        "risk_precheck_status": "PASS",
+    }
+
+    assert classify_single_symbol_advisory_action(row) == "NO_ACTION"
 
 
 def test_alert_preview_includes_manual_confirmation_and_no_auto_order(tmp_path: Path) -> None:

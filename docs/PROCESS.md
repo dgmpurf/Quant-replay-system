@@ -215,6 +215,8 @@ Signal advisory semantics policy milestones should receive checkpoint documents 
 
 Signal semantics dashboard and `research-status` integration milestones should receive checkpoint documents before expanding non-demo semantics, downstream advisory consumption, delivery channels, automation, or broker integration, because they define how advisory-policy labels appear in unified workflow actionability without becoming approval or execution.
 
+Shared semantics wiring across advisory classifiers should receive checkpoint documents before expanding non-demo semantics, delivery channels, automation, or broker integration, because it defines the single policy path used by signal advisory, single-symbol advisory, question-style answers, and conversational routing.
+
 Single-symbol advisory and other product-layer advisory milestones should also receive checkpoint documents before adding delivery channels, conversational review, non-demo action semantics, or automation, because they define how user-facing watch/buy-review/sell-review questions remain advisory rather than executable.
 
 Question-style advisory response and answer dashboard/research-status milestones should receive checkpoint documents before adding conversational NLP, LLM integration, delivery channels, or automation, because they define the boundary between deterministic local answers, human confirmation, dashboard actionability, and any future generated-language or message-delivery layer.

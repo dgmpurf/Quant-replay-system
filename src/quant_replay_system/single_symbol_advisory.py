@@ -10,8 +10,9 @@ from typing import Any
 
 import pandas as pd
 
-from quant_replay_system.config import Settings, SingleSymbolAdvisorySettings, load_settings
+from quant_replay_system.config import Settings, SignalSemanticsSettings, SingleSymbolAdvisorySettings, load_settings
 from quant_replay_system.data import normalize_symbol_value, read_csv_preserve_symbol_columns
+from quant_replay_system.signal_semantics import classify_signal_semantics_action
 
 
 SINGLE_SYMBOL_ADVISORY_COLUMNS = [
@@ -281,6 +282,9 @@ def build_single_symbol_advisory(
             selection_profile=selection_profile,
             demo_mode=demo_mode,
             not_strategy_recommendation=not_strategy,
+            snapshot_quality_status=_resolve_quality_status(row, context.metadata, "snapshot_quality_status"),
+            data_quality_status=_resolve_quality_status(row, context.metadata, "data_quality_status"),
+            semantics_settings=project_settings.signal_semantics,
         )
         if row is not None
         else "NO_ACTION"
@@ -427,37 +431,21 @@ def classify_single_symbol_advisory_action(
     selection_profile: str | None = None,
     demo_mode: bool | None = None,
     not_strategy_recommendation: bool | None = None,
+    snapshot_quality_status: str | None = None,
+    data_quality_status: str | None = None,
+    semantics_settings: SignalSemanticsSettings | None = None,
 ) -> str:
-    """Classify one local source row into a review-only advisory action."""
+    """Classify one local source row via the shared signal semantics policy."""
 
-    risk_status = _normalize_action(_row_get(row, "risk_precheck_status", ""))
-    score_action = _normalize_action(_row_get(row, "score_action", _row_get(row, "original_score_action", "")))
-    current_action = _normalize_action(_row_get(row, "action", _row_get(row, "original_candidate_action", "")))
-    if risk_status in {"BLOCK", "BLOCKED"} or score_action == "BLOCKED" or current_action == "BLOCKED":
-        return "BLOCKED"
-
-    profile = str(selection_profile or _row_get(row, "selection_profile", "") or "").strip().lower()
-    is_demo = _to_bool(demo_mode) if demo_mode is not None else _to_bool(_row_get(row, "demo_mode", False))
-    not_strategy = (
-        _to_bool(not_strategy_recommendation)
-        if not_strategy_recommendation is not None
-        else _to_bool(_row_get(row, "not_strategy_recommendation", False))
+    return classify_signal_semantics_action(
+        row,
+        settings=semantics_settings,
+        selection_profile=selection_profile,
+        demo_mode=demo_mode,
+        not_strategy_recommendation=not_strategy_recommendation,
+        snapshot_quality_status=snapshot_quality_status,
+        data_quality_status=data_quality_status,
     )
-    if profile == "demo" or is_demo or not_strategy:
-        return "DEMO_ONLY"
-
-    action = score_action or current_action
-    if action == "NO_TRADE":
-        return "NO_ACTION"
-    if action in {"PAPER_TRADE", "LIVE_CANDIDATE_SMALL", "STRONG_CANDIDATE_REVIEW_REQUIRED", "BUY", "PAPER_BUY"}:
-        return "REVIEW_BUY_CANDIDATE"
-    if action in {"SELL", "PAPER_SELL"}:
-        return "REVIEW_SELL_CANDIDATE"
-    if action in {"OBSERVE", "WATCH"}:
-        return "WATCH"
-    if action == "HOLD":
-        return "HOLD_REVIEW"
-    return "WATCH"
 
 
 def render_single_symbol_advisory_report(result: SingleSymbolAdvisoryResult) -> str:
@@ -1025,6 +1013,19 @@ def _resolve_bool(row: dict[str, Any] | None, metadata: dict[str, Any], key: str
         if _present(value):
             return _to_bool(value)
     return default
+
+
+def _resolve_quality_status(row: dict[str, Any] | None, metadata: dict[str, Any], key: str) -> str | None:
+    value = _resolve_value(row, metadata, key, "")
+    if _present(value):
+        return value
+    nested_key = key.removesuffix("_status")
+    nested = metadata.get(nested_key)
+    if isinstance(nested, dict):
+        nested_value = nested.get("status")
+        if _present(nested_value):
+            return str(nested_value)
+    return None
 
 
 def _resolve_action(row: dict[str, Any] | None, keys: list[str]) -> str:

@@ -11,8 +11,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from quant_replay_system.config import Settings, SignalAdvisorySettings, load_settings
+from quant_replay_system.config import Settings, SignalAdvisorySettings, SignalSemanticsSettings, load_settings
 from quant_replay_system.data import normalize_symbol_value, read_csv_preserve_symbol_columns
+from quant_replay_system.signal_semantics import classify_signal_semantics_action
 
 
 ADVISORY_ACTIONS = {
@@ -240,6 +241,7 @@ def build_signal_advisory_from_candidates(
         snapshot_manifest_path=snapshot_manifest_path,
         candidates_path=signal_input.candidates_path,
         settings=advisory_settings,
+        semantics_settings=project_settings.signal_semantics,
         source_metadata=source_metadata,
     )
     action_counts = _action_counts(signals)
@@ -287,36 +289,21 @@ def classify_signal_action(
     selection_profile: str | None = None,
     demo_mode: bool | None = None,
     not_strategy_recommendation: bool | None = None,
+    snapshot_quality_status: str | None = None,
+    data_quality_status: str | None = None,
+    semantics_settings: SignalSemanticsSettings | None = None,
 ) -> str:
-    """Classify a candidate row into an advisory action bucket."""
+    """Classify a candidate row via the shared signal semantics policy."""
 
-    profile = str(selection_profile or _row_get(row, "selection_profile", "") or "").strip().lower()
-    is_demo = _to_bool(demo_mode)
-    if demo_mode is None:
-        is_demo = _to_bool(_row_get(row, "demo_mode", False))
-    not_strategy = _to_bool(not_strategy_recommendation)
-    if not_strategy_recommendation is None:
-        not_strategy = _to_bool(_row_get(row, "not_strategy_recommendation", False))
-
-    if profile == "demo" or is_demo or not_strategy:
-        return "DEMO_ONLY"
-
-    original_score_action = _normalize_action(_row_get(row, "score_action", ""))
-    original_candidate_action = _normalize_action(_row_get(row, "action", ""))
-    risk_status = _normalize_action(_row_get(row, "risk_precheck_status", ""))
-    action = original_score_action or original_candidate_action
-
-    if risk_status == "BLOCK" or action == "BLOCKED":
-        return "BLOCKED"
-    if action in {"PAPER_TRADE", "LIVE_CANDIDATE_SMALL", "STRONG_CANDIDATE_REVIEW_REQUIRED", "BUY", "PAPER_BUY"}:
-        return "REVIEW_BUY_CANDIDATE"
-    if action in {"SELL", "PAPER_SELL"}:
-        return "REVIEW_SELL_CANDIDATE"
-    if action in {"OBSERVE", "WATCH"}:
-        return "WATCH"
-    if action in {"HOLD"}:
-        return "HOLD_REVIEW"
-    return "NO_ACTION"
+    return classify_signal_semantics_action(
+        row,
+        settings=semantics_settings,
+        selection_profile=selection_profile,
+        demo_mode=demo_mode,
+        not_strategy_recommendation=not_strategy_recommendation,
+        snapshot_quality_status=snapshot_quality_status,
+        data_quality_status=data_quality_status,
+    )
 
 
 def render_signal_advisory_report(result: SignalAdvisoryResult) -> str:
@@ -522,6 +509,7 @@ def _build_signal_frame(
     snapshot_manifest_path: str,
     candidates_path: Path,
     settings: SignalAdvisorySettings,
+    semantics_settings: SignalSemanticsSettings,
     source_metadata: dict[str, Any],
 ) -> pd.DataFrame:
     signals = [
@@ -535,6 +523,7 @@ def _build_signal_frame(
             snapshot_manifest_path=snapshot_manifest_path,
             candidates_path=candidates_path,
             settings=settings,
+            semantics_settings=semantics_settings,
             source_metadata=source_metadata,
         )
         for index, row in candidates.reset_index(drop=True).iterrows()
@@ -556,6 +545,7 @@ def _signal_from_candidate_row(
     snapshot_manifest_path: str,
     candidates_path: Path,
     settings: SignalAdvisorySettings,
+    semantics_settings: SignalSemanticsSettings,
     source_metadata: dict[str, Any],
 ) -> SignalAdvisorySignal:
     symbol = normalize_symbol_value(_row_get(row, "symbol", ""))
@@ -569,6 +559,9 @@ def _signal_from_candidate_row(
         selection_profile=selection_profile,
         demo_mode=demo_mode,
         not_strategy_recommendation=not_strategy,
+        snapshot_quality_status=_resolve_quality_status(row, source_metadata, "snapshot_quality_status"),
+        data_quality_status=_resolve_quality_status(row, source_metadata, "data_quality_status"),
+        semantics_settings=semantics_settings,
     )
     original_score_action = _text(_row_get(row, "score_action", ""))
     original_candidate_action = _text(_row_get(row, "action", ""))
@@ -741,6 +734,19 @@ def _resolve_row_or_metadata(row: pd.Series, metadata: dict[str, Any], key: str,
         if _present(value):
             return value
     return default
+
+
+def _resolve_quality_status(row: pd.Series, metadata: dict[str, Any], key: str) -> str | None:
+    value = _resolve_row_or_metadata(row, metadata, key, "")
+    if _present(value):
+        return str(value)
+    nested_key = key.removesuffix("_status")
+    nested = metadata.get(nested_key)
+    if isinstance(nested, dict):
+        value = nested.get("status")
+        if _present(value):
+            return str(value)
+    return None
 
 
 def _action_counts(signals: pd.DataFrame) -> dict[str, int]:

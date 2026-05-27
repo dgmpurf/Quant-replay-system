@@ -57,7 +57,7 @@ Supported advisory labels:
 
 These labels are not orders.
 
-The shared [signal semantics policy](signal_semantics.md) defines the deterministic conservative mapping from candidate/scored rows to these advisory labels. It is the policy reference for future advisory expansion: demo rows remain `DEMO_ONLY`, failed risk/data/snapshot rows become `BLOCKED`, and non-demo buy/sell labels remain manual-review candidates rather than instructions.
+The shared [signal semantics policy](signal_semantics.md) defines the deterministic conservative mapping from candidate/scored rows to these advisory labels. `single-symbol-advisory` uses that shared classifier internally when row context is available, so question-style answers and advisory-conversation outputs inherit the same policy. Demo rows remain `DEMO_ONLY`, failed risk/data/snapshot rows become `BLOCKED`, and non-demo buy/sell labels remain manual-review candidates rather than instructions.
 
 Demo inputs keep conservative behavior:
 
@@ -71,7 +71,7 @@ If the source row is blocked by `risk_precheck_status`, `score_action`, or candi
 
 If the source action is `NO_TRADE`, the advisory action is `NO_ACTION`.
 
-Non-demo structural labels such as `REVIEW_BUY_CANDIDATE` or `REVIEW_SELL_CANDIDATE` are allowed only when the source artifact already supports that action. They still require manual confirmation and do not allow auto-order placement.
+Non-demo structural labels such as `REVIEW_BUY_CANDIDATE` or `REVIEW_SELL_CANDIDATE` are shared semantics labels. `REVIEW_BUY_CANDIDATE` can appear for a non-demo high-score row that passes the conservative semantics gates; `REVIEW_SELL_CANDIDATE` remains explicit-source-only in v0.1. They still require manual confirmation and do not allow auto-order placement.
 
 ## Artifacts
 

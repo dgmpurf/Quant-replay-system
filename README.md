@@ -273,6 +273,8 @@ For the v0.88.0 Signal Advisory Semantics Policy checkpoint summary, see [docs/r
 
 For the v0.89.0 Signal Semantics Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.89.0.md](docs/release_checkpoint_v0.89.0.md).
 
+For the v0.90.0 Shared Signal Semantics Wiring Across Advisory Layers checkpoint summary, see [docs/release_checkpoint_v0.90.0.md](docs/release_checkpoint_v0.90.0.md).
+
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
 Recommended next data-source engineering sequence:
@@ -490,6 +492,10 @@ See [docs/release_checkpoint_v0.88.0.md](docs/release_checkpoint_v0.88.0.md) for
 `v0.89.0` marks the Signal Semantics Research Status Integration checkpoint, covering signal-semantics index/health/status observability, dashboard action-count visibility, human-review-only `REVIEW_BUY_CANDIDATE` semantics, demo-only safety, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v0.89.0.md](docs/release_checkpoint_v0.89.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.90.0` marks the Shared Signal Semantics Wiring Across Advisory Layers checkpoint, covering shared classification across `signal-advisory`, `single-symbol-advisory`, question-style answers, and advisory conversation routing while preserving demo-only, `NOT_FOUND`, `PARSE_FAILED`, blocked-row, manual-confirmation, and no-auto-order safety boundaries.
+
+See [docs/release_checkpoint_v0.90.0.md](docs/release_checkpoint_v0.90.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

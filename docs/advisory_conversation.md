@@ -14,7 +14,7 @@ The workflow supports questions such as:
 - `Should I buy 000001?`
 - `Should I sell 510300?`
 
-The facade extracts a six-digit local symbol and a simple advisory intent, then calls the existing `single-symbol-advisory` question-style answer flow.
+The facade extracts a six-digit local symbol and a simple advisory intent, then calls the existing `single-symbol-advisory` question-style answer flow. It does not classify trading actions independently; advisory labels come from the shared `signal_semantics` policy through the single-symbol advisory result.
 
 ```text
 local question

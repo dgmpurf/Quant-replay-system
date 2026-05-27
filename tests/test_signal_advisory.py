@@ -75,9 +75,11 @@ def test_safety_flags_are_written_to_signals_and_metadata(tmp_path: Path) -> Non
 
 def test_preliminary_non_demo_actions_still_require_manual_review() -> None:
     row = {
+        "symbol": "000001",
         "selection_profile": "default",
         "demo_mode": False,
         "not_strategy_recommendation": False,
+        "final_score": 72.0,
         "score_action": "PAPER_TRADE",
         "action": "PAPER_TRADE",
         "risk_precheck_status": "PASS",
@@ -88,15 +90,82 @@ def test_preliminary_non_demo_actions_still_require_manual_review() -> None:
 
 def test_demo_action_overrides_preliminary_buy_signal() -> None:
     row = {
+        "symbol": "000001",
         "selection_profile": "demo",
         "demo_mode": True,
         "not_strategy_recommendation": True,
+        "final_score": 99.0,
         "score_action": "PAPER_TRADE",
         "action": "PAPER_TRADE",
         "risk_precheck_status": "PASS",
     }
 
     assert classify_signal_action(row) == "DEMO_ONLY"
+
+
+def test_synthetic_non_demo_high_score_can_be_review_buy_candidate_manual_only(tmp_path: Path) -> None:
+    candidates, metadata = _write_non_demo_candidate_artifacts(
+        tmp_path,
+        row_updates={"final_score": 82.5, "score_action": "OBSERVE", "action": "OBSERVE"},
+    )
+    result = build_signal_advisory_from_candidates(
+        candidates,
+        metadata_path=metadata,
+        settings=_settings(tmp_path),
+    )
+    signal = result.signals.iloc[0]
+
+    assert signal["advisory_action"] == "REVIEW_BUY_CANDIDATE"
+    assert bool(signal["requires_manual_confirmation"]) is True
+    assert bool(signal["auto_order_allowed"]) is False
+    assert bool(signal["no_live_trading"]) is True
+    assert bool(signal["no_broker_api"]) is True
+
+
+def test_blocked_semantics_propagates_to_signal_advisory(tmp_path: Path) -> None:
+    candidates, metadata = _write_non_demo_candidate_artifacts(
+        tmp_path,
+        row_updates={
+            "final_score": 91.0,
+            "score_action": "PAPER_TRADE",
+            "action": "PAPER_TRADE",
+            "risk_precheck_status": "FAIL",
+            "risk_precheck_reason": "quality gate failed",
+        },
+    )
+    result = build_signal_advisory_from_candidates(
+        candidates,
+        metadata_path=metadata,
+        settings=_settings(tmp_path),
+    )
+
+    assert result.signals.iloc[0]["advisory_action"] == "BLOCKED"
+
+
+def test_no_action_and_watch_semantics_are_stable() -> None:
+    no_trade_row = {
+        "symbol": "000001",
+        "selection_profile": "default",
+        "demo_mode": False,
+        "not_strategy_recommendation": False,
+        "final_score": 88.0,
+        "score_action": "NO_TRADE",
+        "action": "NO_TRADE",
+        "risk_precheck_status": "PASS",
+    }
+    watch_row = {
+        "symbol": "000001",
+        "selection_profile": "default",
+        "demo_mode": False,
+        "not_strategy_recommendation": False,
+        "final_score": 60.0,
+        "score_action": "OBSERVE",
+        "action": "OBSERVE",
+        "risk_precheck_status": "PASS",
+    }
+
+    assert classify_signal_action(no_trade_row) == "NO_ACTION"
+    assert classify_signal_action(watch_row) == "WATCH"
 
 
 def test_cli_signal_advisory_works(tmp_path: Path, capsys) -> None:
@@ -215,6 +284,46 @@ def _write_demo_candidate_artifacts(tmp_path: Path) -> tuple[Path, Path]:
         "warnings": [
             "Demo candidates are for local artifact/workflow validation only and are not strategy recommendations."
         ],
+    }
+    metadata_path = artifact_dir / "metadata.json"
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    return candidates_path, metadata_path
+
+
+def _write_non_demo_candidate_artifacts(tmp_path: Path, *, row_updates: dict) -> tuple[Path, Path]:
+    artifact_dir = tmp_path / "current_candidates" / "2024-05-20_etf_core_default123"
+    artifact_dir.mkdir(parents=True)
+    row = {
+        "rank": 1,
+        "symbol": "000001",
+        "name": "Ping An Bank",
+        "instrument_type": "STOCK",
+        "decision_date": "2024-05-20",
+        "final_score": 72.0,
+        "score_action": "PAPER_TRADE",
+        "action": "PAPER_TRADE",
+        "risk_precheck_status": "PASS",
+        "risk_precheck_reason": "eligible",
+        "score_breakdown": '{"final_score":72.0}',
+        "selection_profile": "default",
+        "demo_mode": False,
+        "not_strategy_recommendation": False,
+        "selection_reason": "DEFAULT_SELECTION_THRESHOLDS_PASSED",
+        "current_candidate_run_id": "default123",
+        "source_run_id": "default123",
+        "source_report_path": str(artifact_dir / "current_candidates_report.md"),
+    }
+    row.update(row_updates)
+    candidates_path = artifact_dir / "candidates.csv"
+    pd.DataFrame([row]).to_csv(candidates_path, index=False)
+    report_path = artifact_dir / "current_candidates_report.md"
+    report_path.write_text("# Current Candidate Report\n", encoding="utf-8")
+    metadata = {
+        "run_id": "default123",
+        "decision_date": "2024-05-20T00:00:00",
+        "selection_profile": "default",
+        "demo_mode": False,
+        "not_strategy_recommendation": False,
     }
     metadata_path = artifact_dir / "metadata.json"
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
