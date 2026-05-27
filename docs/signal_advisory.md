@@ -33,6 +33,8 @@ python -m quant_replay_system.cli signal-semantics --input outputs\reports\curre
 
 The semantics policy blocks failed risk/data/snapshot rows, forces demo/not-strategy artifacts to `DEMO_ONLY`, and only allows non-demo `REVIEW_BUY_CANDIDATE` / `REVIEW_SELL_CANDIDATE` as structural human-review labels. It never creates orders, paper approvals, broker messages, or real BUY/SELL instructions. See [signal_semantics.md](signal_semantics.md).
 
+Semantics runs can be discovered and safety-checked with `signal-semantics-index`, `signal-semantics-health`, and `signal-semantics-status`. These views verify demo safety, no-auto-order flags, no live/broker/message metadata, required output columns, leading-zero symbols, and blocked-row reasons before semantics labels are consumed by downstream advisory workflows.
+
 ## Contract
 
 Each signal includes:

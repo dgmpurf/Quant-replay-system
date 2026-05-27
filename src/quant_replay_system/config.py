@@ -112,6 +112,37 @@ class SignalSemanticsSettings(BaseModel):
     enable_message_delivery: Literal[False] = False
 
 
+class SignalSemanticsIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/signal_semantics")
+    output_dir: Path = Path("outputs/reports/signal_semantics/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class SignalSemanticsHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/signal_semantics/index/signal_semantics_index.csv")
+    root_dir: Path = Path("outputs/reports/signal_semantics")
+    output_dir: Path = Path("outputs/reports/signal_semantics/health")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class SignalSemanticsStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/signal_semantics")
+    output_dir: Path = Path("outputs/reports/signal_semantics/status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class SignalAdvisoryIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/signals")
     output_dir: Path = Path("outputs/reports/signals/index")
@@ -1044,6 +1075,9 @@ class Settings(BaseModel):
     current_candidates: CurrentCandidateSettings = Field(default_factory=CurrentCandidateSettings)
     signal_advisory: SignalAdvisorySettings = Field(default_factory=SignalAdvisorySettings)
     signal_semantics: SignalSemanticsSettings = Field(default_factory=SignalSemanticsSettings)
+    signal_semantics_index: SignalSemanticsIndexSettings = Field(default_factory=SignalSemanticsIndexSettings)
+    signal_semantics_health: SignalSemanticsHealthSettings = Field(default_factory=SignalSemanticsHealthSettings)
+    signal_semantics_status: SignalSemanticsStatusSettings = Field(default_factory=SignalSemanticsStatusSettings)
     signal_advisory_index: SignalAdvisoryIndexSettings = Field(default_factory=SignalAdvisoryIndexSettings)
     signal_advisory_health: SignalAdvisoryHealthSettings = Field(default_factory=SignalAdvisoryHealthSettings)
     signal_advisory_status: SignalAdvisoryStatusSettings = Field(default_factory=SignalAdvisoryStatusSettings)

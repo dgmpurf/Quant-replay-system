@@ -80,7 +80,10 @@ from quant_replay_system.signal_advisory import build_signal_advisory_from_candi
 from quant_replay_system.signal_advisory_health import check_signal_advisory_health
 from quant_replay_system.signal_advisory_index import build_signal_advisory_index
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
+from quant_replay_system.signal_semantics_health import check_signal_semantics_health
+from quant_replay_system.signal_semantics_index import build_signal_semantics_index
 from quant_replay_system.signal_semantics import run_signal_semantics
+from quant_replay_system.signal_semantics_status import run_signal_semantics_status
 from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory
 from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory_answer
 from quant_replay_system.single_symbol_advisory_answer_health import check_single_symbol_advisory_answer_health
@@ -261,6 +264,42 @@ def build_parser() -> argparse.ArgumentParser:
     signal_semantics.add_argument("--output-dir", help="Optional signal semantics output directory")
     signal_semantics.add_argument("--config", help="Optional config YAML path")
     signal_semantics.set_defaults(handler=_handle_signal_semantics)
+
+    signal_semantics_index = subparsers.add_parser(
+        "signal-semantics-index",
+        help="Build a local index of signal semantics artifact folders",
+    )
+    signal_semantics_index.add_argument("--root", help="Signal semantics artifact root directory")
+    signal_semantics_index.add_argument("--output-dir", help="Optional semantics index output directory")
+    signal_semantics_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Index folders missing metadata.json",
+    )
+    signal_semantics_index.add_argument("--config", help="Optional config YAML path")
+    signal_semantics_index.set_defaults(handler=_handle_signal_semantics_index)
+
+    signal_semantics_health = subparsers.add_parser(
+        "signal-semantics-health",
+        help="Check local signal semantics artifact file health and safety flags",
+    )
+    signal_semantics_health.add_argument("--index", help="Signal semantics artifact index CSV path")
+    signal_semantics_health.add_argument("--root", help="Signal semantics artifact root directory")
+    signal_semantics_health.add_argument("--output-dir", help="Optional semantics health-check output directory")
+    signal_semantics_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    signal_semantics_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    signal_semantics_health.add_argument("--config", help="Optional config YAML path")
+    signal_semantics_health.set_defaults(handler=_handle_signal_semantics_health)
+
+    signal_semantics_status = subparsers.add_parser(
+        "signal-semantics-status",
+        help="Build a local signal semantics status dashboard",
+    )
+    signal_semantics_status.add_argument("--root", help="Signal semantics artifact root directory")
+    signal_semantics_status.add_argument("--output-dir", help="Optional semantics status output directory")
+    signal_semantics_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
+    signal_semantics_status.add_argument("--config", help="Optional config YAML path")
+    signal_semantics_status.set_defaults(handler=_handle_signal_semantics_status)
 
     signal_advisory_index = subparsers.add_parser(
         "signal-advisory-index",
@@ -1424,6 +1463,89 @@ def _handle_signal_semantics(args: argparse.Namespace) -> int:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
     print("No alert message was sent. No automated order placement was invoked.")
+    return 0
+
+
+def _handle_signal_semantics_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"include_missing_metadata": bool(args.include_missing_metadata)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"signal_semantics_index": settings.signal_semantics_index.model_copy(update=updates)}
+    )
+    result = build_signal_semantics_index(settings=settings)
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['signal_semantics_index_report']}")
+    print(f"Index CSV path: {result.artifact_paths['signal_semantics_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    return 0
+
+
+def _handle_signal_semantics_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"signal_semantics_health": settings.signal_semantics_health.model_copy(update=updates)}
+    )
+    result = check_signal_semantics_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['signal_semantics_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_signal_semantics_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={"signal_semantics_status": settings.signal_semantics_status.model_copy(update=updates)}
+    )
+    result = run_signal_semantics_status(root=args.root, output_dir=args.output_dir, config=settings)
+    print(f"Status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_semantics_run_id: {result.latest_semantics_run_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"health_status: {result.health_status}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['signal_semantics_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
     return 0
 
 

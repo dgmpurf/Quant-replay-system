@@ -92,6 +92,74 @@ python -m quant_replay_system.cli signal-semantics --input outputs\reports\manua
 
 The CLI prints the semantics run id, status, row count, advisory action counts, artifact paths, and safety flags.
 
+## Index, Health, And Status
+
+Use `signal-semantics-index` to discover local semantics runs:
+
+```cmd
+python -m quant_replay_system.cli signal-semantics-index
+```
+
+The index scans `outputs/reports/signal_semantics/` and writes:
+
+```text
+outputs/reports/signal_semantics/index/
+  signal_semantics_index.csv
+  signal_semantics_index_report.md
+  metadata.json
+```
+
+Index rows include the semantics run id, status, row count, advisory action counts, issue count, input path, profile, quality status fields, safety flags, and artifact paths.
+
+Use `signal-semantics-health` to check artifact completeness and safety boundaries:
+
+```cmd
+python -m quant_replay_system.cli signal-semantics-health
+```
+
+Health checks verify:
+
+- `metadata.json` is readable,
+- `signal_semantics.csv` exists and has the required columns,
+- `signal_semantics_report.md` exists,
+- `signal_semantics_issues.csv` is readable when present,
+- leading-zero symbols such as `000001` remain six-character strings,
+- demo semantics do not contain `REVIEW_BUY_CANDIDATE` or `REVIEW_SELL_CANDIDATE`,
+- `auto_order_allowed=false`,
+- `no_live_trading=true`,
+- `no_broker_api=true`,
+- no message delivery metadata is present,
+- no `APPROVED_FOR_PAPER` metadata is present,
+- `BLOCKED` rows include reason or issue context where possible.
+
+Health artifacts are written under:
+
+```text
+outputs/reports/signal_semantics/health/<health_id>/
+  signal_semantics_health_report.md
+  signal_semantics_health_issues.csv
+  signal_semantics_health_summary.csv
+  metadata.json
+```
+
+Use `signal-semantics-status` to summarize the latest semantics run:
+
+```cmd
+python -m quant_replay_system.cli signal-semantics-status
+```
+
+The status view reports the latest semantics run id, health status, action counts, issue count, workflow stage, report path, and next manual action.
+
+Expected stages include:
+
+- `NO_SIGNAL_SEMANTICS_ARTIFACTS`
+- `DEMO_SIGNAL_SEMANTICS_VALIDATED`
+- `SIGNAL_SEMANTICS_READY_FOR_REVIEW`
+- `SIGNAL_SEMANTICS_HEALTH_WARN`
+- `SIGNAL_SEMANTICS_FAILED`
+
+For a demo-only run, the expected stage is `DEMO_SIGNAL_SEMANTICS_VALIDATED`, and the next action reminds the user not to treat `DEMO_ONLY` labels as strategy recommendations. For non-demo structural runs, the status may be ready for review, but labels still require manual confirmation and do not permit auto-order.
+
 ## Artifacts
 
 Artifacts are written under:

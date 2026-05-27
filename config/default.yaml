@@ -91,6 +91,34 @@ signal_semantics:
   enable_broker_api: false
   enable_message_delivery: false
 
+signal_semantics_index:
+  root_dir: outputs/reports/signal_semantics
+  output_dir: outputs/reports/signal_semantics/index
+  include_missing_metadata: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+signal_semantics_health:
+  index_path: outputs/reports/signal_semantics/index/signal_semantics_index.csv
+  root_dir: outputs/reports/signal_semantics
+  output_dir: outputs/reports/signal_semantics/health
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
+signal_semantics_status:
+  root_dir: outputs/reports/signal_semantics
+  output_dir: outputs/reports/signal_semantics/status
+  strict: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+
 signal_advisory_index:
   root_dir: outputs/reports/signals
   output_dir: outputs/reports/signals/index
