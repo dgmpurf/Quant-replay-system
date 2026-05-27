@@ -77,6 +77,20 @@ signal_advisory:
   enable_broker_api: false
   auto_order_allowed: false
 
+signal_semantics:
+  output_dir: outputs/reports/signal_semantics
+  reviewed_buy_min_score: 70
+  watch_min_score: 55
+  require_snapshot_quality_pass: true
+  require_data_quality_pass: true
+  allow_review_buy_for_demo: false
+  allow_auto_order: false
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+  enable_message_delivery: false
+
 signal_advisory_index:
   root_dir: outputs/reports/signals
   output_dir: outputs/reports/signals/index

@@ -22,6 +22,8 @@ The system should help a user understand:
 
 Signals are advisory artifacts. They are not orders, approvals, or broker instructions.
 
+The signal advisory semantics policy is the deterministic bridge between quantitative rows and user-facing advisory labels. It defines when a row is `DEMO_ONLY`, `WATCH`, `REVIEW_BUY_CANDIDATE`, `REVIEW_SELL_CANDIDATE`, `HOLD_REVIEW`, `NO_ACTION`, or `BLOCKED`. Those labels remain human-review states, not trading instructions, and demo artifacts must stay workflow validation only.
+
 ## Human Confirmation
 
 Manual confirmation remains the default boundary before any execution-like action. The current project supports local research, reviewed cache export, current-candidates, signal advisory, WATCH_ONLY paper workflow, and diagnostic paper reconciliation without live trading or broker integration.

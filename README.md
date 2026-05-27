@@ -20,6 +20,7 @@ Included now:
 - Data preparation artifact index and health check for pipeline, quality, snapshot, and current-candidate outputs.
 - Data preparation workflow status dashboard for the latest local data-prep stage and next manual action.
 - Current/as-of-date candidate generation from local snapshots for paper-trading review.
+- Deterministic signal advisory semantics policy for safe advisory label mapping.
 - Signal advisory contract and local alert preview artifacts from current-candidates outputs.
 - Current candidate artifact index and health check for local candidate run navigation.
 - Current-candidate to paper-trading handoff helper for healthy local candidate artifacts.
@@ -89,6 +90,8 @@ For current/as-of-date candidate generation from local snapshots, see [docs/curr
 `current-candidates --selection-profile demo` is available for tiny local artifact/workflow validation only. The default selection profile and research thresholds remain unchanged, and demo candidates are marked as not strategy recommendations.
 
 For turning current-candidates artifacts into local advisory signals and alert previews without message delivery or execution, see [docs/signal_advisory.md](docs/signal_advisory.md).
+
+For the deterministic policy that maps candidate/scored rows into safe advisory labels such as `DEMO_ONLY`, `WATCH`, and `REVIEW_BUY_CANDIDATE`, see [docs/signal_semantics.md](docs/signal_semantics.md). Demo rows remain workflow validation only, and all labels require manual confirmation with auto-order disabled.
 
 To discover, check, and summarize local signal advisory artifacts before any future alert-delivery work, use `signal-advisory-index`, `signal-advisory-health`, and `signal-advisory-status`; see [docs/signal_advisory.md#index-health-and-status](docs/signal_advisory.md#index-health-and-status).
 

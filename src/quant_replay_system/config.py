@@ -97,6 +97,21 @@ class SignalAdvisorySettings(BaseModel):
     auto_order_allowed: Literal[False] = False
 
 
+class SignalSemanticsSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/signal_semantics")
+    reviewed_buy_min_score: float = Field(default=70.0, ge=0, le=100)
+    watch_min_score: float = Field(default=55.0, ge=0, le=100)
+    require_snapshot_quality_pass: bool = True
+    require_data_quality_pass: bool = True
+    allow_review_buy_for_demo: bool = False
+    allow_auto_order: Literal[False] = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+    enable_message_delivery: Literal[False] = False
+
+
 class SignalAdvisoryIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/signals")
     output_dir: Path = Path("outputs/reports/signals/index")
@@ -1028,6 +1043,7 @@ class Settings(BaseModel):
     candidate_selection: CandidateSelectionSettings = Field(default_factory=CandidateSelectionSettings)
     current_candidates: CurrentCandidateSettings = Field(default_factory=CurrentCandidateSettings)
     signal_advisory: SignalAdvisorySettings = Field(default_factory=SignalAdvisorySettings)
+    signal_semantics: SignalSemanticsSettings = Field(default_factory=SignalSemanticsSettings)
     signal_advisory_index: SignalAdvisoryIndexSettings = Field(default_factory=SignalAdvisoryIndexSettings)
     signal_advisory_health: SignalAdvisoryHealthSettings = Field(default_factory=SignalAdvisoryHealthSettings)
     signal_advisory_status: SignalAdvisoryStatusSettings = Field(default_factory=SignalAdvisoryStatusSettings)

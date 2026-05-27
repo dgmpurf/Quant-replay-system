@@ -55,6 +55,16 @@ The demo profile is not a strategy recommendation. Demo candidates are marked in
 
 Demo selection does not change score calculation and does not select `BLOCKED` rows.
 
+## Signal Semantics Policy
+
+Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:
+
+```cmd
+python -m quant_replay_system.cli signal-semantics --input outputs\reports\current_candidates\example\candidates.csv --input-type candidates --profile demo
+```
+
+The policy is deterministic and conservative. It blocks failed risk/data/snapshot rows, preserves leading-zero symbols, and forces demo/not-strategy rows to `DEMO_ONLY`. Non-demo labels such as `REVIEW_BUY_CANDIDATE` are human-review labels only; they do not approve paper trades, send messages, or place orders.
+
 ## Signal Advisory Handoff
 
 Use `signal-advisory` when a current-candidates artifact should be converted into local advisory signals and alert preview text before any human action:

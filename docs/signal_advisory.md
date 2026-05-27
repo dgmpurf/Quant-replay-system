@@ -23,6 +23,16 @@ The output answers:
 
 Every signal requires manual confirmation. `auto_order_allowed` is always `false`.
 
+## Semantics Policy
+
+`signal-semantics` provides the deterministic policy contract for mapping candidate or scored rows into advisory labels before those labels are used by broader advisory workflows:
+
+```cmd
+python -m quant_replay_system.cli signal-semantics --input outputs\reports\current_candidates\example\candidates.csv --input-type candidates --profile demo
+```
+
+The semantics policy blocks failed risk/data/snapshot rows, forces demo/not-strategy artifacts to `DEMO_ONLY`, and only allows non-demo `REVIEW_BUY_CANDIDATE` / `REVIEW_SELL_CANDIDATE` as structural human-review labels. It never creates orders, paper approvals, broker messages, or real BUY/SELL instructions. See [signal_semantics.md](signal_semantics.md).
+
 ## Contract
 
 Each signal includes:

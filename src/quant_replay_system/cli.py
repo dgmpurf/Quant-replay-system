@@ -80,6 +80,7 @@ from quant_replay_system.signal_advisory import build_signal_advisory_from_candi
 from quant_replay_system.signal_advisory_health import check_signal_advisory_health
 from quant_replay_system.signal_advisory_index import build_signal_advisory_index
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
+from quant_replay_system.signal_semantics import run_signal_semantics
 from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory
 from quant_replay_system.single_symbol_advisory import build_single_symbol_advisory_answer
 from quant_replay_system.single_symbol_advisory_answer_health import check_single_symbol_advisory_answer_health
@@ -241,6 +242,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     signal_advisory.add_argument("--config", help="Optional config YAML path")
     signal_advisory.set_defaults(handler=_handle_signal_advisory)
+
+    signal_semantics = subparsers.add_parser(
+        "signal-semantics",
+        help="Map local candidate/scored rows to safe advisory semantics labels",
+    )
+    signal_semantics.add_argument("--input", required=True, help="Input candidates/scored/signals CSV path")
+    signal_semantics.add_argument(
+        "--input-type",
+        required=True,
+        choices=["candidates", "scored", "scored_dataset", "signals", "factor_dataset"],
+        help="Input artifact type",
+    )
+    signal_semantics.add_argument("--metadata", help="Optional source metadata.json path")
+    signal_semantics.add_argument("--snapshot-quality-status", choices=["PASS", "WARN", "FAIL"], help="Override snapshot quality status")
+    signal_semantics.add_argument("--data-quality-status", choices=["PASS", "WARN", "FAIL"], help="Override data quality status")
+    signal_semantics.add_argument("--profile", help="Override selection/advisory profile, such as demo or reviewed_local_v0")
+    signal_semantics.add_argument("--output-dir", help="Optional signal semantics output directory")
+    signal_semantics.add_argument("--config", help="Optional config YAML path")
+    signal_semantics.set_defaults(handler=_handle_signal_semantics)
 
     signal_advisory_index = subparsers.add_parser(
         "signal-advisory-index",
@@ -1354,6 +1374,52 @@ def _handle_signal_advisory(args: argparse.Namespace) -> int:
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     if args.alert_preview:
         print(f"alert_preview_path: {result.artifact_paths['signal_alert_preview']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading or broker API was invoked.")
+    print("No alert message was sent. No automated order placement was invoked.")
+    return 0
+
+
+def _handle_signal_semantics(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "signal_semantics": settings.signal_semantics.model_copy(update={"output_dir": Path(args.output_dir)})
+            }
+        )
+    result = run_signal_semantics(
+        args.input,
+        input_type=args.input_type,
+        metadata_path=args.metadata,
+        profile=args.profile,
+        snapshot_quality_status=args.snapshot_quality_status,
+        data_quality_status=args.data_quality_status,
+        settings=settings,
+    )
+    print(f"semantics_run_id: {result.semantics_run_id}")
+    print(f"status: {result.status}")
+    print(f"input_type: {result.input_type}")
+    print(f"profile: {result.profile}")
+    print(f"row_count: {result.row_count}")
+    print("advisory_action_counts:")
+    for action, count in result.action_counts.items():
+        if count:
+            print(f"  {action}: {count}")
+    print(f"blocked_count: {result.action_counts.get('BLOCKED', 0)}")
+    print(f"demo_only_count: {result.action_counts.get('DEMO_ONLY', 0)}")
+    print(f"review_buy_candidate_count: {result.action_counts.get('REVIEW_BUY_CANDIDATE', 0)}")
+    print(f"review_sell_candidate_count: {result.action_counts.get('REVIEW_SELL_CANDIDATE', 0)}")
+    print(f"signal_semantics_path: {result.artifact_paths['signal_semantics']}")
+    print(f"issues_path: {result.artifact_paths['signal_semantics_issues']}")
+    print(f"report_path: {result.artifact_paths['signal_semantics_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("requires_manual_confirmation: True")
+    print("auto_order_allowed: False")
+    print("no_live_trading: True")
+    print("no_broker_api: True")
+    print("no_message_sent: True")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")

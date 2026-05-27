@@ -57,6 +57,8 @@ Supported advisory labels:
 
 These labels are not orders.
 
+The shared [signal semantics policy](signal_semantics.md) defines the deterministic conservative mapping from candidate/scored rows to these advisory labels. It is the policy reference for future advisory expansion: demo rows remain `DEMO_ONLY`, failed risk/data/snapshot rows become `BLOCKED`, and non-demo buy/sell labels remain manual-review candidates rather than instructions.
+
 Demo inputs keep conservative behavior:
 
 - `selection_profile=demo`, `demo_mode=true`, or `not_strategy_recommendation=true` produces `DEMO_ONLY` unless the row is blocked.
