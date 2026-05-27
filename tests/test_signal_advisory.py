@@ -66,11 +66,22 @@ def test_safety_flags_are_written_to_signals_and_metadata(tmp_path: Path) -> Non
     assert result.signals["auto_order_allowed"].eq(False).all()
     assert result.signals["no_live_trading"].eq(True).all()
     assert result.signals["no_broker_api"].eq(True).all()
+    assert result.signals["semantics_policy_source"].eq("signal_semantics").all()
+    assert result.signals["semantics_policy_version"].eq("v0.1").all()
+    assert result.signals["semantics_classifier"].eq("classify_signal_semantics_action").all()
+    assert result.signals["semantics_action"].eq("DEMO_ONLY").all()
+    assert result.signals["semantics_auto_order_allowed"].eq(False).all()
+    assert result.signals["semantics_no_live_trading"].eq(True).all()
+    assert result.signals["semantics_no_broker_api"].eq(True).all()
     assert metadata_payload["auto_order_allowed"] is False
     assert metadata_payload["no_live_trading"] is True
     assert metadata_payload["no_broker_api"] is True
     assert metadata_payload["message_sent"] is False
     assert metadata_payload["alert_delivery_enabled"] is False
+    assert metadata_payload["semantics_policy_source"] == "signal_semantics"
+    assert metadata_payload["semantics_policy_version"] == "v0.1"
+    assert metadata_payload["semantics_classifier"] == "classify_signal_semantics_action"
+    assert metadata_payload["semantics_auto_order_allowed"] is False
 
 
 def test_preliminary_non_demo_actions_still_require_manual_review() -> None:

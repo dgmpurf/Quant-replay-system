@@ -16,6 +16,8 @@ The workflow supports questions such as:
 
 The facade extracts a six-digit local symbol and a simple advisory intent, then calls the existing `single-symbol-advisory` question-style answer flow. It does not classify trading actions independently; advisory labels come from the shared `signal_semantics` policy through the single-symbol advisory result.
 
+Conversation artifacts carry or link the shared signal semantics provenance from the single-symbol answer. `PARSE_FAILED` artifacts still record a conservative `NO_ACTION` semantics boundary so audits can see that no symbol or recommendation was invented. This metadata is local audit evidence only and does not approve trades, send messages, or call LLM/API services.
+
 ```text
 local question
 -> deterministic parser
@@ -77,6 +79,8 @@ Files:
 - `advisory_conversation_report.md`
 - `advisory_conversation.json`
 - `metadata.json`
+
+Health checks validate both local-only conversation safety and semantics provenance. Legacy artifacts without provenance may warn; artifacts with `semantics_auto_order_allowed=true`, an unexpected semantics policy source, live-trading provenance, or broker provenance fail health.
 
 When parsing succeeds, the metadata links to the generated single-symbol advisory answer:
 

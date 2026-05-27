@@ -51,7 +51,25 @@ ISSUE_CODES = {
     "MISSING_NO_LIVE_TRADING_STATEMENT",
     "MESSAGE_DELIVERY_DETECTED",
     "STALE_OR_PARTIAL_SIGNAL_RUN",
+    "MISSING_SEMANTICS_PROVENANCE",
+    "SEMANTICS_POLICY_SOURCE_MISMATCH",
+    "SEMANTICS_AUTO_ORDER_ALLOWED",
+    "SEMANTICS_LIVE_TRADING_DETECTED",
+    "SEMANTICS_BROKER_DETECTED",
 }
+
+SEMANTICS_PROVENANCE_FIELDS = [
+    "semantics_policy_source",
+    "semantics_policy_version",
+    "semantics_classifier",
+    "semantics_settings_profile",
+    "semantics_action",
+    "semantics_reason",
+    "semantics_manual_confirmation_required",
+    "semantics_auto_order_allowed",
+    "semantics_no_live_trading",
+    "semantics_no_broker_api",
+]
 
 REQUIRED_PATH_FIELDS = [
     "metadata_path",
@@ -487,7 +505,7 @@ def _check_signals(
             )
         )
         return None
-    missing = [column for column in SIGNAL_COLUMNS if column not in signals.columns]
+    missing = [column for column in SIGNAL_COLUMNS if column not in signals.columns and column not in SEMANTICS_PROVENANCE_FIELDS]
     if missing:
         issues.append(
             _issue(
@@ -600,7 +618,94 @@ def _check_signal_contract(
     _check_symbol_integrity(row, signals, issues)
     _check_signal_safety_columns(row, signals, issues)
     _check_demo_action_safety(row, metadata, signals, issues)
+    _check_semantics_provenance(row, metadata, signals, issues)
     _ = cfg, signal_run_id
+
+
+def _check_semantics_provenance(
+    row: dict[str, Any],
+    metadata: dict[str, Any],
+    signals: pd.DataFrame,
+    issues: list[dict[str, Any]],
+) -> None:
+    metadata_has_source = any(
+        _present(payload.get("semantics_policy_source"))
+        for payload in [metadata, metadata.get("audit_metadata") if isinstance(metadata.get("audit_metadata"), dict) else {}]
+    )
+    records_have_source = (
+        "semantics_policy_source" in signals.columns
+        and signals["semantics_policy_source"].map(_present).all()
+        if not signals.empty
+        else False
+    )
+    if not metadata_has_source or not records_have_source:
+        issues.append(
+            _issue(
+                row,
+                path_field="metadata_path",
+                severity="WARN",
+                issue_code="MISSING_SEMANTICS_PROVENANCE",
+                issue_message="Signal advisory artifact is missing shared signal semantics provenance fields.",
+                suggested_action="Regenerate signal-advisory artifacts with the current shared signal semantics provenance contract.",
+            )
+        )
+    for path_field, payload in _semantics_payloads(metadata, signals):
+        source = _string_or_empty(payload.get("semantics_policy_source"))
+        if source and source != "signal_semantics":
+            issues.append(
+                _issue(
+                    row,
+                    path_field=path_field,
+                    severity="ERROR",
+                    issue_code="SEMANTICS_POLICY_SOURCE_MISMATCH",
+                    issue_message=f"Unexpected semantics_policy_source={source!r}.",
+                    suggested_action="Regenerate artifacts through the shared signal_semantics classifier.",
+                )
+            )
+        if _to_bool(payload.get("semantics_auto_order_allowed")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field=path_field,
+                    severity="ERROR",
+                    issue_code="SEMANTICS_AUTO_ORDER_ALLOWED",
+                    issue_message="Semantics provenance indicates auto-order allowed.",
+                    suggested_action="Regenerate artifacts with semantics_auto_order_allowed=false.",
+                )
+            )
+        if _present(payload.get("semantics_no_live_trading")) and not _to_bool(payload.get("semantics_no_live_trading")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field=path_field,
+                    severity="ERROR",
+                    issue_code="SEMANTICS_LIVE_TRADING_DETECTED",
+                    issue_message="Semantics provenance does not assert no live trading.",
+                    suggested_action="Regenerate artifacts with semantics_no_live_trading=true.",
+                )
+            )
+        if _present(payload.get("semantics_no_broker_api")) and not _to_bool(payload.get("semantics_no_broker_api")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field=path_field,
+                    severity="ERROR",
+                    issue_code="SEMANTICS_BROKER_DETECTED",
+                    issue_message="Semantics provenance does not assert no broker API.",
+                    suggested_action="Regenerate artifacts with semantics_no_broker_api=true.",
+                )
+            )
+
+
+def _semantics_payloads(metadata: dict[str, Any], signals: pd.DataFrame) -> list[tuple[str, dict[str, Any]]]:
+    payloads: list[tuple[str, dict[str, Any]]] = [("metadata_path", metadata)]
+    audit = metadata.get("audit_metadata")
+    if isinstance(audit, dict):
+        payloads.append(("metadata_path", audit))
+    if not signals.empty:
+        for record in signals.to_dict("records"):
+            payloads.append(("signals_csv_path", record))
+    return payloads
 
 
 def _check_symbol_integrity(row: dict[str, Any], signals: pd.DataFrame, issues: list[dict[str, Any]]) -> None:

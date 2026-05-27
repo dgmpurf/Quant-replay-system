@@ -52,6 +52,11 @@ ISSUE_CODES = {
     "DEMO_CONVERSATION_ACTION_UNSAFE",
     "MISSING_LINKED_ANSWER",
     "STALE_OR_PARTIAL_CONVERSATION",
+    "MISSING_SEMANTICS_PROVENANCE",
+    "SEMANTICS_POLICY_SOURCE_MISMATCH",
+    "SEMANTICS_AUTO_ORDER_ALLOWED",
+    "SEMANTICS_LIVE_TRADING_DETECTED",
+    "SEMANTICS_BROKER_DETECTED",
 }
 
 REQUIRED_PATH_FIELDS = ["metadata_path", "conversation_json_path", "report_path"]
@@ -490,6 +495,77 @@ def _check_conversation_contract(
         _add_issue(row, issues, "linked_answer_markdown_path", "", "ERROR", "MISSING_LINKED_ANSWER", "READY conversation must link to an answer markdown artifact.")
     elif linked_answer_path and not _resolve_artifact_path(linked_answer_path, None).exists():
         _add_issue(row, issues, "linked_answer_markdown_path", linked_answer_path, "ERROR", "MISSING_LINKED_ANSWER", "Linked answer markdown path does not exist.")
+    _check_semantics_provenance(row, metadata, conversation_json, issues)
+
+
+def _check_semantics_provenance(
+    row: dict[str, Any],
+    metadata: dict[str, Any],
+    conversation_json: dict[str, Any],
+    issues: list[dict[str, Any]],
+) -> None:
+    payloads = _semantics_payloads(metadata, conversation_json)
+    has_source = any(_string_or_empty(payload.get("semantics_policy_source")) for payload in payloads)
+    if not has_source:
+        _add_issue(
+            row,
+            issues,
+            "metadata_path",
+            row.get("metadata_path"),
+            "WARN",
+            "MISSING_SEMANTICS_PROVENANCE",
+            "Advisory conversation artifact is missing shared signal semantics provenance fields.",
+        )
+    for payload in payloads:
+        source = _string_or_empty(payload.get("semantics_policy_source"))
+        if source and source != "signal_semantics":
+            _add_issue(
+                row,
+                issues,
+                "semantics_policy_source",
+                source,
+                "ERROR",
+                "SEMANTICS_POLICY_SOURCE_MISMATCH",
+                f"Unexpected semantics_policy_source={source!r}.",
+            )
+        if _to_bool(payload.get("semantics_auto_order_allowed")):
+            _add_issue(
+                row,
+                issues,
+                "semantics_auto_order_allowed",
+                "",
+                "ERROR",
+                "SEMANTICS_AUTO_ORDER_ALLOWED",
+                "Semantics provenance indicates auto-order allowed.",
+            )
+        if _string_or_empty(payload.get("semantics_no_live_trading")) and not _to_bool(payload.get("semantics_no_live_trading")):
+            _add_issue(
+                row,
+                issues,
+                "semantics_no_live_trading",
+                "",
+                "ERROR",
+                "SEMANTICS_LIVE_TRADING_DETECTED",
+                "Semantics provenance does not assert no live trading.",
+            )
+        if _string_or_empty(payload.get("semantics_no_broker_api")) and not _to_bool(payload.get("semantics_no_broker_api")):
+            _add_issue(
+                row,
+                issues,
+                "semantics_no_broker_api",
+                "",
+                "ERROR",
+                "SEMANTICS_BROKER_DETECTED",
+                "Semantics provenance does not assert no broker API.",
+            )
+
+
+def _semantics_payloads(metadata: dict[str, Any], conversation_json: dict[str, Any]) -> list[dict[str, Any]]:
+    payloads = [metadata, conversation_json]
+    for payload in [metadata.get("audit_metadata"), conversation_json.get("audit_metadata")]:
+        if isinstance(payload, dict):
+            payloads.append(payload)
+    return payloads
 
 
 def _resolve_artifact_path(value: Any, base_dir: Path | None) -> Path | None:
@@ -597,6 +673,11 @@ def _suggested_action(issue_code: str) -> str:
         "NOT_FOUND_WITH_RECOMMENDATION": "Ensure missing symbols do not invent recommendations.",
         "DEMO_CONVERSATION_ACTION_UNSAFE": "Keep demo conversations review-only and non-recommendational.",
         "MISSING_LINKED_ANSWER": "Regenerate linked single-symbol answer artifacts.",
+        "MISSING_SEMANTICS_PROVENANCE": "Regenerate artifacts with shared signal semantics provenance metadata.",
+        "SEMANTICS_POLICY_SOURCE_MISMATCH": "Regenerate artifacts through the shared signal_semantics classifier.",
+        "SEMANTICS_AUTO_ORDER_ALLOWED": "Keep semantics_auto_order_allowed=false.",
+        "SEMANTICS_LIVE_TRADING_DETECTED": "Restore semantics_no_live_trading=true.",
+        "SEMANTICS_BROKER_DETECTED": "Restore semantics_no_broker_api=true.",
     }
     return actions.get(issue_code, "Review and repair the advisory conversation artifact.")
 

@@ -25,6 +25,8 @@ It answers:
 
 `signal-advisory` and `single-symbol-advisory` now call this policy internally when classifying generated advisory actions, while preserving their existing CSV, report, preview, answer, and metadata fields. Standalone `signal-semantics` runs remain useful for audit/index/health/status views, but they are not required before running those advisory commands. Question-style answers and advisory-conversation outputs consume the single-symbol advisory result, so they reflect the same shared semantics without adding a separate classifier.
 
+Downstream advisory artifacts also record shared semantics provenance. Signal advisory rows, single-symbol advisory rows, question-style answer metadata, and advisory-conversation metadata include fields such as `semantics_policy_source=signal_semantics`, `semantics_policy_version=v0.1`, `semantics_classifier=classify_signal_semantics_action`, `semantics_action`, and no-live/no-broker/no-auto-order semantics safety flags. This provenance is for auditability only; it does not approve trades or change manual-confirmation requirements.
+
 ## Advisory Labels
 
 Supported labels:
@@ -60,6 +62,8 @@ Every output row keeps:
 - `no_live_trading=true`
 - `no_broker_api=true`
 - `no_message_sent=true`
+
+Downstream health checks validate this provenance. Legacy artifacts that predate provenance may produce `MISSING_SEMANTICS_PROVENANCE` warnings, while unsafe provenance such as `semantics_auto_order_allowed=true`, an unexpected policy source, or missing no-live/no-broker assertions is treated as a failure.
 
 ## Configuration
 

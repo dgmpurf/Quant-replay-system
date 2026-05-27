@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from quant_replay_system.config import AdvisoryConversationSettings, Settings, load_settings
+from quant_replay_system.signal_semantics import build_signal_semantics_provenance
 from quant_replay_system.single_symbol_advisory import (
     SingleSymbolAdvisoryAnswerResult,
     SingleSymbolAdvisoryResult,
@@ -64,6 +65,16 @@ class AdvisoryConversationResult:
     parsed_intent: str
     parser_type: str
     advisory_action: str
+    semantics_policy_source: str
+    semantics_policy_version: str
+    semantics_classifier: str
+    semantics_settings_profile: str
+    semantics_action: str
+    semantics_reason: str
+    semantics_manual_confirmation_required: bool
+    semantics_auto_order_allowed: bool
+    semantics_no_live_trading: bool
+    semantics_no_broker_api: bool
     answer_summary: str
     linked_advisory_run_id: str
     linked_answer_run_id: str
@@ -208,6 +219,11 @@ def run_advisory_conversation(
         config_version=conversation_settings.config_version,
     )
     paths = resolve_advisory_conversation_paths(effective_output_dir, conversation_run_id)
+    semantics_provenance = _conversation_semantics_provenance(
+        advisory_action=advisory.advisory_action,
+        reason=advisory.reason_summary,
+        answer=answer,
+    )
     result = AdvisoryConversationResult(
         conversation_run_id=conversation_run_id,
         status=advisory.status,
@@ -216,6 +232,16 @@ def run_advisory_conversation(
         parsed_intent=parse_result.parsed_intent,
         parser_type=parse_result.parser_type,
         advisory_action=advisory.advisory_action,
+        semantics_policy_source=semantics_provenance["semantics_policy_source"],
+        semantics_policy_version=semantics_provenance["semantics_policy_version"],
+        semantics_classifier=semantics_provenance["semantics_classifier"],
+        semantics_settings_profile=semantics_provenance["semantics_settings_profile"],
+        semantics_action=semantics_provenance["semantics_action"],
+        semantics_reason=semantics_provenance["semantics_reason"],
+        semantics_manual_confirmation_required=semantics_provenance["semantics_manual_confirmation_required"],
+        semantics_auto_order_allowed=semantics_provenance["semantics_auto_order_allowed"],
+        semantics_no_live_trading=semantics_provenance["semantics_no_live_trading"],
+        semantics_no_broker_api=semantics_provenance["semantics_no_broker_api"],
         answer_summary=answer.short_answer,
         linked_advisory_run_id=advisory.advisory_run_id,
         linked_answer_run_id=answer.answer_run_id,
@@ -349,6 +375,16 @@ def build_advisory_conversation_metadata(result: AdvisoryConversationResult) -> 
         "parsed_intent": result.parsed_intent,
         "parser_type": result.parser_type,
         "advisory_action": result.advisory_action,
+        "semantics_policy_source": result.semantics_policy_source,
+        "semantics_policy_version": result.semantics_policy_version,
+        "semantics_classifier": result.semantics_classifier,
+        "semantics_settings_profile": result.semantics_settings_profile,
+        "semantics_action": result.semantics_action,
+        "semantics_reason": result.semantics_reason,
+        "semantics_manual_confirmation_required": result.semantics_manual_confirmation_required,
+        "semantics_auto_order_allowed": result.semantics_auto_order_allowed,
+        "semantics_no_live_trading": result.semantics_no_live_trading,
+        "semantics_no_broker_api": result.semantics_no_broker_api,
         "answer_summary": result.answer_summary,
         "linked_advisory_run_id": result.linked_advisory_run_id,
         "linked_answer_run_id": result.linked_answer_run_id,
@@ -411,6 +447,11 @@ def _parse_failed_result(
         linked_answer_run_id="",
         config_version=settings.config_version,
     )
+    semantics_provenance = build_signal_semantics_provenance(
+        advisory_action="NO_ACTION",
+        reason="No row classified; PARSE_FAILED preserved without invented symbol or recommendation.",
+        settings_profile="parse_failed",
+    )
     return AdvisoryConversationResult(
         conversation_run_id=conversation_run_id,
         status="PARSE_FAILED",
@@ -419,6 +460,16 @@ def _parse_failed_result(
         parsed_intent=parse_result.parsed_intent,
         parser_type=parse_result.parser_type,
         advisory_action="NO_ACTION",
+        semantics_policy_source=semantics_provenance["semantics_policy_source"],
+        semantics_policy_version=semantics_provenance["semantics_policy_version"],
+        semantics_classifier=semantics_provenance["semantics_classifier"],
+        semantics_settings_profile=semantics_provenance["semantics_settings_profile"],
+        semantics_action=semantics_provenance["semantics_action"],
+        semantics_reason=semantics_provenance["semantics_reason"],
+        semantics_manual_confirmation_required=semantics_provenance["semantics_manual_confirmation_required"],
+        semantics_auto_order_allowed=semantics_provenance["semantics_auto_order_allowed"],
+        semantics_no_live_trading=semantics_provenance["semantics_no_live_trading"],
+        semantics_no_broker_api=semantics_provenance["semantics_no_broker_api"],
         answer_summary="I could not find a six-digit local symbol in the question. No recommendation was invented.",
         linked_advisory_run_id="",
         linked_answer_run_id="",
@@ -461,6 +512,13 @@ def _audit_metadata(
         "signals_path": str(request.signals_path or ""),
         "linked_advisory_run_id": advisory.advisory_run_id if advisory else "",
         "linked_answer_run_id": answer.answer_run_id if answer else "",
+        **_conversation_semantics_provenance(
+            advisory_action=advisory.advisory_action if advisory else "NO_ACTION",
+            reason=advisory.reason_summary
+            if advisory
+            else "No row classified; PARSE_FAILED preserved without invented symbol or recommendation.",
+            answer=answer,
+        ),
         "config_version": settings.config_version,
         "requires_manual_confirmation": True,
         "auto_order_allowed": False,
@@ -486,6 +544,16 @@ def _conversation_payload(result: AdvisoryConversationResult) -> dict[str, Any]:
         "parsed_intent": result.parsed_intent,
         "parser_type": result.parser_type,
         "advisory_action": result.advisory_action,
+        "semantics_policy_source": result.semantics_policy_source,
+        "semantics_policy_version": result.semantics_policy_version,
+        "semantics_classifier": result.semantics_classifier,
+        "semantics_settings_profile": result.semantics_settings_profile,
+        "semantics_action": result.semantics_action,
+        "semantics_reason": result.semantics_reason,
+        "semantics_manual_confirmation_required": result.semantics_manual_confirmation_required,
+        "semantics_auto_order_allowed": result.semantics_auto_order_allowed,
+        "semantics_no_live_trading": result.semantics_no_live_trading,
+        "semantics_no_broker_api": result.semantics_no_broker_api,
         "answer_summary": result.answer_summary,
         "linked_advisory_run_id": result.linked_advisory_run_id,
         "linked_answer_run_id": result.linked_answer_run_id,
@@ -500,6 +568,32 @@ def _conversation_payload(result: AdvisoryConversationResult) -> dict[str, Any]:
         "parse_result": result.parse_result.__dict__,
         "audit_metadata": result.audit_metadata,
     }
+
+
+def _conversation_semantics_provenance(
+    *,
+    advisory_action: str,
+    reason: str,
+    answer: SingleSymbolAdvisoryAnswerResult | None = None,
+) -> dict[str, Any]:
+    if answer is not None and answer.semantics_policy_source:
+        return {
+            "semantics_policy_source": answer.semantics_policy_source,
+            "semantics_policy_version": answer.semantics_policy_version,
+            "semantics_classifier": answer.semantics_classifier,
+            "semantics_settings_profile": answer.semantics_settings_profile,
+            "semantics_action": answer.semantics_action,
+            "semantics_reason": answer.semantics_reason,
+            "semantics_manual_confirmation_required": answer.semantics_manual_confirmation_required,
+            "semantics_auto_order_allowed": answer.semantics_auto_order_allowed,
+            "semantics_no_live_trading": answer.semantics_no_live_trading,
+            "semantics_no_broker_api": answer.semantics_no_broker_api,
+        }
+    return build_signal_semantics_provenance(
+        advisory_action=advisory_action,
+        reason=reason,
+        settings_profile="conversation",
+    )
 
 
 def _resolve_settings(

@@ -49,6 +49,48 @@ def test_single_symbol_advisory_answer_health_fails_when_auto_order_allowed(tmp_
     assert "AUTO_ORDER_ALLOWED" in set(result.health_frame["issue_code"])
 
 
+def test_single_symbol_advisory_answer_health_warns_when_legacy_provenance_missing(tmp_path: Path) -> None:
+    root = tmp_path / "single_symbol_advisory_answer"
+    _write_answer_artifact(root, "ans001", advisory_run_id="adv001", symbol="000001", include_semantics_provenance=False)
+
+    result = check_single_symbol_advisory_answer_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "WARN"
+    assert "MISSING_SEMANTICS_PROVENANCE" in set(result.health_frame["issue_code"])
+
+
+def test_single_symbol_advisory_answer_health_fails_when_semantics_auto_order_allowed(tmp_path: Path) -> None:
+    root = tmp_path / "single_symbol_advisory_answer"
+    _write_answer_artifact(
+        root,
+        "ans001",
+        advisory_run_id="adv001",
+        symbol="000001",
+        metadata_updates={"semantics_auto_order_allowed": True},
+    )
+
+    result = check_single_symbol_advisory_answer_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "FAIL"
+    assert "SEMANTICS_AUTO_ORDER_ALLOWED" in set(result.health_frame["issue_code"])
+
+
+def test_single_symbol_advisory_answer_health_fails_when_semantics_source_mismatch(tmp_path: Path) -> None:
+    root = tmp_path / "single_symbol_advisory_answer"
+    _write_answer_artifact(
+        root,
+        "ans001",
+        advisory_run_id="adv001",
+        symbol="000001",
+        metadata_updates={"semantics_policy_source": "other_policy"},
+    )
+
+    result = check_single_symbol_advisory_answer_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "FAIL"
+    assert "SEMANTICS_POLICY_SOURCE_MISMATCH" in set(result.health_frame["issue_code"])
+
+
 def test_single_symbol_advisory_answer_health_fails_when_llm_api_called(tmp_path: Path) -> None:
     root = tmp_path / "single_symbol_advisory_answer"
     _write_answer_artifact(root, "ans001", advisory_run_id="adv001", symbol="000001", metadata_updates={"llm_api_called": True})
@@ -230,6 +272,7 @@ def _write_answer_artifact(
     created_at: str = "2024-05-20T00:00:00",
     metadata_updates: dict | None = None,
     json_updates: dict | None = None,
+    include_semantics_provenance: bool = True,
 ) -> None:
     artifact_dir = root / answer_run_id
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -253,6 +296,7 @@ def _write_answer_artifact(
         "symbol": symbol,
         "status": status,
         "advisory_action": advisory_action,
+        **(_semantics_provenance(advisory_action) if include_semantics_provenance else {}),
         "question": question,
         "answer_style": answer_style,
         "short_answer": short_answer,
@@ -265,6 +309,7 @@ def _write_answer_artifact(
         "audit_metadata": {
             "demo_mode": demo_mode,
             "not_strategy_recommendation": not_strategy_recommendation,
+            **(_semantics_provenance(advisory_action) if include_semantics_provenance else {}),
             "llm_api_called": False,
             "external_api_called": False,
             "message_delivery_enabled": False,
@@ -274,6 +319,7 @@ def _write_answer_artifact(
             "symbol": symbol,
             "status": status,
             "advisory_action": advisory_action,
+            **(_semantics_provenance(advisory_action) if include_semantics_provenance else {}),
             "demo_mode": demo_mode,
             "not_strategy_recommendation": not_strategy_recommendation,
             "requires_manual_confirmation": True,
@@ -292,6 +338,7 @@ def _write_answer_artifact(
         "symbol": symbol,
         "status": status,
         "advisory_action": advisory_action,
+        **(_semantics_provenance(advisory_action) if include_semantics_provenance else {}),
         "question": question,
         "answer_style": answer_style,
         "short_answer": short_answer,
@@ -317,3 +364,18 @@ def _write_answer_artifact(
     }
     metadata.update(metadata_updates or {})
     (artifact_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+
+def _semantics_provenance(action: str) -> dict:
+    return {
+        "semantics_policy_source": "signal_semantics",
+        "semantics_policy_version": "v0.1",
+        "semantics_classifier": "classify_signal_semantics_action",
+        "semantics_settings_profile": "demo",
+        "semantics_action": action,
+        "semantics_reason": "Test artifact classified by shared signal semantics.",
+        "semantics_manual_confirmation_required": True,
+        "semantics_auto_order_allowed": False,
+        "semantics_no_live_trading": True,
+        "semantics_no_broker_api": True,
+    }

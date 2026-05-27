@@ -12,7 +12,7 @@ import pandas as pd
 
 from quant_replay_system.config import Settings, SignalSemanticsSettings, SingleSymbolAdvisorySettings, load_settings
 from quant_replay_system.data import normalize_symbol_value, read_csv_preserve_symbol_columns
-from quant_replay_system.signal_semantics import classify_signal_semantics_action
+from quant_replay_system.signal_semantics import build_signal_semantics_provenance, classify_signal_semantics_action
 
 
 SINGLE_SYMBOL_ADVISORY_COLUMNS = [
@@ -31,6 +31,16 @@ SINGLE_SYMBOL_ADVISORY_COLUMNS = [
     "score_action",
     "final_score",
     "advisory_action",
+    "semantics_policy_source",
+    "semantics_policy_version",
+    "semantics_classifier",
+    "semantics_settings_profile",
+    "semantics_action",
+    "semantics_reason",
+    "semantics_manual_confirmation_required",
+    "semantics_auto_order_allowed",
+    "semantics_no_live_trading",
+    "semantics_no_broker_api",
     "reason_summary",
     "supporting_factors",
     "risk_notes",
@@ -154,6 +164,16 @@ class SingleSymbolAdvisoryResult:
     score_action: str
     final_score: float | None
     advisory_action: str
+    semantics_policy_source: str
+    semantics_policy_version: str
+    semantics_classifier: str
+    semantics_settings_profile: str
+    semantics_action: str
+    semantics_reason: str
+    semantics_manual_confirmation_required: bool
+    semantics_auto_order_allowed: bool
+    semantics_no_live_trading: bool
+    semantics_no_broker_api: bool
     reason_summary: str
     supporting_factors: str
     risk_notes: str
@@ -191,6 +211,16 @@ class SingleSymbolAdvisoryResult:
             "score_action": self.score_action,
             "final_score": self.final_score,
             "advisory_action": self.advisory_action,
+            "semantics_policy_source": self.semantics_policy_source,
+            "semantics_policy_version": self.semantics_policy_version,
+            "semantics_classifier": self.semantics_classifier,
+            "semantics_settings_profile": self.semantics_settings_profile,
+            "semantics_action": self.semantics_action,
+            "semantics_reason": self.semantics_reason,
+            "semantics_manual_confirmation_required": self.semantics_manual_confirmation_required,
+            "semantics_auto_order_allowed": self.semantics_auto_order_allowed,
+            "semantics_no_live_trading": self.semantics_no_live_trading,
+            "semantics_no_broker_api": self.semantics_no_broker_api,
             "reason_summary": self.reason_summary,
             "supporting_factors": self.supporting_factors,
             "risk_notes": self.risk_notes,
@@ -214,6 +244,16 @@ class SingleSymbolAdvisoryAnswerResult:
     symbol: str
     status: str
     advisory_action: str
+    semantics_policy_source: str
+    semantics_policy_version: str
+    semantics_classifier: str
+    semantics_settings_profile: str
+    semantics_action: str
+    semantics_reason: str
+    semantics_manual_confirmation_required: bool
+    semantics_auto_order_allowed: bool
+    semantics_no_live_trading: bool
+    semantics_no_broker_api: bool
     question: str
     answer_style: str
     short_answer: str
@@ -300,6 +340,12 @@ def build_single_symbol_advisory(
         not_strategy_recommendation=not_strategy,
         source_artifact_path=context.source_artifact_path,
     )
+    semantics_provenance = build_signal_semantics_provenance(
+        advisory_action=advisory_action,
+        reason=reason_summary,
+        settings=project_settings.signal_semantics,
+        settings_profile=selection_profile or ("not_found" if status == "NOT_FOUND" else None),
+    )
     supporting_factors = _supporting_factors(row)
     risk_notes = _risk_notes(row, advisory_action=advisory_action)
     snapshot_manifest_text = _resolve_snapshot_manifest_text(request, context)
@@ -335,6 +381,16 @@ def build_single_symbol_advisory(
         score_action=score_action,
         final_score=final_score,
         advisory_action=advisory_action,
+        semantics_policy_source=semantics_provenance["semantics_policy_source"],
+        semantics_policy_version=semantics_provenance["semantics_policy_version"],
+        semantics_classifier=semantics_provenance["semantics_classifier"],
+        semantics_settings_profile=semantics_provenance["semantics_settings_profile"],
+        semantics_action=semantics_provenance["semantics_action"],
+        semantics_reason=semantics_provenance["semantics_reason"],
+        semantics_manual_confirmation_required=semantics_provenance["semantics_manual_confirmation_required"],
+        semantics_auto_order_allowed=semantics_provenance["semantics_auto_order_allowed"],
+        semantics_no_live_trading=semantics_provenance["semantics_no_live_trading"],
+        semantics_no_broker_api=semantics_provenance["semantics_no_broker_api"],
         reason_summary=reason_summary,
         supporting_factors=supporting_factors,
         risk_notes=risk_notes,
@@ -600,6 +656,16 @@ def build_single_symbol_advisory_answer(
         symbol=result.symbol,
         status=result.status,
         advisory_action=result.advisory_action,
+        semantics_policy_source=result.semantics_policy_source,
+        semantics_policy_version=result.semantics_policy_version,
+        semantics_classifier=result.semantics_classifier,
+        semantics_settings_profile=result.semantics_settings_profile,
+        semantics_action=result.semantics_action,
+        semantics_reason=result.semantics_reason,
+        semantics_manual_confirmation_required=result.semantics_manual_confirmation_required,
+        semantics_auto_order_allowed=result.semantics_auto_order_allowed,
+        semantics_no_live_trading=result.semantics_no_live_trading,
+        semantics_no_broker_api=result.semantics_no_broker_api,
         question=question_text,
         answer_style=normalized_style,
         short_answer=short_answer,
@@ -618,6 +684,16 @@ def build_single_symbol_advisory_answer(
             "answer_style": normalized_style,
             "status": result.status,
             "advisory_action": result.advisory_action,
+            "semantics_policy_source": result.semantics_policy_source,
+            "semantics_policy_version": result.semantics_policy_version,
+            "semantics_classifier": result.semantics_classifier,
+            "semantics_settings_profile": result.semantics_settings_profile,
+            "semantics_action": result.semantics_action,
+            "semantics_reason": result.semantics_reason,
+            "semantics_manual_confirmation_required": result.semantics_manual_confirmation_required,
+            "semantics_auto_order_allowed": result.semantics_auto_order_allowed,
+            "semantics_no_live_trading": result.semantics_no_live_trading,
+            "semantics_no_broker_api": result.semantics_no_broker_api,
             "demo_mode": result.demo_mode,
             "not_strategy_recommendation": result.not_strategy_recommendation,
             "requires_manual_confirmation": True,
@@ -775,6 +851,16 @@ def build_single_symbol_advisory_answer_metadata(
         "symbol": answer.symbol,
         "status": answer.status,
         "advisory_action": answer.advisory_action,
+        "semantics_policy_source": answer.semantics_policy_source,
+        "semantics_policy_version": answer.semantics_policy_version,
+        "semantics_classifier": answer.semantics_classifier,
+        "semantics_settings_profile": answer.semantics_settings_profile,
+        "semantics_action": answer.semantics_action,
+        "semantics_reason": answer.semantics_reason,
+        "semantics_manual_confirmation_required": answer.semantics_manual_confirmation_required,
+        "semantics_auto_order_allowed": answer.semantics_auto_order_allowed,
+        "semantics_no_live_trading": answer.semantics_no_live_trading,
+        "semantics_no_broker_api": answer.semantics_no_broker_api,
         "question": answer.question,
         "answer_style": answer.answer_style,
         "short_answer": answer.short_answer,
@@ -818,6 +904,16 @@ def build_single_symbol_advisory_metadata(
         "demo_mode": result.demo_mode,
         "not_strategy_recommendation": result.not_strategy_recommendation,
         "advisory_action": result.advisory_action,
+        "semantics_policy_source": result.semantics_policy_source,
+        "semantics_policy_version": result.semantics_policy_version,
+        "semantics_classifier": result.semantics_classifier,
+        "semantics_settings_profile": result.semantics_settings_profile,
+        "semantics_action": result.semantics_action,
+        "semantics_reason": result.semantics_reason,
+        "semantics_manual_confirmation_required": result.semantics_manual_confirmation_required,
+        "semantics_auto_order_allowed": result.semantics_auto_order_allowed,
+        "semantics_no_live_trading": result.semantics_no_live_trading,
+        "semantics_no_broker_api": result.semantics_no_broker_api,
         "final_score": result.final_score,
         "requires_manual_confirmation": True,
         "auto_order_allowed": False,
@@ -1169,6 +1265,11 @@ def _build_audit_metadata(
         "requested_symbol": request.symbol,
         "status": status,
         "advisory_action": advisory_action,
+        **build_signal_semantics_provenance(
+            advisory_action=advisory_action,
+            reason="Single-symbol advisory audit metadata records the shared semantics classifier used for the advisory action.",
+            settings_profile=(context.metadata.get("selection_profile") or ""),
+        ),
         "advisory_date": advisory_date,
         "valid_until": valid_until,
         "source_candidate_run_id": source_candidate_run_id,
@@ -1230,6 +1331,16 @@ def _single_symbol_advisory_answer_payload(
         "symbol": answer.symbol,
         "status": answer.status,
         "advisory_action": answer.advisory_action,
+        "semantics_policy_source": answer.semantics_policy_source,
+        "semantics_policy_version": answer.semantics_policy_version,
+        "semantics_classifier": answer.semantics_classifier,
+        "semantics_settings_profile": answer.semantics_settings_profile,
+        "semantics_action": answer.semantics_action,
+        "semantics_reason": answer.semantics_reason,
+        "semantics_manual_confirmation_required": answer.semantics_manual_confirmation_required,
+        "semantics_auto_order_allowed": answer.semantics_auto_order_allowed,
+        "semantics_no_live_trading": answer.semantics_no_live_trading,
+        "semantics_no_broker_api": answer.semantics_no_broker_api,
         "question": answer.question,
         "answer_style": answer.answer_style,
         "short_answer": answer.short_answer,

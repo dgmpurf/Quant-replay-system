@@ -52,6 +52,11 @@ ISSUE_CODES = {
     "MESSAGE_DELIVERY_DETECTED",
     "MISSING_NO_LIVE_TRADING_STATEMENT",
     "STALE_OR_PARTIAL_ANSWER",
+    "MISSING_SEMANTICS_PROVENANCE",
+    "SEMANTICS_POLICY_SOURCE_MISMATCH",
+    "SEMANTICS_AUTO_ORDER_ALLOWED",
+    "SEMANTICS_LIVE_TRADING_DETECTED",
+    "SEMANTICS_BROKER_DETECTED",
 }
 
 REQUIRED_PATH_FIELDS = ["metadata_path", "answer_markdown_path", "answer_json_path"]
@@ -535,6 +540,7 @@ def _check_answer_contract(
     _check_safety_flags(row, metadata, answer_json, issues)
     _check_demo_safety(row, metadata, answer_json, markdown_text, issues)
     _check_not_found_safety(row, metadata, answer_json, markdown_text, issues)
+    _check_semantics_provenance(row, metadata, answer_json, issues)
 
 
 def _check_symbol_integrity(
@@ -692,6 +698,75 @@ def _check_not_found_safety(
                 suggested_action="Regenerate missing-symbol answer as NOT_FOUND with NO_ACTION and no invented recommendation.",
             )
         )
+
+
+def _check_semantics_provenance(
+    row: dict[str, Any],
+    metadata: dict[str, Any],
+    answer_json: dict[str, Any],
+    issues: list[dict[str, Any]],
+) -> None:
+    payloads = _payloads(metadata, answer_json)
+    has_source = any(_present(payload.get("semantics_policy_source")) for payload in payloads if isinstance(payload, dict))
+    if not has_source:
+        issues.append(
+            _issue(
+                row,
+                path_field="metadata_path",
+                severity="WARN",
+                issue_code="MISSING_SEMANTICS_PROVENANCE",
+                issue_message="Question-style answer artifact is missing shared signal semantics provenance fields.",
+                suggested_action="Regenerate answer artifacts from current single-symbol advisory outputs.",
+            )
+        )
+    for payload in payloads:
+        if not isinstance(payload, dict):
+            continue
+        source = _string_or_empty(payload.get("semantics_policy_source"))
+        if source and source != "signal_semantics":
+            issues.append(
+                _issue(
+                    row,
+                    path_field="metadata_path",
+                    severity="ERROR",
+                    issue_code="SEMANTICS_POLICY_SOURCE_MISMATCH",
+                    issue_message=f"Unexpected semantics_policy_source={source!r}.",
+                    suggested_action="Regenerate artifacts through the shared signal_semantics classifier.",
+                )
+            )
+        if _to_bool(payload.get("semantics_auto_order_allowed")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field="metadata_path",
+                    severity="ERROR",
+                    issue_code="SEMANTICS_AUTO_ORDER_ALLOWED",
+                    issue_message="Semantics provenance indicates auto-order allowed.",
+                    suggested_action="Regenerate artifacts with semantics_auto_order_allowed=false.",
+                )
+            )
+        if _present(payload.get("semantics_no_live_trading")) and not _to_bool(payload.get("semantics_no_live_trading")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field="metadata_path",
+                    severity="ERROR",
+                    issue_code="SEMANTICS_LIVE_TRADING_DETECTED",
+                    issue_message="Semantics provenance does not assert no live trading.",
+                    suggested_action="Regenerate artifacts with semantics_no_live_trading=true.",
+                )
+            )
+        if _present(payload.get("semantics_no_broker_api")) and not _to_bool(payload.get("semantics_no_broker_api")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field="metadata_path",
+                    severity="ERROR",
+                    issue_code="SEMANTICS_BROKER_DETECTED",
+                    issue_message="Semantics provenance does not assert no broker API.",
+                    suggested_action="Regenerate artifacts with semantics_no_broker_api=true.",
+                )
+            )
 
 
 def _answer_text(metadata: dict[str, Any], answer_json: dict[str, Any], markdown_text: str) -> str:

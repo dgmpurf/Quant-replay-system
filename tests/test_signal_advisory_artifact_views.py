@@ -53,6 +53,36 @@ def test_signal_advisory_health_fails_when_auto_order_allowed(tmp_path: Path) ->
     assert "AUTO_ORDER_ALLOWED" in set(result.health_frame["issue_code"])
 
 
+def test_signal_advisory_health_warns_when_legacy_provenance_missing(tmp_path: Path) -> None:
+    root = tmp_path / "signals"
+    _write_signal_artifact(root, "sig001", include_semantics_provenance=False)
+
+    result = check_signal_advisory_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "WARN"
+    assert "MISSING_SEMANTICS_PROVENANCE" in set(result.health_frame["issue_code"])
+
+
+def test_signal_advisory_health_fails_when_semantics_auto_order_allowed(tmp_path: Path) -> None:
+    root = tmp_path / "signals"
+    _write_signal_artifact(root, "sig001", signal_updates={"semantics_auto_order_allowed": True})
+
+    result = check_signal_advisory_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "FAIL"
+    assert "SEMANTICS_AUTO_ORDER_ALLOWED" in set(result.health_frame["issue_code"])
+
+
+def test_signal_advisory_health_fails_when_semantics_source_mismatch(tmp_path: Path) -> None:
+    root = tmp_path / "signals"
+    _write_signal_artifact(root, "sig001", metadata_updates={"semantics_policy_source": "other_policy"})
+
+    result = check_signal_advisory_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "FAIL"
+    assert "SEMANTICS_POLICY_SOURCE_MISMATCH" in set(result.health_frame["issue_code"])
+
+
 def test_signal_advisory_health_fails_when_demo_signal_has_buy_action(tmp_path: Path) -> None:
     root = tmp_path / "signals"
     _write_signal_artifact(root, "sig001", signal_updates={"advisory_action": "REVIEW_BUY_CANDIDATE"})
@@ -186,10 +216,14 @@ def _write_signal_artifact(
     signal_updates: dict | None = None,
     metadata_updates: dict | None = None,
     write_alert_preview: bool = True,
+    include_semantics_provenance: bool = True,
 ) -> None:
     artifact_dir = root / signal_run_id
     artifact_dir.mkdir(parents=True, exist_ok=True)
     signal = _safe_signal(signal_run_id)
+    if not include_semantics_provenance:
+        for key in _semantics_provenance("DEMO_ONLY"):
+            signal.pop(key, None)
     signal.update(signal_updates or {})
     signals = pd.DataFrame([signal], columns=SIGNAL_COLUMNS)
     signals.to_csv(artifact_dir / "signals.csv", index=False)
@@ -234,6 +268,8 @@ def _write_signal_artifact(
             "metadata": str(artifact_dir / "metadata.json"),
         },
     }
+    if include_semantics_provenance:
+        metadata.update(_semantics_provenance(signal["advisory_action"]))
     metadata.update(metadata_updates or {})
     (artifact_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
@@ -252,6 +288,7 @@ def _safe_signal(signal_run_id: str) -> dict:
         "demo_mode": True,
         "not_strategy_recommendation": True,
         "advisory_action": "DEMO_ONLY",
+        **_semantics_provenance("DEMO_ONLY"),
         "original_score_action": "NO_TRADE",
         "original_candidate_action": "NO_TRADE",
         "final_score": 55.0,
@@ -272,4 +309,19 @@ def _safe_signal(signal_run_id: str) -> dict:
         "no_broker_api": True,
         "alert_title": "000001 DEMO_ONLY preview",
         "alert_body": "Manual confirmation required. No auto-order. No live trading or broker API.",
+    }
+
+
+def _semantics_provenance(action: str) -> dict:
+    return {
+        "semantics_policy_source": "signal_semantics",
+        "semantics_policy_version": "v0.1",
+        "semantics_classifier": "classify_signal_semantics_action",
+        "semantics_settings_profile": "demo",
+        "semantics_action": action,
+        "semantics_reason": "Test artifact classified by shared signal semantics.",
+        "semantics_manual_confirmation_required": True,
+        "semantics_auto_order_allowed": False,
+        "semantics_no_live_trading": True,
+        "semantics_no_broker_api": True,
     }

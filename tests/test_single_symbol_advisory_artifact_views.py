@@ -51,6 +51,46 @@ def test_single_symbol_advisory_health_fails_when_auto_order_allowed(tmp_path: P
     assert "AUTO_ORDER_ALLOWED" in set(result.health_frame["issue_code"])
 
 
+def test_single_symbol_advisory_health_warns_when_legacy_provenance_missing(tmp_path: Path) -> None:
+    root = tmp_path / "single_symbol_advisory"
+    _write_single_symbol_artifact(root, "adv001", symbol="000001", include_semantics_provenance=False)
+
+    result = check_single_symbol_advisory_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "WARN"
+    assert "MISSING_SEMANTICS_PROVENANCE" in set(result.health_frame["issue_code"])
+
+
+def test_single_symbol_advisory_health_fails_when_semantics_auto_order_allowed(tmp_path: Path) -> None:
+    root = tmp_path / "single_symbol_advisory"
+    _write_single_symbol_artifact(
+        root,
+        "adv001",
+        symbol="000001",
+        metadata_updates={"semantics_auto_order_allowed": True},
+    )
+
+    result = check_single_symbol_advisory_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "FAIL"
+    assert "SEMANTICS_AUTO_ORDER_ALLOWED" in set(result.health_frame["issue_code"])
+
+
+def test_single_symbol_advisory_health_fails_when_semantics_source_mismatch(tmp_path: Path) -> None:
+    root = tmp_path / "single_symbol_advisory"
+    _write_single_symbol_artifact(
+        root,
+        "adv001",
+        symbol="000001",
+        metadata_updates={"semantics_policy_source": "other_policy"},
+    )
+
+    result = check_single_symbol_advisory_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "FAIL"
+    assert "SEMANTICS_POLICY_SOURCE_MISMATCH" in set(result.health_frame["issue_code"])
+
+
 def test_single_symbol_advisory_health_fails_when_demo_review_has_buy_action(tmp_path: Path) -> None:
     root = tmp_path / "single_symbol_advisory"
     _write_single_symbol_artifact(root, "adv001", symbol="000001", record_updates={"advisory_action": "REVIEW_BUY_CANDIDATE"})
@@ -190,10 +230,14 @@ def _write_single_symbol_artifact(
     record_updates: dict | None = None,
     metadata_updates: dict | None = None,
     write_alert_preview: bool = True,
+    include_semantics_provenance: bool = True,
 ) -> None:
     artifact_dir = root / advisory_run_id
     artifact_dir.mkdir(parents=True, exist_ok=True)
     record = _safe_record(advisory_run_id, symbol)
+    if not include_semantics_provenance:
+        for key in _semantics_provenance("DEMO_ONLY"):
+            record.pop(key, None)
     record.update(record_updates or {})
     pd.DataFrame([record], columns=SINGLE_SYMBOL_ADVISORY_COLUMNS).to_csv(
         artifact_dir / "single_symbol_advisory.csv",
@@ -240,6 +284,8 @@ def _write_single_symbol_artifact(
             "metadata": str(artifact_dir / "metadata.json"),
         },
     }
+    if include_semantics_provenance:
+        metadata.update(_semantics_provenance(record["advisory_action"]))
     metadata.update(metadata_updates or {})
     (artifact_dir / "metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
@@ -261,6 +307,7 @@ def _safe_record(advisory_run_id: str, symbol: str) -> dict:
         "score_action": "NO_TRADE",
         "final_score": 55.0,
         "advisory_action": "DEMO_ONLY",
+        **_semantics_provenance("DEMO_ONLY"),
         "reason_summary": "Demo workflow validation only.",
         "supporting_factors": "{}",
         "risk_notes": "manual confirmation required",
@@ -274,4 +321,19 @@ def _safe_record(advisory_run_id: str, symbol: str) -> dict:
         "no_live_trading": True,
         "no_broker_api": True,
         "no_message_sent": True,
+    }
+
+
+def _semantics_provenance(action: str) -> dict:
+    return {
+        "semantics_policy_source": "signal_semantics",
+        "semantics_policy_version": "v0.1",
+        "semantics_classifier": "classify_signal_semantics_action",
+        "semantics_settings_profile": "demo",
+        "semantics_action": action,
+        "semantics_reason": "Test artifact classified by shared signal semantics.",
+        "semantics_manual_confirmation_required": True,
+        "semantics_auto_order_allowed": False,
+        "semantics_no_live_trading": True,
+        "semantics_no_broker_api": True,
     }

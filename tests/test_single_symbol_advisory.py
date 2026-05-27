@@ -48,6 +48,14 @@ def test_demo_candidate_becomes_demo_only_not_real_buy(tmp_path: Path) -> None:
     assert result.no_live_trading is True
     assert result.no_broker_api is True
     assert result.no_message_sent is True
+    assert result.semantics_policy_source == "signal_semantics"
+    assert result.semantics_policy_version == "v0.1"
+    assert result.semantics_classifier == "classify_signal_semantics_action"
+    assert result.semantics_action == "DEMO_ONLY"
+    assert result.semantics_auto_order_allowed is False
+    metadata_payload = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    assert metadata_payload["semantics_policy_source"] == "signal_semantics"
+    assert metadata_payload["semantics_auto_order_allowed"] is False
 
 
 def test_single_symbol_synthetic_non_demo_high_score_can_be_review_buy_candidate_manual_only(tmp_path: Path) -> None:
@@ -267,6 +275,8 @@ def test_question_style_not_found_answer_does_not_invent_recommendation(tmp_path
     assert payload["no_live_trading"] is True
     assert payload["no_broker_api"] is True
     assert payload["no_message_sent"] is True
+    assert payload["semantics_policy_source"] == "signal_semantics"
+    assert payload["semantics_auto_order_allowed"] is False
 
 
 def test_cli_single_symbol_question_style_writes_answer(tmp_path: Path, capsys) -> None:
@@ -318,6 +328,9 @@ def test_question_style_answer_records_no_message_or_external_api_use(tmp_path: 
     assert metadata_payload["broker_api_invoked"] is False
     assert metadata_payload["live_trading_enabled"] is False
     assert metadata_payload["approved_for_paper_applied"] is False
+    assert metadata_payload["semantics_policy_source"] == "signal_semantics"
+    assert metadata_payload["semantics_classifier"] == "classify_signal_semantics_action"
+    assert metadata_payload["semantics_auto_order_allowed"] is False
 
 
 def test_no_live_trading_broker_network_or_message_sending(tmp_path: Path) -> None:

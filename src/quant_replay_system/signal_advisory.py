@@ -13,7 +13,7 @@ import pandas as pd
 
 from quant_replay_system.config import Settings, SignalAdvisorySettings, SignalSemanticsSettings, load_settings
 from quant_replay_system.data import normalize_symbol_value, read_csv_preserve_symbol_columns
-from quant_replay_system.signal_semantics import classify_signal_semantics_action
+from quant_replay_system.signal_semantics import build_signal_semantics_provenance, classify_signal_semantics_action
 
 
 ADVISORY_ACTIONS = {
@@ -47,6 +47,16 @@ SIGNAL_COLUMNS = [
     "demo_mode",
     "not_strategy_recommendation",
     "advisory_action",
+    "semantics_policy_source",
+    "semantics_policy_version",
+    "semantics_classifier",
+    "semantics_settings_profile",
+    "semantics_action",
+    "semantics_reason",
+    "semantics_manual_confirmation_required",
+    "semantics_auto_order_allowed",
+    "semantics_no_live_trading",
+    "semantics_no_broker_api",
     "original_score_action",
     "original_candidate_action",
     "final_score",
@@ -91,6 +101,16 @@ class SignalAdvisorySignal:
     demo_mode: bool
     not_strategy_recommendation: bool
     advisory_action: str
+    semantics_policy_source: str
+    semantics_policy_version: str
+    semantics_classifier: str
+    semantics_settings_profile: str
+    semantics_action: str
+    semantics_reason: str
+    semantics_manual_confirmation_required: bool
+    semantics_auto_order_allowed: bool
+    semantics_no_live_trading: bool
+    semantics_no_broker_api: bool
     original_score_action: str
     original_candidate_action: str
     final_score: float | None
@@ -126,6 +146,16 @@ class SignalAdvisorySignal:
             "demo_mode": self.demo_mode,
             "not_strategy_recommendation": self.not_strategy_recommendation,
             "advisory_action": self.advisory_action,
+            "semantics_policy_source": self.semantics_policy_source,
+            "semantics_policy_version": self.semantics_policy_version,
+            "semantics_classifier": self.semantics_classifier,
+            "semantics_settings_profile": self.semantics_settings_profile,
+            "semantics_action": self.semantics_action,
+            "semantics_reason": self.semantics_reason,
+            "semantics_manual_confirmation_required": self.semantics_manual_confirmation_required,
+            "semantics_auto_order_allowed": self.semantics_auto_order_allowed,
+            "semantics_no_live_trading": self.semantics_no_live_trading,
+            "semantics_no_broker_api": self.semantics_no_broker_api,
             "original_score_action": self.original_score_action,
             "original_candidate_action": self.original_candidate_action,
             "final_score": self.final_score,
@@ -444,6 +474,16 @@ def build_signal_advisory_metadata(
         "selection_profile": result.audit_metadata.get("selection_profile", ""),
         "demo_mode": result.audit_metadata.get("demo_mode", False),
         "not_strategy_recommendation": result.audit_metadata.get("not_strategy_recommendation", False),
+        "semantics_policy_source": result.audit_metadata.get("semantics_policy_source", ""),
+        "semantics_policy_version": result.audit_metadata.get("semantics_policy_version", ""),
+        "semantics_classifier": result.audit_metadata.get("semantics_classifier", ""),
+        "semantics_settings_profile": result.audit_metadata.get("semantics_settings_profile", ""),
+        "semantics_action": result.audit_metadata.get("semantics_action", ""),
+        "semantics_reason": result.audit_metadata.get("semantics_reason", ""),
+        "semantics_manual_confirmation_required": result.audit_metadata.get("semantics_manual_confirmation_required", True),
+        "semantics_auto_order_allowed": result.audit_metadata.get("semantics_auto_order_allowed", False),
+        "semantics_no_live_trading": result.audit_metadata.get("semantics_no_live_trading", True),
+        "semantics_no_broker_api": result.audit_metadata.get("semantics_no_broker_api", True),
         "requires_manual_confirmation": True,
         "auto_order_allowed": False,
         "no_live_trading": True,
@@ -576,6 +616,12 @@ def _signal_from_candidate_row(
         demo_mode=demo_mode,
         not_strategy_recommendation=not_strategy,
     )
+    semantics_provenance = build_signal_semantics_provenance(
+        advisory_action=advisory_action,
+        reason=reason_summary,
+        settings=semantics_settings,
+        settings_profile=selection_profile or None,
+    )
     risk_notes = _risk_notes(row)
     data_source_notes = _data_source_notes(
         candidates_path=candidates_path,
@@ -618,6 +664,16 @@ def _signal_from_candidate_row(
         demo_mode=demo_mode,
         not_strategy_recommendation=not_strategy,
         advisory_action=advisory_action,
+        semantics_policy_source=semantics_provenance["semantics_policy_source"],
+        semantics_policy_version=semantics_provenance["semantics_policy_version"],
+        semantics_classifier=semantics_provenance["semantics_classifier"],
+        semantics_settings_profile=semantics_provenance["semantics_settings_profile"],
+        semantics_action=semantics_provenance["semantics_action"],
+        semantics_reason=semantics_provenance["semantics_reason"],
+        semantics_manual_confirmation_required=semantics_provenance["semantics_manual_confirmation_required"],
+        semantics_auto_order_allowed=semantics_provenance["semantics_auto_order_allowed"],
+        semantics_no_live_trading=semantics_provenance["semantics_no_live_trading"],
+        semantics_no_broker_api=semantics_provenance["semantics_no_broker_api"],
         original_score_action=original_score_action,
         original_candidate_action=original_candidate_action,
         final_score=final_score,
@@ -794,6 +850,11 @@ def _build_audit_metadata(
         if "not_strategy_recommendation" in signals.columns
         else False
     )
+    semantics_provenance = _run_semantics_provenance(
+        signals,
+        action_counts=action_counts,
+        selection_profile=selection_profile,
+    )
     return {
         "signal_run_id": signal_run_id,
         "signal_date": signal_date,
@@ -802,6 +863,7 @@ def _build_audit_metadata(
         "selection_profile": selection_profile,
         "demo_mode": demo_mode,
         "not_strategy_recommendation": not_strategy,
+        **semantics_provenance,
         "signal_count": len(signals),
         "advisory_action_counts": action_counts,
         "candidates_path": str(candidates_path),
@@ -831,6 +893,29 @@ def _build_audit_metadata(
             "auto_order_allowed": settings.auto_order_allowed,
         },
     }
+
+
+def _run_semantics_provenance(
+    signals: pd.DataFrame,
+    *,
+    action_counts: dict[str, int],
+    selection_profile: str,
+) -> dict[str, Any]:
+    actions = []
+    if "semantics_action" in signals.columns:
+        actions = sorted(
+            {
+                str(value).strip().upper()
+                for value in signals["semantics_action"].dropna().tolist()
+                if str(value).strip()
+            }
+        )
+    action = actions[0] if len(actions) == 1 else "MULTI_ACTION" if actions else ""
+    return build_signal_semantics_provenance(
+        advisory_action=action,
+        reason=f"Signal advisory run classified rows with shared signal semantics; action_counts={action_counts}.",
+        settings_profile=selection_profile or None,
+    )
 
 
 def _confidence_level(final_score: float | None, settings: SignalAdvisorySettings) -> str:

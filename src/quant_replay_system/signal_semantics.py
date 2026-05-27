@@ -25,6 +25,10 @@ SIGNAL_SEMANTICS_ACTIONS = [
     "BLOCKED",
 ]
 
+SIGNAL_SEMANTICS_POLICY_SOURCE = "signal_semantics"
+SIGNAL_SEMANTICS_POLICY_VERSION = "v0.1"
+SIGNAL_SEMANTICS_CLASSIFIER = "classify_signal_semantics_action"
+
 SIGNAL_SEMANTICS_COLUMNS = [
     "semantics_run_id",
     "source_row_index",
@@ -283,6 +287,30 @@ def classify_signal_semantics_action(
         data_quality_status=data_quality_status,
     )
     return action
+
+
+def build_signal_semantics_provenance(
+    *,
+    advisory_action: str,
+    reason: str = "",
+    settings: SignalSemanticsSettings | None = None,
+    settings_profile: str | None = None,
+) -> dict[str, Any]:
+    """Build auditable provenance for a downstream shared-semantics decision."""
+
+    cfg = settings or load_settings(Path("config/default.yaml")).signal_semantics
+    return {
+        "semantics_policy_source": SIGNAL_SEMANTICS_POLICY_SOURCE,
+        "semantics_policy_version": SIGNAL_SEMANTICS_POLICY_VERSION,
+        "semantics_classifier": SIGNAL_SEMANTICS_CLASSIFIER,
+        "semantics_settings_profile": settings_profile or cfg.config_version,
+        "semantics_action": str(advisory_action or "").strip().upper(),
+        "semantics_reason": str(reason or "").strip(),
+        "semantics_manual_confirmation_required": True,
+        "semantics_auto_order_allowed": False,
+        "semantics_no_live_trading": True,
+        "semantics_no_broker_api": True,
+    }
 
 
 def evaluate_signal_semantics_frame(

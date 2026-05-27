@@ -33,6 +33,8 @@ python -m quant_replay_system.cli signal-semantics --input outputs\reports\curre
 
 `signal-advisory` uses the shared semantics classifier internally, so users do not need to run `signal-semantics` separately before generating signal artifacts. The semantics policy blocks failed risk/data/snapshot rows, forces demo/not-strategy artifacts to `DEMO_ONLY`, and only allows non-demo `REVIEW_BUY_CANDIDATE` / `REVIEW_SELL_CANDIDATE` as structural human-review labels. It never creates orders, paper approvals, broker messages, or real BUY/SELL instructions. See [signal_semantics.md](signal_semantics.md).
 
+Each generated signal row and `metadata.json` now record the shared semantics provenance: policy source, policy version, classifier name, settings profile, semantics action, semantics reason, manual-confirmation flag, auto-order flag, no-live-trading flag, and no-broker flag. This makes the advisory action auditable without turning it into an order or paper approval.
+
 Semantics runs can be discovered and safety-checked with `signal-semantics-index`, `signal-semantics-health`, and `signal-semantics-status`. These views verify demo safety, no-auto-order flags, no live/broker/message metadata, required output columns, leading-zero symbols, and blocked-row reasons before semantics labels are consumed by downstream advisory workflows.
 
 `research-status` also includes `signal-semantics-status` as advisory-policy context before signal advisory. It shows the latest semantics run id, health status, advisory label counts, profile, input path, and report path. Review labels remain manual-review context only, and later signal/paper workflow stages keep priority.
@@ -53,6 +55,16 @@ Each signal includes:
 - `demo_mode`
 - `not_strategy_recommendation`
 - `advisory_action`
+- `semantics_policy_source`
+- `semantics_policy_version`
+- `semantics_classifier`
+- `semantics_settings_profile`
+- `semantics_action`
+- `semantics_reason`
+- `semantics_manual_confirmation_required`
+- `semantics_auto_order_allowed`
+- `semantics_no_live_trading`
+- `semantics_no_broker_api`
 - `original_score_action`
 - `original_candidate_action`
 - `final_score`

@@ -3373,6 +3373,7 @@ def _single_symbol_answer_artifact(
         "symbol": symbol,
         "status": "READY",
         "advisory_action": "DEMO_ONLY",
+        **_semantics_provenance("DEMO_ONLY"),
         "question": "should I buy?",
         "answer_style": "concise",
         "short_answer": "Demo-only review for workflow validation; not a real trading recommendation.",
@@ -3382,11 +3383,17 @@ def _single_symbol_answer_artifact(
         "no_live_trading": True,
         "no_broker_api": True,
         "no_message_sent": True,
-        "audit_metadata": {"demo_mode": True, "not_strategy_recommendation": True, "llm_api_called": False},
+        "audit_metadata": {
+            "demo_mode": True,
+            "not_strategy_recommendation": True,
+            "llm_api_called": False,
+            **_semantics_provenance("DEMO_ONLY"),
+        },
         "advisory_record": {
             "symbol": symbol,
             "status": "READY",
             "advisory_action": "DEMO_ONLY",
+            **_semantics_provenance("DEMO_ONLY"),
             "demo_mode": True,
             "not_strategy_recommendation": True,
             "requires_manual_confirmation": True,
@@ -3404,6 +3411,7 @@ def _single_symbol_answer_artifact(
         "symbol": symbol,
         "status": "READY",
         "advisory_action": "DEMO_ONLY",
+        **_semantics_provenance("DEMO_ONLY"),
         "question": "should I buy?",
         "answer_style": "concise",
         "short_answer": "Demo-only review for workflow validation; not a real trading recommendation.",
@@ -3430,6 +3438,21 @@ def _single_symbol_answer_artifact(
     metadata.update(metadata_updates or {})
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     return folder
+
+
+def _semantics_provenance(action: str) -> dict:
+    return {
+        "semantics_policy_source": "signal_semantics",
+        "semantics_policy_version": "v0.1",
+        "semantics_classifier": "classify_signal_semantics_action",
+        "semantics_settings_profile": "demo",
+        "semantics_action": action,
+        "semantics_reason": "Dashboard fixture classified by shared signal semantics.",
+        "semantics_manual_confirmation_required": True,
+        "semantics_auto_order_allowed": False,
+        "semantics_no_live_trading": True,
+        "semantics_no_broker_api": True,
+    }
 
 
 def _market_update_handoff_status(

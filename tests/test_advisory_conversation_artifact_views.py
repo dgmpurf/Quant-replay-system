@@ -69,6 +69,46 @@ def test_advisory_conversation_health_fails_when_auto_order_allowed(tmp_path: Pa
     assert "AUTO_ORDER_ALLOWED" in set(result.health_frame["issue_code"])
 
 
+def test_advisory_conversation_health_warns_when_legacy_provenance_missing(tmp_path: Path) -> None:
+    root = tmp_path / "advisory_conversation"
+    _write_conversation_artifact(root, "conv001", symbol="000001", include_semantics_provenance=False)
+
+    result = check_advisory_conversation_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "WARN"
+    assert "MISSING_SEMANTICS_PROVENANCE" in set(result.health_frame["issue_code"])
+
+
+def test_advisory_conversation_health_fails_when_semantics_auto_order_allowed(tmp_path: Path) -> None:
+    root = tmp_path / "advisory_conversation"
+    _write_conversation_artifact(
+        root,
+        "conv001",
+        symbol="000001",
+        metadata_updates={"semantics_auto_order_allowed": True},
+    )
+
+    result = check_advisory_conversation_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "FAIL"
+    assert "SEMANTICS_AUTO_ORDER_ALLOWED" in set(result.health_frame["issue_code"])
+
+
+def test_advisory_conversation_health_fails_when_semantics_source_mismatch(tmp_path: Path) -> None:
+    root = tmp_path / "advisory_conversation"
+    _write_conversation_artifact(
+        root,
+        "conv001",
+        symbol="000001",
+        metadata_updates={"semantics_policy_source": "other_policy"},
+    )
+
+    result = check_advisory_conversation_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.status == "FAIL"
+    assert "SEMANTICS_POLICY_SOURCE_MISMATCH" in set(result.health_frame["issue_code"])
+
+
 def test_advisory_conversation_health_fails_when_leading_zero_symbol_is_lost(tmp_path: Path) -> None:
     root = tmp_path / "advisory_conversation"
     _write_conversation_artifact(root, "conv001", symbol="1")
@@ -259,6 +299,7 @@ def _write_conversation_artifact(
     created_at: str = "2024-05-20T00:00:00+00:00",
     metadata_updates: dict | None = None,
     json_updates: dict | None = None,
+    include_semantics_provenance: bool = True,
 ) -> None:
     artifact_dir = root / conversation_run_id
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -293,6 +334,7 @@ def _write_conversation_artifact(
         "parsed_intent": parsed_intent,
         "parser_type": parser_type,
         "advisory_action": advisory_action,
+        **(_semantics_provenance(advisory_action) if include_semantics_provenance else {}),
         "answer_summary": answer_summary,
         "linked_advisory_run_id": linked_advisory_run_id if status != "PARSE_FAILED" else "",
         "linked_answer_run_id": linked_answer_run_id if status != "PARSE_FAILED" else "",
@@ -325,3 +367,18 @@ def _write_conversation_artifact(
     }
     metadata.update(metadata_updates or {})
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+
+def _semantics_provenance(action: str) -> dict:
+    return {
+        "semantics_policy_source": "signal_semantics",
+        "semantics_policy_version": "v0.1",
+        "semantics_classifier": "classify_signal_semantics_action",
+        "semantics_settings_profile": "demo",
+        "semantics_action": action,
+        "semantics_reason": "Test conversation routes shared signal semantics provenance.",
+        "semantics_manual_confirmation_required": True,
+        "semantics_auto_order_allowed": False,
+        "semantics_no_live_trading": True,
+        "semantics_no_broker_api": True,
+    }

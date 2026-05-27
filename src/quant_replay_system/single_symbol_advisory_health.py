@@ -53,7 +53,25 @@ ISSUE_CODES = {
     "MESSAGE_DELIVERY_DETECTED",
     "NOT_FOUND_WITH_RECOMMENDATION",
     "STALE_OR_PARTIAL_ADVISORY",
+    "MISSING_SEMANTICS_PROVENANCE",
+    "SEMANTICS_POLICY_SOURCE_MISMATCH",
+    "SEMANTICS_AUTO_ORDER_ALLOWED",
+    "SEMANTICS_LIVE_TRADING_DETECTED",
+    "SEMANTICS_BROKER_DETECTED",
 }
+
+SEMANTICS_PROVENANCE_FIELDS = [
+    "semantics_policy_source",
+    "semantics_policy_version",
+    "semantics_classifier",
+    "semantics_settings_profile",
+    "semantics_action",
+    "semantics_reason",
+    "semantics_manual_confirmation_required",
+    "semantics_auto_order_allowed",
+    "semantics_no_live_trading",
+    "semantics_no_broker_api",
+]
 
 REQUIRED_PATH_FIELDS = [
     "metadata_path",
@@ -494,7 +512,11 @@ def _check_csv(row: dict[str, Any], path: Path | None, issues: list[dict[str, An
             )
         )
         return None
-    missing = [column for column in SINGLE_SYMBOL_ADVISORY_COLUMNS if column not in frame.columns]
+    missing = [
+        column
+        for column in SINGLE_SYMBOL_ADVISORY_COLUMNS
+        if column not in frame.columns and column not in SEMANTICS_PROVENANCE_FIELDS
+    ]
     if missing:
         issues.append(
             _issue(
@@ -544,7 +566,11 @@ def _check_advisory_contract(
 ) -> None:
     if advisory_json is not None:
         record = advisory_json.get("record") if isinstance(advisory_json.get("record"), dict) else {}
-        missing_json_fields = [column for column in SINGLE_SYMBOL_ADVISORY_COLUMNS if column not in record]
+        missing_json_fields = [
+            column
+            for column in SINGLE_SYMBOL_ADVISORY_COLUMNS
+            if column not in record and column not in SEMANTICS_PROVENANCE_FIELDS
+        ]
         if missing_json_fields:
             issues.append(
                 _issue(
@@ -573,6 +599,7 @@ def _check_advisory_contract(
     _check_safety_flags(row, metadata, record, issues)
     _check_demo_safety(row, metadata, record, issues)
     _check_not_found_safety(row, metadata, record, issues)
+    _check_semantics_provenance(row, metadata, record, advisory_json, issues)
 
 
 def _check_symbol_integrity(row: dict[str, Any], record: dict[str, Any], issues: list[dict[str, Any]]) -> None:
@@ -711,6 +738,93 @@ def _check_not_found_safety(row: dict[str, Any], metadata: dict[str, Any], recor
                 suggested_action="Regenerate missing-symbol advisory as NOT_FOUND with NO_ACTION.",
             )
         )
+
+
+def _check_semantics_provenance(
+    row: dict[str, Any],
+    metadata: dict[str, Any],
+    record: dict[str, Any],
+    advisory_json: dict[str, Any] | None,
+    issues: list[dict[str, Any]],
+) -> None:
+    payloads = _semantics_payloads(metadata, record, advisory_json)
+    has_source = any(_present(payload.get("semantics_policy_source")) for _field, payload in payloads)
+    if not has_source:
+        issues.append(
+            _issue(
+                row,
+                path_field="metadata_path",
+                severity="WARN",
+                issue_code="MISSING_SEMANTICS_PROVENANCE",
+                issue_message="Single-symbol advisory artifact is missing shared signal semantics provenance fields.",
+                suggested_action="Regenerate single-symbol-advisory artifacts with current provenance metadata.",
+            )
+        )
+    for path_field, payload in payloads:
+        source = _string_or_empty(payload.get("semantics_policy_source"))
+        if source and source != "signal_semantics":
+            issues.append(
+                _issue(
+                    row,
+                    path_field=path_field,
+                    severity="ERROR",
+                    issue_code="SEMANTICS_POLICY_SOURCE_MISMATCH",
+                    issue_message=f"Unexpected semantics_policy_source={source!r}.",
+                    suggested_action="Regenerate artifacts through the shared signal_semantics classifier.",
+                )
+            )
+        if _to_bool(payload.get("semantics_auto_order_allowed")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field=path_field,
+                    severity="ERROR",
+                    issue_code="SEMANTICS_AUTO_ORDER_ALLOWED",
+                    issue_message="Semantics provenance indicates auto-order allowed.",
+                    suggested_action="Regenerate artifacts with semantics_auto_order_allowed=false.",
+                )
+            )
+        if _present(payload.get("semantics_no_live_trading")) and not _to_bool(payload.get("semantics_no_live_trading")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field=path_field,
+                    severity="ERROR",
+                    issue_code="SEMANTICS_LIVE_TRADING_DETECTED",
+                    issue_message="Semantics provenance does not assert no live trading.",
+                    suggested_action="Regenerate artifacts with semantics_no_live_trading=true.",
+                )
+            )
+        if _present(payload.get("semantics_no_broker_api")) and not _to_bool(payload.get("semantics_no_broker_api")):
+            issues.append(
+                _issue(
+                    row,
+                    path_field=path_field,
+                    severity="ERROR",
+                    issue_code="SEMANTICS_BROKER_DETECTED",
+                    issue_message="Semantics provenance does not assert no broker API.",
+                    suggested_action="Regenerate artifacts with semantics_no_broker_api=true.",
+                )
+            )
+
+
+def _semantics_payloads(
+    metadata: dict[str, Any],
+    record: dict[str, Any],
+    advisory_json: dict[str, Any] | None,
+) -> list[tuple[str, dict[str, Any]]]:
+    payloads: list[tuple[str, dict[str, Any]]] = [("metadata_path", metadata), ("advisory_csv_path", record)]
+    audit = metadata.get("audit_metadata")
+    if isinstance(audit, dict):
+        payloads.append(("metadata_path", audit))
+    if isinstance(advisory_json, dict):
+        json_record = advisory_json.get("record")
+        if isinstance(json_record, dict):
+            payloads.append(("advisory_json_path", json_record))
+        json_audit = advisory_json.get("audit_metadata")
+        if isinstance(json_audit, dict):
+            payloads.append(("advisory_json_path", json_audit))
+    return payloads
 
 
 def _resolve_artifact_path(value: Any, base_dir: Path | None) -> Path | None:

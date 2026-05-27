@@ -62,6 +62,10 @@ def test_conversation_routes_parsed_symbol_to_single_symbol_answer(tmp_path: Pat
     assert result.linked_answer_run_id
     assert Path(result.linked_answer_markdown_path).exists()
     assert "real trading recommendation" in result.answer_summary
+    assert result.semantics_policy_source == "signal_semantics"
+    assert result.semantics_classifier == "classify_signal_semantics_action"
+    assert result.semantics_action == "DEMO_ONLY"
+    assert result.semantics_auto_order_allowed is False
     assert result.llm_api_called is False
     assert result.no_message_sent is True
 
@@ -121,6 +125,9 @@ def test_parse_failed_conversation_writes_safe_no_action_artifact(tmp_path: Path
     )
     assert payload["llm_api_called"] is False
     assert payload["no_message_sent"] is True
+    assert payload["semantics_policy_source"] == "signal_semantics"
+    assert payload["semantics_action"] == "NO_ACTION"
+    assert payload["semantics_auto_order_allowed"] is False
 
 
 def test_conversation_records_no_live_broker_message_or_llm_use(tmp_path: Path) -> None:
@@ -140,6 +147,9 @@ def test_conversation_records_no_live_broker_message_or_llm_use(tmp_path: Path) 
     assert metadata_payload["broker_api_invoked"] is False
     assert metadata_payload["live_trading_enabled"] is False
     assert metadata_payload["approved_for_paper_applied"] is False
+    assert metadata_payload["semantics_policy_source"] == "signal_semantics"
+    assert metadata_payload["semantics_classifier"] == "classify_signal_semantics_action"
+    assert metadata_payload["semantics_auto_order_allowed"] is False
 
 
 def test_cli_advisory_conversation_works(tmp_path: Path, capsys) -> None:

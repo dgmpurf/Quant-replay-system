@@ -59,6 +59,8 @@ These labels are not orders.
 
 The shared [signal semantics policy](signal_semantics.md) defines the deterministic conservative mapping from candidate/scored rows to these advisory labels. `single-symbol-advisory` uses that shared classifier internally when row context is available, so question-style answers and advisory-conversation outputs inherit the same policy. Demo rows remain `DEMO_ONLY`, failed risk/data/snapshot rows become `BLOCKED`, and non-demo buy/sell labels remain manual-review candidates rather than instructions.
 
+Single-symbol advisory CSV/JSON/metadata and question-style answer JSON/metadata record the shared semantics provenance. The provenance fields identify `signal_semantics` v0.1, the classifier name, the settings profile, the semantics action/reason, and the semantics safety flags. They support audits and health checks only; they do not approve execution, paper trading, or message delivery.
+
 Demo inputs keep conservative behavior:
 
 - `selection_profile=demo`, `demo_mode=true`, or `not_strategy_recommendation=true` produces `DEMO_ONLY` unless the row is blocked.
@@ -90,6 +92,8 @@ Files:
 - `alert_preview.md` when `--alert-preview` is supplied
 
 The alert preview is markdown only. It is not sent to SMS, email, Telegram, WeChat, webhooks, or any broker.
+
+New health checks verify the semantics provenance. Older artifacts without provenance remain readable and may warn as legacy output; artifacts that claim semantics auto-order, live trading, broker access, or an unexpected semantics policy source fail health.
 
 ## CLI Usage
 
