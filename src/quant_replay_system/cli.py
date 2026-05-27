@@ -581,6 +581,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--single-symbol-advisory-answer-root",
         help="Question-style single-symbol advisory answer artifact root directory",
     )
+    research_status.add_argument(
+        "--advisory-conversation-root",
+        help="Local advisory conversation artifact root directory",
+    )
     research_status.add_argument("--market-update-handoff-root", help="Market-update-handoff artifact root directory")
     research_status.add_argument("--paper-trading-root", help="Paper trading artifact root directory")
     research_status.add_argument("--decision-date", help="Optional decision date filter")
@@ -1801,6 +1805,7 @@ def _handle_advisory_conversation_status(args: argparse.Namespace) -> int:
         update={"advisory_conversation_status": settings.advisory_conversation_status.model_copy(update=updates)}
     )
     result = run_advisory_conversation_status(root=args.root, output_dir=args.output_dir, config=settings)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
     print(f"Status: {result.status}")
     print(f"workflow_stage: {result.workflow_stage}")
     print(f"latest_conversation_run_id: {result.latest_conversation_run_id}")
@@ -1809,6 +1814,13 @@ def _handle_advisory_conversation_status(args: argparse.Namespace) -> int:
     print(f"latest_parsed_intent: {result.latest_parsed_intent}")
     print(f"latest_advisory_action: {result.latest_advisory_action}")
     print(f"health_status: {result.health_status}")
+    print(f"parser_type: {summary.get('parser_type', '')}")
+    print(f"llm_api_called: {summary.get('llm_api_called', False)}")
+    print(f"no_message_sent: {summary.get('no_message_sent', False)}")
+    print(f"no_live_trading: {summary.get('no_live_trading', False)}")
+    print(f"no_broker_api: {summary.get('no_broker_api', False)}")
+    print(f"auto_order_allowed: {summary.get('auto_order_allowed', False)}")
+    print(f"linked_answer_markdown_path: {summary.get('linked_answer_markdown_path', '')}")
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['advisory_conversation_status_report']}")
     for warning in result.warnings:
@@ -2247,6 +2259,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["single_symbol_advisory_root"] = Path(args.single_symbol_advisory_root)
     if args.single_symbol_advisory_answer_root:
         updates["single_symbol_advisory_answer_root"] = Path(args.single_symbol_advisory_answer_root)
+    if args.advisory_conversation_root:
+        updates["advisory_conversation_root"] = Path(args.advisory_conversation_root)
     if args.market_update_handoff_root:
         updates["market_update_handoff_root"] = Path(args.market_update_handoff_root)
     if args.paper_trading_root:
@@ -2267,6 +2281,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         current_candidates_root=args.current_candidates_root,
         single_symbol_advisory_root=args.single_symbol_advisory_root,
         single_symbol_advisory_answer_root=args.single_symbol_advisory_answer_root,
+        advisory_conversation_root=args.advisory_conversation_root,
         market_update_handoff_root=args.market_update_handoff_root,
         paper_trading_root=args.paper_trading_root,
         decision_date=args.decision_date,
@@ -2356,6 +2371,22 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"single_symbol_advisory_answer_markdown_path: {result.single_symbol_advisory_answer_markdown_path}")
     print(f"single_symbol_advisory_answer_next_action: {result.single_symbol_advisory_answer_next_action}")
+    print(f"latest_advisory_conversation_run_id: {result.latest_advisory_conversation_run_id}")
+    print(f"advisory_conversation_original_question: {result.advisory_conversation_original_question}")
+    print(f"advisory_conversation_parsed_symbol: {result.advisory_conversation_parsed_symbol}")
+    print(f"advisory_conversation_parsed_intent: {result.advisory_conversation_parsed_intent}")
+    print(f"advisory_conversation_status: {result.advisory_conversation_status}")
+    print(f"advisory_conversation_stage: {result.advisory_conversation_stage}")
+    print(f"advisory_conversation_action: {result.advisory_conversation_action}")
+    print(f"advisory_conversation_health_status: {result.advisory_conversation_health_status}")
+    print(f"advisory_conversation_parser_type: {result.advisory_conversation_parser_type}")
+    print(f"advisory_conversation_llm_api_called: {result.advisory_conversation_llm_api_called}")
+    print(f"advisory_conversation_no_message_sent: {result.advisory_conversation_no_message_sent}")
+    print(f"advisory_conversation_no_live_trading: {result.advisory_conversation_no_live_trading}")
+    print(f"advisory_conversation_no_broker_api: {result.advisory_conversation_no_broker_api}")
+    print(f"advisory_conversation_auto_order_allowed: {result.advisory_conversation_auto_order_allowed}")
+    print(f"advisory_conversation_linked_answer_path: {result.advisory_conversation_linked_answer_path}")
+    print(f"advisory_conversation_next_action: {result.advisory_conversation_next_action}")
     print(f"latest_market_update_handoff_id: {result.latest_market_update_handoff_id}")
     print(f"market_update_handoff_status: {result.market_update_handoff_status}")
     print(f"market_update_handoff_stage: {result.market_update_handoff_stage}")

@@ -154,6 +154,8 @@ Expected stages include:
 
 `PARSE_FAILED` and `NOT_FOUND` remain safe when no recommendation is invented. Demo conversations remain workflow validation only, and the conversation status layer is still local observability, not an LLM, delivery channel, or order-execution workflow.
 
+`research-status` includes the latest advisory conversation status as contextual evidence. It exports the original question, parsed symbol, parsed intent, status/stage/action, health status, parser type, no-LLM/no-message/no-live-trading flags, and linked answer markdown path while preserving later paper workflow priority. A safe `PARSE_FAILED` or `NOT_FOUND` conversation remains visible but does not override a valid paper workflow or invent guidance.
+
 ## Safety Boundaries
 
 - The conversation response is not an order.

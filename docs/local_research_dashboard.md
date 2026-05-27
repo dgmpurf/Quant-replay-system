@@ -18,6 +18,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a signal advisory run produced local alert-preview context?
 - Has a single-symbol advisory review been produced for the latest requested symbol?
 - Has a question-style single-symbol answer been rendered for the latest requested symbol?
+- Has a local conversational advisory question been parsed and routed safely?
 - Has the current-to-paper handoff run?
 - Has the paper review template been created and checked?
 - Have reviewed decisions, daily paper reports, and reconciliation artifacts been produced?
@@ -40,6 +41,7 @@ outputs/reports/current_candidates/health/
 outputs/reports/signals/status/
 outputs/reports/single_symbol_advisory/status/
 outputs/reports/single_symbol_advisory_answer/status/
+outputs/reports/advisory_conversation/status/
 outputs/reports/current_to_paper_handoff/
 outputs/reports/current_to_paper_review_handoff/
 outputs/reports/paper_trading/review_template_health/
@@ -112,6 +114,16 @@ The unified summary records the latest answer run id, latest symbol, answer stat
 When the latest answer reports `DEMO_SINGLE_SYMBOL_ADVISORY_ANSWER_VALIDATED`, the dashboard treats the warning as expected demo context. `DEMO_ONLY` remains visible and does not become BUY/SELL guidance. When the latest answer reports `SINGLE_SYMBOL_ADVISORY_ANSWER_NOT_FOUND`, the dashboard treats it as safe reviewable context as long as no recommendation was invented.
 
 Question-style answers are context below broader workflow stages such as single-symbol advisory, signal advisory, current-candidates, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to the answer layer; answer fields remain visible for audit. If answer health fails because safety fields are unsafe, such as `auto_order_allowed=true`, missing no-live-trading/no-broker/no-message-sent metadata, `llm_api_called=true`, demo BUY/SELL wording leakage, or `NOT_FOUND` with invented advice, `research-status` surfaces the failure as actionable when the answer layer is the active stage.
+
+## Advisory Conversation Status
+
+`research-status` includes `advisory-conversation-status` as local conversational advisory context when deterministic conversation artifacts exist.
+
+The unified summary records the latest conversation run id, original question, parsed symbol, parsed intent, conversation status/stage/action, health status, parser type, `llm_api_called`, `no_message_sent`, no-live/no-broker/auto-order flags, linked answer markdown path, and the conversation layer's next manual action. This is local deterministic routing only; the dashboard does not call an LLM or external API, send messages, place orders, connect to brokers, or treat the parsed intent as execution approval.
+
+When the latest conversation reports `DEMO_ADVISORY_CONVERSATION_VALIDATED`, the dashboard treats the warning as expected demo context. `DEMO_ONLY` remains visible and does not become BUY/SELL guidance. When the latest conversation reports `ADVISORY_CONVERSATION_NOT_FOUND` or `ADVISORY_CONVERSATION_PARSE_FAILED`, the dashboard treats it as safe reviewable context as long as no symbol or recommendation was invented.
+
+Advisory conversation is context below broader workflow stages such as question-style answer status, single-symbol advisory, signal advisory, current-candidates, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to the conversation layer; conversation fields remain visible for audit. If conversation health fails because safety fields are unsafe, such as `llm_api_called=true`, `no_message_sent=false`, missing no-live/no-broker metadata, `auto_order_allowed=true`, demo BUY/SELL leakage, or `PARSE_FAILED` / `NOT_FOUND` with invented advice, `research-status` surfaces the failure as actionable when the conversation layer is the active stage.
 
 ## Active Snapshot Linkage
 
@@ -208,6 +220,12 @@ Prior current-candidate health warnings from old dry runs can be classified as s
 - `SINGLE_SYMBOL_ADVISORY_ANSWER_NOT_FOUND`: requested symbol was absent from the provided local artifact and no recommendation was invented.
 - `SINGLE_SYMBOL_ADVISORY_ANSWER_HEALTH_WARN`: question-style answer artifacts have health warnings that should be reviewed before use.
 - `SINGLE_SYMBOL_ADVISORY_ANSWER_FAILED`: question-style answer artifacts have active safety or artifact failures and need repair.
+- `ADVISORY_CONVERSATION_READY_FOR_REVIEW`: deterministic local conversation output exists and should be reviewed manually.
+- `DEMO_ADVISORY_CONVERSATION_VALIDATED`: demo-only conversation output exists; this is workflow validation only, not strategy advice.
+- `ADVISORY_CONVERSATION_PARSE_FAILED`: no six-digit local symbol was parsed and no recommendation was invented.
+- `ADVISORY_CONVERSATION_NOT_FOUND`: parsed symbol was absent from the provided local artifact and no recommendation was invented.
+- `ADVISORY_CONVERSATION_HEALTH_WARN`: conversation artifacts have health warnings that should be reviewed before use.
+- `ADVISORY_CONVERSATION_FAILED`: conversation artifacts have active safety or artifact failures and need repair.
 - `CACHE_EXPORT_HEALTH_WARN`: reviewed cache export has warnings that should be inspected before downstream use.
 - `CACHE_EXPORT_FAILED`: reviewed cache export has active health or duplicate-key failures.
 - `DATA_PREPARATION_READY`: data preparation status exists; current candidates are next.

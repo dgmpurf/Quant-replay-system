@@ -217,6 +217,8 @@ Question-style advisory response and answer dashboard/research-status milestones
 
 Local-only conversational advisory facade milestones should also receive checkpoint documents before adding richer NLP, LLM integration, message delivery, or automation, because they define how natural-language user questions are routed to deterministic local advisory artifacts without changing trading state.
 
+Advisory conversation `research-status` integration milestones should receive checkpoint documents before LLM integration, delivery channels, or automation, because they define how parsed-question context, safe `PARSE_FAILED` / `NOT_FOUND` handling, and later workflow priority appear in the unified dashboard.
+
 ## 6. Pro Extended Usage Rules
 
 Pro Extended is not needed for:

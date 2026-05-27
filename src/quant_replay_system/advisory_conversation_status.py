@@ -47,6 +47,9 @@ SUMMARY_COLUMNS = [
     "health_status",
     "llm_api_called",
     "no_message_sent",
+    "no_live_trading",
+    "no_broker_api",
+    "auto_order_allowed",
     "linked_answer_markdown_path",
     "next_manual_action",
 ]
@@ -267,6 +270,9 @@ def summarize_advisory_conversation_status(index_frame: pd.DataFrame, *, health_
                 health_status=health_status,
                 llm_api_called=_to_bool(latest.get("llm_api_called")),
                 no_message_sent=_to_bool(latest.get("no_message_sent")),
+                no_live_trading=_to_bool(latest.get("no_live_trading")),
+                no_broker_api=_to_bool(latest.get("no_broker_api")),
+                auto_order_allowed=_to_bool(latest.get("auto_order_allowed")),
                 linked_answer_markdown_path=_string_or_empty(latest.get("linked_answer_markdown_path")),
                 next_manual_action=next_action,
             )

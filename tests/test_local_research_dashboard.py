@@ -1658,6 +1658,178 @@ def test_cli_research_status_prints_single_symbol_answer_fields(tmp_path: Path, 
     assert "single_symbol_advisory_answer_health_status: PASS" in output.out
 
 
+def test_dashboard_includes_advisory_conversation_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_conversation_status(root, conversation_id="conv-000001", parsed_symbol="000001")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.latest_advisory_conversation_run_id == "conv-000001"
+    assert result.advisory_conversation_original_question == "000001 now can buy?"
+    assert result.advisory_conversation_parsed_symbol == "000001"
+    assert result.advisory_conversation_parsed_intent == "BUY_REVIEW"
+    assert result.advisory_conversation_status == "WARN"
+    assert result.advisory_conversation_stage == "DEMO_ADVISORY_CONVERSATION_VALIDATED"
+    assert result.advisory_conversation_action == "DEMO_ONLY"
+    assert result.advisory_conversation_health_status == "PASS"
+    assert result.advisory_conversation_parser_type == "deterministic_rule_based"
+    assert result.advisory_conversation_llm_api_called is False
+    assert result.advisory_conversation_no_message_sent is True
+    assert result.workflow_stage == "DEMO_ADVISORY_CONVERSATION_VALIDATED"
+    assert "Review local conversational advisory answer" in result.next_manual_action
+
+
+def test_dashboard_advisory_conversation_parse_failed_visible_but_not_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_conversation_status(
+        root,
+        conversation_id="conv-parse-failed",
+        question="can I buy this?",
+        parsed_symbol="",
+        status="WARN",
+        workflow_stage="ADVISORY_CONVERSATION_PARSE_FAILED",
+        latest_status="PARSE_FAILED",
+        advisory_action="NO_ACTION",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    conversation_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ADVISORY_CONVERSATION_STATUS"
+    ].iloc[0]
+
+    assert result.advisory_conversation_parsed_symbol == ""
+    assert result.advisory_conversation_action == "NO_ACTION"
+    assert result.workflow_stage == "ADVISORY_CONVERSATION_PARSE_FAILED"
+    assert result.status == "WARN"
+    assert conversation_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+    assert "no symbol or recommendation was invented" in result.next_manual_action
+
+
+def test_dashboard_advisory_conversation_not_found_visible_but_not_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_conversation_status(
+        root,
+        conversation_id="conv-not-found",
+        parsed_symbol="999999",
+        status="WARN",
+        workflow_stage="ADVISORY_CONVERSATION_NOT_FOUND",
+        latest_status="NOT_FOUND",
+        advisory_action="NO_ACTION",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    conversation_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ADVISORY_CONVERSATION_STATUS"
+    ].iloc[0]
+
+    assert result.advisory_conversation_parsed_symbol == "999999"
+    assert result.advisory_conversation_action == "NO_ACTION"
+    assert result.workflow_stage == "ADVISORY_CONVERSATION_NOT_FOUND"
+    assert conversation_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "no recommendation was invented" in result.next_manual_action
+
+
+def test_dashboard_failed_advisory_conversation_health_is_actionable_when_active(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_conversation_status(
+        root,
+        conversation_id="conv-fail",
+        status="FAIL",
+        workflow_stage="ADVISORY_CONVERSATION_FAILED",
+        health_status="FAIL",
+        llm_api_called=True,
+        error_count=1,
+        warning_count=0,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    conversation_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ADVISORY_CONVERSATION_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "ADVISORY_CONVERSATION_FAILED"
+    assert result.advisory_conversation_llm_api_called is True
+    assert conversation_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+
+
+def test_dashboard_preserves_later_paper_priority_over_advisory_conversation_parse_failed(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_conversation_status(
+        root,
+        conversation_id="conv-parse-failed",
+        question="can I buy this?",
+        parsed_symbol="",
+        workflow_stage="ADVISORY_CONVERSATION_PARSE_FAILED",
+        latest_status="PARSE_FAILED",
+        advisory_action="NO_ACTION",
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    conversation_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ADVISORY_CONVERSATION_STATUS"
+    ].iloc[0]
+
+    assert result.advisory_conversation_stage == "ADVISORY_CONVERSATION_PARSE_FAILED"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert conversation_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_advisory_conversation_fields_to_summary_and_metadata(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_conversation_status(root, conversation_id="conv-export", parsed_symbol="000001")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_advisory_conversation_run_id"] == "conv-export"
+    assert row["advisory_conversation_original_question"] == "000001 now can buy?"
+    assert row["advisory_conversation_parsed_symbol"] == "000001"
+    assert row["advisory_conversation_parsed_intent"] == "BUY_REVIEW"
+    assert row["advisory_conversation_status"] == "WARN"
+    assert row["advisory_conversation_stage"] == "DEMO_ADVISORY_CONVERSATION_VALIDATED"
+    assert row["advisory_conversation_action"] == "DEMO_ONLY"
+    assert row["advisory_conversation_health_status"] == "PASS"
+    assert row["advisory_conversation_llm_api_called"] == "False"
+    assert row["advisory_conversation_no_message_sent"] == "True"
+    assert metadata["latest_advisory_conversation_run_id"] == "conv-export"
+    assert metadata["advisory_conversation_parsed_symbol"] == "000001"
+    assert metadata["advisory_conversation_health_status"] == "PASS"
+    assert metadata["advisory_conversation_llm_api_called"] is False
+    assert metadata["component_statuses"]["advisory_conversation_parsed_symbol"] == "000001"
+
+
+def test_cli_research_status_prints_advisory_conversation_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_conversation_status(root, conversation_id="conv-cli", parsed_symbol="000001")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_advisory_conversation_run_id: conv-cli" in output.out
+    assert "advisory_conversation_parsed_symbol: 000001" in output.out
+    assert "advisory_conversation_status: WARN" in output.out
+    assert "advisory_conversation_stage: DEMO_ADVISORY_CONVERSATION_VALIDATED" in output.out
+    assert "advisory_conversation_llm_api_called: False" in output.out
+    assert "advisory_conversation_no_message_sent: True" in output.out
+
+
 def _reports_root(tmp_path: Path) -> Path:
     root = tmp_path / "reports"
     root.mkdir(parents=True, exist_ok=True)
@@ -2760,6 +2932,130 @@ def _single_symbol_advisory_answer_status(
             "message_delivery_enabled": False,
             "message_sent": False,
             "llm_api_called": False,
+        },
+    )
+    return folder
+
+
+def _advisory_conversation_status(
+    root: Path,
+    *,
+    conversation_id: str = "conv-a",
+    question: str = "000001 now can buy?",
+    parsed_symbol: str = "000001",
+    parsed_intent: str = "BUY_REVIEW",
+    status: str = "WARN",
+    workflow_stage: str = "DEMO_ADVISORY_CONVERSATION_VALIDATED",
+    latest_status: str = "READY",
+    advisory_action: str = "DEMO_ONLY",
+    health_status: str = "PASS",
+    parser_type: str = "deterministic_rule_based",
+    llm_api_called: bool = False,
+    no_message_sent: bool = True,
+    no_live_trading: bool = True,
+    no_broker_api: bool = True,
+    auto_order_allowed: bool = False,
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:46:00",
+) -> Path:
+    folder = root / "advisory_conversation" / "status" / f"status-{conversation_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "advisory_conversation_status_report.md"
+    status_csv = folder / "advisory_conversation_status.csv"
+    summary_csv = folder / "advisory_conversation_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    linked_answer = root / "single_symbol_advisory_answer" / f"answer-{conversation_id}" / "single_symbol_advisory_answer.md"
+    linked_answer.parent.mkdir(parents=True, exist_ok=True)
+    linked_answer.write_text(
+        "Manual confirmation required. No auto-order. No LLM/API call. No message sent.",
+        encoding="utf-8",
+    )
+    next_action = (
+        "Review local conversational advisory answer; do not treat DEMO_ONLY output as a strategy recommendation."
+        if workflow_stage == "DEMO_ADVISORY_CONVERSATION_VALIDATED"
+        else "Provide a six-digit local symbol in the question; no symbol or recommendation was invented."
+        if workflow_stage == "ADVISORY_CONVERSATION_PARSE_FAILED"
+        else "Parsed symbol was not found in the provided local artifact; no recommendation was invented."
+        if workflow_stage == "ADVISORY_CONVERSATION_NOT_FOUND"
+        else "Repair advisory conversation artifacts before using local conversational answers."
+        if status == "FAIL"
+        else "Review local conversational advisory answer; manual confirmation remains required."
+    )
+    report.write_text(
+        "No live trading, broker API, order placement, LLM/API call, external API call, or message delivery was invoked.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "ADVISORY_CONVERSATION",
+                "status": latest_status,
+                "latest_artifact_id": conversation_id,
+                "symbol": parsed_symbol,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "ADVISORY_CONVERSATION_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "conversation-health-a",
+                "symbol": parsed_symbol,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "workflow_stage": workflow_stage,
+                "status": status,
+                "latest_conversation_run_id": conversation_id,
+                "latest_original_question": question,
+                "latest_parsed_symbol": parsed_symbol,
+                "latest_parsed_intent": parsed_intent,
+                "latest_advisory_action": advisory_action,
+                "parser_type": parser_type,
+                "health_status": health_status,
+                "llm_api_called": llm_api_called,
+                "no_message_sent": no_message_sent,
+                "no_live_trading": no_live_trading,
+                "no_broker_api": no_broker_api,
+                "auto_order_allowed": auto_order_allowed,
+                "linked_answer_markdown_path": str(linked_answer),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{conversation_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_conversation_run_id": conversation_id,
+            "latest_original_question": question,
+            "latest_parsed_symbol": parsed_symbol,
+            "latest_parsed_intent": parsed_intent,
+            "latest_advisory_action": advisory_action,
+            "health_status": health_status,
+            "next_manual_action": next_action,
+            "warnings": ["Latest advisory conversation artifact is review-only."] if warning_count else [],
+            "output_files": {
+                "advisory_conversation_status_report": str(report),
+                "advisory_conversation_status_csv": str(status_csv),
+                "advisory_conversation_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "llm_api_called": llm_api_called,
         },
     )
     return folder

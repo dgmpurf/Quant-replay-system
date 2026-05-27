@@ -936,6 +936,7 @@ class LocalResearchDashboardSettings(BaseModel):
     signal_advisory_root: Path = Path("outputs/reports/signals")
     single_symbol_advisory_root: Path = Path("outputs/reports/single_symbol_advisory")
     single_symbol_advisory_answer_root: Path = Path("outputs/reports/single_symbol_advisory_answer")
+    advisory_conversation_root: Path = Path("outputs/reports/advisory_conversation")
     market_update_handoff_root: Path = Path("outputs/reports/market_update_handoff")
     paper_trading_root: Path = Path("outputs/reports/paper_trading")
     output_dir: Path = Path("outputs/reports/local_research_dashboard")
