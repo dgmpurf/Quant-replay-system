@@ -161,6 +161,16 @@ For demo-only calibration, the status reminds the user not to treat `DEMO_ONLY` 
 
 Calibration context does not approve trades. `REVIEW_BUY_CANDIDATE` remains a human-review-only threshold-analysis label, demo calibration remains `DEMO_ONLY`, and later workflow stages such as signal semantics, signal advisory, market-update handoff, or paper workflow keep priority for the final dashboard stage.
 
+## Calibration-to-Semantics Proposal
+
+Use `calibration-to-signal-semantics` after calibration runs to compare local calibration outputs against the current `signal_semantics` defaults:
+
+```cmd
+python -m quant_replay_system.cli calibration-to-signal-semantics
+```
+
+The proposal report is read-only. It recommends keeping current defaults when evidence is insufficient, highlights mandatory gates such as risk, data-quality, and snapshot-quality failures, and points future work toward `WATCH` semantics or evidence collection before non-demo buy-review expansion. See [calibration_to_signal_semantics.md](calibration_to_signal_semantics.md).
+
 ## Safety Boundaries
 
 Every row and metadata artifact keeps:

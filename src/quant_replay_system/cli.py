@@ -13,6 +13,7 @@ import pandas as pd
 
 from quant_replay_system.batch_replay import run_batch_replay
 from quant_replay_system.calibration import run_parameter_calibration
+from quant_replay_system.calibration_to_signal_semantics import run_calibration_to_signal_semantics
 from quant_replay_system.advisory_profile_calibration import run_advisory_profile_calibration
 from quant_replay_system.advisory_profile_calibration_health import check_advisory_profile_calibration_health
 from quant_replay_system.advisory_profile_calibration_index import build_advisory_profile_calibration_index
@@ -335,6 +336,27 @@ def build_parser() -> argparse.ArgumentParser:
     advisory_profile_calibration_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
     advisory_profile_calibration_status.add_argument("--config", help="Optional config YAML path")
     advisory_profile_calibration_status.set_defaults(handler=_handle_advisory_profile_calibration_status)
+
+    calibration_to_signal_semantics = subparsers.add_parser(
+        "calibration-to-signal-semantics",
+        help="Build a read-only profile proposal from calibration artifacts to signal semantics defaults",
+    )
+    calibration_to_signal_semantics.add_argument(
+        "--calibration-root",
+        default="outputs/reports/advisory_profile_calibration",
+        help="Advisory profile calibration artifact root directory",
+    )
+    calibration_to_signal_semantics.add_argument(
+        "--semantics-config",
+        default="config/default.yaml",
+        help="Config YAML containing current signal_semantics defaults",
+    )
+    calibration_to_signal_semantics.add_argument(
+        "--output-dir",
+        default="outputs/reports/calibration_to_signal_semantics",
+        help="Optional calibration-to-semantics proposal output directory",
+    )
+    calibration_to_signal_semantics.set_defaults(handler=_handle_calibration_to_signal_semantics)
 
     signal_semantics_index = subparsers.add_parser(
         "signal-semantics-index",
@@ -1678,6 +1700,41 @@ def _handle_advisory_profile_calibration_status(args: argparse.Namespace) -> int
         return 1
     if result.status == "WARN" and args.strict:
         return 1
+    return 0
+
+
+def _handle_calibration_to_signal_semantics(args: argparse.Namespace) -> int:
+    result = run_calibration_to_signal_semantics(
+        calibration_root=args.calibration_root,
+        semantics_config=args.semantics_config,
+        output_dir=args.output_dir,
+    )
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"proposal_run_id: {result.proposal_run_id}")
+    print(f"status: {result.status}")
+    print(f"calibration_run_count: {summary.get('calibration_run_count', 0)}")
+    print(f"observed_review_buy_candidate_count: {summary.get('observed_review_buy_candidate_count', 0)}")
+    print(f"observed_watch_count: {summary.get('observed_watch_count', 0)}")
+    print(f"observed_blocked_count: {summary.get('observed_blocked_count', 0)}")
+    print(f"semantics_reviewed_buy_min_score: {summary.get('semantics_reviewed_buy_min_score', '')}")
+    print(f"semantics_watch_min_score: {summary.get('semantics_watch_min_score', '')}")
+    print("proposal_categories:")
+    for category in result.proposal_categories:
+        print(f"  {category}")
+    print(f"keep_current_defaults: {summary.get('keep_current_defaults', True)}")
+    print(f"defaults_changed: {result.defaults_changed}")
+    print(f"report_path: {result.artifact_paths['calibration_to_signal_semantics_report']}")
+    print(f"summary_path: {result.artifact_paths['calibration_to_signal_semantics_summary']}")
+    print(f"proposals_path: {result.artifact_paths['calibration_to_signal_semantics_proposals']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("requires_manual_confirmation: True")
+    print("auto_order_allowed: False")
+    print("no_live_trading: True")
+    print("no_broker_api: True")
+    print("no_message_sent: True")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, message delivery, LLM API, or external API was invoked.")
     return 0
 
 
