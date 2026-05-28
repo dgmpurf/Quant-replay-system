@@ -227,6 +227,8 @@ Advisory profile calibration milestones should receive checkpoint documents befo
 
 Calibration-to-semantics proposal and `research-status` milestones should receive checkpoint documents before changing `signal_semantics` thresholds, expanding non-demo semantics, adding delivery channels, automation, or broker integration, because they define how design evidence, `defaults_changed=false`, and more-evidence warnings remain observable without becoming strategy approval.
 
+Multi-date current-candidates backfill planning milestones should receive checkpoint documents before executing multi-date candidate generation, forward-return labeling, non-demo threshold calibration, delivery channels, automation, or broker integration, because they define how local cache coverage and forward-horizon feasibility are reviewed without creating recommendations or orders.
+
 Single-symbol advisory and other product-layer advisory milestones should also receive checkpoint documents before adding delivery channels, conversational review, non-demo action semantics, or automation, because they define how user-facing watch/buy-review/sell-review questions remain advisory rather than executable.
 
 Question-style advisory response and answer dashboard/research-status milestones should receive checkpoint documents before adding conversational NLP, LLM integration, delivery channels, or automation, because they define the boundary between deterministic local answers, human confirmation, dashboard actionability, and any future generated-language or message-delivery layer.

@@ -55,6 +55,20 @@ The demo profile is not a strategy recommendation. Demo candidates are marked in
 
 Demo selection does not change score calculation and does not select `BLOCKED` rows.
 
+## Multi-date Backfill Planning
+
+Use `current-candidates-backfill-plan` when you need to review feasible historical signal dates before generating a multi-date set of current-candidates artifacts:
+
+```cmd
+python -m quant_replay_system.cli current-candidates-backfill-plan --cache-path data\cache\market\daily_bars.csv --start-date 2024-01-02 --end-date 2024-05-20 --universe etf_core --selection-profile demo --horizons 1,3,5,10 --warmup-trading-days 60 --max-dates 8
+```
+
+The planner reads the local market cache, preserves leading-zero symbols, checks distinct symbol coverage by signal date, verifies indicator warmup coverage, and marks whether future trading dates exist for requested forward-return horizons. It records source/upstream guidance so later candidate generation can avoid duplicate `symbol` + `trade_date` rows through an explicit reviewed source policy.
+
+This command writes plan artifacts only. It does not run `current-candidates`, run `data-pipeline`, mutate cache files, fetch data, compute forward returns, send messages, connect to brokers, or place orders. See [current_candidates_backfill_plan.md](current_candidates_backfill_plan.md).
+
+Use `current-candidates-backfill-plan-index`, `current-candidates-backfill-plan-health`, and `current-candidates-backfill-plan-status` to discover, safety-check, and summarize those plan artifacts before any reviewed execution step.
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:

@@ -28,6 +28,10 @@ from quant_replay_system.advisory_conversation_status import run_advisory_conver
 from quant_replay_system.config import load_settings
 from quant_replay_system.current_candidate_artifact_health import check_current_candidate_artifact_health
 from quant_replay_system.current_candidate_artifact_index import build_current_candidate_artifact_index
+from quant_replay_system.current_candidates_backfill_plan import build_current_candidates_backfill_plan
+from quant_replay_system.current_candidates_backfill_plan_health import check_current_candidates_backfill_plan_health
+from quant_replay_system.current_candidates_backfill_plan_index import build_current_candidates_backfill_plan_index
+from quant_replay_system.current_candidates_backfill_plan_status import run_current_candidates_backfill_plan_status
 from quant_replay_system.current_candidates import generate_current_candidates
 from quant_replay_system.current_to_paper_handoff import run_current_to_paper_handoff
 from quant_replay_system.current_to_paper_review_handoff import run_current_to_paper_review_handoff
@@ -215,6 +219,59 @@ def build_parser() -> argparse.ArgumentParser:
     current_candidates.add_argument("--config", help="Optional config YAML path")
     _add_snapshot_preflight_arguments(current_candidates)
     current_candidates.set_defaults(handler=_handle_current_candidates)
+
+    current_backfill_plan = subparsers.add_parser(
+        "current-candidates-backfill-plan",
+        help="Plan local multi-date current-candidates backfill runs without executing them",
+    )
+    current_backfill_plan.add_argument("--cache-path", default="data/cache/market/daily_bars.csv", help="Local market cache CSV path")
+    current_backfill_plan.add_argument("--start-date", required=True, help="Inclusive cache/signal planning start date")
+    current_backfill_plan.add_argument("--end-date", required=True, help="Inclusive cache/signal planning end date")
+    current_backfill_plan.add_argument("--universe", required=True, help="Universe name for planned current-candidates runs")
+    current_backfill_plan.add_argument(
+        "--selection-profile",
+        choices=["default", "demo"],
+        default="demo",
+        help="Planned current-candidates selection profile; demo remains workflow validation only.",
+    )
+    current_backfill_plan.add_argument("--horizons", default="1,3,5,10", help="Comma-separated forward horizons")
+    current_backfill_plan.add_argument("--max-dates", type=int, default=None, help="Maximum planned signal dates")
+    current_backfill_plan.add_argument(
+        "--warmup-trading-days",
+        type=int,
+        default=60,
+        help="Required trading-day indicator warmup coverage through each planned signal date",
+    )
+    current_backfill_plan.add_argument("--min-symbol-coverage", type=int, default=4, help="Minimum distinct symbols per signal date")
+    current_backfill_plan.add_argument("--source-policy", default="reviewed_local_v0", help="Reviewed source policy label")
+    current_backfill_plan.add_argument("--output-dir", help="Optional backfill plan output directory")
+    current_backfill_plan.set_defaults(handler=_handle_current_candidates_backfill_plan)
+
+    current_backfill_plan_index = subparsers.add_parser(
+        "current-candidates-backfill-plan-index",
+        help="Build a local index of current-candidates backfill plan artifacts",
+    )
+    current_backfill_plan_index.add_argument("--root", default="outputs/reports/current_candidates_backfill_plan", help="Backfill plan artifact root")
+    current_backfill_plan_index.add_argument("--output-dir", default="outputs/reports/current_candidates_backfill_plan/index", help="Index output directory")
+    current_backfill_plan_index.add_argument("--include-missing-metadata", action="store_true", help="Include folders missing metadata.json")
+    current_backfill_plan_index.set_defaults(handler=_handle_current_candidates_backfill_plan_index)
+
+    current_backfill_plan_health = subparsers.add_parser(
+        "current-candidates-backfill-plan-health",
+        help="Check local current-candidates backfill plan artifact health",
+    )
+    current_backfill_plan_health.add_argument("--root", default="outputs/reports/current_candidates_backfill_plan", help="Backfill plan artifact root")
+    current_backfill_plan_health.add_argument("--index", help="Optional backfill plan index CSV path")
+    current_backfill_plan_health.add_argument("--output-dir", default="outputs/reports/current_candidates_backfill_plan/health", help="Health output directory")
+    current_backfill_plan_health.set_defaults(handler=_handle_current_candidates_backfill_plan_health)
+
+    current_backfill_plan_status = subparsers.add_parser(
+        "current-candidates-backfill-plan-status",
+        help="Summarize latest local current-candidates backfill plan status",
+    )
+    current_backfill_plan_status.add_argument("--root", default="outputs/reports/current_candidates_backfill_plan", help="Backfill plan artifact root")
+    current_backfill_plan_status.add_argument("--output-dir", default="outputs/reports/current_candidates_backfill_plan/status", help="Status output directory")
+    current_backfill_plan_status.set_defaults(handler=_handle_current_candidates_backfill_plan_status)
 
     current_index = subparsers.add_parser(
         "current-candidates-index",
@@ -767,6 +824,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument("--market-cache-export-root", help="Market-cache-export artifact root directory")
     research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
     research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
+    research_status.add_argument(
+        "--current-candidates-backfill-plan-root",
+        help="Current-candidates backfill plan artifact root directory",
+    )
     research_status.add_argument(
         "--advisory-profile-calibration-root",
         help="Advisory profile calibration artifact root directory",
@@ -1467,6 +1528,116 @@ def _handle_current_candidates(args: argparse.Namespace) -> int:
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
+    return 0
+
+
+def _handle_current_candidates_backfill_plan(args: argparse.Namespace) -> int:
+    result = build_current_candidates_backfill_plan(
+        cache_path=args.cache_path,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        universe=args.universe,
+        selection_profile=args.selection_profile,
+        horizons=_parse_int_values(args.horizons),
+        max_dates=args.max_dates,
+        warmup_trading_days=args.warmup_trading_days,
+        min_symbol_coverage=args.min_symbol_coverage,
+        source_policy=args.source_policy,
+        output_dir=args.output_dir,
+    )
+    print(f"plan_id: {result.plan_id}")
+    print(f"status: {result.status}")
+    print(f"selected_date_count: {result.selected_date_count}")
+    print(f"first_signal_date: {result.first_signal_date}")
+    print(f"last_signal_date: {result.last_signal_date}")
+    print(f"warmup_trading_days: {result.request.warmup_trading_days}")
+    print("warmup_feasibility_counts:")
+    for key, value in result.warmup_feasibility_counts.items():
+        print(f"  {key}: {value}")
+    print("horizon_feasibility_counts:")
+    for key, value in result.horizon_feasibility_counts.items():
+        print(f"  {key}: {value}")
+    print(f"plan_path: {result.artifact_paths['plan_csv']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, message delivery, or network/API call was invoked.")
+    return 0
+
+
+def _handle_current_candidates_backfill_plan_index(args: argparse.Namespace) -> int:
+    result = build_current_candidates_backfill_plan_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['current_candidates_backfill_plan_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, message delivery, or network/API call was invoked.")
+    return 0
+
+
+def _handle_current_candidates_backfill_plan_health(args: argparse.Namespace) -> int:
+    result = check_current_candidates_backfill_plan_health(
+        index_path=args.index,
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['current_candidates_backfill_plan_health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"latest_plan_id: {summary.get('latest_plan_id', '')}")
+    print(f"latest_plan_is_warmup_aware: {summary.get('latest_plan_is_warmup_aware', '')}")
+    print(f"active_plan_health_status: {summary.get('active_plan_health_status', '')}")
+    print(f"active_plan_issue_count: {summary.get('active_plan_issue_count', '')}")
+    print(f"active_plan_error_count: {summary.get('active_plan_error_count', '')}")
+    print(f"legacy_plan_count: {summary.get('legacy_plan_count', '')}")
+    print(f"legacy_missing_warmup_count: {summary.get('legacy_missing_warmup_count', '')}")
+    print(f"stale_plan_warning_count: {summary.get('stale_plan_warning_count', '')}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, message delivery, or network/API call was invoked.")
+    return 0
+
+
+def _handle_current_candidates_backfill_plan_status(args: argparse.Namespace) -> int:
+    result = run_current_candidates_backfill_plan_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['current_candidates_backfill_plan_status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_plan_id: {result.latest_plan_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"selected_date_count: {result.selected_date_count}")
+    print(f"first_signal_date: {summary.get('first_signal_date', '')}")
+    print(f"last_signal_date: {summary.get('last_signal_date', '')}")
+    print(f"warmup_trading_days: {summary.get('warmup_trading_days', '')}")
+    print(f"warmup_feasible_count: {summary.get('warmup_feasible_count', '')}")
+    print(f"forward_1d_available_count: {summary.get('forward_1d_available_count', '')}")
+    print(f"forward_3d_available_count: {summary.get('forward_3d_available_count', '')}")
+    print(f"forward_5d_available_count: {summary.get('forward_5d_available_count', '')}")
+    print(f"forward_10d_available_count: {summary.get('forward_10d_available_count', '')}")
+    print(f"latest_plan_is_warmup_aware: {summary.get('latest_plan_is_warmup_aware', '')}")
+    print(f"overall_health_status: {summary.get('overall_health_status', '')}")
+    print(f"active_plan_issue_count: {summary.get('active_plan_issue_count', '')}")
+    print(f"active_plan_error_count: {summary.get('active_plan_error_count', '')}")
+    print(f"legacy_plan_count: {summary.get('legacy_plan_count', '')}")
+    print(f"legacy_missing_warmup_count: {summary.get('legacy_missing_warmup_count', '')}")
+    print(f"stale_plan_warning_count: {summary.get('stale_plan_warning_count', '')}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, message delivery, or network/API call was invoked.")
     return 0
 
 
@@ -2862,6 +3033,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["data_preparation_root"] = Path(args.data_preparation_root)
     if args.current_candidates_root:
         updates["current_candidates_root"] = Path(args.current_candidates_root)
+    if args.current_candidates_backfill_plan_root:
+        updates["current_candidates_backfill_plan_root"] = Path(args.current_candidates_backfill_plan_root)
     if args.advisory_profile_calibration_root:
         updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
     if args.calibration_to_signal_semantics_root:
@@ -2892,6 +3065,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         market_cache_export_root=args.market_cache_export_root,
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
+        current_candidates_backfill_plan_root=args.current_candidates_backfill_plan_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -2945,6 +3119,59 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"market_cache_export_stage: {result.market_cache_export_stage}")
     print(f"market_cache_export_pipeline_id: {result.market_cache_export_pipeline_id}")
     print(f"market_cache_export_snapshot_quality_status: {result.market_cache_export_snapshot_quality_status}")
+    print(f"latest_current_candidates_backfill_plan_id: {result.latest_current_candidates_backfill_plan_id}")
+    print(f"current_candidates_backfill_plan_status: {result.current_candidates_backfill_plan_status}")
+    print(f"current_candidates_backfill_plan_stage: {result.current_candidates_backfill_plan_stage}")
+    print(
+        "current_candidates_backfill_plan_health_status: "
+        f"{result.current_candidates_backfill_plan_health_status}"
+    )
+    print(
+        "current_candidates_backfill_plan_selected_date_count: "
+        f"{result.current_candidates_backfill_plan_selected_date_count}"
+    )
+    print(
+        "current_candidates_backfill_plan_first_signal_date: "
+        f"{result.current_candidates_backfill_plan_first_signal_date}"
+    )
+    print(
+        "current_candidates_backfill_plan_last_signal_date: "
+        f"{result.current_candidates_backfill_plan_last_signal_date}"
+    )
+    print(
+        "current_candidates_backfill_plan_warmup_trading_days: "
+        f"{result.current_candidates_backfill_plan_warmup_trading_days}"
+    )
+    print(
+        "current_candidates_backfill_plan_forward_horizon_summary: "
+        f"{result.current_candidates_backfill_plan_forward_horizon_summary}"
+    )
+    print(
+        "current_candidates_backfill_plan_legacy_plan_count: "
+        f"{result.current_candidates_backfill_plan_legacy_plan_count}"
+    )
+    print(
+        "current_candidates_backfill_plan_stale_plan_warning_count: "
+        f"{result.current_candidates_backfill_plan_stale_plan_warning_count}"
+    )
+    print(
+        "current_candidates_backfill_plan_active_plan_issue_count: "
+        f"{result.current_candidates_backfill_plan_active_plan_issue_count}"
+    )
+    print(
+        "current_candidates_backfill_plan_active_plan_error_count: "
+        f"{result.current_candidates_backfill_plan_active_plan_error_count}"
+    )
+    print(
+        "current_candidates_backfill_plan_legacy_missing_warmup_count: "
+        f"{result.current_candidates_backfill_plan_legacy_missing_warmup_count}"
+    )
+    print(
+        "current_candidates_backfill_plan_latest_plan_is_warmup_aware: "
+        f"{result.current_candidates_backfill_plan_latest_plan_is_warmup_aware}"
+    )
+    print(f"current_candidates_backfill_plan_report_path: {result.current_candidates_backfill_plan_report_path}")
+    print(f"current_candidates_backfill_plan_next_action: {result.current_candidates_backfill_plan_next_action}")
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
     print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")
@@ -4527,6 +4754,17 @@ def _parse_date_values(values: Sequence[str] | None) -> list[str]:
         parts = [part.strip() for part in str(value).split(",")]
         dates.extend(part for part in parts if part)
     return dates
+
+
+def _parse_int_values(value: str | Sequence[str] | None) -> list[int]:
+    if value is None:
+        return []
+    raw_values = value if isinstance(value, (list, tuple)) else [value]
+    output: list[int] = []
+    for raw_value in raw_values:
+        parts = [part.strip() for part in str(raw_value).split(",")]
+        output.extend(int(part) for part in parts if part)
+    return output
 
 
 def _print_snapshot_preflight_summary(metadata: dict) -> None:

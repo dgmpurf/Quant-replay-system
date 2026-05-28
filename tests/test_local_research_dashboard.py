@@ -56,6 +56,174 @@ def test_dashboard_detects_current_candidate_health_artifacts(tmp_path: Path) ->
     assert result.workflow_stage == "CURRENT_CANDIDATES_HEALTH_READY"
 
 
+def test_dashboard_includes_current_candidates_backfill_plan_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_plan_status(root, plan_id="plan-ready")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS"
+    ].iloc[0]
+
+    assert result.latest_current_candidates_backfill_plan_id == "plan-ready"
+    assert result.current_candidates_backfill_plan_status == "PASS"
+    assert result.current_candidates_backfill_plan_stage == "CURRENT_CANDIDATES_BACKFILL_PLAN_READY"
+    assert result.current_candidates_backfill_plan_health_status == "PASS"
+    assert result.current_candidates_backfill_plan_selected_date_count == 8
+    assert result.current_candidates_backfill_plan_first_signal_date == "2024-04-02"
+    assert result.current_candidates_backfill_plan_last_signal_date == "2024-05-06"
+    assert result.current_candidates_backfill_plan_warmup_trading_days == 60
+    assert '"forward_10d_available_count": 8' in result.current_candidates_backfill_plan_forward_horizon_summary
+    assert result.workflow_stage == "CURRENT_CANDIDATES_BACKFILL_PLAN_READY"
+    assert plan_row["warning_classification"] == ""
+    assert "before candidate generation" in result.next_manual_action
+
+
+def test_dashboard_current_candidates_backfill_plan_ready_is_non_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_plan_status(root, plan_id="plan-non-blocking")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS"
+    ].iloc[0]
+
+    assert result.status != "FAIL"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+    assert result.summary_frame.iloc[0]["actionable_warning_count"] == 0
+    assert plan_row["warning_classification"] == ""
+
+
+def test_dashboard_failed_current_candidates_backfill_plan_health_is_actionable_when_active(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_plan_status(
+        root,
+        plan_id="plan-fail",
+        status="FAIL",
+        workflow_stage="CURRENT_CANDIDATES_BACKFILL_PLAN_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "CURRENT_CANDIDATES_BACKFILL_PLAN_FAILED"
+    assert result.current_candidates_backfill_plan_health_status == "FAIL"
+    assert plan_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+    assert "Repair current-candidates backfill plan artifacts" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_current_candidates_backfill_plan(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_plan_status(root, plan_id="plan-context", status="WARN")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    plan_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS"
+    ].iloc[0]
+
+    assert result.latest_current_candidates_backfill_plan_id == "plan-context"
+    assert result.current_candidates_backfill_plan_stage == "CURRENT_CANDIDATES_BACKFILL_PLAN_READY"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert plan_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exposes_legacy_backfill_plan_context_without_active_override(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_plan_status(
+        root,
+        plan_id="plan-active",
+        legacy_plan_count=1,
+        stale_plan_warning_count=1,
+        legacy_missing_warmup_count=1,
+        latest_plan_is_warmup_aware=True,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.latest_current_candidates_backfill_plan_id == "plan-active"
+    assert result.current_candidates_backfill_plan_status == "PASS"
+    assert result.current_candidates_backfill_plan_stage == "CURRENT_CANDIDATES_BACKFILL_PLAN_READY"
+    assert result.current_candidates_backfill_plan_health_status == "PASS"
+    assert result.current_candidates_backfill_plan_legacy_plan_count == 1
+    assert result.current_candidates_backfill_plan_stale_plan_warning_count == 1
+    assert result.current_candidates_backfill_plan_active_plan_issue_count == 0
+    assert result.current_candidates_backfill_plan_active_plan_error_count == 0
+    assert result.current_candidates_backfill_plan_legacy_missing_warmup_count == 1
+    assert result.current_candidates_backfill_plan_latest_plan_is_warmup_aware is True
+    assert result.workflow_stage == "CURRENT_CANDIDATES_BACKFILL_PLAN_READY"
+
+
+def test_dashboard_exports_current_candidates_backfill_plan_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_plan_status(root, plan_id="plan-export")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_current_candidates_backfill_plan_id"] == "plan-export"
+    assert row["current_candidates_backfill_plan_status"] == "PASS"
+    assert row["current_candidates_backfill_plan_stage"] == "CURRENT_CANDIDATES_BACKFILL_PLAN_READY"
+    assert row["current_candidates_backfill_plan_health_status"] == "PASS"
+    assert row["current_candidates_backfill_plan_selected_date_count"] == "8"
+    assert row["current_candidates_backfill_plan_warmup_trading_days"] == "60"
+    assert '"forward_5d_available_count": 8' in row["current_candidates_backfill_plan_forward_horizon_summary"]
+    assert row["current_candidates_backfill_plan_latest_plan_is_warmup_aware"] == "True"
+    assert metadata["latest_current_candidates_backfill_plan_id"] == "plan-export"
+    assert metadata["current_candidates_backfill_plan_health_status"] == "PASS"
+    assert metadata["current_candidates_backfill_plan_selected_date_count"] == 8
+    assert metadata["current_candidates_backfill_plan_latest_plan_is_warmup_aware"] is True
+    assert metadata["component_statuses"]["latest_current_candidates_backfill_plan_id"] == "plan-export"
+
+
+def test_cli_research_status_prints_current_candidates_backfill_plan_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_plan_status(root, plan_id="plan-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_current_candidates_backfill_plan_id: plan-cli" in output.out
+    assert "current_candidates_backfill_plan_status: PASS" in output.out
+    assert "current_candidates_backfill_plan_stage: CURRENT_CANDIDATES_BACKFILL_PLAN_READY" in output.out
+    assert "current_candidates_backfill_plan_health_status: PASS" in output.out
+    assert "current_candidates_backfill_plan_selected_date_count: 8" in output.out
+    assert "current_candidates_backfill_plan_latest_plan_is_warmup_aware: True" in output.out
+
+
 def test_dashboard_detects_current_to_paper_handoff_artifacts(tmp_path: Path) -> None:
     root = _workflow_to_paper_handoff(_reports_root(tmp_path))
 
@@ -3206,6 +3374,133 @@ def _calibration_to_signal_semantics_status(
             "llm_api_called": False,
             "config_mutated": False,
             "auto_order_allowed": False,
+        },
+    )
+    return folder
+
+
+def _current_candidates_backfill_plan_status(
+    root: Path,
+    *,
+    plan_id: str = "plan-a",
+    status: str = "PASS",
+    workflow_stage: str = "CURRENT_CANDIDATES_BACKFILL_PLAN_READY",
+    health_status: str = "PASS",
+    selected_date_count: int = 8,
+    first_signal_date: str = "2024-04-02",
+    last_signal_date: str = "2024-05-06",
+    warmup_trading_days: int = 60,
+    warmup_feasible_count: int = 8,
+    forward_1d_available_count: int = 8,
+    forward_3d_available_count: int = 8,
+    forward_5d_available_count: int = 8,
+    forward_10d_available_count: int = 8,
+    legacy_plan_count: int = 0,
+    stale_plan_warning_count: int = 0,
+    active_plan_issue_count: int = 0,
+    active_plan_error_count: int = 0,
+    legacy_missing_warmup_count: int = 0,
+    latest_plan_is_warmup_aware: bool = True,
+    warning_count: int = 0,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:39:30",
+) -> Path:
+    folder = root / "current_candidates_backfill_plan" / "status" / f"status-{plan_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "current_candidates_backfill_plan_status_report.md"
+    status_csv = folder / "current_candidates_backfill_plan_status.csv"
+    summary_csv = folder / "current_candidates_backfill_plan_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    plan_report = (
+        root / "current_candidates_backfill_plan" / plan_id / "current_candidates_backfill_plan_report.md"
+    )
+    next_action = (
+        "Repair current-candidates backfill plan artifacts before any backfill execution."
+        if status == "FAIL"
+        else "Review the backfill plan, source policy, warmup coverage, and forward horizons before candidate generation."
+    )
+    report.write_text(
+        "Plan-only status. No current-candidates generation, live trading, broker API, order placement, message delivery, or network/API call was invoked.",
+        encoding="utf-8",
+    )
+    plan_report.parent.mkdir(parents=True, exist_ok=True)
+    plan_report.write_text("Plan-only artifact. It does not generate candidates or forward labels.", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "component": "CURRENT_CANDIDATES_BACKFILL_PLAN",
+                "status": "READY" if status != "FAIL" else "FAIL",
+                "latest_artifact_id": plan_id,
+                "selected_date_count": selected_date_count,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "CURRENT_CANDIDATES_BACKFILL_PLAN_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "backfill-plan-health-a",
+                "selected_date_count": selected_date_count,
+                "warning_count": warning_count,
+                "error_count": error_count,
+                "issue_count": warning_count + error_count,
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "latest_plan_id": plan_id,
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "health_status": health_status,
+                "selected_date_count": selected_date_count,
+                "first_signal_date": first_signal_date,
+                "last_signal_date": last_signal_date,
+                "warmup_trading_days": warmup_trading_days,
+                "warmup_feasible_count": warmup_feasible_count,
+                "forward_1d_available_count": forward_1d_available_count,
+                "forward_3d_available_count": forward_3d_available_count,
+                "forward_5d_available_count": forward_5d_available_count,
+                "forward_10d_available_count": forward_10d_available_count,
+                "legacy_plan_count": legacy_plan_count,
+                "stale_plan_warning_count": stale_plan_warning_count,
+                "active_plan_issue_count": active_plan_issue_count,
+                "active_plan_error_count": active_plan_error_count,
+                "legacy_missing_warmup_count": legacy_missing_warmup_count,
+                "latest_plan_is_warmup_aware": latest_plan_is_warmup_aware,
+                "report_path": str(plan_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{plan_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_plan_id": plan_id,
+            "health_status": health_status,
+            "selected_date_count": selected_date_count,
+            "next_manual_action": next_action,
+            "warnings": ["Backfill plan health warnings are present."] if warning_count else [],
+            "output_files": {
+                "current_candidates_backfill_plan_status_report": str(report),
+                "current_candidates_backfill_plan_status_csv": str(status_csv),
+                "current_candidates_backfill_plan_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "current_candidates_executed": False,
+            "forward_returns_computed": False,
+            "cache_mutated": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "order_placement_enabled": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "network_api_called": False,
         },
     )
     return folder

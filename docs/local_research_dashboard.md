@@ -12,6 +12,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has snapshot quality run?
 - Has a historical backfill dry-run or cache-write run produced reviewable artifact evidence?
 - Has a policy-aware reviewed cache export plan produced a reviewable manifest or linked downstream validation?
+- Has a current-candidates backfill plan identified warmup/forward-horizon-feasible signal dates?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
@@ -41,6 +42,7 @@ outputs/reports/snapshot_quality/
 outputs/reports/market_update_handoff/status/
 outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
+outputs/reports/current_candidates_backfill_plan/status/
 outputs/reports/advisory_profile_calibration/status/
 outputs/reports/calibration_to_signal_semantics/status/
 outputs/reports/signal_semantics/status/
@@ -90,6 +92,16 @@ The unified summary records the latest export id, export status/stage, linked pi
 Market-cache-export is earlier than current-candidates, market-update-handoff, and paper workflow. If those later artifacts exist, they take priority for the final `workflow_stage`; cache-export fields remain visible as context. If the latest active cache export has health failures or duplicate-key errors and no later valid workflow supersedes it, `research-status` surfaces the export failure as actionable.
 
 These export fields do not imply automatic source selection. The reviewed cache export remains an explicit source/upstream selection layer, and `data-quality` plus `snapshot-quality` remain required before research use.
+
+## Current-Candidates Backfill Plan Status
+
+`research-status` includes `current-candidates-backfill-plan-status` as multi-date planning context when those artifacts exist.
+
+The unified summary records the latest active warmup-aware plan id, plan status/stage, active health status, selected date count, first and last selected signal dates, warmup trading-day requirement, forward-horizon availability summary, legacy plan counts, active plan issue/error counts, report path, and the plan layer's next manual action. This is plan-only evidence: it does not run `current-candidates`, build snapshot manifests, compute forward-return labels, mutate cache, fetch data, send messages, connect to brokers, or place orders.
+
+When the plan reports `CURRENT_CANDIDATES_BACKFILL_PLAN_READY`, the dashboard treats it as visible non-blocking planning context. Older pre-warmup plan artifacts can remain visible through legacy counts without overriding the active warmup-aware plan. When the active plan reports `CURRENT_CANDIDATES_BACKFILL_PLAN_HEALTH_WARN`, the warning remains reviewable before any future candidate-generation execution. If the active plan reports `CURRENT_CANDIDATES_BACKFILL_PLAN_FAILED` and no later valid workflow supersedes it, the failure is actionable.
+
+Current-candidates backfill plans are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to backfill planning; plan fields remain visible for audit. A plan does not imply that candidate artifacts have been generated.
 
 ## Advisory Profile Calibration Status
 

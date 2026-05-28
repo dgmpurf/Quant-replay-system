@@ -89,6 +89,12 @@ For current/as-of-date candidate generation from local snapshots, see [docs/curr
 
 `current-candidates --selection-profile demo` is available for tiny local artifact/workflow validation only. The default selection profile and research thresholds remain unchanged, and demo candidates are marked as not strategy recommendations.
 
+For planning multi-date current-candidates backfills from existing local market-cache coverage without generating candidates, see [docs/current_candidates_backfill_plan.md](docs/current_candidates_backfill_plan.md). `current-candidates-backfill-plan` records feasible signal dates, indicator warmup coverage, and forward-horizon coverage only; it does not mutate cache, run data-pipeline, fetch data, send messages, or place orders.
+
+Use `current-candidates-backfill-plan-index`, `current-candidates-backfill-plan-health`, and `current-candidates-backfill-plan-status` to discover, safety-check, and summarize those plan artifacts before any candidate generation is executed.
+
+`research-status` includes the latest `current-candidates-backfill-plan-status` as planning context, including selected date count, first/last signal dates, warmup requirement, forward-horizon summary, health status, and report path. The plan is visible but does not imply candidate generation; later paper workflow priority is preserved. See [docs/local_research_dashboard.md#current-candidates-backfill-plan-status](docs/local_research_dashboard.md#current-candidates-backfill-plan-status).
+
 For turning current-candidates artifacts into local advisory signals and alert previews without message delivery or execution, see [docs/signal_advisory.md](docs/signal_advisory.md).
 
 For the deterministic policy that maps candidate/scored rows into safe advisory labels such as `DEMO_ONLY`, `WATCH`, and `REVIEW_BUY_CANDIDATE`, see [docs/signal_semantics.md](docs/signal_semantics.md). Demo rows remain workflow validation only, and all labels require manual confirmation with auto-order disabled.
@@ -294,6 +300,8 @@ For the v0.93.0 Non-Demo Advisory Profile Calibration Analyzer checkpoint summar
 For the v0.94.0 Advisory Profile Calibration Artifact Views and Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.94.0.md](docs/release_checkpoint_v0.94.0.md).
 
 For the v0.96.0 Calibration-to-Signal-Semantics Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.96.0.md](docs/release_checkpoint_v0.96.0.md).
+
+For the v0.97.0 Multi-date Current-Candidates Backfill Plan checkpoint summary, see [docs/release_checkpoint_v0.97.0.md](docs/release_checkpoint_v0.97.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -536,6 +544,10 @@ See [docs/release_checkpoint_v0.94.0.md](docs/release_checkpoint_v0.94.0.md) for
 `v0.96.0` marks the Calibration-to-Signal-Semantics Research Status Integration checkpoint, covering proposal report observability, proposal index/health/status, unified dashboard proposal context fields, `defaults_changed=False` visibility, conservative proposal categories, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v0.96.0.md](docs/release_checkpoint_v0.96.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.97.0` marks the Multi-date Current-Candidates Backfill Plan checkpoint, covering local cache coverage planning, selected feasible signal dates, forward-horizon availability, distinct-symbol coverage under duplicate source rows, reviewed source/upstream guidance, and plan-only safety boundaries before candidate generation.
+
+See [docs/release_checkpoint_v0.97.0.md](docs/release_checkpoint_v0.97.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

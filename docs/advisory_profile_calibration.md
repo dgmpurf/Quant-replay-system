@@ -38,6 +38,8 @@ Built-in v0.1 profiles:
 
 The profiles are threshold-analysis candidates, not strategy validation results.
 
+Before using calibration outputs as multi-date evidence, use `current-candidates-backfill-plan` to identify feasible signal dates from local market-cache coverage. The planner checks forward-horizon availability and writes a reviewed plan only; it does not generate candidates or compute outcome labels. See [current_candidates_backfill_plan.md](current_candidates_backfill_plan.md).
+
 ## Gates
 
 Rows become `BLOCKED` when any of these apply:

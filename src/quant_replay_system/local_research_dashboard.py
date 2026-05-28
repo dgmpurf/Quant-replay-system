@@ -14,6 +14,7 @@ from quant_replay_system.advisory_conversation_status import run_advisory_conver
 from quant_replay_system.advisory_profile_calibration_status import run_advisory_profile_calibration_status
 from quant_replay_system.calibration_to_signal_semantics_status import run_calibration_to_signal_semantics_status
 from quant_replay_system.config import LocalResearchDashboardSettings, Settings, load_settings
+from quant_replay_system.current_candidates_backfill_plan_status import run_current_candidates_backfill_plan_status
 from quant_replay_system.historical_backfill_status import run_historical_backfill_status
 from quant_replay_system.market_cache_export_policy_status import run_market_cache_export_policy_status
 from quant_replay_system.market_cache_export_status import run_market_cache_export_status
@@ -76,6 +77,23 @@ SUMMARY_COLUMNS = [
     "unrelated_snapshot_warning_count",
     "current_candidate_status",
     "current_candidate_health_status",
+    "current_candidates_backfill_plan_status",
+    "latest_current_candidates_backfill_plan_id",
+    "current_candidates_backfill_plan_stage",
+    "current_candidates_backfill_plan_health_status",
+    "current_candidates_backfill_plan_selected_date_count",
+    "current_candidates_backfill_plan_first_signal_date",
+    "current_candidates_backfill_plan_last_signal_date",
+    "current_candidates_backfill_plan_warmup_trading_days",
+    "current_candidates_backfill_plan_forward_horizon_summary",
+    "current_candidates_backfill_plan_legacy_plan_count",
+    "current_candidates_backfill_plan_stale_plan_warning_count",
+    "current_candidates_backfill_plan_active_plan_issue_count",
+    "current_candidates_backfill_plan_active_plan_error_count",
+    "current_candidates_backfill_plan_legacy_missing_warmup_count",
+    "current_candidates_backfill_plan_latest_plan_is_warmup_aware",
+    "current_candidates_backfill_plan_report_path",
+    "current_candidates_backfill_plan_next_action",
     "advisory_profile_calibration_status",
     "latest_advisory_profile_calibration_run_id",
     "advisory_profile_calibration_stage",
@@ -289,6 +307,7 @@ COMPONENTS = [
     "SNAPSHOT_QUALITY",
     "CURRENT_CANDIDATES",
     "CURRENT_CANDIDATE_HEALTH",
+    "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS",
     "ADVISORY_PROFILE_CALIBRATION_STATUS",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
     "SIGNAL_SEMANTICS_STATUS",
@@ -314,6 +333,7 @@ WORKFLOW_AREAS = {
     "SNAPSHOT_QUALITY": "DATA_PREPARATION",
     "CURRENT_CANDIDATES": "CURRENT_CANDIDATES",
     "CURRENT_CANDIDATE_HEALTH": "CURRENT_CANDIDATES",
+    "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS": "CURRENT_CANDIDATES_BACKFILL_PLAN",
     "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS": "CALIBRATION_TO_SIGNAL_SEMANTICS",
     "SIGNAL_SEMANTICS_STATUS": "SIGNAL_SEMANTICS",
@@ -366,6 +386,23 @@ class LocalResearchDashboardResult:
     unrelated_snapshot_warning_count: int
     current_candidate_status: str
     current_candidate_health_status: str
+    current_candidates_backfill_plan_status: str
+    latest_current_candidates_backfill_plan_id: str
+    current_candidates_backfill_plan_stage: str
+    current_candidates_backfill_plan_health_status: str
+    current_candidates_backfill_plan_selected_date_count: int
+    current_candidates_backfill_plan_first_signal_date: str
+    current_candidates_backfill_plan_last_signal_date: str
+    current_candidates_backfill_plan_warmup_trading_days: int
+    current_candidates_backfill_plan_forward_horizon_summary: str
+    current_candidates_backfill_plan_legacy_plan_count: int
+    current_candidates_backfill_plan_stale_plan_warning_count: int
+    current_candidates_backfill_plan_active_plan_issue_count: int
+    current_candidates_backfill_plan_active_plan_error_count: int
+    current_candidates_backfill_plan_legacy_missing_warmup_count: int
+    current_candidates_backfill_plan_latest_plan_is_warmup_aware: bool
+    current_candidates_backfill_plan_report_path: str
+    current_candidates_backfill_plan_next_action: str
     advisory_profile_calibration_status: str
     latest_advisory_profile_calibration_run_id: str
     advisory_profile_calibration_stage: str
@@ -559,6 +596,7 @@ def run_local_research_dashboard(
     market_cache_export_root: str | Path | None = None,
     data_preparation_root: str | Path | None = None,
     current_candidates_root: str | Path | None = None,
+    current_candidates_backfill_plan_root: str | Path | None = None,
     advisory_profile_calibration_root: str | Path | None = None,
     calibration_to_signal_semantics_root: str | Path | None = None,
     signal_semantics_root: str | Path | None = None,
@@ -604,6 +642,11 @@ def run_local_research_dashboard(
         Path(current_candidates_root)
         if current_candidates_root is not None
         else dashboard_settings.current_candidates_root
+    )
+    effective_current_candidates_backfill_plan_root = (
+        Path(current_candidates_backfill_plan_root)
+        if current_candidates_backfill_plan_root is not None
+        else dashboard_settings.current_candidates_backfill_plan_root
     )
     effective_advisory_profile_calibration_root = (
         Path(advisory_profile_calibration_root)
@@ -658,6 +701,8 @@ def run_local_research_dashboard(
             effective_data_prep_root = effective_root / "data_preparation"
         if current_candidates_root is None:
             effective_current_root = effective_root / "current_candidates"
+        if current_candidates_backfill_plan_root is None:
+            effective_current_candidates_backfill_plan_root = effective_root / "current_candidates_backfill_plan"
         if advisory_profile_calibration_root is None:
             effective_advisory_profile_calibration_root = effective_root / "advisory_profile_calibration"
         if calibration_to_signal_semantics_root is None:
@@ -684,6 +729,7 @@ def run_local_research_dashboard(
         market_cache_export_root=effective_market_cache_export_root,
         data_preparation_root=effective_data_prep_root,
         current_candidates_root=effective_current_root,
+        current_candidates_backfill_plan_root=effective_current_candidates_backfill_plan_root,
         advisory_profile_calibration_root=effective_advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=effective_calibration_to_signal_semantics_root,
         signal_semantics_root=effective_signal_semantics_root,
@@ -724,6 +770,7 @@ def run_local_research_dashboard(
         "market_cache_export_root": effective_market_cache_export_root,
         "data_preparation_root": effective_data_prep_root,
         "current_candidates_root": effective_current_root,
+        "current_candidates_backfill_plan_root": effective_current_candidates_backfill_plan_root,
         "advisory_profile_calibration_root": effective_advisory_profile_calibration_root,
         "calibration_to_signal_semantics_root": effective_calibration_to_signal_semantics_root,
         "signal_semantics_root": effective_signal_semantics_root,
@@ -758,6 +805,57 @@ def run_local_research_dashboard(
         unrelated_snapshot_warning_count=_int_or_zero(summary.get("unrelated_snapshot_warning_count")),
         current_candidate_status=str(summary.get("current_candidate_status", "MISSING")),
         current_candidate_health_status=str(summary.get("current_candidate_health_status", "MISSING")),
+        current_candidates_backfill_plan_status=str(
+            summary.get("current_candidates_backfill_plan_status", "MISSING")
+        ),
+        latest_current_candidates_backfill_plan_id=str(
+            summary.get("latest_current_candidates_backfill_plan_id", "")
+        ),
+        current_candidates_backfill_plan_stage=str(
+            summary.get("current_candidates_backfill_plan_stage", "")
+        ),
+        current_candidates_backfill_plan_health_status=str(
+            summary.get("current_candidates_backfill_plan_health_status", "")
+        ),
+        current_candidates_backfill_plan_selected_date_count=_int_or_zero(
+            summary.get("current_candidates_backfill_plan_selected_date_count")
+        ),
+        current_candidates_backfill_plan_first_signal_date=str(
+            summary.get("current_candidates_backfill_plan_first_signal_date", "")
+        ),
+        current_candidates_backfill_plan_last_signal_date=str(
+            summary.get("current_candidates_backfill_plan_last_signal_date", "")
+        ),
+        current_candidates_backfill_plan_warmup_trading_days=_int_or_zero(
+            summary.get("current_candidates_backfill_plan_warmup_trading_days")
+        ),
+        current_candidates_backfill_plan_forward_horizon_summary=str(
+            summary.get("current_candidates_backfill_plan_forward_horizon_summary", "")
+        ),
+        current_candidates_backfill_plan_legacy_plan_count=_int_or_zero(
+            summary.get("current_candidates_backfill_plan_legacy_plan_count")
+        ),
+        current_candidates_backfill_plan_stale_plan_warning_count=_int_or_zero(
+            summary.get("current_candidates_backfill_plan_stale_plan_warning_count")
+        ),
+        current_candidates_backfill_plan_active_plan_issue_count=_int_or_zero(
+            summary.get("current_candidates_backfill_plan_active_plan_issue_count")
+        ),
+        current_candidates_backfill_plan_active_plan_error_count=_int_or_zero(
+            summary.get("current_candidates_backfill_plan_active_plan_error_count")
+        ),
+        current_candidates_backfill_plan_legacy_missing_warmup_count=_int_or_zero(
+            summary.get("current_candidates_backfill_plan_legacy_missing_warmup_count")
+        ),
+        current_candidates_backfill_plan_latest_plan_is_warmup_aware=_bool_from_text(
+            summary.get("current_candidates_backfill_plan_latest_plan_is_warmup_aware")
+        ),
+        current_candidates_backfill_plan_report_path=str(
+            summary.get("current_candidates_backfill_plan_report_path", "")
+        ),
+        current_candidates_backfill_plan_next_action=str(
+            summary.get("current_candidates_backfill_plan_next_action", "")
+        ),
         advisory_profile_calibration_status=str(
             summary.get("advisory_profile_calibration_status", "MISSING")
         ),
@@ -1094,6 +1192,7 @@ def scan_local_research_workflow_artifacts(
     market_cache_export_root: str | Path,
     data_preparation_root: str | Path,
     current_candidates_root: str | Path,
+    current_candidates_backfill_plan_root: str | Path,
     advisory_profile_calibration_root: str | Path,
     calibration_to_signal_semantics_root: str | Path,
     signal_semantics_root: str | Path,
@@ -1114,6 +1213,7 @@ def scan_local_research_workflow_artifacts(
     market_cache_export_path = Path(market_cache_export_root)
     data_prep_root = Path(data_preparation_root)
     current_root = Path(current_candidates_root)
+    current_candidates_backfill_plan_path = Path(current_candidates_backfill_plan_root)
     advisory_profile_calibration_path = Path(advisory_profile_calibration_root)
     calibration_to_signal_semantics_path = Path(calibration_to_signal_semantics_root)
     signal_semantics_path = Path(signal_semantics_root)
@@ -1134,6 +1234,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_snapshot_quality(root_path / "snapshot_quality", requested_date))
     records.extend(_scan_current_candidates(current_root, requested_date, requested_universe))
     records.extend(_scan_current_candidate_health(current_root / "health"))
+    records.extend(_scan_current_candidates_backfill_plan_status(current_candidates_backfill_plan_path))
     records.extend(_scan_advisory_profile_calibration_status(advisory_profile_calibration_path))
     records.extend(_scan_calibration_to_signal_semantics_status(calibration_to_signal_semantics_path))
     records.extend(_scan_signal_semantics_status(signal_semantics_path))
@@ -1445,6 +1546,19 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "MARKET_UPDATE_HANDOFF_STATUS",
         *paper_started_components,
     }
+    post_current_candidates_backfill_plan_components = {
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
     post_calibration_to_signal_semantics_components = {
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
@@ -1582,6 +1696,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "post_advisory_profile_calibration_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_advisory_profile_calibration_components
+        ),
+        "post_current_candidates_backfill_plan_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_current_candidates_backfill_plan_components
         ),
         "post_calibration_to_signal_semantics_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
@@ -1726,6 +1844,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
                 + issue_counts["stale_warning_count"]
                 + issue_counts["actionable_warning_count"],
             }
+
+    if component == "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS":
+        return _current_candidates_backfill_plan_warning_actionability(row, context)
 
     if component == "ADVISORY_PROFILE_CALIBRATION_STATUS":
         return _advisory_profile_calibration_warning_actionability(row, context)
@@ -2120,6 +2241,56 @@ def _calibration_to_signal_semantics_warning_actionability(
     if status == "WARN" and stage in {
         "CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE",
         "CALIBRATION_TO_SEMANTICS_PROPOSAL_READY",
+    }:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
+def _current_candidates_backfill_plan_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if context.get("post_current_candidates_backfill_plan_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage in {
+        "CURRENT_CANDIDATES_BACKFILL_PLAN_READY",
+        "CURRENT_CANDIDATES_BACKFILL_PLAN_HEALTH_WARN",
     }:
         expected_count = max(warning_count, 1)
         return {
@@ -2689,6 +2860,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         if not _has_post_backfill_workflow_component(dashboard_frame) and statuses["HISTORICAL_BACKFILL_STATUS"] == "FAIL":
             return "BACKFILL_FAILED"
         if (
+            not _has_post_current_candidates_backfill_plan_workflow_component(dashboard_frame)
+            and statuses["CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS"] == "FAIL"
+        ):
+            return "CURRENT_CANDIDATES_BACKFILL_PLAN_FAILED"
+        if (
             not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
             and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] == "FAIL"
         ):
@@ -2740,6 +2916,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
     ):
         return "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+    if (
+        not _has_post_current_candidates_backfill_plan_workflow_component(dashboard_frame)
+        and statuses["CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS"] in {"PASS", "WARN", "READY"}
+        and _current_candidates_backfill_plan_stage_from_frame(dashboard_frame)
+    ):
+        return _current_candidates_backfill_plan_stage_from_frame(dashboard_frame)
     if (
         not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
         and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] in {"PASS", "WARN", "READY"}
@@ -2866,6 +3048,9 @@ def infer_local_research_next_action(
         "SNAPSHOT_READY": "Run current-candidates.",
         "CURRENT_CANDIDATES_READY": "Run current-candidates-index.",
         "CURRENT_CANDIDATES_HEALTH_READY": "Run current-to-paper.",
+        "CURRENT_CANDIDATES_BACKFILL_PLAN_READY": "Review the backfill plan, source policy, warmup coverage, and forward horizons before candidate generation.",
+        "CURRENT_CANDIDATES_BACKFILL_PLAN_HEALTH_WARN": "Review current-candidates backfill plan health warnings before any candidate generation.",
+        "CURRENT_CANDIDATES_BACKFILL_PLAN_FAILED": "Repair current-candidates backfill plan artifacts before any backfill execution.",
         "DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED": "Demo advisory profile calibration validated; do not treat DEMO_ONLY labels as strategy recommendations.",
         "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW": "Review calibration labels manually; REVIEW_BUY_CANDIDATE is not an order and auto-order remains disabled.",
         "ADVISORY_PROFILE_CALIBRATION_HEALTH_WARN": "Review advisory profile calibration health warnings before using threshold analysis.",
@@ -2941,6 +3126,7 @@ def summarize_local_research_status(
                     "HISTORICAL_BACKFILL_STATUS",
                     "MARKET_CACHE_EXPORT_POLICY_STATUS",
                     "MARKET_CACHE_EXPORT_STATUS",
+                    "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS",
                     "ADVISORY_PROFILE_CALIBRATION_STATUS",
                     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
                     "SIGNAL_SEMANTICS_STATUS",
@@ -3018,6 +3204,88 @@ def summarize_local_research_status(
         "unrelated_snapshot_warning_count": _sum_int_column(frame, "unrelated_snapshot_warning_count"),
         "current_candidate_status": _component_status(by_component, "CURRENT_CANDIDATES"),
         "current_candidate_health_status": _component_status(by_component, "CURRENT_CANDIDATE_HEALTH"),
+        "current_candidates_backfill_plan_status": _component_status(
+            by_component,
+            "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS",
+        ),
+        "latest_current_candidates_backfill_plan_id": _string_or_empty(
+            by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("latest_artifact_id")
+        ),
+        "current_candidates_backfill_plan_stage": _string_or_empty(
+            by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("stage")
+        ),
+        "current_candidates_backfill_plan_health_status": _parse_note_value(
+            by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "current_candidates_backfill_plan_selected_date_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+                "selected_date_count",
+            )
+        ),
+        "current_candidates_backfill_plan_first_signal_date": _parse_note_value(
+            by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+            "first_signal_date",
+        ),
+        "current_candidates_backfill_plan_last_signal_date": _parse_note_value(
+            by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+            "last_signal_date",
+        ),
+        "current_candidates_backfill_plan_warmup_trading_days": _int_or_zero(
+            _parse_note_value(
+                by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+                "warmup_trading_days",
+            )
+        ),
+        "current_candidates_backfill_plan_forward_horizon_summary": _parse_note_value(
+            by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+            "forward_horizon_summary",
+        ),
+        "current_candidates_backfill_plan_legacy_plan_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+                "legacy_plan_count",
+            )
+        ),
+        "current_candidates_backfill_plan_stale_plan_warning_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+                "stale_plan_warning_count",
+            )
+        ),
+        "current_candidates_backfill_plan_active_plan_issue_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+                "active_plan_issue_count",
+            )
+        ),
+        "current_candidates_backfill_plan_active_plan_error_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+                "active_plan_error_count",
+            )
+        ),
+        "current_candidates_backfill_plan_legacy_missing_warmup_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+                "legacy_missing_warmup_count",
+            )
+        ),
+        "current_candidates_backfill_plan_latest_plan_is_warmup_aware": _bool_from_text(
+            _parse_note_value(
+                by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+                "latest_plan_is_warmup_aware",
+            )
+        ),
+        "current_candidates_backfill_plan_report_path": _parse_note_value(
+            by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "current_candidates_backfill_plan_next_action": _parse_note_value(
+            by_component.get("CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
         "advisory_profile_calibration_status": _component_status(
             by_component,
             "ADVISORY_PROFILE_CALIBRATION_STATUS",
@@ -3756,6 +4024,45 @@ def build_local_research_dashboard_metadata(
         "market_update_handoff_pipeline_id": result.market_update_handoff_pipeline_id,
         "market_update_handoff_snapshot_quality_status": result.market_update_handoff_snapshot_quality_status,
         "market_update_handoff_current_candidate_run_id": result.market_update_handoff_current_candidate_run_id,
+        "latest_current_candidates_backfill_plan_id": result.latest_current_candidates_backfill_plan_id,
+        "current_candidates_backfill_plan_status": result.current_candidates_backfill_plan_status,
+        "current_candidates_backfill_plan_stage": result.current_candidates_backfill_plan_stage,
+        "current_candidates_backfill_plan_health_status": result.current_candidates_backfill_plan_health_status,
+        "current_candidates_backfill_plan_selected_date_count": (
+            result.current_candidates_backfill_plan_selected_date_count
+        ),
+        "current_candidates_backfill_plan_first_signal_date": (
+            result.current_candidates_backfill_plan_first_signal_date
+        ),
+        "current_candidates_backfill_plan_last_signal_date": (
+            result.current_candidates_backfill_plan_last_signal_date
+        ),
+        "current_candidates_backfill_plan_warmup_trading_days": (
+            result.current_candidates_backfill_plan_warmup_trading_days
+        ),
+        "current_candidates_backfill_plan_forward_horizon_summary": (
+            result.current_candidates_backfill_plan_forward_horizon_summary
+        ),
+        "current_candidates_backfill_plan_legacy_plan_count": (
+            result.current_candidates_backfill_plan_legacy_plan_count
+        ),
+        "current_candidates_backfill_plan_stale_plan_warning_count": (
+            result.current_candidates_backfill_plan_stale_plan_warning_count
+        ),
+        "current_candidates_backfill_plan_active_plan_issue_count": (
+            result.current_candidates_backfill_plan_active_plan_issue_count
+        ),
+        "current_candidates_backfill_plan_active_plan_error_count": (
+            result.current_candidates_backfill_plan_active_plan_error_count
+        ),
+        "current_candidates_backfill_plan_legacy_missing_warmup_count": (
+            result.current_candidates_backfill_plan_legacy_missing_warmup_count
+        ),
+        "current_candidates_backfill_plan_latest_plan_is_warmup_aware": (
+            result.current_candidates_backfill_plan_latest_plan_is_warmup_aware
+        ),
+        "current_candidates_backfill_plan_report_path": result.current_candidates_backfill_plan_report_path,
+        "current_candidates_backfill_plan_next_action": result.current_candidates_backfill_plan_next_action,
         "latest_advisory_profile_calibration_run_id": result.latest_advisory_profile_calibration_run_id,
         "advisory_profile_calibration_status": result.advisory_profile_calibration_status,
         "advisory_profile_calibration_stage": result.advisory_profile_calibration_stage,
@@ -3978,6 +4285,15 @@ def render_local_research_dashboard_report(
                 "market_cache_export_stage",
                 "market_cache_export_pipeline_id",
                 "market_cache_export_snapshot_quality_status",
+                "current_candidates_backfill_plan_status",
+                "latest_current_candidates_backfill_plan_id",
+                "current_candidates_backfill_plan_stage",
+                "current_candidates_backfill_plan_health_status",
+                "current_candidates_backfill_plan_selected_date_count",
+                "current_candidates_backfill_plan_first_signal_date",
+                "current_candidates_backfill_plan_last_signal_date",
+                "current_candidates_backfill_plan_warmup_trading_days",
+                "current_candidates_backfill_plan_forward_horizon_summary",
                 "market_update_handoff_status",
                 "latest_market_update_handoff_id",
                 "market_update_handoff_stage",
@@ -4389,6 +4705,137 @@ def _signal_advisory_action_counts_text(summary: dict[str, Any]) -> str:
         "REVIEW_BUY_CANDIDATE": _int_or_zero(summary.get("review_buy_candidate_count")),
         "REVIEW_SELL_CANDIDATE": _int_or_zero(summary.get("review_sell_candidate_count")),
         "BLOCKED": _int_or_zero(summary.get("blocked_count")),
+    }
+    return json.dumps(counts, sort_keys=True)
+
+
+def _scan_current_candidates_backfill_plan_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_current_candidates_backfill_plan_status_record(root)
+    if computed is not None:
+        return [computed]
+
+    scan_root = root if root.name == "status" else root / "status"
+    records = []
+    for metadata_path in _metadata_paths(scan_root, "metadata.json"):
+        metadata = _load_json_or_none(metadata_path)
+        if metadata is None or not metadata.get("status_id"):
+            continue
+        output_files = _output_files(metadata)
+        summary = _first_csv_record(output_files.get("current_candidates_backfill_plan_status_summary"))
+        status_rows = _csv_records(output_files.get("current_candidates_backfill_plan_status_csv"))
+        health_row = next(
+            (
+                row
+                for row in status_rows
+                if _string_or_empty(row.get("component")) == "CURRENT_CANDIDATES_BACKFILL_PLAN_HEALTH"
+            ),
+            {},
+        )
+        status_text = _string_or_empty(metadata.get("status")) or _string_or_empty(summary.get("status")) or "READY"
+        stage = _string_or_empty(metadata.get("workflow_stage")) or _string_or_empty(summary.get("workflow_stage"))
+        latest_plan_id = _string_or_empty(metadata.get("latest_plan_id")) or _string_or_empty(
+            summary.get("latest_plan_id")
+        )
+        warning_count = (
+            _int_or_zero(summary.get("warning_count"))
+            + _int_or_zero(health_row.get("warning_count"))
+            + (len(metadata.get("warnings", [])) if isinstance(metadata.get("warnings"), list) else 0)
+        )
+        if status_text == "WARN" and warning_count == 0:
+            warning_count = 1
+        records.append(
+            _record(
+                workflow_area="CURRENT_CANDIDATES_BACKFILL_PLAN",
+                component="CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS",
+                status=status_text,
+                stage=stage or "CURRENT_CANDIDATES_BACKFILL_PLAN_READY",
+                latest_artifact_id=latest_plan_id
+                or _string_or_empty(metadata.get("status_id"))
+                or metadata_path.parent.name,
+                report_path=output_files.get(
+                    "current_candidates_backfill_plan_status_report",
+                    metadata_path.parent / "current_candidates_backfill_plan_status_report.md",
+                ),
+                metadata_path=metadata_path,
+                issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+                warning_count=warning_count,
+                error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+                notes=_current_candidates_backfill_plan_notes(metadata, summary),
+                created_at=metadata.get("created_at"),
+            )
+        )
+    return records
+
+
+def _computed_current_candidates_backfill_plan_status_record(root: Path) -> dict[str, Any] | None:
+    plan_root = root.parent if root.name == "status" else root
+    if not plan_root.exists():
+        return None
+    try:
+        result = run_current_candidates_backfill_plan_status(
+            root=plan_root,
+            output_dir=plan_root / "status",
+        )
+    except Exception:
+        return None
+    if not result.latest_plan_id:
+        return None
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    health_row = {}
+    if not result.status_frame.empty:
+        health_rows = result.status_frame.loc[
+            result.status_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_PLAN_HEALTH"
+        ]
+        if not health_rows.empty:
+            health_row = health_rows.iloc[0].to_dict()
+    warning_count = (
+        _int_or_zero(summary.get("warning_count"))
+        + _int_or_zero(health_row.get("warning_count"))
+        + len(result.warnings)
+    )
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="CURRENT_CANDIDATES_BACKFILL_PLAN",
+        component="CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_plan_id,
+        report_path=result.artifact_paths.get("current_candidates_backfill_plan_status_report", ""),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+        warning_count=warning_count,
+        error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+        notes=_current_candidates_backfill_plan_notes({"next_manual_action": result.next_manual_action}, summary),
+    )
+
+
+def _current_candidates_backfill_plan_notes(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(metadata.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"selected_date_count={_string_or_empty(summary.get('selected_date_count'))}; "
+        f"first_signal_date={_string_or_empty(summary.get('first_signal_date'))}; "
+        f"last_signal_date={_string_or_empty(summary.get('last_signal_date'))}; "
+        f"warmup_trading_days={_string_or_empty(summary.get('warmup_trading_days'))}; "
+        f"forward_horizon_summary={_note_safe_text(_current_candidates_backfill_forward_horizon_summary(summary))}; "
+        f"legacy_plan_count={_string_or_empty(summary.get('legacy_plan_count'))}; "
+        f"stale_plan_warning_count={_string_or_empty(summary.get('stale_plan_warning_count'))}; "
+        f"active_plan_issue_count={_string_or_empty(summary.get('active_plan_issue_count'))}; "
+        f"active_plan_error_count={_string_or_empty(summary.get('active_plan_error_count'))}; "
+        f"legacy_missing_warmup_count={_string_or_empty(summary.get('legacy_missing_warmup_count'))}; "
+        f"latest_plan_is_warmup_aware={_string_or_empty(summary.get('latest_plan_is_warmup_aware'))}; "
+        f"report_path={_string_or_empty(summary.get('report_path'))}"
+    )
+
+
+def _current_candidates_backfill_forward_horizon_summary(summary: dict[str, Any]) -> str:
+    counts = {
+        "forward_1d_available_count": _int_or_zero(summary.get("forward_1d_available_count")),
+        "forward_3d_available_count": _int_or_zero(summary.get("forward_3d_available_count")),
+        "forward_5d_available_count": _int_or_zero(summary.get("forward_5d_available_count")),
+        "forward_10d_available_count": _int_or_zero(summary.get("forward_10d_available_count")),
+        "warmup_feasible_count": _int_or_zero(summary.get("warmup_feasible_count")),
     }
     return json.dumps(counts, sort_keys=True)
 
@@ -5904,6 +6351,12 @@ def _component_next_action(component: str, status: str) -> str:
         return "Run current-candidates." if status == "MISSING" else "Run current-candidates-index."
     if component == "CURRENT_CANDIDATE_HEALTH":
         return "Run current-candidates-health." if status == "MISSING" else "Run current-to-paper."
+    if component == "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS":
+        return (
+            "Run current-candidates-backfill-plan before multi-date candidate generation."
+            if status == "MISSING"
+            else "Review current-candidates-backfill-plan-status before any candidate generation."
+        )
     if component == "ADVISORY_PROFILE_CALIBRATION_STATUS":
         return (
             "Run advisory-profile-calibration on a local candidates or scored artifact."
@@ -5992,6 +6445,14 @@ def _market_cache_export_policy_stage_from_frame(dashboard_frame: pd.DataFrame) 
 def _historical_backfill_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "HISTORICAL_BACKFILL_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _current_candidates_backfill_plan_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "CURRENT_CANDIDATES_BACKFILL_PLAN_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))
@@ -6145,6 +6606,33 @@ def _has_post_advisory_profile_calibration_workflow_component(dashboard_frame: p
     later_components = {
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_current_candidates_backfill_plan_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
