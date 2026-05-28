@@ -1247,6 +1247,155 @@ def test_cli_research_status_prints_market_update_handoff_fields(tmp_path: Path,
     assert "market_update_handoff_current_candidate_run_id: candidate-a" in output.out
 
 
+def test_dashboard_includes_advisory_profile_calibration_status_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_profile_calibration_status(root, calibration_id="calibration-reviewed")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    calibration_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ADVISORY_PROFILE_CALIBRATION_STATUS"
+    ].iloc[0]
+
+    assert result.latest_advisory_profile_calibration_run_id == "calibration-reviewed"
+    assert result.advisory_profile_calibration_status == "WARN"
+    assert result.advisory_profile_calibration_stage == "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW"
+    assert result.advisory_profile_calibration_health_status == "PASS"
+    assert result.advisory_profile_calibration_profile == "balanced"
+    assert result.advisory_profile_calibration_review_buy_candidate_count == 1
+    assert result.advisory_profile_calibration_watch_count == 2
+    assert result.advisory_profile_calibration_no_action_count == 1
+    assert result.advisory_profile_calibration_blocked_count == 2
+    assert result.advisory_profile_calibration_issue_count == 2
+    assert result.workflow_stage == "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW"
+    assert calibration_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "REVIEW_BUY_CANDIDATE is not an order" in result.next_manual_action
+
+
+def test_dashboard_advisory_profile_calibration_demo_is_visible_but_not_blocking(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_profile_calibration_status(
+        root,
+        calibration_id="calibration-demo",
+        workflow_stage="DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED",
+        profile="balanced",
+        row_count=9,
+        review_buy_candidate_count=0,
+        watch_count=0,
+        no_action_count=0,
+        blocked_count=0,
+        demo_only_count=9,
+        issue_count=0,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    calibration_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ADVISORY_PROFILE_CALIBRATION_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED"
+    assert result.advisory_profile_calibration_demo_only_count == 9
+    assert result.advisory_profile_calibration_review_buy_candidate_count == 0
+    assert calibration_row["warning_classification"] == "EXPECTED_DEMO_WARNING"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 0
+    assert "DEMO_ONLY labels" in result.next_manual_action
+
+
+def test_dashboard_failed_advisory_profile_calibration_health_is_actionable_when_active(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_profile_calibration_status(
+        root,
+        calibration_id="calibration-fail",
+        status="FAIL",
+        workflow_stage="ADVISORY_PROFILE_CALIBRATION_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    calibration_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ADVISORY_PROFILE_CALIBRATION_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "ADVISORY_PROFILE_CALIBRATION_FAILED"
+    assert calibration_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+    assert "Repair advisory profile calibration artifacts" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_advisory_profile_calibration(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_profile_calibration_status(root, calibration_id="calibration-reviewed")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    calibration_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ADVISORY_PROFILE_CALIBRATION_STATUS"
+    ].iloc[0]
+
+    assert result.latest_advisory_profile_calibration_run_id == "calibration-reviewed"
+    assert result.advisory_profile_calibration_stage == "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert calibration_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_advisory_profile_calibration_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_profile_calibration_status(root, calibration_id="calibration-export")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_advisory_profile_calibration_run_id"] == "calibration-export"
+    assert row["advisory_profile_calibration_status"] == "WARN"
+    assert row["advisory_profile_calibration_stage"] == "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW"
+    assert row["advisory_profile_calibration_health_status"] == "PASS"
+    assert row["advisory_profile_calibration_review_buy_candidate_count"] == "1"
+    assert row["advisory_profile_calibration_watch_count"] == "2"
+    assert row["advisory_profile_calibration_blocked_count"] == "2"
+    assert row["advisory_profile_calibration_profile"] == "balanced"
+    assert metadata["latest_advisory_profile_calibration_run_id"] == "calibration-export"
+    assert metadata["advisory_profile_calibration_health_status"] == "PASS"
+    assert metadata["advisory_profile_calibration_review_buy_candidate_count"] == 1
+    assert metadata["component_statuses"]["latest_advisory_profile_calibration_run_id"] == "calibration-export"
+
+
+def test_cli_research_status_prints_advisory_profile_calibration_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _advisory_profile_calibration_status(root, calibration_id="calibration-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_advisory_profile_calibration_run_id: calibration-cli" in output.out
+    assert "advisory_profile_calibration_status: WARN" in output.out
+    assert "advisory_profile_calibration_stage: ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW" in output.out
+    assert "advisory_profile_calibration_health_status: PASS" in output.out
+    assert "advisory_profile_calibration_review_buy_candidate_count: 1" in output.out
+
+
 def test_dashboard_includes_signal_semantics_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
     root = _reports_root(tmp_path)
     _signal_semantics_status(root, semantics_id="semantics-reviewed")
@@ -2896,6 +3045,122 @@ def _signal_semantics_status(
                 "signal_semantics_status_report": str(report),
                 "signal_semantics_status_csv": str(status_csv),
                 "signal_semantics_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "auto_order_allowed": False,
+        },
+    )
+    return folder
+
+
+def _advisory_profile_calibration_status(
+    root: Path,
+    *,
+    calibration_id: str = "calibration-a",
+    status: str = "WARN",
+    workflow_stage: str = "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW",
+    health_status: str = "PASS",
+    row_count: int = 6,
+    review_buy_candidate_count: int = 1,
+    watch_count: int = 2,
+    no_action_count: int = 1,
+    blocked_count: int = 2,
+    demo_only_count: int = 0,
+    issue_count: int = 2,
+    profile: str = "balanced",
+    input_path: str = "outputs/reports/manual_diagnostics/advisory_profile_calibration_synthetic_fixture.csv",
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:40:00",
+) -> Path:
+    folder = root / "advisory_profile_calibration" / "status" / f"status-{calibration_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "advisory_profile_calibration_status_report.md"
+    status_csv = folder / "advisory_profile_calibration_status.csv"
+    summary_csv = folder / "advisory_profile_calibration_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    calibration_report = root / "advisory_profile_calibration" / calibration_id / "advisory_profile_calibration_report.md"
+    next_action = (
+        "Demo advisory profile calibration validated; do not treat DEMO_ONLY labels as strategy recommendations."
+        if workflow_stage == "DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED"
+        else "Repair advisory profile calibration artifacts before using threshold analysis."
+        if status == "FAIL"
+        else "Review calibration labels manually; REVIEW_BUY_CANDIDATE is not an order and auto-order remains disabled."
+    )
+    report.write_text(
+        "No live trading, broker API, order placement, or message delivery was invoked.",
+        encoding="utf-8",
+    )
+    calibration_report.parent.mkdir(parents=True, exist_ok=True)
+    calibration_report.write_text(
+        "Calibration labels are threshold-analysis labels, not orders.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "ADVISORY_PROFILE_CALIBRATION",
+                "status": "READY" if status != "FAIL" else "FAIL",
+                "latest_artifact_id": calibration_id,
+                "row_count": row_count,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": issue_count,
+            },
+            {
+                "component": "ADVISORY_PROFILE_CALIBRATION_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "calibration-health-a",
+                "row_count": row_count,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "workflow_stage": workflow_stage,
+                "status": status,
+                "latest_calibration_run_id": calibration_id,
+                "latest_status": "READY" if status != "FAIL" else "FAIL",
+                "health_status": health_status,
+                "row_count": row_count,
+                "review_buy_candidate_count": review_buy_candidate_count,
+                "watch_count": watch_count,
+                "no_action_count": no_action_count,
+                "blocked_count": blocked_count,
+                "demo_only_count": demo_only_count,
+                "issue_count": issue_count,
+                "profile": profile,
+                "input_path": input_path,
+                "input_type": "candidates",
+                "report_path": str(calibration_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{calibration_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_calibration_run_id": calibration_id,
+            "health_status": health_status,
+            "row_count": row_count,
+            "next_manual_action": next_action,
+            "warnings": ["Latest advisory profile calibration artifact is review-only."] if warning_count else [],
+            "output_files": {
+                "advisory_profile_calibration_status_report": str(report),
+                "advisory_profile_calibration_status_csv": str(status_csv),
+                "advisory_profile_calibration_status_summary": str(summary_csv),
                 "metadata": str(metadata_path),
             },
             "live_trading_enabled": False,

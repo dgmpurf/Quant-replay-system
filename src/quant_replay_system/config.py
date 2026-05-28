@@ -153,6 +153,37 @@ class AdvisoryProfileCalibrationSettings(BaseModel):
     auto_order_allowed: Literal[False] = False
 
 
+class AdvisoryProfileCalibrationIndexSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/advisory_profile_calibration")
+    output_dir: Path = Path("outputs/reports/advisory_profile_calibration/index")
+    include_missing_metadata: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class AdvisoryProfileCalibrationHealthSettings(BaseModel):
+    index_path: Path = Path("outputs/reports/advisory_profile_calibration/index/advisory_profile_calibration_index.csv")
+    root_dir: Path = Path("outputs/reports/advisory_profile_calibration")
+    output_dir: Path = Path("outputs/reports/advisory_profile_calibration/health")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
+class AdvisoryProfileCalibrationStatusSettings(BaseModel):
+    root_dir: Path = Path("outputs/reports/advisory_profile_calibration")
+    output_dir: Path = Path("outputs/reports/advisory_profile_calibration/status")
+    strict: bool = False
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+
+
 class SignalAdvisoryIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/signals")
     output_dir: Path = Path("outputs/reports/signals/index")
@@ -989,6 +1020,7 @@ class LocalResearchDashboardSettings(BaseModel):
     market_cache_export_root: Path = Path("outputs/reports/market_cache_export")
     data_preparation_root: Path = Path("outputs/reports/data_preparation")
     current_candidates_root: Path = Path("outputs/reports/current_candidates")
+    advisory_profile_calibration_root: Path = Path("outputs/reports/advisory_profile_calibration")
     signal_semantics_root: Path = Path("outputs/reports/signal_semantics")
     signal_advisory_root: Path = Path("outputs/reports/signals")
     single_symbol_advisory_root: Path = Path("outputs/reports/single_symbol_advisory")
@@ -1091,6 +1123,15 @@ class Settings(BaseModel):
     signal_semantics_status: SignalSemanticsStatusSettings = Field(default_factory=SignalSemanticsStatusSettings)
     advisory_profile_calibration: AdvisoryProfileCalibrationSettings = Field(
         default_factory=AdvisoryProfileCalibrationSettings
+    )
+    advisory_profile_calibration_index: AdvisoryProfileCalibrationIndexSettings = Field(
+        default_factory=AdvisoryProfileCalibrationIndexSettings
+    )
+    advisory_profile_calibration_health: AdvisoryProfileCalibrationHealthSettings = Field(
+        default_factory=AdvisoryProfileCalibrationHealthSettings
+    )
+    advisory_profile_calibration_status: AdvisoryProfileCalibrationStatusSettings = Field(
+        default_factory=AdvisoryProfileCalibrationStatusSettings
     )
     signal_advisory_index: SignalAdvisoryIndexSettings = Field(default_factory=SignalAdvisoryIndexSettings)
     signal_advisory_health: SignalAdvisoryHealthSettings = Field(default_factory=SignalAdvisoryHealthSettings)

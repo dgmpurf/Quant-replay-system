@@ -15,6 +15,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
+- Has advisory profile calibration produced local threshold-design context?
 - Has signal semantics mapped scores into advisory labels safely?
 - Has a signal advisory run produced local alert-preview context?
 - Has a single-symbol advisory review been produced for the latest requested symbol?
@@ -39,6 +40,7 @@ outputs/reports/snapshot_quality/
 outputs/reports/market_update_handoff/status/
 outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
+outputs/reports/advisory_profile_calibration/status/
 outputs/reports/signal_semantics/status/
 outputs/reports/signals/status/
 outputs/reports/single_symbol_advisory/status/
@@ -86,6 +88,16 @@ The unified summary records the latest export id, export status/stage, linked pi
 Market-cache-export is earlier than current-candidates, market-update-handoff, and paper workflow. If those later artifacts exist, they take priority for the final `workflow_stage`; cache-export fields remain visible as context. If the latest active cache export has health failures or duplicate-key errors and no later valid workflow supersedes it, `research-status` surfaces the export failure as actionable.
 
 These export fields do not imply automatic source selection. The reviewed cache export remains an explicit source/upstream selection layer, and `data-quality` plus `snapshot-quality` remain required before research use.
+
+## Advisory Profile Calibration Status
+
+`research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.
+
+The unified summary records the latest calibration run id, calibration status/stage, profile, health status, simulated action counts, issue count, report path, and the calibration layer's next manual action. Calibration labels are local design outputs only. `REVIEW_BUY_CANDIDATE` means a human-review candidate for threshold analysis, not an order, paper approval, broker instruction, or automatic execution.
+
+When calibration reports `DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED`, the dashboard treats the warning as expected demo context. Demo calibration remains `DEMO_ONLY` and does not become real BUY/SELL guidance. When calibration reports `ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW`, review labels remain visible as manual review context, with auto-order disabled.
+
+Advisory profile calibration is earlier than signal semantics, signal advisory, single-symbol advisory, advisory conversation, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to calibration; calibration fields remain visible for audit. If calibration health fails because safety boundaries are broken, such as `auto_order_allowed=true`, missing no-live/no-broker/no-message metadata, `APPROVED_FOR_PAPER`, message-delivery metadata, missing required files, or demo BUY/SELL leakage, `research-status` surfaces the failure as actionable when calibration is the active stage.
 
 ## Signal Semantics Status
 

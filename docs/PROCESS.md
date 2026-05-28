@@ -219,6 +219,8 @@ Shared semantics wiring across advisory classifiers should receive checkpoint do
 
 Advisory provenance and auditability milestones should receive checkpoint documents before dashboard expansion, delivery channels, automation, or broker integration, because they define how downstream artifacts record the policy source, classifier, version, and safety flags behind advisory labels.
 
+Advisory profile calibration artifact-view and `research-status` milestones should receive checkpoint documents before using calibration outputs to refine non-demo `signal_semantics` profiles, delivery channels, automation, or broker integration, because they define how threshold-design context appears in dashboard actionability without becoming approval or execution.
+
 Shared semantics provenance visibility milestones should receive checkpoint documents before non-demo calibration, delivery channels, automation, or broker integration, because they define how advisory index/status views and unified `research-status` expose audit metadata without turning it into approval.
 
 Advisory profile calibration milestones should receive checkpoint documents before wiring non-demo thresholds into `signal_semantics`, dashboard status, delivery channels, automation, or broker integration, because they define how threshold experiments remain calibration-only rather than recommendations or orders.

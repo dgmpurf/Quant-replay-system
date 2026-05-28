@@ -88,6 +88,79 @@ Files:
 
 The summary includes score distribution, row count, symbol count, risk/action counts, simulated label counts, and safety flags.
 
+## Index, Health, And Status
+
+Use `advisory-profile-calibration-index` to discover local calibration runs:
+
+```cmd
+python -m quant_replay_system.cli advisory-profile-calibration-index
+```
+
+The index scans `outputs/reports/advisory_profile_calibration/` and writes:
+
+```text
+outputs/reports/advisory_profile_calibration/index/
+  advisory_profile_calibration_index.csv
+  advisory_profile_calibration_index_report.md
+  metadata.json
+```
+
+Index rows include the calibration run id, status, profile, input type, action counts, quality status fields, safety flags, and artifact paths.
+
+Use `advisory-profile-calibration-health` to check artifact completeness and safety boundaries:
+
+```cmd
+python -m quant_replay_system.cli advisory-profile-calibration-health
+```
+
+Health checks verify:
+
+- `metadata.json` is readable,
+- `advisory_profile_calibration.csv` exists and has the required columns,
+- `advisory_profile_calibration_summary.csv` exists and is readable,
+- `advisory_profile_calibration_report.md` exists,
+- leading-zero symbols such as `000001` remain six-character strings,
+- demo calibration does not contain `REVIEW_BUY_CANDIDATE` or `REVIEW_SELL_CANDIDATE`,
+- review labels retain `requires_manual_confirmation=true`,
+- `auto_order_allowed=false`,
+- `no_live_trading=true`,
+- `no_broker_api=true`,
+- `no_message_sent=true`,
+- no message delivery, broker, live-trading, or `APPROVED_FOR_PAPER` metadata is present,
+- `BLOCKED` rows include reason or issue context where possible.
+
+Health artifacts are written under:
+
+```text
+outputs/reports/advisory_profile_calibration/health/<health_id>/
+  advisory_profile_calibration_health_report.md
+  advisory_profile_calibration_health_issues.csv
+  advisory_profile_calibration_health_summary.csv
+  metadata.json
+```
+
+Use `advisory-profile-calibration-status` to summarize the latest calibration run:
+
+```cmd
+python -m quant_replay_system.cli advisory-profile-calibration-status
+```
+
+Expected stages include:
+
+- `NO_ADVISORY_PROFILE_CALIBRATION_ARTIFACTS`
+- `DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED`
+- `ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW`
+- `ADVISORY_PROFILE_CALIBRATION_HEALTH_WARN`
+- `ADVISORY_PROFILE_CALIBRATION_FAILED`
+
+For demo-only calibration, the status reminds the user not to treat `DEMO_ONLY` labels as strategy recommendations. For non-demo structural calibration, the status may be ready for review, but `REVIEW_BUY_CANDIDATE` remains a human-review-only label and auto-order remains disabled.
+
+## Research Status Integration
+
+`research-status` includes the latest `advisory-profile-calibration-status` as calibration/design context. The unified summary, metadata, markdown report, and CLI output expose the latest calibration run id, profile, health status, simulated action counts, issue count, report path, and next manual action.
+
+Calibration context does not approve trades. `REVIEW_BUY_CANDIDATE` remains a human-review-only threshold-analysis label, demo calibration remains `DEMO_ONLY`, and later workflow stages such as signal semantics, signal advisory, market-update handoff, or paper workflow keep priority for the final dashboard stage.
+
 ## Safety Boundaries
 
 Every row and metadata artifact keeps:

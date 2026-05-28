@@ -14,6 +14,9 @@ import pandas as pd
 from quant_replay_system.batch_replay import run_batch_replay
 from quant_replay_system.calibration import run_parameter_calibration
 from quant_replay_system.advisory_profile_calibration import run_advisory_profile_calibration
+from quant_replay_system.advisory_profile_calibration_health import check_advisory_profile_calibration_health
+from quant_replay_system.advisory_profile_calibration_index import build_advisory_profile_calibration_index
+from quant_replay_system.advisory_profile_calibration_status import run_advisory_profile_calibration_status
 from quant_replay_system.advisory_conversation import run_advisory_conversation
 from quant_replay_system.advisory_conversation_health import check_advisory_conversation_health
 from quant_replay_system.advisory_conversation_index import build_advisory_conversation_index
@@ -296,6 +299,42 @@ def build_parser() -> argparse.ArgumentParser:
     advisory_profile_calibration.add_argument("--output-dir", help="Optional calibration output directory")
     advisory_profile_calibration.add_argument("--config", help="Optional config YAML path")
     advisory_profile_calibration.set_defaults(handler=_handle_advisory_profile_calibration)
+
+    advisory_profile_calibration_index = subparsers.add_parser(
+        "advisory-profile-calibration-index",
+        help="Build a local index of advisory profile calibration artifact folders",
+    )
+    advisory_profile_calibration_index.add_argument("--root", help="Advisory profile calibration artifact root directory")
+    advisory_profile_calibration_index.add_argument("--output-dir", help="Optional calibration index output directory")
+    advisory_profile_calibration_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Index folders missing metadata.json",
+    )
+    advisory_profile_calibration_index.add_argument("--config", help="Optional config YAML path")
+    advisory_profile_calibration_index.set_defaults(handler=_handle_advisory_profile_calibration_index)
+
+    advisory_profile_calibration_health = subparsers.add_parser(
+        "advisory-profile-calibration-health",
+        help="Check local advisory profile calibration artifact file health and safety flags",
+    )
+    advisory_profile_calibration_health.add_argument("--index", help="Advisory profile calibration artifact index CSV path")
+    advisory_profile_calibration_health.add_argument("--root", help="Advisory profile calibration artifact root directory")
+    advisory_profile_calibration_health.add_argument("--output-dir", help="Optional calibration health-check output directory")
+    advisory_profile_calibration_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    advisory_profile_calibration_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    advisory_profile_calibration_health.add_argument("--config", help="Optional config YAML path")
+    advisory_profile_calibration_health.set_defaults(handler=_handle_advisory_profile_calibration_health)
+
+    advisory_profile_calibration_status = subparsers.add_parser(
+        "advisory-profile-calibration-status",
+        help="Build a local advisory profile calibration status dashboard",
+    )
+    advisory_profile_calibration_status.add_argument("--root", help="Advisory profile calibration artifact root directory")
+    advisory_profile_calibration_status.add_argument("--output-dir", help="Optional calibration status output directory")
+    advisory_profile_calibration_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
+    advisory_profile_calibration_status.add_argument("--config", help="Optional config YAML path")
+    advisory_profile_calibration_status.set_defaults(handler=_handle_advisory_profile_calibration_status)
 
     signal_semantics_index = subparsers.add_parser(
         "signal-semantics-index",
@@ -667,6 +706,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument("--market-cache-export-root", help="Market-cache-export artifact root directory")
     research_status.add_argument("--data-preparation-root", help="Data preparation artifact root directory")
     research_status.add_argument("--current-candidates-root", help="Current-candidates artifact root directory")
+    research_status.add_argument(
+        "--advisory-profile-calibration-root",
+        help="Advisory profile calibration artifact root directory",
+    )
     research_status.add_argument("--signal-semantics-root", help="Signal semantics artifact root directory")
     research_status.add_argument("--single-symbol-advisory-root", help="Single-symbol advisory artifact root directory")
     research_status.add_argument(
@@ -1540,6 +1583,101 @@ def _handle_advisory_profile_calibration(args: argparse.Namespace) -> int:
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading, broker API, order placement, or message delivery was invoked.")
+    return 0
+
+
+def _handle_advisory_profile_calibration_index(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"include_missing_metadata": bool(args.include_missing_metadata)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "advisory_profile_calibration_index": settings.advisory_profile_calibration_index.model_copy(
+                update=updates
+            )
+        }
+    )
+    result = build_advisory_profile_calibration_index(settings=settings)
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['advisory_profile_calibration_index_report']}")
+    print(f"Index CSV path: {result.artifact_paths['advisory_profile_calibration_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    return 0
+
+
+def _handle_advisory_profile_calibration_health(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.index:
+        updates["index_path"] = Path(args.index)
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "advisory_profile_calibration_health": settings.advisory_profile_calibration_health.model_copy(
+                update=updates
+            )
+        }
+    )
+    result = check_advisory_profile_calibration_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        settings=settings,
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['advisory_profile_calibration_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_advisory_profile_calibration_status(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    updates = {"strict": bool(args.strict)}
+    if args.root:
+        updates["root_dir"] = Path(args.root)
+    if args.output_dir:
+        updates["output_dir"] = Path(args.output_dir)
+    settings = settings.model_copy(
+        update={
+            "advisory_profile_calibration_status": settings.advisory_profile_calibration_status.model_copy(
+                update=updates
+            )
+        }
+    )
+    result = run_advisory_profile_calibration_status(root=args.root, output_dir=args.output_dir, config=settings)
+    print(f"Status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_calibration_run_id: {result.latest_calibration_run_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"health_status: {result.health_status}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['advisory_profile_calibration_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
     return 0
 
 
@@ -2555,6 +2693,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["data_preparation_root"] = Path(args.data_preparation_root)
     if args.current_candidates_root:
         updates["current_candidates_root"] = Path(args.current_candidates_root)
+    if args.advisory_profile_calibration_root:
+        updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
     if args.signal_semantics_root:
         updates["signal_semantics_root"] = Path(args.signal_semantics_root)
     if args.single_symbol_advisory_root:
@@ -2581,6 +2721,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         market_cache_export_root=args.market_cache_export_root,
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
+        advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         signal_semantics_root=args.signal_semantics_root,
         single_symbol_advisory_root=args.single_symbol_advisory_root,
         single_symbol_advisory_answer_root=args.single_symbol_advisory_answer_root,
@@ -2632,6 +2773,22 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"market_cache_export_stage: {result.market_cache_export_stage}")
     print(f"market_cache_export_pipeline_id: {result.market_cache_export_pipeline_id}")
     print(f"market_cache_export_snapshot_quality_status: {result.market_cache_export_snapshot_quality_status}")
+    print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
+    print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
+    print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")
+    print(f"advisory_profile_calibration_profile: {result.advisory_profile_calibration_profile}")
+    print(f"advisory_profile_calibration_health_status: {result.advisory_profile_calibration_health_status}")
+    print(
+        "advisory_profile_calibration_review_buy_candidate_count: "
+        f"{result.advisory_profile_calibration_review_buy_candidate_count}"
+    )
+    print(f"advisory_profile_calibration_watch_count: {result.advisory_profile_calibration_watch_count}")
+    print(f"advisory_profile_calibration_no_action_count: {result.advisory_profile_calibration_no_action_count}")
+    print(f"advisory_profile_calibration_blocked_count: {result.advisory_profile_calibration_blocked_count}")
+    print(f"advisory_profile_calibration_demo_only_count: {result.advisory_profile_calibration_demo_only_count}")
+    print(f"advisory_profile_calibration_issue_count: {result.advisory_profile_calibration_issue_count}")
+    print(f"advisory_profile_calibration_report_path: {result.advisory_profile_calibration_report_path}")
+    print(f"advisory_profile_calibration_next_action: {result.advisory_profile_calibration_next_action}")
     print(f"latest_signal_semantics_run_id: {result.latest_signal_semantics_run_id}")
     print(f"signal_semantics_status: {result.signal_semantics_status}")
     print(f"signal_semantics_stage: {result.signal_semantics_stage}")

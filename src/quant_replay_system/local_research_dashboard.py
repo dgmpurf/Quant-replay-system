@@ -11,6 +11,7 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.advisory_conversation_status import run_advisory_conversation_status
+from quant_replay_system.advisory_profile_calibration_status import run_advisory_profile_calibration_status
 from quant_replay_system.config import LocalResearchDashboardSettings, Settings, load_settings
 from quant_replay_system.historical_backfill_status import run_historical_backfill_status
 from quant_replay_system.market_cache_export_policy_status import run_market_cache_export_policy_status
@@ -74,6 +75,19 @@ SUMMARY_COLUMNS = [
     "unrelated_snapshot_warning_count",
     "current_candidate_status",
     "current_candidate_health_status",
+    "advisory_profile_calibration_status",
+    "latest_advisory_profile_calibration_run_id",
+    "advisory_profile_calibration_stage",
+    "advisory_profile_calibration_profile",
+    "advisory_profile_calibration_health_status",
+    "advisory_profile_calibration_review_buy_candidate_count",
+    "advisory_profile_calibration_watch_count",
+    "advisory_profile_calibration_no_action_count",
+    "advisory_profile_calibration_blocked_count",
+    "advisory_profile_calibration_demo_only_count",
+    "advisory_profile_calibration_issue_count",
+    "advisory_profile_calibration_report_path",
+    "advisory_profile_calibration_next_action",
     "signal_semantics_status",
     "latest_signal_semantics_run_id",
     "signal_semantics_stage",
@@ -262,6 +276,7 @@ COMPONENTS = [
     "SNAPSHOT_QUALITY",
     "CURRENT_CANDIDATES",
     "CURRENT_CANDIDATE_HEALTH",
+    "ADVISORY_PROFILE_CALIBRATION_STATUS",
     "SIGNAL_SEMANTICS_STATUS",
     "SIGNAL_ADVISORY_STATUS",
     "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -285,6 +300,7 @@ WORKFLOW_AREAS = {
     "SNAPSHOT_QUALITY": "DATA_PREPARATION",
     "CURRENT_CANDIDATES": "CURRENT_CANDIDATES",
     "CURRENT_CANDIDATE_HEALTH": "CURRENT_CANDIDATES",
+    "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
     "SIGNAL_SEMANTICS_STATUS": "SIGNAL_SEMANTICS",
     "SIGNAL_ADVISORY_STATUS": "SIGNAL_ADVISORY",
     "SINGLE_SYMBOL_ADVISORY_STATUS": "SINGLE_SYMBOL_ADVISORY",
@@ -335,6 +351,19 @@ class LocalResearchDashboardResult:
     unrelated_snapshot_warning_count: int
     current_candidate_status: str
     current_candidate_health_status: str
+    advisory_profile_calibration_status: str
+    latest_advisory_profile_calibration_run_id: str
+    advisory_profile_calibration_stage: str
+    advisory_profile_calibration_profile: str
+    advisory_profile_calibration_health_status: str
+    advisory_profile_calibration_review_buy_candidate_count: int
+    advisory_profile_calibration_watch_count: int
+    advisory_profile_calibration_no_action_count: int
+    advisory_profile_calibration_blocked_count: int
+    advisory_profile_calibration_demo_only_count: int
+    advisory_profile_calibration_issue_count: int
+    advisory_profile_calibration_report_path: str
+    advisory_profile_calibration_next_action: str
     signal_semantics_status: str
     latest_signal_semantics_run_id: str
     signal_semantics_stage: str
@@ -503,6 +532,7 @@ def run_local_research_dashboard(
     market_cache_export_root: str | Path | None = None,
     data_preparation_root: str | Path | None = None,
     current_candidates_root: str | Path | None = None,
+    advisory_profile_calibration_root: str | Path | None = None,
     signal_semantics_root: str | Path | None = None,
     signal_advisory_root: str | Path | None = None,
     single_symbol_advisory_root: str | Path | None = None,
@@ -547,6 +577,11 @@ def run_local_research_dashboard(
         if current_candidates_root is not None
         else dashboard_settings.current_candidates_root
     )
+    effective_advisory_profile_calibration_root = (
+        Path(advisory_profile_calibration_root)
+        if advisory_profile_calibration_root is not None
+        else dashboard_settings.advisory_profile_calibration_root
+    )
     effective_signal_semantics_root = (
         Path(signal_semantics_root)
         if signal_semantics_root is not None
@@ -590,6 +625,8 @@ def run_local_research_dashboard(
             effective_data_prep_root = effective_root / "data_preparation"
         if current_candidates_root is None:
             effective_current_root = effective_root / "current_candidates"
+        if advisory_profile_calibration_root is None:
+            effective_advisory_profile_calibration_root = effective_root / "advisory_profile_calibration"
         if signal_semantics_root is None:
             effective_signal_semantics_root = effective_root / "signal_semantics"
         if signal_advisory_root is None:
@@ -612,6 +649,7 @@ def run_local_research_dashboard(
         market_cache_export_root=effective_market_cache_export_root,
         data_preparation_root=effective_data_prep_root,
         current_candidates_root=effective_current_root,
+        advisory_profile_calibration_root=effective_advisory_profile_calibration_root,
         signal_semantics_root=effective_signal_semantics_root,
         signal_advisory_root=effective_signal_advisory_root,
         single_symbol_advisory_root=effective_single_symbol_advisory_root,
@@ -650,6 +688,7 @@ def run_local_research_dashboard(
         "market_cache_export_root": effective_market_cache_export_root,
         "data_preparation_root": effective_data_prep_root,
         "current_candidates_root": effective_current_root,
+        "advisory_profile_calibration_root": effective_advisory_profile_calibration_root,
         "signal_semantics_root": effective_signal_semantics_root,
         "signal_advisory_root": effective_signal_advisory_root,
         "single_symbol_advisory_root": effective_single_symbol_advisory_root,
@@ -682,6 +721,37 @@ def run_local_research_dashboard(
         unrelated_snapshot_warning_count=_int_or_zero(summary.get("unrelated_snapshot_warning_count")),
         current_candidate_status=str(summary.get("current_candidate_status", "MISSING")),
         current_candidate_health_status=str(summary.get("current_candidate_health_status", "MISSING")),
+        advisory_profile_calibration_status=str(
+            summary.get("advisory_profile_calibration_status", "MISSING")
+        ),
+        latest_advisory_profile_calibration_run_id=str(
+            summary.get("latest_advisory_profile_calibration_run_id", "")
+        ),
+        advisory_profile_calibration_stage=str(summary.get("advisory_profile_calibration_stage", "")),
+        advisory_profile_calibration_profile=str(summary.get("advisory_profile_calibration_profile", "")),
+        advisory_profile_calibration_health_status=str(
+            summary.get("advisory_profile_calibration_health_status", "")
+        ),
+        advisory_profile_calibration_review_buy_candidate_count=_int_or_zero(
+            summary.get("advisory_profile_calibration_review_buy_candidate_count")
+        ),
+        advisory_profile_calibration_watch_count=_int_or_zero(
+            summary.get("advisory_profile_calibration_watch_count")
+        ),
+        advisory_profile_calibration_no_action_count=_int_or_zero(
+            summary.get("advisory_profile_calibration_no_action_count")
+        ),
+        advisory_profile_calibration_blocked_count=_int_or_zero(
+            summary.get("advisory_profile_calibration_blocked_count")
+        ),
+        advisory_profile_calibration_demo_only_count=_int_or_zero(
+            summary.get("advisory_profile_calibration_demo_only_count")
+        ),
+        advisory_profile_calibration_issue_count=_int_or_zero(
+            summary.get("advisory_profile_calibration_issue_count")
+        ),
+        advisory_profile_calibration_report_path=str(summary.get("advisory_profile_calibration_report_path", "")),
+        advisory_profile_calibration_next_action=str(summary.get("advisory_profile_calibration_next_action", "")),
         signal_semantics_status=str(summary.get("signal_semantics_status", "MISSING")),
         latest_signal_semantics_run_id=str(summary.get("latest_signal_semantics_run_id", "")),
         signal_semantics_stage=str(summary.get("signal_semantics_stage", "")),
@@ -951,6 +1021,7 @@ def scan_local_research_workflow_artifacts(
     market_cache_export_root: str | Path,
     data_preparation_root: str | Path,
     current_candidates_root: str | Path,
+    advisory_profile_calibration_root: str | Path,
     signal_semantics_root: str | Path,
     signal_advisory_root: str | Path,
     single_symbol_advisory_root: str | Path,
@@ -969,6 +1040,7 @@ def scan_local_research_workflow_artifacts(
     market_cache_export_path = Path(market_cache_export_root)
     data_prep_root = Path(data_preparation_root)
     current_root = Path(current_candidates_root)
+    advisory_profile_calibration_path = Path(advisory_profile_calibration_root)
     signal_semantics_path = Path(signal_semantics_root)
     signal_root = Path(signal_advisory_root)
     single_symbol_root = Path(single_symbol_advisory_root)
@@ -987,6 +1059,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_snapshot_quality(root_path / "snapshot_quality", requested_date))
     records.extend(_scan_current_candidates(current_root, requested_date, requested_universe))
     records.extend(_scan_current_candidate_health(current_root / "health"))
+    records.extend(_scan_advisory_profile_calibration_status(advisory_profile_calibration_path))
     records.extend(_scan_signal_semantics_status(signal_semantics_path))
     records.extend(_scan_signal_advisory_status(signal_root))
     records.extend(_scan_single_symbol_advisory_status(single_symbol_root))
@@ -1284,6 +1357,17 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "MARKET_UPDATE_HANDOFF_STATUS",
         *paper_started_components,
     }
+    post_advisory_profile_calibration_components = {
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
     post_single_symbol_advisory_components = {
         "MARKET_CACHE_EXPORT_POLICY_STATUS",
         "MARKET_CACHE_EXPORT_STATUS",
@@ -1291,6 +1375,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "MARKET_UPDATE_HANDOFF_STATUS",
@@ -1303,6 +1388,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -1316,6 +1402,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -1330,6 +1417,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -1342,6 +1430,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "DATA_PREPARATION_WORKFLOW",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -1357,6 +1446,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -1394,6 +1484,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "post_signal_semantics_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_signal_semantics_components
+        ),
+        "post_advisory_profile_calibration_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_advisory_profile_calibration_components
         ),
         "post_single_symbol_advisory_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
@@ -1534,6 +1628,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
                 + issue_counts["stale_warning_count"]
                 + issue_counts["actionable_warning_count"],
             }
+
+    if component == "ADVISORY_PROFILE_CALIBRATION_STATUS":
+        return _advisory_profile_calibration_warning_actionability(row, context)
 
     if component == "SIGNAL_SEMANTICS_STATUS":
         return _signal_semantics_warning_actionability(row, context)
@@ -1815,6 +1912,63 @@ def _signal_semantics_warning_actionability(row: dict[str, Any], context: dict[s
             "blocking_error_count": 0,
         }
     if status == "WARN" and stage == "SIGNAL_SEMANTICS_READY_FOR_REVIEW":
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
+def _advisory_profile_calibration_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if context.get("post_advisory_profile_calibration_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage == "DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED":
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": expected_count,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "WARN" and stage == "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW":
         expected_count = max(warning_count, 1)
         return {
             "total_warning_count": expected_count,
@@ -2383,6 +2537,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         if not _has_post_backfill_workflow_component(dashboard_frame) and statuses["HISTORICAL_BACKFILL_STATUS"] == "FAIL":
             return "BACKFILL_FAILED"
         if (
+            not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
+            and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] == "FAIL"
+        ):
+            return "ADVISORY_PROFILE_CALIBRATION_FAILED"
+        if (
             not _has_post_signal_semantics_workflow_component(dashboard_frame)
             and statuses["SIGNAL_SEMANTICS_STATUS"] == "FAIL"
         ):
@@ -2424,6 +2583,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         == "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
     ):
         return "CURRENT_CANDIDATES_READY_FOR_PAPER_SMOKE_TEST"
+    if (
+        not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
+        and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] in {"PASS", "WARN", "READY"}
+        and _advisory_profile_calibration_stage_from_frame(dashboard_frame)
+    ):
+        return _advisory_profile_calibration_stage_from_frame(dashboard_frame)
     if (
         not _has_post_signal_semantics_workflow_component(dashboard_frame)
         and statuses["SIGNAL_SEMANTICS_STATUS"] in {"PASS", "WARN", "READY"}
@@ -2538,6 +2703,10 @@ def infer_local_research_next_action(
         "SNAPSHOT_READY": "Run current-candidates.",
         "CURRENT_CANDIDATES_READY": "Run current-candidates-index.",
         "CURRENT_CANDIDATES_HEALTH_READY": "Run current-to-paper.",
+        "DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED": "Demo advisory profile calibration validated; do not treat DEMO_ONLY labels as strategy recommendations.",
+        "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW": "Review calibration labels manually; REVIEW_BUY_CANDIDATE is not an order and auto-order remains disabled.",
+        "ADVISORY_PROFILE_CALIBRATION_HEALTH_WARN": "Review advisory profile calibration health warnings before using threshold analysis.",
+        "ADVISORY_PROFILE_CALIBRATION_FAILED": "Repair advisory profile calibration artifacts before using threshold analysis.",
         "DEMO_SIGNAL_SEMANTICS_VALIDATED": "Demo signal semantics validated; do not treat DEMO_ONLY labels as strategy recommendations.",
         "SIGNAL_SEMANTICS_READY_FOR_REVIEW": "Review signal semantics labels manually; REVIEW_BUY_CANDIDATE is not an order and auto-order remains disabled.",
         "SIGNAL_SEMANTICS_HEALTH_WARN": "Review signal semantics health warnings before using advisory labels.",
@@ -2605,6 +2774,7 @@ def summarize_local_research_status(
                     "HISTORICAL_BACKFILL_STATUS",
                     "MARKET_CACHE_EXPORT_POLICY_STATUS",
                     "MARKET_CACHE_EXPORT_STATUS",
+                    "ADVISORY_PROFILE_CALIBRATION_STATUS",
                     "SIGNAL_SEMANTICS_STATUS",
                     "SIGNAL_ADVISORY_STATUS",
                     "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -2680,6 +2850,68 @@ def summarize_local_research_status(
         "unrelated_snapshot_warning_count": _sum_int_column(frame, "unrelated_snapshot_warning_count"),
         "current_candidate_status": _component_status(by_component, "CURRENT_CANDIDATES"),
         "current_candidate_health_status": _component_status(by_component, "CURRENT_CANDIDATE_HEALTH"),
+        "advisory_profile_calibration_status": _component_status(
+            by_component,
+            "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        ),
+        "latest_advisory_profile_calibration_run_id": _string_or_empty(
+            by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("latest_artifact_id")
+        ),
+        "advisory_profile_calibration_stage": _string_or_empty(
+            by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("stage")
+        ),
+        "advisory_profile_calibration_profile": _parse_note_value(
+            by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+            "profile",
+        ),
+        "advisory_profile_calibration_health_status": _parse_note_value(
+            by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "advisory_profile_calibration_review_buy_candidate_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+                "review_buy_candidate_count",
+            )
+        ),
+        "advisory_profile_calibration_watch_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+                "watch_count",
+            )
+        ),
+        "advisory_profile_calibration_no_action_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+                "no_action_count",
+            )
+        ),
+        "advisory_profile_calibration_blocked_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+                "blocked_count",
+            )
+        ),
+        "advisory_profile_calibration_demo_only_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+                "demo_only_count",
+            )
+        ),
+        "advisory_profile_calibration_issue_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+                "issue_count",
+            )
+        ),
+        "advisory_profile_calibration_report_path": _parse_note_value(
+            by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "advisory_profile_calibration_next_action": _parse_note_value(
+            by_component.get("ADVISORY_PROFILE_CALIBRATION_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
         "signal_semantics_status": _component_status(by_component, "SIGNAL_SEMANTICS_STATUS"),
         "latest_signal_semantics_run_id": _string_or_empty(
             by_component.get("SIGNAL_SEMANTICS_STATUS", {}).get("latest_artifact_id")
@@ -3300,6 +3532,21 @@ def build_local_research_dashboard_metadata(
         "market_update_handoff_pipeline_id": result.market_update_handoff_pipeline_id,
         "market_update_handoff_snapshot_quality_status": result.market_update_handoff_snapshot_quality_status,
         "market_update_handoff_current_candidate_run_id": result.market_update_handoff_current_candidate_run_id,
+        "latest_advisory_profile_calibration_run_id": result.latest_advisory_profile_calibration_run_id,
+        "advisory_profile_calibration_status": result.advisory_profile_calibration_status,
+        "advisory_profile_calibration_stage": result.advisory_profile_calibration_stage,
+        "advisory_profile_calibration_profile": result.advisory_profile_calibration_profile,
+        "advisory_profile_calibration_health_status": result.advisory_profile_calibration_health_status,
+        "advisory_profile_calibration_review_buy_candidate_count": (
+            result.advisory_profile_calibration_review_buy_candidate_count
+        ),
+        "advisory_profile_calibration_watch_count": result.advisory_profile_calibration_watch_count,
+        "advisory_profile_calibration_no_action_count": result.advisory_profile_calibration_no_action_count,
+        "advisory_profile_calibration_blocked_count": result.advisory_profile_calibration_blocked_count,
+        "advisory_profile_calibration_demo_only_count": result.advisory_profile_calibration_demo_only_count,
+        "advisory_profile_calibration_issue_count": result.advisory_profile_calibration_issue_count,
+        "advisory_profile_calibration_report_path": result.advisory_profile_calibration_report_path,
+        "advisory_profile_calibration_next_action": result.advisory_profile_calibration_next_action,
         "latest_signal_semantics_run_id": result.latest_signal_semantics_run_id,
         "signal_semantics_status": result.signal_semantics_status,
         "signal_semantics_stage": result.signal_semantics_stage,
@@ -3487,6 +3734,15 @@ def render_local_research_dashboard_report(
                 "latest_market_update_handoff_id",
                 "market_update_handoff_stage",
                 "market_update_handoff_current_candidate_run_id",
+                "advisory_profile_calibration_status",
+                "latest_advisory_profile_calibration_run_id",
+                "advisory_profile_calibration_stage",
+                "advisory_profile_calibration_health_status",
+                "advisory_profile_calibration_review_buy_candidate_count",
+                "advisory_profile_calibration_watch_count",
+                "advisory_profile_calibration_blocked_count",
+                "advisory_profile_calibration_issue_count",
+                "advisory_profile_calibration_profile",
                 "signal_semantics_status",
                 "latest_signal_semantics_run_id",
                 "signal_semantics_stage",
@@ -3887,6 +4143,124 @@ def _signal_advisory_action_counts_text(summary: dict[str, Any]) -> str:
         "BLOCKED": _int_or_zero(summary.get("blocked_count")),
     }
     return json.dumps(counts, sort_keys=True)
+
+
+def _scan_advisory_profile_calibration_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_advisory_profile_calibration_status_record(root)
+    if computed is not None:
+        return [computed]
+
+    scan_root = root if root.name == "status" else root / "status"
+    records = []
+    for metadata_path in _metadata_paths(scan_root, "metadata.json"):
+        metadata = _load_json_or_none(metadata_path)
+        if metadata is None or not metadata.get("status_id"):
+            continue
+        output_files = _output_files(metadata)
+        summary = _first_csv_record(output_files.get("advisory_profile_calibration_status_summary"))
+        status_rows = _csv_records(output_files.get("advisory_profile_calibration_status_csv"))
+        health_row = next(
+            (
+                row
+                for row in status_rows
+                if _string_or_empty(row.get("component")) == "ADVISORY_PROFILE_CALIBRATION_HEALTH"
+            ),
+            {},
+        )
+        status_text = _string_or_empty(metadata.get("status")) or _string_or_empty(summary.get("status")) or "READY"
+        stage = _string_or_empty(metadata.get("workflow_stage")) or _string_or_empty(summary.get("workflow_stage"))
+        latest_calibration_run_id = _string_or_empty(metadata.get("latest_calibration_run_id")) or _string_or_empty(
+            summary.get("latest_calibration_run_id")
+        )
+        warning_count = (
+            _int_or_zero(summary.get("warning_count"))
+            + _int_or_zero(health_row.get("warning_count"))
+            + (len(metadata.get("warnings", [])) if isinstance(metadata.get("warnings"), list) else 0)
+        )
+        if status_text == "WARN" and warning_count == 0:
+            warning_count = 1
+        records.append(
+            _record(
+                workflow_area="ADVISORY_PROFILE_CALIBRATION",
+                component="ADVISORY_PROFILE_CALIBRATION_STATUS",
+                status=status_text,
+                stage=stage or "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW",
+                latest_artifact_id=latest_calibration_run_id
+                or _string_or_empty(metadata.get("status_id"))
+                or metadata_path.parent.name,
+                report_path=output_files.get(
+                    "advisory_profile_calibration_status_report",
+                    metadata_path.parent / "advisory_profile_calibration_status_report.md",
+                ),
+                metadata_path=metadata_path,
+                issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+                warning_count=warning_count,
+                error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+                notes=_advisory_profile_calibration_notes(metadata, summary),
+                created_at=metadata.get("created_at"),
+            )
+        )
+    return records
+
+
+def _computed_advisory_profile_calibration_status_record(root: Path) -> dict[str, Any] | None:
+    calibration_root = root.parent if root.name == "status" else root
+    if not calibration_root.exists():
+        return None
+    try:
+        result = run_advisory_profile_calibration_status(
+            root=calibration_root,
+            output_dir=calibration_root / "status",
+            config={"write_artifacts": False},
+        )
+    except Exception:
+        return None
+    if not result.latest_calibration_run_id:
+        return None
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    health_row = {}
+    if not result.status_frame.empty:
+        health_rows = result.status_frame.loc[
+            result.status_frame["component"] == "ADVISORY_PROFILE_CALIBRATION_HEALTH"
+        ]
+        if not health_rows.empty:
+            health_row = health_rows.iloc[0].to_dict()
+    warning_count = (
+        _int_or_zero(summary.get("warning_count"))
+        + _int_or_zero(health_row.get("warning_count"))
+        + len(result.warnings)
+    )
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="ADVISORY_PROFILE_CALIBRATION",
+        component="ADVISORY_PROFILE_CALIBRATION_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_calibration_run_id,
+        report_path=result.artifact_paths.get("advisory_profile_calibration_status_report", ""),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+        warning_count=warning_count,
+        error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+        notes=_advisory_profile_calibration_notes({"next_manual_action": result.next_manual_action}, summary),
+    )
+
+
+def _advisory_profile_calibration_notes(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(metadata.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"profile={_string_or_empty(summary.get('profile'))}; "
+        f"review_buy_candidate_count={_string_or_empty(summary.get('review_buy_candidate_count'))}; "
+        f"watch_count={_string_or_empty(summary.get('watch_count'))}; "
+        f"no_action_count={_string_or_empty(summary.get('no_action_count'))}; "
+        f"blocked_count={_string_or_empty(summary.get('blocked_count'))}; "
+        f"demo_only_count={_string_or_empty(summary.get('demo_only_count'))}; "
+        f"issue_count={_string_or_empty(summary.get('issue_count'))}; "
+        f"input_path={_string_or_empty(summary.get('input_path'))}; "
+        f"report_path={_string_or_empty(summary.get('report_path'))}"
+    )
 
 
 def _scan_signal_semantics_status(root: Path) -> list[dict[str, Any]]:
@@ -5166,6 +5540,12 @@ def _component_next_action(component: str, status: str) -> str:
         return "Run current-candidates." if status == "MISSING" else "Run current-candidates-index."
     if component == "CURRENT_CANDIDATE_HEALTH":
         return "Run current-candidates-health." if status == "MISSING" else "Run current-to-paper."
+    if component == "ADVISORY_PROFILE_CALIBRATION_STATUS":
+        return (
+            "Run advisory-profile-calibration on a local candidates or scored artifact."
+            if status == "MISSING"
+            else "Review advisory-profile-calibration-status as calibration context only."
+        )
     if component == "SIGNAL_SEMANTICS_STATUS":
         return (
             "Run signal-semantics on a local candidates or scored artifact."
@@ -5255,6 +5635,14 @@ def _signal_advisory_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     return _string_or_empty(rows.iloc[0].get("stage"))
 
 
+def _advisory_profile_calibration_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "ADVISORY_PROFILE_CALIBRATION_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
 def _signal_semantics_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "SIGNAL_SEMANTICS_STATUS"]
@@ -5295,6 +5683,7 @@ def _has_post_backfill_workflow_component(dashboard_frame: pd.DataFrame) -> bool
         "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -5324,6 +5713,7 @@ def _has_post_policy_plan_workflow_component(dashboard_frame: pd.DataFrame) -> b
         "SNAPSHOT_QUALITY",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
@@ -5350,9 +5740,35 @@ def _has_post_cache_export_workflow_component(dashboard_frame: pd.DataFrame) -> 
         "DATA_PREPARATION_WORKFLOW",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_SEMANTICS_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_advisory_profile_calibration_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
         "MARKET_UPDATE_HANDOFF_STATUS",
         "CURRENT_TO_PAPER_HANDOFF",
         "CURRENT_TO_PAPER_REVIEW_HANDOFF",
@@ -5624,6 +6040,7 @@ def _only_stale_pre_paper_fail(frame: pd.DataFrame, actionability: dict[str, int
         "HISTORICAL_BACKFILL_STATUS",
         "MARKET_CACHE_EXPORT_POLICY_STATUS",
         "MARKET_CACHE_EXPORT_STATUS",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
         "SIGNAL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_STATUS",
         "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
