@@ -229,6 +229,8 @@ Calibration-to-semantics proposal and `research-status` milestones should receiv
 
 Multi-date current-candidates backfill planning milestones should receive checkpoint documents before executing multi-date candidate generation, forward-return labeling, non-demo threshold calibration, delivery channels, automation, or broker integration, because they define how local cache coverage and forward-horizon feasibility are reviewed without creating recommendations or orders.
 
+Current-candidates backfill execution-manifest and `research-status` milestones should receive checkpoint documents before point-in-time universe/snapshot preparation, current-candidates execution, forward-return labeling, non-demo threshold calibration, delivery channels, automation, or broker integration, because they define how readiness blockers such as `BLOCKED_UNIVERSE_AS_OF` are surfaced without running generation or claiming strategy performance.
+
 Single-symbol advisory and other product-layer advisory milestones should also receive checkpoint documents before adding delivery channels, conversational review, non-demo action semantics, or automation, because they define how user-facing watch/buy-review/sell-review questions remain advisory rather than executable.
 
 Question-style advisory response and answer dashboard/research-status milestones should receive checkpoint documents before adding conversational NLP, LLM integration, delivery channels, or automation, because they define the boundary between deterministic local answers, human confirmation, dashboard actionability, and any future generated-language or message-delivery layer.

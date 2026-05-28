@@ -224,6 +224,159 @@ def test_cli_research_status_prints_current_candidates_backfill_plan_fields(
     assert "current_candidates_backfill_plan_latest_plan_is_warmup_aware: True" in output.out
 
 
+def test_dashboard_includes_current_candidates_backfill_execution_manifest_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_execution_manifest_status(root, execution_manifest_id="manifest-blocked")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    manifest_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_STATUS"
+    ].iloc[0]
+
+    assert result.latest_current_candidates_backfill_execution_manifest_id == "manifest-blocked"
+    assert result.current_candidates_backfill_execution_manifest_status == "WARN"
+    assert (
+        result.current_candidates_backfill_execution_manifest_stage
+        == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_BLOCKED"
+    )
+    assert result.current_candidates_backfill_execution_manifest_health_status == "PASS"
+    assert result.current_candidates_backfill_execution_manifest_plan_id == "plan-a"
+    assert result.current_candidates_backfill_execution_manifest_row_count == 8
+    assert result.current_candidates_backfill_execution_manifest_ready_count == 0
+    assert result.current_candidates_backfill_execution_manifest_blocked_count == 8
+    assert result.current_candidates_backfill_execution_manifest_blocked_universe_as_of_count == 8
+    assert result.workflow_stage == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_BLOCKED"
+    assert manifest_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "no current-candidates were run" in result.next_manual_action
+
+
+def test_dashboard_backfill_execution_manifest_ready_for_review_does_not_imply_execution(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_execution_manifest_status(
+        root,
+        execution_manifest_id="manifest-ready",
+        status="PASS",
+        workflow_stage="CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_READY_FOR_REVIEW",
+        ready_count=8,
+        blocked_count=0,
+        blocked_universe_as_of_count=0,
+        warning_count=0,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    manifest_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_READY_FOR_REVIEW"
+    assert result.current_candidates_backfill_execution_manifest_ready_count == 8
+    assert result.current_candidates_backfill_execution_manifest_blocked_count == 0
+    assert manifest_row["warning_classification"] == ""
+    assert "separate candidate generation" in result.next_manual_action
+    assert result.audit_metadata["local_research_dashboard_only"] is True
+
+
+def test_dashboard_failed_current_candidates_backfill_execution_manifest_health_is_actionable_when_active(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_execution_manifest_status(
+        root,
+        execution_manifest_id="manifest-fail",
+        status="FAIL",
+        workflow_stage="CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    manifest_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_FAILED"
+    assert manifest_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+    assert "Repair execution manifest artifacts" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_backfill_execution_manifest(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_execution_manifest_status(root, execution_manifest_id="manifest-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    manifest_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_STATUS"
+    ].iloc[0]
+
+    assert result.latest_current_candidates_backfill_execution_manifest_id == "manifest-context"
+    assert result.current_candidates_backfill_execution_manifest_blocked_universe_as_of_count == 8
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert manifest_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_current_candidates_backfill_execution_manifest_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_execution_manifest_status(root, execution_manifest_id="manifest-export")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_current_candidates_backfill_execution_manifest_id"] == "manifest-export"
+    assert row["current_candidates_backfill_execution_manifest_status"] == "WARN"
+    assert row["current_candidates_backfill_execution_manifest_health_status"] == "PASS"
+    assert row["current_candidates_backfill_execution_manifest_plan_id"] == "plan-a"
+    assert row["current_candidates_backfill_execution_manifest_row_count"] == "8"
+    assert row["current_candidates_backfill_execution_manifest_blocked_universe_as_of_count"] == "8"
+    assert metadata["latest_current_candidates_backfill_execution_manifest_id"] == "manifest-export"
+    assert metadata["current_candidates_backfill_execution_manifest_plan_id"] == "plan-a"
+    assert metadata["current_candidates_backfill_execution_manifest_blocked_universe_as_of_count"] == 8
+    assert (
+        metadata["component_statuses"]["latest_current_candidates_backfill_execution_manifest_id"]
+        == "manifest-export"
+    )
+
+
+def test_cli_research_status_prints_current_candidates_backfill_execution_manifest_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _current_candidates_backfill_execution_manifest_status(root, execution_manifest_id="manifest-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_current_candidates_backfill_execution_manifest_id: manifest-cli" in output.out
+    assert "current_candidates_backfill_execution_manifest_status: WARN" in output.out
+    assert "current_candidates_backfill_execution_manifest_plan_id: plan-a" in output.out
+    assert "current_candidates_backfill_execution_manifest_blocked_universe_as_of_count: 8" in output.out
+
+
 def test_dashboard_detects_current_to_paper_handoff_artifacts(tmp_path: Path) -> None:
     root = _workflow_to_paper_handoff(_reports_root(tmp_path))
 
@@ -3501,6 +3654,138 @@ def _current_candidates_backfill_plan_status(
             "message_delivery_enabled": False,
             "message_sent": False,
             "network_api_called": False,
+        },
+    )
+    return folder
+
+
+def _current_candidates_backfill_execution_manifest_status(
+    root: Path,
+    *,
+    execution_manifest_id: str = "manifest-a",
+    plan_id: str = "plan-a",
+    status: str = "WARN",
+    workflow_stage: str = "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_BLOCKED",
+    health_status: str = "PASS",
+    row_count: int = 8,
+    ready_count: int = 0,
+    blocked_count: int = 8,
+    blocked_missing_snapshot_count: int = 0,
+    blocked_snapshot_quality_count: int = 0,
+    blocked_universe_as_of_count: int = 8,
+    blocked_plan_infeasible_count: int = 0,
+    reviewed_execution_required_count: int = 8,
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:39:45",
+) -> Path:
+    folder = root / "current_candidates_backfill_execution_manifest" / "status" / f"status-{execution_manifest_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "current_candidates_backfill_execution_manifest_status_report.md"
+    status_csv = folder / "current_candidates_backfill_execution_manifest_status.csv"
+    summary_csv = folder / "current_candidates_backfill_execution_manifest_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    manifest_report = (
+        root
+        / "current_candidates_backfill_execution_manifest"
+        / execution_manifest_id
+        / "current_candidates_backfill_execution_manifest_report.md"
+    )
+    next_action = (
+        "Repair execution manifest artifacts before reviewed candidate generation."
+        if status == "FAIL"
+        else "Review READY_FOR_REVIEW signal dates manually before any separate candidate generation step."
+        if workflow_stage == "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_READY_FOR_REVIEW"
+        else "Resolve blocked signal-date inputs before candidate generation; no current-candidates were run."
+    )
+    report.write_text(
+        "Manifest-only status. No current-candidates generation, snapshot build, forward labels, live trading, broker API, order placement, message delivery, or network/API call was invoked.",
+        encoding="utf-8",
+    )
+    manifest_report.parent.mkdir(parents=True, exist_ok=True)
+    manifest_report.write_text(
+        "Execution readiness manifest only. It does not generate candidates, build snapshots, or compute forward labels.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST",
+                "status": "WARN" if blocked_count else ("READY" if status != "FAIL" else "FAIL"),
+                "latest_artifact_id": execution_manifest_id,
+                "row_count": row_count,
+                "ready_count": ready_count,
+                "blocked_count": blocked_count,
+                "warning_count": warning_count if status != "PASS" else 0,
+                "error_count": 0,
+                "issue_count": warning_count if status != "PASS" else 0,
+            },
+            {
+                "component": "CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "execution-manifest-health-a",
+                "row_count": row_count,
+                "ready_count": ready_count,
+                "blocked_count": blocked_count,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "latest_execution_manifest_id": execution_manifest_id,
+                "plan_id": plan_id,
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "health_status": health_status,
+                "row_count": row_count,
+                "ready_count": ready_count,
+                "blocked_count": blocked_count,
+                "blocked_missing_snapshot_count": blocked_missing_snapshot_count,
+                "blocked_snapshot_quality_count": blocked_snapshot_quality_count,
+                "blocked_universe_as_of_count": blocked_universe_as_of_count,
+                "blocked_plan_infeasible_count": blocked_plan_infeasible_count,
+                "reviewed_execution_required_count": reviewed_execution_required_count,
+                "report_path": str(manifest_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{execution_manifest_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_execution_manifest_id": execution_manifest_id,
+            "plan_id": plan_id,
+            "health_status": health_status,
+            "row_count": row_count,
+            "ready_count": ready_count,
+            "blocked_count": blocked_count,
+            "next_manual_action": next_action,
+            "warnings": ["Latest execution manifest has blocked signal-date rows."] if warning_count else [],
+            "output_files": {
+                "current_candidates_backfill_execution_manifest_status_report": str(report),
+                "current_candidates_backfill_execution_manifest_status_csv": str(status_csv),
+                "current_candidates_backfill_execution_manifest_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "current_candidates_executed": False,
+            "snapshot_manifest_built": False,
+            "forward_returns_computed": False,
+            "cache_mutated": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "order_placement_enabled": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "network_api_called": False,
+            "execution_manifest_artifacts_only": True,
         },
     )
     return folder

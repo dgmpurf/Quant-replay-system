@@ -1021,6 +1021,9 @@ class LocalResearchDashboardSettings(BaseModel):
     data_preparation_root: Path = Path("outputs/reports/data_preparation")
     current_candidates_root: Path = Path("outputs/reports/current_candidates")
     current_candidates_backfill_plan_root: Path = Path("outputs/reports/current_candidates_backfill_plan")
+    current_candidates_backfill_execution_manifest_root: Path = Path(
+        "outputs/reports/current_candidates_backfill_execution_manifest"
+    )
     advisory_profile_calibration_root: Path = Path("outputs/reports/advisory_profile_calibration")
     signal_semantics_root: Path = Path("outputs/reports/signal_semantics")
     signal_advisory_root: Path = Path("outputs/reports/signals")

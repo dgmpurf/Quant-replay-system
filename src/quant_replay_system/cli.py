@@ -921,6 +921,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Current-candidates backfill plan artifact root directory",
     )
     research_status.add_argument(
+        "--current-candidates-backfill-execution-manifest-root",
+        help="Current-candidates backfill execution manifest artifact root directory",
+    )
+    research_status.add_argument(
         "--advisory-profile-calibration-root",
         help="Advisory profile calibration artifact root directory",
     )
@@ -3231,6 +3235,10 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["current_candidates_root"] = Path(args.current_candidates_root)
     if args.current_candidates_backfill_plan_root:
         updates["current_candidates_backfill_plan_root"] = Path(args.current_candidates_backfill_plan_root)
+    if args.current_candidates_backfill_execution_manifest_root:
+        updates["current_candidates_backfill_execution_manifest_root"] = Path(
+            args.current_candidates_backfill_execution_manifest_root
+        )
     if args.advisory_profile_calibration_root:
         updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
     if args.calibration_to_signal_semantics_root:
@@ -3262,6 +3270,9 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
         current_candidates_backfill_plan_root=args.current_candidates_backfill_plan_root,
+        current_candidates_backfill_execution_manifest_root=(
+            args.current_candidates_backfill_execution_manifest_root
+        ),
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -3368,6 +3379,62 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"current_candidates_backfill_plan_report_path: {result.current_candidates_backfill_plan_report_path}")
     print(f"current_candidates_backfill_plan_next_action: {result.current_candidates_backfill_plan_next_action}")
+    print(
+        "latest_current_candidates_backfill_execution_manifest_id: "
+        f"{result.latest_current_candidates_backfill_execution_manifest_id}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_status: "
+        f"{result.current_candidates_backfill_execution_manifest_status}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_stage: "
+        f"{result.current_candidates_backfill_execution_manifest_stage}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_health_status: "
+        f"{result.current_candidates_backfill_execution_manifest_health_status}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_plan_id: "
+        f"{result.current_candidates_backfill_execution_manifest_plan_id}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_row_count: "
+        f"{result.current_candidates_backfill_execution_manifest_row_count}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_ready_count: "
+        f"{result.current_candidates_backfill_execution_manifest_ready_count}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_blocked_count: "
+        f"{result.current_candidates_backfill_execution_manifest_blocked_count}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_blocked_missing_snapshot_count: "
+        f"{result.current_candidates_backfill_execution_manifest_blocked_missing_snapshot_count}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_blocked_snapshot_quality_count: "
+        f"{result.current_candidates_backfill_execution_manifest_blocked_snapshot_quality_count}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_blocked_universe_as_of_count: "
+        f"{result.current_candidates_backfill_execution_manifest_blocked_universe_as_of_count}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_blocked_plan_infeasible_count: "
+        f"{result.current_candidates_backfill_execution_manifest_blocked_plan_infeasible_count}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_report_path: "
+        f"{result.current_candidates_backfill_execution_manifest_report_path}"
+    )
+    print(
+        "current_candidates_backfill_execution_manifest_next_action: "
+        f"{result.current_candidates_backfill_execution_manifest_next_action}"
+    )
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
     print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")

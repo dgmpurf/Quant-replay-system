@@ -13,6 +13,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a historical backfill dry-run or cache-write run produced reviewable artifact evidence?
 - Has a policy-aware reviewed cache export plan produced a reviewable manifest or linked downstream validation?
 - Has a current-candidates backfill plan identified warmup/forward-horizon-feasible signal dates?
+- Has a current-candidates backfill execution manifest identified which planned signal dates are ready or blocked?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
@@ -43,6 +44,7 @@ outputs/reports/market_update_handoff/status/
 outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
 outputs/reports/current_candidates_backfill_plan/status/
+outputs/reports/current_candidates_backfill_execution_manifest/status/
 outputs/reports/advisory_profile_calibration/status/
 outputs/reports/calibration_to_signal_semantics/status/
 outputs/reports/signal_semantics/status/
@@ -102,6 +104,18 @@ The unified summary records the latest active warmup-aware plan id, plan status/
 When the plan reports `CURRENT_CANDIDATES_BACKFILL_PLAN_READY`, the dashboard treats it as visible non-blocking planning context. Older pre-warmup plan artifacts can remain visible through legacy counts without overriding the active warmup-aware plan. When the active plan reports `CURRENT_CANDIDATES_BACKFILL_PLAN_HEALTH_WARN`, the warning remains reviewable before any future candidate-generation execution. If the active plan reports `CURRENT_CANDIDATES_BACKFILL_PLAN_FAILED` and no later valid workflow supersedes it, the failure is actionable.
 
 Current-candidates backfill plans are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to backfill planning; plan fields remain visible for audit. A plan does not imply that candidate artifacts have been generated.
+
+## Current-Candidates Backfill Execution Manifest Status
+
+`research-status` includes `current-candidates-backfill-execution-manifest-status` as multi-date candidate execution-readiness context when those artifacts exist.
+
+The unified summary records the latest execution manifest id, linked plan id, manifest status/stage, health status, row count, ready count, blocked count, blocker counts for missing snapshot, snapshot quality, universe `as_of_date`, and plan infeasibility, report path, and the manifest layer's next manual action. This is readiness context only: it does not run `current-candidates`, build snapshot manifests, run `data-pipeline`, compute forward-return labels, mutate cache, fetch data, send messages, connect to brokers, or place orders.
+
+When the manifest reports `CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_BLOCKED`, the dashboard treats it as a planning blocker. It means required inputs are missing or not point-in-time valid for selected signal dates; it does not mean candidate generation failed, because candidate generation was not run. `BLOCKED_UNIVERSE_AS_OF` specifically means the available universe artifact is later than the signal date and must be replaced or reviewed before any future execution step.
+
+When the manifest reports `CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_READY_FOR_REVIEW`, the dashboard treats the ready rows as human-review planning context. It still does not imply automatic candidate generation or trading approval. Health failures remain actionable when this layer is active.
+
+Current-candidates backfill execution manifests are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to execution-manifest readiness; manifest fields remain visible for audit. A manifest does not imply that candidate artifacts have been generated.
 
 ## Advisory Profile Calibration Status
 

@@ -36,6 +36,7 @@ STATUS_COLUMNS = [
 
 SUMMARY_COLUMNS = [
     "latest_execution_manifest_id",
+    "plan_id",
     "status",
     "workflow_stage",
     "health_status",
@@ -236,6 +237,7 @@ def summarize_current_candidates_backfill_execution_manifest_status(index_frame:
         [
             _summary_row(
                 latest_execution_manifest_id=_string_or_empty(latest.get("execution_manifest_id")),
+                plan_id=_string_or_empty(latest.get("plan_id")),
                 status=status,
                 workflow_stage=stage,
                 health_status=health_result.status,

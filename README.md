@@ -75,6 +75,8 @@ For the standard reusable Codex prompt structure for future tasks, see [docs/COD
 
 For the product vision around research, signal advisory, human-confirmed execution assistance, later-stage automation, and later-stage international expansion, see [docs/product_vision.md](docs/product_vision.md).
 
+For the v0.99.0 checkpoint covering current-candidates backfill execution manifest integration into unified `research-status`, see [docs/release_checkpoint_v0.99.0.md](docs/release_checkpoint_v0.99.0.md).
+
 For the v0.98.0 checkpoint covering current-candidates backfill execution manifest index, health, and status views, see [docs/release_checkpoint_v0.98.0.md](docs/release_checkpoint_v0.98.0.md).
 
 For local CSV ingestion, validation, and processed snapshot manifests, see [docs/data_ingestion.md](docs/data_ingestion.md).
@@ -98,6 +100,8 @@ Use `current-candidates-backfill-plan-index`, `current-candidates-backfill-plan-
 For checking whether a reviewed multi-date plan already has point-in-time-valid snapshot inputs before any candidate generation, see [docs/current_candidates_backfill_execution_manifest.md](docs/current_candidates_backfill_execution_manifest.md). `current-candidates-backfill-execution-manifest` is readiness-only: it does not run current-candidates, build snapshots, compute forward labels, mutate cache, send messages, connect to brokers, or place orders.
 
 Use `current-candidates-backfill-execution-manifest-index`, `current-candidates-backfill-execution-manifest-health`, and `current-candidates-backfill-execution-manifest-status` to discover, safety-check, and summarize readiness manifests. Blocked rows identify missing or point-in-time invalid inputs; they are not candidate generation failures and do not imply strategy performance validation.
+
+`research-status` includes the latest `current-candidates-backfill-execution-manifest-status` as execution-readiness context, including linked plan id, ready/blocked counts, blocker counts such as `BLOCKED_UNIVERSE_AS_OF`, health status, and report path. The manifest remains planning-only; later paper workflow priority is preserved. See [docs/local_research_dashboard.md#current-candidates-backfill-execution-manifest-status](docs/local_research_dashboard.md#current-candidates-backfill-execution-manifest-status).
 
 `research-status` includes the latest `current-candidates-backfill-plan-status` as planning context, including selected date count, first/last signal dates, warmup requirement, forward-horizon summary, health status, and report path. The plan is visible but does not imply candidate generation; later paper workflow priority is preserved. See [docs/local_research_dashboard.md#current-candidates-backfill-plan-status](docs/local_research_dashboard.md#current-candidates-backfill-plan-status).
 
@@ -554,6 +558,14 @@ See [docs/release_checkpoint_v0.96.0.md](docs/release_checkpoint_v0.96.0.md) for
 `v0.97.0` marks the Multi-date Current-Candidates Backfill Plan checkpoint, covering local cache coverage planning, selected feasible signal dates, forward-horizon availability, distinct-symbol coverage under duplicate source rows, reviewed source/upstream guidance, and plan-only safety boundaries before candidate generation.
 
 See [docs/release_checkpoint_v0.97.0.md](docs/release_checkpoint_v0.97.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.98.0` marks the Current-Candidates Backfill Execution Manifest Artifact Views checkpoint, covering execution manifest index/health/status views, readiness and blocker counts, plan-only safety boundaries, and no current-candidates/no snapshot-build/no forward-label behavior.
+
+See [docs/release_checkpoint_v0.98.0.md](docs/release_checkpoint_v0.98.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.99.0` marks the Current-Candidates Backfill Execution Manifest Research Status Integration checkpoint, covering dashboard visibility for execution manifest readiness, `BLOCKED_UNIVERSE_AS_OF` blockers, linked warmup-aware plan context, manifest-only safety boundaries, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v0.99.0.md](docs/release_checkpoint_v0.99.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

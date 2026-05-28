@@ -135,6 +135,14 @@ Expected stages include:
 
 `CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_BLOCKED` is expected when reviewed inputs are not ready, such as missing per-date snapshot manifests or a universe `as_of_date` later than the signal date. It is a planning/readiness blocker only; no candidate generation has run.
 
+## Research Status Integration
+
+`research-status` includes the latest `current-candidates-backfill-execution-manifest-status` as multi-date candidate execution-readiness context.
+
+The unified dashboard exports fields for the latest execution manifest id, linked plan id, status/stage, health status, row count, ready count, blocked count, blocker counts, report path, and next manual action. A blocked manifest remains visible as a planning blocker, not as a strategy failure, paper workflow failure, or failed current-candidates run.
+
+If later workflow artifacts already exist, especially paper workflow status, those later stages keep priority for the final `workflow_stage`. Execution manifest fields remain visible for audit while the next manual action can stay on the later paper workflow path.
+
 ## Safety Boundaries
 
 The manifest always records:
