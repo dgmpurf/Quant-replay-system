@@ -93,6 +93,8 @@ For turning current-candidates artifacts into local advisory signals and alert p
 
 For the deterministic policy that maps candidate/scored rows into safe advisory labels such as `DEMO_ONLY`, `WATCH`, and `REVIEW_BUY_CANDIDATE`, see [docs/signal_semantics.md](docs/signal_semantics.md). Demo rows remain workflow validation only, and all labels require manual confirmation with auto-order disabled.
 
+For local threshold analysis of proposed non-demo advisory profiles before wiring them into product semantics, use `advisory-profile-calibration`; see [docs/advisory_profile_calibration.md](docs/advisory_profile_calibration.md). It produces simulated calibration labels only and never creates orders, broker calls, or real message delivery.
+
 Downstream advisory artifacts record shared `signal_semantics` provenance metadata so audits can see which local policy/classifier produced each advisory action. Provenance is not a trading approval; health checks warn on legacy missing provenance and fail unsafe provenance such as auto-order, live trading, broker access, or unexpected policy source.
 
 To discover, check, and summarize local signal semantics artifacts before wiring semantics into broader advisory or dashboard flows, use `signal-semantics-index`, `signal-semantics-health`, and `signal-semantics-status`; see [docs/signal_semantics.md#index-health-and-status](docs/signal_semantics.md#index-health-and-status).
@@ -280,6 +282,8 @@ For the v0.90.0 Shared Signal Semantics Wiring Across Advisory Layers checkpoint
 For the v0.91.0 Shared Signal Semantics Provenance Metadata checkpoint summary, see [docs/release_checkpoint_v0.91.0.md](docs/release_checkpoint_v0.91.0.md).
 
 For the v0.92.0 Shared Signal Semantics Provenance Visibility checkpoint summary, see [docs/release_checkpoint_v0.92.0.md](docs/release_checkpoint_v0.92.0.md).
+
+For the v0.93.0 Non-Demo Advisory Profile Calibration Analyzer checkpoint summary, see [docs/release_checkpoint_v0.93.0.md](docs/release_checkpoint_v0.93.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -510,6 +514,10 @@ See [docs/release_checkpoint_v0.91.0.md](docs/release_checkpoint_v0.91.0.md) for
 `v0.92.0` marks the Shared Signal Semantics Provenance Visibility checkpoint, covering provenance visibility in advisory index/status views and unified `research-status`, regenerated provenance-bearing single-symbol artifacts, warning-only legacy provenance context, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v0.92.0.md](docs/release_checkpoint_v0.92.0.md) for the milestone summary, workflow chain, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.93.0` marks the Non-Demo Advisory Profile Calibration Analyzer checkpoint, covering local threshold-analysis profiles, simulated calibration labels, demo-only safety, quality/risk blocking gates, and no-order/no-broker/no-message boundaries before any future non-demo semantics wiring.
+
+See [docs/release_checkpoint_v0.93.0.md](docs/release_checkpoint_v0.93.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

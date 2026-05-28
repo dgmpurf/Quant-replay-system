@@ -143,6 +143,16 @@ class SignalSemanticsStatusSettings(BaseModel):
     enable_broker_api: Literal[False] = False
 
 
+class AdvisoryProfileCalibrationSettings(BaseModel):
+    output_dir: Path = Path("outputs/reports/advisory_profile_calibration")
+    config_version: str = "mvp"
+    write_artifacts: bool = True
+    enable_live_trading: Literal[False] = False
+    enable_broker_api: Literal[False] = False
+    enable_message_delivery: Literal[False] = False
+    auto_order_allowed: Literal[False] = False
+
+
 class SignalAdvisoryIndexSettings(BaseModel):
     root_dir: Path = Path("outputs/reports/signals")
     output_dir: Path = Path("outputs/reports/signals/index")
@@ -1079,6 +1089,9 @@ class Settings(BaseModel):
     signal_semantics_index: SignalSemanticsIndexSettings = Field(default_factory=SignalSemanticsIndexSettings)
     signal_semantics_health: SignalSemanticsHealthSettings = Field(default_factory=SignalSemanticsHealthSettings)
     signal_semantics_status: SignalSemanticsStatusSettings = Field(default_factory=SignalSemanticsStatusSettings)
+    advisory_profile_calibration: AdvisoryProfileCalibrationSettings = Field(
+        default_factory=AdvisoryProfileCalibrationSettings
+    )
     signal_advisory_index: SignalAdvisoryIndexSettings = Field(default_factory=SignalAdvisoryIndexSettings)
     signal_advisory_health: SignalAdvisoryHealthSettings = Field(default_factory=SignalAdvisoryHealthSettings)
     signal_advisory_status: SignalAdvisoryStatusSettings = Field(default_factory=SignalAdvisoryStatusSettings)

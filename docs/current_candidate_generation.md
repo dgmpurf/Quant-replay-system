@@ -65,6 +65,14 @@ python -m quant_replay_system.cli signal-semantics --input outputs\reports\curre
 
 The policy is deterministic and conservative. It blocks failed risk/data/snapshot rows, preserves leading-zero symbols, and forces demo/not-strategy rows to `DEMO_ONLY`. Non-demo labels such as `REVIEW_BUY_CANDIDATE` are human-review labels only; they do not approve paper trades, send messages, or place orders.
 
+Use `advisory-profile-calibration` when testing proposed non-demo threshold profiles against local candidates or scored rows:
+
+```cmd
+python -m quant_replay_system.cli advisory-profile-calibration --input outputs\reports\current_candidates\example\candidates.csv --input-type candidates --profile balanced --data-quality-status PASS --snapshot-quality-status PASS
+```
+
+The calibration analyzer writes simulated labels for threshold review only. It does not alter current-candidates artifacts, approve paper trades, send messages, or place orders.
+
 ## Signal Advisory Handoff
 
 Use `signal-advisory` when a current-candidates artifact should be converted into local advisory signals and alert preview text before any human action:

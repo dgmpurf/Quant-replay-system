@@ -23,6 +23,8 @@ It answers:
 - what risks and caveats should remain visible,
 - whether manual confirmation and no-auto-order safety fields are preserved.
 
+Use `advisory-profile-calibration` before changing non-demo threshold behavior. That analyzer evaluates proposed conservative, balanced, and experimental profile thresholds against local candidates or scored rows and writes calibration-only artifacts. Its simulated labels are not strategy recommendations and are not orders. See [advisory_profile_calibration.md](advisory_profile_calibration.md).
+
 `signal-advisory` and `single-symbol-advisory` now call this policy internally when classifying generated advisory actions, while preserving their existing CSV, report, preview, answer, and metadata fields. Standalone `signal-semantics` runs remain useful for audit/index/health/status views, but they are not required before running those advisory commands. Question-style answers and advisory-conversation outputs consume the single-symbol advisory result, so they reflect the same shared semantics without adding a separate classifier.
 
 Downstream advisory artifacts also record shared semantics provenance. Signal advisory rows, single-symbol advisory rows, question-style answer metadata, and advisory-conversation metadata include fields such as `semantics_policy_source=signal_semantics`, `semantics_policy_version=v0.1`, `semantics_classifier=classify_signal_semantics_action`, `semantics_action`, and no-live/no-broker/no-auto-order semantics safety flags. This provenance is for auditability only; it does not approve trades or change manual-confirmation requirements.

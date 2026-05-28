@@ -13,6 +13,7 @@ import pandas as pd
 
 from quant_replay_system.batch_replay import run_batch_replay
 from quant_replay_system.calibration import run_parameter_calibration
+from quant_replay_system.advisory_profile_calibration import run_advisory_profile_calibration
 from quant_replay_system.advisory_conversation import run_advisory_conversation
 from quant_replay_system.advisory_conversation_health import check_advisory_conversation_health
 from quant_replay_system.advisory_conversation_index import build_advisory_conversation_index
@@ -264,6 +265,37 @@ def build_parser() -> argparse.ArgumentParser:
     signal_semantics.add_argument("--output-dir", help="Optional signal semantics output directory")
     signal_semantics.add_argument("--config", help="Optional config YAML path")
     signal_semantics.set_defaults(handler=_handle_signal_semantics)
+
+    advisory_profile_calibration = subparsers.add_parser(
+        "advisory-profile-calibration",
+        help="Analyze local advisory profile thresholds without creating orders or recommendations",
+    )
+    advisory_profile_calibration.add_argument("--input", required=True, help="Input candidates/scored CSV path")
+    advisory_profile_calibration.add_argument(
+        "--input-type",
+        required=True,
+        choices=["candidates", "scored_dataset"],
+        help="Input artifact type",
+    )
+    advisory_profile_calibration.add_argument(
+        "--profile",
+        required=True,
+        choices=["conservative", "balanced", "experimental"],
+        help="Calibration profile to evaluate",
+    )
+    advisory_profile_calibration.add_argument(
+        "--snapshot-quality-status",
+        choices=["PASS", "WARN", "FAIL"],
+        help="Override snapshot quality status",
+    )
+    advisory_profile_calibration.add_argument(
+        "--data-quality-status",
+        choices=["PASS", "WARN", "FAIL"],
+        help="Override data quality status",
+    )
+    advisory_profile_calibration.add_argument("--output-dir", help="Optional calibration output directory")
+    advisory_profile_calibration.add_argument("--config", help="Optional config YAML path")
+    advisory_profile_calibration.set_defaults(handler=_handle_advisory_profile_calibration)
 
     signal_semantics_index = subparsers.add_parser(
         "signal-semantics-index",
@@ -1464,6 +1496,50 @@ def _handle_signal_semantics(args: argparse.Namespace) -> int:
         print(f"WARNING: {warning}")
     print("No live trading or broker API was invoked.")
     print("No alert message was sent. No automated order placement was invoked.")
+    return 0
+
+
+def _handle_advisory_profile_calibration(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config) if args.config else load_settings(Path("config/default.yaml"))
+    if args.output_dir:
+        settings = settings.model_copy(
+            update={
+                "advisory_profile_calibration": settings.advisory_profile_calibration.model_copy(
+                    update={"output_dir": Path(args.output_dir)}
+                )
+            }
+        )
+    result = run_advisory_profile_calibration(
+        args.input,
+        input_type=args.input_type,
+        profile=args.profile,
+        snapshot_quality_status=args.snapshot_quality_status,
+        data_quality_status=args.data_quality_status,
+        settings=settings,
+    )
+    print(f"calibration_run_id: {result.calibration_run_id}")
+    print(f"status: {result.status}")
+    print(f"input_type: {result.input_type}")
+    print(f"profile: {result.profile}")
+    print(f"row_count: {result.row_count}")
+    print(f"symbol_count: {result.symbol_count}")
+    print("simulated_advisory_label_counts:")
+    for label, count in result.label_counts.items():
+        if count:
+            print(f"  {label}: {count}")
+    print(f"advisory_profile_calibration_path: {result.artifact_paths['advisory_profile_calibration']}")
+    print(f"summary_path: {result.artifact_paths['advisory_profile_calibration_summary']}")
+    print(f"issues_path: {result.artifact_paths['advisory_profile_calibration_issues']}")
+    print(f"report_path: {result.artifact_paths['advisory_profile_calibration_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("requires_manual_confirmation: True")
+    print("auto_order_allowed: False")
+    print("no_live_trading: True")
+    print("no_broker_api: True")
+    print("no_message_sent: True")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, or message delivery was invoked.")
     return 0
 
 

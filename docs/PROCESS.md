@@ -221,6 +221,8 @@ Advisory provenance and auditability milestones should receive checkpoint docume
 
 Shared semantics provenance visibility milestones should receive checkpoint documents before non-demo calibration, delivery channels, automation, or broker integration, because they define how advisory index/status views and unified `research-status` expose audit metadata without turning it into approval.
 
+Advisory profile calibration milestones should receive checkpoint documents before wiring non-demo thresholds into `signal_semantics`, dashboard status, delivery channels, automation, or broker integration, because they define how threshold experiments remain calibration-only rather than recommendations or orders.
+
 Single-symbol advisory and other product-layer advisory milestones should also receive checkpoint documents before adding delivery channels, conversational review, non-demo action semantics, or automation, because they define how user-facing watch/buy-review/sell-review questions remain advisory rather than executable.
 
 Question-style advisory response and answer dashboard/research-status milestones should receive checkpoint documents before adding conversational NLP, LLM integration, delivery channels, or automation, because they define the boundary between deterministic local answers, human confirmation, dashboard actionability, and any future generated-language or message-delivery layer.

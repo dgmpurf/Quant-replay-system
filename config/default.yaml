@@ -119,6 +119,15 @@ signal_semantics_status:
   enable_live_trading: false
   enable_broker_api: false
 
+advisory_profile_calibration:
+  output_dir: outputs/reports/advisory_profile_calibration
+  config_version: mvp
+  write_artifacts: true
+  enable_live_trading: false
+  enable_broker_api: false
+  enable_message_delivery: false
+  auto_order_allowed: false
+
 signal_advisory_index:
   root_dir: outputs/reports/signals
   output_dir: outputs/reports/signals/index
