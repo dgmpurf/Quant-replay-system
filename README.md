@@ -95,7 +95,9 @@ For the deterministic policy that maps candidate/scored rows into safe advisory 
 
 For local threshold analysis of proposed non-demo advisory profiles before wiring them into product semantics, use `advisory-profile-calibration`; see [docs/advisory_profile_calibration.md](docs/advisory_profile_calibration.md). It produces simulated calibration labels only and never creates orders, broker calls, or real message delivery. To discover, check, and summarize these calibration artifacts, use `advisory-profile-calibration-index`, `advisory-profile-calibration-health`, and `advisory-profile-calibration-status`.
 
-To compare calibration artifacts against current `signal_semantics` defaults without changing thresholds, use `calibration-to-signal-semantics`; see [docs/calibration_to_signal_semantics.md](docs/calibration_to_signal_semantics.md). The report is proposal-only and currently favors keeping defaults, collecting more evidence, and expanding `WATCH` semantics before any non-demo buy-review expansion.
+To compare calibration artifacts against current `signal_semantics` defaults without changing thresholds, use `calibration-to-signal-semantics`; see [docs/calibration_to_signal_semantics.md](docs/calibration_to_signal_semantics.md). The report is proposal-only and currently favors keeping defaults, collecting more evidence, and expanding `WATCH` semantics before any non-demo buy-review expansion. Use `calibration-to-signal-semantics-index`, `calibration-to-signal-semantics-health`, and `calibration-to-signal-semantics-status` to discover, safety-check, and summarize those proposal artifacts.
+
+`research-status` includes the latest `calibration-to-signal-semantics-status` as proposal/design context, including proposal categories, `defaults_changed`, observed calibration label counts, report path, and next action. This does not validate strategy performance or change defaults; later workflow priority is preserved. See [docs/local_research_dashboard.md#calibration-to-signal-semantics-status](docs/local_research_dashboard.md#calibration-to-signal-semantics-status).
 
 `research-status` includes the latest `advisory-profile-calibration-status` as calibration/design context, including profile, health status, simulated label counts, report path, and next action. `REVIEW_BUY_CANDIDATE` remains human-review-only and later paper workflow priority is preserved; see [docs/local_research_dashboard.md#advisory-profile-calibration-status](docs/local_research_dashboard.md#advisory-profile-calibration-status).
 
@@ -290,6 +292,8 @@ For the v0.92.0 Shared Signal Semantics Provenance Visibility checkpoint summary
 For the v0.93.0 Non-Demo Advisory Profile Calibration Analyzer checkpoint summary, see [docs/release_checkpoint_v0.93.0.md](docs/release_checkpoint_v0.93.0.md).
 
 For the v0.94.0 Advisory Profile Calibration Artifact Views and Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.94.0.md](docs/release_checkpoint_v0.94.0.md).
+
+For the v0.96.0 Calibration-to-Signal-Semantics Research Status Integration checkpoint summary, see [docs/release_checkpoint_v0.96.0.md](docs/release_checkpoint_v0.96.0.md).
 
 For Codex local CLI verification and artifact diagnostics delegation rules, see [docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics](docs/PROCESS.md#codex-local-cli-verification-and-artifact-diagnostics).
 
@@ -528,6 +532,10 @@ See [docs/release_checkpoint_v0.93.0.md](docs/release_checkpoint_v0.93.0.md) for
 `v0.94.0` marks the Advisory Profile Calibration Artifact Views and Research Status Integration checkpoint, covering calibration index/health/status, dashboard calibration context fields, health PASS verification, human-review-only review labels, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v0.94.0.md](docs/release_checkpoint_v0.94.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v0.96.0` marks the Calibration-to-Signal-Semantics Research Status Integration checkpoint, covering proposal report observability, proposal index/health/status, unified dashboard proposal context fields, `defaults_changed=False` visibility, conservative proposal categories, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v0.96.0.md](docs/release_checkpoint_v0.96.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

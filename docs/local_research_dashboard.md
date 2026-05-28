@@ -16,6 +16,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
 - Has advisory profile calibration produced local threshold-design context?
+- Has calibration-to-signal-semantics produced proposal context for future semantics refinement?
 - Has signal semantics mapped scores into advisory labels safely?
 - Has a signal advisory run produced local alert-preview context?
 - Has a single-symbol advisory review been produced for the latest requested symbol?
@@ -41,6 +42,7 @@ outputs/reports/market_update_handoff/status/
 outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
 outputs/reports/advisory_profile_calibration/status/
+outputs/reports/calibration_to_signal_semantics/status/
 outputs/reports/signal_semantics/status/
 outputs/reports/signals/status/
 outputs/reports/single_symbol_advisory/status/
@@ -98,6 +100,18 @@ The unified summary records the latest calibration run id, calibration status/st
 When calibration reports `DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED`, the dashboard treats the warning as expected demo context. Demo calibration remains `DEMO_ONLY` and does not become real BUY/SELL guidance. When calibration reports `ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW`, review labels remain visible as manual review context, with auto-order disabled.
 
 Advisory profile calibration is earlier than signal semantics, signal advisory, single-symbol advisory, advisory conversation, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to calibration; calibration fields remain visible for audit. If calibration health fails because safety boundaries are broken, such as `auto_order_allowed=true`, missing no-live/no-broker/no-message metadata, `APPROVED_FOR_PAPER`, message-delivery metadata, missing required files, or demo BUY/SELL leakage, `research-status` surfaces the failure as actionable when calibration is the active stage.
+
+## Calibration-to-Signal Semantics Status
+
+`research-status` includes `calibration-to-signal-semantics-status` as proposal/design context when proposal artifacts exist.
+
+The unified summary records the latest proposal run id, proposal status/stage, health status, `defaults_changed`, proposal categories, calibration run count, observed review-buy/watch/blocked counts, report path, and the proposal layer's next manual action. This context is not strategy validation and does not change `signal_semantics` defaults.
+
+When the status reports `CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE`, the dashboard treats the warning as expected reviewable design context. The next action remains conservative: keep current defaults, consider `WATCH` expansion only after more evidence, and do not expand BUY review yet. When the status reports `CALIBRATION_TO_SEMANTICS_PROPOSAL_READY`, the proposal remains manual design context only.
+
+`defaults_changed=true` is actionable and unsafe for this proposal-only layer because the tool must not mutate config or executable semantics thresholds. Health failures also remain actionable when this layer is active.
+
+Calibration-to-signal-semantics proposals are earlier than current-candidates, signal semantics, signal advisory, single-symbol advisory, advisory conversation, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to proposal status; proposal fields remain visible for audit.
 
 ## Signal Semantics Status
 

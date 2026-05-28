@@ -14,6 +14,9 @@ import pandas as pd
 from quant_replay_system.batch_replay import run_batch_replay
 from quant_replay_system.calibration import run_parameter_calibration
 from quant_replay_system.calibration_to_signal_semantics import run_calibration_to_signal_semantics
+from quant_replay_system.calibration_to_signal_semantics_health import check_calibration_to_signal_semantics_health
+from quant_replay_system.calibration_to_signal_semantics_index import build_calibration_to_signal_semantics_index
+from quant_replay_system.calibration_to_signal_semantics_status import run_calibration_to_signal_semantics_status
 from quant_replay_system.advisory_profile_calibration import run_advisory_profile_calibration
 from quant_replay_system.advisory_profile_calibration_health import check_advisory_profile_calibration_health
 from quant_replay_system.advisory_profile_calibration_index import build_advisory_profile_calibration_index
@@ -357,6 +360,42 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional calibration-to-semantics proposal output directory",
     )
     calibration_to_signal_semantics.set_defaults(handler=_handle_calibration_to_signal_semantics)
+
+    calibration_to_signal_semantics_index = subparsers.add_parser(
+        "calibration-to-signal-semantics-index",
+        help="Build a local index of calibration-to-signal-semantics proposal artifacts",
+    )
+    calibration_to_signal_semantics_index.add_argument(
+        "--root",
+        help="Calibration-to-signal-semantics proposal artifact root directory",
+    )
+    calibration_to_signal_semantics_index.add_argument("--output-dir", help="Optional proposal index output directory")
+    calibration_to_signal_semantics_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Index folders missing metadata.json",
+    )
+    calibration_to_signal_semantics_index.set_defaults(handler=_handle_calibration_to_signal_semantics_index)
+
+    calibration_to_signal_semantics_health = subparsers.add_parser(
+        "calibration-to-signal-semantics-health",
+        help="Check local calibration-to-signal-semantics proposal artifact safety",
+    )
+    calibration_to_signal_semantics_health.add_argument("--index", help="Proposal artifact index CSV path")
+    calibration_to_signal_semantics_health.add_argument("--root", help="Proposal artifact root directory")
+    calibration_to_signal_semantics_health.add_argument("--output-dir", help="Optional proposal health-check output directory")
+    calibration_to_signal_semantics_health.add_argument("--strict", action="store_true", help="Escalate configurable warnings to errors")
+    calibration_to_signal_semantics_health.add_argument("--allow-warn", action="store_true", help="Exit zero when status is WARN in strict mode")
+    calibration_to_signal_semantics_health.set_defaults(handler=_handle_calibration_to_signal_semantics_health)
+
+    calibration_to_signal_semantics_status = subparsers.add_parser(
+        "calibration-to-signal-semantics-status",
+        help="Build a local calibration-to-signal-semantics proposal status dashboard",
+    )
+    calibration_to_signal_semantics_status.add_argument("--root", help="Proposal artifact root directory")
+    calibration_to_signal_semantics_status.add_argument("--output-dir", help="Optional proposal status output directory")
+    calibration_to_signal_semantics_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
+    calibration_to_signal_semantics_status.set_defaults(handler=_handle_calibration_to_signal_semantics_status)
 
     signal_semantics_index = subparsers.add_parser(
         "signal-semantics-index",
@@ -731,6 +770,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--advisory-profile-calibration-root",
         help="Advisory profile calibration artifact root directory",
+    )
+    research_status.add_argument(
+        "--calibration-to-signal-semantics-root",
+        help="Calibration-to-signal-semantics proposal artifact root directory",
     )
     research_status.add_argument("--signal-semantics-root", help="Signal semantics artifact root directory")
     research_status.add_argument("--single-symbol-advisory-root", help="Single-symbol advisory artifact root directory")
@@ -1735,6 +1778,75 @@ def _handle_calibration_to_signal_semantics(args: argparse.Namespace) -> int:
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading, broker API, order placement, message delivery, LLM API, or external API was invoked.")
+    return 0
+
+
+def _handle_calibration_to_signal_semantics_index(args: argparse.Namespace) -> int:
+    result = build_calibration_to_signal_semantics_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index report path: {result.artifact_paths['calibration_to_signal_semantics_index_report']}")
+    print(f"Index CSV path: {result.artifact_paths['calibration_to_signal_semantics_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, message delivery, LLM API, or external API was invoked.")
+    return 0
+
+
+def _handle_calibration_to_signal_semantics_health(args: argparse.Namespace) -> int:
+    result = check_calibration_to_signal_semantics_health(
+        index_path=args.index,
+        root=None if args.index else args.root,
+        output_dir=args.output_dir,
+        settings={"strict": bool(args.strict)},
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"Artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Report path: {result.artifact_paths['calibration_to_signal_semantics_health_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, message delivery, LLM API, or external API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_calibration_to_signal_semantics_status(args: argparse.Namespace) -> int:
+    result = run_calibration_to_signal_semantics_status(
+        root=args.root,
+        output_dir=args.output_dir,
+        config={"strict": bool(args.strict)},
+    )
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_proposal_run_id: {result.latest_proposal_run_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"proposal_categories: {summary.get('proposal_categories', '')}")
+    print(f"defaults_changed: {summary.get('defaults_changed', '')}")
+    print(f"calibration_run_count: {summary.get('calibration_run_count', 0)}")
+    print(f"observed_review_buy_candidate_count: {summary.get('observed_review_buy_candidate_count', 0)}")
+    print(f"observed_watch_count: {summary.get('observed_watch_count', 0)}")
+    print(f"observed_blocked_count: {summary.get('observed_blocked_count', 0)}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print(f"Report path: {result.artifact_paths['calibration_to_signal_semantics_status_report']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No live trading, broker API, order placement, message delivery, LLM API, or external API was invoked.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict:
+        return 1
     return 0
 
 
@@ -2752,6 +2864,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["current_candidates_root"] = Path(args.current_candidates_root)
     if args.advisory_profile_calibration_root:
         updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
+    if args.calibration_to_signal_semantics_root:
+        updates["calibration_to_signal_semantics_root"] = Path(args.calibration_to_signal_semantics_root)
     if args.signal_semantics_root:
         updates["signal_semantics_root"] = Path(args.signal_semantics_root)
     if args.single_symbol_advisory_root:
@@ -2779,6 +2893,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         data_preparation_root=args.data_preparation_root,
         current_candidates_root=args.current_candidates_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
+        calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
         single_symbol_advisory_root=args.single_symbol_advisory_root,
         single_symbol_advisory_answer_root=args.single_symbol_advisory_answer_root,
@@ -2846,6 +2961,42 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"advisory_profile_calibration_issue_count: {result.advisory_profile_calibration_issue_count}")
     print(f"advisory_profile_calibration_report_path: {result.advisory_profile_calibration_report_path}")
     print(f"advisory_profile_calibration_next_action: {result.advisory_profile_calibration_next_action}")
+    print(
+        "latest_calibration_to_signal_semantics_proposal_run_id: "
+        f"{result.latest_calibration_to_signal_semantics_proposal_run_id}"
+    )
+    print(f"calibration_to_signal_semantics_status: {result.calibration_to_signal_semantics_status}")
+    print(f"calibration_to_signal_semantics_stage: {result.calibration_to_signal_semantics_stage}")
+    print(
+        "calibration_to_signal_semantics_health_status: "
+        f"{result.calibration_to_signal_semantics_health_status}"
+    )
+    print(
+        "calibration_to_signal_semantics_defaults_changed: "
+        f"{result.calibration_to_signal_semantics_defaults_changed}"
+    )
+    print(
+        "calibration_to_signal_semantics_proposal_categories: "
+        f"{result.calibration_to_signal_semantics_proposal_categories}"
+    )
+    print(
+        "calibration_to_signal_semantics_calibration_run_count: "
+        f"{result.calibration_to_signal_semantics_calibration_run_count}"
+    )
+    print(
+        "calibration_to_signal_semantics_observed_review_buy_candidate_count: "
+        f"{result.calibration_to_signal_semantics_observed_review_buy_candidate_count}"
+    )
+    print(
+        "calibration_to_signal_semantics_observed_watch_count: "
+        f"{result.calibration_to_signal_semantics_observed_watch_count}"
+    )
+    print(
+        "calibration_to_signal_semantics_observed_blocked_count: "
+        f"{result.calibration_to_signal_semantics_observed_blocked_count}"
+    )
+    print(f"calibration_to_signal_semantics_report_path: {result.calibration_to_signal_semantics_report_path}")
+    print(f"calibration_to_signal_semantics_next_action: {result.calibration_to_signal_semantics_next_action}")
     print(f"latest_signal_semantics_run_id: {result.latest_signal_semantics_run_id}")
     print(f"signal_semantics_status: {result.signal_semantics_status}")
     print(f"signal_semantics_stage: {result.signal_semantics_stage}")

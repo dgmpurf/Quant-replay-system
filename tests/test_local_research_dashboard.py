@@ -1396,6 +1396,161 @@ def test_cli_research_status_prints_advisory_profile_calibration_fields(tmp_path
     assert "advisory_profile_calibration_review_buy_candidate_count: 1" in output.out
 
 
+def test_dashboard_includes_calibration_to_signal_semantics_status_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _calibration_to_signal_semantics_status(root, proposal_id="proposal-reviewed")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    proposal_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS"
+    ].iloc[0]
+
+    assert result.latest_calibration_to_signal_semantics_proposal_run_id == "proposal-reviewed"
+    assert result.calibration_to_signal_semantics_status == "WARN"
+    assert result.calibration_to_signal_semantics_stage == "CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE"
+    assert result.calibration_to_signal_semantics_health_status == "PASS"
+    assert result.calibration_to_signal_semantics_defaults_changed is False
+    assert "KEEP_CURRENT_DEFAULTS" in result.calibration_to_signal_semantics_proposal_categories
+    assert "DO_NOT_EXPAND_BUY_REVIEW_YET" in result.calibration_to_signal_semantics_proposal_categories
+    assert result.calibration_to_signal_semantics_calibration_run_count == 10
+    assert result.calibration_to_signal_semantics_observed_review_buy_candidate_count == 7
+    assert result.calibration_to_signal_semantics_observed_watch_count == 8
+    assert result.calibration_to_signal_semantics_observed_blocked_count == 24
+    assert result.workflow_stage == "CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE"
+    assert proposal_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "Keep current defaults" in result.next_manual_action
+    assert "do not expand BUY review yet" in result.next_manual_action
+
+
+def test_dashboard_calibration_to_signal_semantics_defaults_changed_is_actionable(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _calibration_to_signal_semantics_status(
+        root,
+        proposal_id="proposal-defaults-changed",
+        status="FAIL",
+        workflow_stage="CALIBRATION_TO_SEMANTICS_FAILED",
+        health_status="FAIL",
+        defaults_changed=True,
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    proposal_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "CALIBRATION_TO_SEMANTICS_FAILED"
+    assert result.calibration_to_signal_semantics_defaults_changed is True
+    assert proposal_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+
+
+def test_dashboard_failed_calibration_to_signal_semantics_health_is_actionable_when_active(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _calibration_to_signal_semantics_status(
+        root,
+        proposal_id="proposal-health-fail",
+        status="FAIL",
+        workflow_stage="CALIBRATION_TO_SEMANTICS_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    proposal_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "CALIBRATION_TO_SEMANTICS_FAILED"
+    assert result.calibration_to_signal_semantics_health_status == "FAIL"
+    assert proposal_row["warning_classification"] == "BLOCKING_ERROR"
+    assert "Repair calibration-to-semantics proposal artifacts" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_calibration_to_signal_semantics(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _calibration_to_signal_semantics_status(root, proposal_id="proposal-reviewed")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    proposal_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS"
+    ].iloc[0]
+
+    assert result.latest_calibration_to_signal_semantics_proposal_run_id == "proposal-reviewed"
+    assert result.calibration_to_signal_semantics_stage == "CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert proposal_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_calibration_to_signal_semantics_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _calibration_to_signal_semantics_status(root, proposal_id="proposal-export")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_calibration_to_signal_semantics_proposal_run_id"] == "proposal-export"
+    assert row["calibration_to_signal_semantics_status"] == "WARN"
+    assert row["calibration_to_signal_semantics_stage"] == "CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE"
+    assert row["calibration_to_signal_semantics_health_status"] == "PASS"
+    assert row["calibration_to_signal_semantics_defaults_changed"] == "False"
+    assert "REQUIRE_MORE_EVIDENCE" in row["calibration_to_signal_semantics_proposal_categories"]
+    assert row["calibration_to_signal_semantics_calibration_run_count"] == "10"
+    assert row["calibration_to_signal_semantics_observed_review_buy_candidate_count"] == "7"
+    assert metadata["latest_calibration_to_signal_semantics_proposal_run_id"] == "proposal-export"
+    assert metadata["calibration_to_signal_semantics_defaults_changed"] is False
+    assert metadata["calibration_to_signal_semantics_observed_blocked_count"] == 24
+    assert (
+        metadata["component_statuses"]["latest_calibration_to_signal_semantics_proposal_run_id"]
+        == "proposal-export"
+    )
+
+
+def test_cli_research_status_prints_calibration_to_signal_semantics_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _calibration_to_signal_semantics_status(root, proposal_id="proposal-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_calibration_to_signal_semantics_proposal_run_id: proposal-cli" in output.out
+    assert "calibration_to_signal_semantics_status: WARN" in output.out
+    assert (
+        "calibration_to_signal_semantics_stage: CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE"
+        in output.out
+    )
+    assert "calibration_to_signal_semantics_defaults_changed: False" in output.out
+    assert "calibration_to_signal_semantics_observed_review_buy_candidate_count: 7" in output.out
+
+
 def test_dashboard_includes_signal_semantics_status_when_no_later_workflow_exists(tmp_path: Path) -> None:
     root = _reports_root(tmp_path)
     _signal_semantics_status(root, semantics_id="semantics-reviewed")
@@ -2932,6 +3087,125 @@ def _market_cache_export_policy_status(
             },
             "live_trading_enabled": False,
             "broker_api_invoked": False,
+        },
+    )
+    return folder
+
+
+def _calibration_to_signal_semantics_status(
+    root: Path,
+    *,
+    proposal_id: str = "proposal-a",
+    status: str = "WARN",
+    workflow_stage: str = "CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE",
+    health_status: str = "PASS",
+    proposal_categories: str = (
+        "KEEP_CURRENT_DEFAULTS;CONSIDER_WATCH_EXPANSION;DO_NOT_EXPAND_BUY_REVIEW_YET;"
+        "REQUIRE_MORE_EVIDENCE;NEED_MULTI_DATE_VALIDATION;NEED_MORE_SYMBOLS;"
+        "NEED_BACKTEST_OR_PAPER_EVIDENCE"
+    ),
+    defaults_changed: bool = False,
+    calibration_run_count: int = 10,
+    observed_review_buy_candidate_count: int = 7,
+    observed_watch_count: int = 8,
+    observed_blocked_count: int = 24,
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:40:30",
+) -> Path:
+    folder = root / "calibration_to_signal_semantics" / "status" / f"status-{proposal_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "calibration_to_signal_semantics_status_report.md"
+    status_csv = folder / "calibration_to_signal_semantics_status.csv"
+    summary_csv = folder / "calibration_to_signal_semantics_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    proposal_report = (
+        root / "calibration_to_signal_semantics" / proposal_id / "calibration_to_signal_semantics_report.md"
+    )
+    next_action = (
+        "Keep current defaults; consider WATCH expansion only after more evidence; do not expand BUY review yet."
+        if workflow_stage == "CALIBRATION_TO_SEMANTICS_NEEDS_MORE_EVIDENCE"
+        else "Repair calibration-to-semantics proposal artifacts before dashboard integration."
+        if status == "FAIL"
+        else "Review proposal manually; do not change signal_semantics defaults without explicit implementation work."
+    )
+    report.write_text(
+        "No live trading, broker API, order placement, message delivery, LLM API, or external API was invoked.",
+        encoding="utf-8",
+    )
+    proposal_report.parent.mkdir(parents=True, exist_ok=True)
+    proposal_report.write_text(
+        "Proposal context only. REVIEW_BUY_CANDIDATE remains human-review-only, not an order.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "CALIBRATION_TO_SIGNAL_SEMANTICS_PROPOSAL",
+                "status": "READY" if status != "FAIL" else "FAIL",
+                "latest_artifact_id": proposal_id,
+                "row_count": calibration_run_count,
+                "warning_count": 0,
+                "error_count": 0,
+                "issue_count": 0,
+            },
+            {
+                "component": "CALIBRATION_TO_SIGNAL_SEMANTICS_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "proposal-health-a",
+                "row_count": calibration_run_count,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "workflow_stage": workflow_stage,
+                "status": status,
+                "latest_proposal_run_id": proposal_id,
+                "latest_status": "READY" if status != "FAIL" else "FAIL",
+                "health_status": health_status,
+                "proposal_categories": proposal_categories,
+                "defaults_changed": defaults_changed,
+                "calibration_run_count": calibration_run_count,
+                "observed_review_buy_candidate_count": observed_review_buy_candidate_count,
+                "observed_watch_count": observed_watch_count,
+                "observed_blocked_count": observed_blocked_count,
+                "report_path": str(proposal_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{proposal_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_proposal_run_id": proposal_id,
+            "health_status": health_status,
+            "proposal_categories": proposal_categories.split(";"),
+            "defaults_changed": defaults_changed,
+            "next_manual_action": next_action,
+            "warnings": ["Proposal says more evidence is needed."] if warning_count else [],
+            "output_files": {
+                "calibration_to_signal_semantics_status_report": str(report),
+                "calibration_to_signal_semantics_status_csv": str(status_csv),
+                "calibration_to_signal_semantics_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "external_api_called": False,
+            "llm_api_called": False,
+            "config_mutated": False,
+            "auto_order_allowed": False,
         },
     )
     return folder
