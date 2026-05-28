@@ -75,6 +75,8 @@ For the standard reusable Codex prompt structure for future tasks, see [docs/COD
 
 For the product vision around research, signal advisory, human-confirmed execution assistance, later-stage automation, and later-stage international expansion, see [docs/product_vision.md](docs/product_vision.md).
 
+For the v0.98.0 checkpoint covering current-candidates backfill execution manifest index, health, and status views, see [docs/release_checkpoint_v0.98.0.md](docs/release_checkpoint_v0.98.0.md).
+
 For local CSV ingestion, validation, and processed snapshot manifests, see [docs/data_ingestion.md](docs/data_ingestion.md).
 
 For processed data quality summaries before replay, see [docs/data_quality.md](docs/data_quality.md).
@@ -92,6 +94,10 @@ For current/as-of-date candidate generation from local snapshots, see [docs/curr
 For planning multi-date current-candidates backfills from existing local market-cache coverage without generating candidates, see [docs/current_candidates_backfill_plan.md](docs/current_candidates_backfill_plan.md). `current-candidates-backfill-plan` records feasible signal dates, indicator warmup coverage, and forward-horizon coverage only; it does not mutate cache, run data-pipeline, fetch data, send messages, or place orders.
 
 Use `current-candidates-backfill-plan-index`, `current-candidates-backfill-plan-health`, and `current-candidates-backfill-plan-status` to discover, safety-check, and summarize those plan artifacts before any candidate generation is executed.
+
+For checking whether a reviewed multi-date plan already has point-in-time-valid snapshot inputs before any candidate generation, see [docs/current_candidates_backfill_execution_manifest.md](docs/current_candidates_backfill_execution_manifest.md). `current-candidates-backfill-execution-manifest` is readiness-only: it does not run current-candidates, build snapshots, compute forward labels, mutate cache, send messages, connect to brokers, or place orders.
+
+Use `current-candidates-backfill-execution-manifest-index`, `current-candidates-backfill-execution-manifest-health`, and `current-candidates-backfill-execution-manifest-status` to discover, safety-check, and summarize readiness manifests. Blocked rows identify missing or point-in-time invalid inputs; they are not candidate generation failures and do not imply strategy performance validation.
 
 `research-status` includes the latest `current-candidates-backfill-plan-status` as planning context, including selected date count, first/last signal dates, warmup requirement, forward-horizon summary, health status, and report path. The plan is visible but does not imply candidate generation; later paper workflow priority is preserved. See [docs/local_research_dashboard.md#current-candidates-backfill-plan-status](docs/local_research_dashboard.md#current-candidates-backfill-plan-status).
 

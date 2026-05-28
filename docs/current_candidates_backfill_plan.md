@@ -18,6 +18,7 @@ The intended workflow is:
 local market cache
 -> current-candidates-backfill-plan
 -> reviewed signal-date plan
+-> current-candidates-backfill-execution-manifest
 -> later current-candidates generation
 -> later forward-return label dataset
 -> calibration evidence
@@ -199,6 +200,20 @@ The unified dashboard exports:
 `CURRENT_CANDIDATES_BACKFILL_PLAN_READY` is visible but non-blocking. Legacy pre-warmup warnings remain reviewable audit context, but the active plan status follows the latest warmup-aware plan. Active health failures are actionable only when the backfill plan is the active stage. Later generated current-candidates, advisory artifacts, market-update handoff, and paper workflow stages take priority, while the plan stays visible as audit context.
 
 The dashboard does not execute the plan. It does not generate candidates, build snapshot manifests, compute forward labels, mutate cache, call APIs, send messages, connect to brokers, or place orders.
+
+## Execution Manifest
+
+After a warmup-aware plan is reviewed, use `current-candidates-backfill-execution-manifest` to check which planned signal dates already have the local snapshot inputs needed for a future execution step:
+
+```cmd
+python -m quant_replay_system.cli current-candidates-backfill-execution-manifest --plan outputs\reports\current_candidates_backfill_plan\aadd86db24a1\current_candidates_backfill_plan.csv
+```
+
+The execution manifest checks existing snapshot manifests, snapshot-quality status, market/universe/trading-calendar paths, and whether the universe `as_of_date` is point-in-time valid for each signal date. It is still manifest-only: it does not run `current-candidates`, build snapshot manifests, run `data-pipeline`, compute forward returns, mutate cache, send messages, connect to brokers, or place orders.
+
+Use `current-candidates-backfill-execution-manifest-index`, `current-candidates-backfill-execution-manifest-health`, and `current-candidates-backfill-execution-manifest-status` to discover, safety-check, and summarize execution readiness artifacts before any reviewed generation step.
+
+See [current_candidates_backfill_execution_manifest.md](current_candidates_backfill_execution_manifest.md).
 
 ## Safety Boundaries
 

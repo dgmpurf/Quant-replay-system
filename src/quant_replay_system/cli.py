@@ -29,6 +29,18 @@ from quant_replay_system.config import load_settings
 from quant_replay_system.current_candidate_artifact_health import check_current_candidate_artifact_health
 from quant_replay_system.current_candidate_artifact_index import build_current_candidate_artifact_index
 from quant_replay_system.current_candidates_backfill_plan import build_current_candidates_backfill_plan
+from quant_replay_system.current_candidates_backfill_execution_manifest import (
+    build_current_candidates_backfill_execution_manifest,
+)
+from quant_replay_system.current_candidates_backfill_execution_manifest_health import (
+    check_current_candidates_backfill_execution_manifest_health,
+)
+from quant_replay_system.current_candidates_backfill_execution_manifest_index import (
+    build_current_candidates_backfill_execution_manifest_index,
+)
+from quant_replay_system.current_candidates_backfill_execution_manifest_status import (
+    run_current_candidates_backfill_execution_manifest_status,
+)
 from quant_replay_system.current_candidates_backfill_plan_health import check_current_candidates_backfill_plan_health
 from quant_replay_system.current_candidates_backfill_plan_index import build_current_candidates_backfill_plan_index
 from quant_replay_system.current_candidates_backfill_plan_status import run_current_candidates_backfill_plan_status
@@ -272,6 +284,86 @@ def build_parser() -> argparse.ArgumentParser:
     current_backfill_plan_status.add_argument("--root", default="outputs/reports/current_candidates_backfill_plan", help="Backfill plan artifact root")
     current_backfill_plan_status.add_argument("--output-dir", default="outputs/reports/current_candidates_backfill_plan/status", help="Status output directory")
     current_backfill_plan_status.set_defaults(handler=_handle_current_candidates_backfill_plan_status)
+
+    current_backfill_execution_manifest = subparsers.add_parser(
+        "current-candidates-backfill-execution-manifest",
+        help="Build a manifest-only readiness review for planned multi-date current-candidates execution",
+    )
+    current_backfill_execution_manifest.add_argument("--plan", required=True, help="Current-candidates backfill plan CSV")
+    current_backfill_execution_manifest.add_argument("--snapshot-root", default="outputs/reports/data_pipeline", help="Existing data-pipeline snapshot manifest root")
+    current_backfill_execution_manifest.add_argument("--snapshot-quality-root", default="outputs/reports/snapshot_quality", help="Existing snapshot-quality artifact root")
+    current_backfill_execution_manifest.add_argument("--universe-root", default="data/raw/LOCAL_CSV/universe_overlay", help="Reviewed universe overlay root")
+    current_backfill_execution_manifest.add_argument(
+        "--selection-profile",
+        default=None,
+        help="Optional reviewed selection profile label for the readiness manifest",
+    )
+    current_backfill_execution_manifest.add_argument(
+        "--output-dir",
+        default="outputs/reports/current_candidates_backfill_execution_manifest",
+        help="Execution manifest output directory",
+    )
+    current_backfill_execution_manifest.set_defaults(handler=_handle_current_candidates_backfill_execution_manifest)
+
+    current_backfill_execution_manifest_index = subparsers.add_parser(
+        "current-candidates-backfill-execution-manifest-index",
+        help="Build a local index of current-candidates backfill execution manifest artifacts",
+    )
+    current_backfill_execution_manifest_index.add_argument(
+        "--root",
+        default="outputs/reports/current_candidates_backfill_execution_manifest",
+        help="Execution manifest artifact root",
+    )
+    current_backfill_execution_manifest_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/current_candidates_backfill_execution_manifest/index",
+        help="Index output directory",
+    )
+    current_backfill_execution_manifest_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include folders missing metadata.json",
+    )
+    current_backfill_execution_manifest_index.set_defaults(
+        handler=_handle_current_candidates_backfill_execution_manifest_index
+    )
+
+    current_backfill_execution_manifest_health = subparsers.add_parser(
+        "current-candidates-backfill-execution-manifest-health",
+        help="Check local current-candidates backfill execution manifest artifact health",
+    )
+    current_backfill_execution_manifest_health.add_argument(
+        "--root",
+        default="outputs/reports/current_candidates_backfill_execution_manifest",
+        help="Execution manifest artifact root",
+    )
+    current_backfill_execution_manifest_health.add_argument("--index", help="Optional execution manifest index CSV path")
+    current_backfill_execution_manifest_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/current_candidates_backfill_execution_manifest/health",
+        help="Health output directory",
+    )
+    current_backfill_execution_manifest_health.set_defaults(
+        handler=_handle_current_candidates_backfill_execution_manifest_health
+    )
+
+    current_backfill_execution_manifest_status = subparsers.add_parser(
+        "current-candidates-backfill-execution-manifest-status",
+        help="Summarize latest local current-candidates backfill execution manifest status",
+    )
+    current_backfill_execution_manifest_status.add_argument(
+        "--root",
+        default="outputs/reports/current_candidates_backfill_execution_manifest",
+        help="Execution manifest artifact root",
+    )
+    current_backfill_execution_manifest_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/current_candidates_backfill_execution_manifest/status",
+        help="Status output directory",
+    )
+    current_backfill_execution_manifest_status.set_defaults(
+        handler=_handle_current_candidates_backfill_execution_manifest_status
+    )
 
     current_index = subparsers.add_parser(
         "current-candidates-index",
@@ -1638,6 +1730,110 @@ def _handle_current_candidates_backfill_plan_status(args: argparse.Namespace) ->
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print("No live trading, broker API, order placement, message delivery, or network/API call was invoked.")
+    return 0
+
+
+def _handle_current_candidates_backfill_execution_manifest(args: argparse.Namespace) -> int:
+    result = build_current_candidates_backfill_execution_manifest(
+        plan=args.plan,
+        snapshot_root=args.snapshot_root,
+        snapshot_quality_root=args.snapshot_quality_root,
+        universe_root=args.universe_root,
+        selection_profile=args.selection_profile,
+        output_dir=args.output_dir,
+    )
+    print(f"execution_manifest_id: {result.execution_manifest_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"ready_count: {result.ready_count}")
+    print(f"blocked_count: {result.blocked_count}")
+    print("readiness_counts:")
+    for status, count in result.readiness_counts.items():
+        print(f"  {status}={count}")
+    print(f"manifest_path: {result.artifact_paths['execution_manifest_csv']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, or network/API call was invoked."
+    )
+    return 0
+
+
+def _handle_current_candidates_backfill_execution_manifest_index(args: argparse.Namespace) -> int:
+    result = build_current_candidates_backfill_execution_manifest_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Index CSV path: "
+        f"{result.artifact_paths['current_candidates_backfill_execution_manifest_index_csv']}"
+    )
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, or network/API call was invoked."
+    )
+    return 0
+
+
+def _handle_current_candidates_backfill_execution_manifest_health(args: argparse.Namespace) -> int:
+    result = check_current_candidates_backfill_execution_manifest_health(
+        index_path=args.index,
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Health report path: "
+        f"{result.artifact_paths['current_candidates_backfill_execution_manifest_health_report']}"
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, or network/API call was invoked."
+    )
+    return 0
+
+
+def _handle_current_candidates_backfill_execution_manifest_status(args: argparse.Namespace) -> int:
+    result = run_current_candidates_backfill_execution_manifest_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Status report path: "
+        f"{result.artifact_paths['current_candidates_backfill_execution_manifest_status_report']}"
+    )
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_execution_manifest_id: {result.latest_execution_manifest_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"row_count: {result.row_count}")
+    print(f"ready_count: {result.ready_count}")
+    print(f"blocked_count: {result.blocked_count}")
+    print(f"blocked_missing_snapshot_count: {summary.get('blocked_missing_snapshot_count', '')}")
+    print(f"blocked_snapshot_quality_count: {summary.get('blocked_snapshot_quality_count', '')}")
+    print(f"blocked_universe_as_of_count: {summary.get('blocked_universe_as_of_count', '')}")
+    print(f"blocked_plan_infeasible_count: {summary.get('blocked_plan_infeasible_count', '')}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, or network/API call was invoked."
+    )
     return 0
 
 

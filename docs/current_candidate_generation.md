@@ -69,6 +69,14 @@ This command writes plan artifacts only. It does not run `current-candidates`, r
 
 Use `current-candidates-backfill-plan-index`, `current-candidates-backfill-plan-health`, and `current-candidates-backfill-plan-status` to discover, safety-check, and summarize those plan artifacts before any reviewed execution step.
 
+Before executing a reviewed multi-date plan, use `current-candidates-backfill-execution-manifest` to check whether the required local snapshot manifest, snapshot-quality PASS, market dataset, universe dataset, and trading calendar already exist for each planned signal date:
+
+```cmd
+python -m quant_replay_system.cli current-candidates-backfill-execution-manifest --plan outputs\reports\current_candidates_backfill_plan\aadd86db24a1\current_candidates_backfill_plan.csv
+```
+
+The manifest can mark rows as `READY_FOR_REVIEW` or blocked by missing snapshot inputs, snapshot-quality status, plan infeasibility, missing datasets, or universe `as_of_date` being later than the signal date. It does not run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, connect to brokers, or place orders. See [current_candidates_backfill_execution_manifest.md](current_candidates_backfill_execution_manifest.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:
