@@ -15,6 +15,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a current-candidates backfill plan identified warmup/forward-horizon-feasible signal dates?
 - Has a current-candidates backfill execution manifest identified which planned signal dates are ready or blocked?
 - Has a PIT universe overlay plan produced manual-review rows for point-in-time universe preparation?
+- Has a reviewed PIT universe overlay workflow approved rows or identified evidence gaps?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
@@ -47,6 +48,7 @@ outputs/reports/current_candidates/health/
 outputs/reports/current_candidates_backfill_plan/status/
 outputs/reports/current_candidates_backfill_execution_manifest/status/
 outputs/reports/point_in_time_universe_overlay_plan/status/
+outputs/reports/point_in_time_universe_overlay_review/status/
 outputs/reports/advisory_profile_calibration/status/
 outputs/reports/calibration_to_signal_semantics/status/
 outputs/reports/signal_semantics/status/
@@ -128,6 +130,16 @@ The unified summary records the latest overlay plan id, plan status/stage, healt
 When the status reports `PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW`, the dashboard treats the warning as expected reviewable PIT universe preparation work. Generated rows are not point-in-time-valid universe rows yet; `NEEDS_MANUAL_REVIEW` rows must be manually reviewed with evidence before any later snapshot preparation or candidate-generation workflow can use them. Survivorship-bias warnings remain visible so future-universe-derived templates are not mistaken for reviewed point-in-time inputs.
 
 PIT universe overlay plans are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to PIT overlay review; overlay fields remain visible for audit. A PIT overlay plan does not imply that current-candidates were generated, snapshots were built, or forward labels were computed.
+
+## PIT Universe Overlay Review Status
+
+`research-status` includes `pit-universe-overlay-review-status` as reviewed PIT universe evidence context when those artifacts exist.
+
+The unified summary records the latest review id, review status/stage, health status, approved count, valid-for-signal-date count, needs-more-evidence count, unresolved survivorship-warning count, report path, and the review layer's next manual action. This is still preparation context only: it does not write usable universe input files, run `current-candidates`, build snapshot manifests, run `data-pipeline`, compute forward-return labels, mutate cache, fetch data, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_UNIVERSE_OVERLAY_REVIEW_NEEDS_MORE_EVIDENCE`, the dashboard treats the warning as expected reviewable PIT universe preparation work. Unresolved evidence or survivorship-bias issues must be resolved before any later snapshot preparation workflow can consume the rows. When the status reports `PIT_UNIVERSE_OVERLAY_REVIEW_HAS_APPROVED_ROWS` or `PIT_UNIVERSE_OVERLAY_REVIEW_ALL_APPROVED`, approved rows remain evidence artifacts only and do not imply candidate generation has happened.
+
+PIT universe overlay reviews are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to review status; review fields remain visible for audit. If review health fails because an approved row lacks reviewer/evidence, has unresolved survivorship risk, or violates local-only safety flags, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Advisory Profile Calibration Status
 

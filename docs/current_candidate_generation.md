@@ -85,6 +85,14 @@ python -m quant_replay_system.cli pit-universe-overlay-plan --execution-manifest
 
 Generated rows default to `NEEDS_MANUAL_REVIEW`, `valid_for_signal_date=false`, and survivorship-bias warnings when derived from a later universe artifact. The command is template-only and does not approve the universe, build snapshots, run current-candidates, or compute labels. See [point_in_time_universe_overlay_plan.md](point_in_time_universe_overlay_plan.md).
 
+After a template exists, use `pit-universe-overlay-review` to apply local reviewer updates and validate point-in-time evidence:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-overlay-review --overlay-plan outputs\reports\point_in_time_universe_overlay_plan\38a254c54024\point_in_time_universe_overlay_plan.csv --write-review-template-only
+```
+
+The review workflow can mark rows `APPROVED_FOR_PIT_UNIVERSE` only when reviewer, timestamp, evidence, listed-date, active-status, and survivorship-bias checks pass. It writes reviewed evidence artifacts only; it does not export a usable universe dataset, build snapshots, run current-candidates, compute forward labels, or place orders. See [point_in_time_universe_overlay_review.md](point_in_time_universe_overlay_review.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:

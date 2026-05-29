@@ -146,6 +146,18 @@ Expected stages include:
 
 `PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW` is expected for generated templates. It means the artifact is safe and discoverable, but rows are not valid for execution until manual point-in-time universe review is completed.
 
+## Reviewed Approval Workflow
+
+Use `pit-universe-overlay-review` to apply a reviewer-supplied local CSV to a PIT overlay plan/template:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-overlay-review --overlay-plan outputs\reports\point_in_time_universe_overlay_plan\38a254c54024\point_in_time_universe_overlay_plan.csv --write-review-template-only
+```
+
+The review workflow merges updates by `signal_date`, `symbol`, and `universe_name`. `APPROVED_FOR_PIT_UNIVERSE` rows require reviewer identity, review time, review reason, evidence source/path or reference, listed-date evidence, active-status evidence, and explicit survivorship-bias resolution. Failed approval checks are downgraded to `NEEDS_MORE_EVIDENCE` with blocker reasons.
+
+It writes reviewed evidence artifacts only. It does not write usable universe inputs under `data/raw` or `data/processed`, build snapshots, run `current-candidates`, compute labels, or place orders. Use `pit-universe-overlay-review-index`, `pit-universe-overlay-review-health`, and `pit-universe-overlay-review-status` to discover, safety-check, and summarize review artifacts. See [point_in_time_universe_overlay_review.md](point_in_time_universe_overlay_review.md).
+
 ## Research-Status Integration
 
 `research-status` includes the latest `pit-universe-overlay-plan-status` as PIT universe preparation context.

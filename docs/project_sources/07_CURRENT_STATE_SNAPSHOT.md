@@ -1,12 +1,12 @@
 # Current State Snapshot
 
 > Status: working memory document  
-> Last generated: 2026-05-28  
+> Last generated: 2026-05-29  
 > Permanence: temporary; refresh after the next major checkpoint or when source state changes.
 
 ## Summary
 
-The project is currently a local quantitative research, signal semantics, advisory, and paper workflow system for China A-share stocks and ETFs.
+The project is currently a local quantitative research, signal semantics, advisory, calibration, paper workflow, and multi-date evidence preparation system for China A-share stocks and ETFs.
 
 It has not become a live trading system.
 
@@ -41,8 +41,10 @@ It has not become a live trading system.
   - execution manifest,
   - execution manifest index/health/status,
   - research-status integration.
-- Current blocker:
-  - `BLOCKED_UNIVERSE_AS_OF` for selected multi-date signal dates.
+- PIT universe overlay preparation:
+  - PIT overlay plan/template,
+  - PIT overlay index/health/status,
+  - research-status integration.
 
 ### Signal Semantics
 
@@ -88,6 +90,13 @@ It has not become a live trading system.
   - consider watch expansion only after more evidence,
   - collect more symbols/dates/backtest/paper evidence.
 
+### Factor Taxonomy Sources
+
+- Canonical China A-share factor taxonomy source exists.
+- Event-driven/industry-chain factor framework source exists.
+- Factor taxonomy normalization produced a registry seed and summary in local/docs outputs.
+- These are design sources, not executable signal logic.
+
 ## Current Quantitative Evidence Status
 
 Current evidence is not enough to validate non-demo buy signals.
@@ -101,7 +110,7 @@ Known gaps:
 - no multi-date outcome dataset,
 - no benchmark-relative outcomes,
 - no transaction cost/slippage model,
-- no survivorship-bias handling yet,
+- no survivorship-bias resolution yet,
 - no corporate action adjustment policy validation,
 - no linked paper outcome history for signals.
 
@@ -116,12 +125,24 @@ Market/cache feasibility:
 Execution readiness:
 
 - 8 selected signal dates.
-- 0 ready.
-- 8 blocked by `BLOCKED_UNIVERSE_AS_OF`.
+- 0 execution-ready.
+- 8 blocked by `BLOCKED_UNIVERSE_AS_OF` at execution manifest stage.
+
+PIT universe overlay preparation:
+
+- latest overlay plan id: `38a254c54024`.
+- 72 rows.
+- 8 signal dates.
+- 9 symbols.
+- 72 rows require manual review.
+- 0 rows valid for signal date.
+- 72 survivorship-bias warnings.
 
 Meaning:
 
-The next blocker is point-in-time universe/snapshot preparation.
+The project has moved from “universe-as-of blocker identified” to “PIT universe overlay review templates created.”
+
+The next blocker is reviewed approval of PIT universe rows with evidence.
 
 ## Current External Data Strategy
 
@@ -141,19 +162,21 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Point-in-Time Universe Overlay Plan v0.1
+Reviewed PIT Universe Overlay Approval Workflow v0.1
 ```
 
 Purpose:
 
-- solve `BLOCKED_UNIVERSE_AS_OF`,
-- produce reviewed universe overlay templates,
-- avoid survivorship bias,
-- keep plan-only behavior.
+- consume PIT universe overlay templates,
+- require row-level evidence,
+- approve/reject/needs-more-evidence rows,
+- resolve survivorship-bias warnings where possible,
+- produce reviewed PIT universe overlay artifacts.
 
 Do not yet:
 
 - generate multi-date candidates,
+- build per-date snapshot manifests,
 - compute forward returns,
 - change non-demo thresholds,
 - add news scraping,
@@ -173,17 +196,18 @@ Recent milestone direction, not necessarily exhaustive:
 - v0.97.0: warmup-aware current-candidates backfill plan.
 - v0.98.0: current-candidates backfill execution manifest.
 - v0.99.0: execution manifest research-status integration.
+- v1.0.0: research-infrastructure milestone with PIT universe overlay planning and status visibility.
 
 ## What to Ask ChatGPT Next
 
 For next development:
 
 ```text
-Give me three Codex tasks for Point-in-Time Universe Overlay Plan v0.1.
+Give me Codex tasks for Reviewed PIT Universe Overlay Approval Workflow v0.1.
 ```
 
 Expected split:
 
 1. read-only audit,
-2. plan/template implementation,
-3. index/health/status and checkpoint.
+2. approval workflow implementation,
+3. index/health/status and research-status/checkpoint.

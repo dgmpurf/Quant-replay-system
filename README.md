@@ -107,6 +107,12 @@ For blocked `BLOCKED_UNIVERSE_AS_OF` rows, use `pit-universe-overlay-plan` to cr
 
 `research-status` includes the latest `pit-universe-overlay-plan-status` as PIT universe preparation context, including manual-review counts, valid-for-signal-date counts, survivorship-bias warning counts, health status, and report path. `NEEDS_MANUAL_REVIEW` rows are not valid PIT universe rows yet, and later paper workflow priority is preserved. See [docs/local_research_dashboard.md#pit-universe-overlay-plan-status](docs/local_research_dashboard.md#pit-universe-overlay-plan-status).
 
+Use `pit-universe-overlay-review` to apply local reviewer updates to a PIT overlay plan and validate row-level point-in-time evidence; see [docs/point_in_time_universe_overlay_review.md](docs/point_in_time_universe_overlay_review.md). The review workflow writes evidence artifacts only and does not export usable universe data, build snapshots, run current-candidates, compute labels, send messages, or place orders.
+
+Use `pit-universe-overlay-review-index`, `pit-universe-overlay-review-health`, and `pit-universe-overlay-review-status` to discover, safety-check, and summarize reviewed PIT universe approval artifacts. `research-status` includes the latest review as preparation context, including approved rows, unresolved survivorship warnings, and evidence gaps, while preserving later paper workflow priority.
+
+For the v1.1.0 checkpoint covering reviewed PIT universe overlay approval artifact views and `research-status` integration, see [docs/release_checkpoint_v1.1.0.md](docs/release_checkpoint_v1.1.0.md).
+
 For the v1.0.0 checkpoint covering the plan-only path from warmup-aware backfill planning through PIT universe overlay preparation, see [docs/release_checkpoint_v1.0.0.md](docs/release_checkpoint_v1.0.0.md).
 
 `research-status` includes the latest `current-candidates-backfill-plan-status` as planning context, including selected date count, first/last signal dates, warmup requirement, forward-horizon summary, health status, and report path. The plan is visible but does not imply candidate generation; later paper workflow priority is preserved. See [docs/local_research_dashboard.md#current-candidates-backfill-plan-status](docs/local_research_dashboard.md#current-candidates-backfill-plan-status).
@@ -572,6 +578,10 @@ See [docs/release_checkpoint_v0.98.0.md](docs/release_checkpoint_v0.98.0.md) for
 `v0.99.0` marks the Current-Candidates Backfill Execution Manifest Research Status Integration checkpoint, covering dashboard visibility for execution manifest readiness, `BLOCKED_UNIVERSE_AS_OF` blockers, linked warmup-aware plan context, manifest-only safety boundaries, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v0.99.0.md](docs/release_checkpoint_v0.99.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v1.1.0` marks the Reviewed PIT Universe Overlay Review Artifact Views and Research Status Integration checkpoint, covering reviewed approval artifact index/health/status views, evidence-required approval safety checks, unresolved survivorship warning visibility, dashboard integration, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v1.1.0.md](docs/release_checkpoint_v1.1.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

@@ -1,7 +1,7 @@
 # System Architecture and Workflow Map
 
 > Status: working memory document  
-> Last generated: 2026-05-28  
+> Last generated: 2026-05-29  
 > Permanence: temporary; update after major architecture or workflow additions.
 
 ## High-Level Architecture
@@ -51,6 +51,11 @@ Paper and Review Layer
   ├─ paper-daily
   └─ paper-reconcile-fills
 
+Multi-Date Evidence Preparation
+  ├─ current-candidates-backfill-plan
+  ├─ current-candidates-backfill-execution-manifest
+  └─ point-in-time-universe-overlay-plan
+
 Dashboards and Status
   ├─ index / health / status for most artifacts
   └─ unified research-status
@@ -69,7 +74,7 @@ artifact-producing command
 → checkpoint doc
 ```
 
-This pattern is intentionally repetitive. It makes local workflows auditable and prevents hidden state transitions.
+This repetition is deliberate. It makes local workflows auditable and prevents hidden state transitions.
 
 ## Key Completed Workflow Chains
 
@@ -140,24 +145,25 @@ candidate or scored rows
 → research-status
 ```
 
-### 7. Multi-Date Candidate Planning
+### 7. Multi-Date Candidate Planning and PIT Universe Preparation
 
 ```text
 market cache coverage
 → current-candidates-backfill-plan
 → warmup-aware plan
 → execution manifest
-→ execution manifest index / health / status
+→ PIT universe overlay plan/template
+→ PIT universe overlay index / health / status
 → research-status
 ```
 
-Current blocker:
+Current active blocker has evolved from a raw universe-as-of failure into a reviewed PIT universe preparation state:
 
 ```text
-BLOCKED_UNIVERSE_AS_OF
+PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW
 ```
 
-The market data and forward-horizon feasibility are present, but the available universe artifact is too late for earlier signal dates.
+The system has not generated multi-date current-candidates yet.
 
 ## Important Data Contracts
 
@@ -176,18 +182,20 @@ The project should preserve:
 
 ### Safety Fields
 
-Most user-facing artifacts should keep:
+Most user-facing or review-facing artifacts should keep:
 
 - `requires_manual_confirmation=true`
 - `auto_order_allowed=false`
 - `no_live_trading=true`
 - `no_broker_api=true`
+- `no_order_placement=true` where applicable
 - `no_message_sent=true`
 - `llm_api_called=false` when relevant
+- `plan_only=true` for planning workflows
 
 ### Signal Semantics Provenance
 
-Downstream advisory artifacts now carry or should carry:
+Downstream advisory artifacts carry or should carry:
 
 - `semantics_policy_source`
 - `semantics_policy_version`
@@ -202,7 +210,7 @@ Downstream advisory artifacts now carry or should carry:
 
 ## Current Multi-Date Planning State
 
-Known current state from the conversation:
+Known current state:
 
 - Market cache rows: 1335.
 - Symbols: 9.
@@ -216,5 +224,26 @@ Known current state from the conversation:
   - 8 rows.
   - 0 ready.
   - 8 blocked by `BLOCKED_UNIVERSE_AS_OF`.
+- PIT universe overlay plan:
+  - overlay plan id: `38a254c54024`.
+  - 72 rows.
+  - 8 signal dates.
+  - 9 symbols.
+  - 72 rows need manual review.
+  - 0 rows valid for signal date.
+  - 72 survivorship-bias warnings.
 
-Next technical blocker: point-in-time universe overlay / snapshot preparation.
+## Current Next Technical Branch
+
+```text
+Reviewed PIT Universe Overlay Approval Workflow v0.1
+```
+
+Purpose:
+
+- turn review templates into explicitly reviewed PIT universe rows;
+- require evidence fields before approval;
+- preserve survivorship-bias visibility;
+- avoid candidate generation until universe rows are reviewed.
+
+Do not skip directly to current-candidates backfill runner.

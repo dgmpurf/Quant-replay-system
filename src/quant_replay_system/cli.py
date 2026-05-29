@@ -57,6 +57,16 @@ from quant_replay_system.point_in_time_universe_overlay_plan_index import (
 from quant_replay_system.point_in_time_universe_overlay_plan_status import (
     run_point_in_time_universe_overlay_plan_status,
 )
+from quant_replay_system.point_in_time_universe_overlay_review import build_pit_universe_overlay_review
+from quant_replay_system.point_in_time_universe_overlay_review_health import (
+    check_pit_universe_overlay_review_health,
+)
+from quant_replay_system.point_in_time_universe_overlay_review_index import (
+    build_pit_universe_overlay_review_index,
+)
+from quant_replay_system.point_in_time_universe_overlay_review_status import (
+    run_pit_universe_overlay_review_status,
+)
 from quant_replay_system.data import read_csv_preserve_symbol_columns
 from quant_replay_system.data_preparation_artifact_health import check_data_preparation_artifact_health
 from quant_replay_system.data_preparation_artifact_index import build_data_preparation_artifact_index
@@ -399,6 +409,86 @@ def build_parser() -> argparse.ArgumentParser:
         help="Status output directory",
     )
     pit_universe_overlay_plan_status.set_defaults(handler=_handle_pit_universe_overlay_plan_status)
+
+    pit_universe_overlay_review = subparsers.add_parser(
+        "pit-universe-overlay-review",
+        help="Apply local reviewed PIT universe overlay updates without generating candidates or snapshots",
+    )
+    pit_universe_overlay_review.add_argument(
+        "--overlay-plan",
+        required=True,
+        help="PIT universe overlay plan CSV",
+    )
+    pit_universe_overlay_review.add_argument(
+        "--review-updates",
+        default=None,
+        help="Optional local PIT universe overlay review updates CSV",
+    )
+    pit_universe_overlay_review.add_argument(
+        "--write-review-template-only",
+        action="store_true",
+        help="Write a reviewer update template and do not approve rows",
+    )
+    pit_universe_overlay_review.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_overlay_review",
+        help="Reviewed PIT universe overlay output directory",
+    )
+    pit_universe_overlay_review.set_defaults(handler=_handle_pit_universe_overlay_review)
+
+    pit_universe_overlay_review_index = subparsers.add_parser(
+        "pit-universe-overlay-review-index",
+        help="Build a local index of reviewed PIT universe overlay artifacts",
+    )
+    pit_universe_overlay_review_index.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_overlay_review",
+        help="Reviewed PIT universe overlay artifact root",
+    )
+    pit_universe_overlay_review_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_overlay_review/index",
+        help="Index output directory",
+    )
+    pit_universe_overlay_review_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include folders missing metadata.json",
+    )
+    pit_universe_overlay_review_index.set_defaults(handler=_handle_pit_universe_overlay_review_index)
+
+    pit_universe_overlay_review_health = subparsers.add_parser(
+        "pit-universe-overlay-review-health",
+        help="Check local reviewed PIT universe overlay artifact health",
+    )
+    pit_universe_overlay_review_health.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_overlay_review",
+        help="Reviewed PIT universe overlay artifact root",
+    )
+    pit_universe_overlay_review_health.add_argument("--index", help="Optional reviewed PIT universe overlay index CSV path")
+    pit_universe_overlay_review_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_overlay_review/health",
+        help="Health output directory",
+    )
+    pit_universe_overlay_review_health.set_defaults(handler=_handle_pit_universe_overlay_review_health)
+
+    pit_universe_overlay_review_status = subparsers.add_parser(
+        "pit-universe-overlay-review-status",
+        help="Summarize latest local reviewed PIT universe overlay status",
+    )
+    pit_universe_overlay_review_status.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_overlay_review",
+        help="Reviewed PIT universe overlay artifact root",
+    )
+    pit_universe_overlay_review_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_overlay_review/status",
+        help="Status output directory",
+    )
+    pit_universe_overlay_review_status.set_defaults(handler=_handle_pit_universe_overlay_review_status)
 
     current_backfill_execution_manifest_index = subparsers.add_parser(
         "current-candidates-backfill-execution-manifest-index",
@@ -1022,6 +1112,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--pit-universe-overlay-plan-root",
         help="Point-in-time universe overlay plan artifact root directory",
+    )
+    research_status.add_argument(
+        "--pit-universe-overlay-review-root",
+        help="Reviewed point-in-time universe overlay artifact root directory",
     )
     research_status.add_argument(
         "--advisory-profile-calibration-root",
@@ -1951,6 +2045,98 @@ def _handle_pit_universe_overlay_plan_status(args: argparse.Namespace) -> int:
     print(f"needs_manual_review_count: {result.needs_manual_review_count}")
     print(f"valid_for_signal_date_count: {result.valid_for_signal_date_count}")
     print(f"survivorship_bias_warning_count: {summary.get('survivorship_bias_warning_count', '')}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, LLM API, or external API was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_pit_universe_overlay_review(args: argparse.Namespace) -> int:
+    result = build_pit_universe_overlay_review(
+        overlay_plan=args.overlay_plan,
+        review_updates=args.review_updates,
+        write_review_template_only=bool(args.write_review_template_only),
+        output_dir=args.output_dir,
+    )
+    print(f"review_id: {result.review_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"approved_count: {result.approved_count}")
+    print(f"rejected_count: {result.rejected_count}")
+    print(f"needs_more_evidence_count: {result.needs_more_evidence_count}")
+    print(f"needs_manual_review_count: {result.needs_manual_review_count}")
+    print(f"valid_for_signal_date_count: {result.valid_for_signal_date_count}")
+    print(f"reviewed_overlay_path: {result.artifact_paths['reviewed_overlay']}")
+    print(f"review_template_path: {result.artifact_paths['review_template']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, LLM API, or external API was invoked."
+    )
+    return 0
+
+
+def _handle_pit_universe_overlay_review_index(args: argparse.Namespace) -> int:
+    result = build_pit_universe_overlay_review_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['pit_universe_overlay_review_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, LLM API, or external API was invoked."
+    )
+    return 0
+
+
+def _handle_pit_universe_overlay_review_health(args: argparse.Namespace) -> int:
+    result = check_pit_universe_overlay_review_health(
+        index_path=args.index,
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['pit_universe_overlay_review_health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, LLM API, or external API was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_pit_universe_overlay_review_status(args: argparse.Namespace) -> int:
+    result = run_pit_universe_overlay_review_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['pit_universe_overlay_review_status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_review_id: {result.latest_review_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"approved_count: {result.approved_count}")
+    print(f"valid_for_signal_date_count: {result.valid_for_signal_date_count}")
+    print(f"needs_more_evidence_count: {result.needs_more_evidence_count}")
+    print(f"unresolved_survivorship_warning_count: {result.unresolved_survivorship_warning_count}")
+    print(f"report_path: {summary.get('report_path', '')}")
     print(f"next_manual_action: {result.next_manual_action}")
     for warning in result.warnings:
         print(f"WARNING: {warning}")
@@ -3436,6 +3622,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         )
     if args.pit_universe_overlay_plan_root:
         updates["point_in_time_universe_overlay_plan_root"] = Path(args.pit_universe_overlay_plan_root)
+    if args.pit_universe_overlay_review_root:
+        updates["point_in_time_universe_overlay_review_root"] = Path(args.pit_universe_overlay_review_root)
     if args.advisory_profile_calibration_root:
         updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
     if args.calibration_to_signal_semantics_root:
@@ -3471,6 +3659,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
             args.current_candidates_backfill_execution_manifest_root
         ),
         pit_universe_overlay_plan_root=args.pit_universe_overlay_plan_root,
+        pit_universe_overlay_review_root=args.pit_universe_overlay_review_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -3654,6 +3843,25 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"pit_universe_overlay_plan_report_path: {result.pit_universe_overlay_plan_report_path}")
     print(f"pit_universe_overlay_plan_next_action: {result.pit_universe_overlay_plan_next_action}")
+    print(f"latest_pit_universe_overlay_review_id: {result.latest_pit_universe_overlay_review_id}")
+    print(f"pit_universe_overlay_review_status: {result.pit_universe_overlay_review_status}")
+    print(f"pit_universe_overlay_review_stage: {result.pit_universe_overlay_review_stage}")
+    print(f"pit_universe_overlay_review_health_status: {result.pit_universe_overlay_review_health_status}")
+    print(f"pit_universe_overlay_review_approved_count: {result.pit_universe_overlay_review_approved_count}")
+    print(
+        "pit_universe_overlay_review_valid_for_signal_date_count: "
+        f"{result.pit_universe_overlay_review_valid_for_signal_date_count}"
+    )
+    print(
+        "pit_universe_overlay_review_needs_more_evidence_count: "
+        f"{result.pit_universe_overlay_review_needs_more_evidence_count}"
+    )
+    print(
+        "pit_universe_overlay_review_unresolved_survivorship_warning_count: "
+        f"{result.pit_universe_overlay_review_unresolved_survivorship_warning_count}"
+    )
+    print(f"pit_universe_overlay_review_report_path: {result.pit_universe_overlay_review_report_path}")
+    print(f"pit_universe_overlay_review_next_action: {result.pit_universe_overlay_review_next_action}")
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
     print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")

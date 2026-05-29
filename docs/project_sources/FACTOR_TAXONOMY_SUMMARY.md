@@ -1,16 +1,29 @@
-# Factor Taxonomy v2.0 Summary
+# Factor Taxonomy V2 Summary
 
-## Why The 8-Layer Framework Is The Main Skeleton
+> Status: working memory document  
+> Last generated: 2026-05-29  
+> Permanence: temporary; replace if the factor taxonomy changes materially.
 
-The eight-layer framework is the project skeleton because each layer maps to a distinct engineering boundary: company fundamentals and events, industry-chain economics, macro and policy context, capital-market supply and institutional rules, traded-market confirmation, information propagation, expectation and valuation gaps, and risk/compliance boundaries. These are different data contracts and different failure modes, so they should not be collapsed into a single generic factor list.
+## Purpose
 
-The framework is intended for source registration, schema design, event extraction, exposure mapping, factor observation, signal scoring, and compliance gating. It is not a trading recommendation system by itself.
+This document summarizes the China A-share factor taxonomy sources for use in `quant-replay-system` Project Sources.
 
-## Why The 12 Factors Are Only A Checklist
+The full taxonomy should be treated as a design framework for future factor/event/fundamental/news modules, not as executable trading logic.
 
-The original twelve factors are useful as a coverage checklist, but they overlap too much for direct database design. Macro, liquidity, fiscal policy, industry cycle, commodity prices, events, sentiment, and expectation gaps can double-count the same story if they are stored as peer factors. The eight-layer taxonomy gives cleaner ownership boundaries; the twelve-factor list remains a reminder to check coverage during research design.
+## Canonical Rule
 
-## Eight Primary Layers
+Use this priority when sources overlap:
+
+1. `FACTOR_TAXONOMY_V2_CANONICAL.md` or `股价影响因素全景表v2.0.md` is the canonical factor taxonomy.
+2. `中国事件驱动与产业链量化系统的因子分层框架研究.md` explains the strategic and China-specific rationale.
+3. `FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md` is a raw Excel-conversion reference.
+4. `factor_definition_seed.csv` is an engineering seed, not a trading model.
+
+If canonical and raw export disagree, prefer canonical unless the user explicitly says otherwise.
+
+## Core Framework
+
+The taxonomy uses 8 primary layers as the system skeleton:
 
 1. 经营与公司事件层
 2. 行业供需与产业链价格层
@@ -21,39 +34,120 @@ The original twelve factors are useful as a coverage checklist, but they overlap
 7. 预期、估值与定价偏离层
 8. 风险事件与合规边界层
 
+The older 12-factor structure should be treated as a coverage checklist, not as the database primary classification.
+
 ## Data Availability Grades
 
-- A: Public, structured, relatively easy to obtain; suitable for direct factor storage and backtesting.
-- B: Public but delayed, scattered, or cleaning-heavy; useful for medium-horizon factors or event confirmation.
-- C: Public but highly dispersed; often requires crawling, NLP, or proxy variables.
-- D: Not directly obtainable; can only be approximated by low-confidence proxies.
-- E: Should not be obtained or legally used; prohibited from live signals.
+| Grade | Meaning | System Use |
+|---|---|---|
+| A | Public, structured, relatively easy to obtain. | Can enter factor library and backtests after quality checks. |
+| B | Public but lagged, fragmented, or requiring cleaning. | Useful for medium-horizon factors or event confirmation. |
+| C | Public but highly scattered; needs crawling, NLP, or proxies. | Event-library use with confidence scoring. |
+| D | Not directly available; only approximated by proxies. | Low-confidence proxy signal. |
+| E | Should not be acquired or cannot legally be used. | Must not enter trading signals. |
 
-## Required Cross-Layer Metadata Fields
+## Required Cross-Layer Metadata
 
-Every factor or event should carry at least: `factor_id`, `layer`, `second_level`, `factor_name`, `impact_path`, `affected_entities`, `direction_rule`, `time_horizon`, `data_sources`, `data_availability`, `proxy_variables`, `lag_days`, `confidence_default`, `backtestable`, `compliance_flag`, and `trade_usage`.
+Future factor/event records should preserve:
 
-Additional implementation metadata should include source type, public timestamp, available time, source reliability, revision risk, mapping scope, coverage, permission class, and audit trace.
+- `factor_id`
+- `layer`
+- `second_level`
+- `factor_name`
+- `impact_path`
+- `affected_entities`
+- `direction_rule`
+- `time_horizon`
+- `data_sources`
+- `data_availability`
+- `proxy_variables`
+- `lag_days`
+- `confidence_default`
+- `backtestable`
+- `compliance_flag`
+- `trade_usage`
+
+These fields align with future tables such as `factor_definition`, `factor_observation`, `event_structured`, `company_exposure`, `source_registry`, `signal_score`, and `compliance_rule`.
 
 ## Future Table Mapping
 
-- `factor_definition`: canonical definitions for layer, second-level group, factor name, path, direction rule, availability, and usage.
-- `factor_observation`: dated observations such as values, changes, z-scores, source ids, lag, and quality flags.
-- `event_structured`: extracted events with public time, event type, entities, source tier, confidence, and impact path.
-- `company_exposure`: company-to-industry, product, raw-material, geography, export, and supply-chain exposure tags.
-- `source_registry`: source name, permission class, update frequency, reliability, and allowed use.
-- `signal_score`: structured scores for real impact, market confirmation, sentiment, confidence, and final signal score.
-- `compliance_rule`: rule ids, trigger conditions, actions, severity, and audit requirements.
+| Table | Role |
+|---|---|
+| `factor_definition` | Stable factor definitions and taxonomy metadata. |
+| `factor_observation` | Date-specific observed values for factors. |
+| `event_structured` | Structured event records extracted from announcements/news. |
+| `company_exposure` | Company-to-industry/product/chain exposure mapping. |
+| `source_registry` | Source, permission, reliability, and update-frequency governance. |
+| `signal_score` | Scores such as real impact, market confirmation, sentiment, and confidence. |
+| `compliance_rule` | Risk/compliance rules, including restricted or illegal data gates. |
 
-## Use In quant-replay-system
+## Signal Score Concept
 
-Use the taxonomy as source material for future schema design, feature flags, factor definitions, source governance, and risk/compliance gates. The seed CSV is a starting registry, not executable logic. It can support future migrations, tests, documentation, and offline research tooling after review.
+Single events or factors should not directly output buy/sell decisions.
 
-## What Should Not Be Done Yet
+A future event/factor scoring layer may use separate scores:
 
-- Do not turn any factor into a buy/sell recommendation.
-- Do not change signal semantics, advisory labels, or trading behavior from this taxonomy alone.
-- Do not use E-grade, restricted, rumor-only, or non-public data as tradable inputs.
-- Do not claim strategy performance is validated.
-- Do not add broker integration, live trading, automated order placement, message delivery, or external API calls.
-- Do not write generated research artifacts into tracked cache or output paths.
+- `real_impact`
+- `market_confirmation`
+- `sentiment`
+- `confidence`
+
+A possible formula from the taxonomy is:
+
+```text
+signal_score = 0.40 * real_impact
+             + 0.30 * market_confirmation
+             + 0.10 * sentiment
+             + 0.20 * confidence
+```
+
+This is a design reference only. It is not currently validated, and it should not override existing `signal_semantics` safety gates.
+
+## How This Should Enter quant-replay-system
+
+Recommended sequence:
+
+1. Factor taxonomy source normalization.
+2. `factor_definition_seed.csv` validation.
+3. `source_registry` schema design.
+4. `company_exposure` schema design.
+5. Fundamental data schema and LOCAL_CSV ingestion.
+6. Event schema and LOCAL_CSV ingestion.
+7. Event/factor quality gates.
+8. Factor observation prototype.
+9. Advisory context integration.
+10. Only later: scoring integration and backtesting.
+
+## What Not To Do Yet
+
+Do not:
+
+- turn taxonomy rows into live signals;
+- change `signal_semantics` defaults based on taxonomy alone;
+- use news sentiment as a direct buy/sell driver;
+- bypass point-in-time rules;
+- ignore source permissions or legality;
+- add broker integration or automated orders;
+- treat `manual_confirm_trade` in the taxonomy as current project behavior.
+
+## Free-First Interpretation
+
+The taxonomy mentions paid or institutional sources in some places. Current project policy is free-first:
+
+- prioritize LOCAL_CSV;
+- prioritize AKShare/BaoStock/free Tushare where usable;
+- use public official data and announcements conservatively;
+- paid vendors remain future backups only.
+
+## Current Engineering Use
+
+At the current project stage, this taxonomy should mainly guide:
+
+- future fundamental data schema;
+- future event/news schema;
+- factor definition registry;
+- company exposure mapping;
+- risk/compliance fields;
+- advisory context explanations.
+
+It should not yet drive real trading, non-demo buy-review expansion, or automation.

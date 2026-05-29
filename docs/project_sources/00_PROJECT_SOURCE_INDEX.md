@@ -1,79 +1,128 @@
 # Quant Replay System Project Source Pack Index
 
 > Status: working memory document  
-> Last generated: 2026-05-28  
-> Intended use: add to ChatGPT Project Sources or keep under a local planning folder.  
-> Permanence: temporary and replaceable. These documents should be refreshed as the project changes.
+> Last generated: 2026-05-29  
+> Intended use: replace the previous Project Source Pack after the v1.0.0 research-infrastructure checkpoint.  
+> Permanence: temporary and replaceable. Refresh when the project changes stage.
 
 ## Purpose
 
-This pack condenses the long ChatGPT/Codex collaboration history, current GitHub project shape, and active product direction into a small set of Markdown files.
+This pack condenses the current `quant-replay-system` project direction, engineering state, artifact governance rules, and near-term roadmap into a small set of Markdown files for ChatGPT Project Sources.
 
-The goal is to make future sessions easier by giving ChatGPT and Codex stable project context without relying on a long chat transcript.
+It is designed to reduce reliance on a very long chat transcript and help future ChatGPT/Codex sessions recover the current project state quickly.
 
 ## Source Basis
 
 This pack is based on:
 
-- The long project conversation in this ChatGPT thread.
-- The GitHub repository discovered as `dgmpurf/Quant-replay-system`.
-- The GitHub README, which describes the project as a point-in-time historical replay quant research system for China A-share ETFs and stocks and explicitly states that it is not an automatic trading bot or broker auto-order system.
-- The GitHub `docs/product_vision.md`, which states that the near-term goal is quantitative research plus signal advisory plus human-confirmed execution.
-- The GitHub `docs/PROCESS.md`, which defines the Codex/ChatGPT workflow, testing standards, checkpoint documentation rules, Git safety rules, and safety boundaries.
+- the long ChatGPT/Codex collaboration history;
+- the GitHub repository `dgmpurf/Quant-replay-system`;
+- the project README and docs;
+- the v1.0.0 research-infrastructure milestone;
+- the current completed PIT universe overlay plan status;
+- factor taxonomy source materials for China A-share event-driven and industry-chain quantitative research.
 
-## Important Accuracy Note
+## Accuracy Note
 
-This pack does not replace the repository source code or official project docs. It is a high-level project memory layer.
+This pack does not replace the source code, formal repository docs, or actual local artifacts.
 
-It may not include every local ignored artifact because many local files under `outputs/`, `data/raw/`, `data/cache/`, and `data/processed/` are intentionally ignored and not available through GitHub. Those local artifacts should remain untracked unless explicitly reviewed.
+Many local outputs under `outputs/`, `data/raw/`, `data/cache/`, and `data/processed/` are intentionally ignored by Git and are not always available to ChatGPT. When local artifact state matters, the user should paste Codex summaries or run local CLI/status checks.
 
-## Documents in This Pack
+## Current Pack Documents
 
-| File | Purpose |
-|---|---|
-| `00_PROJECT_SOURCE_INDEX.md` | Index, usage guidance, and update triggers. |
-| `01_PROJECT_VISION_AND_BOUNDARIES.md` | Product north star, stages, safety boundaries, and what “full automation” means. |
-| `02_SYSTEM_ARCHITECTURE_AND_WORKFLOW_MAP.md` | Current architecture from data sources to cache, candidates, semantics, advisory, paper workflow, dashboards, and backfill planning. |
-| `03_ROADMAP_AND_NEXT_DECISION_POINTS.md` | Near-term roadmap, current blockers, likely next branches, and what should happen before external data/news/fundamentals. |
-| `04_FREE_FIRST_DATA_SOURCE_STRATEGY.md` | Free-first data source plan for market data, fundamentals, announcements, and news/event context. |
-| `05_CODEX_OPERATING_PROTOCOL.md` | How to queue Codex tasks, how to split large tasks, validation expectations, and Git safety. |
-| `06_CHECKPOINT_AND_ARTIFACT_GOVERNANCE.md` | Checkpoint/tag philosophy, artifact health/status rules, legacy/stale artifact treatment, and when to refresh docs. |
-| `07_CURRENT_STATE_SNAPSHOT.md` | Condensed current-state snapshot at the time this pack was generated. |
+| File | Purpose | Replace When |
+|---|---|---|
+| `00_PROJECT_SOURCE_INDEX.md` | Index and update rules for Project Sources. | Any major Project Source structure change. |
+| `01_PROJECT_VISION_AND_BOUNDARIES.md` | Product north star, stages, and safety boundaries. | Product boundary changes, real delivery, broker, automation, or international expansion begins. |
+| `02_SYSTEM_ARCHITECTURE_AND_WORKFLOW_MAP.md` | Architecture map and completed workflow chains. | New major workflow chain added. |
+| `03_ROADMAP_AND_NEXT_DECISION_POINTS.md` | Current roadmap and decision gates. | Next major blocker or branch changes. |
+| `04_FREE_FIRST_DATA_SOURCE_STRATEGY.md` | Free-first external data strategy. | Paid source purchased, free source fails, or external data plan changes materially. |
+| `05_CODEX_OPERATING_PROTOCOL.md` | Codex/ChatGPT workflow and safety protocol. | User workflow preferences or validation rules change. |
+| `06_CHECKPOINT_AND_ARTIFACT_GOVERNANCE.md` | Artifact, checkpoint, active/legacy, and plan-only governance. | New artifact category or status/actionability semantics change. |
+| `07_CURRENT_STATE_SNAPSHOT.md` | Current project status snapshot. | Every major checkpoint or stage transition. |
+| `FACTOR_TAXONOMY_SUMMARY.md` | Concise factor-taxonomy guide for future schema/event/factor work. | Factor taxonomy changes materially. |
+| `FACTOR_TAXONOMY_V2_CANONICAL.md` | Full canonical factor taxonomy, if included separately. | Canonical taxonomy version changes. |
+| `FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md` | Optional raw Excel-conversion reference. | Raw reference is regenerated. |
+| `中国事件驱动与产业链量化系统的因子分层框架研究.md` | Strategic rationale for China event-driven/industry-chain factor layering. | Strategy framework changes materially. |
 
-## How to Use
+## Recommended Project Source Set After v1.0.0
 
-Recommended options:
+Replace or add these now:
 
-1. Add these files to ChatGPT Project Sources.
-2. Keep them in a local folder such as `docs/project_sources/`.
-3. Do not treat them as permanent truth. Treat them as a compact memory snapshot.
+```text
+00_PROJECT_SOURCE_INDEX.md
+02_SYSTEM_ARCHITECTURE_AND_WORKFLOW_MAP.md
+03_ROADMAP_AND_NEXT_DECISION_POINTS.md
+06_CHECKPOINT_AND_ARTIFACT_GOVERNANCE.md
+07_CURRENT_STATE_SNAPSHOT.md
+FACTOR_TAXONOMY_SUMMARY.md
+```
 
-## When to Replace This Pack
+Keep existing unless changed:
 
-Replace or regenerate this pack when any of these happen:
+```text
+01_PROJECT_VISION_AND_BOUNDARIES.md
+04_FREE_FIRST_DATA_SOURCE_STRATEGY.md
+05_CODEX_OPERATING_PROTOCOL.md
+FACTOR_TAXONOMY_V2_CANONICAL.md
+FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
+中国事件驱动与产业链量化系统的因子分层框架研究.md
+```
 
-- A major release checkpoint is completed.
-- The project moves from planning-only to actual multi-date candidate generation.
-- Fundamental data ingestion starts.
-- News/event ingestion starts.
-- Real alert delivery is introduced.
-- Broker integration or execution automation is discussed.
-- The project changes from demo/synthetic validation to non-demo research signals.
-- `research-status` semantics change materially.
-- Data source strategy changes because a paid vendor is purchased or abandoned.
-- The GitHub repository has changed significantly from the state summarized here.
+## Current Project State Summary
+
+The project has reached a research-infrastructure v1.0.0 milestone:
+
+```text
+local market data / reviewed exports / quality gates
+→ current-candidates
+→ signal semantics / advisory layers
+→ calibration tooling
+→ multi-date backfill planning
+→ execution readiness manifest
+→ PIT universe overlay preparation plan
+→ index / health / status / research-status context
+```
+
+The current blocker is no longer simply `BLOCKED_UNIVERSE_AS_OF`; it has been decomposed into a reviewed PIT universe overlay preparation state:
+
+```text
+PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW
+```
+
+Latest known PIT universe overlay plan:
+
+```text
+overlay_plan_id: 38a254c54024
+rows: 72
+signal dates: 8
+symbols: 9
+needs manual review: 72
+valid_for_signal_date: 0
+survivorship_bias_warning: 72
+```
+
+## Current Recommended Next Branch
+
+```text
+Reviewed PIT Universe Overlay Approval Workflow v0.1
+```
+
+This branch should remain local and reviewed. It should not run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
 
 ## When to Add a New Source Document
 
-Add a new project source document when a topic becomes too important to live only in the chat, for example:
+Add a new source document when a topic becomes too important to live only in chat, such as:
 
-- Fundamental data schema and quality gates.
-- News/event data schema and risk context.
-- Forward-return labeling.
-- Historical signal outcome datasets.
-- Real alert delivery safety.
-- Broker integration readiness.
-- International market expansion.
+- reviewed PIT universe approval workflow;
+- per-date snapshot preparation;
+- forward-return labels;
+- historical signal outcomes;
+- fundamental data schema and quality gates;
+- news/event context;
+- alert delivery safety;
+- broker integration readiness;
+- international market expansion.
 
 ## Do Not Use This Pack To
 

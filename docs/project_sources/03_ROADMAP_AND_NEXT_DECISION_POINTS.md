@@ -1,7 +1,7 @@
 # Roadmap and Next Decision Points
 
 > Status: working memory document  
-> Last generated: 2026-05-28  
+> Last generated: 2026-05-29  
 > Permanence: temporary; update after each major checkpoint.
 
 ## Current Position
@@ -17,9 +17,10 @@ The project has progressed from local mock data and replay scaffolding into a br
 - paper workflow,
 - calibration tooling,
 - multi-date backfill planning,
+- PIT universe overlay preparation,
 - unified `research-status`.
 
-The project is now preparing for true multi-date evidence collection. It is not yet ready to change non-demo thresholds or produce validated buy/sell signals.
+The project is now preparing for true multi-date evidence collection, but it is not yet ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
 
 ## Immediate Technical State
 
@@ -32,42 +33,87 @@ Completed or largely complete:
 - Calibration-to-signal-semantics proposal report.
 - Warmup-aware current-candidates backfill plan.
 - Current-candidates execution manifest.
-- Research-status integration for most status layers.
+- PIT universe overlay plan/template.
+- Index / health / status for PIT universe overlay plans.
+- Research-status integration for most status layers, including PIT universe overlay plan.
 
-Known current blocker:
+Current active preparation state:
 
 ```text
-BLOCKED_UNIVERSE_AS_OF
+PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW
 ```
 
-The selected multi-date signal dates require point-in-time valid universe inputs. The existing universe artifact is dated 2024-05-20, which is too late for earlier dates.
+Latest known PIT overlay plan:
+
+```text
+overlay_plan_id: 38a254c54024
+rows: 72
+signal dates: 8
+symbols: 9
+needs manual review: 72
+valid_for_signal_date: 0
+survivorship_bias_warning: 72
+```
 
 ## Recommended Next Branch
 
-### Branch: Point-in-Time Universe and Snapshot Preparation
+### Branch: Reviewed PIT Universe Overlay Approval Workflow
 
 Suggested sequence:
 
-1. Point-in-Time Universe and Snapshot Preparation Read-only Audit.
-2. PIT Universe Overlay Plan v0.1.
-3. PIT Universe Overlay Plan Index / Health / Status.
-4. Research-status integration.
-5. Checkpoint.
-6. Only then consider per-date snapshot preparation.
-7. Only then consider current-candidates backfill runner.
+1. Reviewed PIT Universe Overlay Approval Workflow Read-only Audit.
+2. Review template/update schema.
+3. Approval command that consumes the template plus review updates.
+4. Approved overlay artifact index / health / status.
+5. Research-status integration.
+6. Checkpoint.
+7. Only then consider per-date snapshot preparation.
+8. Only then consider current-candidates backfill runner.
 
 Do not skip directly to multi-date candidate generation.
 
-## After PIT Universe Is Solved
+## What Reviewed PIT Approval Must Solve
+
+The approval workflow should answer:
+
+- Which symbols were valid universe members on each historical signal date?
+- What evidence supports each symbol/date row?
+- Was the evidence available at or before the signal date?
+- Is survivorship-bias risk resolved or still flagged?
+- Who reviewed the row and when?
+- Is the row approved, rejected, or waiting for more evidence?
+
+Suggested approval statuses:
+
+```text
+NEEDS_MANUAL_REVIEW
+APPROVED_FOR_PIT_UNIVERSE
+REJECTED
+NEEDS_MORE_EVIDENCE
+```
+
+Suggested required evidence fields:
+
+- `listed_date_evidence`
+- `delisted_date_evidence`
+- `is_active_evidence`
+- `evidence_path`
+- `evidence_source`
+- `reviewer`
+- `reviewed_at`
+- `review_reason`
+- `survivorship_bias_resolved`
+
+## After Reviewed PIT Universe Approval
 
 Next likely branches:
 
 ### 1. Per-Date Snapshot Manifest Preparation
 
-Need to produce or verify, per signal date:
+Need to prepare or verify, per signal date:
 
 - market dataset,
-- universe dataset,
+- reviewed PIT universe dataset,
 - trading calendar,
 - snapshot manifest,
 - snapshot-quality status.
@@ -147,7 +193,7 @@ Fundamental data should come before news sentiment.
 
 ### Financial Reports
 
-Start after the current calibration/multi-date plan work is stable.
+Start after the current multi-date evidence path is stable enough that the project can benefit from fundamentals.
 
 First step should be schema, not API implementation.
 
@@ -221,9 +267,9 @@ Do not yet:
 
 - use paid APIs as required dependencies,
 - parse all news with LLM,
-- run current-candidates backfill without PIT universe,
+- run current-candidates backfill without reviewed PIT universe rows,
 - compute forward returns without multi-date candidates,
-- change signal_semantics defaults based on synthetic fixtures,
+- change `signal_semantics` defaults based on synthetic fixtures,
 - turn `REVIEW_BUY_CANDIDATE` into orders,
 - send real alerts,
 - add broker integration.

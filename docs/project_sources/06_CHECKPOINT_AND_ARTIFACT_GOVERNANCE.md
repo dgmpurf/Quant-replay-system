@@ -1,8 +1,8 @@
 # Checkpoint and Artifact Governance
 
 > Status: working memory document  
-> Last generated: 2026-05-28  
-> Permanence: temporary; update after checkpoint policy changes.
+> Last generated: 2026-05-29  
+> Permanence: temporary; update after checkpoint policy or artifact-status semantics change.
 
 ## Checkpoint Philosophy
 
@@ -22,7 +22,7 @@ Checkpoint documents live under:
 docs/release_checkpoint_vX.Y.Z.md
 ```
 
-They are not final product documentation. They are milestone summaries.
+They are milestone summaries, not final product documentation.
 
 ## Checkpoint Does Not Mean Production Ready
 
@@ -91,6 +91,39 @@ diagnostic_artifact=true
 active_workflow_artifact=false
 ```
 
+## Plan-Only Workflows
+
+The project has several plan-only workflows. These must not be confused with execution:
+
+- `current-candidates-backfill-plan`
+- `current-candidates-backfill-execution-manifest`
+- `pit-universe-overlay-plan`
+- calibration-to-signal-semantics proposal reports
+- future snapshot preparation plans
+
+Plan-only means:
+
+- no candidate generation,
+- no snapshot build,
+- no forward labels,
+- no cache mutation,
+- no message sending,
+- no broker/order behavior.
+
+## Review-Template Workflows
+
+PIT universe overlay plans are review-template workflows.
+
+They may create rows such as:
+
+```text
+NEEDS_MANUAL_REVIEW
+```
+
+But those rows are not valid PIT universe rows until a separate approval workflow verifies evidence and writes reviewed artifacts.
+
+A review-template artifact should not be used by current-candidates, snapshot manifests, or forward-label workflows as if it were approved data.
+
 ## Safety Flags
 
 Artifact metadata should include safety flags where relevant:
@@ -104,29 +137,36 @@ Artifact metadata should include safety flags where relevant:
 - `llm_api_called=false`
 - `plan_only=true`
 
-## Plan-Only Workflows
+## Survivorship and Point-in-Time Governance
 
-The project has several plan-only workflows. These must not be confused with execution:
+Universe, fundamental, and event data must preserve point-in-time validity.
 
-- `current-candidates-backfill-plan`
-- `current-candidates-backfill-execution-manifest`
-- future PIT universe overlay plans
-- calibration-to-signal-semantics proposal reports
+Important fields include:
 
-Plan-only means:
+- `as_of_date`
+- `available_time`
+- `listed_date`
+- `delisted_date`
+- `revision_id`
+- `source`
+- `evidence_path`
+- `review_status`
+- `reviewer`
+- `reviewed_at`
 
-- no candidate generation,
-- no snapshot build,
-- no forward labels,
-- no cache mutation,
-- no message sending,
-- no broker/order behavior.
+Rows derived from a future universe must carry survivorship-bias warnings until separately reviewed.
 
 ## Research-Status Priority Rule
 
 `research-status` should summarize context from many layers while preserving later workflow priority.
 
 A safe parse failure, NOT_FOUND, stale warning, or planning blocker should not override a later validated paper workflow unless it represents an active blocking error for the current workflow.
+
+Examples:
+
+- PIT overlay rows needing review should be visible.
+- They should not be treated as candidate generation failures.
+- They should not override later validated paper workflow status.
 
 ## When to Refresh This Document
 
@@ -137,4 +177,5 @@ Refresh this document when:
 - legacy/stale actionability rules change,
 - research-status stage priority changes,
 - diagnostic artifact scoping changes,
+- PIT universe approval semantics are implemented,
 - real alert delivery or broker integration is introduced.
