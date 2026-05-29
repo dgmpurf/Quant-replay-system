@@ -18,9 +18,10 @@ The project has progressed from local mock data and replay scaffolding into a br
 - calibration tooling,
 - multi-date backfill planning,
 - PIT universe overlay preparation,
+- reviewed PIT universe overlay approval workflow,
 - unified `research-status`.
 
-The project is now preparing for true multi-date evidence collection, but it is not yet ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
+The project is preparing for true multi-date evidence collection, but it is not yet ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
 
 ## Immediate Technical State
 
@@ -34,81 +35,98 @@ Completed or largely complete:
 - Warmup-aware current-candidates backfill plan.
 - Current-candidates execution manifest.
 - PIT universe overlay plan/template.
-- Index / health / status for PIT universe overlay plans.
-- Research-status integration for most status layers, including PIT universe overlay plan.
+- PIT universe overlay review/approval workflow.
+- Index / health / status for PIT universe overlay review artifacts.
+- Research-status integration for most status layers, including PIT universe overlay review.
 
 Current active preparation state:
 
 ```text
-PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW
+PIT_UNIVERSE_OVERLAY_REVIEW_NEEDS_MORE_EVIDENCE
 ```
 
-Latest known PIT overlay plan:
+Latest known PIT overlay review:
 
 ```text
-overlay_plan_id: 38a254c54024
+review_id: 7bc8ba08bf5a
 rows: 72
-signal dates: 8
-symbols: 9
-needs manual review: 72
-valid_for_signal_date: 0
-survivorship_bias_warning: 72
+approved rows: 0
+valid_for_signal_date rows: 0
+needs manual review rows: 72
+unresolved survivorship warnings: 72
 ```
 
 ## Recommended Next Branch
 
-### Branch: Reviewed PIT Universe Overlay Approval Workflow
+### Branch: Reviewed PIT Universe Overlay Export Readiness
 
 Suggested sequence:
 
-1. Reviewed PIT Universe Overlay Approval Workflow Read-only Audit.
-2. Review template/update schema.
-3. Approval command that consumes the template plus review updates.
-4. Approved overlay artifact index / health / status.
-5. Research-status integration.
-6. Checkpoint.
-7. Only then consider per-date snapshot preparation.
-8. Only then consider current-candidates backfill runner.
+1. Reviewed PIT Universe Overlay Export Readiness Read-only Audit.
+2. Export readiness planning/status command if audit supports it.
+3. Index / health / status for export readiness artifacts.
+4. Research-status integration.
+5. Checkpoint.
+6. Only after approved rows exist, consider a guarded export workflow.
+7. Only after exported PIT universe inputs exist, consider per-date snapshot preparation.
+8. Only after per-date snapshots pass quality gates, consider current-candidates backfill runner.
 
 Do not skip directly to multi-date candidate generation.
 
-## What Reviewed PIT Approval Must Solve
+## What Export Readiness Must Solve
 
-The approval workflow should answer:
+The export readiness workflow should answer:
 
-- Which symbols were valid universe members on each historical signal date?
-- What evidence supports each symbol/date row?
-- Was the evidence available at or before the signal date?
-- Is survivorship-bias risk resolved or still flagged?
-- Who reviewed the row and when?
-- Is the row approved, rejected, or waiting for more evidence?
+- Are there any `APPROVED_FOR_PIT_UNIVERSE` rows?
+- Are approved rows `valid_for_signal_date=true`?
+- Are evidence fields complete?
+- Are survivorship-bias warnings resolved for approved rows?
+- Are required current-candidates universe columns present?
+- Should export be blocked, partially ready, or ready?
+- Should output be per-signal-date, combined, or both?
+- Should any write to `data/raw` require an explicit accept flag?
 
-Suggested approval statuses:
+Current expected result:
 
 ```text
-NEEDS_MANUAL_REVIEW
-APPROVED_FOR_PIT_UNIVERSE
-REJECTED
-NEEDS_MORE_EVIDENCE
+export readiness should be BLOCKED because approved_count=0
 ```
 
-Suggested required evidence fields:
+## After Export Readiness
+
+Next likely branches:
+
+### 1. PIT Universe Evidence Completion Helper
+
+If there are no approved rows, the project may need helper workflows for reviewer-supplied evidence, not export.
+
+Potential fields:
 
 - `listed_date_evidence`
 - `delisted_date_evidence`
 - `is_active_evidence`
-- `evidence_path`
 - `evidence_source`
+- `evidence_path`
+- `evidence_reference`
 - `reviewer`
 - `reviewed_at`
 - `review_reason`
 - `survivorship_bias_resolved`
 
-## After Reviewed PIT Universe Approval
+### 2. Guarded PIT Universe Export
 
-Next likely branches:
+Only after approved rows exist.
 
-### 1. Per-Date Snapshot Manifest Preparation
+Scope should remain:
+
+- no current-candidates generation,
+- no snapshot build,
+- no forward returns,
+- no messages,
+- no broker,
+- no cache mutation.
+
+### 3. Per-Date Snapshot Manifest Preparation
 
 Need to prepare or verify, per signal date:
 
@@ -118,7 +136,7 @@ Need to prepare or verify, per signal date:
 - snapshot manifest,
 - snapshot-quality status.
 
-### 2. Current-Candidates Backfill Runner
+### 4. Current-Candidates Backfill Runner
 
 Should consume a reviewed healthy plan/manifest and produce candidate artifacts for selected dates.
 
@@ -130,7 +148,7 @@ Scope should remain:
 - no broker,
 - no cache mutation.
 
-### 3. Forward Return Label Dataset
+### 5. Forward Return Label Dataset
 
 Only after multi-date candidates exist.
 
@@ -144,7 +162,7 @@ Potential labels:
 - benchmark-relative return,
 - hit/miss labels.
 
-### 4. Historical Signal Outcome Dataset
+### 6. Historical Signal Outcome Dataset
 
 Combine:
 
@@ -156,7 +174,7 @@ Combine:
 - quality status,
 - forward outcomes.
 
-### 5. Non-Demo Semantics Calibration
+### 7. Non-Demo Semantics Calibration
 
 Only after enough multi-date evidence.
 
@@ -267,7 +285,8 @@ Do not yet:
 
 - use paid APIs as required dependencies,
 - parse all news with LLM,
-- run current-candidates backfill without reviewed PIT universe rows,
+- export PIT universe input without approved rows,
+- run current-candidates backfill without reviewed/exported PIT universe rows,
 - compute forward returns without multi-date candidates,
 - change `signal_semantics` defaults based on synthetic fixtures,
 - turn `REVIEW_BUY_CANDIDATE` into orders,

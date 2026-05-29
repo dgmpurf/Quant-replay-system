@@ -93,6 +93,14 @@ python -m quant_replay_system.cli pit-universe-overlay-review --overlay-plan out
 
 The review workflow can mark rows `APPROVED_FOR_PIT_UNIVERSE` only when reviewer, timestamp, evidence, listed-date, active-status, and survivorship-bias checks pass. It writes reviewed evidence artifacts only; it does not export a usable universe dataset, build snapshots, run current-candidates, compute forward labels, or place orders. See [point_in_time_universe_overlay_review.md](point_in_time_universe_overlay_review.md).
 
+After review artifacts exist, use `pit-universe-overlay-export-readiness` to check whether any approved rows are complete enough for a later explicit universe export workflow:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-overlay-export-readiness --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv
+```
+
+This command writes readiness reports only. It does not write usable universe files under `data/raw` or `data/processed`, build snapshots, run current-candidates, compute forward labels, mutate cache, or place orders. See [point_in_time_universe_overlay_export_readiness.md](point_in_time_universe_overlay_export_readiness.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:

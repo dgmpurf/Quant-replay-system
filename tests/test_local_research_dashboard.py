@@ -671,6 +671,125 @@ def test_cli_research_status_prints_pit_universe_overlay_review_fields(
     assert "pit_universe_overlay_review_unresolved_survivorship_warning_count: 1" in output.out
 
 
+def test_dashboard_includes_pit_universe_export_readiness_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_export_readiness_status(root, export_readiness_id="export-blocked")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    readiness_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EXPORT_READINESS_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_export_readiness_id == "export-blocked"
+    assert result.pit_universe_export_readiness_status == "WARN"
+    assert result.pit_universe_export_readiness_stage == "PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS"
+    assert result.pit_universe_export_readiness_health_status == "PASS"
+    assert result.pit_universe_export_readiness_review_id == "review-a"
+    assert result.pit_universe_export_readiness_approved_count == 0
+    assert result.pit_universe_export_readiness_export_ready_count == 0
+    assert result.pit_universe_export_readiness_blocked_count == 72
+    assert result.pit_universe_export_readiness_no_approved_rows is True
+    assert result.workflow_stage == "PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS"
+    assert readiness_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "Approve PIT universe rows" in result.next_manual_action
+
+
+def test_dashboard_failed_pit_universe_export_readiness_health_is_actionable_when_active(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_export_readiness_status(
+        root,
+        export_readiness_id="export-fail",
+        status="FAIL",
+        workflow_stage="PIT_UNIVERSE_EXPORT_READINESS_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    readiness_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EXPORT_READINESS_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "PIT_UNIVERSE_EXPORT_READINESS_FAILED"
+    assert readiness_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+    assert "Repair PIT universe export-readiness artifacts" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_universe_export_readiness(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_export_readiness_status(root, export_readiness_id="export-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    readiness_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EXPORT_READINESS_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_export_readiness_id == "export-paper-context"
+    assert result.pit_universe_export_readiness_blocked_count == 72
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert readiness_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_pit_universe_export_readiness_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_export_readiness_status(root, export_readiness_id="export-summary")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_pit_universe_export_readiness_id"] == "export-summary"
+    assert row["pit_universe_export_readiness_status"] == "WARN"
+    assert row["pit_universe_export_readiness_stage"] == "PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS"
+    assert row["pit_universe_export_readiness_health_status"] == "PASS"
+    assert row["pit_universe_export_readiness_approved_count"] == "0"
+    assert row["pit_universe_export_readiness_blocked_count"] == "72"
+    assert metadata["latest_pit_universe_export_readiness_id"] == "export-summary"
+    assert metadata["pit_universe_export_readiness_blocked_count"] == 72
+    assert metadata["component_statuses"]["latest_pit_universe_export_readiness_id"] == "export-summary"
+
+
+def test_cli_research_status_prints_pit_universe_export_readiness_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_export_readiness_status(root, export_readiness_id="export-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_universe_export_readiness_id: export-cli" in output.out
+    assert "pit_universe_export_readiness_status: WARN" in output.out
+    assert "pit_universe_export_readiness_stage: PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS" in output.out
+    assert "pit_universe_export_readiness_approved_count: 0" in output.out
+    assert "pit_universe_export_readiness_blocked_count: 72" in output.out
+
+
 def test_dashboard_detects_current_to_paper_handoff_artifacts(tmp_path: Path) -> None:
     root = _workflow_to_paper_handoff(_reports_root(tmp_path))
 
@@ -4339,6 +4458,151 @@ def _pit_universe_overlay_review_status(
             "network_api_called": False,
             "llm_api_called": False,
             "pit_universe_overlay_review_artifacts_only": True,
+        },
+    )
+    return folder
+
+
+def _pit_universe_overlay_export_readiness_status(
+    root: Path,
+    *,
+    export_readiness_id: str = "export-a",
+    review_id: str = "review-a",
+    status: str = "WARN",
+    workflow_stage: str = "PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS",
+    health_status: str = "PASS",
+    approved_count: int = 0,
+    export_ready_count: int = 0,
+    blocked_count: int = 72,
+    no_approved_rows: bool = True,
+    missing_required_columns_count: int = 72,
+    unresolved_survivorship_warning_count: int = 72,
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:53:45",
+) -> Path:
+    folder = root / "point_in_time_universe_overlay_export_readiness" / "status" / f"status-{export_readiness_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "pit_universe_overlay_export_readiness_status_report.md"
+    status_csv = folder / "pit_universe_overlay_export_readiness_status.csv"
+    summary_csv = folder / "pit_universe_overlay_export_readiness_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    readiness_report = (
+        root
+        / "point_in_time_universe_overlay_export_readiness"
+        / export_readiness_id
+        / "pit_universe_overlay_export_readiness_report.md"
+    )
+    next_action = (
+        "Repair PIT universe overlay export-readiness artifacts before any universe export planning."
+        if status == "FAIL"
+        else "Review export-ready PIT universe rows before a separate explicit universe export workflow."
+        if workflow_stage == "PIT_UNIVERSE_EXPORT_READY_FOR_DRY_RUN"
+        else "Approve PIT universe rows with evidence before export readiness can proceed."
+        if workflow_stage == "PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS"
+        else "Resolve PIT universe review evidence and required universe columns before export readiness can proceed."
+    )
+    report.write_text(
+        "Export-readiness status only. No universe export, data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked.",
+        encoding="utf-8",
+    )
+    readiness_report.parent.mkdir(parents=True, exist_ok=True)
+    readiness_report.write_text(
+        "PIT universe overlay export readiness only. No usable universe export occurred.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "PIT_UNIVERSE_EXPORT_READINESS",
+                "status": "BLOCKED_NO_APPROVED_ROWS" if no_approved_rows else "READY_FOR_DRY_RUN",
+                "latest_artifact_id": export_readiness_id,
+                "review_id": review_id,
+                "approved_count": approved_count,
+                "export_ready_count": export_ready_count,
+                "blocked_count": blocked_count,
+                "no_approved_rows": no_approved_rows,
+                "missing_required_columns_count": missing_required_columns_count,
+                "unresolved_survivorship_warning_count": unresolved_survivorship_warning_count,
+                "warning_count": warning_count if status != "PASS" else 0,
+                "error_count": 0,
+                "issue_count": warning_count if status != "PASS" else 0,
+            },
+            {
+                "component": "PIT_UNIVERSE_EXPORT_READINESS_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "pit-export-readiness-health-a",
+                "review_id": review_id,
+                "approved_count": approved_count,
+                "export_ready_count": export_ready_count,
+                "blocked_count": blocked_count,
+                "no_approved_rows": no_approved_rows,
+                "missing_required_columns_count": missing_required_columns_count,
+                "unresolved_survivorship_warning_count": unresolved_survivorship_warning_count,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "latest_export_readiness_id": export_readiness_id,
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "health_status": health_status,
+                "review_id": review_id,
+                "approved_count": approved_count,
+                "export_ready_count": export_ready_count,
+                "blocked_count": blocked_count,
+                "no_approved_rows": no_approved_rows,
+                "missing_required_columns_count": missing_required_columns_count,
+                "unresolved_survivorship_warning_count": unresolved_survivorship_warning_count,
+                "report_path": str(readiness_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{export_readiness_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_export_readiness_id": export_readiness_id,
+            "health_status": health_status,
+            "review_id": review_id,
+            "approved_count": approved_count,
+            "export_ready_count": export_ready_count,
+            "blocked_count": blocked_count,
+            "no_approved_rows": no_approved_rows,
+            "missing_required_columns_count": missing_required_columns_count,
+            "unresolved_survivorship_warning_count": unresolved_survivorship_warning_count,
+            "next_manual_action": next_action,
+            "warnings": ["Latest PIT universe overlay export readiness is blocked."] if warning_count else [],
+            "output_files": {
+                "pit_universe_overlay_export_readiness_status_report": str(report),
+                "pit_universe_overlay_export_readiness_status_csv": str(status_csv),
+                "pit_universe_overlay_export_readiness_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "universe_exported": False,
+            "would_write_data_raw": False,
+            "would_write_data_processed": False,
+            "current_candidates_executed": False,
+            "snapshot_manifest_built": False,
+            "forward_returns_computed": False,
+            "cache_mutated": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "order_placement_enabled": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "network_api_called": False,
+            "llm_api_called": False,
+            "pit_universe_overlay_export_readiness_artifacts_only": True,
         },
     )
     return folder

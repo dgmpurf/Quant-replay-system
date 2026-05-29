@@ -49,6 +49,7 @@ outputs/reports/current_candidates_backfill_plan/status/
 outputs/reports/current_candidates_backfill_execution_manifest/status/
 outputs/reports/point_in_time_universe_overlay_plan/status/
 outputs/reports/point_in_time_universe_overlay_review/status/
+outputs/reports/point_in_time_universe_overlay_export_readiness/status/
 outputs/reports/advisory_profile_calibration/status/
 outputs/reports/calibration_to_signal_semantics/status/
 outputs/reports/signal_semantics/status/
@@ -140,6 +141,16 @@ The unified summary records the latest review id, review status/stage, health st
 When the status reports `PIT_UNIVERSE_OVERLAY_REVIEW_NEEDS_MORE_EVIDENCE`, the dashboard treats the warning as expected reviewable PIT universe preparation work. Unresolved evidence or survivorship-bias issues must be resolved before any later snapshot preparation workflow can consume the rows. When the status reports `PIT_UNIVERSE_OVERLAY_REVIEW_HAS_APPROVED_ROWS` or `PIT_UNIVERSE_OVERLAY_REVIEW_ALL_APPROVED`, approved rows remain evidence artifacts only and do not imply candidate generation has happened.
 
 PIT universe overlay reviews are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to review status; review fields remain visible for audit. If review health fails because an approved row lacks reviewer/evidence, has unresolved survivorship risk, or violates local-only safety flags, `research-status` surfaces the failure as actionable when this layer is active.
+
+## PIT Universe Overlay Export Readiness Status
+
+`research-status` includes `pit-universe-overlay-export-readiness-status` as PIT universe export-preparation context when those artifacts exist.
+
+The unified summary records the latest export-readiness id, readiness status/stage, health status, linked review id, approved count, export-ready count, blocked count, no-approved-rows flag, missing required-column count, unresolved survivorship-warning count, report path, and the readiness layer's next manual action. This is report-only context: it does not export usable universe files, write `data/raw`, write `data/processed`, run `current-candidates`, build snapshot manifests, run `data-pipeline`, compute forward labels, mutate cache, fetch data, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS`, the dashboard treats the warning as expected reviewable PIT universe preparation work. It means the reviewed overlay has no rows approved for PIT universe export readiness; it does not mean export failed, because no export was attempted. When the status reports `PIT_UNIVERSE_EXPORT_READY_FOR_DRY_RUN`, export-ready rows remain review context for a later explicit export workflow.
+
+PIT universe export readiness is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to export readiness; readiness fields remain visible for audit. If readiness health fails because the artifact claims `data/raw` or `data/processed` writes, current-candidates generation, snapshot build, forward labels, unsafe trading flags, or missing required fields on export-ready rows, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Advisory Profile Calibration Status
 

@@ -54,7 +54,8 @@ Paper and Review Layer
 Multi-Date Evidence Preparation
   ├─ current-candidates-backfill-plan
   ├─ current-candidates-backfill-execution-manifest
-  └─ point-in-time-universe-overlay-plan
+  ├─ point-in-time-universe-overlay-plan
+  └─ point-in-time-universe-overlay-review
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -145,7 +146,7 @@ candidate or scored rows
 → research-status
 ```
 
-### 7. Multi-Date Candidate Planning and PIT Universe Preparation
+### 7. Multi-Date Candidate Planning, PIT Universe Preparation, and Review
 
 ```text
 market cache coverage
@@ -153,17 +154,18 @@ market cache coverage
 → warmup-aware plan
 → execution manifest
 → PIT universe overlay plan/template
-→ PIT universe overlay index / health / status
+→ PIT universe overlay review workflow
+→ PIT universe overlay review index / health / status
 → research-status
 ```
 
-Current active blocker has evolved from a raw universe-as-of failure into a reviewed PIT universe preparation state:
+Current active preparation state:
 
 ```text
-PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW
+PIT_UNIVERSE_OVERLAY_REVIEW_NEEDS_MORE_EVIDENCE
 ```
 
-The system has not generated multi-date current-candidates yet.
+The system has not generated multi-date current-candidates, per-date snapshots, or forward-return labels yet.
 
 ## Important Data Contracts
 
@@ -180,6 +182,33 @@ The project should preserve:
 - `revision_id`
 - `raw_hash` or equivalent where possible
 
+### PIT Universe Review Fields
+
+Reviewed PIT universe rows should preserve:
+
+- `signal_date`
+- `symbol`
+- `universe_name`
+- `include_flag`
+- `review_status`
+- `valid_for_signal_date`
+- `blocker_reason`
+- `reviewer`
+- `reviewed_at`
+- `review_reason`
+- `evidence_source`
+- `evidence_path` or `evidence_reference`
+- `listed_date`
+- `delisted_date`
+- `is_active`
+- `is_st`
+- `is_suspended`
+- `listed_date_evidence`
+- `delisted_date_evidence`
+- `is_active_evidence`
+- `survivorship_bias_warning`
+- `survivorship_bias_resolved`
+
 ### Safety Fields
 
 Most user-facing or review-facing artifacts should keep:
@@ -192,6 +221,7 @@ Most user-facing or review-facing artifacts should keep:
 - `no_message_sent=true`
 - `llm_api_called=false` when relevant
 - `plan_only=true` for planning workflows
+- `review_only=true` for review workflows
 
 ### Signal Semantics Provenance
 
@@ -232,18 +262,25 @@ Known current state:
   - 72 rows need manual review.
   - 0 rows valid for signal date.
   - 72 survivorship-bias warnings.
+- PIT universe overlay review:
+  - review id: `7bc8ba08bf5a`.
+  - 72 rows.
+  - 0 approved rows.
+  - 0 valid-for-signal-date rows.
+  - 72 rows still need manual review / more evidence.
+  - 72 unresolved survivorship warnings.
 
 ## Current Next Technical Branch
 
 ```text
-Reviewed PIT Universe Overlay Approval Workflow v0.1
+Reviewed PIT Universe Overlay Export Readiness Read-only Audit v0.1
 ```
 
 Purpose:
 
-- turn review templates into explicitly reviewed PIT universe rows;
-- require evidence fields before approval;
-- preserve survivorship-bias visibility;
-- avoid candidate generation until universe rows are reviewed.
+- inspect whether reviewed rows can be exported into a local universe input;
+- confirm there are currently no approved rows to export;
+- define blockers and export readiness statuses;
+- keep the workflow read-only before implementation.
 
-Do not skip directly to current-candidates backfill runner.
+Do not skip directly to universe export, snapshot preparation, or current-candidates backfill runner.

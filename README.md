@@ -111,6 +111,12 @@ Use `pit-universe-overlay-review` to apply local reviewer updates to a PIT overl
 
 Use `pit-universe-overlay-review-index`, `pit-universe-overlay-review-health`, and `pit-universe-overlay-review-status` to discover, safety-check, and summarize reviewed PIT universe approval artifacts. `research-status` includes the latest review as preparation context, including approved rows, unresolved survivorship warnings, and evidence gaps, while preserving later paper workflow priority.
 
+Use `pit-universe-overlay-export-readiness` to check whether reviewed PIT universe rows are complete enough for a later explicit universe export workflow; see [docs/point_in_time_universe_overlay_export_readiness.md](docs/point_in_time_universe_overlay_export_readiness.md). The readiness workflow writes report artifacts only and does not write usable universe files under `data/raw` or `data/processed`.
+
+Use `pit-universe-overlay-export-readiness-index`, `pit-universe-overlay-export-readiness-health`, and `pit-universe-overlay-export-readiness-status` to discover, safety-check, and summarize PIT universe export-readiness artifacts. `research-status` includes the latest export-readiness status as preparation context, including blocked/no-approved-rows state, export-ready count, missing required-column count, unresolved survivorship-warning count, and report path, while preserving later paper workflow priority.
+
+For the v1.2.0 checkpoint covering PIT universe overlay export-readiness artifact views and `research-status` integration, see [docs/release_checkpoint_v1.2.0.md](docs/release_checkpoint_v1.2.0.md).
+
 For the v1.1.0 checkpoint covering reviewed PIT universe overlay approval artifact views and `research-status` integration, see [docs/release_checkpoint_v1.1.0.md](docs/release_checkpoint_v1.1.0.md).
 
 For the v1.0.0 checkpoint covering the plan-only path from warmup-aware backfill planning through PIT universe overlay preparation, see [docs/release_checkpoint_v1.0.0.md](docs/release_checkpoint_v1.0.0.md).

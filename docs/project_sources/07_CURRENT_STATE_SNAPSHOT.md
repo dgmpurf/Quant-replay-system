@@ -45,6 +45,10 @@ It has not become a live trading system.
   - PIT overlay plan/template,
   - PIT overlay index/health/status,
   - research-status integration.
+- PIT universe overlay review:
+  - review workflow,
+  - review index/health/status,
+  - research-status integration.
 
 ### Signal Semantics
 
@@ -110,7 +114,7 @@ Known gaps:
 - no multi-date outcome dataset,
 - no benchmark-relative outcomes,
 - no transaction cost/slippage model,
-- no survivorship-bias resolution yet,
+- no survivorship-bias resolution for usable universe exports yet,
 - no corporate action adjustment policy validation,
 - no linked paper outcome history for signals.
 
@@ -138,11 +142,21 @@ PIT universe overlay preparation:
 - 0 rows valid for signal date.
 - 72 survivorship-bias warnings.
 
+PIT universe overlay review:
+
+- latest review id: `7bc8ba08bf5a`.
+- 72 rows.
+- approved rows: 0.
+- valid-for-signal-date rows: 0.
+- needs manual review rows: 72.
+- unresolved survivorship warnings: 72.
+- stage: `PIT_UNIVERSE_OVERLAY_REVIEW_NEEDS_MORE_EVIDENCE`.
+
 Meaning:
 
-The project has moved from “universe-as-of blocker identified” to “PIT universe overlay review templates created.”
+The project has moved from “PIT universe template needs review” to “review workflow exists, but there are no approved rows yet.”
 
-The next blocker is reviewed approval of PIT universe rows with evidence.
+The next blocker is export readiness: there are no approved PIT universe rows to export into usable universe input.
 
 ## Current External Data Strategy
 
@@ -162,19 +176,19 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Reviewed PIT Universe Overlay Approval Workflow v0.1
+Reviewed PIT Universe Overlay Export Readiness Read-only Audit v0.1
 ```
 
 Purpose:
 
-- consume PIT universe overlay templates,
-- require row-level evidence,
-- approve/reject/needs-more-evidence rows,
-- resolve survivorship-bias warnings where possible,
-- produce reviewed PIT universe overlay artifacts.
+- inspect if approved PIT universe review rows can be exported;
+- confirm current export blockers;
+- define export readiness statuses;
+- avoid writing usable universe files until explicit approval and export gating exist.
 
 Do not yet:
 
+- export usable universe files,
 - generate multi-date candidates,
 - build per-date snapshot manifests,
 - compute forward returns,
@@ -197,17 +211,18 @@ Recent milestone direction, not necessarily exhaustive:
 - v0.98.0: current-candidates backfill execution manifest.
 - v0.99.0: execution manifest research-status integration.
 - v1.0.0: research-infrastructure milestone with PIT universe overlay planning and status visibility.
+- v1.1.0: reviewed PIT universe overlay approval workflow and research-status visibility.
 
 ## What to Ask ChatGPT Next
 
 For next development:
 
 ```text
-Give me Codex tasks for Reviewed PIT Universe Overlay Approval Workflow v0.1.
+Give me Codex tasks for Reviewed PIT Universe Overlay Export Readiness Read-only Audit v0.1.
 ```
 
 Expected split:
 
 1. read-only audit,
-2. approval workflow implementation,
-3. index/health/status and research-status/checkpoint.
+2. export readiness planning implementation,
+3. index/health/status and research-status/checkpoint if implementation proceeds.

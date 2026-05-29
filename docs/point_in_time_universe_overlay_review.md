@@ -156,6 +156,18 @@ The unified dashboard exposes latest review id, status/stage, health status, app
 
 If a later paper workflow is already active, unified `research-status` preserves that later workflow priority while keeping review fields visible for audit.
 
+## Export Readiness
+
+Use `pit-universe-overlay-export-readiness` to validate whether reviewed PIT rows are complete enough for a later explicit universe export workflow:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-overlay-export-readiness --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv
+```
+
+The readiness workflow writes report artifacts only. It can return statuses such as `EXPORT_BLOCKED_NO_APPROVED_ROWS`, `EXPORT_BLOCKED_MISSING_REQUIRED_COLUMNS`, or `EXPORT_READY_FOR_DRY_RUN`, but it never writes usable universe files under `data/raw` or `data/processed`. See [point_in_time_universe_overlay_export_readiness.md](point_in_time_universe_overlay_export_readiness.md).
+
+Use `pit-universe-overlay-export-readiness-index`, `pit-universe-overlay-export-readiness-health`, and `pit-universe-overlay-export-readiness-status` to discover, safety-check, and summarize readiness artifacts. `research-status` includes the latest export-readiness status as PIT universe preparation context, including no-approved-rows, missing required-column, unresolved survivorship-warning, and export-ready counts. Blocked readiness is not a candidate-generation failure and does not mean a universe export happened.
+
 ## Safety Boundaries
 
 The workflow always records:

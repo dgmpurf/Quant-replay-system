@@ -100,6 +100,7 @@ The project has several plan-only workflows. These must not be confused with exe
 - `pit-universe-overlay-plan`
 - calibration-to-signal-semantics proposal reports
 - future snapshot preparation plans
+- future export-readiness plans
 
 Plan-only means:
 
@@ -124,6 +125,45 @@ But those rows are not valid PIT universe rows until a separate approval workflo
 
 A review-template artifact should not be used by current-candidates, snapshot manifests, or forward-label workflows as if it were approved data.
 
+## Review-Only Workflows
+
+PIT universe overlay review artifacts are review-only workflows.
+
+They may create statuses such as:
+
+```text
+NEEDS_MANUAL_REVIEW
+APPROVED_FOR_PIT_UNIVERSE
+REJECTED
+NEEDS_MORE_EVIDENCE
+```
+
+Review-only means:
+
+- reviewed evidence may be recorded;
+- rows may become approved for PIT universe semantics;
+- no usable universe files are exported unless a separate guarded export workflow does that;
+- no current-candidates are generated;
+- no snapshots are built;
+- no forward labels are computed.
+
+Approved review rows are not the same thing as exported current-candidates universe input.
+
+## Export-Readiness Workflows
+
+A future PIT universe export readiness workflow should answer whether approved review rows can be exported.
+
+It should block export when:
+
+- there are no approved rows,
+- approved rows are not `valid_for_signal_date=true`,
+- survivorship-bias warnings are unresolved,
+- required evidence is missing,
+- required current-candidates universe columns are missing,
+- duplicate `signal_date + symbol + universe_name` rows exist.
+
+Export readiness should still not write `data/raw` or `data/processed` unless a separate explicit export workflow and accept flag are introduced.
+
 ## Safety Flags
 
 Artifact metadata should include safety flags where relevant:
@@ -136,6 +176,7 @@ Artifact metadata should include safety flags where relevant:
 - `requires_manual_confirmation=true`
 - `llm_api_called=false`
 - `plan_only=true`
+- `review_only=true`
 
 ## Survivorship and Point-in-Time Governance
 
@@ -150,21 +191,25 @@ Important fields include:
 - `revision_id`
 - `source`
 - `evidence_path`
+- `evidence_reference`
 - `review_status`
 - `reviewer`
 - `reviewed_at`
 
 Rows derived from a future universe must carry survivorship-bias warnings until separately reviewed.
 
+Rows cannot be approved for PIT universe use unless evidence is present and survivorship risk is resolved.
+
 ## Research-Status Priority Rule
 
 `research-status` should summarize context from many layers while preserving later workflow priority.
 
-A safe parse failure, NOT_FOUND, stale warning, or planning blocker should not override a later validated paper workflow unless it represents an active blocking error for the current workflow.
+A safe parse failure, NOT_FOUND, stale warning, planning blocker, or review evidence blocker should not override a later validated paper workflow unless it represents an active blocking error for the current workflow.
 
 Examples:
 
 - PIT overlay rows needing review should be visible.
+- PIT review rows needing evidence should be visible.
 - They should not be treated as candidate generation failures.
 - They should not override later validated paper workflow status.
 
@@ -177,5 +222,5 @@ Refresh this document when:
 - legacy/stale actionability rules change,
 - research-status stage priority changes,
 - diagnostic artifact scoping changes,
-- PIT universe approval semantics are implemented,
+- PIT universe export readiness or export semantics are implemented,
 - real alert delivery or broker integration is introduced.
