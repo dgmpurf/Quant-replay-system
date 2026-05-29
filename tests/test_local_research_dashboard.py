@@ -377,6 +377,151 @@ def test_cli_research_status_prints_current_candidates_backfill_execution_manife
     assert "current_candidates_backfill_execution_manifest_blocked_universe_as_of_count: 8" in output.out
 
 
+def test_dashboard_includes_pit_universe_overlay_plan_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_plan_status(root, overlay_plan_id="overlay-needs-review")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    overlay_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_OVERLAY_PLAN_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_overlay_plan_id == "overlay-needs-review"
+    assert result.pit_universe_overlay_plan_status == "WARN"
+    assert result.pit_universe_overlay_plan_stage == "PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW"
+    assert result.pit_universe_overlay_plan_health_status == "PASS"
+    assert result.pit_universe_overlay_plan_row_count == 72
+    assert result.pit_universe_overlay_plan_signal_date_count == 8
+    assert result.pit_universe_overlay_plan_symbol_count == 9
+    assert result.pit_universe_overlay_plan_needs_manual_review_count == 72
+    assert result.pit_universe_overlay_plan_valid_for_signal_date_count == 0
+    assert result.pit_universe_overlay_plan_survivorship_bias_warning_count == 72
+    assert result.workflow_stage == "PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW"
+    assert overlay_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "manual review" in result.next_manual_action
+    assert "not valid" in result.next_manual_action
+
+
+def test_dashboard_pit_universe_overlay_needs_review_does_not_imply_candidate_generation(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_plan_status(root, overlay_plan_id="overlay-context")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    overlay_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_OVERLAY_PLAN_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW"
+    assert result.pit_universe_overlay_plan_valid_for_signal_date_count == 0
+    assert overlay_row["actionable_warning_count"] == 0
+    assert overlay_row["blocking_error_count"] == 0
+    assert result.summary_frame.iloc[0]["expected_reviewable_warning_count"] == 1
+    assert result.audit_metadata["local_research_dashboard_only"] is True
+    assert result.audit_metadata["live_trading_enabled"] is False
+    assert result.audit_metadata["broker_api_invoked"] is False
+
+
+def test_dashboard_failed_pit_universe_overlay_plan_health_is_actionable_when_active(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_plan_status(
+        root,
+        overlay_plan_id="overlay-fail",
+        status="FAIL",
+        workflow_stage="PIT_UNIVERSE_OVERLAY_PLAN_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    overlay_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_OVERLAY_PLAN_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "PIT_UNIVERSE_OVERLAY_PLAN_FAILED"
+    assert overlay_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+    assert "Repair PIT universe overlay plan artifacts" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_universe_overlay_plan(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_plan_status(root, overlay_plan_id="overlay-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    overlay_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_OVERLAY_PLAN_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_overlay_plan_id == "overlay-paper-context"
+    assert result.pit_universe_overlay_plan_needs_manual_review_count == 72
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert overlay_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_pit_universe_overlay_plan_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_plan_status(root, overlay_plan_id="overlay-export")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_pit_universe_overlay_plan_id"] == "overlay-export"
+    assert row["pit_universe_overlay_plan_status"] == "WARN"
+    assert row["pit_universe_overlay_plan_stage"] == "PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW"
+    assert row["pit_universe_overlay_plan_health_status"] == "PASS"
+    assert row["pit_universe_overlay_plan_row_count"] == "72"
+    assert row["pit_universe_overlay_plan_needs_manual_review_count"] == "72"
+    assert row["pit_universe_overlay_plan_valid_for_signal_date_count"] == "0"
+    assert row["pit_universe_overlay_plan_survivorship_bias_warning_count"] == "72"
+    assert metadata["latest_pit_universe_overlay_plan_id"] == "overlay-export"
+    assert metadata["pit_universe_overlay_plan_needs_manual_review_count"] == 72
+    assert metadata["pit_universe_overlay_plan_valid_for_signal_date_count"] == 0
+    assert metadata["component_statuses"]["latest_pit_universe_overlay_plan_id"] == "overlay-export"
+
+
+def test_cli_research_status_prints_pit_universe_overlay_plan_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_overlay_plan_status(root, overlay_plan_id="overlay-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_universe_overlay_plan_id: overlay-cli" in output.out
+    assert "pit_universe_overlay_plan_status: WARN" in output.out
+    assert "pit_universe_overlay_plan_stage: PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW" in output.out
+    assert "pit_universe_overlay_plan_needs_manual_review_count: 72" in output.out
+    assert "pit_universe_overlay_plan_survivorship_bias_warning_count: 72" in output.out
+
+
 def test_dashboard_detects_current_to_paper_handoff_artifacts(tmp_path: Path) -> None:
     root = _workflow_to_paper_handoff(_reports_root(tmp_path))
 
@@ -3786,6 +3931,134 @@ def _current_candidates_backfill_execution_manifest_status(
             "message_sent": False,
             "network_api_called": False,
             "execution_manifest_artifacts_only": True,
+        },
+    )
+    return folder
+
+
+def _pit_universe_overlay_plan_status(
+    root: Path,
+    *,
+    overlay_plan_id: str = "overlay-a",
+    status: str = "WARN",
+    workflow_stage: str = "PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW",
+    health_status: str = "PASS",
+    row_count: int = 72,
+    signal_date_count: int = 8,
+    symbol_count: int = 9,
+    needs_manual_review_count: int = 72,
+    valid_for_signal_date_count: int = 0,
+    survivorship_bias_warning_count: int = 72,
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:49:45",
+) -> Path:
+    folder = root / "point_in_time_universe_overlay_plan" / "status" / f"status-{overlay_plan_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "point_in_time_universe_overlay_plan_status_report.md"
+    status_csv = folder / "point_in_time_universe_overlay_plan_status.csv"
+    summary_csv = folder / "point_in_time_universe_overlay_plan_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    overlay_report = (
+        root
+        / "point_in_time_universe_overlay_plan"
+        / overlay_plan_id
+        / "point_in_time_universe_overlay_plan_report.md"
+    )
+    next_action = (
+        "Repair PIT universe overlay plan artifacts before manual PIT universe review."
+        if status == "FAIL"
+        else "Review PIT-valid overlay rows before any separate snapshot preparation step."
+        if workflow_stage == "PIT_UNIVERSE_OVERLAY_PLAN_READY_FOR_REVIEW"
+        else "Complete manual review for point-in-time universe rows; generated rows are not valid for execution yet."
+    )
+    report.write_text(
+        "Plan-only PIT universe overlay status. No current-candidates generation, snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM API, or external API was invoked.",
+        encoding="utf-8",
+    )
+    overlay_report.parent.mkdir(parents=True, exist_ok=True)
+    overlay_report.write_text(
+        "PIT universe overlay plan only. NEEDS_MANUAL_REVIEW rows are not valid point-in-time universe rows yet.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "PIT_UNIVERSE_OVERLAY_PLAN",
+                "status": "NEEDS_REVIEW" if needs_manual_review_count else ("READY" if status != "FAIL" else "FAIL"),
+                "latest_artifact_id": overlay_plan_id,
+                "row_count": row_count,
+                "needs_manual_review_count": needs_manual_review_count,
+                "valid_for_signal_date_count": valid_for_signal_date_count,
+                "survivorship_bias_warning_count": survivorship_bias_warning_count,
+                "warning_count": warning_count if status != "PASS" else 0,
+                "error_count": 0,
+                "issue_count": warning_count if status != "PASS" else 0,
+            },
+            {
+                "component": "PIT_UNIVERSE_OVERLAY_PLAN_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "pit-overlay-health-a",
+                "row_count": row_count,
+                "needs_manual_review_count": needs_manual_review_count,
+                "valid_for_signal_date_count": valid_for_signal_date_count,
+                "survivorship_bias_warning_count": survivorship_bias_warning_count,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "latest_overlay_plan_id": overlay_plan_id,
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "health_status": health_status,
+                "row_count": row_count,
+                "signal_date_count": signal_date_count,
+                "symbol_count": symbol_count,
+                "needs_manual_review_count": needs_manual_review_count,
+                "valid_for_signal_date_count": valid_for_signal_date_count,
+                "survivorship_bias_warning_count": survivorship_bias_warning_count,
+                "report_path": str(overlay_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{overlay_plan_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_overlay_plan_id": overlay_plan_id,
+            "health_status": health_status,
+            "row_count": row_count,
+            "needs_manual_review_count": needs_manual_review_count,
+            "valid_for_signal_date_count": valid_for_signal_date_count,
+            "next_manual_action": next_action,
+            "warnings": ["Latest PIT universe overlay plan still requires manual review."] if warning_count else [],
+            "output_files": {
+                "point_in_time_universe_overlay_plan_status_report": str(report),
+                "point_in_time_universe_overlay_plan_status_csv": str(status_csv),
+                "point_in_time_universe_overlay_plan_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "current_candidates_executed": False,
+            "snapshot_manifest_built": False,
+            "forward_returns_computed": False,
+            "cache_mutated": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "order_placement_enabled": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "network_api_called": False,
+            "llm_api_called": False,
+            "pit_universe_overlay_plan_artifacts_only": True,
         },
     )
     return folder

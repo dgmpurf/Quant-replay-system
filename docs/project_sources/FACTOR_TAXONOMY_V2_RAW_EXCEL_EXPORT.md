@@ -1,0 +1,41 @@
+# FACTOR TAXONOMY V2 RAW EXCEL EXPORT
+> Converted from `quantitative_trading_factors_v2.xlsx`. The workbook contains 2 sheet(s).
+
+## Sheet 1: Factors_v2
+
+| Factor | Indicator | Description | Data Source | Update Frequency | Suitable for Short | Suitable for Mid | Suitable for Long | Backtest Ease | Overfitting Risk |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 经营与公司事件层 | Revenue Growth (YoY) | Percentage growth in company revenue compared to the previous year; measures expansion of sales. | SEC Form 10-Q / company financial statements | Quarterly | No | Yes | Yes | Medium | Low |
+| 经营与公司事件层 | Net Profit Margin | Net income divided by total revenue; expresses profitability as a percentage of revenuehttps://www.netsuite.com/portal/resource/articles/financial-management/profit-margin.shtml#:~:text=pretax%20profit%20margin%20of%2034,x%20100. | Company income statements (10-Q) | Quarterly | No | Yes | Yes | Medium | Low |
+| 经营与公司事件层 | Return on Equity (ROE) | Net income divided by shareholders’ equity; measures how efficiently a company uses equity to generate profitshttps://corporatefinanceinstitute.com/resources/accounting/what-is-return-on-equity-roe/#:~:text=What%20is%20Return%20on%20Equity,ROE. | Company financial statements (10-Q, 10-K) | Quarterly | No | Yes | Yes | Medium | Low |
+| 经营与公司事件层 | Earnings per Share (EPS) | Net income divided by the number of outstanding shares; widely used to assess profitability per share. | Company financial statements (10-Q) | Quarterly | No | Yes | Yes | Medium | Low |
+| 经营与公司事件层 | Debt-to-Equity Ratio | Total liabilities divided by shareholders’ equity; assesses leverage and capital structure. | Company balance sheets (10-Q) | Quarterly | No | Yes | Yes | Medium | Low |
+| 经营与公司事件层 | SG&A Ratio | Selling, general and administrative expenses divided by revenue; gauges operational efficiencyhttps://www.netsuite.com/portal/resource/articles/financial-management/profit-margin.shtml#:~:text=pretax%20profit%20margin%20of%2034,x%20100. | Company income statements (10-Q) | Quarterly | No | Yes | Yes | Medium | Low |
+| 经营与公司事件层 | Interest Coverage Ratio | Earnings before interest and taxes (EBIT) divided by interest expense; measures ability to service debthttps://www.netsuite.com/portal/resource/articles/financial-management/profit-margin.shtml#:~:text=pretax%20profit%20margin%20of%2034,x%20100. | Company income statements (10-Q) | Quarterly | No | Yes | Yes | Medium | Low |
+| 行业供需与产业链价格层 | Industrial Production Index (INDPRO) | Measures real output in manufacturing, mining and utilities; used to gauge industrial activityhttps://fred.stlouisfed.org/series/INDPRO#:~:text=Apr%202026%3A%20102.4963%20,Monthlyhttps://fred.stlouisfed.org/series/INDPRO#:~:text=Units%3A%C2%A0%20Index%202017%3D100%2C%C2%A0Seasonally%20Adjusted. | Federal Reserve (FRED) | Monthly | No | Yes | Yes | High | Low |
+| 行业供需与产业链价格层 | ISM Manufacturing PMI | Purchasing Managers’ Index derived from surveys of manufacturing managers; indicates expansion (>50) or contractionhttps://www.ismworld.org/supply-management-news-and-reports/reports/rob-report-calendar/#:~:text=Release%20Dates%20for%20the%20ISM,Manufacturing%20and%20Services%C2%A0PMI%C2%AE%20Reports. | Institute for Supply Management (ISM) | Monthly (1st business day) | Yes | Yes | No | High | Medium |
+| 行业供需与产业链价格层 | Producer Price Index (PPI) | Index of average change in prices received by domestic producers; a leading inflation gaugehttps://www.bls.gov/ppi/#:~:text=Next%20Release. | Bureau of Labor Statistics (BLS) | Monthly | Yes | Yes | Yes | High | Low |
+| 宏观流动性与政策国际层 | GDP Growth Rate | Quarterly percentage change in real gross domestic product; measures overall economic growthhttps://www.bea.gov/news/schedule#:~:text=May%2028. | Bureau of Economic Analysis (BEA) | Quarterly | No | Yes | Yes | Medium | Low |
+| 宏观流动性与政策国际层 | Consumer Price Index (CPI) | Measures changes in the price level of a basket of consumer goods and services; key inflation indicatorhttps://www.bls.gov/schedule/news_release/cpi.htm#:~:text=Reference%20Month%20Release%20Date%20Release,10%2C%202026%2008%3A30%20AM. | Bureau of Labor Statistics (BLS) | Monthly | Yes | Yes | Yes | Medium | Medium |
+| 资本市场制度与供需层 | IPO Statistics | Number and proceeds of initial public offerings; indicates supply of new equity and market appetitehttps://www.sec.gov/data-research/statistics-data-visualizations/initial-public-offerings-ipos#:~:text=for%202024%20and%202025,2000%3AQ1%20to%202025%3AQ4%2C%C2%A0view%20Statistics%20Download. | U.S. Securities and Exchange Commission (SEC) | Quarterly | Yes | Yes | No | High | Low |
+| 资本市场制度与供需层 | Margin Debt | Aggregate debit balances in customers’ securities margin accounts; reflects leverage in the markethttps://www.finra.org/rules-guidance/key-topics/margin-accounts/margin-statistics#:~:text=the%20reported%20balances%20may%20be,data%20feeds%20are%20not%20available. | Financial Industry Regulatory Authority (FINRA) | Monthly (third week of following month) | Yes | Yes | No | Medium | Medium |
+| 资本市场制度与供需层 | Advance–Decline Line (A/D Line) | Cumulative sum of the daily difference between advancing and declining issues; measures market breadthhttps://en.wikipedia.org/wiki/Advance%E2%80%93decline_line#:~:text=The%20advance%E2%80%93decline%20line%20is%20a,The. | Exchange market data | Daily | Yes | Yes | No | High | Medium |
+| 交易行为与微观结构层 | Order Flow Imbalance (OFI) | Difference between buy and sell orders in the order book; captures demand–supply pressurehttps://www.quantvps.com/blog/order-flow-imbalance-signals#:~:text=Order%20Flow%20Imbalance%20,faster%20than%20traditional%20indicatorshttps://www.quantvps.com/blog/order-flow-imbalance-signals#:~:text=Order%20Flow%20Imbalance%20,often%20correlate%20directly%20with%20OFI. | High-frequency order book data | Intraday / High frequency | Yes | No | No | Medium | High |
+| 信息披露与舆情传播层 | Daily News Sentiment Index | Lexical sentiment index derived from economic news articles; weighted average declining with time since publicationhttps://www.frbsf.org/research-and-insights/data-and-indicators/daily-news-sentiment-index/#:~:text=The%20Daily%20News%20Sentiment%20Index,2020. | Federal Reserve Bank of San Francisco | Weekly | Yes | Yes | No | High | Medium |
+| 预期、估值与定价偏离层 | Earnings Surprise | Difference between a company’s reported earnings and analysts’ consensus estimates; can lead to price jumpshttps://www.heygotrade.com/en/blog/understanding-earnings-surprise/#:~:text=An%20earnings%20surprise%20occurs%20when,beats%20or%20misses%20analyst%20forecasts. | Company earnings announcements and analyst forecasts | Quarterly (earnings season) | Yes | Yes | No | Medium | High |
+| 预期、估值与定价偏离层 | Price-to-Earnings (P/E) Ratio | Current stock price divided by earnings per share; trailing P/E uses the last 12 months of EPShttps://www.schwab.com/learn/story/stock-analysis-using-pe-ratio#:~:text=,12%20months%2C%20while%20the%20forwardhttps://www.schwab.com/learn/story/stock-analysis-using-pe-ratio#:~:text=Trailing%20P%2FE%20ratio. | Market price & company earnings | Daily (price changes) / quarterly (earnings refresh) | Maybe | Yes | Yes | High | Low |
+| 风险事件与合规边界层 | Value at Risk (VaR) | Statistical measure estimating potential portfolio loss at a specified confidence levelhttps://blog.quantinsti.com/value-at-risk/#:~:text=There%20is%20a%20way%20to,is%20a%20number%20such%20that. | Risk management models / portfolio returns | Daily | Yes | Yes | No | High | High |
+| 风险事件与合规边界层 | CBOE Volatility Index (VIX) | Index derived from S&P 500 option prices measuring market expectation of near-term volatility; updated dailyhttps://fred.stlouisfed.org/series/VIXCLS#:~:text=2026,Daily%2C%20Closehttps://fred.stlouisfed.org/series/VIXCLS#:~:text=Frequency%3A%C2%A0%20Daily%2C%20Close. | Chicago Board Options Exchange / FRED | Daily | Yes | Yes | No | High | Medium |
+
+## Sheet 2: Name_Mapping
+
+| 旧名称 | 正式名称 v2.0 |
+| --- | --- |
+| Company Operations | 经营与公司事件层 |
+| Industry & Value Chain | 行业供需与产业链价格层 |
+| Macro/Policy/International Environment | 宏观流动性与政策国际层 |
+| Capital Market System & Supply-Demand | 资本市场制度与供需层 |
+| Capital Flows & Microstructure | 交易行为与微观结构层 |
+| Information/News & Sentiment | 信息披露与舆情传播层 |
+| Expectation Divergence & Valuation | 预期、估值与定价偏离层 |
+| Special Risks & Black Swan | 风险事件与合规边界层 |

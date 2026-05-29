@@ -14,6 +14,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a policy-aware reviewed cache export plan produced a reviewable manifest or linked downstream validation?
 - Has a current-candidates backfill plan identified warmup/forward-horizon-feasible signal dates?
 - Has a current-candidates backfill execution manifest identified which planned signal dates are ready or blocked?
+- Has a PIT universe overlay plan produced manual-review rows for point-in-time universe preparation?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
@@ -45,6 +46,7 @@ outputs/reports/current_candidates/
 outputs/reports/current_candidates/health/
 outputs/reports/current_candidates_backfill_plan/status/
 outputs/reports/current_candidates_backfill_execution_manifest/status/
+outputs/reports/point_in_time_universe_overlay_plan/status/
 outputs/reports/advisory_profile_calibration/status/
 outputs/reports/calibration_to_signal_semantics/status/
 outputs/reports/signal_semantics/status/
@@ -116,6 +118,16 @@ When the manifest reports `CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_BLOCKE
 When the manifest reports `CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_READY_FOR_REVIEW`, the dashboard treats the ready rows as human-review planning context. It still does not imply automatic candidate generation or trading approval. Health failures remain actionable when this layer is active.
 
 Current-candidates backfill execution manifests are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to execution-manifest readiness; manifest fields remain visible for audit. A manifest does not imply that candidate artifacts have been generated.
+
+## PIT Universe Overlay Plan Status
+
+`research-status` includes `pit-universe-overlay-plan-status` as point-in-time universe preparation context when those artifacts exist.
+
+The unified summary records the latest overlay plan id, plan status/stage, health status, row count, signal date count, symbol count, `NEEDS_MANUAL_REVIEW` count, valid-for-signal-date count, survivorship-bias warning count, report path, and the overlay plan layer's next manual action. This is preparation context only: it does not run `current-candidates`, build snapshot manifests, run `data-pipeline`, compute forward-return labels, mutate cache, fetch data, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW`, the dashboard treats the warning as expected reviewable PIT universe preparation work. Generated rows are not point-in-time-valid universe rows yet; `NEEDS_MANUAL_REVIEW` rows must be manually reviewed with evidence before any later snapshot preparation or candidate-generation workflow can use them. Survivorship-bias warnings remain visible so future-universe-derived templates are not mistaken for reviewed point-in-time inputs.
+
+PIT universe overlay plans are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to PIT overlay review; overlay fields remain visible for audit. A PIT overlay plan does not imply that current-candidates were generated, snapshots were built, or forward labels were computed.
 
 ## Advisory Profile Calibration Status
 

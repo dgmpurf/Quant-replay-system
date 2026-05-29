@@ -135,6 +135,18 @@ Expected stages include:
 
 `CURRENT_CANDIDATES_BACKFILL_EXECUTION_MANIFEST_BLOCKED` is expected when reviewed inputs are not ready, such as missing per-date snapshot manifests or a universe `as_of_date` later than the signal date. It is a planning/readiness blocker only; no candidate generation has run.
 
+## PIT Universe Overlay Planning
+
+When rows are blocked by `BLOCKED_UNIVERSE_AS_OF`, use `pit-universe-overlay-plan` to create a manual-review template for point-in-time universe overlays:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-overlay-plan --execution-manifest outputs\reports\current_candidates_backfill_execution_manifest\f98279630ce6\current_candidates_backfill_execution_manifest.csv --universe-name etf_core
+```
+
+The template marks generated rows as `NEEDS_MANUAL_REVIEW`, keeps `valid_for_signal_date=false`, and sets survivorship-bias warnings when rows are derived from a future universe. It does not approve a PIT universe, build snapshot manifests, run current-candidates, or compute forward labels. See [point_in_time_universe_overlay_plan.md](point_in_time_universe_overlay_plan.md).
+
+Use `pit-universe-overlay-plan-index`, `pit-universe-overlay-plan-health`, and `pit-universe-overlay-plan-status` to discover, safety-check, and summarize those PIT universe preparation templates. A healthy template can still be `PIT_UNIVERSE_OVERLAY_PLAN_NEEDS_REVIEW`; that is planning context, not execution readiness.
+
 ## Research Status Integration
 
 `research-status` includes the latest `current-candidates-backfill-execution-manifest-status` as multi-date candidate execution-readiness context.

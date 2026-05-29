@@ -103,6 +103,12 @@ Use `current-candidates-backfill-execution-manifest-index`, `current-candidates-
 
 `research-status` includes the latest `current-candidates-backfill-execution-manifest-status` as execution-readiness context, including linked plan id, ready/blocked counts, blocker counts such as `BLOCKED_UNIVERSE_AS_OF`, health status, and report path. The manifest remains planning-only; later paper workflow priority is preserved. See [docs/local_research_dashboard.md#current-candidates-backfill-execution-manifest-status](docs/local_research_dashboard.md#current-candidates-backfill-execution-manifest-status).
 
+For blocked `BLOCKED_UNIVERSE_AS_OF` rows, use `pit-universe-overlay-plan` to create a manual review template for point-in-time universe overlays; see [docs/point_in_time_universe_overlay_plan.md](docs/point_in_time_universe_overlay_plan.md). The template does not approve a universe, build snapshots, run current-candidates, compute labels, or place orders. Use `pit-universe-overlay-plan-index`, `pit-universe-overlay-plan-health`, and `pit-universe-overlay-plan-status` to discover, safety-check, and summarize those templates.
+
+`research-status` includes the latest `pit-universe-overlay-plan-status` as PIT universe preparation context, including manual-review counts, valid-for-signal-date counts, survivorship-bias warning counts, health status, and report path. `NEEDS_MANUAL_REVIEW` rows are not valid PIT universe rows yet, and later paper workflow priority is preserved. See [docs/local_research_dashboard.md#pit-universe-overlay-plan-status](docs/local_research_dashboard.md#pit-universe-overlay-plan-status).
+
+For the v1.0.0 checkpoint covering the plan-only path from warmup-aware backfill planning through PIT universe overlay preparation, see [docs/release_checkpoint_v1.0.0.md](docs/release_checkpoint_v1.0.0.md).
+
 `research-status` includes the latest `current-candidates-backfill-plan-status` as planning context, including selected date count, first/last signal dates, warmup requirement, forward-horizon summary, health status, and report path. The plan is visible but does not imply candidate generation; later paper workflow priority is preserved. See [docs/local_research_dashboard.md#current-candidates-backfill-plan-status](docs/local_research_dashboard.md#current-candidates-backfill-plan-status).
 
 For turning current-candidates artifacts into local advisory signals and alert previews without message delivery or execution, see [docs/signal_advisory.md](docs/signal_advisory.md).

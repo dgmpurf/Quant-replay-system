@@ -77,6 +77,14 @@ python -m quant_replay_system.cli current-candidates-backfill-execution-manifest
 
 The manifest can mark rows as `READY_FOR_REVIEW` or blocked by missing snapshot inputs, snapshot-quality status, plan infeasibility, missing datasets, or universe `as_of_date` being later than the signal date. It does not run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, connect to brokers, or place orders. See [current_candidates_backfill_execution_manifest.md](current_candidates_backfill_execution_manifest.md).
 
+If execution is blocked by `BLOCKED_UNIVERSE_AS_OF`, use `pit-universe-overlay-plan` to produce a manual review template for point-in-time universe overlays:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-overlay-plan --execution-manifest outputs\reports\current_candidates_backfill_execution_manifest\f98279630ce6\current_candidates_backfill_execution_manifest.csv --universe-name etf_core
+```
+
+Generated rows default to `NEEDS_MANUAL_REVIEW`, `valid_for_signal_date=false`, and survivorship-bias warnings when derived from a later universe artifact. The command is template-only and does not approve the universe, build snapshots, run current-candidates, or compute labels. See [point_in_time_universe_overlay_plan.md](point_in_time_universe_overlay_plan.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:
