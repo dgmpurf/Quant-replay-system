@@ -121,6 +121,8 @@ Use `pit-universe-evidence-completion-helper-index`, `pit-universe-evidence-comp
 
 For the v1.3.0 checkpoint covering PIT universe evidence completion helper artifact views and `research-status` integration, see [docs/release_checkpoint_v1.3.0.md](docs/release_checkpoint_v1.3.0.md).
 
+For the v1.4.0 checkpoint covering PIT universe export-readiness gate-ordering and required metadata consolidation tests, see [docs/release_checkpoint_v1.4.0.md](docs/release_checkpoint_v1.4.0.md).
+
 For the v1.2.0 checkpoint covering PIT universe overlay export-readiness artifact views and `research-status` integration, see [docs/release_checkpoint_v1.2.0.md](docs/release_checkpoint_v1.2.0.md).
 
 For the v1.1.0 checkpoint covering reviewed PIT universe overlay approval artifact views and `research-status` integration, see [docs/release_checkpoint_v1.1.0.md](docs/release_checkpoint_v1.1.0.md).

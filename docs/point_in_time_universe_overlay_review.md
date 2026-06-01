@@ -18,6 +18,9 @@ PIT overlay plan/template
 
 The review workflow validates whether a row has enough point-in-time evidence to be marked `APPROVED_FOR_PIT_UNIVERSE`. Approval remains evidence metadata only; it does not create a snapshot-ready universe dataset by itself.
 
+Rows may optionally carry required point-in-time universe metadata (`as_of_date`, `name`, `instrument_type`, `exchange`, `industry`, `min_lot`, `t_plus_rule`, `available_time`, `revision_id`, `source`) so that
+`pit-universe-overlay-export-readiness` can evaluate completion without auto-filling from suggested hints.
+
 ## CLI Usage
 
 Template-only mode:
@@ -76,6 +79,23 @@ Invalid statuses are rejected.
 - `delisted_date_evidence` blank or on/after `signal_date`
 
 Rows that fail approval checks are not silently approved. They are downgraded to `NEEDS_MORE_EVIDENCE` with a `blocker_reason`.
+
+## Reviewer-supplied current-candidates metadata
+
+The update schema also accepts and preserves these optional PIT universe metadata fields:
+
+- `as_of_date`
+- `name`
+- `instrument_type`
+- `exchange`
+- `industry`
+- `min_lot`
+- `t_plus_rule`
+- `available_time`
+- `revision_id`
+- `source`
+
+These fields are preserved in the reviewed output when present and are subject to later export-readiness checks. They are not auto-filled from helper suggestions.
 
 ## Artifacts
 

@@ -63,6 +63,19 @@ HELPER_OUTPUT_COLUMNS = [
     "evidence_completion_only",
 ]
 
+HELPER_REQUIRED_INPUT_COLUMNS = [
+    "review_id",
+    "overlay_plan_id",
+    "signal_date",
+    "symbol",
+    "universe_name",
+    "include_flag",
+    "review_status",
+    "valid_for_signal_date",
+    "survivorship_bias_warning",
+    "survivorship_bias_resolved",
+]
+
 SAFETY_STATEMENT = (
     "No universe export, data/raw write, data/processed write, current-candidates generation, "
     "snapshot build, forward labels, live trading, broker API, order placement, message delivery, "
@@ -225,9 +238,12 @@ def load_pit_universe_review_for_evidence_completion(review: str | Path) -> pd.D
     if not review_path.exists():
         raise FileNotFoundError(f"Reviewed PIT universe overlay not found: {review_path}")
     frame = read_csv_preserve_symbol_columns(review_path, keep_default_na=False)
-    missing = [column for column in REVIEW_OUTPUT_COLUMNS if column not in frame.columns]
+    missing = [column for column in HELPER_REQUIRED_INPUT_COLUMNS if column not in frame.columns]
     if missing:
         raise ValueError(f"Reviewed PIT universe overlay missing required columns: {', '.join(missing)}")
+    for column in REVIEW_OUTPUT_COLUMNS:
+        if column not in frame.columns:
+            frame[column] = ""
     output = frame.copy(deep=True)
     output["symbol"] = output["symbol"].map(normalize_symbol_value)
     return output

@@ -68,6 +68,8 @@ Required current-candidates universe fields:
 - `revision_id`
 - `source`
 
+These fields are expected to come from reviewer-provided metadata in reviewed PIT overlay rows. Non-authoritative helper hints are ignored for completeness checks.
+
 Duplicate `signal_date + symbol + universe_name` keys among otherwise export-ready rows are blocked.
 
 ## Status Values
@@ -83,6 +85,9 @@ Aggregate readiness statuses:
 - `EXPORT_READY_REVIEW_ONLY`
 
 For the current template-only review, `EXPORT_BLOCKED_NO_APPROVED_ROWS` is expected and safe.
+
+If at least one row is `export_ready=true` but some rows are still blocked, the aggregate status is `EXPORT_READY_REVIEW_ONLY`.
+This is treated as passable readiness-check context (reviewable), not a hard process failure, and appears in status as `PIT_UNIVERSE_EXPORT_READY_FOR_DRY_RUN`.
 
 ## Artifacts
 
@@ -166,7 +171,8 @@ The workflow always records:
 - `universe_exported=false`
 - `would_write_data_raw=false`
 - `would_write_data_processed=false`
-- `no_current_candidates_generated=true`
+ - `no_current_candidates_generated=true`
+ - `universe_exported=false`
 - `no_snapshot_built=true`
 - `no_forward_labels=true`
 - `cache_mutated=false`

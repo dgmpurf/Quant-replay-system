@@ -79,6 +79,40 @@ def test_approved_row_becomes_valid_only_with_required_pit_evidence(tmp_path: Pa
     assert approved["review_only"] is True
 
 
+def test_review_updates_with_universe_metadata_fields_are_preserved(tmp_path: Path) -> None:
+    overlay_plan = _write_overlay_plan(tmp_path / "overlay_plan.csv")
+    update = _approved_update("000001")
+    update["as_of_date"] = "2024-04-02"
+    update["name"] = "Ping An Bank"
+    update["instrument_type"] = "STOCK"
+    update["exchange"] = "SZSE"
+    update["industry"] = "BANKING"
+    update["min_lot"] = "100"
+    update["t_plus_rule"] = "T+1"
+    update["available_time"] = "2024-04-02 08:00:00"
+    update["revision_id"] = "rev-a"
+    update["source"] = "LOCAL_TEST"
+    updates = _write_review_updates(tmp_path / "updates.csv", [update])
+
+    result = build_pit_universe_overlay_review(
+        overlay_plan=overlay_plan,
+        review_updates=updates,
+        output_dir=tmp_path / "out",
+    )
+
+    row = result.reviewed_frame.loc[result.reviewed_frame["symbol"] == "000001"].iloc[0]
+    assert row["as_of_date"] == "2024-04-02"
+    assert row["name"] == "Ping An Bank"
+    assert row["instrument_type"] == "STOCK"
+    assert row["exchange"] == "SZSE"
+    assert row["industry"] == "BANKING"
+    assert row["min_lot"] == "100"
+    assert row["t_plus_rule"] == "T+1"
+    assert row["available_time"] == "2024-04-02 08:00:00"
+    assert row["revision_id"] == "rev-a"
+    assert row["source"] == "LOCAL_TEST"
+
+
 def test_approval_missing_reviewer_is_blocked_as_needs_more_evidence(tmp_path: Path) -> None:
     overlay_plan = _write_overlay_plan(tmp_path / "overlay_plan.csv")
     update = _approved_update("000001")
@@ -148,6 +182,33 @@ def test_invalid_review_status_is_rejected(tmp_path: Path) -> None:
         )
 
 
+def test_review_update_leading_zero_symbols_are_preserved(tmp_path: Path) -> None:
+    overlay_plan = _write_overlay_plan(
+        tmp_path / "overlay_plan.csv",
+        rows=[
+            _overlay_row("000001"),
+            _overlay_row("000100"),
+        ],
+    )
+    updates = _write_review_updates(
+        tmp_path / "updates.csv",
+        [
+            _approved_update("000001"),
+            _needs_more_evidence_update("000100"),
+        ],
+    )
+
+    result = build_pit_universe_overlay_review(
+        overlay_plan=overlay_plan,
+        review_updates=updates,
+        output_dir=tmp_path / "out",
+    )
+
+    symbols = result.reviewed_frame["symbol"].tolist()
+    assert symbols == ["000001", "000100"]
+    assert "000100" in symbols
+
+
 def test_review_workflow_does_not_execute_candidates_snapshots_or_delivery(tmp_path: Path) -> None:
     overlay_plan = _write_overlay_plan(tmp_path / "overlay_plan.csv")
     updates = _write_review_updates(tmp_path / "updates.csv", [_approved_update("000001")])
@@ -193,13 +254,12 @@ def test_cli_pit_universe_overlay_review_template_only_works(tmp_path: Path, cap
     assert "No current-candidates generation, snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM API, or external API was invoked." in output.out
 
 
-def _write_overlay_plan(path: Path) -> Path:
+def _write_overlay_plan(path: Path, rows: list[dict] | None = None) -> Path:
+    if rows is None:
+        rows = [_overlay_row("000001"), _overlay_row("510300")]
     path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(
-        [
-            _overlay_row("000001"),
-            _overlay_row("510300"),
-        ],
+        rows,
         columns=OVERLAY_PLAN_COLUMNS,
     ).to_csv(path, index=False)
     return path
@@ -258,6 +318,16 @@ def _approved_update(symbol: str) -> dict:
         "is_st": False,
         "is_suspended": False,
         "survivorship_bias_resolved": True,
+        "as_of_date": "",
+        "name": "",
+        "instrument_type": "",
+        "exchange": "",
+        "industry": "",
+        "min_lot": "",
+        "t_plus_rule": "",
+        "available_time": "",
+        "revision_id": "",
+        "source": "LOCAL_TEST",
     }
 
 

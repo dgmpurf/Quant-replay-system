@@ -196,10 +196,10 @@ def load_pit_universe_overlay_review_for_export_readiness(review: str | Path) ->
     if not review_path.exists():
         raise FileNotFoundError(f"Reviewed PIT universe overlay not found: {review_path}")
     frame = read_csv_preserve_symbol_columns(review_path, keep_default_na=False)
-    missing = [column for column in REVIEW_OUTPUT_COLUMNS if column not in frame.columns]
-    if missing:
-        raise ValueError(f"Reviewed PIT universe overlay missing required columns: {', '.join(missing)}")
     output = frame.copy(deep=True)
+    for column in REVIEW_OUTPUT_COLUMNS:
+        if column not in output.columns:
+            output[column] = ""
     output["symbol"] = output["symbol"].map(normalize_symbol_value)
     return output
 

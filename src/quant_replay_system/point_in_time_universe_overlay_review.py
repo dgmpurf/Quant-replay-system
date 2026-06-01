@@ -45,6 +45,19 @@ REVIEW_UPDATE_COLUMNS = [
     "is_suspended",
     "survivorship_bias_resolved",
 ]
+REVIEW_UPDATE_UNIVERSE_METADATA_COLUMNS = [
+    "as_of_date",
+    "name",
+    "instrument_type",
+    "exchange",
+    "industry",
+    "min_lot",
+    "t_plus_rule",
+    "available_time",
+    "revision_id",
+    "source",
+]
+REVIEW_UPDATE_COLUMNS = REVIEW_UPDATE_COLUMNS + REVIEW_UPDATE_UNIVERSE_METADATA_COLUMNS
 
 REVIEW_OUTPUT_COLUMNS = [
     "review_id",
@@ -72,6 +85,16 @@ REVIEW_OUTPUT_COLUMNS = [
     "is_active_evidence",
     "survivorship_bias_warning",
     "survivorship_bias_resolved",
+    "as_of_date",
+    "name",
+    "instrument_type",
+    "exchange",
+    "industry",
+    "min_lot",
+    "t_plus_rule",
+    "available_time",
+    "revision_id",
+    "source",
     "manual_review_required",
     "no_live_trading",
     "no_broker_api",
@@ -131,6 +154,16 @@ class PitUniverseOverlayReviewRow:
     listed_date_evidence: str
     delisted_date_evidence: str
     is_active_evidence: bool | str
+    as_of_date: str
+    name: str
+    instrument_type: str
+    exchange: str
+    industry: str
+    min_lot: str
+    t_plus_rule: str
+    available_time: str
+    revision_id: str
+    source: str
     survivorship_bias_warning: bool
     survivorship_bias_resolved: bool
     manual_review_required: bool = True
@@ -165,6 +198,16 @@ class PitUniverseOverlayReviewRow:
             "listed_date_evidence": self.listed_date_evidence,
             "delisted_date_evidence": self.delisted_date_evidence,
             "is_active_evidence": self.is_active_evidence,
+            "as_of_date": self.as_of_date,
+            "name": self.name,
+            "instrument_type": self.instrument_type,
+            "exchange": self.exchange,
+            "industry": self.industry,
+            "min_lot": self.min_lot,
+            "t_plus_rule": self.t_plus_rule,
+            "available_time": self.available_time,
+            "revision_id": self.revision_id,
+            "source": self.source,
             "survivorship_bias_warning": self.survivorship_bias_warning,
             "survivorship_bias_resolved": self.survivorship_bias_resolved,
             "manual_review_required": self.manual_review_required,
@@ -241,6 +284,9 @@ def load_pit_universe_overlay_review_updates(path: str | Path | None) -> pd.Data
         raise ValueError(f"PIT universe overlay review updates missing required columns: {', '.join(missing)}")
     output = frame.copy(deep=True)
     for column in REVIEW_UPDATE_COLUMNS:
+        if column not in output.columns:
+            output[column] = ""
+    for column in REVIEW_UPDATE_UNIVERSE_METADATA_COLUMNS:
         if column not in output.columns:
             output[column] = ""
     output["symbol"] = output["symbol"].map(normalize_symbol_value)
@@ -434,6 +480,16 @@ def build_pit_universe_overlay_review_template(plan_frame: pd.DataFrame) -> pd.D
                 "is_st": "",
                 "is_suspended": "",
                 "survivorship_bias_resolved": "",
+                "as_of_date": "",
+                "name": "",
+                "instrument_type": "",
+                "exchange": "",
+                "industry": "",
+                "min_lot": "",
+                "t_plus_rule": "",
+                "available_time": "",
+                "revision_id": "",
+                "source": "",
             }
         )
     return pd.DataFrame(rows, columns=REVIEW_UPDATE_COLUMNS)
@@ -578,6 +634,16 @@ def _build_review_row(
         listed_date_evidence=listed,
         delisted_date_evidence=delisted,
         is_active_evidence=_bool_or_empty(update_row.get("is_active_evidence")),
+        as_of_date=_date_text(update_row.get("as_of_date")),
+        name=_text(update_row.get("name")),
+        instrument_type=_text(update_row.get("instrument_type")),
+        exchange=_text(update_row.get("exchange")),
+        industry=_text(update_row.get("industry")),
+        min_lot=_text(update_row.get("min_lot")),
+        t_plus_rule=_text(update_row.get("t_plus_rule")),
+        available_time=_datetime_text(update_row.get("available_time")),
+        revision_id=_text(update_row.get("revision_id")),
+        source=_text(update_row.get("source")),
         survivorship_bias_warning=_is_true(plan_row.get("survivorship_bias_warning")),
         survivorship_bias_resolved=_is_true(update_row.get("survivorship_bias_resolved")),
     )
@@ -693,6 +759,11 @@ def _text(value: Any) -> str:
 def _date_text(value: Any) -> str:
     parsed = _parse_date(value)
     return "" if parsed is None else parsed.strftime("%Y-%m-%d")
+
+
+def _datetime_text(value: Any) -> str:
+    parsed = _parse_datetime(value)
+    return "" if parsed is None else parsed.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _parse_date(value: Any) -> pd.Timestamp | None:
