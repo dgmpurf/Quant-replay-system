@@ -101,6 +101,14 @@ python -m quant_replay_system.cli pit-universe-overlay-export-readiness --review
 
 This command writes readiness reports only. It does not write usable universe files under `data/raw` or `data/processed`, build snapshots, run current-candidates, compute forward labels, mutate cache, or place orders. See [point_in_time_universe_overlay_export_readiness.md](point_in_time_universe_overlay_export_readiness.md).
 
+If export readiness is blocked because rows still need evidence, use `pit-universe-evidence-completion-helper` to create a completion template with optional non-authoritative local base-universe hints:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-evidence-completion-helper --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv --base-universe data\processed\universe\416435ab80d9\raw_data_cleaned.csv
+```
+
+The helper keeps rows non-approved, marks hints as `hint_authoritative_for_pit=false`, preserves survivorship-bias warnings, and does not export universe files, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [point_in_time_universe_evidence_completion_helper.md](point_in_time_universe_evidence_completion_helper.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:

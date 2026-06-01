@@ -920,6 +920,7 @@ local_research_dashboard:
   data_preparation_root: outputs/reports/data_preparation
   current_candidates_root: outputs/reports/current_candidates
   current_candidates_backfill_plan_root: outputs/reports/current_candidates_backfill_plan
+  point_in_time_universe_evidence_completion_helper_root: outputs/reports/point_in_time_universe_evidence_completion_helper
   advisory_profile_calibration_root: outputs/reports/advisory_profile_calibration
   signal_semantics_root: outputs/reports/signal_semantics
   signal_advisory_root: outputs/reports/signals

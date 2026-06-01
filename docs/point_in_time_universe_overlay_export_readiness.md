@@ -188,3 +188,5 @@ Export readiness is not strategy validation and does not authorize candidate gen
 - It does not fill missing universe fields from a base universe automatically.
 - It does not prove strategy performance or market edge.
 - A later explicit reviewed export workflow is still required before snapshot preparation can consume approved rows.
+
+If readiness is blocked because rows are not approved or evidence fields are missing, use [point_in_time_universe_evidence_completion_helper.md](point_in_time_universe_evidence_completion_helper.md) to generate a report-only completion template. That helper may prefill non-authoritative `suggested_*` hints from a local base universe, but it does not approve rows or export usable universe files.

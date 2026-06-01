@@ -168,6 +168,18 @@ The readiness workflow writes report artifacts only. It can return statuses such
 
 Use `pit-universe-overlay-export-readiness-index`, `pit-universe-overlay-export-readiness-health`, and `pit-universe-overlay-export-readiness-status` to discover, safety-check, and summarize readiness artifacts. `research-status` includes the latest export-readiness status as PIT universe preparation context, including no-approved-rows, missing required-column, unresolved survivorship-warning, and export-ready counts. Blocked readiness is not a candidate-generation failure and does not mean a universe export happened.
 
+## Evidence Completion Helper
+
+Use `pit-universe-evidence-completion-helper` when reviewed rows still need human evidence fields:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-evidence-completion-helper --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv --base-universe data\processed\universe\416435ab80d9\raw_data_cleaned.csv
+```
+
+The helper writes a gap report and completion template only. Optional base-universe data is joined as non-authoritative `suggested_*` hints and marked `hint_authoritative_for_pit=false`; future-dated hints keep survivorship-bias risk visible. It does not approve rows, set `valid_for_signal_date=true`, export universe files, build snapshots, run current-candidates, or compute labels. See [point_in_time_universe_evidence_completion_helper.md](point_in_time_universe_evidence_completion_helper.md).
+
+Use `pit-universe-evidence-completion-helper-index`, `pit-universe-evidence-completion-helper-health`, and `pit-universe-evidence-completion-helper-status` to discover, safety-check, and summarize helper artifacts. Unified `research-status` includes the latest helper status as evidence-preparation context, including needs-evidence counts, non-authoritative base-hint counts, future-dated hint counts, and authoritative hint counts. Helper status does not approve rows and does not imply universe export, snapshot build, current-candidates generation, or forward-label computation.
+
 ## Safety Boundaries
 
 The workflow always records:

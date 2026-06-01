@@ -1029,6 +1029,9 @@ class LocalResearchDashboardSettings(BaseModel):
     point_in_time_universe_overlay_export_readiness_root: Path = Path(
         "outputs/reports/point_in_time_universe_overlay_export_readiness"
     )
+    point_in_time_universe_evidence_completion_helper_root: Path = Path(
+        "outputs/reports/point_in_time_universe_evidence_completion_helper"
+    )
     advisory_profile_calibration_root: Path = Path("outputs/reports/advisory_profile_calibration")
     signal_semantics_root: Path = Path("outputs/reports/signal_semantics")
     signal_advisory_root: Path = Path("outputs/reports/signals")

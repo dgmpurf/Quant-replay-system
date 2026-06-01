@@ -152,6 +152,16 @@ When the status reports `PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS`, the dash
 
 PIT universe export readiness is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to export readiness; readiness fields remain visible for audit. If readiness health fails because the artifact claims `data/raw` or `data/processed` writes, current-candidates generation, snapshot build, forward labels, unsafe trading flags, or missing required fields on export-ready rows, `research-status` surfaces the failure as actionable when this layer is active.
 
+## PIT Universe Evidence Completion Helper Status
+
+`research-status` includes `pit-universe-evidence-completion-helper-status` as PIT universe evidence-preparation context when those artifacts exist.
+
+The unified summary records the latest helper id, helper status/stage, health status, linked review id, row count, needs-evidence count, rows-with-base-hints count, future-dated hint count, authoritative hint count, report path, and the helper layer's next manual action. This is template-only context: it does not approve rows, set `valid_for_signal_date=true`, export usable universe files, write `data/raw`, write `data/processed`, run `current-candidates`, build snapshot manifests, run `data-pipeline`, compute forward labels, mutate cache, fetch data, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_NEEDS_REVIEW`, the dashboard treats the warning as expected reviewable PIT universe evidence-preparation work. Optional base-universe hints remain non-authoritative; future-dated hints keep survivorship-bias risk visible and cannot approve rows.
+
+PIT universe evidence completion helper artifacts are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to helper status; helper fields remain visible for audit. If helper health fails because an artifact claims row approval, `valid_for_signal_date=true`, authoritative hints, data writes, universe export, current-candidates generation, snapshot build, forward labels, unsafe trading flags, API calls, broker access, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.
