@@ -1,7 +1,7 @@
 # System Architecture and Workflow Map
 
 > Status: working memory document  
-> Last generated: 2026-05-29  
+> Last generated: 2026-06-02  
 > Permanence: temporary; update after major architecture or workflow additions.
 
 ## High-Level Architecture
@@ -55,7 +55,10 @@ Multi-Date Evidence Preparation
   ├─ current-candidates-backfill-plan
   ├─ current-candidates-backfill-execution-manifest
   ├─ point-in-time-universe-overlay-plan
-  └─ point-in-time-universe-overlay-review
+  ├─ point-in-time-universe-overlay-review
+  ├─ point-in-time-universe-overlay-export-readiness
+  ├─ point-in-time-universe-evidence-completion-helper
+  └─ point-in-time-universe-export-staging
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -146,7 +149,7 @@ candidate or scored rows
 → research-status
 ```
 
-### 7. Multi-Date Candidate Planning, PIT Universe Preparation, and Review
+### 7. Multi-Date Candidate Planning, PIT Universe Review, and Staging
 
 ```text
 market cache coverage
@@ -155,17 +158,21 @@ market cache coverage
 → execution manifest
 → PIT universe overlay plan/template
 → PIT universe overlay review workflow
-→ PIT universe overlay review index / health / status
+→ PIT universe export-readiness
+→ PIT universe evidence completion helper
+→ PIT universe required metadata support
+→ guarded PIT universe export staging
+→ PIT universe export staging index / health / status
 → research-status
 ```
 
 Current active preparation state:
 
 ```text
-PIT_UNIVERSE_OVERLAY_REVIEW_NEEDS_MORE_EVIDENCE
+PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS
 ```
 
-The system has not generated multi-date current-candidates, per-date snapshots, or forward-return labels yet.
+The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, or usable universe exports yet.
 
 ## Important Data Contracts
 
@@ -181,6 +188,27 @@ The project should preserve:
 - `upstream_source`
 - `revision_id`
 - `raw_hash` or equivalent where possible
+
+### Current-Candidates Universe Input Fields
+
+A usable universe input for `current-candidates` requires:
+
+- `as_of_date`
+- `symbol`
+- `name`
+- `instrument_type`
+- `exchange`
+- `listed_date`
+- `delisted_date`
+- `is_active`
+- `is_st`
+- `is_suspended`
+- `industry`
+- `min_lot`
+- `t_plus_rule`
+- `available_time`
+- `revision_id`
+- `source`
 
 ### PIT Universe Review Fields
 
@@ -209,6 +237,8 @@ Reviewed PIT universe rows should preserve:
 - `survivorship_bias_warning`
 - `survivorship_bias_resolved`
 
+Review rows now also support current-candidates universe metadata fields such as `as_of_date`, `name`, `instrument_type`, `exchange`, `industry`, `min_lot`, `t_plus_rule`, `available_time`, `revision_id`, and `source` when a reviewer explicitly supplies them.
+
 ### Safety Fields
 
 Most user-facing or review-facing artifacts should keep:
@@ -222,6 +252,7 @@ Most user-facing or review-facing artifacts should keep:
 - `llm_api_called=false` when relevant
 - `plan_only=true` for planning workflows
 - `review_only=true` for review workflows
+- `staging_only=true` for staging workflows
 
 ### Signal Semantics Provenance
 
@@ -269,18 +300,35 @@ Known current state:
   - 0 valid-for-signal-date rows.
   - 72 rows still need manual review / more evidence.
   - 72 unresolved survivorship warnings.
+- Export readiness:
+  - export readiness id: `75c6975e93e4`.
+  - 0 approved rows.
+  - 0 export-ready rows.
+  - 72 blocked rows.
+- Evidence completion helper:
+  - helper id: `4cf008a09f04`.
+  - 72 rows need evidence.
+  - base universe hints are non-authoritative and future-dated.
+- Export staging:
+  - staging id: `41bfd31a9e2c`.
+  - 0 export-ready input rows.
+  - 0 staged rows.
+  - 72 blocked rows.
+  - stage: `PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS`.
+
+Diagnostic synthetic metadata tests proved that a complete reviewed row with required metadata can become export-ready in diagnostics, but those diagnostic rows do not become active workflow artifacts.
 
 ## Current Next Technical Branch
 
 ```text
-Reviewed PIT Universe Overlay Export Readiness Read-only Audit v0.1
+PIT Universe Evidence Review Worklist / Real Evidence Completion Plan
 ```
 
 Purpose:
 
-- inspect whether reviewed rows can be exported into a local universe input;
-- confirm there are currently no approved rows to export;
-- define blockers and export readiness statuses;
-- keep the workflow read-only before implementation.
+- help the user complete real PIT evidence fields safely;
+- keep future universe hints non-authoritative;
+- preserve survivorship-bias warnings until resolved;
+- prepare real review updates without automatically approving rows.
 
-Do not skip directly to universe export, snapshot preparation, or current-candidates backfill runner.
+Do not skip directly to accepted universe export, snapshot preparation, or current-candidates backfill runner.

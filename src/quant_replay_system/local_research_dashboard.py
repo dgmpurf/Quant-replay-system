@@ -37,6 +37,9 @@ from quant_replay_system.point_in_time_universe_overlay_review_status import (
 from quant_replay_system.point_in_time_universe_evidence_completion_helper_status import (
     run_pit_universe_evidence_completion_helper_status,
 )
+from quant_replay_system.point_in_time_universe_evidence_review_worklist_status import (
+    run_pit_universe_evidence_review_worklist_status,
+)
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
 from quant_replay_system.signal_semantics_status import run_signal_semantics_status
 from quant_replay_system.single_symbol_advisory_answer_status import run_single_symbol_advisory_answer_status
@@ -186,6 +189,19 @@ SUMMARY_COLUMNS = [
     "pit_universe_evidence_helper_authoritative_hint_count",
     "pit_universe_evidence_helper_report_path",
     "pit_universe_evidence_helper_next_action",
+    "pit_universe_evidence_worklist_status",
+    "latest_pit_universe_evidence_worklist_id",
+    "pit_universe_evidence_worklist_stage",
+    "pit_universe_evidence_worklist_health_status",
+    "pit_universe_evidence_worklist_review_id",
+    "pit_universe_evidence_worklist_helper_id",
+    "pit_universe_evidence_worklist_row_count",
+    "pit_universe_evidence_worklist_symbol_count",
+    "pit_universe_evidence_worklist_signal_date_count",
+    "pit_universe_evidence_worklist_needs_evidence_count",
+    "pit_universe_evidence_worklist_future_dated_hint_count",
+    "pit_universe_evidence_worklist_report_path",
+    "pit_universe_evidence_worklist_next_action",
     "advisory_profile_calibration_status",
     "latest_advisory_profile_calibration_run_id",
     "advisory_profile_calibration_stage",
@@ -406,6 +422,7 @@ COMPONENTS = [
     "PIT_UNIVERSE_EXPORT_READINESS_STATUS",
     "PIT_UNIVERSE_EXPORT_STAGING_STATUS",
     "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS",
+    "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
     "ADVISORY_PROFILE_CALIBRATION_STATUS",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
     "SIGNAL_SEMANTICS_STATUS",
@@ -438,6 +455,7 @@ WORKFLOW_AREAS = {
     "PIT_UNIVERSE_EXPORT_READINESS_STATUS": "PIT_UNIVERSE_EXPORT_READINESS",
     "PIT_UNIVERSE_EXPORT_STAGING_STATUS": "PIT_UNIVERSE_EXPORT_STAGING",
     "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS": "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER",
+    "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS": "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
     "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS": "CALIBRATION_TO_SIGNAL_SEMANTICS",
     "SIGNAL_SEMANTICS_STATUS": "SIGNAL_SEMANTICS",
@@ -581,6 +599,19 @@ class LocalResearchDashboardResult:
     pit_universe_evidence_helper_authoritative_hint_count: int
     pit_universe_evidence_helper_report_path: str
     pit_universe_evidence_helper_next_action: str
+    pit_universe_evidence_worklist_status: str
+    latest_pit_universe_evidence_worklist_id: str
+    pit_universe_evidence_worklist_stage: str
+    pit_universe_evidence_worklist_health_status: str
+    pit_universe_evidence_worklist_review_id: str
+    pit_universe_evidence_worklist_helper_id: str
+    pit_universe_evidence_worklist_row_count: int
+    pit_universe_evidence_worklist_symbol_count: int
+    pit_universe_evidence_worklist_signal_date_count: int
+    pit_universe_evidence_worklist_needs_evidence_count: int
+    pit_universe_evidence_worklist_future_dated_hint_count: int
+    pit_universe_evidence_worklist_report_path: str
+    pit_universe_evidence_worklist_next_action: str
     advisory_profile_calibration_status: str
     latest_advisory_profile_calibration_run_id: str
     advisory_profile_calibration_stage: str
@@ -781,6 +812,7 @@ def run_local_research_dashboard(
     pit_universe_overlay_export_readiness_root: str | Path | None = None,
     pit_universe_export_staging_root: str | Path | None = None,
     pit_universe_evidence_completion_helper_root: str | Path | None = None,
+    pit_universe_evidence_review_worklist_root: str | Path | None = None,
     advisory_profile_calibration_root: str | Path | None = None,
     calibration_to_signal_semantics_root: str | Path | None = None,
     signal_semantics_root: str | Path | None = None,
@@ -862,6 +894,11 @@ def run_local_research_dashboard(
         if pit_universe_evidence_completion_helper_root is not None
         else dashboard_settings.point_in_time_universe_evidence_completion_helper_root
     )
+    effective_pit_universe_evidence_review_worklist_root = (
+        Path(pit_universe_evidence_review_worklist_root)
+        if pit_universe_evidence_review_worklist_root is not None
+        else effective_root / "point_in_time_universe_evidence_review_worklist"
+    )
     effective_advisory_profile_calibration_root = (
         Path(advisory_profile_calibration_root)
         if advisory_profile_calibration_root is not None
@@ -937,6 +974,10 @@ def run_local_research_dashboard(
             effective_pit_universe_evidence_completion_helper_root = (
                 effective_root / "point_in_time_universe_evidence_completion_helper"
             )
+        if pit_universe_evidence_review_worklist_root is None:
+            effective_pit_universe_evidence_review_worklist_root = (
+                effective_root / "point_in_time_universe_evidence_review_worklist"
+            )
         if advisory_profile_calibration_root is None:
             effective_advisory_profile_calibration_root = effective_root / "advisory_profile_calibration"
         if calibration_to_signal_semantics_root is None:
@@ -970,6 +1011,7 @@ def run_local_research_dashboard(
         pit_universe_overlay_export_readiness_root=effective_pit_universe_overlay_export_readiness_root,
         pit_universe_export_staging_root=effective_pit_universe_export_staging_root,
         pit_universe_evidence_completion_helper_root=effective_pit_universe_evidence_completion_helper_root,
+        pit_universe_evidence_review_worklist_root=effective_pit_universe_evidence_review_worklist_root,
         advisory_profile_calibration_root=effective_advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=effective_calibration_to_signal_semantics_root,
         signal_semantics_root=effective_signal_semantics_root,
@@ -1019,6 +1061,7 @@ def run_local_research_dashboard(
         "pit_universe_overlay_export_readiness_root": effective_pit_universe_overlay_export_readiness_root,
         "pit_universe_export_staging_root": effective_pit_universe_export_staging_root,
         "pit_universe_evidence_completion_helper_root": effective_pit_universe_evidence_completion_helper_root,
+        "pit_universe_evidence_review_worklist_root": effective_pit_universe_evidence_review_worklist_root,
         "advisory_profile_calibration_root": effective_advisory_profile_calibration_root,
         "calibration_to_signal_semantics_root": effective_calibration_to_signal_semantics_root,
         "signal_semantics_root": effective_signal_semantics_root,
@@ -1297,6 +1340,43 @@ def run_local_research_dashboard(
         ),
         pit_universe_evidence_helper_next_action=str(
             summary.get("pit_universe_evidence_helper_next_action", "")
+        ),
+        pit_universe_evidence_worklist_status=str(
+            summary.get("pit_universe_evidence_worklist_status", "MISSING")
+        ),
+        latest_pit_universe_evidence_worklist_id=str(
+            summary.get("latest_pit_universe_evidence_worklist_id", "")
+        ),
+        pit_universe_evidence_worklist_stage=str(summary.get("pit_universe_evidence_worklist_stage", "")),
+        pit_universe_evidence_worklist_health_status=str(
+            summary.get("pit_universe_evidence_worklist_health_status", "")
+        ),
+        pit_universe_evidence_worklist_review_id=str(
+            summary.get("pit_universe_evidence_worklist_review_id", "")
+        ),
+        pit_universe_evidence_worklist_helper_id=str(
+            summary.get("pit_universe_evidence_worklist_helper_id", "")
+        ),
+        pit_universe_evidence_worklist_row_count=_int_or_zero(
+            summary.get("pit_universe_evidence_worklist_row_count")
+        ),
+        pit_universe_evidence_worklist_symbol_count=_int_or_zero(
+            summary.get("pit_universe_evidence_worklist_symbol_count")
+        ),
+        pit_universe_evidence_worklist_signal_date_count=_int_or_zero(
+            summary.get("pit_universe_evidence_worklist_signal_date_count")
+        ),
+        pit_universe_evidence_worklist_needs_evidence_count=_int_or_zero(
+            summary.get("pit_universe_evidence_worklist_needs_evidence_count")
+        ),
+        pit_universe_evidence_worklist_future_dated_hint_count=_int_or_zero(
+            summary.get("pit_universe_evidence_worklist_future_dated_hint_count")
+        ),
+        pit_universe_evidence_worklist_report_path=str(
+            summary.get("pit_universe_evidence_worklist_report_path", "")
+        ),
+        pit_universe_evidence_worklist_next_action=str(
+            summary.get("pit_universe_evidence_worklist_next_action", "")
         ),
         advisory_profile_calibration_status=str(
             summary.get("advisory_profile_calibration_status", "MISSING")
@@ -1641,6 +1721,7 @@ def scan_local_research_workflow_artifacts(
     pit_universe_overlay_export_readiness_root: str | Path,
     pit_universe_export_staging_root: str | Path,
     pit_universe_evidence_completion_helper_root: str | Path,
+    pit_universe_evidence_review_worklist_root: str | Path,
     advisory_profile_calibration_root: str | Path,
     calibration_to_signal_semantics_root: str | Path,
     signal_semantics_root: str | Path,
@@ -1668,6 +1749,7 @@ def scan_local_research_workflow_artifacts(
     pit_universe_overlay_export_readiness_path = Path(pit_universe_overlay_export_readiness_root)
     pit_universe_export_staging_path = Path(pit_universe_export_staging_root)
     pit_universe_evidence_completion_helper_path = Path(pit_universe_evidence_completion_helper_root)
+    pit_universe_evidence_review_worklist_path = Path(pit_universe_evidence_review_worklist_root)
     advisory_profile_calibration_path = Path(advisory_profile_calibration_root)
     calibration_to_signal_semantics_path = Path(calibration_to_signal_semantics_root)
     signal_semantics_path = Path(signal_semantics_root)
@@ -1699,6 +1781,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_pit_universe_overlay_export_readiness_status(pit_universe_overlay_export_readiness_path))
     records.extend(_scan_pit_universe_export_staging_status(pit_universe_export_staging_path))
     records.extend(_scan_pit_universe_evidence_completion_helper_status(pit_universe_evidence_completion_helper_path))
+    records.extend(_scan_pit_universe_evidence_review_worklist_status(pit_universe_evidence_review_worklist_path))
     records.extend(_scan_advisory_profile_calibration_status(advisory_profile_calibration_path))
     records.extend(_scan_calibration_to_signal_semantics_status(calibration_to_signal_semantics_path))
     records.extend(_scan_signal_semantics_status(signal_semantics_path))
@@ -2109,6 +2192,20 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         *paper_started_components,
     }
     post_pit_universe_evidence_helper_components = {
+        "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
+    post_pit_universe_evidence_worklist_components = {
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
         "ADVISORY_PROFILE_CALIBRATION_STATUS",
@@ -2295,6 +2392,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_pit_universe_evidence_helper_components
         ),
+        "post_pit_universe_evidence_worklist_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_pit_universe_evidence_worklist_components
+        ),
         "post_calibration_to_signal_semantics_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_calibration_to_signal_semantics_components
@@ -2459,6 +2560,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS":
         return _pit_universe_evidence_helper_warning_actionability(row, context)
+
+    if component == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS":
+        return _pit_universe_evidence_worklist_warning_actionability(row, context)
 
     if component == "ADVISORY_PROFILE_CALIBRATION_STATUS":
         return _advisory_profile_calibration_warning_actionability(row, context)
@@ -3228,6 +3332,56 @@ def _pit_universe_evidence_helper_warning_actionability(
     }
 
 
+def _pit_universe_evidence_worklist_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if context.get("post_pit_universe_evidence_worklist_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage in {
+        "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW",
+        "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_HEALTH_WARN",
+    }:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
 def _single_symbol_advisory_warning_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int]:
     warning_count = _int_or_zero(row.get("warning_count"))
     error_count = _int_or_zero(row.get("error_count"))
@@ -3812,6 +3966,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         ):
             return "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_FAILED"
         if (
+            not _has_post_pit_universe_evidence_worklist_workflow_component(dashboard_frame)
+            and statuses["PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS"] == "FAIL"
+        ):
+            return "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_FAILED"
+        if (
             not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
             and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] == "FAIL"
         ):
@@ -3905,6 +4064,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _pit_universe_evidence_helper_stage_from_frame(dashboard_frame)
     ):
         return _pit_universe_evidence_helper_stage_from_frame(dashboard_frame)
+    if (
+        not _has_post_pit_universe_evidence_worklist_workflow_component(dashboard_frame)
+        and statuses["PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS"] in {"PASS", "WARN", "READY"}
+        and _pit_universe_evidence_worklist_stage_from_frame(dashboard_frame)
+    ):
+        return _pit_universe_evidence_worklist_stage_from_frame(dashboard_frame)
     if (
         not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
         and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] in {"PASS", "WARN", "READY"}
@@ -4061,6 +4226,10 @@ def infer_local_research_next_action(
         "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_NEEDS_REVIEW": "Complete PIT universe evidence fields manually; helper hints are non-authoritative and do not approve rows.",
         "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_HEALTH_WARN": "Review PIT universe evidence completion helper health warnings before using completion templates.",
         "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_FAILED": "Repair PIT universe evidence completion helper artifacts before using completion templates.",
+        "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_READY": "Review completed PIT universe evidence worklist manually, then rerun the PIT universe overlay review workflow.",
+        "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW": "Complete PIT universe evidence fields manually; worklist hints are non-authoritative and do not approve rows.",
+        "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_HEALTH_WARN": "Review PIT universe evidence review worklist health warnings before using reviewer templates.",
+        "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_FAILED": "Repair PIT universe evidence review worklist artifacts before using reviewer templates.",
         "DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED": "Demo advisory profile calibration validated; do not treat DEMO_ONLY labels as strategy recommendations.",
         "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW": "Review calibration labels manually; REVIEW_BUY_CANDIDATE is not an order and auto-order remains disabled.",
         "ADVISORY_PROFILE_CALIBRATION_HEALTH_WARN": "Review advisory profile calibration health warnings before using threshold analysis.",
@@ -4143,6 +4312,7 @@ def summarize_local_research_status(
                     "PIT_UNIVERSE_EXPORT_READINESS_STATUS",
                     "PIT_UNIVERSE_EXPORT_STAGING_STATUS",
                     "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS",
+                    "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
                     "ADVISORY_PROFILE_CALIBRATION_STATUS",
                     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
                     "SIGNAL_SEMANTICS_STATUS",
@@ -4650,6 +4820,66 @@ def summarize_local_research_status(
         ),
         "pit_universe_evidence_helper_next_action": _parse_note_value(
             by_component.get("PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "pit_universe_evidence_worklist_status": _component_status(
+            by_component,
+            "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
+        ),
+        "latest_pit_universe_evidence_worklist_id": _string_or_empty(
+            by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("latest_artifact_id")
+        ),
+        "pit_universe_evidence_worklist_stage": _string_or_empty(
+            by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("stage")
+        ),
+        "pit_universe_evidence_worklist_health_status": _parse_note_value(
+            by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "pit_universe_evidence_worklist_review_id": _parse_note_value(
+            by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+            "review_id",
+        ),
+        "pit_universe_evidence_worklist_helper_id": _parse_note_value(
+            by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+            "helper_id",
+        ),
+        "pit_universe_evidence_worklist_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+                "row_count",
+            )
+        ),
+        "pit_universe_evidence_worklist_symbol_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+                "symbol_count",
+            )
+        ),
+        "pit_universe_evidence_worklist_signal_date_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+                "signal_date_count",
+            )
+        ),
+        "pit_universe_evidence_worklist_needs_evidence_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+                "needs_evidence_count",
+            )
+        ),
+        "pit_universe_evidence_worklist_future_dated_hint_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+                "future_dated_hint_count",
+            )
+        ),
+        "pit_universe_evidence_worklist_report_path": _parse_note_value(
+            by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "pit_universe_evidence_worklist_next_action": _parse_note_value(
+            by_component.get("PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "advisory_profile_calibration_status": _component_status(
@@ -5561,6 +5791,23 @@ def build_local_research_dashboard_metadata(
         ),
         "pit_universe_evidence_helper_report_path": result.pit_universe_evidence_helper_report_path,
         "pit_universe_evidence_helper_next_action": result.pit_universe_evidence_helper_next_action,
+        "latest_pit_universe_evidence_worklist_id": result.latest_pit_universe_evidence_worklist_id,
+        "pit_universe_evidence_worklist_status": result.pit_universe_evidence_worklist_status,
+        "pit_universe_evidence_worklist_stage": result.pit_universe_evidence_worklist_stage,
+        "pit_universe_evidence_worklist_health_status": result.pit_universe_evidence_worklist_health_status,
+        "pit_universe_evidence_worklist_review_id": result.pit_universe_evidence_worklist_review_id,
+        "pit_universe_evidence_worklist_helper_id": result.pit_universe_evidence_worklist_helper_id,
+        "pit_universe_evidence_worklist_row_count": result.pit_universe_evidence_worklist_row_count,
+        "pit_universe_evidence_worklist_symbol_count": result.pit_universe_evidence_worklist_symbol_count,
+        "pit_universe_evidence_worklist_signal_date_count": result.pit_universe_evidence_worklist_signal_date_count,
+        "pit_universe_evidence_worklist_needs_evidence_count": (
+            result.pit_universe_evidence_worklist_needs_evidence_count
+        ),
+        "pit_universe_evidence_worklist_future_dated_hint_count": (
+            result.pit_universe_evidence_worklist_future_dated_hint_count
+        ),
+        "pit_universe_evidence_worklist_report_path": result.pit_universe_evidence_worklist_report_path,
+        "pit_universe_evidence_worklist_next_action": result.pit_universe_evidence_worklist_next_action,
         "latest_advisory_profile_calibration_run_id": result.latest_advisory_profile_calibration_run_id,
         "advisory_profile_calibration_status": result.advisory_profile_calibration_status,
         "advisory_profile_calibration_stage": result.advisory_profile_calibration_stage,
@@ -7081,6 +7328,129 @@ def _pit_universe_evidence_completion_helper_notes(metadata: dict[str, Any], sum
         f"row_count={_string_or_empty(summary.get('row_count'))}; "
         f"needs_evidence_count={_string_or_empty(summary.get('needs_evidence_count'))}; "
         f"rows_with_base_hints_count={_string_or_empty(summary.get('rows_with_base_hints_count'))}; "
+        f"future_dated_hint_count={_string_or_empty(summary.get('future_dated_hint_count'))}; "
+        f"authoritative_hint_count={_string_or_empty(summary.get('authoritative_hint_count'))}; "
+        f"report_path={_string_or_empty(summary.get('report_path'))}"
+    )
+
+
+def _scan_pit_universe_evidence_review_worklist_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_pit_universe_evidence_review_worklist_status_record(root)
+    if computed is not None:
+        return [computed]
+
+    scan_root = root if root.name == "status" else root / "status"
+    records = []
+    for metadata_path in _metadata_paths(scan_root, "metadata.json"):
+        metadata = _load_json_or_none(metadata_path)
+        if metadata is None or not metadata.get("status_id"):
+            continue
+        output_files = _output_files(metadata)
+        summary = _first_csv_record(output_files.get("pit_universe_evidence_review_worklist_status_summary"))
+        status_rows = _csv_records(output_files.get("pit_universe_evidence_review_worklist_status_csv"))
+        health_row = next(
+            (
+                row
+                for row in status_rows
+                if _string_or_empty(row.get("component")) == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_HEALTH"
+            ),
+            {},
+        )
+        status_text = _string_or_empty(metadata.get("status")) or _string_or_empty(summary.get("status")) or "READY"
+        stage = _string_or_empty(metadata.get("workflow_stage")) or _string_or_empty(summary.get("workflow_stage"))
+        latest_worklist_id = _string_or_empty(metadata.get("latest_worklist_id")) or _string_or_empty(
+            summary.get("latest_worklist_id")
+        )
+        warning_count = (
+            _int_or_zero(summary.get("warning_count"))
+            + _int_or_zero(health_row.get("warning_count"))
+            + (len(metadata.get("warnings", [])) if isinstance(metadata.get("warnings"), list) else 0)
+        )
+        if status_text == "WARN" and warning_count == 0:
+            warning_count = 1
+        records.append(
+            _record(
+                workflow_area="PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
+                component="PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
+                status=status_text,
+                stage=stage or "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW",
+                latest_artifact_id=latest_worklist_id
+                or _string_or_empty(metadata.get("status_id"))
+                or metadata_path.parent.name,
+                report_path=output_files.get(
+                    "pit_universe_evidence_review_worklist_status_report",
+                    metadata_path.parent / "pit_universe_evidence_review_worklist_status_report.md",
+                ),
+                metadata_path=metadata_path,
+                issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+                warning_count=warning_count,
+                error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+                notes=_pit_universe_evidence_review_worklist_notes(metadata, summary),
+                created_at=metadata.get("created_at"),
+            )
+        )
+    return records
+
+
+def _computed_pit_universe_evidence_review_worklist_status_record(root: Path) -> dict[str, Any] | None:
+    worklist_root = root.parent if root.name == "status" else root
+    if not worklist_root.exists():
+        return None
+    try:
+        result = run_pit_universe_evidence_review_worklist_status(
+            root=worklist_root,
+            output_dir=worklist_root / "status",
+        )
+    except Exception:
+        return None
+    if not result.latest_worklist_id:
+        return None
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    health_row = {}
+    if not result.status_frame.empty:
+        health_rows = result.status_frame.loc[
+            result.status_frame["component"] == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_HEALTH"
+        ]
+        if not health_rows.empty:
+            health_row = health_rows.iloc[0].to_dict()
+    warning_count = (
+        _int_or_zero(summary.get("warning_count"))
+        + _int_or_zero(health_row.get("warning_count"))
+        + len(result.warnings)
+    )
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
+        component="PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_worklist_id,
+        report_path=result.artifact_paths.get(
+            "pit_universe_evidence_review_worklist_status_report",
+            "",
+        ),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+        warning_count=warning_count,
+        error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+        notes=_pit_universe_evidence_review_worklist_notes(
+            {"next_manual_action": result.next_manual_action},
+            summary,
+        ),
+    )
+
+
+def _pit_universe_evidence_review_worklist_notes(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(metadata.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"review_id={_string_or_empty(summary.get('review_id'))}; "
+        f"helper_id={_string_or_empty(summary.get('helper_id'))}; "
+        f"row_count={_string_or_empty(summary.get('row_count'))}; "
+        f"symbol_count={_string_or_empty(summary.get('symbol_count'))}; "
+        f"signal_date_count={_string_or_empty(summary.get('signal_date_count'))}; "
+        f"needs_evidence_count={_string_or_empty(summary.get('needs_evidence_count'))}; "
         f"future_dated_hint_count={_string_or_empty(summary.get('future_dated_hint_count'))}; "
         f"authoritative_hint_count={_string_or_empty(summary.get('authoritative_hint_count'))}; "
         f"report_path={_string_or_empty(summary.get('report_path'))}"
@@ -8783,6 +9153,14 @@ def _pit_universe_evidence_helper_stage_from_frame(dashboard_frame: pd.DataFrame
     return _string_or_empty(rows.iloc[0].get("stage"))
 
 
+def _pit_universe_evidence_worklist_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
 def _signal_advisory_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "SIGNAL_ADVISORY_STATUS"]
@@ -9134,6 +9512,34 @@ def _has_post_pit_universe_export_staging_workflow_component(dashboard_frame: pd
 
 
 def _has_post_pit_universe_evidence_helper_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_pit_universe_evidence_worklist_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "CURRENT_CANDIDATES",

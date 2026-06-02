@@ -1,7 +1,7 @@
 # Roadmap and Next Decision Points
 
 > Status: working memory document  
-> Last generated: 2026-05-29  
+> Last generated: 2026-06-02  
 > Permanence: temporary; update after each major checkpoint.
 
 ## Current Position
@@ -19,6 +19,9 @@ The project has progressed from local mock data and replay scaffolding into a br
 - multi-date backfill planning,
 - PIT universe overlay preparation,
 - reviewed PIT universe overlay approval workflow,
+- PIT universe export-readiness,
+- PIT universe evidence completion helper,
+- guarded PIT universe export staging,
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not yet ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -36,102 +39,130 @@ Completed or largely complete:
 - Current-candidates execution manifest.
 - PIT universe overlay plan/template.
 - PIT universe overlay review/approval workflow.
-- Index / health / status for PIT universe overlay review artifacts.
-- Research-status integration for most status layers, including PIT universe overlay review.
+- PIT universe export-readiness.
+- PIT universe evidence completion helper.
+- PIT universe required metadata support.
+- Guarded PIT universe export staging.
+- Index / health / status for export staging artifacts.
+- Research-status integration for most status layers, including export staging.
 
 Current active preparation state:
 
 ```text
-PIT_UNIVERSE_OVERLAY_REVIEW_NEEDS_MORE_EVIDENCE
+PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS
 ```
 
-Latest known PIT overlay review:
+Latest known PIT universe state:
 
 ```text
 review_id: 7bc8ba08bf5a
-rows: 72
+export_readiness_id: 75c6975e93e4
+helper_id: 4cf008a09f04
+staging_id: 41bfd31a9e2c
 approved rows: 0
-valid_for_signal_date rows: 0
-needs manual review rows: 72
-unresolved survivorship warnings: 72
+export-ready rows: 0
+staged rows: 0
+blocked rows: 72
 ```
+
+A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true` in a readiness artifact, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Reviewed PIT Universe Overlay Export Readiness
+### Branch: PIT Universe Evidence Review Worklist / Real Evidence Completion Plan
 
 Suggested sequence:
 
-1. Reviewed PIT Universe Overlay Export Readiness Read-only Audit.
-2. Export readiness planning/status command if audit supports it.
-3. Index / health / status for export readiness artifacts.
-4. Research-status integration.
-5. Checkpoint.
-6. Only after approved rows exist, consider a guarded export workflow.
-7. Only after exported PIT universe inputs exist, consider per-date snapshot preparation.
-8. Only after per-date snapshots pass quality gates, consider current-candidates backfill runner.
+1. Read-only audit for real evidence completion workflow.
+2. Define reviewer worklist schema and evidence source policy.
+3. Build a local worklist/template that helps fill real evidence fields.
+4. Keep base-universe hints as `suggested_*` and non-authoritative.
+5. Do not auto-approve rows.
+6. Do not export universe files.
+7. After real evidence rows are filled, rerun review → export-readiness → staging.
+8. Only after real export-ready rows exist, consider accepted export design.
 
-Do not skip directly to multi-date candidate generation.
+Do not skip directly to accepted universe export or multi-date candidate generation.
 
-## What Export Readiness Must Solve
+## What Real Evidence Completion Must Solve
 
-The export readiness workflow should answer:
+It should help answer:
 
-- Are there any `APPROVED_FOR_PIT_UNIVERSE` rows?
-- Are approved rows `valid_for_signal_date=true`?
-- Are evidence fields complete?
-- Are survivorship-bias warnings resolved for approved rows?
-- Are required current-candidates universe columns present?
-- Should export be blocked, partially ready, or ready?
-- Should output be per-signal-date, combined, or both?
-- Should any write to `data/raw` require an explicit accept flag?
+- Which symbol/date/universe rows can be supported by evidence available at or before the signal date?
+- What listed-date / delisted-date evidence exists?
+- What active/ST/suspension evidence exists?
+- What evidence source and path/reference supports the review?
+- Who reviewed it and when?
+- Is survivorship-bias risk resolved?
+- Are required current-candidates universe metadata fields supplied by the reviewer rather than inferred from future-dated hints?
 
-Current expected result:
+Relevant fields include:
 
-```text
-export readiness should be BLOCKED because approved_count=0
-```
-
-## After Export Readiness
-
-Next likely branches:
-
-### 1. PIT Universe Evidence Completion Helper
-
-If there are no approved rows, the project may need helper workflows for reviewer-supplied evidence, not export.
-
-Potential fields:
-
-- `listed_date_evidence`
-- `delisted_date_evidence`
-- `is_active_evidence`
-- `evidence_source`
-- `evidence_path`
-- `evidence_reference`
 - `reviewer`
 - `reviewed_at`
 - `review_reason`
+- `evidence_source`
+- `evidence_path`
+- `evidence_reference`
+- `listed_date_evidence`
+- `delisted_date_evidence`
+- `is_active_evidence`
 - `survivorship_bias_resolved`
+- `as_of_date`
+- `available_time`
+- `name`
+- `instrument_type`
+- `exchange`
+- `industry`
+- `min_lot`
+- `t_plus_rule`
+- `revision_id`
+- `source`
 
-### 2. Guarded PIT Universe Export
+## After Real Evidence Completion
 
-Only after approved rows exist.
+Next likely branches:
+
+### 1. Rerun Review / Export-Readiness / Staging
+
+Use real reviewer-supplied evidence updates to rerun:
+
+```text
+pit-universe-overlay-review
+→ pit-universe-overlay-export-readiness
+→ pit-universe-export-staging
+```
+
+Expected safe outcomes:
+
+- no rows approved if evidence remains incomplete;
+- export readiness blocked until all gates pass;
+- staging blocked until export-ready rows exist;
+- no `data/raw` / `data/processed` write.
+
+### 2. Accepted PIT Universe Export Workflow
+
+Only after real export-ready rows exist.
 
 Scope should remain:
 
-- no current-candidates generation,
-- no snapshot build,
-- no forward returns,
-- no messages,
-- no broker,
+- explicit accept flag required;
+- dry-run first;
+- no current-candidates generation;
+- no snapshot build;
+- no forward labels;
+- no messages;
+- no broker;
 - no cache mutation.
 
 ### 3. Per-Date Snapshot Manifest Preparation
 
+Only after accepted PIT universe inputs exist.
+
 Need to prepare or verify, per signal date:
 
 - market dataset,
-- reviewed PIT universe dataset,
+- reviewed/exported PIT universe dataset,
 - trading calendar,
 - snapshot manifest,
 - snapshot-quality status.
@@ -285,7 +316,9 @@ Do not yet:
 
 - use paid APIs as required dependencies,
 - parse all news with LLM,
-- export PIT universe input without approved rows,
+- treat suggested base-universe hints as authoritative PIT evidence,
+- export PIT universe input without real approved/export-ready rows,
+- write `data/raw` or `data/processed` from PIT staging,
 - run current-candidates backfill without reviewed/exported PIT universe rows,
 - compute forward returns without multi-date candidates,
 - change `signal_semantics` defaults based on synthetic fixtures,

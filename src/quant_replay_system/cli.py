@@ -94,6 +94,18 @@ from quant_replay_system.point_in_time_universe_evidence_completion_helper_index
 from quant_replay_system.point_in_time_universe_evidence_completion_helper_status import (
     run_pit_universe_evidence_completion_helper_status,
 )
+from quant_replay_system.point_in_time_universe_evidence_review_worklist import (
+    build_pit_universe_evidence_review_worklist,
+)
+from quant_replay_system.point_in_time_universe_evidence_review_worklist_health import (
+    check_pit_universe_evidence_review_worklist_health,
+)
+from quant_replay_system.point_in_time_universe_evidence_review_worklist_index import (
+    build_pit_universe_evidence_review_worklist_index,
+)
+from quant_replay_system.point_in_time_universe_evidence_review_worklist_status import (
+    run_pit_universe_evidence_review_worklist_status,
+)
 from quant_replay_system.point_in_time_universe_overlay_review_health import (
     check_pit_universe_overlay_review_health,
 )
@@ -703,6 +715,87 @@ def build_parser() -> argparse.ArgumentParser:
         help="PIT universe evidence completion helper output directory",
     )
     pit_universe_evidence_completion_helper.set_defaults(handler=_handle_pit_universe_evidence_completion_helper)
+
+    pit_universe_evidence_review_worklist = subparsers.add_parser(
+        "pit-universe-evidence-review-worklist",
+        help="Build report-only PIT universe evidence review worklists from helper and review artifacts",
+    )
+    pit_universe_evidence_review_worklist.add_argument(
+        "--helper",
+        required=True,
+        help="PIT universe evidence completion helper template CSV",
+    )
+    pit_universe_evidence_review_worklist.add_argument(
+        "--review",
+        required=True,
+        help="Reviewed PIT universe overlay CSV",
+    )
+    pit_universe_evidence_review_worklist.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_evidence_review_worklist",
+        help="PIT universe evidence review worklist output directory",
+    )
+    pit_universe_evidence_review_worklist.set_defaults(handler=_handle_pit_universe_evidence_review_worklist)
+
+    pit_universe_evidence_review_worklist_index = subparsers.add_parser(
+        "pit-universe-evidence-review-worklist-index",
+        help="Build a local index of PIT universe evidence review worklist artifacts",
+    )
+    pit_universe_evidence_review_worklist_index.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_evidence_review_worklist",
+        help="PIT universe evidence review worklist artifact root",
+    )
+    pit_universe_evidence_review_worklist_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_evidence_review_worklist/index",
+        help="Index output directory",
+    )
+    pit_universe_evidence_review_worklist_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include folders missing metadata.json",
+    )
+    pit_universe_evidence_review_worklist_index.set_defaults(
+        handler=_handle_pit_universe_evidence_review_worklist_index
+    )
+
+    pit_universe_evidence_review_worklist_health = subparsers.add_parser(
+        "pit-universe-evidence-review-worklist-health",
+        help="Check local PIT universe evidence review worklist artifact health",
+    )
+    pit_universe_evidence_review_worklist_health.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_evidence_review_worklist",
+        help="PIT universe evidence review worklist artifact root",
+    )
+    pit_universe_evidence_review_worklist_health.add_argument("--index", help="Optional worklist index CSV path")
+    pit_universe_evidence_review_worklist_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_evidence_review_worklist/health",
+        help="Health output directory",
+    )
+    pit_universe_evidence_review_worklist_health.set_defaults(
+        handler=_handle_pit_universe_evidence_review_worklist_health
+    )
+
+    pit_universe_evidence_review_worklist_status = subparsers.add_parser(
+        "pit-universe-evidence-review-worklist-status",
+        help="Summarize latest local PIT universe evidence review worklist status",
+    )
+    pit_universe_evidence_review_worklist_status.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_evidence_review_worklist",
+        help="PIT universe evidence review worklist artifact root",
+    )
+    pit_universe_evidence_review_worklist_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_evidence_review_worklist/status",
+        help="Status output directory",
+    )
+    pit_universe_evidence_review_worklist_status.set_defaults(
+        handler=_handle_pit_universe_evidence_review_worklist_status
+    )
 
     pit_universe_evidence_completion_helper_index = subparsers.add_parser(
         "pit-universe-evidence-completion-helper-index",
@@ -2667,6 +2760,119 @@ def _handle_pit_universe_evidence_completion_helper(args: argparse.Namespace) ->
     return 0
 
 
+def _handle_pit_universe_evidence_review_worklist(args: argparse.Namespace) -> int:
+    result = build_pit_universe_evidence_review_worklist(
+        helper=args.helper,
+        review=args.review,
+        output_dir=args.output_dir,
+    )
+    print(f"worklist_id: {result.worklist_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"symbol_count: {result.symbol_count}")
+    print(f"signal_date_count: {result.signal_date_count}")
+    print(f"needs_manual_review_count: {result.needs_manual_review_count}")
+    print(f"needs_evidence_count: {result.needs_evidence_count}")
+    print(f"future_dated_hint_count: {result.future_dated_hint_count}")
+    print(f"authoritative_hint_count: {result.authoritative_hint_count}")
+    print(f"approved_count: {result.approved_count}")
+    print(f"valid_for_signal_date_count: {result.valid_for_signal_date_count}")
+    print(f"worklist_csv_path: {result.artifact_paths['worklist_csv']}")
+    print(f"symbol_summary_path: {result.artifact_paths['symbol_summary']}")
+    print(f"date_summary_path: {result.artifact_paths['date_summary']}")
+    print(f"update_template_path: {result.artifact_paths['update_template']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No universe export, data/raw write, data/processed write, current-candidates generation, "
+        "snapshot build, forward labels, live trading, broker API, order placement, message delivery, "
+        "network/API, LLM/API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_universe_evidence_review_worklist_index(args: argparse.Namespace) -> int:
+    result = build_pit_universe_evidence_review_worklist_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Index CSV path: "
+        f"{result.artifact_paths['pit_universe_evidence_review_worklist_index_csv']}"
+    )
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, universe export, data/raw write, data/processed write, current-candidates generation, "
+        "snapshot build, forward labels, live trading, broker API, order placement, message delivery, "
+        "LLM/API, external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_universe_evidence_review_worklist_health(args: argparse.Namespace) -> int:
+    result = check_pit_universe_evidence_review_worklist_health(
+        index_path=args.index,
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Health report path: "
+        f"{result.artifact_paths['pit_universe_evidence_review_worklist_health_report']}"
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, universe export, data/raw write, data/processed write, current-candidates generation, "
+        "snapshot build, forward labels, live trading, broker API, order placement, message delivery, "
+        "LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_pit_universe_evidence_review_worklist_status(args: argparse.Namespace) -> int:
+    result = run_pit_universe_evidence_review_worklist_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Status report path: "
+        f"{result.artifact_paths['pit_universe_evidence_review_worklist_status_report']}"
+    )
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_worklist_id: {result.latest_worklist_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"review_id: {result.review_id}")
+    print(f"helper_id: {result.helper_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"symbol_count: {result.symbol_count}")
+    print(f"signal_date_count: {result.signal_date_count}")
+    print(f"needs_evidence_count: {result.needs_evidence_count}")
+    print(f"future_dated_hint_count: {result.future_dated_hint_count}")
+    print(f"authoritative_hint_count: {result.authoritative_hint_count}")
+    print(f"report_path: {summary.get('report_path', '')}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, universe export, data/raw write, data/processed write, current-candidates generation, "
+        "snapshot build, forward labels, live trading, broker API, order placement, message delivery, "
+        "LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
 def _handle_pit_universe_evidence_completion_helper_index(args: argparse.Namespace) -> int:
     result = build_pit_universe_evidence_completion_helper_index(
         root=args.root,
@@ -4559,6 +4765,31 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"pit_universe_evidence_helper_report_path: {result.pit_universe_evidence_helper_report_path}")
     print(f"pit_universe_evidence_helper_next_action: {result.pit_universe_evidence_helper_next_action}")
+    print(f"latest_pit_universe_evidence_worklist_id: {result.latest_pit_universe_evidence_worklist_id}")
+    print(f"pit_universe_evidence_worklist_status: {result.pit_universe_evidence_worklist_status}")
+    print(f"pit_universe_evidence_worklist_stage: {result.pit_universe_evidence_worklist_stage}")
+    print(
+        "pit_universe_evidence_worklist_health_status: "
+        f"{result.pit_universe_evidence_worklist_health_status}"
+    )
+    print(f"pit_universe_evidence_worklist_review_id: {result.pit_universe_evidence_worklist_review_id}")
+    print(f"pit_universe_evidence_worklist_helper_id: {result.pit_universe_evidence_worklist_helper_id}")
+    print(f"pit_universe_evidence_worklist_row_count: {result.pit_universe_evidence_worklist_row_count}")
+    print(f"pit_universe_evidence_worklist_symbol_count: {result.pit_universe_evidence_worklist_symbol_count}")
+    print(
+        "pit_universe_evidence_worklist_signal_date_count: "
+        f"{result.pit_universe_evidence_worklist_signal_date_count}"
+    )
+    print(
+        "pit_universe_evidence_worklist_needs_evidence_count: "
+        f"{result.pit_universe_evidence_worklist_needs_evidence_count}"
+    )
+    print(
+        "pit_universe_evidence_worklist_future_dated_hint_count: "
+        f"{result.pit_universe_evidence_worklist_future_dated_hint_count}"
+    )
+    print(f"pit_universe_evidence_worklist_report_path: {result.pit_universe_evidence_worklist_report_path}")
+    print(f"pit_universe_evidence_worklist_next_action: {result.pit_universe_evidence_worklist_next_action}")
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
     print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")

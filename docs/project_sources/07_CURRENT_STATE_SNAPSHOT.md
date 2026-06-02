@@ -1,7 +1,7 @@
 # Current State Snapshot
 
 > Status: working memory document  
-> Last generated: 2026-05-29  
+> Last generated: 2026-06-02  
 > Permanence: temporary; refresh after the next major checkpoint or when source state changes.
 
 ## Summary
@@ -48,6 +48,13 @@ It has not become a live trading system.
 - PIT universe overlay review:
   - review workflow,
   - review index/health/status,
+  - research-status integration.
+- PIT universe export preparation:
+  - export-readiness,
+  - evidence completion helper,
+  - required metadata support,
+  - guarded export staging,
+  - export staging index/health/status,
   - research-status integration.
 
 ### Signal Semantics
@@ -114,7 +121,7 @@ Known gaps:
 - no multi-date outcome dataset,
 - no benchmark-relative outcomes,
 - no transaction cost/slippage model,
-- no survivorship-bias resolution for usable universe exports yet,
+- no accepted PIT universe export yet,
 - no corporate action adjustment policy validation,
 - no linked paper outcome history for signals.
 
@@ -144,7 +151,7 @@ PIT universe overlay preparation:
 
 PIT universe overlay review:
 
-- latest review id: `7bc8ba08bf5a`.
+- latest active review id: `7bc8ba08bf5a`.
 - 72 rows.
 - approved rows: 0.
 - valid-for-signal-date rows: 0.
@@ -152,11 +159,43 @@ PIT universe overlay review:
 - unresolved survivorship warnings: 72.
 - stage: `PIT_UNIVERSE_OVERLAY_REVIEW_NEEDS_MORE_EVIDENCE`.
 
+PIT universe export readiness:
+
+- latest active export readiness id: `75c6975e93e4`.
+- approved rows: 0.
+- export-ready rows: 0.
+- blocked rows: 72.
+- stage: `PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS`.
+
+PIT universe evidence completion helper:
+
+- latest helper id: `4cf008a09f04`.
+- 72 rows need evidence.
+- 72 rows have base-universe hints.
+- 72 future-dated hints.
+- authoritative hints: 0.
+- approved rows: 0.
+- valid-for-signal-date rows: 0.
+
+PIT universe export staging:
+
+- latest active staging id: `41bfd31a9e2c`.
+- linked export readiness id: `75c6975e93e4`.
+- export-ready input count: 0.
+- staged row count: 0.
+- blocked count: 72.
+- stage: `PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS`.
+
+Diagnostic result:
+
+- Synthetic required-metadata diagnostics proved that a complete reviewed row with all required universe metadata can become `export_ready=true` in isolated diagnostics.
+- Diagnostic artifacts remain under `manual_diagnostics` and are not active workflow artifacts.
+
 Meaning:
 
-The project has moved from “PIT universe template needs review” to “review workflow exists, but there are no approved rows yet.”
+The project has moved from “can we design PIT universe review/export-readiness?” to “the guarded staging path exists, but the real active workflow has no approved/export-ready rows.”
 
-The next blocker is export readiness: there are no approved PIT universe rows to export into usable universe input.
+The next blocker is real evidence completion. Without real approved PIT universe rows, there is nothing to export or stage.
 
 ## Current External Data Strategy
 
@@ -176,19 +215,21 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Reviewed PIT Universe Overlay Export Readiness Read-only Audit v0.1
+PIT Universe Evidence Review Worklist / Real Evidence Completion Plan
 ```
 
 Purpose:
 
-- inspect if approved PIT universe review rows can be exported;
-- confirm current export blockers;
-- define export readiness statuses;
-- avoid writing usable universe files until explicit approval and export gating exist.
+- help the user complete real PIT evidence fields;
+- keep future-dated base universe hints non-authoritative;
+- preserve survivorship warnings until resolved;
+- prepare real review updates for rerunning review/export-readiness/staging;
+- avoid writing usable universe files until accepted export is explicitly designed.
 
 Do not yet:
 
-- export usable universe files,
+- write usable universe files,
+- write `data/raw` or `data/processed`,
 - generate multi-date candidates,
 - build per-date snapshot manifests,
 - compute forward returns,
@@ -212,17 +253,21 @@ Recent milestone direction, not necessarily exhaustive:
 - v0.99.0: execution manifest research-status integration.
 - v1.0.0: research-infrastructure milestone with PIT universe overlay planning and status visibility.
 - v1.1.0: reviewed PIT universe overlay approval workflow and research-status visibility.
+- v1.2.0: PIT universe export-readiness.
+- v1.3.0: PIT universe evidence completion helper.
+- v1.4.0: PIT universe required metadata support.
+- v1.5.0: guarded PIT universe export staging.
 
 ## What to Ask ChatGPT Next
 
 For next development:
 
 ```text
-Give me Codex tasks for Reviewed PIT Universe Overlay Export Readiness Read-only Audit v0.1.
+Give me Codex tasks for PIT Universe Evidence Review Worklist / Real Evidence Completion Plan.
 ```
 
 Expected split:
 
 1. read-only audit,
-2. export readiness planning implementation,
+2. worklist/template implementation,
 3. index/health/status and research-status/checkpoint if implementation proceeds.

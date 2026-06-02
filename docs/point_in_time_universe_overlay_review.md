@@ -200,6 +200,14 @@ The helper writes a gap report and completion template only. Optional base-unive
 
 Use `pit-universe-evidence-completion-helper-index`, `pit-universe-evidence-completion-helper-health`, and `pit-universe-evidence-completion-helper-status` to discover, safety-check, and summarize helper artifacts. Unified `research-status` includes the latest helper status as evidence-preparation context, including needs-evidence counts, non-authoritative base-hint counts, future-dated hint counts, and authoritative hint counts. Helper status does not approve rows and does not imply universe export, snapshot build, current-candidates generation, or forward-label computation.
 
+When the helper output is too row-heavy for manual review, use `pit-universe-evidence-review-worklist` to create row-level, symbol-level, and date-level worklists plus a blank reviewer update template:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-evidence-review-worklist --helper outputs\reports\point_in_time_universe_evidence_completion_helper\4cf008a09f04\pit_universe_evidence_completion_template.csv --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv
+```
+
+The worklist does not approve rows, does not set `include_flag=true`, does not set `valid_for_signal_date=true`, and does not export usable universe files. See [point_in_time_universe_evidence_review_worklist.md](point_in_time_universe_evidence_review_worklist.md).
+
 ## Safety Boundaries
 
 The workflow always records:

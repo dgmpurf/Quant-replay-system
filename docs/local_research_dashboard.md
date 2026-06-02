@@ -173,6 +173,16 @@ When the status reports `PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_NEEDS_REVIEW`, 
 
 PIT universe evidence completion helper artifacts are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to helper status; helper fields remain visible for audit. If helper health fails because an artifact claims row approval, `valid_for_signal_date=true`, authoritative hints, data writes, universe export, current-candidates generation, snapshot build, forward labels, unsafe trading flags, API calls, broker access, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
 
+## PIT Universe Evidence Review Worklist Status
+
+`research-status` includes `pit-universe-evidence-review-worklist-status` as PIT universe evidence-review preparation context when those artifacts exist.
+
+The unified summary records the latest worklist id, worklist status/stage, health status, linked review id, linked helper id, row count, symbol count, signal date count, needs-evidence count, future-dated hint count, report path, and the worklist layer's next manual action. This is worklist-only context: it does not approve rows, set `valid_for_signal_date=true`, export usable universe files, write `data/raw`, write `data/processed`, run `current-candidates`, build snapshot manifests, run `data-pipeline`, compute forward labels, mutate cache, fetch data, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW`, the dashboard treats the warning as expected reviewable PIT universe evidence work. Worklist `suggested_*` columns are non-authoritative hints only; future-dated hints remain visible as survivorship-bias context. The update template does not auto-fill `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, or `valid_for_signal_date=true`.
+
+PIT universe evidence review worklists are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to worklist status; worklist fields remain visible for audit. If worklist health fails because artifacts approve rows, set valid-for-signal-date flags, claim data writes, current-candidates generation, snapshot build, forward labels, unsafe trading flags, or API calls, `research-status` surfaces the failure as actionable when this layer is active.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

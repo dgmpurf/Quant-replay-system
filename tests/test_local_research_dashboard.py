@@ -1005,6 +1005,129 @@ def test_cli_research_status_prints_pit_universe_evidence_helper_fields(
     assert "pit_universe_evidence_helper_authoritative_hint_count: 0" in output.out
 
 
+def test_dashboard_includes_pit_universe_evidence_worklist_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_review_worklist_status(root, worklist_id="worklist-needs-review")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    worklist_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_evidence_worklist_id == "worklist-needs-review"
+    assert result.pit_universe_evidence_worklist_status == "WARN"
+    assert result.pit_universe_evidence_worklist_stage == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW"
+    assert result.pit_universe_evidence_worklist_health_status == "PASS"
+    assert result.pit_universe_evidence_worklist_review_id == "review-a"
+    assert result.pit_universe_evidence_worklist_helper_id == "helper-a"
+    assert result.pit_universe_evidence_worklist_row_count == 72
+    assert result.pit_universe_evidence_worklist_symbol_count == 9
+    assert result.pit_universe_evidence_worklist_signal_date_count == 8
+    assert result.pit_universe_evidence_worklist_needs_evidence_count == 72
+    assert result.pit_universe_evidence_worklist_future_dated_hint_count == 72
+    assert result.workflow_stage == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW"
+    assert worklist_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "Complete PIT universe evidence" in result.next_manual_action
+
+
+def test_dashboard_failed_pit_universe_evidence_worklist_health_is_actionable_when_active(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_review_worklist_status(
+        root,
+        worklist_id="worklist-fail",
+        status="FAIL",
+        workflow_stage="PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_FAILED",
+        health_status="FAIL",
+        warning_count=0,
+        error_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    worklist_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS"
+    ].iloc[0]
+
+    assert result.status == "FAIL"
+    assert result.workflow_stage == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_FAILED"
+    assert worklist_row["warning_classification"] == "BLOCKING_ERROR"
+    assert result.summary_frame.iloc[0]["blocking_error_count"] == 1
+    assert "Repair PIT universe evidence review worklist artifacts" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_universe_evidence_worklist(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_review_worklist_status(root, worklist_id="worklist-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    worklist_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_evidence_worklist_id == "worklist-paper-context"
+    assert result.pit_universe_evidence_worklist_needs_evidence_count == 72
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert worklist_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_pit_universe_evidence_worklist_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_review_worklist_status(root, worklist_id="worklist-summary")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_pit_universe_evidence_worklist_id"] == "worklist-summary"
+    assert row["pit_universe_evidence_worklist_status"] == "WARN"
+    assert row["pit_universe_evidence_worklist_stage"] == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW"
+    assert row["pit_universe_evidence_worklist_health_status"] == "PASS"
+    assert row["pit_universe_evidence_worklist_row_count"] == "72"
+    assert row["pit_universe_evidence_worklist_needs_evidence_count"] == "72"
+    assert row["pit_universe_evidence_worklist_future_dated_hint_count"] == "72"
+    assert metadata["latest_pit_universe_evidence_worklist_id"] == "worklist-summary"
+    assert metadata["pit_universe_evidence_worklist_needs_evidence_count"] == 72
+    assert metadata["pit_universe_evidence_worklist_future_dated_hint_count"] == 72
+    assert metadata["component_statuses"]["latest_pit_universe_evidence_worklist_id"] == "worklist-summary"
+
+
+def test_cli_research_status_prints_pit_universe_evidence_worklist_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_review_worklist_status(root, worklist_id="worklist-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_universe_evidence_worklist_id: worklist-cli" in output.out
+    assert "pit_universe_evidence_worklist_status: WARN" in output.out
+    assert "pit_universe_evidence_worklist_stage: PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW" in output.out
+    assert "pit_universe_evidence_worklist_needs_evidence_count: 72" in output.out
+    assert "pit_universe_evidence_worklist_future_dated_hint_count: 72" in output.out
+
+
 def test_dashboard_detects_current_to_paper_handoff_artifacts(tmp_path: Path) -> None:
     root = _workflow_to_paper_handoff(_reports_root(tmp_path))
 
@@ -5095,6 +5218,157 @@ def _pit_universe_evidence_completion_helper_status(
             "network_api_called": False,
             "llm_api_called": False,
             "pit_universe_evidence_completion_helper_artifacts_only": True,
+        },
+    )
+    return folder
+
+
+def _pit_universe_evidence_review_worklist_status(
+    root: Path,
+    *,
+    worklist_id: str = "worklist-a",
+    review_id: str = "review-a",
+    helper_id: str = "helper-a",
+    status: str = "WARN",
+    workflow_stage: str = "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW",
+    health_status: str = "PASS",
+    row_count: int = 72,
+    symbol_count: int = 9,
+    signal_date_count: int = 8,
+    needs_evidence_count: int = 72,
+    future_dated_hint_count: int = 72,
+    authoritative_hint_count: int = 0,
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:55:00",
+) -> Path:
+    folder = root / "point_in_time_universe_evidence_review_worklist" / "status" / f"status-{worklist_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "pit_universe_evidence_review_worklist_status_report.md"
+    status_csv = folder / "pit_universe_evidence_review_worklist_status.csv"
+    summary_csv = folder / "pit_universe_evidence_review_worklist_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    worklist_report = (
+        root
+        / "point_in_time_universe_evidence_review_worklist"
+        / worklist_id
+        / "pit_universe_evidence_review_worklist_report.md"
+    )
+    next_action = (
+        "Repair PIT universe evidence review worklist artifacts before using reviewer templates."
+        if status == "FAIL"
+        else "Review PIT universe evidence review worklist health warnings before using reviewer templates."
+        if workflow_stage == "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_HEALTH_WARN"
+        else "Complete PIT universe evidence fields manually; worklist hints are non-authoritative and do not approve rows."
+    )
+    report.write_text(
+        "Evidence review worklist status only. No approval, universe export, data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked.",
+        encoding="utf-8",
+    )
+    worklist_report.parent.mkdir(parents=True, exist_ok=True)
+    worklist_report.write_text(
+        "PIT universe evidence review worklist only. No approvals or usable universe export occurred.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
+                "status": "NEEDS_REVIEW",
+                "latest_artifact_id": worklist_id,
+                "review_id": review_id,
+                "helper_id": helper_id,
+                "row_count": row_count,
+                "symbol_count": symbol_count,
+                "signal_date_count": signal_date_count,
+                "needs_evidence_count": needs_evidence_count,
+                "future_dated_hint_count": future_dated_hint_count,
+                "authoritative_hint_count": authoritative_hint_count,
+                "warning_count": warning_count if status != "PASS" else 0,
+                "error_count": 0,
+                "issue_count": warning_count if status != "PASS" else 0,
+            },
+            {
+                "component": "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "pit-evidence-worklist-health-a",
+                "review_id": review_id,
+                "helper_id": helper_id,
+                "row_count": row_count,
+                "symbol_count": symbol_count,
+                "signal_date_count": signal_date_count,
+                "needs_evidence_count": needs_evidence_count,
+                "future_dated_hint_count": future_dated_hint_count,
+                "authoritative_hint_count": authoritative_hint_count,
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "latest_worklist_id": worklist_id,
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "health_status": health_status,
+                "review_id": review_id,
+                "helper_id": helper_id,
+                "row_count": row_count,
+                "symbol_count": symbol_count,
+                "signal_date_count": signal_date_count,
+                "needs_evidence_count": needs_evidence_count,
+                "future_dated_hint_count": future_dated_hint_count,
+                "authoritative_hint_count": authoritative_hint_count,
+                "report_path": str(worklist_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{worklist_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_worklist_id": worklist_id,
+            "health_status": health_status,
+            "review_id": review_id,
+            "helper_id": helper_id,
+            "row_count": row_count,
+            "symbol_count": symbol_count,
+            "signal_date_count": signal_date_count,
+            "needs_evidence_count": needs_evidence_count,
+            "future_dated_hint_count": future_dated_hint_count,
+            "authoritative_hint_count": authoritative_hint_count,
+            "next_manual_action": next_action,
+            "warnings": ["Latest PIT universe evidence review worklist rows still need evidence."]
+            if warning_count
+            else [],
+            "output_files": {
+                "pit_universe_evidence_review_worklist_status_report": str(report),
+                "pit_universe_evidence_review_worklist_status_csv": str(status_csv),
+                "pit_universe_evidence_review_worklist_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "approved_rows_created": False,
+            "universe_exported": False,
+            "would_write_data_raw": False,
+            "would_write_data_processed": False,
+            "current_candidates_executed": False,
+            "snapshot_manifest_built": False,
+            "forward_returns_computed": False,
+            "cache_mutated": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "order_placement_enabled": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "network_api_called": False,
+            "llm_api_called": False,
+            "pit_universe_evidence_review_worklist_artifacts_only": True,
         },
     )
     return folder

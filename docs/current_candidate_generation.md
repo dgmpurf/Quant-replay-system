@@ -117,6 +117,14 @@ python -m quant_replay_system.cli pit-universe-evidence-completion-helper --revi
 
 The helper keeps rows non-approved, marks hints as `hint_authoritative_for_pit=false`, preserves survivorship-bias warnings, and does not export universe files, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [point_in_time_universe_evidence_completion_helper.md](point_in_time_universe_evidence_completion_helper.md).
 
+To make manual evidence completion easier, use `pit-universe-evidence-review-worklist` to turn helper and review artifacts into row-level, symbol-level, and date-level worklists:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-evidence-review-worklist --helper outputs\reports\point_in_time_universe_evidence_completion_helper\4cf008a09f04\pit_universe_evidence_completion_template.csv --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv
+```
+
+The worklist is still report/template-only. It does not approve rows, export universe files, write `data/raw` or `data/processed`, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [point_in_time_universe_evidence_review_worklist.md](point_in_time_universe_evidence_review_worklist.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:

@@ -11,6 +11,7 @@ The helper sits between reviewed PIT overlay artifacts and later export readines
 ```text
 pit-universe-overlay-review
 -> pit-universe-evidence-completion-helper
+-> pit-universe-evidence-review-worklist
 -> reviewer fills evidence fields
 -> pit-universe-overlay-review
 -> pit-universe-overlay-export-readiness
@@ -171,6 +172,16 @@ The helper always records:
 - `evidence_completion_only=true`
 
 It does not create `APPROVED_FOR_PIT_UNIVERSE` rows and does not set `valid_for_signal_date=true`.
+
+## Evidence Review Worklist
+
+Use `pit-universe-evidence-review-worklist` after the helper when the reviewer needs a row-level, symbol-level, and date-level worklist:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-evidence-review-worklist --helper outputs\reports\point_in_time_universe_evidence_completion_helper\4cf008a09f04\pit_universe_evidence_completion_template.csv --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv
+```
+
+The worklist writes review templates and summaries under `outputs/reports` only. It does not approve rows, turn `suggested_*` hints into evidence, export universe files, build snapshots, run current-candidates, compute labels, mutate cache, send messages, connect to brokers, or place orders. See [point_in_time_universe_evidence_review_worklist.md](point_in_time_universe_evidence_review_worklist.md).
 
 ## Known Limitations
 
