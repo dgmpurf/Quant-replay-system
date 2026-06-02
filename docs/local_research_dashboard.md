@@ -50,6 +50,7 @@ outputs/reports/current_candidates_backfill_execution_manifest/status/
 outputs/reports/point_in_time_universe_overlay_plan/status/
 outputs/reports/point_in_time_universe_overlay_review/status/
 outputs/reports/point_in_time_universe_overlay_export_readiness/status/
+outputs/reports/point_in_time_universe_export_staging/status/
 outputs/reports/advisory_profile_calibration/status/
 outputs/reports/calibration_to_signal_semantics/status/
 outputs/reports/signal_semantics/status/
@@ -151,6 +152,16 @@ The unified summary records the latest export-readiness id, readiness status/sta
 When the status reports `PIT_UNIVERSE_EXPORT_BLOCKED_NO_APPROVED_ROWS`, the dashboard treats the warning as expected reviewable PIT universe preparation work. It means the reviewed overlay has no rows approved for PIT universe export readiness; it does not mean export failed, because no export was attempted. When the status reports `PIT_UNIVERSE_EXPORT_READY_FOR_DRY_RUN`, export-ready rows remain review context for a later explicit export workflow.
 
 PIT universe export readiness is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to export readiness; readiness fields remain visible for audit. If readiness health fails because the artifact claims `data/raw` or `data/processed` writes, current-candidates generation, snapshot build, forward labels, unsafe trading flags, or missing required fields on export-ready rows, `research-status` surfaces the failure as actionable when this layer is active.
+
+## PIT Universe Export Staging Status
+
+`research-status` includes `pit-universe-export-staging-status` as guarded PIT universe staging context when those artifacts exist.
+
+The unified summary records the latest staging id, staging status/stage, health status, linked export-readiness id, linked review id, export-ready input count, staged row count, blocked count, diagnostic-source flag, no-ready-row flag, report path, and the staging layer's next manual action. This is staging-only context: it does not write usable universe files, write `data/raw`, write `data/processed`, run `current-candidates`, build snapshot manifests, run `data-pipeline`, compute forward labels, mutate cache, fetch data, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS`, the dashboard treats the warning as expected reviewable PIT universe preparation work. It means no export-ready rows were available for staging; it does not mean a universe export failed, because no export occurred. When the status reports `PIT_UNIVERSE_EXPORT_STAGING_READY_FOR_REVIEW`, staged preview rows remain `outputs/reports` review artifacts only and do not become accepted universe inputs.
+
+PIT universe export staging is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to staging; staging fields remain visible for audit. If staging health fails because artifacts claim data writes, current-candidates generation, snapshot build, forward labels, cache mutation, API calls, unsafe trading flags, or incomplete staged universe columns, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## PIT Universe Evidence Completion Helper Status
 

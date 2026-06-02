@@ -115,6 +115,10 @@ Use `pit-universe-overlay-export-readiness` to check whether reviewed PIT univer
 
 Use `pit-universe-overlay-export-readiness-index`, `pit-universe-overlay-export-readiness-health`, and `pit-universe-overlay-export-readiness-status` to discover, safety-check, and summarize PIT universe export-readiness artifacts. `research-status` includes the latest export-readiness status as preparation context, including blocked/no-approved-rows state, export-ready count, missing required-column count, unresolved survivorship-warning count, and report path, while preserving later paper workflow priority.
 
+Use `pit-universe-export-staging` to create guarded PIT universe staging previews from export-ready rows under `outputs/reports` only; see [docs/point_in_time_universe_export_staging.md](docs/point_in_time_universe_export_staging.md). The staging workflow blocks diagnostic sources by default and still does not write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute labels, send messages, or place orders.
+
+Use `pit-universe-export-staging-index`, `pit-universe-export-staging-health`, and `pit-universe-export-staging-status` to discover, safety-check, and summarize staging artifacts. `research-status` includes the latest staging context, including no-ready-row blocking, staged row counts, diagnostic-source flags, and report path, while preserving later paper workflow priority.
+
 Use `pit-universe-evidence-completion-helper` to generate a report-only evidence completion template for reviewed PIT universe rows; see [docs/point_in_time_universe_evidence_completion_helper.md](docs/point_in_time_universe_evidence_completion_helper.md). Optional base-universe rows are joined as non-authoritative `suggested_*` hints only. The helper does not approve rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute labels, send messages, or place orders.
 
 Use `pit-universe-evidence-completion-helper-index`, `pit-universe-evidence-completion-helper-health`, and `pit-universe-evidence-completion-helper-status` to discover, safety-check, and summarize evidence helper artifacts. `research-status` includes the latest helper context, including needs-evidence counts, non-authoritative base hints, future-dated hint warnings, and authoritative-hint counts, while preserving later paper workflow priority.
@@ -122,6 +126,8 @@ Use `pit-universe-evidence-completion-helper-index`, `pit-universe-evidence-comp
 For the v1.3.0 checkpoint covering PIT universe evidence completion helper artifact views and `research-status` integration, see [docs/release_checkpoint_v1.3.0.md](docs/release_checkpoint_v1.3.0.md).
 
 For the v1.4.0 checkpoint covering PIT universe export-readiness gate-ordering and required metadata consolidation tests, see [docs/release_checkpoint_v1.4.0.md](docs/release_checkpoint_v1.4.0.md).
+
+For the v1.5.0 checkpoint covering PIT universe export staging artifact views and `research-status` integration, see [docs/release_checkpoint_v1.5.0.md](docs/release_checkpoint_v1.5.0.md).
 
 For the v1.2.0 checkpoint covering PIT universe overlay export-readiness artifact views and `research-status` integration, see [docs/release_checkpoint_v1.2.0.md](docs/release_checkpoint_v1.2.0.md).
 

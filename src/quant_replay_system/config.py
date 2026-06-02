@@ -1029,6 +1029,9 @@ class LocalResearchDashboardSettings(BaseModel):
     point_in_time_universe_overlay_export_readiness_root: Path = Path(
         "outputs/reports/point_in_time_universe_overlay_export_readiness"
     )
+    point_in_time_universe_export_staging_root: Path = Path(
+        "outputs/reports/point_in_time_universe_export_staging"
+    )
     point_in_time_universe_evidence_completion_helper_root: Path = Path(
         "outputs/reports/point_in_time_universe_evidence_completion_helper"
     )

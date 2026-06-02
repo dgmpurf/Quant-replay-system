@@ -790,6 +790,99 @@ def test_cli_research_status_prints_pit_universe_export_readiness_fields(
     assert "pit_universe_export_readiness_blocked_count: 72" in output.out
 
 
+def test_dashboard_includes_pit_universe_export_staging_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_export_staging_status(root, staging_id="stage-blocked")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    staging_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EXPORT_STAGING_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_export_staging_id == "stage-blocked"
+    assert result.pit_universe_export_staging_status == "WARN"
+    assert result.pit_universe_export_staging_stage == "PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS"
+    assert result.pit_universe_export_staging_health_status == "PASS"
+    assert result.pit_universe_export_staging_export_readiness_id == "export-a"
+    assert result.pit_universe_export_staging_export_ready_input_count == 0
+    assert result.pit_universe_export_staging_staged_row_count == 0
+    assert result.pit_universe_export_staging_blocked_count == 72
+    assert result.pit_universe_export_staging_no_ready_rows is True
+    assert result.workflow_stage == "PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS"
+    assert staging_row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert "Complete PIT universe review evidence" in result.next_manual_action
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_universe_export_staging(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_export_staging_status(root, staging_id="stage-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    staging_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EXPORT_STAGING_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_export_staging_id == "stage-paper-context"
+    assert result.pit_universe_export_staging_blocked_count == 72
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert staging_row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_pit_universe_export_staging_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_export_staging_status(root, staging_id="stage-summary")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_pit_universe_export_staging_id"] == "stage-summary"
+    assert row["pit_universe_export_staging_status"] == "WARN"
+    assert row["pit_universe_export_staging_stage"] == "PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS"
+    assert row["pit_universe_export_staging_health_status"] == "PASS"
+    assert row["pit_universe_export_staging_staged_row_count"] == "0"
+    assert row["pit_universe_export_staging_blocked_count"] == "72"
+    assert metadata["latest_pit_universe_export_staging_id"] == "stage-summary"
+    assert metadata["pit_universe_export_staging_blocked_count"] == 72
+    assert metadata["component_statuses"]["latest_pit_universe_export_staging_id"] == "stage-summary"
+
+
+def test_cli_research_status_prints_pit_universe_export_staging_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_export_staging_status(root, staging_id="stage-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_universe_export_staging_id: stage-cli" in output.out
+    assert "pit_universe_export_staging_status: WARN" in output.out
+    assert "pit_universe_export_staging_stage: PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS" in output.out
+    assert "pit_universe_export_staging_staged_row_count: 0" in output.out
+    assert "pit_universe_export_staging_blocked_count: 72" in output.out
+
+
 def test_dashboard_includes_pit_universe_evidence_helper_when_no_later_workflow_exists(
     tmp_path: Path,
 ) -> None:
@@ -4725,6 +4818,140 @@ def _pit_universe_overlay_export_readiness_status(
             "network_api_called": False,
             "llm_api_called": False,
             "pit_universe_overlay_export_readiness_artifacts_only": True,
+        },
+    )
+    return folder
+
+
+def _pit_universe_export_staging_status(
+    root: Path,
+    *,
+    staging_id: str = "stage-a",
+    export_readiness_id: str = "export-a",
+    review_id: str = "review-a",
+    status: str = "WARN",
+    workflow_stage: str = "PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_NO_READY_ROWS",
+    health_status: str = "PASS",
+    export_ready_input_count: int = 0,
+    staged_row_count: int = 0,
+    blocked_count: int = 72,
+    source_is_diagnostic: bool = False,
+    no_ready_rows: bool = True,
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T15:54:10",
+) -> Path:
+    folder = root / "point_in_time_universe_export_staging" / "status" / f"status-{staging_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "pit_universe_export_staging_status_report.md"
+    status_csv = folder / "pit_universe_export_staging_status.csv"
+    summary_csv = folder / "pit_universe_export_staging_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    staging_report = (
+        root
+        / "point_in_time_universe_export_staging"
+        / staging_id
+        / "pit_universe_export_staging_report.md"
+    )
+    next_action = (
+        "Repair PIT universe export staging artifacts before any accepted export planning."
+        if status == "FAIL"
+        else "Review staged PIT universe previews before any separate accepted export workflow."
+        if workflow_stage == "PIT_UNIVERSE_EXPORT_STAGING_READY_FOR_REVIEW"
+        else "Use only active non-diagnostic export-readiness artifacts for staging."
+        if workflow_stage == "PIT_UNIVERSE_EXPORT_STAGING_BLOCKED_DIAGNOSTIC_SOURCE"
+        else "Complete PIT universe review evidence before staging can create previews."
+    )
+    report.write_text(
+        "PIT universe export staging status only. No data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, live trading, broker API, order placement, message delivery, network/API, LLM/API, or cache mutation was invoked.",
+        encoding="utf-8",
+    )
+    staging_report.parent.mkdir(parents=True, exist_ok=True)
+    staging_report.write_text("PIT universe export staging preview only.", encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "component": "PIT_UNIVERSE_EXPORT_STAGING",
+                "status": "BLOCKED_NO_READY_ROWS" if no_ready_rows else "READY_FOR_REVIEW",
+                "latest_artifact_id": staging_id,
+                "export_readiness_id": export_readiness_id,
+                "review_id": review_id,
+                "export_ready_input_count": export_ready_input_count,
+                "staged_row_count": staged_row_count,
+                "blocked_count": blocked_count,
+                "source_is_diagnostic": source_is_diagnostic,
+                "no_ready_rows": no_ready_rows,
+                "warning_count": warning_count if status != "PASS" else 0,
+                "error_count": 0,
+                "issue_count": warning_count if status != "PASS" else 0,
+            },
+            {
+                "component": "PIT_UNIVERSE_EXPORT_STAGING_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "pit-export-staging-health-a",
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "latest_staging_id": staging_id,
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "health_status": health_status,
+                "export_readiness_id": export_readiness_id,
+                "review_id": review_id,
+                "export_ready_input_count": export_ready_input_count,
+                "staged_row_count": staged_row_count,
+                "blocked_count": blocked_count,
+                "source_is_diagnostic": source_is_diagnostic,
+                "no_ready_rows": no_ready_rows,
+                "report_path": str(staging_report),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{staging_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_staging_id": staging_id,
+            "health_status": health_status,
+            "export_readiness_id": export_readiness_id,
+            "review_id": review_id,
+            "export_ready_input_count": export_ready_input_count,
+            "staged_row_count": staged_row_count,
+            "blocked_count": blocked_count,
+            "source_is_diagnostic": source_is_diagnostic,
+            "no_ready_rows": no_ready_rows,
+            "next_manual_action": next_action,
+            "warnings": ["Latest PIT universe export staging is blocked."] if warning_count else [],
+            "output_files": {
+                "pit_universe_export_staging_status_report": str(report),
+                "pit_universe_export_staging_status_csv": str(status_csv),
+                "pit_universe_export_staging_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "would_write_data_raw": False,
+            "would_write_data_processed": False,
+            "current_candidates_executed": False,
+            "snapshot_manifest_built": False,
+            "forward_returns_computed": False,
+            "cache_mutated": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "order_placement_enabled": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "network_api_called": False,
+            "llm_api_called": False,
+            "pit_universe_export_staging_artifacts_only": True,
         },
     )
     return folder

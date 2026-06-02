@@ -101,6 +101,14 @@ python -m quant_replay_system.cli pit-universe-overlay-export-readiness --review
 
 This command writes readiness reports only. It does not write usable universe files under `data/raw` or `data/processed`, build snapshots, run current-candidates, compute forward labels, mutate cache, or place orders. See [point_in_time_universe_overlay_export_readiness.md](point_in_time_universe_overlay_export_readiness.md).
 
+When export-ready rows exist, use `pit-universe-export-staging` to create guarded preview artifacts under `outputs/reports` only:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-export-staging --export-readiness outputs\reports\point_in_time_universe_overlay_export_readiness\<export_readiness_id>\pit_universe_overlay_export_readiness.csv
+```
+
+Staging previews are not accepted universe files. The command does not write `data/raw` or `data/processed`, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [point_in_time_universe_export_staging.md](point_in_time_universe_export_staging.md).
+
 If export readiness is blocked because rows still need evidence, use `pit-universe-evidence-completion-helper` to create a completion template with optional non-authoritative local base-universe hints:
 
 ```cmd

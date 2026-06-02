@@ -196,3 +196,5 @@ Export readiness is not strategy validation and does not authorize candidate gen
 - A later explicit reviewed export workflow is still required before snapshot preparation can consume approved rows.
 
 If readiness is blocked because rows are not approved or evidence fields are missing, use [point_in_time_universe_evidence_completion_helper.md](point_in_time_universe_evidence_completion_helper.md) to generate a report-only completion template. That helper may prefill non-authoritative `suggested_*` hints from a local base universe, but it does not approve rows or export usable universe files.
+
+If rows become `export_ready=true`, use [point_in_time_universe_export_staging.md](point_in_time_universe_export_staging.md) to create guarded staging previews under `outputs/reports` only. Staging still does not write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.

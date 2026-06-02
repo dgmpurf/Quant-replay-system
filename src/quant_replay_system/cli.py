@@ -70,6 +70,18 @@ from quant_replay_system.point_in_time_universe_overlay_export_readiness_index i
 from quant_replay_system.point_in_time_universe_overlay_export_readiness_status import (
     run_pit_universe_overlay_export_readiness_status,
 )
+from quant_replay_system.point_in_time_universe_export_staging import (
+    build_pit_universe_export_staging,
+)
+from quant_replay_system.point_in_time_universe_export_staging_health import (
+    check_pit_universe_export_staging_health,
+)
+from quant_replay_system.point_in_time_universe_export_staging_index import (
+    build_pit_universe_export_staging_index,
+)
+from quant_replay_system.point_in_time_universe_export_staging_status import (
+    run_pit_universe_export_staging_status,
+)
 from quant_replay_system.point_in_time_universe_evidence_completion_helper import (
     build_pit_universe_evidence_completion_helper,
 )
@@ -592,6 +604,84 @@ def build_parser() -> argparse.ArgumentParser:
     pit_universe_overlay_export_readiness_status.set_defaults(
         handler=_handle_pit_universe_overlay_export_readiness_status
     )
+
+    pit_universe_export_staging = subparsers.add_parser(
+        "pit-universe-export-staging",
+        help="Create guarded outputs-only PIT universe export staging artifacts",
+    )
+    pit_universe_export_staging.add_argument(
+        "--export-readiness",
+        required=True,
+        help="PIT universe overlay export-readiness CSV",
+    )
+    pit_universe_export_staging.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_export_staging",
+        help="PIT universe export staging output directory",
+    )
+    pit_universe_export_staging.add_argument(
+        "--allow-diagnostic-source",
+        action="store_true",
+        help="Allow manual_diagnostics export-readiness sources for isolated diagnostics only",
+    )
+    pit_universe_export_staging.set_defaults(handler=_handle_pit_universe_export_staging)
+
+    pit_universe_export_staging_index = subparsers.add_parser(
+        "pit-universe-export-staging-index",
+        help="Index guarded PIT universe export staging artifacts",
+    )
+    pit_universe_export_staging_index.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_export_staging",
+        help="PIT universe export staging artifact root",
+    )
+    pit_universe_export_staging_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_export_staging/index",
+        help="Index output directory",
+    )
+    pit_universe_export_staging_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include staging folders that do not contain metadata.json",
+    )
+    pit_universe_export_staging_index.set_defaults(handler=_handle_pit_universe_export_staging_index)
+
+    pit_universe_export_staging_health = subparsers.add_parser(
+        "pit-universe-export-staging-health",
+        help="Health-check guarded PIT universe export staging artifacts",
+    )
+    pit_universe_export_staging_health.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_export_staging",
+        help="PIT universe export staging artifact root",
+    )
+    pit_universe_export_staging_health.add_argument(
+        "--index",
+        help="Optional PIT universe export staging index CSV",
+    )
+    pit_universe_export_staging_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_export_staging/health",
+        help="Health output directory",
+    )
+    pit_universe_export_staging_health.set_defaults(handler=_handle_pit_universe_export_staging_health)
+
+    pit_universe_export_staging_status = subparsers.add_parser(
+        "pit-universe-export-staging-status",
+        help="Summarize latest guarded PIT universe export staging status",
+    )
+    pit_universe_export_staging_status.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_export_staging",
+        help="PIT universe export staging artifact root",
+    )
+    pit_universe_export_staging_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_export_staging/status",
+        help="Status output directory",
+    )
+    pit_universe_export_staging_status.set_defaults(handler=_handle_pit_universe_export_staging_status)
 
     pit_universe_evidence_completion_helper = subparsers.add_parser(
         "pit-universe-evidence-completion-helper",
@@ -1304,6 +1394,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--pit-universe-overlay-export-readiness-root",
         help="PIT universe overlay export-readiness artifact root directory",
+    )
+    research_status.add_argument(
+        "--pit-universe-export-staging-root",
+        help="PIT universe export staging artifact root directory",
     )
     research_status.add_argument(
         "--pit-universe-evidence-completion-helper-root",
@@ -2442,6 +2536,105 @@ def _handle_pit_universe_overlay_export_readiness_status(args: argparse.Namespac
         "No universe export, data/raw write, data/processed write, current-candidates generation, "
         "snapshot build, forward labels, live trading, broker API, order placement, message delivery, "
         "LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_pit_universe_export_staging(args: argparse.Namespace) -> int:
+    result = build_pit_universe_export_staging(
+        export_readiness=args.export_readiness,
+        output_dir=args.output_dir,
+        allow_diagnostic_source=bool(args.allow_diagnostic_source),
+    )
+    print(f"staging_id: {result.staging_id}")
+    print(f"status: {result.status}")
+    print(f"staging_status: {result.staging_status}")
+    print(f"row_count: {result.row_count}")
+    print(f"export_ready_input_count: {result.export_ready_input_count}")
+    print(f"staged_row_count: {result.staged_row_count}")
+    print(f"blocked_count: {result.blocked_count}")
+    print(f"source_is_diagnostic: {result.source_is_diagnostic}")
+    print(f"no_ready_rows: {result.no_ready_rows}")
+    print(f"duplicate_key_count: {result.duplicate_key_count}")
+    print(f"missing_required_columns_count: {result.missing_required_columns_count}")
+    print(f"staging_csv_path: {result.artifact_paths['staging_csv']}")
+    print(f"combined_preview_csv_path: {result.artifact_paths['combined_preview_csv']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No data/raw write, data/processed write, current-candidates generation, snapshot build, "
+        "forward labels, live trading, broker API, order placement, message delivery, network/API, "
+        "LLM/API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_universe_export_staging_index(args: argparse.Namespace) -> int:
+    result = build_pit_universe_export_staging_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['pit_universe_export_staging_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No data/raw write, data/processed write, current-candidates generation, snapshot build, "
+        "forward labels, live trading, broker API, order placement, message delivery, network/API, "
+        "LLM/API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_universe_export_staging_health(args: argparse.Namespace) -> int:
+    result = check_pit_universe_export_staging_health(
+        index_path=args.index,
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['pit_universe_export_staging_health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "No data/raw write, data/processed write, current-candidates generation, snapshot build, "
+        "forward labels, live trading, broker API, order placement, message delivery, network/API, "
+        "LLM/API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_pit_universe_export_staging_status(args: argparse.Namespace) -> int:
+    result = run_pit_universe_export_staging_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['pit_universe_export_staging_status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_staging_id: {result.latest_staging_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"export_readiness_id: {result.export_readiness_id}")
+    print(f"review_id: {result.review_id}")
+    print(f"export_ready_input_count: {result.export_ready_input_count}")
+    print(f"staged_row_count: {result.staged_row_count}")
+    print(f"blocked_count: {result.blocked_count}")
+    print(f"source_is_diagnostic: {result.source_is_diagnostic}")
+    print(f"no_ready_rows: {result.no_ready_rows}")
+    print(f"report_path: {summary.get('report_path', '')}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No data/raw write, data/processed write, current-candidates generation, snapshot build, "
+        "forward labels, live trading, broker API, order placement, message delivery, network/API, "
+        "LLM/API, or cache mutation was invoked."
     )
     return 1 if result.status == "FAIL" else 0
 
@@ -4033,6 +4226,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["point_in_time_universe_overlay_export_readiness_root"] = Path(
             args.pit_universe_overlay_export_readiness_root
         )
+    if args.pit_universe_export_staging_root:
+        updates["point_in_time_universe_export_staging_root"] = Path(args.pit_universe_export_staging_root)
     if args.pit_universe_evidence_completion_helper_root:
         updates["point_in_time_universe_evidence_completion_helper_root"] = Path(
             args.pit_universe_evidence_completion_helper_root
@@ -4074,6 +4269,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         pit_universe_overlay_plan_root=args.pit_universe_overlay_plan_root,
         pit_universe_overlay_review_root=args.pit_universe_overlay_review_root,
         pit_universe_overlay_export_readiness_root=args.pit_universe_overlay_export_readiness_root,
+        pit_universe_export_staging_root=args.pit_universe_export_staging_root,
         pit_universe_evidence_completion_helper_root=args.pit_universe_evidence_completion_helper_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
@@ -4311,6 +4507,31 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"pit_universe_export_readiness_report_path: {result.pit_universe_export_readiness_report_path}")
     print(f"pit_universe_export_readiness_next_action: {result.pit_universe_export_readiness_next_action}")
+    print(f"latest_pit_universe_export_staging_id: {result.latest_pit_universe_export_staging_id}")
+    print(f"pit_universe_export_staging_status: {result.pit_universe_export_staging_status}")
+    print(f"pit_universe_export_staging_stage: {result.pit_universe_export_staging_stage}")
+    print(f"pit_universe_export_staging_health_status: {result.pit_universe_export_staging_health_status}")
+    print(
+        "pit_universe_export_staging_export_readiness_id: "
+        f"{result.pit_universe_export_staging_export_readiness_id}"
+    )
+    print(f"pit_universe_export_staging_review_id: {result.pit_universe_export_staging_review_id}")
+    print(
+        "pit_universe_export_staging_export_ready_input_count: "
+        f"{result.pit_universe_export_staging_export_ready_input_count}"
+    )
+    print(
+        "pit_universe_export_staging_staged_row_count: "
+        f"{result.pit_universe_export_staging_staged_row_count}"
+    )
+    print(f"pit_universe_export_staging_blocked_count: {result.pit_universe_export_staging_blocked_count}")
+    print(
+        "pit_universe_export_staging_source_is_diagnostic: "
+        f"{result.pit_universe_export_staging_source_is_diagnostic}"
+    )
+    print(f"pit_universe_export_staging_no_ready_rows: {result.pit_universe_export_staging_no_ready_rows}")
+    print(f"pit_universe_export_staging_report_path: {result.pit_universe_export_staging_report_path}")
+    print(f"pit_universe_export_staging_next_action: {result.pit_universe_export_staging_next_action}")
     print(f"latest_pit_universe_evidence_helper_id: {result.latest_pit_universe_evidence_helper_id}")
     print(f"pit_universe_evidence_helper_status: {result.pit_universe_evidence_helper_status}")
     print(f"pit_universe_evidence_helper_stage: {result.pit_universe_evidence_helper_stage}")
