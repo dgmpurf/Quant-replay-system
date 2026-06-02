@@ -16,6 +16,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a current-candidates backfill execution manifest identified which planned signal dates are ready or blocked?
 - Has a PIT universe overlay plan produced manual-review rows for point-in-time universe preparation?
 - Has a reviewed PIT universe overlay workflow approved rows or identified evidence gaps?
+- Has a PIT universe evidence update ingestion run validated reviewer-completed updates into clean review-updates rows?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
@@ -182,6 +183,16 @@ The unified summary records the latest worklist id, worklist status/stage, healt
 When the status reports `PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW`, the dashboard treats the warning as expected reviewable PIT universe evidence work. Worklist `suggested_*` columns are non-authoritative hints only; future-dated hints remain visible as survivorship-bias context. The update template does not auto-fill `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, or `valid_for_signal_date=true`.
 
 PIT universe evidence review worklists are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to worklist status; worklist fields remain visible for audit. If worklist health fails because artifacts approve rows, set valid-for-signal-date flags, claim data writes, current-candidates generation, snapshot build, forward labels, unsafe trading flags, or API calls, `research-status` surfaces the failure as actionable when this layer is active.
+
+## PIT Universe Evidence Update Ingestion Status
+
+`research-status` includes `pit-universe-evidence-update-ingestion-status` as PIT universe evidence-update context when those artifacts exist.
+
+The unified summary records the latest ingestion id, ingestion status/stage, health status, row count, ready-for-review-update count, blocked count, approval-request count, approved-ready count, duplicate identity count, suggested-copy-risk count, report path, clean review-updates path, and the ingestion layer's next manual action. This is ingestion-validation-only context: it does not apply approval, rerun `pit-universe-overlay-review`, export universe files, write `data/raw`, write `data/processed`, run `current-candidates`, build snapshots, compute forward labels, mutate cache, call APIs, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES`, the dashboard treats the warning as expected reviewable PIT universe preparation work. It means reviewer updates did not produce any clean rows for a later manual overlay-review run; it does not mean approval failed, because no approval was applied. `PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_PARTIAL_READY` and `PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_READY_FOR_REVIEW_APPLY` still require a separate explicit `pit-universe-overlay-review` run.
+
+PIT universe evidence update ingestion is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to ingestion status; ingestion fields remain visible for audit. If ingestion health fails because clean review updates include blocked rows, count consistency breaks, required files are missing, approval is claimed, data writes are claimed, current-candidates were generated, snapshots were built, forward labels were computed, or unsafe trading flags appear, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Advisory Profile Calibration Status
 

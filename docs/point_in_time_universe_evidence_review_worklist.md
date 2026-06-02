@@ -45,6 +45,14 @@ python -m quant_replay_system.cli pit-universe-evidence-review-worklist-status
 
 `research-status` also includes the latest worklist status as PIT universe preparation context. Worklist status can be `PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW` while the final dashboard stage remains on a later paper workflow if paper artifacts are already more advanced.
 
+After a reviewer completes the generated update template, use `pit-universe-evidence-update-ingestion` to validate the completed CSV before any separate manual `pit-universe-overlay-review` run:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-evidence-update-ingestion --completed-updates outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_update_template.csv --worklist outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_worklist.csv
+```
+
+The ingestion validator writes clean review-update artifacts only. It does not apply approval, rerun overlay review, export universe files, build snapshots, run current-candidates, or compute labels. See [point_in_time_universe_evidence_update_ingestion.md](point_in_time_universe_evidence_update_ingestion.md).
+
 ## Outputs
 
 Artifacts are written under:
@@ -144,4 +152,4 @@ It records:
 - Base-universe hints may be future-dated and remain non-authoritative.
 - The workflow does not fetch missing evidence.
 - The workflow does not produce usable universe inputs.
-- A human must still provide review updates and rerun `pit-universe-overlay-review`.
+- A human must still provide review updates, validate them with `pit-universe-evidence-update-ingestion`, and then explicitly rerun `pit-universe-overlay-review`.

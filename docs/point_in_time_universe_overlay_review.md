@@ -208,6 +208,14 @@ python -m quant_replay_system.cli pit-universe-evidence-review-worklist --helper
 
 The worklist does not approve rows, does not set `include_flag=true`, does not set `valid_for_signal_date=true`, and does not export usable universe files. See [point_in_time_universe_evidence_review_worklist.md](point_in_time_universe_evidence_review_worklist.md).
 
+After the reviewer completes that update template, use `pit-universe-evidence-update-ingestion` to validate identity keys, reviewer/evidence fields, PIT date rules, required universe metadata, and suggested-hint copy risk before a separate explicit review run:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-evidence-update-ingestion --completed-updates outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_update_template.csv --worklist outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_worklist.csv
+```
+
+The ingestion validator may write a clean `pit_universe_review_updates.csv` for later manual `pit-universe-overlay-review`, but it does not apply approval itself. See [point_in_time_universe_evidence_update_ingestion.md](point_in_time_universe_evidence_update_ingestion.md).
+
 ## Safety Boundaries
 
 The workflow always records:

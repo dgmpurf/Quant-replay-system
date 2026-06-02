@@ -1128,6 +1128,101 @@ def test_cli_research_status_prints_pit_universe_evidence_worklist_fields(
     assert "pit_universe_evidence_worklist_future_dated_hint_count: 72" in output.out
 
 
+def test_dashboard_includes_pit_universe_evidence_update_ingestion_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_update_ingestion_status(root, ingestion_id="ingest-no-ready")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_evidence_update_ingestion_id == "ingest-no-ready"
+    assert result.pit_universe_evidence_update_ingestion_status == "WARN"
+    assert (
+        result.pit_universe_evidence_update_ingestion_stage
+        == "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES"
+    )
+    assert result.pit_universe_evidence_update_ingestion_health_status == "PASS"
+    assert result.pit_universe_evidence_update_ingestion_row_count == 72
+    assert result.pit_universe_evidence_update_ingestion_ready_for_review_update_count == 0
+    assert result.pit_universe_evidence_update_ingestion_blocked_count == 72
+    assert result.workflow_stage == "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES"
+    assert row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_universe_evidence_update_ingestion(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_update_ingestion_status(root, ingestion_id="ingest-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_universe_evidence_update_ingestion_id == "ingest-paper-context"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+
+
+def test_dashboard_exports_pit_universe_evidence_update_ingestion_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_update_ingestion_status(root, ingestion_id="ingest-summary")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_pit_universe_evidence_update_ingestion_id"] == "ingest-summary"
+    assert row["pit_universe_evidence_update_ingestion_status"] == "WARN"
+    assert (
+        row["pit_universe_evidence_update_ingestion_stage"]
+        == "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES"
+    )
+    assert row["pit_universe_evidence_update_ingestion_ready_for_review_update_count"] == "0"
+    assert row["pit_universe_evidence_update_ingestion_blocked_count"] == "72"
+    assert metadata["latest_pit_universe_evidence_update_ingestion_id"] == "ingest-summary"
+    assert metadata["pit_universe_evidence_update_ingestion_blocked_count"] == 72
+
+
+def test_cli_research_status_prints_pit_universe_evidence_update_ingestion_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_universe_evidence_update_ingestion_status(root, ingestion_id="ingest-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_universe_evidence_update_ingestion_id: ingest-cli" in output.out
+    assert "pit_universe_evidence_update_ingestion_status: WARN" in output.out
+    assert (
+        "pit_universe_evidence_update_ingestion_stage: "
+        "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES"
+    ) in output.out
+    assert "pit_universe_evidence_update_ingestion_ready_for_review_update_count: 0" in output.out
+    assert "pit_universe_evidence_update_ingestion_blocked_count: 72" in output.out
+
+
 def test_dashboard_detects_current_to_paper_handoff_artifacts(tmp_path: Path) -> None:
     root = _workflow_to_paper_handoff(_reports_root(tmp_path))
 
@@ -5369,6 +5464,147 @@ def _pit_universe_evidence_review_worklist_status(
             "network_api_called": False,
             "llm_api_called": False,
             "pit_universe_evidence_review_worklist_artifacts_only": True,
+        },
+    )
+    return folder
+
+
+def _pit_universe_evidence_update_ingestion_status(
+    root: Path,
+    *,
+    ingestion_id: str = "ingest-a",
+    status: str = "WARN",
+    workflow_stage: str = "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES",
+    health_status: str = "PASS",
+    row_count: int = 72,
+    ready_for_review_update_count: int = 0,
+    blocked_count: int = 72,
+    approval_requested_count: int = 0,
+    approved_ready_count: int = 0,
+    duplicate_identity_count: int = 0,
+    suggested_copy_risk_count: int = 0,
+    warning_count: int = 1,
+    error_count: int = 0,
+    created_at: str = f"{DECISION_DATE}T16:05:00",
+) -> Path:
+    folder = root / "point_in_time_universe_evidence_update_ingestion" / "status" / f"status-{ingestion_id}"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "pit_universe_evidence_update_ingestion_status_report.md"
+    status_csv = folder / "pit_universe_evidence_update_ingestion_status.csv"
+    summary_csv = folder / "pit_universe_evidence_update_ingestion_status_summary.csv"
+    metadata_path = folder / "metadata.json"
+    ingestion_report = (
+        root
+        / "point_in_time_universe_evidence_update_ingestion"
+        / ingestion_id
+        / "pit_universe_evidence_update_ingestion_report.md"
+    )
+    review_updates = (
+        root
+        / "point_in_time_universe_evidence_update_ingestion"
+        / ingestion_id
+        / "pit_universe_review_updates.csv"
+    )
+    ingestion_report.parent.mkdir(parents=True, exist_ok=True)
+    ingestion_report.write_text("PIT universe evidence update ingestion report only.", encoding="utf-8")
+    review_updates.write_text("signal_date,symbol,universe_name,review_status\n", encoding="utf-8")
+    next_action = (
+        "Repair PIT universe evidence update ingestion artifacts before using clean review updates."
+        if status == "FAIL"
+        else "Reviewer has not completed usable PIT universe evidence update rows yet."
+        if ready_for_review_update_count == 0
+        else "Review clean review_updates artifact manually before a separate pit-universe-overlay-review run."
+    )
+    report.write_text(
+        "Evidence update ingestion status only. No approval applied, universe export, data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked.",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "component": "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION",
+                "status": "WARN" if ready_for_review_update_count == 0 else "READY",
+                "latest_artifact_id": ingestion_id,
+                "row_count": row_count,
+                "ready_for_review_update_count": ready_for_review_update_count,
+                "blocked_count": blocked_count,
+                "approval_requested_count": approval_requested_count,
+                "approved_ready_count": approved_ready_count,
+                "duplicate_identity_count": duplicate_identity_count,
+                "suggested_copy_risk_count": suggested_copy_risk_count,
+                "warning_count": warning_count if status != "PASS" else 0,
+                "error_count": 0,
+                "issue_count": warning_count if status != "PASS" else 0,
+            },
+            {
+                "component": "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_HEALTH",
+                "status": health_status,
+                "latest_artifact_id": "pit-evidence-update-ingestion-health-a",
+                "warning_count": 0 if health_status == "PASS" else warning_count,
+                "error_count": error_count,
+                "issue_count": error_count + (0 if health_status == "PASS" else warning_count),
+            },
+        ]
+    ).to_csv(status_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "latest_ingestion_id": ingestion_id,
+                "status": status,
+                "workflow_stage": workflow_stage,
+                "health_status": health_status,
+                "row_count": row_count,
+                "ready_for_review_update_count": ready_for_review_update_count,
+                "blocked_count": blocked_count,
+                "approval_requested_count": approval_requested_count,
+                "approved_ready_count": approved_ready_count,
+                "duplicate_identity_count": duplicate_identity_count,
+                "suggested_copy_risk_count": suggested_copy_risk_count,
+                "report_path": str(ingestion_report),
+                "review_updates_path": str(review_updates),
+                "next_manual_action": next_action,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    _write_json(
+        metadata_path,
+        {
+            "status_id": f"status-{ingestion_id}",
+            "created_at": created_at,
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_ingestion_id": ingestion_id,
+            "health_status": health_status,
+            "row_count": row_count,
+            "ready_for_review_update_count": ready_for_review_update_count,
+            "blocked_count": blocked_count,
+            "approval_requested_count": approval_requested_count,
+            "approved_ready_count": approved_ready_count,
+            "duplicate_identity_count": duplicate_identity_count,
+            "suggested_copy_risk_count": suggested_copy_risk_count,
+            "next_manual_action": next_action,
+            "output_files": {
+                "pit_universe_evidence_update_ingestion_status_report": str(report),
+                "pit_universe_evidence_update_ingestion_status_csv": str(status_csv),
+                "pit_universe_evidence_update_ingestion_status_summary": str(summary_csv),
+                "metadata": str(metadata_path),
+            },
+            "approval_applied": False,
+            "universe_exported": False,
+            "would_write_data_raw": False,
+            "would_write_data_processed": False,
+            "current_candidates_executed": False,
+            "snapshot_manifest_built": False,
+            "forward_returns_computed": False,
+            "cache_mutated": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "order_placement_enabled": False,
+            "message_delivery_enabled": False,
+            "message_sent": False,
+            "network_api_called": False,
+            "llm_api_called": False,
+            "pit_universe_evidence_update_ingestion_artifacts_only": True,
         },
     )
     return folder

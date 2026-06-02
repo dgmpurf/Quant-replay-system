@@ -125,6 +125,10 @@ Use `pit-universe-evidence-completion-helper-index`, `pit-universe-evidence-comp
 
 Use `pit-universe-evidence-review-worklist` to convert the active helper and review artifacts into row-level, symbol-level, and date-level reviewer worklists; see [docs/point_in_time_universe_evidence_review_worklist.md](docs/point_in_time_universe_evidence_review_worklist.md). The worklist is template/report-only: it does not approve rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute labels, send messages, or place orders.
 
+Use `pit-universe-evidence-update-ingestion` to validate a reviewer-completed worklist update CSV and produce a clean `pit_universe_review_updates.csv` for later manual `pit-universe-overlay-review`; see [docs/point_in_time_universe_evidence_update_ingestion.md](docs/point_in_time_universe_evidence_update_ingestion.md). The validator does not apply approvals, rerun review, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute labels, send messages, or place orders.
+
+Use `pit-universe-evidence-update-ingestion-index`, `pit-universe-evidence-update-ingestion-health`, and `pit-universe-evidence-update-ingestion-status` to discover, safety-check, and summarize evidence update ingestion artifacts. `research-status` includes the latest ingestion context, including ready-for-review-update counts, blocked counts, clean review-updates path, suggested-copy-risk counts, and local-only safety flags, while preserving later paper workflow priority.
+
 For the v1.3.0 checkpoint covering PIT universe evidence completion helper artifact views and `research-status` integration, see [docs/release_checkpoint_v1.3.0.md](docs/release_checkpoint_v1.3.0.md).
 
 For the v1.4.0 checkpoint covering PIT universe export-readiness gate-ordering and required metadata consolidation tests, see [docs/release_checkpoint_v1.4.0.md](docs/release_checkpoint_v1.4.0.md).
@@ -132,6 +136,8 @@ For the v1.4.0 checkpoint covering PIT universe export-readiness gate-ordering a
 For the v1.5.0 checkpoint covering PIT universe export staging artifact views and `research-status` integration, see [docs/release_checkpoint_v1.5.0.md](docs/release_checkpoint_v1.5.0.md).
 
 For the v1.6.0 checkpoint covering PIT universe evidence review worklist artifact views and `research-status` integration, see [docs/release_checkpoint_v1.6.0.md](docs/release_checkpoint_v1.6.0.md).
+
+For the v1.7.0 checkpoint covering PIT universe evidence update ingestion artifact views and `research-status` integration, see [docs/release_checkpoint_v1.7.0.md](docs/release_checkpoint_v1.7.0.md).
 
 For the v1.2.0 checkpoint covering PIT universe overlay export-readiness artifact views and `research-status` integration, see [docs/release_checkpoint_v1.2.0.md](docs/release_checkpoint_v1.2.0.md).
 

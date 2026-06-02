@@ -106,6 +106,18 @@ from quant_replay_system.point_in_time_universe_evidence_review_worklist_index i
 from quant_replay_system.point_in_time_universe_evidence_review_worklist_status import (
     run_pit_universe_evidence_review_worklist_status,
 )
+from quant_replay_system.point_in_time_universe_evidence_update_ingestion import (
+    build_pit_universe_evidence_update_ingestion,
+)
+from quant_replay_system.point_in_time_universe_evidence_update_ingestion_health import (
+    check_pit_universe_evidence_update_ingestion_health,
+)
+from quant_replay_system.point_in_time_universe_evidence_update_ingestion_index import (
+    build_pit_universe_evidence_update_ingestion_index,
+)
+from quant_replay_system.point_in_time_universe_evidence_update_ingestion_status import (
+    run_pit_universe_evidence_update_ingestion_status,
+)
 from quant_replay_system.point_in_time_universe_overlay_review_health import (
     check_pit_universe_overlay_review_health,
 )
@@ -795,6 +807,92 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pit_universe_evidence_review_worklist_status.set_defaults(
         handler=_handle_pit_universe_evidence_review_worklist_status
+    )
+
+    pit_universe_evidence_update_ingestion = subparsers.add_parser(
+        "pit-universe-evidence-update-ingestion",
+        help="Validate reviewer-completed PIT universe evidence update CSVs under reports only",
+    )
+    pit_universe_evidence_update_ingestion.add_argument(
+        "--completed-updates",
+        required=True,
+        help="Reviewer-completed PIT universe evidence update CSV",
+    )
+    pit_universe_evidence_update_ingestion.add_argument(
+        "--worklist",
+        default=None,
+        help="Optional PIT universe evidence review worklist CSV for suggested_* hint cross-checks",
+    )
+    pit_universe_evidence_update_ingestion.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_evidence_update_ingestion",
+        help="PIT universe evidence update ingestion output directory",
+    )
+    pit_universe_evidence_update_ingestion.set_defaults(
+        handler=_handle_pit_universe_evidence_update_ingestion
+    )
+
+    pit_universe_evidence_update_ingestion_index = subparsers.add_parser(
+        "pit-universe-evidence-update-ingestion-index",
+        help="Build a local index of PIT universe evidence update ingestion artifacts",
+    )
+    pit_universe_evidence_update_ingestion_index.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_evidence_update_ingestion",
+        help="PIT universe evidence update ingestion artifact root",
+    )
+    pit_universe_evidence_update_ingestion_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_evidence_update_ingestion/index",
+        help="Index output directory",
+    )
+    pit_universe_evidence_update_ingestion_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include folders missing metadata.json",
+    )
+    pit_universe_evidence_update_ingestion_index.set_defaults(
+        handler=_handle_pit_universe_evidence_update_ingestion_index
+    )
+
+    pit_universe_evidence_update_ingestion_health = subparsers.add_parser(
+        "pit-universe-evidence-update-ingestion-health",
+        help="Check local PIT universe evidence update ingestion artifact health",
+    )
+    pit_universe_evidence_update_ingestion_health.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_evidence_update_ingestion",
+        help="PIT universe evidence update ingestion artifact root",
+    )
+    pit_universe_evidence_update_ingestion_health.add_argument(
+        "--index",
+        help="Optional PIT universe evidence update ingestion index CSV path",
+    )
+    pit_universe_evidence_update_ingestion_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_evidence_update_ingestion/health",
+        help="Health output directory",
+    )
+    pit_universe_evidence_update_ingestion_health.set_defaults(
+        handler=_handle_pit_universe_evidence_update_ingestion_health
+    )
+
+    pit_universe_evidence_update_ingestion_status = subparsers.add_parser(
+        "pit-universe-evidence-update-ingestion-status",
+        help="Summarize latest local PIT universe evidence update ingestion status",
+    )
+    pit_universe_evidence_update_ingestion_status.add_argument(
+        "--root",
+        default="outputs/reports/point_in_time_universe_evidence_update_ingestion",
+        help="PIT universe evidence update ingestion artifact root",
+    )
+    pit_universe_evidence_update_ingestion_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/point_in_time_universe_evidence_update_ingestion/status",
+        help="Status output directory",
+    )
+    pit_universe_evidence_update_ingestion_status.set_defaults(
+        handler=_handle_pit_universe_evidence_update_ingestion_status
     )
 
     pit_universe_evidence_completion_helper_index = subparsers.add_parser(
@@ -1495,6 +1593,14 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--pit-universe-evidence-completion-helper-root",
         help="PIT universe evidence completion helper artifact root directory",
+    )
+    research_status.add_argument(
+        "--pit-universe-evidence-review-worklist-root",
+        help="PIT universe evidence review worklist artifact root directory",
+    )
+    research_status.add_argument(
+        "--pit-universe-evidence-update-ingestion-root",
+        help="PIT universe evidence update ingestion artifact root directory",
     )
     research_status.add_argument(
         "--advisory-profile-calibration-root",
@@ -2869,6 +2975,118 @@ def _handle_pit_universe_evidence_review_worklist_status(args: argparse.Namespac
         "No approval, universe export, data/raw write, data/processed write, current-candidates generation, "
         "snapshot build, forward labels, live trading, broker API, order placement, message delivery, "
         "LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_pit_universe_evidence_update_ingestion(args: argparse.Namespace) -> int:
+    result = build_pit_universe_evidence_update_ingestion(
+        completed_updates=args.completed_updates,
+        worklist=args.worklist,
+        output_dir=args.output_dir,
+    )
+    print(f"ingestion_id: {result.ingestion_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"ready_for_review_update_count: {result.ready_for_review_update_count}")
+    print(f"blocked_count: {result.blocked_count}")
+    print(f"approval_requested_count: {result.approval_requested_count}")
+    print(f"approved_ready_count: {result.approved_ready_count}")
+    print(f"rejected_ready_count: {result.rejected_ready_count}")
+    print(f"needs_more_evidence_ready_count: {result.needs_more_evidence_ready_count}")
+    print(f"duplicate_identity_count: {result.duplicate_identity_count}")
+    print(f"missing_identity_count: {result.missing_identity_count}")
+    print(f"suggested_copy_risk_count: {result.suggested_copy_risk_count}")
+    print(f"ingestion_csv_path: {result.artifact_paths['ingestion_csv']}")
+    print(f"review_updates_path: {result.artifact_paths['review_updates']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval was applied, no universe export, data/raw write, data/processed write, "
+        "current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, network/API, LLM/API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_universe_evidence_update_ingestion_index(args: argparse.Namespace) -> int:
+    result = build_pit_universe_evidence_update_ingestion_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Index CSV path: "
+        f"{result.artifact_paths['pit_universe_evidence_update_ingestion_index_csv']}"
+    )
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval applied, universe export, data/raw write, data/processed write, current-candidates generation, "
+        "snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM/API, "
+        "external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_universe_evidence_update_ingestion_health(args: argparse.Namespace) -> int:
+    result = check_pit_universe_evidence_update_ingestion_health(
+        index_path=args.index,
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Health report path: "
+        f"{result.artifact_paths['pit_universe_evidence_update_ingestion_health_report']}"
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval applied, universe export, data/raw write, data/processed write, current-candidates generation, "
+        "snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM/API, "
+        "external API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_pit_universe_evidence_update_ingestion_status(args: argparse.Namespace) -> int:
+    result = run_pit_universe_evidence_update_ingestion_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Status report path: "
+        f"{result.artifact_paths['pit_universe_evidence_update_ingestion_status_report']}"
+    )
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_ingestion_id: {result.latest_ingestion_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"row_count: {result.row_count}")
+    print(f"ready_for_review_update_count: {result.ready_for_review_update_count}")
+    print(f"blocked_count: {result.blocked_count}")
+    print(f"approval_requested_count: {result.approval_requested_count}")
+    print(f"approved_ready_count: {result.approved_ready_count}")
+    print(f"duplicate_identity_count: {result.duplicate_identity_count}")
+    print(f"suggested_copy_risk_count: {result.suggested_copy_risk_count}")
+    print(f"report_path: {summary.get('report_path', '')}")
+    print(f"review_updates_path: {summary.get('review_updates_path', '')}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval applied, universe export, data/raw write, data/processed write, current-candidates generation, "
+        "snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM/API, "
+        "external API, or cache mutation was invoked."
     )
     return 1 if result.status == "FAIL" else 0
 
@@ -4477,6 +4695,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         pit_universe_overlay_export_readiness_root=args.pit_universe_overlay_export_readiness_root,
         pit_universe_export_staging_root=args.pit_universe_export_staging_root,
         pit_universe_evidence_completion_helper_root=args.pit_universe_evidence_completion_helper_root,
+        pit_universe_evidence_review_worklist_root=args.pit_universe_evidence_review_worklist_root,
+        pit_universe_evidence_update_ingestion_root=args.pit_universe_evidence_update_ingestion_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -4790,6 +5010,62 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"pit_universe_evidence_worklist_report_path: {result.pit_universe_evidence_worklist_report_path}")
     print(f"pit_universe_evidence_worklist_next_action: {result.pit_universe_evidence_worklist_next_action}")
+    print(
+        "latest_pit_universe_evidence_update_ingestion_id: "
+        f"{result.latest_pit_universe_evidence_update_ingestion_id}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_status: "
+        f"{result.pit_universe_evidence_update_ingestion_status}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_stage: "
+        f"{result.pit_universe_evidence_update_ingestion_stage}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_health_status: "
+        f"{result.pit_universe_evidence_update_ingestion_health_status}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_row_count: "
+        f"{result.pit_universe_evidence_update_ingestion_row_count}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_ready_for_review_update_count: "
+        f"{result.pit_universe_evidence_update_ingestion_ready_for_review_update_count}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_blocked_count: "
+        f"{result.pit_universe_evidence_update_ingestion_blocked_count}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_approval_requested_count: "
+        f"{result.pit_universe_evidence_update_ingestion_approval_requested_count}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_approved_ready_count: "
+        f"{result.pit_universe_evidence_update_ingestion_approved_ready_count}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_duplicate_identity_count: "
+        f"{result.pit_universe_evidence_update_ingestion_duplicate_identity_count}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_suggested_copy_risk_count: "
+        f"{result.pit_universe_evidence_update_ingestion_suggested_copy_risk_count}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_report_path: "
+        f"{result.pit_universe_evidence_update_ingestion_report_path}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_review_updates_path: "
+        f"{result.pit_universe_evidence_update_ingestion_review_updates_path}"
+    )
+    print(
+        "pit_universe_evidence_update_ingestion_next_action: "
+        f"{result.pit_universe_evidence_update_ingestion_next_action}"
+    )
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
     print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")

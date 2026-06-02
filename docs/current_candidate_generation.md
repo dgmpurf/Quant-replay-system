@@ -125,6 +125,14 @@ python -m quant_replay_system.cli pit-universe-evidence-review-worklist --helper
 
 The worklist is still report/template-only. It does not approve rows, export universe files, write `data/raw` or `data/processed`, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [point_in_time_universe_evidence_review_worklist.md](point_in_time_universe_evidence_review_worklist.md).
 
+After a reviewer fills the worklist update template, use `pit-universe-evidence-update-ingestion` to validate the completed evidence update CSV before any separate manual PIT overlay review:
+
+```cmd
+python -m quant_replay_system.cli pit-universe-evidence-update-ingestion --completed-updates outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_update_template.csv --worklist outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_worklist.csv
+```
+
+The ingestion validator writes reports and a clean review-update CSV under `outputs/reports` only. It does not apply approvals, rerun `pit-universe-overlay-review`, export universe files, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [point_in_time_universe_evidence_update_ingestion.md](point_in_time_universe_evidence_update_ingestion.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:
