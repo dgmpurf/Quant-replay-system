@@ -128,6 +128,14 @@ python -m quant_replay_system.cli universe-profile-policy-audit --worklist outpu
 
 This audit reports whether a label such as `etf_core` actually contains both STOCK and ETF rows. It writes split guidance only and does not approve/reject rows, export universe files, build snapshots, run current-candidates, or compute labels. See [universe_profile_policy_audit.md](universe_profile_policy_audit.md).
 
+After the audit, use `universe-profile-split-worklist-plan` to apply the local profile registry and preview future split worklists:
+
+```cmd
+python -m quant_replay_system.cli universe-profile-split-worklist-plan --worklist outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_worklist.csv --policy-audit outputs\reports\universe_profile_policy_audit\844794b3aae1\universe_profile_policy_audit.csv --profiles config\universe_profiles.yaml
+```
+
+The split planner keeps existing worklists unchanged. It can recommend future `stock_core`, `etf_core`, or `mixed_demo_core` rows, but it does not approve, reject, export, regenerate, or execute anything. See [universe_profile_split_worklist_plan.md](universe_profile_split_worklist_plan.md).
+
 ## Safety Rules
 
 The worklist preserves:

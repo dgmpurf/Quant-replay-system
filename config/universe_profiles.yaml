@@ -1,0 +1,23 @@
+profiles:
+  stock_core:
+    allowed_instrument_types:
+      - STOCK
+    profile_type: production_candidate
+    mixed_allowed: false
+    demo_only: false
+    description: Reviewed stock-only universe profile for future PIT worklists.
+  etf_core:
+    allowed_instrument_types:
+      - ETF
+    profile_type: production_candidate
+    mixed_allowed: false
+    demo_only: false
+    description: Reviewed ETF-only universe profile for future PIT worklists.
+  mixed_demo_core:
+    allowed_instrument_types:
+      - STOCK
+      - ETF
+    profile_type: demo_mixed
+    mixed_allowed: true
+    demo_only: true
+    description: Mixed STOCK/ETF demo profile for workflow validation only.

@@ -122,6 +122,16 @@ from quant_replay_system.universe_profile_policy_audit import build_universe_pro
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
+from quant_replay_system.universe_profile_split_worklist_plan import build_universe_profile_split_worklist_plan
+from quant_replay_system.universe_profile_split_worklist_plan_health import (
+    check_universe_profile_split_worklist_plan_health,
+)
+from quant_replay_system.universe_profile_split_worklist_plan_index import (
+    build_universe_profile_split_worklist_plan_index,
+)
+from quant_replay_system.universe_profile_split_worklist_plan_status import (
+    run_universe_profile_split_worklist_plan_status,
+)
 from quant_replay_system.point_in_time_universe_overlay_review_health import (
     check_pit_universe_overlay_review_health,
 )
@@ -974,6 +984,92 @@ def build_parser() -> argparse.ArgumentParser:
     )
     universe_profile_policy_audit_status.set_defaults(handler=_handle_universe_profile_policy_audit_status)
 
+    universe_profile_split_worklist_plan = subparsers.add_parser(
+        "universe-profile-split-worklist-plan",
+        help="Plan future split worklists from a universe profile registry without mutating active worklists",
+    )
+    universe_profile_split_worklist_plan.add_argument(
+        "--worklist",
+        default=None,
+        help="Optional PIT universe evidence review worklist CSV",
+    )
+    universe_profile_split_worklist_plan.add_argument(
+        "--policy-audit",
+        default=None,
+        help="Optional universe profile policy audit CSV",
+    )
+    universe_profile_split_worklist_plan.add_argument(
+        "--profiles",
+        default="config/universe_profiles.yaml",
+        help="Universe profile registry YAML",
+    )
+    universe_profile_split_worklist_plan.add_argument(
+        "--output-dir",
+        default="outputs/reports/universe_profile_split_worklist_plan",
+        help="Universe profile split-worklist plan output directory",
+    )
+    universe_profile_split_worklist_plan.set_defaults(handler=_handle_universe_profile_split_worklist_plan)
+
+    universe_profile_split_worklist_plan_index = subparsers.add_parser(
+        "universe-profile-split-worklist-plan-index",
+        help="Build a local index of universe profile split-worklist plan artifacts",
+    )
+    universe_profile_split_worklist_plan_index.add_argument(
+        "--root",
+        default="outputs/reports/universe_profile_split_worklist_plan",
+        help="Universe profile split-worklist plan artifact root",
+    )
+    universe_profile_split_worklist_plan_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/universe_profile_split_worklist_plan/index",
+        help="Index output directory",
+    )
+    universe_profile_split_worklist_plan_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include folders missing metadata.json",
+    )
+    universe_profile_split_worklist_plan_index.set_defaults(
+        handler=_handle_universe_profile_split_worklist_plan_index
+    )
+
+    universe_profile_split_worklist_plan_health = subparsers.add_parser(
+        "universe-profile-split-worklist-plan-health",
+        help="Check local universe profile split-worklist plan artifact health",
+    )
+    universe_profile_split_worklist_plan_health.add_argument(
+        "--root",
+        default="outputs/reports/universe_profile_split_worklist_plan",
+        help="Universe profile split-worklist plan artifact root",
+    )
+    universe_profile_split_worklist_plan_health.add_argument("--index", help="Optional split-worklist plan index CSV path")
+    universe_profile_split_worklist_plan_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/universe_profile_split_worklist_plan/health",
+        help="Health output directory",
+    )
+    universe_profile_split_worklist_plan_health.set_defaults(
+        handler=_handle_universe_profile_split_worklist_plan_health
+    )
+
+    universe_profile_split_worklist_plan_status = subparsers.add_parser(
+        "universe-profile-split-worklist-plan-status",
+        help="Summarize latest local universe profile split-worklist plan status",
+    )
+    universe_profile_split_worklist_plan_status.add_argument(
+        "--root",
+        default="outputs/reports/universe_profile_split_worklist_plan",
+        help="Universe profile split-worklist plan artifact root",
+    )
+    universe_profile_split_worklist_plan_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/universe_profile_split_worklist_plan/status",
+        help="Status output directory",
+    )
+    universe_profile_split_worklist_plan_status.set_defaults(
+        handler=_handle_universe_profile_split_worklist_plan_status
+    )
+
     pit_universe_evidence_completion_helper_index = subparsers.add_parser(
         "pit-universe-evidence-completion-helper-index",
         help="Build a local index of PIT universe evidence completion helper artifacts",
@@ -1684,6 +1780,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
         help="Universe profile policy audit artifact root directory",
+    )
+    research_status.add_argument(
+        "--universe-profile-split-worklist-plan-root",
+        help="Universe profile split-worklist plan artifact root directory",
     )
     research_status.add_argument(
         "--advisory-profile-calibration-root",
@@ -3280,6 +3380,125 @@ def _handle_universe_profile_policy_audit_status(args: argparse.Namespace) -> in
         "No approval, rejection, universe export, data/raw write, data/processed write, "
         "current-candidates generation, snapshot build, forward labels, live trading, broker API, "
         "order placement, message delivery, network/API, LLM/API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_universe_profile_split_worklist_plan(args: argparse.Namespace) -> int:
+    result = build_universe_profile_split_worklist_plan(
+        worklist=args.worklist,
+        policy_audit=args.policy_audit,
+        profiles=args.profiles,
+        output_dir=args.output_dir,
+    )
+    print(f"plan_id: {result.plan_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_row_count: {result.stock_row_count}")
+    print(f"etf_row_count: {result.etf_row_count}")
+    print(f"unknown_instrument_type_count: {result.unknown_instrument_type_count}")
+    print(f"legacy_mixed_demo_row_count: {result.legacy_mixed_demo_row_count}")
+    print(f"recommended_stock_core_count: {result.recommended_stock_core_count}")
+    print(f"recommended_etf_core_count: {result.recommended_etf_core_count}")
+    print(f"recommended_mixed_demo_core_count: {result.recommended_mixed_demo_core_count}")
+    print(f"profile_conflict_count: {result.profile_conflict_count}")
+    print("active_worklist_mutated: False")
+    print(f"registry_snapshot_path: {result.artifact_paths['registry_snapshot']}")
+    print(f"plan_csv_path: {result.artifact_paths['plan_csv']}")
+    print(f"summary_csv_path: {result.artifact_paths['summary_csv']}")
+    print(f"stock_core_guidance_path: {result.artifact_paths['stock_core_guidance']}")
+    print(f"etf_core_guidance_path: {result.artifact_paths['etf_core_guidance']}")
+    print(f"mixed_demo_core_guidance_path: {result.artifact_paths['mixed_demo_core_guidance']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_universe_profile_split_worklist_plan_index(args: argparse.Namespace) -> int:
+    result = build_universe_profile_split_worklist_plan_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Index CSV path: "
+        f"{result.artifact_paths['universe_profile_split_worklist_plan_index_csv']}"
+    )
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_universe_profile_split_worklist_plan_health(args: argparse.Namespace) -> int:
+    result = check_universe_profile_split_worklist_plan_health(
+        index_path=args.index,
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Health report path: "
+        f"{result.artifact_paths['universe_profile_split_worklist_plan_health_report']}"
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_universe_profile_split_worklist_plan_status(args: argparse.Namespace) -> int:
+    result = run_universe_profile_split_worklist_plan_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Status report path: "
+        f"{result.artifact_paths['universe_profile_split_worklist_plan_status_report']}"
+    )
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_plan_id: {result.latest_plan_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_row_count: {result.stock_row_count}")
+    print(f"etf_row_count: {result.etf_row_count}")
+    print(f"legacy_mixed_demo_row_count: {result.legacy_mixed_demo_row_count}")
+    print(f"recommended_stock_core_count: {result.recommended_stock_core_count}")
+    print(f"recommended_etf_core_count: {result.recommended_etf_core_count}")
+    print(f"recommended_mixed_demo_core_count: {result.recommended_mixed_demo_core_count}")
+    print(f"profile_conflict_count: {result.profile_conflict_count}")
+    print(f"report_path: {summary.get('report_path', '')}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
     )
     return 1 if result.status == "FAIL" else 0
 
@@ -4901,6 +5120,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         pit_universe_evidence_review_worklist_root=args.pit_universe_evidence_review_worklist_root,
         pit_universe_evidence_update_ingestion_root=args.pit_universe_evidence_update_ingestion_root,
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
+        universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -5293,6 +5513,62 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"universe_profile_policy_report_path: {result.universe_profile_policy_report_path}")
     print(f"universe_profile_policy_next_action: {result.universe_profile_policy_next_action}")
+    print(
+        "latest_universe_profile_split_worklist_plan_id: "
+        f"{result.latest_universe_profile_split_worklist_plan_id}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_status: "
+        f"{result.universe_profile_split_worklist_plan_status}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_stage: "
+        f"{result.universe_profile_split_worklist_plan_stage}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_health_status: "
+        f"{result.universe_profile_split_worklist_plan_health_status}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_row_count: "
+        f"{result.universe_profile_split_worklist_plan_row_count}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_stock_row_count: "
+        f"{result.universe_profile_split_worklist_plan_stock_row_count}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_etf_row_count: "
+        f"{result.universe_profile_split_worklist_plan_etf_row_count}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_legacy_mixed_demo_row_count: "
+        f"{result.universe_profile_split_worklist_plan_legacy_mixed_demo_row_count}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_recommended_stock_core_count: "
+        f"{result.universe_profile_split_worklist_plan_recommended_stock_core_count}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_recommended_etf_core_count: "
+        f"{result.universe_profile_split_worklist_plan_recommended_etf_core_count}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_recommended_mixed_demo_core_count: "
+        f"{result.universe_profile_split_worklist_plan_recommended_mixed_demo_core_count}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_profile_conflict_count: "
+        f"{result.universe_profile_split_worklist_plan_profile_conflict_count}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_report_path: "
+        f"{result.universe_profile_split_worklist_plan_report_path}"
+    )
+    print(
+        "universe_profile_split_worklist_plan_next_action: "
+        f"{result.universe_profile_split_worklist_plan_next_action}"
+    )
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
     print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")

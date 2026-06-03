@@ -130,3 +130,5 @@ This workflow does not:
 ## Recommended Next Step
 
 Create a future profile-registry or split-worklist plan so new worklists can use `stock_core`, `etf_core`, or `mixed_demo_core` deliberately. Do not approve or reject existing ambiguous rows automatically.
+
+Use `universe-profile-split-worklist-plan` for the first report-only version of that step. It consumes this audit and/or the source worklist, applies `config/universe_profiles.yaml`, and writes future split guidance under `outputs/reports` without mutating active worklists. See [universe_profile_split_worklist_plan.md](universe_profile_split_worklist_plan.md).

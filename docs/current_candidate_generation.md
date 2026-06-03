@@ -141,6 +141,14 @@ python -m quant_replay_system.cli universe-profile-policy-audit --worklist outpu
 
 The audit reports instrument-type distribution and future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`. It does not approve/reject rows, export universe files, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [universe_profile_policy_audit.md](universe_profile_policy_audit.md).
 
+After the audit, use `universe-profile-split-worklist-plan` to apply the local profile registry and produce plan-only split guidance:
+
+```cmd
+python -m quant_replay_system.cli universe-profile-split-worklist-plan --worklist outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_worklist.csv --policy-audit outputs\reports\universe_profile_policy_audit\844794b3aae1\universe_profile_policy_audit.csv --profiles config\universe_profiles.yaml
+```
+
+This writes future split previews only. It does not regenerate active worklists, approve/reject rows, export universe files, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [universe_profile_split_worklist_plan.md](universe_profile_split_worklist_plan.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:

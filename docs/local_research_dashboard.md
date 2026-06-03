@@ -204,6 +204,16 @@ When the status reports `UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE`, the 
 
 Universe profile policy audits are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to policy audit status; policy fields remain visible for audit. If audit health fails because an artifact claims approval, rejection, data writes, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
 
+## Universe Profile Split-Worklist Plan Status
+
+`research-status` includes `universe-profile-split-worklist-plan-status` as future worklist split-planning context when those artifacts exist.
+
+The unified summary records the latest split-worklist plan id, plan status/stage, health status, row count, STOCK/ETF/legacy mixed-demo counts, recommended `stock_core`, `etf_core`, and `mixed_demo_core` counts, profile-conflict count, report path, and the plan layer's next manual action. This is split-planning-only context: it does not approve rows, reject rows, mutate active worklists, export universe files, write `data/raw`, write `data/processed`, run `current-candidates`, build snapshots, compute forward labels, mutate cache, call APIs, send messages, connect to brokers, or place orders.
+
+When the status reports `UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_HAS_PROFILE_CONFLICTS`, the dashboard treats the warning as expected reviewable split-planning context. It means the current legacy source rows have a universe-label/instrument-type mismatch under the clarified profile registry; it does not apply any approval, rejection, or replacement worklist.
+
+Universe profile split-worklist plans are earlier than generated replacement worklists, current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to split-plan status; split-plan fields remain visible for audit. If plan health fails because an artifact claims active worklist mutation, approval, rejection, data writes, universe export, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

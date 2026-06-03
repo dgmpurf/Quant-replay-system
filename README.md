@@ -133,6 +133,12 @@ Use `universe-profile-policy-audit` to classify local universe labels such as le
 
 Use `universe-profile-policy-audit-index`, `universe-profile-policy-audit-health`, and `universe-profile-policy-audit-status` to discover, safety-check, and summarize universe profile policy audit artifacts. `research-status` includes this policy context, including mixed-universe and split-guidance counts, while preserving later paper workflow priority.
 
+Use `universe-profile-split-worklist-plan` to apply `config/universe_profiles.yaml` to legacy mixed `etf_core` rows and produce future split-worklist guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_split_worklist_plan.md](docs/universe_profile_split_worklist_plan.md). The workflow is planning-only and does not mutate active worklists, approve/reject rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
+
+Use `universe-profile-split-worklist-plan-index`, `universe-profile-split-worklist-plan-health`, and `universe-profile-split-worklist-plan-status` to discover, safety-check, and summarize split-worklist plan artifacts. `research-status` includes the latest split plan as universe-profile planning context, including profile-conflict counts and recommended future universe counts, while preserving later paper workflow priority.
+
+Use `universe-profile-split-worklist-plan` to apply `config/universe_profiles.yaml` and write report-only future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_split_worklist_plan.md](docs/universe_profile_split_worklist_plan.md). The planner leaves active worklists unchanged and does not approve/reject rows, export universe files, build snapshots, run current-candidates, or compute labels.
+
 For the v1.8.0 checkpoint covering universe profile policy audit artifact views and `research-status` integration, see [docs/release_checkpoint_v1.8.0.md](docs/release_checkpoint_v1.8.0.md).
 
 For the v1.3.0 checkpoint covering PIT universe evidence completion helper artifact views and `research-status` integration, see [docs/release_checkpoint_v1.3.0.md](docs/release_checkpoint_v1.3.0.md).
@@ -618,6 +624,10 @@ See [docs/release_checkpoint_v0.99.0.md](docs/release_checkpoint_v0.99.0.md) for
 `v1.1.0` marks the Reviewed PIT Universe Overlay Review Artifact Views and Research Status Integration checkpoint, covering reviewed approval artifact index/health/status views, evidence-required approval safety checks, unresolved survivorship warning visibility, dashboard integration, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v1.1.0.md](docs/release_checkpoint_v1.1.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v1.9.0` marks the Universe Profile Split-Worklist Plan Artifact Views and Research Status Integration checkpoint, covering split-plan index/health/status views, dashboard visibility for profile conflicts and future universe recommendations, planning-only safety checks, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v1.9.0.md](docs/release_checkpoint_v1.9.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 
