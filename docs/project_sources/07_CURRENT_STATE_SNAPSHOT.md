@@ -42,6 +42,9 @@ It is not a live trading system.
 - PIT required metadata support.
 - Guarded export staging.
 - PIT evidence review worklist.
+- PIT evidence update ingestion.
+- Universe profile policy audit.
+- Universe profile registry and split-worklist planning.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -107,6 +110,9 @@ export_readiness_id: 75c6975e93e4
 helper_id: 4cf008a09f04
 staging_id: 41bfd31a9e2c
 worklist_id: 1c7972988f59
+ingestion_id: 284058e7f1e4
+policy_audit_id: 844794b3aae1
+split_plan_id: db2c09268c14
 ```
 
 Current counts:
@@ -119,22 +125,33 @@ approved rows: 0
 valid-for-signal-date rows: 0
 export-ready rows: 0
 staged rows: 0
+clean ready review updates: 0
 needs evidence rows: 72
 future-dated hints: 72
 authoritative hints: 0
+
+STOCK rows: 56
+ETF rows: 16
+legacy mixed-demo rows: 72
+recommended future stock_core rows: 56
+recommended future etf_core rows: 16
+recommended future mixed_demo_core rows: 0
+profile conflicts: 56
 ```
 
-Current active stage:
+Current universe governance stage:
 
 ```text
-PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW
+UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_HAS_PROFILE_CONFLICTS
 ```
 
 Meaning:
 
-The project has moved from “can staging be guarded?” to “the reviewer now has a worklist for filling real PIT evidence.”
+The project has moved from “can evidence updates be validated?” to “legacy mixed universe naming has been identified and future split guidance exists.”
 
-The next blocker is evidence update ingestion. Without a safe ingestion validator for completed worklist rows, reviewer-filled evidence cannot reliably become a clean review-updates artifact.
+Existing `etf_core` artifacts should be treated as legacy mixed/demo context, not ETF-only context.
+
+The next blocker is designing a reviewed replacement worklist plan. Without reviewed replacement worklists, evidence collection may continue to target ambiguous legacy universe labels.
 
 ## Current External Data Strategy
 
@@ -154,19 +171,20 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Reviewed PIT Universe Evidence Update Ingestion Read-only Audit v0.1
+Reviewed Replacement Worklist Planning Read-only Audit v0.1
 ```
 
 Purpose:
 
-- inspect how reviewer-completed worklist update CSVs should be validated;
-- define identity keys and blocker rules;
-- design a safe output review-updates artifact;
-- avoid automatic approval or universe export.
+- inspect how future replacement worklist templates should be generated from split guidance;
+- decide whether to create stock_core / etf_core replacement templates or only diagnostics;
+- keep active legacy worklist unchanged;
+- avoid automatic approval, rejection, export, or candidate generation.
 
 Do not yet:
 
-- approve rows automatically;
+- mutate active worklists;
+- approve or reject rows;
 - write usable universe files;
 - write `data/raw` or `data/processed`;
 - generate multi-date candidates;
@@ -188,9 +206,12 @@ Recent milestone direction:
 - v1.4.0: PIT universe required metadata support.
 - v1.5.0: guarded PIT universe export staging.
 - v1.6.0: PIT universe evidence review worklist.
+- v1.7.0: PIT universe evidence update ingestion.
+- v1.8.0: universe profile policy audit.
+- v1.9.0: universe profile split-worklist planning.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Reviewed PIT Universe Evidence Update Ingestion Read-only Audit v0.1.
+Give me Codex tasks for Reviewed Replacement Worklist Planning Read-only Audit v0.1.
 ```

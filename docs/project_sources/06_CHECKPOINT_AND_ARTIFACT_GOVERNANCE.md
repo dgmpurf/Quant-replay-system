@@ -40,7 +40,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, and stale PIT overlay review artifacts missing newer metadata columns.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, and legacy mixed-demo `etf_core` artifacts.
 
 ## Diagnostic vs Active Artifacts
 
@@ -50,6 +50,7 @@ Examples:
 
 - synthetic PIT universe metadata support smoke;
 - synthetic export-ready diagnostics under `manual_diagnostics`;
+- synthetic evidence update apply smoke;
 - ignored dry-run files.
 
 ## Plan-Only Workflows
@@ -59,6 +60,7 @@ Plan-only workflows include:
 - `current-candidates-backfill-plan`
 - `current-candidates-backfill-execution-manifest`
 - `pit-universe-overlay-plan`
+- `universe-profile-split-worklist-plan`
 - calibration-to-signal-semantics proposal reports
 
 Plan-only means no candidate generation, no snapshot build, no forward labels, no cache mutation, no messages, and no broker/order behavior.
@@ -107,7 +109,7 @@ A worklist is not evidence; it only organizes what a reviewer needs to fill.
 
 ## Evidence Update Ingestion Workflows
 
-A future PIT universe evidence update ingestion workflow should validate reviewer-completed worklist updates and produce a clean `review_updates.csv` artifact.
+PIT universe evidence update ingestion validates reviewer-completed worklist updates and produces a clean `review_updates.csv` artifact.
 
 It should block ingestion when:
 
@@ -119,7 +121,45 @@ It should block ingestion when:
 - PIT dates are invalid;
 - suggested fields are copied into authoritative fields without review reason.
 
-It should not export universe files, write `data/raw`, write `data/processed`, run current-candidates, build snapshots, or compute forward labels.
+It must not export universe files, write `data/raw`, write `data/processed`, run current-candidates, build snapshots, or compute forward labels.
+
+A clean `review_updates.csv` is not an applied approval; it is a validated input that may be manually passed to the review workflow later.
+
+## Universe Profile Policy Audit Workflows
+
+Universe profile policy audit artifacts are governance-only.
+
+They may classify existing artifacts as:
+
+```text
+legacy_mixed_demo_universe
+POLICY_AMBIGUOUS_DEMO_MIXED_UNIVERSE
+```
+
+They must not approve or reject rows. They must not mutate existing worklists.
+
+## Universe Profile Split-Worklist Plan Workflows
+
+Split-worklist plan artifacts are planning-only.
+
+They may produce:
+
+- registry snapshots;
+- split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`;
+- profile conflict counts;
+- future replacement worklist guidance.
+
+They must not:
+
+- mutate the active legacy worklist;
+- generate active replacement worklists;
+- approve rows;
+- reject rows;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- run current-candidates.
+
+Profile conflicts are governance context, not candidate generation failures.
 
 ## Export-Readiness Workflows
 
@@ -151,8 +191,10 @@ plan_only=true
 review_only=true
 evidence_completion_only=true
 worklist_only=true
+ingestion_only=true
 export_readiness_only=true
 staging_only=true
+audit_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -181,7 +223,7 @@ Rows derived from a future universe must keep survivorship-bias warnings until r
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
 
 ## When to Refresh This Document
 
@@ -191,7 +233,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- PIT evidence update ingestion semantics are implemented;
+- replacement worklist planning semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.

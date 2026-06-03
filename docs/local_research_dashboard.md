@@ -214,6 +214,16 @@ When the status reports `UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_HAS_PROFILE_CONFLI
 
 Universe profile split-worklist plans are earlier than generated replacement worklists, current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to split-plan status; split-plan fields remain visible for audit. If plan health fails because an artifact claims active worklist mutation, approval, rejection, data writes, universe export, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
 
+## Reviewed Replacement Worklist Plan Status
+
+`research-status` includes `reviewed-replacement-worklist-plan-status` as future replacement-worklist planning context when those artifacts exist.
+
+The unified summary records the latest replacement plan id, plan status/stage, health status, source split plan id, total row count, `stock_core`, `etf_core`, and `mixed_demo_core` row counts, profile-conflict count, active-worklist mutation flag, report path, and the plan layer's next manual action. This is replacement-template-only context: it does not approve rows, reject rows, mutate active worklists, export universe files, write `data/raw`, write `data/processed`, run `current-candidates`, build snapshots, compute forward labels, mutate cache, call APIs, send messages, connect to brokers, or place orders.
+
+When the status reports `REVIEWED_REPLACEMENT_WORKLIST_PLAN_READY`, the dashboard treats it as non-blocking planning context. It means future replacement templates are ready for manual review; it does not mean replacement worklists have been activated or used.
+
+Reviewed replacement worklist plans are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to replacement-plan status; replacement-plan fields remain visible for audit. If health fails because an artifact claims active worklist mutation, approval, rejection, data writes, universe export, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

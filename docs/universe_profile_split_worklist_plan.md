@@ -142,4 +142,4 @@ This workflow does not:
 
 ## Recommended Next Step
 
-Prepare a reviewed replacement-worklist planning workflow that can create separate future worklist templates under `stock_core`, `etf_core`, or `mixed_demo_core`. Do not regenerate the active 72-row worklist until a separate reviewed task explicitly creates replacement worklists under clarified profile names.
+Use `reviewed-replacement-worklist-plan` to create report-only future replacement templates under `stock_core`, `etf_core`, or `mixed_demo_core`. See [reviewed_replacement_worklist_plan.md](reviewed_replacement_worklist_plan.md). Do not mutate the active 72-row worklist or treat replacement templates as approvals.

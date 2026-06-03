@@ -45,7 +45,10 @@ Multi-Date Evidence Preparation
   ├─ point-in-time-universe-overlay-export-readiness
   ├─ point-in-time-universe-evidence-completion-helper
   ├─ point-in-time-universe-export-staging
-  └─ point-in-time-universe-evidence-review-worklist
+  ├─ point-in-time-universe-evidence-review-worklist
+  ├─ point-in-time-universe-evidence-update-ingestion
+  ├─ universe-profile-policy-audit
+  └─ universe-profile-split-worklist-plan
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -102,7 +105,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Staging, and Worklist
+### Multi-Date Candidate Planning, PIT Universe Review, Staging, and Universe Profile Governance
 
 ```text
 market cache coverage
@@ -116,14 +119,17 @@ market cache coverage
 → PIT universe required metadata support
 → guarded PIT universe export staging
 → PIT universe evidence review worklist
-→ PIT universe evidence review worklist index / health / status
+→ PIT universe evidence update ingestion
+→ universe profile policy audit
+→ universe profile split-worklist plan
+→ index / health / status
 → research-status
 ```
 
 Current active preparation state:
 
 ```text
-PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_NEEDS_REVIEW
+UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_HAS_PROFILE_CONFLICTS
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, or live trades.
@@ -153,6 +159,53 @@ revision_id
 source
 ```
 
+### Universe Profile Registry
+
+The initial profile registry is expected to live in:
+
+```text
+config/universe_profiles.yaml
+```
+
+Initial profile intent:
+
+```text
+stock_core:
+  allowed_instrument_types: STOCK
+  mixed_allowed: false
+
+etf_core:
+  allowed_instrument_types: ETF
+  mixed_allowed: false
+
+mixed_demo_core:
+  allowed_instrument_types: STOCK, ETF
+  mixed_allowed: true
+  profile_type: demo_mixed
+```
+
+### Legacy etf_core Meaning
+
+Existing `etf_core` artifacts are not ETF-only.
+
+Current 72-row worklist distribution:
+
+```text
+STOCK rows: 56
+ETF rows: 16
+legacy mixed-demo rows: 72
+profile conflicts: 56
+```
+
+Therefore existing `etf_core` artifacts should be treated as:
+
+```text
+legacy_mixed_demo_universe
+POLICY_AMBIGUOUS_DEMO_MIXED_UNIVERSE
+```
+
+They should not be mutated in place.
+
 ### PIT Universe Review Fields
 
 Reviewed PIT rows should preserve:
@@ -168,22 +221,31 @@ survivorship_bias_warning, survivorship_bias_resolved
 
 Review rows also support current-candidates metadata fields such as `as_of_date`, `name`, `instrument_type`, `exchange`, `industry`, `min_lot`, `t_plus_rule`, `available_time`, `revision_id`, and `source` when a reviewer explicitly supplies them.
 
-### PIT Universe Worklist Fields
+### PIT Evidence Update Ingestion Fields
 
-The worklist is reviewer-facing and should not approve anything.
+Evidence update ingestion validates reviewer-completed rows and may write a clean `review_updates.csv` artifact under `outputs/reports`.
 
-Important fields:
+It must not:
 
 ```text
-worklist_id, review_id, helper_id,
-signal_date, symbol, universe_name,
-current_review_status, current_valid_for_signal_date,
-survivorship_bias_warning, survivorship_bias_resolved,
-missing_* evidence flags,
-suggested_* non-authoritative hints,
-required_next_evidence_fields,
-suggested_next_review_action,
-worklist_only=true
+apply approvals
+export universe files
+write data/raw or data/processed
+run current-candidates
+build snapshots
+compute forward labels
+```
+
+### Split-Worklist Plan Fields
+
+Split-worklist planning is report-only and should preserve:
+
+```text
+plan_id, source_worklist_id, source_policy_audit_id,
+current_universe_name, symbol, resolved_instrument_type,
+recommended_future_universe, profile_conflict,
+legacy_classification, should_mutate_active_worklist=false,
+should_approve=false, should_reject=false, plan_only=true
 ```
 
 ## Current Multi-Date Planning State
@@ -200,19 +262,22 @@ Export readiness: 0 approved, 0 export-ready, 72 blocked
 Evidence helper: 72 needs evidence, 72 future-dated hints, 0 authoritative hints
 Export staging: 0 staged rows, 72 blocked
 Evidence review worklist: 72 rows, 9 symbols, 8 dates, 72 needs evidence
+Evidence update ingestion: 72 rows, 0 ready clean updates, 72 blocked
+Universe profile policy audit: 72 ambiguous legacy mixed-demo rows
+Split-worklist plan: 56 future stock_core rows, 16 future etf_core rows, 0 mixed_demo_core rows, 56 profile conflicts
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Reviewed PIT Universe Evidence Update Ingestion Read-only Audit v0.1
+Reviewed Replacement Worklist Planning Read-only Audit v0.1
 ```
 
 Purpose:
 
-- inspect how user-completed worklist update CSVs should be validated;
-- define identity keys and blocker rules;
-- design a safe output review-updates artifact;
-- keep the branch read-only before implementation.
+- inspect how future replacement worklist templates should be generated from split guidance;
+- decide whether to produce stock_core / etf_core replacement templates or only diagnostics;
+- keep active legacy worklist untouched;
+- keep the branch read-only before any implementation.
 
 Do not skip directly to accepted universe export, snapshot preparation, or current-candidates backfill runner.

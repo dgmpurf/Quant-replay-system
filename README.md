@@ -137,6 +137,10 @@ Use `universe-profile-split-worklist-plan` to apply `config/universe_profiles.ya
 
 Use `universe-profile-split-worklist-plan-index`, `universe-profile-split-worklist-plan-health`, and `universe-profile-split-worklist-plan-status` to discover, safety-check, and summarize split-worklist plan artifacts. `research-status` includes the latest split plan as universe-profile planning context, including profile-conflict counts and recommended future universe counts, while preserving later paper workflow priority.
 
+Use `reviewed-replacement-worklist-plan` to create report-only future replacement templates for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/reviewed_replacement_worklist_plan.md](docs/reviewed_replacement_worklist_plan.md). The workflow leaves active legacy worklists unchanged and does not approve/reject rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
+
+Use `reviewed-replacement-worklist-plan-index`, `reviewed-replacement-worklist-plan-health`, and `reviewed-replacement-worklist-plan-status` to discover, safety-check, and summarize replacement-plan artifacts. `research-status` includes the latest replacement plan as planning context while preserving later paper workflow priority.
+
 Use `universe-profile-split-worklist-plan` to apply `config/universe_profiles.yaml` and write report-only future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_split_worklist_plan.md](docs/universe_profile_split_worklist_plan.md). The planner leaves active worklists unchanged and does not approve/reject rows, export universe files, build snapshots, run current-candidates, or compute labels.
 
 For the v1.8.0 checkpoint covering universe profile policy audit artifact views and `research-status` integration, see [docs/release_checkpoint_v1.8.0.md](docs/release_checkpoint_v1.8.0.md).
@@ -628,6 +632,10 @@ See [docs/release_checkpoint_v1.1.0.md](docs/release_checkpoint_v1.1.0.md) for t
 `v1.9.0` marks the Universe Profile Split-Worklist Plan Artifact Views and Research Status Integration checkpoint, covering split-plan index/health/status views, dashboard visibility for profile conflicts and future universe recommendations, planning-only safety checks, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v1.9.0.md](docs/release_checkpoint_v1.9.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v1.10.0` marks the Reviewed Replacement Worklist Planning checkpoint, covering report-only replacement templates for `stock_core`, `etf_core`, and `mixed_demo_core`, replacement-plan index/health/status views, dashboard visibility, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v1.10.0.md](docs/release_checkpoint_v1.10.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 
