@@ -118,6 +118,16 @@ The generated update template includes reviewer/evidence fields and PIT universe
 
 The template leaves approval fields blank. It does not set `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, or `valid_for_signal_date=true`.
 
+## Universe Profile Policy
+
+Before filling or approving rows from a mixed legacy universe label, run:
+
+```cmd
+python -m quant_replay_system.cli universe-profile-policy-audit --worklist outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_worklist.csv --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv
+```
+
+This audit reports whether a label such as `etf_core` actually contains both STOCK and ETF rows. It writes split guidance only and does not approve/reject rows, export universe files, build snapshots, run current-candidates, or compute labels. See [universe_profile_policy_audit.md](universe_profile_policy_audit.md).
+
 ## Safety Rules
 
 The worklist preserves:

@@ -1035,6 +1035,13 @@ class LocalResearchDashboardSettings(BaseModel):
     point_in_time_universe_evidence_completion_helper_root: Path = Path(
         "outputs/reports/point_in_time_universe_evidence_completion_helper"
     )
+    point_in_time_universe_evidence_review_worklist_root: Path = Path(
+        "outputs/reports/point_in_time_universe_evidence_review_worklist"
+    )
+    point_in_time_universe_evidence_update_ingestion_root: Path = Path(
+        "outputs/reports/point_in_time_universe_evidence_update_ingestion"
+    )
+    universe_profile_policy_audit_root: Path = Path("outputs/reports/universe_profile_policy_audit")
     advisory_profile_calibration_root: Path = Path("outputs/reports/advisory_profile_calibration")
     signal_semantics_root: Path = Path("outputs/reports/signal_semantics")
     signal_advisory_root: Path = Path("outputs/reports/signals")

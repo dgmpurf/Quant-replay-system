@@ -12,6 +12,7 @@ from quant_replay_system.local_research_dashboard import (
     infer_local_research_workflow_stage,
     run_local_research_dashboard,
 )
+from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 
 
 DECISION_DATE = "2024-05-20"
@@ -1221,6 +1222,93 @@ def test_cli_research_status_prints_pit_universe_evidence_update_ingestion_field
     ) in output.out
     assert "pit_universe_evidence_update_ingestion_ready_for_review_update_count: 0" in output.out
     assert "pit_universe_evidence_update_ingestion_blocked_count: 72" in output.out
+
+
+def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _universe_profile_policy_audit(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"
+    ].iloc[0]
+
+    assert result.latest_universe_profile_policy_audit_id
+    assert result.universe_profile_policy_audit_status == "WARN"
+    assert result.universe_profile_policy_audit_stage == "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE"
+    assert result.universe_profile_policy_audit_health_status == "WARN"
+    assert result.universe_profile_policy_row_count == 2
+    assert result.universe_profile_policy_stock_row_count == 1
+    assert result.universe_profile_policy_etf_row_count == 1
+    assert result.universe_profile_policy_ambiguous_policy_count == 2
+    assert result.workflow_stage == "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE"
+    assert row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+
+
+def test_dashboard_preserves_later_paper_priority_over_universe_profile_policy_audit(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _universe_profile_policy_audit(root)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"
+    ].iloc[0]
+
+    assert result.universe_profile_policy_audit_status == "WARN"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+
+
+def test_dashboard_exports_universe_profile_policy_audit_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _universe_profile_policy_audit(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["universe_profile_policy_audit_status"] == "WARN"
+    assert row["universe_profile_policy_audit_stage"] == "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE"
+    assert row["universe_profile_policy_stock_row_count"] == "1"
+    assert row["universe_profile_policy_etf_row_count"] == "1"
+    assert row["universe_profile_policy_ambiguous_policy_count"] == "2"
+    assert metadata["universe_profile_policy_ambiguous_policy_count"] == 2
+    assert metadata["universe_profile_policy_stock_row_count"] == 1
+
+
+def test_cli_research_status_prints_universe_profile_policy_audit_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _universe_profile_policy_audit(root)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "universe_profile_policy_audit_status: WARN" in output.out
+    assert "universe_profile_policy_audit_stage: UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE" in output.out
+    assert "universe_profile_policy_stock_row_count: 1" in output.out
+    assert "universe_profile_policy_etf_row_count: 1" in output.out
+    assert "universe_profile_policy_ambiguous_policy_count: 2" in output.out
 
 
 def test_dashboard_detects_current_to_paper_handoff_artifacts(tmp_path: Path) -> None:
@@ -5608,6 +5696,48 @@ def _pit_universe_evidence_update_ingestion_status(
         },
     )
     return folder
+
+
+def _universe_profile_policy_audit(root: Path) -> Path:
+    worklist = root / "manual_diagnostics" / "policy_audit_test_worklist.csv"
+    worklist.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "worklist_id": "worklist001",
+                "review_id": "review001",
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "universe_name": "etf_core",
+                "suggested_instrument_type": "STOCK",
+                "current_review_status": "NEEDS_MANUAL_REVIEW",
+                "no_live_trading": True,
+                "no_broker_api": True,
+                "no_order_placement": True,
+                "no_message_sent": True,
+                "worklist_only": True,
+            },
+            {
+                "worklist_id": "worklist001",
+                "review_id": "review001",
+                "signal_date": "2024-04-02",
+                "symbol": "510300",
+                "universe_name": "etf_core",
+                "suggested_instrument_type": "ETF",
+                "current_review_status": "NEEDS_MANUAL_REVIEW",
+                "no_live_trading": True,
+                "no_broker_api": True,
+                "no_order_placement": True,
+                "no_message_sent": True,
+                "worklist_only": True,
+            },
+        ]
+    ).to_csv(worklist, index=False)
+    result = build_universe_profile_policy_audit(
+        worklist=worklist,
+        output_dir=root / "universe_profile_policy_audit",
+    )
+    return Path(result.artifact_paths["artifact_dir"])
 
 
 def _signal_semantics_status(

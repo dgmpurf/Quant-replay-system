@@ -216,6 +216,16 @@ python -m quant_replay_system.cli pit-universe-evidence-update-ingestion --compl
 
 The ingestion validator may write a clean `pit_universe_review_updates.csv` for later manual `pit-universe-overlay-review`, but it does not apply approval itself. See [point_in_time_universe_evidence_update_ingestion.md](point_in_time_universe_evidence_update_ingestion.md).
 
+## Universe Profile Policy Audit
+
+If a worklist uses a legacy or misleading universe label such as `etf_core`, run `universe-profile-policy-audit` before approving more PIT rows:
+
+```cmd
+python -m quant_replay_system.cli universe-profile-policy-audit --worklist outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_worklist.csv --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv
+```
+
+The audit classifies mixed STOCK/ETF artifacts as policy context and provides future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`. It does not approve or reject rows. See [universe_profile_policy_audit.md](universe_profile_policy_audit.md).
+
 ## Safety Boundaries
 
 The workflow always records:

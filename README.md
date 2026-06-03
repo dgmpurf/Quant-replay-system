@@ -129,6 +129,12 @@ Use `pit-universe-evidence-update-ingestion` to validate a reviewer-completed wo
 
 Use `pit-universe-evidence-update-ingestion-index`, `pit-universe-evidence-update-ingestion-health`, and `pit-universe-evidence-update-ingestion-status` to discover, safety-check, and summarize evidence update ingestion artifacts. `research-status` includes the latest ingestion context, including ready-for-review-update counts, blocked counts, clean review-updates path, suggested-copy-risk counts, and local-only safety flags, while preserving later paper workflow priority.
 
+Use `universe-profile-policy-audit` to classify local universe labels such as legacy mixed `etf_core`, report STOCK/ETF distribution, and produce future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_policy_audit.md](docs/universe_profile_policy_audit.md). The audit is report-only and does not approve/reject rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
+
+Use `universe-profile-policy-audit-index`, `universe-profile-policy-audit-health`, and `universe-profile-policy-audit-status` to discover, safety-check, and summarize universe profile policy audit artifacts. `research-status` includes this policy context, including mixed-universe and split-guidance counts, while preserving later paper workflow priority.
+
+For the v1.8.0 checkpoint covering universe profile policy audit artifact views and `research-status` integration, see [docs/release_checkpoint_v1.8.0.md](docs/release_checkpoint_v1.8.0.md).
+
 For the v1.3.0 checkpoint covering PIT universe evidence completion helper artifact views and `research-status` integration, see [docs/release_checkpoint_v1.3.0.md](docs/release_checkpoint_v1.3.0.md).
 
 For the v1.4.0 checkpoint covering PIT universe export-readiness gate-ordering and required metadata consolidation tests, see [docs/release_checkpoint_v1.4.0.md](docs/release_checkpoint_v1.4.0.md).

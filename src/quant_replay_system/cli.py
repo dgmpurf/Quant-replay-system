@@ -118,6 +118,10 @@ from quant_replay_system.point_in_time_universe_evidence_update_ingestion_index 
 from quant_replay_system.point_in_time_universe_evidence_update_ingestion_status import (
     run_pit_universe_evidence_update_ingestion_status,
 )
+from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
+from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
+from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
+from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.point_in_time_universe_overlay_review_health import (
     check_pit_universe_overlay_review_health,
 )
@@ -895,6 +899,81 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_pit_universe_evidence_update_ingestion_status
     )
 
+    universe_profile_policy_audit = subparsers.add_parser(
+        "universe-profile-policy-audit",
+        help="Audit local universe profile naming and instrument-type policy without mutating artifacts",
+    )
+    universe_profile_policy_audit.add_argument(
+        "--worklist",
+        default=None,
+        help="Optional PIT universe evidence review worklist CSV",
+    )
+    universe_profile_policy_audit.add_argument(
+        "--review",
+        default=None,
+        help="Optional reviewed PIT universe overlay CSV",
+    )
+    universe_profile_policy_audit.add_argument(
+        "--output-dir",
+        default="outputs/reports/universe_profile_policy_audit",
+        help="Universe profile policy audit output directory",
+    )
+    universe_profile_policy_audit.set_defaults(handler=_handle_universe_profile_policy_audit)
+
+    universe_profile_policy_audit_index = subparsers.add_parser(
+        "universe-profile-policy-audit-index",
+        help="Build a local index of universe profile policy audit artifacts",
+    )
+    universe_profile_policy_audit_index.add_argument(
+        "--root",
+        default="outputs/reports/universe_profile_policy_audit",
+        help="Universe profile policy audit artifact root",
+    )
+    universe_profile_policy_audit_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/universe_profile_policy_audit/index",
+        help="Index output directory",
+    )
+    universe_profile_policy_audit_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include folders missing metadata.json",
+    )
+    universe_profile_policy_audit_index.set_defaults(handler=_handle_universe_profile_policy_audit_index)
+
+    universe_profile_policy_audit_health = subparsers.add_parser(
+        "universe-profile-policy-audit-health",
+        help="Check local universe profile policy audit artifact health",
+    )
+    universe_profile_policy_audit_health.add_argument(
+        "--root",
+        default="outputs/reports/universe_profile_policy_audit",
+        help="Universe profile policy audit artifact root",
+    )
+    universe_profile_policy_audit_health.add_argument("--index", help="Optional policy audit index CSV path")
+    universe_profile_policy_audit_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/universe_profile_policy_audit/health",
+        help="Health output directory",
+    )
+    universe_profile_policy_audit_health.set_defaults(handler=_handle_universe_profile_policy_audit_health)
+
+    universe_profile_policy_audit_status = subparsers.add_parser(
+        "universe-profile-policy-audit-status",
+        help="Summarize latest local universe profile policy audit status",
+    )
+    universe_profile_policy_audit_status.add_argument(
+        "--root",
+        default="outputs/reports/universe_profile_policy_audit",
+        help="Universe profile policy audit artifact root",
+    )
+    universe_profile_policy_audit_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/universe_profile_policy_audit/status",
+        help="Status output directory",
+    )
+    universe_profile_policy_audit_status.set_defaults(handler=_handle_universe_profile_policy_audit_status)
+
     pit_universe_evidence_completion_helper_index = subparsers.add_parser(
         "pit-universe-evidence-completion-helper-index",
         help="Build a local index of PIT universe evidence completion helper artifacts",
@@ -1601,6 +1680,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--pit-universe-evidence-update-ingestion-root",
         help="PIT universe evidence update ingestion artifact root directory",
+    )
+    research_status.add_argument(
+        "--universe-profile-policy-audit-root",
+        help="Universe profile policy audit artifact root directory",
     )
     research_status.add_argument(
         "--advisory-profile-calibration-root",
@@ -3087,6 +3170,116 @@ def _handle_pit_universe_evidence_update_ingestion_status(args: argparse.Namespa
         "No approval applied, universe export, data/raw write, data/processed write, current-candidates generation, "
         "snapshot build, forward labels, live trading, broker API, order placement, message delivery, LLM/API, "
         "external API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_universe_profile_policy_audit(args: argparse.Namespace) -> int:
+    result = build_universe_profile_policy_audit(
+        worklist=args.worklist,
+        review=args.review,
+        output_dir=args.output_dir,
+    )
+    print(f"audit_id: {result.audit_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"universe_count: {result.universe_count}")
+    print(f"mixed_universe_count: {result.mixed_universe_count}")
+    print(f"ambiguous_policy_count: {result.ambiguous_policy_count}")
+    print(f"stock_row_count: {result.stock_row_count}")
+    print(f"etf_row_count: {result.etf_row_count}")
+    print(f"recommended_stock_core_count: {result.recommended_stock_core_count}")
+    print(f"recommended_etf_core_count: {result.recommended_etf_core_count}")
+    print(f"recommended_mixed_demo_core_count: {result.recommended_mixed_demo_core_count}")
+    print(f"audit_csv_path: {result.artifact_paths['audit_csv']}")
+    print(f"summary_csv_path: {result.artifact_paths['summary_csv']}")
+    print(f"split_guidance_csv_path: {result.artifact_paths['split_guidance_csv']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, universe export, data/raw write, data/processed write, "
+        "current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, network/API, LLM/API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_universe_profile_policy_audit_index(args: argparse.Namespace) -> int:
+    result = build_universe_profile_policy_audit_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Index CSV path: "
+        f"{result.artifact_paths['universe_profile_policy_audit_index_csv']}"
+    )
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, universe export, data/raw write, data/processed write, "
+        "current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, network/API, LLM/API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_universe_profile_policy_audit_health(args: argparse.Namespace) -> int:
+    result = check_universe_profile_policy_audit_health(
+        index_path=args.index,
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Health report path: "
+        f"{result.artifact_paths['universe_profile_policy_audit_health_report']}"
+    )
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "No approval, rejection, universe export, data/raw write, data/processed write, "
+        "current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, network/API, LLM/API, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_universe_profile_policy_audit_status(args: argparse.Namespace) -> int:
+    result = run_universe_profile_policy_audit_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Status report path: "
+        f"{result.artifact_paths['universe_profile_policy_audit_status_report']}"
+    )
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_audit_id: {result.latest_audit_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_row_count: {result.stock_row_count}")
+    print(f"etf_row_count: {result.etf_row_count}")
+    print(f"mixed_universe_count: {result.mixed_universe_count}")
+    print(f"ambiguous_policy_count: {result.ambiguous_policy_count}")
+    print(f"recommended_stock_core_count: {result.recommended_stock_core_count}")
+    print(f"recommended_etf_core_count: {result.recommended_etf_core_count}")
+    print(f"recommended_mixed_demo_core_count: {result.recommended_mixed_demo_core_count}")
+    print(f"report_path: {summary.get('report_path', '')}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, universe export, data/raw write, data/processed write, "
+        "current-candidates generation, snapshot build, forward labels, live trading, broker API, "
+        "order placement, message delivery, network/API, LLM/API, or cache mutation was invoked."
     )
     return 1 if result.status == "FAIL" else 0
 
@@ -4656,6 +4849,16 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["point_in_time_universe_evidence_completion_helper_root"] = Path(
             args.pit_universe_evidence_completion_helper_root
         )
+    if args.pit_universe_evidence_review_worklist_root:
+        updates["point_in_time_universe_evidence_review_worklist_root"] = Path(
+            args.pit_universe_evidence_review_worklist_root
+        )
+    if args.pit_universe_evidence_update_ingestion_root:
+        updates["point_in_time_universe_evidence_update_ingestion_root"] = Path(
+            args.pit_universe_evidence_update_ingestion_root
+        )
+    if args.universe_profile_policy_audit_root:
+        updates["universe_profile_policy_audit_root"] = Path(args.universe_profile_policy_audit_root)
     if args.advisory_profile_calibration_root:
         updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
     if args.calibration_to_signal_semantics_root:
@@ -4697,6 +4900,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         pit_universe_evidence_completion_helper_root=args.pit_universe_evidence_completion_helper_root,
         pit_universe_evidence_review_worklist_root=args.pit_universe_evidence_review_worklist_root,
         pit_universe_evidence_update_ingestion_root=args.pit_universe_evidence_update_ingestion_root,
+        universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -5066,6 +5270,29 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "pit_universe_evidence_update_ingestion_next_action: "
         f"{result.pit_universe_evidence_update_ingestion_next_action}"
     )
+    print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
+    print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
+    print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")
+    print(f"universe_profile_policy_audit_health_status: {result.universe_profile_policy_audit_health_status}")
+    print(f"universe_profile_policy_row_count: {result.universe_profile_policy_row_count}")
+    print(f"universe_profile_policy_stock_row_count: {result.universe_profile_policy_stock_row_count}")
+    print(f"universe_profile_policy_etf_row_count: {result.universe_profile_policy_etf_row_count}")
+    print(f"universe_profile_policy_mixed_universe_count: {result.universe_profile_policy_mixed_universe_count}")
+    print(f"universe_profile_policy_ambiguous_policy_count: {result.universe_profile_policy_ambiguous_policy_count}")
+    print(
+        "universe_profile_policy_recommended_stock_core_count: "
+        f"{result.universe_profile_policy_recommended_stock_core_count}"
+    )
+    print(
+        "universe_profile_policy_recommended_etf_core_count: "
+        f"{result.universe_profile_policy_recommended_etf_core_count}"
+    )
+    print(
+        "universe_profile_policy_recommended_mixed_demo_core_count: "
+        f"{result.universe_profile_policy_recommended_mixed_demo_core_count}"
+    )
+    print(f"universe_profile_policy_report_path: {result.universe_profile_policy_report_path}")
+    print(f"universe_profile_policy_next_action: {result.universe_profile_policy_next_action}")
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
     print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")

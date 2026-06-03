@@ -133,6 +133,14 @@ python -m quant_replay_system.cli pit-universe-evidence-update-ingestion --compl
 
 The ingestion validator writes reports and a clean review-update CSV under `outputs/reports` only. It does not apply approvals, rerun `pit-universe-overlay-review`, export universe files, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [point_in_time_universe_evidence_update_ingestion.md](point_in_time_universe_evidence_update_ingestion.md).
 
+Before approving additional PIT evidence rows from legacy mixed artifacts, use `universe-profile-policy-audit` to check whether `universe_name` semantics are clear:
+
+```cmd
+python -m quant_replay_system.cli universe-profile-policy-audit --worklist outputs\reports\point_in_time_universe_evidence_review_worklist\1c7972988f59\pit_universe_evidence_review_worklist.csv --review outputs\reports\point_in_time_universe_overlay_review\7bc8ba08bf5a\reviewed_pit_universe_overlay.csv
+```
+
+The audit reports instrument-type distribution and future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`. It does not approve/reject rows, export universe files, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [universe_profile_policy_audit.md](universe_profile_policy_audit.md).
+
 ## Signal Semantics Policy
 
 Use `signal-semantics` when a current-candidates or scored artifact needs an explicit advisory label mapping before signal or one-symbol review:

@@ -194,6 +194,16 @@ When the status reports `PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES
 
 PIT universe evidence update ingestion is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to ingestion status; ingestion fields remain visible for audit. If ingestion health fails because clean review updates include blocked rows, count consistency breaks, required files are missing, approval is claimed, data writes are claimed, current-candidates were generated, snapshots were built, forward labels were computed, or unsafe trading flags appear, `research-status` surfaces the failure as actionable when this layer is active.
 
+## Universe Profile Policy Audit Status
+
+`research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.
+
+The unified summary records the latest audit id, audit status/stage, health status, row count, stock/ETF/mixed counts, ambiguous-policy count, recommended `stock_core`, `etf_core`, and `mixed_demo_core` counts, report path, and the audit layer's next manual action. This is policy-audit-only context: it does not approve rows, reject rows, export universe files, write `data/raw`, write `data/processed`, run `current-candidates`, build snapshots, compute forward labels, mutate cache, call APIs, send messages, connect to brokers, or place orders.
+
+When the status reports `UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE`, the dashboard treats the warning as expected reviewable policy context. It means the current artifact contains mixed STOCK/ETF rows under a universe label such as `etf_core`; it does not approve or reject any PIT universe row.
+
+Universe profile policy audits are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to policy audit status; policy fields remain visible for audit. If audit health fails because an artifact claims approval, rejection, data writes, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

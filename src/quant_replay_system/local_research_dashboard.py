@@ -43,6 +43,7 @@ from quant_replay_system.point_in_time_universe_evidence_review_worklist_status 
 from quant_replay_system.point_in_time_universe_evidence_update_ingestion_status import (
     run_pit_universe_evidence_update_ingestion_status,
 )
+from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
 from quant_replay_system.signal_semantics_status import run_signal_semantics_status
 from quant_replay_system.single_symbol_advisory_answer_status import run_single_symbol_advisory_answer_status
@@ -219,6 +220,20 @@ SUMMARY_COLUMNS = [
     "pit_universe_evidence_update_ingestion_report_path",
     "pit_universe_evidence_update_ingestion_review_updates_path",
     "pit_universe_evidence_update_ingestion_next_action",
+    "universe_profile_policy_audit_status",
+    "latest_universe_profile_policy_audit_id",
+    "universe_profile_policy_audit_stage",
+    "universe_profile_policy_audit_health_status",
+    "universe_profile_policy_row_count",
+    "universe_profile_policy_stock_row_count",
+    "universe_profile_policy_etf_row_count",
+    "universe_profile_policy_mixed_universe_count",
+    "universe_profile_policy_ambiguous_policy_count",
+    "universe_profile_policy_recommended_stock_core_count",
+    "universe_profile_policy_recommended_etf_core_count",
+    "universe_profile_policy_recommended_mixed_demo_core_count",
+    "universe_profile_policy_report_path",
+    "universe_profile_policy_next_action",
     "advisory_profile_calibration_status",
     "latest_advisory_profile_calibration_run_id",
     "advisory_profile_calibration_stage",
@@ -441,6 +456,7 @@ COMPONENTS = [
     "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS",
     "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
     "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS",
+    "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "ADVISORY_PROFILE_CALIBRATION_STATUS",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
     "SIGNAL_SEMANTICS_STATUS",
@@ -473,6 +489,7 @@ WORKFLOW_AREAS = {
     "PIT_UNIVERSE_EXPORT_READINESS_STATUS": "PIT_UNIVERSE_EXPORT_READINESS",
     "PIT_UNIVERSE_EXPORT_STAGING_STATUS": "PIT_UNIVERSE_EXPORT_STAGING",
     "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS": "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER",
+    "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS": "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
     "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS": "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION",
     "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
@@ -645,6 +662,20 @@ class LocalResearchDashboardResult:
     pit_universe_evidence_update_ingestion_report_path: str
     pit_universe_evidence_update_ingestion_review_updates_path: str
     pit_universe_evidence_update_ingestion_next_action: str
+    universe_profile_policy_audit_status: str
+    latest_universe_profile_policy_audit_id: str
+    universe_profile_policy_audit_stage: str
+    universe_profile_policy_audit_health_status: str
+    universe_profile_policy_row_count: int
+    universe_profile_policy_stock_row_count: int
+    universe_profile_policy_etf_row_count: int
+    universe_profile_policy_mixed_universe_count: int
+    universe_profile_policy_ambiguous_policy_count: int
+    universe_profile_policy_recommended_stock_core_count: int
+    universe_profile_policy_recommended_etf_core_count: int
+    universe_profile_policy_recommended_mixed_demo_core_count: int
+    universe_profile_policy_report_path: str
+    universe_profile_policy_next_action: str
     advisory_profile_calibration_status: str
     latest_advisory_profile_calibration_run_id: str
     advisory_profile_calibration_stage: str
@@ -847,6 +878,7 @@ def run_local_research_dashboard(
     pit_universe_evidence_completion_helper_root: str | Path | None = None,
     pit_universe_evidence_review_worklist_root: str | Path | None = None,
     pit_universe_evidence_update_ingestion_root: str | Path | None = None,
+    universe_profile_policy_audit_root: str | Path | None = None,
     advisory_profile_calibration_root: str | Path | None = None,
     calibration_to_signal_semantics_root: str | Path | None = None,
     signal_semantics_root: str | Path | None = None,
@@ -938,6 +970,11 @@ def run_local_research_dashboard(
         if pit_universe_evidence_update_ingestion_root is not None
         else effective_root / "point_in_time_universe_evidence_update_ingestion"
     )
+    effective_universe_profile_policy_audit_root = (
+        Path(universe_profile_policy_audit_root)
+        if universe_profile_policy_audit_root is not None
+        else effective_root / "universe_profile_policy_audit"
+    )
     effective_advisory_profile_calibration_root = (
         Path(advisory_profile_calibration_root)
         if advisory_profile_calibration_root is not None
@@ -1021,6 +1058,8 @@ def run_local_research_dashboard(
             effective_pit_universe_evidence_update_ingestion_root = (
                 effective_root / "point_in_time_universe_evidence_update_ingestion"
             )
+        if universe_profile_policy_audit_root is None:
+            effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if advisory_profile_calibration_root is None:
             effective_advisory_profile_calibration_root = effective_root / "advisory_profile_calibration"
         if calibration_to_signal_semantics_root is None:
@@ -1056,6 +1095,7 @@ def run_local_research_dashboard(
         pit_universe_evidence_completion_helper_root=effective_pit_universe_evidence_completion_helper_root,
         pit_universe_evidence_review_worklist_root=effective_pit_universe_evidence_review_worklist_root,
         pit_universe_evidence_update_ingestion_root=effective_pit_universe_evidence_update_ingestion_root,
+        universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         advisory_profile_calibration_root=effective_advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=effective_calibration_to_signal_semantics_root,
         signal_semantics_root=effective_signal_semantics_root,
@@ -1107,6 +1147,7 @@ def run_local_research_dashboard(
         "pit_universe_evidence_completion_helper_root": effective_pit_universe_evidence_completion_helper_root,
         "pit_universe_evidence_review_worklist_root": effective_pit_universe_evidence_review_worklist_root,
         "pit_universe_evidence_update_ingestion_root": effective_pit_universe_evidence_update_ingestion_root,
+        "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "advisory_profile_calibration_root": effective_advisory_profile_calibration_root,
         "calibration_to_signal_semantics_root": effective_calibration_to_signal_semantics_root,
         "signal_semantics_root": effective_signal_semantics_root,
@@ -1465,6 +1506,48 @@ def run_local_research_dashboard(
         pit_universe_evidence_update_ingestion_next_action=str(
             summary.get("pit_universe_evidence_update_ingestion_next_action", "")
         ),
+        universe_profile_policy_audit_status=str(
+            summary.get("universe_profile_policy_audit_status", "MISSING")
+        ),
+        latest_universe_profile_policy_audit_id=str(
+            summary.get("latest_universe_profile_policy_audit_id", "")
+        ),
+        universe_profile_policy_audit_stage=str(
+            summary.get("universe_profile_policy_audit_stage", "")
+        ),
+        universe_profile_policy_audit_health_status=str(
+            summary.get("universe_profile_policy_audit_health_status", "")
+        ),
+        universe_profile_policy_row_count=_int_or_zero(
+            summary.get("universe_profile_policy_row_count")
+        ),
+        universe_profile_policy_stock_row_count=_int_or_zero(
+            summary.get("universe_profile_policy_stock_row_count")
+        ),
+        universe_profile_policy_etf_row_count=_int_or_zero(
+            summary.get("universe_profile_policy_etf_row_count")
+        ),
+        universe_profile_policy_mixed_universe_count=_int_or_zero(
+            summary.get("universe_profile_policy_mixed_universe_count")
+        ),
+        universe_profile_policy_ambiguous_policy_count=_int_or_zero(
+            summary.get("universe_profile_policy_ambiguous_policy_count")
+        ),
+        universe_profile_policy_recommended_stock_core_count=_int_or_zero(
+            summary.get("universe_profile_policy_recommended_stock_core_count")
+        ),
+        universe_profile_policy_recommended_etf_core_count=_int_or_zero(
+            summary.get("universe_profile_policy_recommended_etf_core_count")
+        ),
+        universe_profile_policy_recommended_mixed_demo_core_count=_int_or_zero(
+            summary.get("universe_profile_policy_recommended_mixed_demo_core_count")
+        ),
+        universe_profile_policy_report_path=str(
+            summary.get("universe_profile_policy_report_path", "")
+        ),
+        universe_profile_policy_next_action=str(
+            summary.get("universe_profile_policy_next_action", "")
+        ),
         advisory_profile_calibration_status=str(
             summary.get("advisory_profile_calibration_status", "MISSING")
         ),
@@ -1810,6 +1893,7 @@ def scan_local_research_workflow_artifacts(
     pit_universe_evidence_completion_helper_root: str | Path,
     pit_universe_evidence_review_worklist_root: str | Path,
     pit_universe_evidence_update_ingestion_root: str | Path,
+    universe_profile_policy_audit_root: str | Path,
     advisory_profile_calibration_root: str | Path,
     calibration_to_signal_semantics_root: str | Path,
     signal_semantics_root: str | Path,
@@ -1839,6 +1923,7 @@ def scan_local_research_workflow_artifacts(
     pit_universe_evidence_completion_helper_path = Path(pit_universe_evidence_completion_helper_root)
     pit_universe_evidence_review_worklist_path = Path(pit_universe_evidence_review_worklist_root)
     pit_universe_evidence_update_ingestion_path = Path(pit_universe_evidence_update_ingestion_root)
+    universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     advisory_profile_calibration_path = Path(advisory_profile_calibration_root)
     calibration_to_signal_semantics_path = Path(calibration_to_signal_semantics_root)
     signal_semantics_path = Path(signal_semantics_root)
@@ -1872,6 +1957,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_pit_universe_evidence_completion_helper_status(pit_universe_evidence_completion_helper_path))
     records.extend(_scan_pit_universe_evidence_review_worklist_status(pit_universe_evidence_review_worklist_path))
     records.extend(_scan_pit_universe_evidence_update_ingestion_status(pit_universe_evidence_update_ingestion_path))
+    records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_advisory_profile_calibration_status(advisory_profile_calibration_path))
     records.extend(_scan_calibration_to_signal_semantics_status(calibration_to_signal_semantics_path))
     records.extend(_scan_signal_semantics_status(signal_semantics_path))
@@ -2284,6 +2370,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
     post_pit_universe_evidence_helper_components = {
         "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
         "ADVISORY_PROFILE_CALIBRATION_STATUS",
@@ -2298,6 +2385,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
     }
     post_pit_universe_evidence_worklist_components = {
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
         "ADVISORY_PROFILE_CALIBRATION_STATUS",
@@ -2311,6 +2399,20 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         *paper_started_components,
     }
     post_pit_universe_evidence_update_ingestion_components = {
+        "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
+    post_universe_profile_policy_audit_components = {
         "CURRENT_CANDIDATES",
         "CURRENT_CANDIDATE_HEALTH",
         "ADVISORY_PROFILE_CALIBRATION_STATUS",
@@ -2505,6 +2607,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_pit_universe_evidence_update_ingestion_components
         ),
+        "post_universe_profile_policy_audit_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_universe_profile_policy_audit_components
+        ),
         "post_calibration_to_signal_semantics_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_calibration_to_signal_semantics_components
@@ -2675,6 +2781,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS":
         return _pit_universe_evidence_update_ingestion_warning_actionability(row, context)
+
+    if component == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS":
+        return _universe_profile_policy_audit_warning_actionability(row, context)
 
     if component == "ADVISORY_PROFILE_CALIBRATION_STATUS":
         return _advisory_profile_calibration_warning_actionability(row, context)
@@ -3545,6 +3654,56 @@ def _pit_universe_evidence_update_ingestion_warning_actionability(
     }
 
 
+def _universe_profile_policy_audit_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if context.get("post_universe_profile_policy_audit_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage in {
+        "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_HEALTH_WARN",
+    }:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
 def _single_symbol_advisory_warning_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int]:
     warning_count = _int_or_zero(row.get("warning_count"))
     error_count = _int_or_zero(row.get("error_count"))
@@ -4139,6 +4298,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         ):
             return "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_FAILED"
         if (
+            not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
+            and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
+        ):
+            return "UNIVERSE_PROFILE_POLICY_AUDIT_FAILED"
+        if (
             not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
             and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] == "FAIL"
         ):
@@ -4244,6 +4408,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _pit_universe_evidence_update_ingestion_stage_from_frame(dashboard_frame)
     ):
         return _pit_universe_evidence_update_ingestion_stage_from_frame(dashboard_frame)
+    if (
+        not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
+        and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
+        and _universe_profile_policy_audit_stage_from_frame(dashboard_frame)
+    ):
+        return _universe_profile_policy_audit_stage_from_frame(dashboard_frame)
     if (
         not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
         and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] in {"PASS", "WARN", "READY"}
@@ -4409,6 +4579,10 @@ def infer_local_research_next_action(
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_READY_FOR_REVIEW_APPLY": "Review clean review_updates artifact manually before a separate PIT universe overlay review run.",
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_HEALTH_WARN": "Review PIT universe evidence update ingestion health warnings before using clean review_updates.",
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_FAILED": "Repair PIT universe evidence update ingestion artifacts before using clean review_updates.",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_READY": "Use universe profile split guidance for future worklists.",
+        "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE": "Resolve mixed universe naming before semantic approval decisions, or explicitly accept as legacy mixed demo context.",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_HEALTH_WARN": "Review universe profile policy audit health warnings.",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_FAILED": "Repair universe profile policy audit artifacts before using profile guidance.",
         "DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED": "Demo advisory profile calibration validated; do not treat DEMO_ONLY labels as strategy recommendations.",
         "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW": "Review calibration labels manually; REVIEW_BUY_CANDIDATE is not an order and auto-order remains disabled.",
         "ADVISORY_PROFILE_CALIBRATION_HEALTH_WARN": "Review advisory profile calibration health warnings before using threshold analysis.",
@@ -4493,6 +4667,7 @@ def summarize_local_research_status(
                     "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS",
                     "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
                     "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS",
+                    "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "ADVISORY_PROFILE_CALIBRATION_STATUS",
                     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
                     "SIGNAL_SEMANTICS_STATUS",
@@ -5128,6 +5303,76 @@ def summarize_local_research_status(
         ),
         "pit_universe_evidence_update_ingestion_next_action": _parse_note_value(
             by_component.get("PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "universe_profile_policy_audit_status": _component_status(
+            by_component,
+            "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+        ),
+        "latest_universe_profile_policy_audit_id": _string_or_empty(
+            by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("latest_artifact_id")
+        ),
+        "universe_profile_policy_audit_stage": _string_or_empty(
+            by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("stage")
+        ),
+        "universe_profile_policy_audit_health_status": _parse_note_value(
+            by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "universe_profile_policy_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+                "row_count",
+            )
+        ),
+        "universe_profile_policy_stock_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+                "stock_row_count",
+            )
+        ),
+        "universe_profile_policy_etf_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+                "etf_row_count",
+            )
+        ),
+        "universe_profile_policy_mixed_universe_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+                "mixed_universe_count",
+            )
+        ),
+        "universe_profile_policy_ambiguous_policy_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+                "ambiguous_policy_count",
+            )
+        ),
+        "universe_profile_policy_recommended_stock_core_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+                "recommended_stock_core_count",
+            )
+        ),
+        "universe_profile_policy_recommended_etf_core_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+                "recommended_etf_core_count",
+            )
+        ),
+        "universe_profile_policy_recommended_mixed_demo_core_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+                "recommended_mixed_demo_core_count",
+            )
+        ),
+        "universe_profile_policy_report_path": _parse_note_value(
+            by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "universe_profile_policy_next_action": _parse_note_value(
+            by_component.get("UNIVERSE_PROFILE_POLICY_AUDIT_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "advisory_profile_calibration_status": _component_status(
@@ -6098,6 +6343,26 @@ def build_local_research_dashboard_metadata(
         "pit_universe_evidence_update_ingestion_next_action": (
             result.pit_universe_evidence_update_ingestion_next_action
         ),
+        "latest_universe_profile_policy_audit_id": result.latest_universe_profile_policy_audit_id,
+        "universe_profile_policy_audit_status": result.universe_profile_policy_audit_status,
+        "universe_profile_policy_audit_stage": result.universe_profile_policy_audit_stage,
+        "universe_profile_policy_audit_health_status": result.universe_profile_policy_audit_health_status,
+        "universe_profile_policy_row_count": result.universe_profile_policy_row_count,
+        "universe_profile_policy_stock_row_count": result.universe_profile_policy_stock_row_count,
+        "universe_profile_policy_etf_row_count": result.universe_profile_policy_etf_row_count,
+        "universe_profile_policy_mixed_universe_count": result.universe_profile_policy_mixed_universe_count,
+        "universe_profile_policy_ambiguous_policy_count": result.universe_profile_policy_ambiguous_policy_count,
+        "universe_profile_policy_recommended_stock_core_count": (
+            result.universe_profile_policy_recommended_stock_core_count
+        ),
+        "universe_profile_policy_recommended_etf_core_count": (
+            result.universe_profile_policy_recommended_etf_core_count
+        ),
+        "universe_profile_policy_recommended_mixed_demo_core_count": (
+            result.universe_profile_policy_recommended_mixed_demo_core_count
+        ),
+        "universe_profile_policy_report_path": result.universe_profile_policy_report_path,
+        "universe_profile_policy_next_action": result.universe_profile_policy_next_action,
         "latest_advisory_profile_calibration_run_id": result.latest_advisory_profile_calibration_run_id,
         "advisory_profile_calibration_status": result.advisory_profile_calibration_status,
         "advisory_profile_calibration_stage": result.advisory_profile_calibration_stage,
@@ -7870,6 +8135,126 @@ def _pit_universe_evidence_update_ingestion_notes(metadata: dict[str, Any], summ
     )
 
 
+def _scan_universe_profile_policy_audit_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_universe_profile_policy_audit_status_record(root)
+    if computed is not None:
+        return [computed]
+
+    scan_root = root if root.name == "status" else root / "status"
+    records = []
+    for metadata_path in _metadata_paths(scan_root, "metadata.json"):
+        metadata = _load_json_or_none(metadata_path)
+        if metadata is None or not metadata.get("status_id"):
+            continue
+        output_files = _output_files(metadata)
+        summary = _first_csv_record(output_files.get("universe_profile_policy_audit_status_summary"))
+        status_rows = _csv_records(output_files.get("universe_profile_policy_audit_status_csv"))
+        health_row = next(
+            (
+                row
+                for row in status_rows
+                if _string_or_empty(row.get("component")) == "UNIVERSE_PROFILE_POLICY_AUDIT_HEALTH"
+            ),
+            {},
+        )
+        status_text = _string_or_empty(metadata.get("status")) or _string_or_empty(summary.get("status")) or "WARN"
+        stage = _string_or_empty(metadata.get("workflow_stage")) or _string_or_empty(summary.get("workflow_stage"))
+        latest_audit_id = _string_or_empty(metadata.get("latest_audit_id")) or _string_or_empty(
+            summary.get("latest_audit_id")
+        )
+        warning_count = (
+            _int_or_zero(summary.get("warning_count"))
+            + _int_or_zero(health_row.get("warning_count"))
+            + (len(metadata.get("warnings", [])) if isinstance(metadata.get("warnings"), list) else 0)
+        )
+        if status_text == "WARN" and warning_count == 0:
+            warning_count = 1
+        records.append(
+            _record(
+                workflow_area="UNIVERSE_PROFILE_POLICY_AUDIT",
+                component="UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+                status=status_text,
+                stage=stage or "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE",
+                latest_artifact_id=latest_audit_id
+                or _string_or_empty(metadata.get("status_id"))
+                or metadata_path.parent.name,
+                report_path=output_files.get(
+                    "universe_profile_policy_audit_status_report",
+                    metadata_path.parent / "universe_profile_policy_audit_status_report.md",
+                ),
+                metadata_path=metadata_path,
+                issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+                warning_count=warning_count,
+                error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+                notes=_universe_profile_policy_audit_notes(metadata, summary),
+                created_at=metadata.get("created_at"),
+            )
+        )
+    return records
+
+
+def _computed_universe_profile_policy_audit_status_record(root: Path) -> dict[str, Any] | None:
+    audit_root = root.parent if root.name == "status" else root
+    if not audit_root.exists():
+        return None
+    try:
+        result = run_universe_profile_policy_audit_status(
+            root=audit_root,
+            output_dir=audit_root / "status",
+        )
+    except Exception:
+        return None
+    if not result.latest_audit_id:
+        return None
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    health_row = {}
+    if not result.status_frame.empty:
+        health_rows = result.status_frame.loc[
+            result.status_frame["component"] == "UNIVERSE_PROFILE_POLICY_AUDIT_HEALTH"
+        ]
+        if not health_rows.empty:
+            health_row = health_rows.iloc[0].to_dict()
+    warning_count = (
+        _int_or_zero(summary.get("warning_count"))
+        + _int_or_zero(health_row.get("warning_count"))
+        + len(result.warnings)
+    )
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="UNIVERSE_PROFILE_POLICY_AUDIT",
+        component="UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_audit_id,
+        report_path=result.artifact_paths.get("universe_profile_policy_audit_status_report", ""),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=_int_or_zero(summary.get("issue_count")) + _int_or_zero(health_row.get("issue_count")),
+        warning_count=warning_count,
+        error_count=max(_int_or_zero(summary.get("error_count")), _int_or_zero(health_row.get("error_count"))),
+        notes=_universe_profile_policy_audit_notes(
+            {"next_manual_action": result.next_manual_action},
+            summary,
+        ),
+    )
+
+
+def _universe_profile_policy_audit_notes(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(metadata.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"row_count={_string_or_empty(summary.get('row_count'))}; "
+        f"stock_row_count={_string_or_empty(summary.get('stock_row_count'))}; "
+        f"etf_row_count={_string_or_empty(summary.get('etf_row_count'))}; "
+        f"mixed_universe_count={_string_or_empty(summary.get('mixed_universe_count'))}; "
+        f"ambiguous_policy_count={_string_or_empty(summary.get('ambiguous_policy_count'))}; "
+        f"recommended_stock_core_count={_string_or_empty(summary.get('recommended_stock_core_count'))}; "
+        f"recommended_etf_core_count={_string_or_empty(summary.get('recommended_etf_core_count'))}; "
+        f"recommended_mixed_demo_core_count={_string_or_empty(summary.get('recommended_mixed_demo_core_count'))}; "
+        f"report_path={_string_or_empty(summary.get('report_path'))}"
+    )
+
+
 def _scan_advisory_profile_calibration_status(root: Path) -> list[dict[str, Any]]:
     computed = _computed_advisory_profile_calibration_status_record(root)
     if computed is not None:
@@ -9594,6 +9979,14 @@ def _pit_universe_evidence_update_ingestion_stage_from_frame(dashboard_frame: pd
     return _string_or_empty(rows.iloc[0].get("stage"))
 
 
+def _universe_profile_policy_audit_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
 def _signal_advisory_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "SIGNAL_ADVISORY_STATUS"]
@@ -10002,6 +10395,34 @@ def _has_post_pit_universe_evidence_worklist_workflow_component(dashboard_frame:
 
 
 def _has_post_pit_universe_evidence_update_ingestion_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "CURRENT_CANDIDATES",
