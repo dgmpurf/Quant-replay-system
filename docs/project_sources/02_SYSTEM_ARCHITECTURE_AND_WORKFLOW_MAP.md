@@ -1,7 +1,7 @@
 # System Architecture and Workflow Map
 
 > Status: working memory document  
-> Last generated: 2026-06-02  
+> Last generated: 2026-06-04  
 > Permanence: temporary; update after major architecture or workflow additions.
 
 ## High-Level Architecture
@@ -48,7 +48,8 @@ Multi-Date Evidence Preparation
   ├─ point-in-time-universe-evidence-review-worklist
   ├─ point-in-time-universe-evidence-update-ingestion
   ├─ universe-profile-policy-audit
-  └─ universe-profile-split-worklist-plan
+  ├─ universe-profile-split-worklist-plan
+  └─ reviewed-replacement-worklist-plan
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -105,7 +106,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Staging, and Universe Profile Governance
+### Multi-Date Candidate Planning, PIT Universe Review, Staging, Universe Profile Governance, and Replacement Planning
 
 ```text
 market cache coverage
@@ -122,6 +123,7 @@ market cache coverage
 → PIT universe evidence update ingestion
 → universe profile policy audit
 → universe profile split-worklist plan
+→ reviewed replacement worklist plan
 → index / health / status
 → research-status
 ```
@@ -129,7 +131,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_HAS_PROFILE_CONFLICTS
+REVIEWED_REPLACEMENT_WORKLIST_PLAN_READY
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, or live trades.
@@ -161,7 +163,7 @@ source
 
 ### Universe Profile Registry
 
-The initial profile registry is expected to live in:
+The initial profile registry lives in:
 
 ```text
 config/universe_profiles.yaml
@@ -188,7 +190,7 @@ mixed_demo_core:
 
 Existing `etf_core` artifacts are not ETF-only.
 
-Current 72-row worklist distribution:
+Current 72-row legacy worklist distribution:
 
 ```text
 STOCK rows: 56
@@ -206,20 +208,22 @@ POLICY_AMBIGUOUS_DEMO_MIXED_UNIVERSE
 
 They should not be mutated in place.
 
-### PIT Universe Review Fields
+### Reviewed Replacement Worklist Plan Fields
 
-Reviewed PIT rows should preserve:
+Replacement worklist planning is report-only and should preserve:
 
 ```text
-signal_date, symbol, universe_name, include_flag, review_status,
-valid_for_signal_date, blocker_reason, reviewer, reviewed_at,
-review_reason, evidence_source, evidence_path/evidence_reference,
-listed_date, delisted_date, is_active, is_st, is_suspended,
-listed_date_evidence, delisted_date_evidence, is_active_evidence,
-survivorship_bias_warning, survivorship_bias_resolved
+replacement_plan_id, source_worklist_id, source_policy_audit_id, source_split_plan_id,
+source_universe_name, recommended_future_universe, signal_date, symbol,
+resolved_instrument_type, current_review_status, replacement_review_status,
+include_flag, valid_for_signal_date, survivorship_bias_warning,
+survivorship_bias_resolved, legacy_classification, profile_rule_applied,
+profile_conflict, evidence_gap_summary, required_next_evidence_fields,
+suggested_next_review_action, should_mutate_active_worklist=false,
+should_approve=false, should_reject=false, plan_only=true
 ```
 
-Review rows also support current-candidates metadata fields such as `as_of_date`, `name`, `instrument_type`, `exchange`, `industry`, `min_lot`, `t_plus_rule`, `available_time`, `revision_id`, and `source` when a reviewer explicitly supplies them.
+Replacement plans create future templates under `outputs/reports` only. They are not active review artifacts and do not replace the active legacy worklist.
 
 ### PIT Evidence Update Ingestion Fields
 
@@ -234,18 +238,6 @@ write data/raw or data/processed
 run current-candidates
 build snapshots
 compute forward labels
-```
-
-### Split-Worklist Plan Fields
-
-Split-worklist planning is report-only and should preserve:
-
-```text
-plan_id, source_worklist_id, source_policy_audit_id,
-current_universe_name, symbol, resolved_instrument_type,
-recommended_future_universe, profile_conflict,
-legacy_classification, should_mutate_active_worklist=false,
-should_approve=false, should_reject=false, plan_only=true
 ```
 
 ## Current Multi-Date Planning State
@@ -265,19 +257,20 @@ Evidence review worklist: 72 rows, 9 symbols, 8 dates, 72 needs evidence
 Evidence update ingestion: 72 rows, 0 ready clean updates, 72 blocked
 Universe profile policy audit: 72 ambiguous legacy mixed-demo rows
 Split-worklist plan: 56 future stock_core rows, 16 future etf_core rows, 0 mixed_demo_core rows, 56 profile conflicts
+Reviewed replacement worklist plan: 56 stock_core replacement rows, 16 etf_core replacement rows, 0 mixed_demo_core rows, active legacy worklist untouched
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Reviewed Replacement Worklist Planning Read-only Audit v0.1
+Reviewed Replacement Worklist Acceptance Read-only Audit v0.1
 ```
 
 Purpose:
 
-- inspect how future replacement worklist templates should be generated from split guidance;
-- decide whether to produce stock_core / etf_core replacement templates or only diagnostics;
-- keep active legacy worklist untouched;
+- inspect whether replacement worklist templates should ever be accepted as a reviewed planning artifact;
+- define explicit accept flags / manual confirmation requirements;
+- keep the active legacy worklist untouched;
 - keep the branch read-only before any implementation.
 
 Do not skip directly to accepted universe export, snapshot preparation, or current-candidates backfill runner.

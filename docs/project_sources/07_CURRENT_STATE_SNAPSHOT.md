@@ -1,7 +1,7 @@
 # Current State Snapshot
 
 > Status: working memory document  
-> Last generated: 2026-06-02  
+> Last generated: 2026-06-04  
 > Permanence: temporary; refresh after the next major checkpoint or when source state changes.
 
 ## Summary
@@ -45,6 +45,7 @@ It is not a live trading system.
 - PIT evidence update ingestion.
 - Universe profile policy audit.
 - Universe profile registry and split-worklist planning.
+- Reviewed replacement worklist planning.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -101,7 +102,7 @@ local market cache has enough data for selected warmup-aware signal dates
 1d/3d/5d/10d forward horizon modeled
 ```
 
-PIT universe active artifacts:
+PIT universe active / planning artifacts:
 
 ```text
 overlay_plan_id: 38a254c54024
@@ -113,6 +114,7 @@ worklist_id: 1c7972988f59
 ingestion_id: 284058e7f1e4
 policy_audit_id: 844794b3aae1
 split_plan_id: db2c09268c14
+replacement_plan_id: 0774d0a1fdb9
 ```
 
 Current counts:
@@ -137,21 +139,28 @@ recommended future stock_core rows: 56
 recommended future etf_core rows: 16
 recommended future mixed_demo_core rows: 0
 profile conflicts: 56
+
+reviewed replacement stock_core rows: 56
+reviewed replacement etf_core rows: 16
+reviewed replacement mixed_demo_core rows: 0
+active legacy worklist mutated: false
 ```
 
-Current universe governance stage:
+Current reviewed replacement worklist planning stage:
 
 ```text
-UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_HAS_PROFILE_CONFLICTS
+REVIEWED_REPLACEMENT_WORKLIST_PLAN_READY
 ```
 
 Meaning:
 
-The project has moved from “can evidence updates be validated?” to “legacy mixed universe naming has been identified and future split guidance exists.”
+The project has moved from “how should legacy mixed etf_core be split?” to “future stock_core and etf_core replacement worklist templates now exist as planning artifacts.”
 
-Existing `etf_core` artifacts should be treated as legacy mixed/demo context, not ETF-only context.
+Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-The next blocker is designing a reviewed replacement worklist plan. Without reviewed replacement worklists, evidence collection may continue to target ambiguous legacy universe labels.
+Replacement worklist templates exist under `outputs/reports`, but they are not accepted active worklists yet.
+
+The next blocker is designing a guarded acceptance workflow. Without an acceptance design, replacement templates should not be treated as active review worklists.
 
 ## Current External Data Strategy
 
@@ -171,18 +180,20 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Reviewed Replacement Worklist Planning Read-only Audit v0.1
+Reviewed Replacement Worklist Acceptance Read-only Audit v0.1
 ```
 
 Purpose:
 
-- inspect how future replacement worklist templates should be generated from split guidance;
-- decide whether to create stock_core / etf_core replacement templates or only diagnostics;
+- inspect how planned replacement worklist templates might become accepted reviewed planning artifacts;
+- define explicit accept flags and manual confirmation requirements;
+- preserve lineage from legacy worklist, policy audit, split plan, and replacement plan;
 - keep active legacy worklist unchanged;
 - avoid automatic approval, rejection, export, or candidate generation.
 
 Do not yet:
 
+- accept replacement worklists automatically;
 - mutate active worklists;
 - approve or reject rows;
 - write usable universe files;
@@ -209,9 +220,10 @@ Recent milestone direction:
 - v1.7.0: PIT universe evidence update ingestion.
 - v1.8.0: universe profile policy audit.
 - v1.9.0: universe profile split-worklist planning.
+- v1.10.0: reviewed replacement worklist planning.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Reviewed Replacement Worklist Planning Read-only Audit v0.1.
+Give me Codex tasks for Reviewed Replacement Worklist Acceptance Read-only Audit v0.1.
 ```

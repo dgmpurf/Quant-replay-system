@@ -109,4 +109,4 @@ This workflow does not:
 
 ## Recommended Next Step
 
-Review the replacement templates manually. The next safe implementation should add a reviewed replacement-worklist acceptance or staging workflow, still without approvals, exports, snapshots, candidate generation, or trading automation unless explicitly requested in a separate safety-gated task.
+Review the replacement templates manually. The next safe implementation is `reviewed-replacement-worklist-acceptance`, which acknowledges templates as planning context only. It still does not approve rows, reject rows, export universe files, activate worklists, build snapshots, generate candidates, or perform trading automation.

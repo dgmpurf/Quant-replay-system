@@ -198,6 +198,18 @@ from quant_replay_system.reviewed_replacement_worklist_plan import build_reviewe
 from quant_replay_system.reviewed_replacement_worklist_plan_health import check_reviewed_replacement_worklist_plan_health
 from quant_replay_system.reviewed_replacement_worklist_plan_index import build_reviewed_replacement_worklist_plan_index
 from quant_replay_system.reviewed_replacement_worklist_plan_status import run_reviewed_replacement_worklist_plan_status
+from quant_replay_system.reviewed_replacement_worklist_acceptance import (
+    build_reviewed_replacement_worklist_acceptance,
+)
+from quant_replay_system.reviewed_replacement_worklist_acceptance_health import (
+    check_reviewed_replacement_worklist_acceptance_health,
+)
+from quant_replay_system.reviewed_replacement_worklist_acceptance_index import (
+    build_reviewed_replacement_worklist_acceptance_index,
+)
+from quant_replay_system.reviewed_replacement_worklist_acceptance_status import (
+    run_reviewed_replacement_worklist_acceptance_status,
+)
 from quant_replay_system.signal_advisory import build_signal_advisory_from_candidates
 from quant_replay_system.signal_advisory_health import check_signal_advisory_health
 from quant_replay_system.signal_advisory_index import build_signal_advisory_index
@@ -1147,6 +1159,102 @@ def build_parser() -> argparse.ArgumentParser:
     )
     reviewed_replacement_worklist_plan_status.set_defaults(handler=_handle_reviewed_replacement_worklist_plan_status)
 
+    reviewed_replacement_worklist_acceptance = subparsers.add_parser(
+        "reviewed-replacement-worklist-acceptance",
+        help="Acknowledge reviewed replacement templates as report-only planning context",
+    )
+    reviewed_replacement_worklist_acceptance.add_argument(
+        "--replacement-plan",
+        default=(
+            "outputs/reports/reviewed_replacement_worklist_plan/"
+            "0774d0a1fdb9/reviewed_replacement_worklist_plan.csv"
+        ),
+        help="Reviewed replacement worklist plan CSV",
+    )
+    reviewed_replacement_worklist_acceptance.add_argument("--accepted-by", required=True, help="Manual acceptor name/id")
+    reviewed_replacement_worklist_acceptance.add_argument("--accepted-at", required=True, help="Manual acceptance timestamp")
+    reviewed_replacement_worklist_acceptance.add_argument(
+        "--acceptance-reason",
+        required=True,
+        help="Manual acceptance reason for planning context",
+    )
+    reviewed_replacement_worklist_acceptance.add_argument(
+        "--manual-acceptance",
+        action="store_true",
+        help="Required explicit acknowledgement flag",
+    )
+    reviewed_replacement_worklist_acceptance.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewed_replacement_worklist_acceptance",
+        help="Reviewed replacement worklist acceptance output directory",
+    )
+    reviewed_replacement_worklist_acceptance.set_defaults(
+        handler=_handle_reviewed_replacement_worklist_acceptance
+    )
+
+    reviewed_replacement_worklist_acceptance_index = subparsers.add_parser(
+        "reviewed-replacement-worklist-acceptance-index",
+        help="Build a local index of reviewed replacement worklist acceptance artifacts",
+    )
+    reviewed_replacement_worklist_acceptance_index.add_argument(
+        "--root",
+        default="outputs/reports/reviewed_replacement_worklist_acceptance",
+        help="Reviewed replacement worklist acceptance artifact root",
+    )
+    reviewed_replacement_worklist_acceptance_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewed_replacement_worklist_acceptance/index",
+        help="Index output directory",
+    )
+    reviewed_replacement_worklist_acceptance_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include folders missing metadata.json",
+    )
+    reviewed_replacement_worklist_acceptance_index.set_defaults(
+        handler=_handle_reviewed_replacement_worklist_acceptance_index
+    )
+
+    reviewed_replacement_worklist_acceptance_health = subparsers.add_parser(
+        "reviewed-replacement-worklist-acceptance-health",
+        help="Check local reviewed replacement worklist acceptance artifact health",
+    )
+    reviewed_replacement_worklist_acceptance_health.add_argument(
+        "--root",
+        default="outputs/reports/reviewed_replacement_worklist_acceptance",
+        help="Reviewed replacement worklist acceptance artifact root",
+    )
+    reviewed_replacement_worklist_acceptance_health.add_argument(
+        "--index",
+        help="Optional replacement acceptance index CSV path",
+    )
+    reviewed_replacement_worklist_acceptance_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewed_replacement_worklist_acceptance/health",
+        help="Health output directory",
+    )
+    reviewed_replacement_worklist_acceptance_health.set_defaults(
+        handler=_handle_reviewed_replacement_worklist_acceptance_health
+    )
+
+    reviewed_replacement_worklist_acceptance_status = subparsers.add_parser(
+        "reviewed-replacement-worklist-acceptance-status",
+        help="Summarize latest local reviewed replacement worklist acceptance status",
+    )
+    reviewed_replacement_worklist_acceptance_status.add_argument(
+        "--root",
+        default="outputs/reports/reviewed_replacement_worklist_acceptance",
+        help="Reviewed replacement worklist acceptance artifact root",
+    )
+    reviewed_replacement_worklist_acceptance_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewed_replacement_worklist_acceptance/status",
+        help="Status output directory",
+    )
+    reviewed_replacement_worklist_acceptance_status.set_defaults(
+        handler=_handle_reviewed_replacement_worklist_acceptance_status
+    )
+
     pit_universe_evidence_completion_helper_index = subparsers.add_parser(
         "pit-universe-evidence-completion-helper-index",
         help="Build a local index of PIT universe evidence completion helper artifacts",
@@ -1865,6 +1973,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--reviewed-replacement-worklist-plan-root",
         help="Reviewed replacement worklist plan artifact root directory",
+    )
+    research_status.add_argument(
+        "--reviewed-replacement-worklist-acceptance-root",
+        help="Reviewed replacement worklist acceptance artifact root directory",
     )
     research_status.add_argument(
         "--advisory-profile-calibration-root",
@@ -3690,6 +3802,128 @@ def _handle_reviewed_replacement_worklist_plan_status(args: argparse.Namespace) 
     return 1 if result.status == "FAIL" else 0
 
 
+def _handle_reviewed_replacement_worklist_acceptance(args: argparse.Namespace) -> int:
+    result = build_reviewed_replacement_worklist_acceptance(
+        replacement_plan=args.replacement_plan,
+        accepted_by=args.accepted_by,
+        accepted_at=args.accepted_at,
+        acceptance_reason=args.acceptance_reason,
+        manual_acceptance=bool(args.manual_acceptance),
+        output_dir=args.output_dir,
+    )
+    print(f"acceptance_id: {result.acceptance_id}")
+    print(f"status: {result.status}")
+    print(f"replacement_plan_id: {result.replacement_plan_id}")
+    print(f"source_split_plan_id: {result.source_split_plan_id}")
+    print(f"source_policy_audit_id: {result.source_policy_audit_id}")
+    print(f"source_worklist_id: {result.source_worklist_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_core_row_count: {result.stock_core_row_count}")
+    print(f"etf_core_row_count: {result.etf_core_row_count}")
+    print(f"mixed_demo_core_row_count: {result.mixed_demo_core_row_count}")
+    print(f"profile_conflict_count: {result.profile_conflict_count}")
+    print(f"acceptance_acknowledged: {result.acceptance_acknowledged}")
+    print(f"active_worklist_mutated: {result.active_worklist_mutated}")
+    print(f"acceptance_csv_path: {result.artifact_paths['reviewed_replacement_worklist_acceptance']}")
+    print(f"accepted_replacement_worklist_stock_core_path: {result.artifact_paths['accepted_replacement_worklist_stock_core']}")
+    print(f"accepted_replacement_worklist_etf_core_path: {result.artifact_paths['accepted_replacement_worklist_etf_core']}")
+    print(
+        "accepted_replacement_worklist_mixed_demo_core_path: "
+        f"{result.artifact_paths['accepted_replacement_worklist_mixed_demo_core']}"
+    )
+    print(f"accepted_update_template_stock_core_path: {result.artifact_paths['accepted_update_template_stock_core']}")
+    print(f"accepted_update_template_etf_core_path: {result.artifact_paths['accepted_update_template_etf_core']}")
+    print(
+        "accepted_update_template_mixed_demo_core_path: "
+        f"{result.artifact_paths['accepted_update_template_mixed_demo_core']}"
+    )
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_reviewed_replacement_worklist_acceptance_index(args: argparse.Namespace) -> int:
+    result = build_reviewed_replacement_worklist_acceptance_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['reviewed_replacement_worklist_acceptance_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_reviewed_replacement_worklist_acceptance_health(args: argparse.Namespace) -> int:
+    result = check_reviewed_replacement_worklist_acceptance_health(
+        root=args.root,
+        index_path=args.index,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['reviewed_replacement_worklist_acceptance_health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_reviewed_replacement_worklist_acceptance_status(args: argparse.Namespace) -> int:
+    result = run_reviewed_replacement_worklist_acceptance_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['reviewed_replacement_worklist_acceptance_status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_acceptance_id: {result.latest_acceptance_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"replacement_plan_id: {result.replacement_plan_id}")
+    print(f"source_split_plan_id: {result.source_split_plan_id}")
+    print(f"source_policy_audit_id: {result.source_policy_audit_id}")
+    print(f"source_worklist_id: {result.source_worklist_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_core_row_count: {result.stock_core_row_count}")
+    print(f"etf_core_row_count: {result.etf_core_row_count}")
+    print(f"mixed_demo_core_row_count: {result.mixed_demo_core_row_count}")
+    print(f"profile_conflict_count: {result.profile_conflict_count}")
+    print(f"acceptance_acknowledged: {result.acceptance_acknowledged}")
+    print(f"active_worklist_mutated: {result.active_worklist_mutated}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
 def _handle_pit_universe_evidence_completion_helper_index(args: argparse.Namespace) -> int:
     result = build_pit_universe_evidence_completion_helper_index(
         root=args.root,
@@ -5265,6 +5499,14 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         )
     if args.universe_profile_policy_audit_root:
         updates["universe_profile_policy_audit_root"] = Path(args.universe_profile_policy_audit_root)
+    if args.universe_profile_split_worklist_plan_root:
+        updates["universe_profile_split_worklist_plan_root"] = Path(args.universe_profile_split_worklist_plan_root)
+    if args.reviewed_replacement_worklist_plan_root:
+        updates["reviewed_replacement_worklist_plan_root"] = Path(args.reviewed_replacement_worklist_plan_root)
+    if args.reviewed_replacement_worklist_acceptance_root:
+        updates["reviewed_replacement_worklist_acceptance_root"] = Path(
+            args.reviewed_replacement_worklist_acceptance_root
+        )
     if args.advisory_profile_calibration_root:
         updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
     if args.calibration_to_signal_semantics_root:
@@ -5309,6 +5551,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
+        reviewed_replacement_worklist_acceptance_root=args.reviewed_replacement_worklist_acceptance_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -5791,6 +6034,70 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"reviewed_replacement_worklist_plan_report_path: {result.reviewed_replacement_worklist_plan_report_path}")
     print(f"reviewed_replacement_worklist_plan_next_action: {result.reviewed_replacement_worklist_plan_next_action}")
+    print(
+        "latest_reviewed_replacement_worklist_acceptance_id: "
+        f"{result.latest_reviewed_replacement_worklist_acceptance_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_status: "
+        f"{result.reviewed_replacement_worklist_acceptance_status}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_stage: "
+        f"{result.reviewed_replacement_worklist_acceptance_stage}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_health_status: "
+        f"{result.reviewed_replacement_worklist_acceptance_health_status}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_replacement_plan_id: "
+        f"{result.reviewed_replacement_worklist_acceptance_replacement_plan_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_source_split_plan_id: "
+        f"{result.reviewed_replacement_worklist_acceptance_source_split_plan_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_source_policy_audit_id: "
+        f"{result.reviewed_replacement_worklist_acceptance_source_policy_audit_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_source_worklist_id: "
+        f"{result.reviewed_replacement_worklist_acceptance_source_worklist_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_row_count: "
+        f"{result.reviewed_replacement_worklist_acceptance_row_count}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_stock_core_row_count: "
+        f"{result.reviewed_replacement_worklist_acceptance_stock_core_row_count}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_etf_core_row_count: "
+        f"{result.reviewed_replacement_worklist_acceptance_etf_core_row_count}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_mixed_demo_core_row_count: "
+        f"{result.reviewed_replacement_worklist_acceptance_mixed_demo_core_row_count}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_acceptance_acknowledged: "
+        f"{result.reviewed_replacement_worklist_acceptance_acceptance_acknowledged}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_active_worklist_mutated: "
+        f"{result.reviewed_replacement_worklist_acceptance_active_worklist_mutated}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_report_path: "
+        f"{result.reviewed_replacement_worklist_acceptance_report_path}"
+    )
+    print(
+        "reviewed_replacement_worklist_acceptance_next_action: "
+        f"{result.reviewed_replacement_worklist_acceptance_next_action}"
+    )
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")
     print(f"advisory_profile_calibration_stage: {result.advisory_profile_calibration_stage}")

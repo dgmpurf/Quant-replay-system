@@ -1,7 +1,7 @@
 # Checkpoint and Artifact Governance
 
 > Status: working memory document  
-> Last generated: 2026-06-02  
+> Last generated: 2026-06-04  
 > Permanence: temporary; update after checkpoint policy or artifact-status semantics change.
 
 ## Checkpoint Philosophy
@@ -40,7 +40,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, and legacy mixed-demo `etf_core` artifacts.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, and replacement worklist plans that are not accepted active worklists.
 
 ## Diagnostic vs Active Artifacts
 
@@ -61,6 +61,7 @@ Plan-only workflows include:
 - `current-candidates-backfill-execution-manifest`
 - `pit-universe-overlay-plan`
 - `universe-profile-split-worklist-plan`
+- `reviewed-replacement-worklist-plan`
 - calibration-to-signal-semantics proposal reports
 
 Plan-only means no candidate generation, no snapshot build, no forward labels, no cache mutation, no messages, and no broker/order behavior.
@@ -161,6 +162,47 @@ They must not:
 
 Profile conflicts are governance context, not candidate generation failures.
 
+## Reviewed Replacement Worklist Plan Workflows
+
+Reviewed replacement worklist plan artifacts are planning-only.
+
+They may produce:
+
+- future `stock_core` replacement worklist templates;
+- future `etf_core` replacement worklist templates;
+- empty or summary `mixed_demo_core` artifacts when no rows are recommended;
+- lineage back to legacy worklist, policy audit, and split plan artifacts;
+- reviewer-facing replacement update templates.
+
+They must not:
+
+- mutate the active legacy worklist;
+- become an accepted active replacement worklist automatically;
+- approve rows;
+- reject rows;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- run current-candidates;
+- build snapshots;
+- compute forward labels.
+
+Replacement templates under `outputs/reports` are planning artifacts only until a future guarded acceptance workflow explicitly accepts them.
+
+## Future Replacement Worklist Acceptance Workflows
+
+A future replacement worklist acceptance workflow should be audited before implementation.
+
+It should require explicit manual accept flags and should preserve lineage. It must distinguish:
+
+```text
+planned replacement worklist
+accepted replacement worklist
+active legacy worklist
+active PIT review artifact
+```
+
+Acceptance must not imply approval of any PIT row or export of any universe file.
+
 ## Export-Readiness Workflows
 
 Export-readiness blocks export when there are no approved rows, evidence is missing, survivorship is unresolved, required universe columns are missing, duplicates exist, or PIT dates are invalid. It must not write `data/raw` or `data/processed`.
@@ -223,7 +265,7 @@ Rows derived from a future universe must keep survivorship-bias warnings until r
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
 
 ## When to Refresh This Document
 
@@ -233,7 +275,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- replacement worklist planning semantics are implemented;
+- replacement worklist acceptance semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.

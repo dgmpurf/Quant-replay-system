@@ -141,6 +141,10 @@ Use `reviewed-replacement-worklist-plan` to create report-only future replacemen
 
 Use `reviewed-replacement-worklist-plan-index`, `reviewed-replacement-worklist-plan-health`, and `reviewed-replacement-worklist-plan-status` to discover, safety-check, and summarize replacement-plan artifacts. `research-status` includes the latest replacement plan as planning context while preserving later paper workflow priority.
 
+Use `reviewed-replacement-worklist-acceptance` to acknowledge reviewed replacement templates as planning context only; see [docs/reviewed_replacement_worklist_acceptance.md](docs/reviewed_replacement_worklist_acceptance.md). The command requires explicit manual acceptance metadata and still does not activate worklists, approve/reject PIT rows, export universe files, run current-candidates, build snapshots, or compute labels.
+
+Use `reviewed-replacement-worklist-acceptance-index`, `reviewed-replacement-worklist-acceptance-health`, and `reviewed-replacement-worklist-acceptance-status` to discover, safety-check, and summarize acceptance artifacts. `research-status` includes acceptance context while preserving later paper workflow priority.
+
 Use `universe-profile-split-worklist-plan` to apply `config/universe_profiles.yaml` and write report-only future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_split_worklist_plan.md](docs/universe_profile_split_worklist_plan.md). The planner leaves active worklists unchanged and does not approve/reject rows, export universe files, build snapshots, run current-candidates, or compute labels.
 
 For the v1.8.0 checkpoint covering universe profile policy audit artifact views and `research-status` integration, see [docs/release_checkpoint_v1.8.0.md](docs/release_checkpoint_v1.8.0.md).
@@ -636,6 +640,10 @@ See [docs/release_checkpoint_v1.9.0.md](docs/release_checkpoint_v1.9.0.md) for t
 `v1.10.0` marks the Reviewed Replacement Worklist Planning checkpoint, covering report-only replacement templates for `stock_core`, `etf_core`, and `mixed_demo_core`, replacement-plan index/health/status views, dashboard visibility, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v1.10.0.md](docs/release_checkpoint_v1.10.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+`v1.11.0` marks the Reviewed Replacement Worklist Acceptance checkpoint, covering report-only acknowledgement of replacement templates, acceptance index/health/status views, dashboard visibility, lineage preservation, and preservation of later paper workflow priority.
+
+See [docs/release_checkpoint_v1.11.0.md](docs/release_checkpoint_v1.11.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 
