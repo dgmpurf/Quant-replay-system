@@ -149,6 +149,16 @@ The status command summarizes the latest ingestion run with stages such as:
 
 Status remains context only. `READY_FOR_REVIEW_APPLY` means a clean local review-updates file exists for a later explicit manual `pit-universe-overlay-review` run; it does not apply approval.
 
+## Strict Checklist Validation
+
+After ingestion creates or blocks clean review updates, use `pit-evidence-checklist-validator` to compare completed or draft rows against the strict `stock_core` and `etf_core` evidence checklists:
+
+```cmd
+python -m quant_replay_system.cli pit-evidence-checklist-validator --completed-updates outputs\reports\manual_diagnostics\codex_pit_evidence_gap_closure_v0_2\combined_approval_candidate_updates.csv --stock-checklist outputs\reports\manual_diagnostics\pit_strict_evidence_checklist_v0_3\stock_core_strict_evidence_checklist.csv --etf-checklist outputs\reports\manual_diagnostics\pit_strict_evidence_checklist_v0_3\etf_core_strict_evidence_checklist.csv --source-acceptance outputs\reports\manual_diagnostics\pit_strict_evidence_checklist_v0_3\source_acceptance_matrix.csv
+```
+
+The checklist validator is report-only. It can produce an approval-candidate preview, but it does not apply approval, rerun PIT overlay review, run export readiness, stage or export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute forward labels, or mutate cache. See [pit_evidence_checklist_validator.md](pit_evidence_checklist_validator.md).
+
 ## Research Status
 
 `research-status` includes the latest `pit-universe-evidence-update-ingestion-status` as PIT universe evidence-preparation context. The dashboard exposes the latest ingestion id, status/stage, health status, row count, ready-for-review-update count, blocked count, approval-request count, approved-ready count, duplicate identity count, suggested-copy-risk count, report path, clean review-updates path, and next manual action.

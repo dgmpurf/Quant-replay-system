@@ -12,6 +12,7 @@ from quant_replay_system.local_research_dashboard import (
     infer_local_research_workflow_stage,
     run_local_research_dashboard,
 )
+from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 
 
@@ -1222,6 +1223,100 @@ def test_cli_research_status_prints_pit_universe_evidence_update_ingestion_field
     ) in output.out
     assert "pit_universe_evidence_update_ingestion_ready_for_review_update_count: 0" in output.out
     assert "pit_universe_evidence_update_ingestion_blocked_count: 72" in output.out
+
+
+def test_dashboard_includes_pit_evidence_checklist_validator_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_evidence_checklist_validator_artifact(root, validator_id="validator-blocked")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_evidence_checklist_validator_id == "validator-blocked"
+    assert result.pit_evidence_checklist_validator_status == "WARN"
+    assert result.pit_evidence_checklist_validator_stage == "PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED"
+    assert result.pit_evidence_checklist_validator_health_status == "PASS"
+    assert result.pit_evidence_checklist_validator_row_count == 16
+    assert result.pit_evidence_checklist_validator_checklist_pass_count == 0
+    assert result.pit_evidence_checklist_validator_blocked_count == 16
+    assert result.pit_evidence_checklist_validator_stock_core_blocked_count == 8
+    assert result.pit_evidence_checklist_validator_etf_core_blocked_count == 8
+    assert result.workflow_stage == "PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED"
+    assert row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_evidence_checklist_validator(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_evidence_checklist_validator_artifact(root, validator_id="validator-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_evidence_checklist_validator_id == "validator-paper-context"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
+
+
+def test_dashboard_exports_pit_evidence_checklist_validator_fields_to_summary_and_metadata(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_evidence_checklist_validator_artifact(root, validator_id="validator-summary")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    exported = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    row = exported.iloc[0].to_dict()
+
+    assert row["latest_pit_evidence_checklist_validator_id"] == "validator-summary"
+    assert row["pit_evidence_checklist_validator_status"] == "WARN"
+    assert row["pit_evidence_checklist_validator_stage"] == "PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED"
+    assert row["pit_evidence_checklist_validator_health_status"] == "PASS"
+    assert row["pit_evidence_checklist_validator_row_count"] == "16"
+    assert row["pit_evidence_checklist_validator_checklist_pass_count"] == "0"
+    assert row["pit_evidence_checklist_validator_blocked_count"] == "16"
+    assert row["pit_evidence_checklist_validator_stock_core_blocked_count"] == "8"
+    assert row["pit_evidence_checklist_validator_etf_core_blocked_count"] == "8"
+    assert metadata["latest_pit_evidence_checklist_validator_id"] == "validator-summary"
+    assert metadata["pit_evidence_checklist_validator_blocked_count"] == 16
+    assert metadata["component_statuses"]["latest_pit_evidence_checklist_validator_id"] == "validator-summary"
+
+
+def test_cli_research_status_prints_pit_evidence_checklist_validator_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_evidence_checklist_validator_artifact(root, validator_id="validator-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_evidence_checklist_validator_id: validator-cli" in output.out
+    assert "pit_evidence_checklist_validator_status: WARN" in output.out
+    assert "pit_evidence_checklist_validator_stage: PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED" in output.out
+    assert "pit_evidence_checklist_validator_health_status: PASS" in output.out
+    assert "pit_evidence_checklist_validator_blocked_count: 16" in output.out
 
 
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
@@ -5693,6 +5788,140 @@ def _pit_universe_evidence_update_ingestion_status(
             "network_api_called": False,
             "llm_api_called": False,
             "pit_universe_evidence_update_ingestion_artifacts_only": True,
+        },
+    )
+    return folder
+
+
+def _pit_evidence_checklist_validator_artifact(
+    root: Path,
+    *,
+    validator_id: str = "validator-a",
+    status: str = "WARN",
+    row_count: int = 16,
+    checklist_pass_count: int = 0,
+    blocked_count: int = 16,
+    stock_core_blocked_count: int = 8,
+    etf_core_blocked_count: int = 8,
+) -> Path:
+    folder = root / "pit_evidence_checklist_validator" / validator_id
+    folder.mkdir(parents=True, exist_ok=True)
+    validation_csv = folder / "pit_evidence_checklist_validation.csv"
+    summary_csv = folder / "pit_evidence_checklist_validation_summary.csv"
+    missing_csv = folder / "missing_evidence_matrix.csv"
+    preview_csv = folder / "approval_candidate_preview.csv"
+    report = folder / "report.md"
+    metadata = folder / "metadata.json"
+    pd.DataFrame(
+        [
+            {
+                "validator_id": validator_id,
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "universe_name": "stock_core",
+                "profile": "stock_core",
+                "review_status": "NEEDS_MORE_EVIDENCE",
+                "checklist_status": "CHECKLIST_BLOCKED_MISSING_EVIDENCE",
+                "checklist_pass": False,
+                "blocked": True,
+                "blocker_reason": "missing evidence",
+                "missing_required_fields": "is_active_evidence",
+                "unacceptable_source_fields": "",
+                "pit_timing_blocker": True,
+                "survivorship_blocker": True,
+                "stock_st_blocker": True,
+                "no_approval_applied": True,
+                "no_universe_export": True,
+                "no_data_raw_write": True,
+                "no_data_processed_write": True,
+                "no_current_candidates_generated": True,
+                "no_snapshot_built": True,
+                "no_forward_labels": True,
+                "no_live_trading": True,
+                "no_broker_api": True,
+                "no_order_placement": True,
+                "no_message_sent": True,
+                "checklist_validation_only": True,
+            }
+        ],
+        columns=VALIDATION_COLUMNS,
+    ).to_csv(validation_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "validator_id": validator_id,
+                "status": status,
+                "row_count": row_count,
+                "checklist_pass_count": checklist_pass_count,
+                "blocked_count": blocked_count,
+                "stock_core_blocked_count": stock_core_blocked_count,
+                "etf_core_blocked_count": etf_core_blocked_count,
+                "missing_evidence_count": blocked_count,
+                "unacceptable_source_count": 0,
+                "pit_timing_blocked_count": blocked_count,
+                "survivorship_blocked_count": blocked_count,
+                "stock_st_blocked_count": stock_core_blocked_count,
+            }
+        ],
+        columns=SUMMARY_COLUMNS,
+    ).to_csv(summary_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "validator_id": validator_id,
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "universe_name": "stock_core",
+                "field_name": "is_active_evidence",
+                "issue_code": "MISSING_REQUIRED_EVIDENCE",
+                "issue_message": "is_active_evidence is required.",
+                "acceptable_sources": "official",
+                "notes": "",
+            }
+        ]
+    ).to_csv(missing_csv, index=False)
+    pd.DataFrame().to_csv(preview_csv, index=False)
+    report.write_text("No approval applied. No universe export. No current-candidates were run.", encoding="utf-8")
+    _write_json(
+        metadata,
+        {
+            "validator_id": validator_id,
+            "created_at": "2026-06-04T10:00:00+08:00",
+            "status": status,
+            "row_count": row_count,
+            "checklist_pass_count": checklist_pass_count,
+            "blocked_count": blocked_count,
+            "stock_core_blocked_count": stock_core_blocked_count,
+            "etf_core_blocked_count": etf_core_blocked_count,
+            "output_files": {
+                "validation_csv": str(validation_csv),
+                "summary_csv": str(summary_csv),
+                "missing_evidence_matrix": str(missing_csv),
+                "approval_candidate_preview": str(preview_csv),
+                "report": str(report),
+                "metadata": str(metadata),
+            },
+            "no_approval_applied": True,
+            "no_universe_export": True,
+            "no_data_raw_write": True,
+            "no_data_processed_write": True,
+            "no_current_candidates_generated": True,
+            "no_snapshot_built": True,
+            "no_forward_labels": True,
+            "no_live_trading": True,
+            "no_broker_api": True,
+            "no_order_placement": True,
+            "no_message_sent": True,
+            "checklist_validation_only": True,
+            "would_write_data_raw": False,
+            "would_write_data_processed": False,
+            "current_candidates_executed": False,
+            "snapshot_manifest_built": False,
+            "forward_returns_computed": False,
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+            "order_placement_enabled": False,
+            "message_sent": False,
         },
     )
     return folder

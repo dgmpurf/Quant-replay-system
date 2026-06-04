@@ -129,6 +129,10 @@ Use `pit-universe-evidence-update-ingestion` to validate a reviewer-completed wo
 
 Use `pit-universe-evidence-update-ingestion-index`, `pit-universe-evidence-update-ingestion-health`, and `pit-universe-evidence-update-ingestion-status` to discover, safety-check, and summarize evidence update ingestion artifacts. `research-status` includes the latest ingestion context, including ready-for-review-update counts, blocked counts, clean review-updates path, suggested-copy-risk counts, and local-only safety flags, while preserving later paper workflow priority.
 
+Use `pit-evidence-checklist-validator` to compare completed or draft PIT evidence update rows against strict `stock_core` and `etf_core` evidence checklists before any explicit overlay review; see [docs/pit_evidence_checklist_validator.md](docs/pit_evidence_checklist_validator.md). The validator can produce an approval-candidate preview, but it does not apply approval, rerun PIT review, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute labels, send messages, or place orders.
+
+Use `pit-evidence-checklist-validator-index`, `pit-evidence-checklist-validator-health`, and `pit-evidence-checklist-validator-status` to discover, safety-check, and summarize strict checklist artifacts. `research-status` includes the latest validator context, including checklist-pass and blocked counts by profile, while preserving later paper workflow priority.
+
 Use `universe-profile-policy-audit` to classify local universe labels such as legacy mixed `etf_core`, report STOCK/ETF distribution, and produce future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_policy_audit.md](docs/universe_profile_policy_audit.md). The audit is report-only and does not approve/reject rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
 
 Use `universe-profile-policy-audit-index`, `universe-profile-policy-audit-health`, and `universe-profile-policy-audit-status` to discover, safety-check, and summarize universe profile policy audit artifacts. `research-status` includes this policy context, including mixed-universe and split-guidance counts, while preserving later paper workflow priority.
@@ -164,6 +168,8 @@ For the v1.5.0 checkpoint covering PIT universe export staging artifact views an
 For the v1.6.0 checkpoint covering PIT universe evidence review worklist artifact views and `research-status` integration, see [docs/release_checkpoint_v1.6.0.md](docs/release_checkpoint_v1.6.0.md).
 
 For the v1.13.0 checkpoint covering activated replacement worklist evidence update planning and `research-status` integration, see [docs/release_checkpoint_v1.13.0.md](docs/release_checkpoint_v1.13.0.md).
+
+For the v1.14.0 checkpoint covering PIT evidence checklist validation, artifact views, and `research-status` integration, see [docs/release_checkpoint_v1.14.0.md](docs/release_checkpoint_v1.14.0.md).
 
 For the v1.7.0 checkpoint covering PIT universe evidence update ingestion artifact views and `research-status` integration, see [docs/release_checkpoint_v1.7.0.md](docs/release_checkpoint_v1.7.0.md).
 

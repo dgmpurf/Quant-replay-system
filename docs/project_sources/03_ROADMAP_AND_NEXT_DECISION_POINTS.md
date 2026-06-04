@@ -27,6 +27,7 @@ The project is now a broad local research system with:
 - reviewed replacement worklist planning;
 - reviewed replacement worklist acceptance;
 - guarded reviewed replacement worklist activation;
+- activated replacement worklist evidence update planning;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -53,12 +54,13 @@ Completed or largely complete:
 - reviewed replacement worklist plan;
 - reviewed replacement worklist acceptance;
 - guarded reviewed replacement worklist activation;
+- activated replacement worklist evidence update plan;
 - index / health / status and research-status integration for these stages.
 
-Current reviewed replacement worklist activation state:
+Current activated replacement evidence update planning state:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_ACTIVATED_AS_PLANNING_CONTEXT
+ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_READY
 ```
 
 Latest known state:
@@ -75,6 +77,7 @@ split_plan_id: db2c09268c14
 replacement_plan_id: 0774d0a1fdb9
 acceptance_id: c723c0c476b1
 activation_id: a8e74161f9bb
+evidence_update_plan_id: 4e268d67bd7d
 
 approved rows: 0
 export-ready rows: 0
@@ -94,55 +97,74 @@ mixed_demo_core replacement rows: 0
 active legacy worklist mutated: false
 acceptance acknowledged: true
 activation planning context created: true
+stock_core evidence package rows: 56
+etf_core evidence package rows: 16
+stock_core first-batch rows: 8
+etf_core first-batch rows: 8
+clean_review_updates_created: false
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Activated Replacement Worklist Evidence Update Planning
+### Branch: Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation
 
 Suggested sequence:
 
-1. Read-only audit for activated replacement worklist evidence update planning.
-2. Define how activated stock_core and etf_core templates should be used for manual PIT evidence work.
-3. Decide whether to generate profile-specific evidence work packages, diagnostics-only templates, or both.
-4. Keep current active legacy `etf_core` worklist unchanged.
-5. Do not approve/reject rows.
-6. Do not export universe files.
-7. Do not run current-candidates or snapshot workflows.
-8. If implementation proceeds later, add index / health / status and research-status integration.
-9. Checkpoint.
+1. Read-only / diagnostics-first evidence discovery for the generated first-batch packages.
+2. Prefer Codex-side automation for any manual-looking step.
+3. Search local artifacts first.
+4. If browser/web/plugin access is available, use light public official source discovery.
+5. Record evidence URLs / files / source type / fetch time / PIT suitability.
+6. Generate draft completed update CSVs only when evidence is actually found.
+7. Keep draft rows non-applied and diagnostics-only.
+8. Run `pit-universe-evidence-update-ingestion` against draft updates in a diagnostics output directory.
+9. Report ready/blocked rows.
+10. Do not run PIT review application, export-readiness, staging, snapshot, or current-candidates in this branch.
 
-Do not skip directly to accepted universe export or multi-date candidate generation.
-
-## What Activated Replacement Evidence Planning Must Solve
+## What Evidence Discovery Must Solve
 
 It should answer:
 
-- Should future evidence update work start from the activated stock_core and etf_core templates rather than the legacy `etf_core` worklist?
-- What fields should profile-specific update templates preserve?
-- How should activated templates preserve lineage to legacy worklist, policy audit, split plan, replacement plan, acceptance, and activation artifacts?
-- Should stock_core and etf_core evidence update planning happen separately?
-- Should the system generate first-batch evidence packs per profile?
-- How should research-status distinguish activated planning context from actual clean review updates?
-- How should the system prevent activated templates from being treated as approved PIT rows or current-candidates universe input?
+- Which first-batch stock_core rows are easiest to evidence?
+- Which first-batch etf_core rows are easiest to evidence?
+- Which fields can be supported by local artifacts?
+- Which fields require public official evidence?
+- Which fields remain impossible or unsafe without user intervention?
+- Which evidence is point-in-time safe?
+- Which evidence is only current/future-dated context?
+- Can Codex produce a draft completed update CSV that passes ingestion for at least one row?
+- If not, which exact blockers remain?
 
-## After Activated Replacement Evidence Planning
+## Current Preference for Manual Steps
 
-### 1. Real Evidence Completion on Correct Profile
+The user prefers that Codex automate evidence preparation whenever possible.
 
-Use activated replacement worklist templates to fill real evidence for the appropriate profile:
+Default handling:
 
 ```text
-stock_core for STOCK symbols
-etf_core for ETF symbols
-mixed_demo_core only for demo/mixed work
+If a step looks manual, first try to make Codex do it as:
+local evidence discovery
+public source discovery
+source checklist generation
+draft update CSV generation
+diagnostics-only validation
 ```
 
-### 2. Evidence Update Ingestion
+User intervention should be required only for:
 
-Use reviewer-supplied completed update CSVs to run:
+- credentials;
+- CAPTCHA/login/paywall;
+- final acceptance of evidence sufficiency;
+- subjective judgment;
+- explicit approval/export/activation decisions.
+
+## After Evidence Discovery and Draft Update Validation
+
+### 1. Evidence Update Ingestion
+
+Use reviewer-supplied or Codex-drafted completed update CSVs to run:
 
 ```text
 pit-universe-evidence-update-ingestion
@@ -154,7 +176,7 @@ Expected safe outcomes:
 - ready clean review updates only when reviewer fields, PIT dates, metadata, and evidence pass validation;
 - no approval applied automatically.
 
-### 3. Rerun Review / Export-Readiness / Staging
+### 2. Rerun Review / Export-Readiness / Staging
 
 Only with validated real review updates:
 
@@ -171,7 +193,7 @@ Expected safe outcomes:
 - staging blocked until export-ready rows exist;
 - no `data/raw` / `data/processed` write.
 
-### 4. Accepted PIT Universe Export Workflow
+### 3. Accepted PIT Universe Export Workflow
 
 Only after real export-ready rows exist.
 
@@ -186,7 +208,7 @@ Scope should remain:
 - no broker;
 - no cache mutation.
 
-### 5. Per-Date Snapshot Manifest Preparation
+### 4. Per-Date Snapshot Manifest Preparation
 
 Only after accepted PIT universe inputs exist.
 
@@ -198,7 +220,7 @@ Need to prepare or verify:
 - snapshot manifest;
 - snapshot-quality status.
 
-### 6. Current-Candidates Backfill Runner
+### 5. Current-Candidates Backfill Runner
 
 Only after reviewed healthy plan/manifest and accepted PIT universe input exist.
 
@@ -210,7 +232,7 @@ Scope should remain:
 - no broker;
 - no cache mutation.
 
-### 7. Forward Return Label Dataset
+### 6. Forward Return Label Dataset
 
 Only after multi-date candidates exist.
 
@@ -242,6 +264,7 @@ Do not yet:
 - treat reviewed replacement worklist plans as accepted active replacement worklists;
 - treat reviewed replacement acceptance as activation;
 - treat reviewed replacement activation as PIT row approval or usable universe input;
+- treat activated evidence update plans or evidence packages as clean review updates;
 - export PIT universe input without real approved/export-ready rows;
 - write `data/raw` or `data/processed` from PIT staging;
 - run current-candidates backfill without reviewed/exported PIT universe rows;

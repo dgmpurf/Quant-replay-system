@@ -51,7 +51,8 @@ Multi-Date Evidence Preparation
   ├─ universe-profile-split-worklist-plan
   ├─ reviewed-replacement-worklist-plan
   ├─ reviewed-replacement-worklist-acceptance
-  └─ reviewed-replacement-worklist-activation
+  ├─ reviewed-replacement-worklist-activation
+  └─ activated-replacement-worklist-evidence-update-plan
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -108,7 +109,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Staging, Universe Profile Governance, Replacement Planning, Acceptance, and Activation
+### Multi-Date Candidate Planning, PIT Universe Review, Staging, Universe Profile Governance, Replacement Planning, Acceptance, Activation, and Evidence Planning
 
 ```text
 market cache coverage
@@ -128,6 +129,7 @@ market cache coverage
 → reviewed replacement worklist plan
 → reviewed replacement worklist acceptance
 → reviewed replacement worklist activation
+→ activated replacement worklist evidence update plan
 → index / health / status
 → research-status
 ```
@@ -135,10 +137,10 @@ market cache coverage
 Current active preparation state:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_ACTIVATED_AS_PLANNING_CONTEXT
+ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_READY
 ```
 
-The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, or live trades.
+The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real review updates, or live trades.
 
 ## Important Data Contracts
 
@@ -212,51 +214,62 @@ POLICY_AMBIGUOUS_DEMO_MIXED_UNIVERSE
 
 They should not be mutated in place.
 
-### Reviewed Replacement Worklist Plan Fields
+### Replacement / Acceptance / Activation Fields
 
-Replacement worklist planning is report-only and should preserve:
+Replacement planning, acceptance, and activation are all outputs-only planning context.
+
+They preserve lineage to:
 
 ```text
-replacement_plan_id, source_worklist_id, source_policy_audit_id, source_split_plan_id,
-source_universe_name, recommended_future_universe, signal_date, symbol,
-resolved_instrument_type, current_review_status, replacement_review_status,
-include_flag, valid_for_signal_date, survivorship_bias_warning,
-survivorship_bias_resolved, legacy_classification, profile_rule_applied,
-profile_conflict, evidence_gap_summary, required_next_evidence_fields,
-suggested_next_review_action, should_mutate_active_worklist=false,
-should_approve=false, should_reject=false, plan_only=true
+legacy_worklist_id
+policy_audit_id
+split_plan_id
+replacement_plan_id
+acceptance_id
+activation_id
 ```
 
-Replacement plans create future templates under `outputs/reports` only. They are not active review artifacts and do not replace the active legacy worklist.
-
-### Reviewed Replacement Worklist Acceptance Fields
-
-Replacement acceptance is a report-only planning acknowledgement. It should preserve:
+They must preserve safety flags:
 
 ```text
-acceptance_id, replacement_plan_id, policy_audit_id, split_plan_id,
-legacy_worklist_id, accepted_by, accepted_at, acceptance_reason,
-acceptance_acknowledged=true, active_worklist_mutated=false,
-should_activate=false, should_approve=false, should_reject=false,
-no_universe_export=true, no_data_raw_write=true, no_data_processed_write=true,
-plan_only=true, acceptance_only=true
-```
-
-Acceptance artifacts acknowledge replacement templates as reviewed planning context only. They do not activate a worklist, approve PIT rows, reject rows, or export universe files.
-
-### Reviewed Replacement Worklist Activation Fields
-
-Replacement activation is still planning context, not a usable universe input. It should preserve:
-
-```text
-activation_id, acceptance_id, replacement_plan_id, policy_audit_id, split_plan_id,
-legacy_worklist_id, stock_core_row_count, etf_core_row_count, mixed_demo_core_row_count,
-active_worklist_mutated=false, should_approve=false, should_reject=false,
-no_universe_export=true, no_data_raw_write=true, no_data_processed_write=true,
-plan_only=true, activation_only=true
+active_worklist_mutated=false
+should_approve=false
+should_reject=false
+no_universe_export=true
+no_data_raw_write=true
+no_data_processed_write=true
+plan_only=true
 ```
 
 Activation artifacts may produce activated replacement templates under `outputs/reports`, but they must not mutate the active legacy worklist or imply PIT approval/export.
+
+### Activated Replacement Evidence Update Plan Fields
+
+Activated replacement evidence update planning is report-only and should preserve:
+
+```text
+plan_id, activation_id, acceptance_id, replacement_plan_id, split_plan_id,
+policy_audit_id, legacy_worklist_id, recommended_future_universe,
+signal_date, symbol, resolved_instrument_type, review_status,
+include_flag=false, valid_for_signal_date=false,
+survivorship_bias_resolved=false, manual_review_required=true,
+evidence_gap_summary, required_next_evidence_fields,
+suggested_next_review_action, hint_authoritative_for_pit=false,
+clean_review_updates_created=false, no_universe_export=true,
+no_data_raw_write=true, no_data_processed_write=true,
+no_current_candidates_generated=true, no_snapshot_built=true,
+no_forward_labels=true, plan_only=true
+```
+
+Evidence update plans may produce profile-specific worklists and update templates for:
+
+```text
+stock_core
+etf_core
+mixed_demo_core
+```
+
+They are not clean `review_updates.csv` artifacts and must not be fed directly as applied approvals.
 
 ### PIT Evidence Update Ingestion Fields
 
@@ -293,18 +306,20 @@ Split-worklist plan: 56 future stock_core rows, 16 future etf_core rows, 0 mixed
 Reviewed replacement worklist plan: 56 stock_core replacement rows, 16 etf_core replacement rows, 0 mixed_demo_core rows, active legacy worklist untouched
 Reviewed replacement worklist acceptance: acknowledged as planning context, active legacy worklist untouched
 Reviewed replacement worklist activation: activation planning context, 56 stock_core rows, 16 etf_core rows, active legacy worklist untouched
+Activated replacement evidence update plan: 56 stock_core rows, 16 etf_core rows, 0 mixed_demo_core rows, stock first batch 8 rows, ETF first batch 8 rows, no clean review updates
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Activated Replacement Worklist Evidence Update Planning Read-only Audit v0.1
+Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation v0.1
 ```
 
 Purpose:
 
-- inspect how activated stock_core and etf_core planning templates should be used for manual PIT evidence update work;
-- decide whether to create profile-specific evidence work packages or only diagnostics;
-- keep the branch read-only before any implementation.
+- use Codex to perform local and public evidence discovery for first-batch stock_core / etf_core rows;
+- create evidence source records and draft completed update CSVs if evidence is found;
+- run diagnostics-only `pit-universe-evidence-update-ingestion` validation;
+- keep the branch diagnostics-only before any applied PIT review.
 
-Do not skip directly to accepted universe export, snapshot preparation, or current-candidates backfill runner.
+Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.

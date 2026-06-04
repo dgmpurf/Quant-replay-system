@@ -48,6 +48,7 @@ It is not a live trading system.
 - Reviewed replacement worklist planning.
 - Reviewed replacement worklist acceptance.
 - Guarded reviewed replacement worklist activation.
+- Activated replacement worklist evidence update planning.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -119,6 +120,7 @@ split_plan_id: db2c09268c14
 replacement_plan_id: 0774d0a1fdb9
 acceptance_id: c723c0c476b1
 activation_id: a8e74161f9bb
+evidence_update_plan_id: 4e268d67bd7d
 ```
 
 Current counts:
@@ -150,23 +152,31 @@ reviewed replacement mixed_demo_core rows: 0
 reviewed replacement acceptance acknowledged: true
 reviewed replacement activation planning context created: true
 active legacy worklist mutated: false
+
+activated evidence update planning:
+stock_core evidence rows: 56
+etf_core evidence rows: 16
+mixed_demo_core evidence rows: 0
+stock_core first batch rows: 8
+etf_core first batch rows: 8
+clean_review_updates_created: false
 ```
 
-Current reviewed replacement worklist activation stage:
+Current activated replacement evidence update planning stage:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_ACTIVATED_AS_PLANNING_CONTEXT
+ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_READY
 ```
 
 Meaning:
 
-The project has moved from “replacement templates acknowledged as planning context” to “replacement stock_core and etf_core templates are activated as planning context for future evidence work.”
+The project has moved from “replacement stock_core and etf_core templates are activated as planning context” to “profile-specific evidence update packages and first-batch packages exist as planning context.”
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-Activation artifacts exist under `outputs/reports`, but they are not PIT-approved rows, not exported universe files, and not current-candidates universe input.
+Activated evidence update plan artifacts exist under `outputs/reports`, but they are not clean `review_updates.csv`, not PIT-approved rows, not exported universe files, and not current-candidates universe input.
 
-The next blocker is designing how manual evidence updates should be prepared and validated against the activated stock_core and etf_core templates.
+The next blocker is Codex-driven evidence discovery and draft update validation for the generated stock_core / etf_core first-batch packages.
 
 ## Current External Data Strategy
 
@@ -186,15 +196,15 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Activated Replacement Worklist Evidence Update Planning Read-only Audit v0.1
+Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation v0.1
 ```
 
 Purpose:
 
-- inspect how activated replacement worklist templates should be used for manual evidence update work;
-- decide whether to create stock_core / etf_core evidence update planning packages;
-- preserve lineage from legacy worklist, policy audit, split plan, replacement plan, acceptance, and activation artifacts;
-- keep active legacy worklist unchanged;
+- inspect local artifacts for evidence that can support first-batch stock_core / etf_core rows;
+- optionally use browser/web/plugin access for light official/public evidence discovery if available;
+- create evidence source records and draft completed update CSVs only when evidence exists;
+- run diagnostics-only evidence update ingestion validation;
 - avoid automatic approval, rejection, export, or candidate generation.
 
 Do not yet:
@@ -227,9 +237,10 @@ Recent milestone direction:
 - v1.10.0: reviewed replacement worklist planning.
 - v1.11.0: reviewed replacement worklist acceptance.
 - v1.12.0: guarded reviewed replacement worklist activation.
+- v1.13.0: activated replacement worklist evidence update planning.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Activated Replacement Worklist Evidence Update Planning Read-only Audit v0.1.
+Give me Codex tasks for Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation v0.1.
 ```

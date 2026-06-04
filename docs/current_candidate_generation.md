@@ -133,6 +133,14 @@ python -m quant_replay_system.cli pit-universe-evidence-update-ingestion --compl
 
 The ingestion validator writes reports and a clean review-update CSV under `outputs/reports` only. It does not apply approvals, rerun `pit-universe-overlay-review`, export universe files, build snapshots, run current-candidates, compute labels, mutate cache, or place orders. See [point_in_time_universe_evidence_update_ingestion.md](point_in_time_universe_evidence_update_ingestion.md).
 
+Before applying any PIT overlay review, use `pit-evidence-checklist-validator` to validate completed or draft evidence rows against strict stock/ETF checklists:
+
+```cmd
+python -m quant_replay_system.cli pit-evidence-checklist-validator --completed-updates outputs\reports\manual_diagnostics\codex_pit_evidence_gap_closure_v0_2\combined_approval_candidate_updates.csv --stock-checklist outputs\reports\manual_diagnostics\pit_strict_evidence_checklist_v0_3\stock_core_strict_evidence_checklist.csv --etf-checklist outputs\reports\manual_diagnostics\pit_strict_evidence_checklist_v0_3\etf_core_strict_evidence_checklist.csv --source-acceptance outputs\reports\manual_diagnostics\pit_strict_evidence_checklist_v0_3\source_acceptance_matrix.csv
+```
+
+The checklist validator can create a local approval-candidate preview, but it still does not approve rows, export universe files, build snapshots, run current-candidates, compute forward labels, mutate cache, or place orders. See [pit_evidence_checklist_validator.md](pit_evidence_checklist_validator.md).
+
 Before approving additional PIT evidence rows from legacy mixed artifacts, use `universe-profile-policy-audit` to check whether `universe_name` semantics are clear:
 
 ```cmd

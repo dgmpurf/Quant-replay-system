@@ -17,6 +17,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a PIT universe overlay plan produced manual-review rows for point-in-time universe preparation?
 - Has a reviewed PIT universe overlay workflow approved rows or identified evidence gaps?
 - Has a PIT universe evidence update ingestion run validated reviewer-completed updates into clean review-updates rows?
+- Has a PIT evidence checklist validator checked strict stock/ETF evidence completeness before any approval review?
 - Has an activated replacement worklist produced profile-specific manual evidence update packages?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
@@ -56,6 +57,7 @@ outputs/reports/point_in_time_universe_export_staging/status/
 outputs/reports/point_in_time_universe_evidence_completion_helper/status/
 outputs/reports/point_in_time_universe_evidence_review_worklist/status/
 outputs/reports/point_in_time_universe_evidence_update_ingestion/status/
+outputs/reports/pit_evidence_checklist_validator/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -203,6 +205,16 @@ The unified summary records the latest ingestion id, ingestion status/stage, hea
 When the status reports `PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES`, the dashboard treats the warning as expected reviewable PIT universe preparation work. It means reviewer updates did not produce any clean rows for a later manual overlay-review run; it does not mean approval failed, because no approval was applied. `PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_PARTIAL_READY` and `PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_READY_FOR_REVIEW_APPLY` still require a separate explicit `pit-universe-overlay-review` run.
 
 PIT universe evidence update ingestion is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to ingestion status; ingestion fields remain visible for audit. If ingestion health fails because clean review updates include blocked rows, count consistency breaks, required files are missing, approval is claimed, data writes are claimed, current-candidates were generated, snapshots were built, forward labels were computed, or unsafe trading flags appear, `research-status` surfaces the failure as actionable when this layer is active.
+
+## PIT Evidence Checklist Validator Status
+
+`research-status` includes `pit-evidence-checklist-validator-status` as strict PIT evidence quality-gate context when those artifacts exist.
+
+The unified summary records the latest validator id, validator status/stage, health status, row count, checklist-pass count, blocked count, `stock_core` blocked count, `etf_core` blocked count, report path, and the validator layer's next manual action. This is checklist-validation-only context: it does not apply approval, rerun `pit-universe-overlay-review`, export universe files, write `data/raw`, write `data/processed`, run current-candidates, build snapshots, compute forward labels, mutate cache, call APIs, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED`, the dashboard treats the warning as expected reviewable PIT evidence work. It means strict evidence is still missing or blocked by PIT timing, ST/no-ST, active/not-delisted, survivorship, or source-acceptance checks. It does not mean candidate generation failed, because no candidate generation was run. When the status reports `PIT_EVIDENCE_CHECKLIST_VALIDATION_HAS_APPROVAL_CANDIDATES`, rows are only preview candidates for a later explicit manual review workflow.
+
+PIT evidence checklist validation is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to checklist validation; validator fields remain visible for audit. If validator health fails because files are missing, required columns are missing, approval/export/data-write/current-candidates/snapshot/forward-label/trading safety flags are violated, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Universe Profile Policy Audit Status
 

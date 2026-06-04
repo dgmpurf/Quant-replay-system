@@ -2,8 +2,8 @@
 
 > Status: working memory document  
 > Last generated: 2026-06-04  
-> Intended use: replace previous Project Source Pack after v1.12.0 reviewed replacement worklist activation checkpoint.  
-> Permanence: temporary and replaceable. Refresh when the project changes stage.
+> Intended use: replace previous Project Source Pack after v1.13.0 activated replacement worklist evidence update planning checkpoint.  
+> Permanence: temporary and replaceable. Refresh only after major checkpoint / stage changes, not after every small audit.
 
 ## Purpose
 
@@ -30,6 +30,7 @@ This pack is based on:
 - v1.10.0 reviewed replacement worklist planning;
 - v1.11.0 reviewed replacement worklist acceptance;
 - v1.12.0 guarded reviewed replacement worklist activation;
+- v1.13.0 activated replacement worklist evidence update planning;
 - China A-share event-driven and industry-chain factor taxonomy sources.
 
 ## Accuracy Note
@@ -40,7 +41,7 @@ Many local outputs under `outputs/`, `data/raw/`, `data/cache`, and `data/proces
 
 ## Current Project Source Set
 
-Replace these after v1.12.0:
+Replace these after v1.13.0:
 
 ```text
 00_PROJECT_SOURCE_INDEX.md
@@ -64,7 +65,7 @@ FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
 
 ## Current Project State Summary
 
-The project has reached a guarded reviewed replacement worklist activation checkpoint:
+The project has reached an activated replacement worklist evidence update planning checkpoint:
 
 ```text
 local market data / reviewed exports / quality gates
@@ -86,13 +87,14 @@ local market data / reviewed exports / quality gates
 → reviewed replacement worklist plan
 → reviewed replacement worklist acceptance
 → guarded reviewed replacement worklist activation
+→ activated replacement worklist evidence update plan
 → index / health / status / research-status context
 ```
 
-Current reviewed replacement worklist activation state:
+Current activated replacement worklist evidence update planning state:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_ACTIVATED_AS_PLANNING_CONTEXT
+ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_READY
 ```
 
 Latest known active / planning artifacts:
@@ -109,6 +111,7 @@ split_plan_id: db2c09268c14
 replacement_plan_id: 0774d0a1fdb9
 acceptance_id: c723c0c476b1
 activation_id: a8e74161f9bb
+evidence_update_plan_id: 4e268d67bd7d
 
 approved rows: 0
 export-ready rows: 0
@@ -128,6 +131,14 @@ future mixed_demo_core rows: 0
 active legacy worklist mutated: false
 acceptance_acknowledged: true
 activation_created_as_planning_context: true
+
+activated evidence update plan:
+  stock_core rows: 56
+  etf_core rows: 16
+  mixed_demo_core rows: 0
+  stock first-batch package rows: 8
+  ETF first-batch package rows: 8
+  clean_review_updates_created: false
 ```
 
 Key conclusion:
@@ -139,19 +150,39 @@ They should not be mutated in place.
 Replacement worklist planning creates future stock_core and etf_core templates under outputs/reports only.
 Reviewed replacement worklist acceptance acknowledges those templates as planning context only.
 Guarded activation creates separate planning artifacts for stock_core and etf_core evidence work, but still does not approve rows, export universe files, or replace the legacy active worklist.
+Activated replacement worklist evidence update planning creates profile-specific evidence packages and first-batch packages, but does not create clean review_updates.csv or apply approvals.
 ```
 
 ## Current Recommended Next Branch
 
 ```text
-Activated Replacement Worklist Evidence Update Planning Read-only Audit v0.1
+Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation v0.1
 ```
 
-This branch should audit how the activated stock_core and etf_core planning templates should be used for manual PIT evidence update work.
+This branch should use Codex to do as much of the manual evidence preparation as possible:
 
-It should remain read-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
+```text
+local/public evidence discovery
+→ evidence source records / source checklist
+→ draft completed update CSV for a tiny first batch
+→ diagnostics-only pit-universe-evidence-update-ingestion validation
+```
 
-## When to Add a New Source Document
+It should remain diagnostics/report-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
+
+User preference: if a step looks manual, first try to make Codex perform local/public evidence discovery, draft artifact generation, and validation. The user should only intervene for final evidence acceptance, credentials, CAPTCHA/login/paywall, or subjective judgment.
+
+## When to Add or Replace Source Documents
+
+Do not update Source after every audit or small implementation.
+
+Add or replace Source when:
+
+- a full milestone/checkpoint/tag is accepted;
+- a new artifact workflow lands with index/health/status/research-status;
+- current stage or next branch changes;
+- artifact governance or safety boundaries change;
+- major external data, alert, broker, snapshot, or forward-label semantics are introduced.
 
 Add a new source document when a topic becomes too important to live only in chat, such as:
 
@@ -170,7 +201,8 @@ Add a new source document when a topic becomes too important to live only in cha
 
 - justify live trading;
 - treat worklist rows as reviewed evidence;
-- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, or activation artifacts as usable universe input;
+- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, or evidence update plans as usable universe input;
+- treat evidence packages as clean `review_updates.csv`;
 - treat staging preview files as accepted local universe input;
 - treat approved PIT universe rows as exported usable universe files unless a future accepted export workflow says so;
 - treat legacy `etf_core` artifacts as ETF-only;

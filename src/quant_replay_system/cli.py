@@ -118,6 +118,10 @@ from quant_replay_system.point_in_time_universe_evidence_update_ingestion_index 
 from quant_replay_system.point_in_time_universe_evidence_update_ingestion_status import (
     run_pit_universe_evidence_update_ingestion_status,
 )
+from quant_replay_system.pit_evidence_checklist_validator import build_pit_evidence_checklist_validator
+from quant_replay_system.pit_evidence_checklist_validator_health import check_pit_evidence_checklist_validator_health
+from quant_replay_system.pit_evidence_checklist_validator_index import build_pit_evidence_checklist_validator_index
+from quant_replay_system.pit_evidence_checklist_validator_status import run_pit_evidence_checklist_validator_status
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -948,6 +952,62 @@ def build_parser() -> argparse.ArgumentParser:
     pit_universe_evidence_update_ingestion_status.set_defaults(
         handler=_handle_pit_universe_evidence_update_ingestion_status
     )
+
+    pit_evidence_checklist_validator = subparsers.add_parser(
+        "pit-evidence-checklist-validator",
+        help="Validate PIT evidence updates against the strict checklist under reports only",
+    )
+    pit_evidence_checklist_validator.add_argument("--completed-updates", required=True)
+    pit_evidence_checklist_validator.add_argument("--stock-checklist", required=True)
+    pit_evidence_checklist_validator.add_argument("--etf-checklist", required=True)
+    pit_evidence_checklist_validator.add_argument("--source-acceptance", default=None)
+    pit_evidence_checklist_validator.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_evidence_checklist_validator",
+    )
+    pit_evidence_checklist_validator.set_defaults(handler=_handle_pit_evidence_checklist_validator)
+
+    pit_evidence_checklist_validator_index = subparsers.add_parser(
+        "pit-evidence-checklist-validator-index",
+        help="Build a local index of PIT evidence checklist validator artifacts",
+    )
+    pit_evidence_checklist_validator_index.add_argument(
+        "--root",
+        default="outputs/reports/pit_evidence_checklist_validator",
+    )
+    pit_evidence_checklist_validator_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_evidence_checklist_validator/index",
+    )
+    pit_evidence_checklist_validator_index.set_defaults(handler=_handle_pit_evidence_checklist_validator_index)
+
+    pit_evidence_checklist_validator_health = subparsers.add_parser(
+        "pit-evidence-checklist-validator-health",
+        help="Check local PIT evidence checklist validator artifact health",
+    )
+    pit_evidence_checklist_validator_health.add_argument(
+        "--root",
+        default="outputs/reports/pit_evidence_checklist_validator",
+    )
+    pit_evidence_checklist_validator_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_evidence_checklist_validator/health",
+    )
+    pit_evidence_checklist_validator_health.set_defaults(handler=_handle_pit_evidence_checklist_validator_health)
+
+    pit_evidence_checklist_validator_status = subparsers.add_parser(
+        "pit-evidence-checklist-validator-status",
+        help="Summarize latest PIT evidence checklist validator status",
+    )
+    pit_evidence_checklist_validator_status.add_argument(
+        "--root",
+        default="outputs/reports/pit_evidence_checklist_validator",
+    )
+    pit_evidence_checklist_validator_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_evidence_checklist_validator/status",
+    )
+    pit_evidence_checklist_validator_status.set_defaults(handler=_handle_pit_evidence_checklist_validator_status)
 
     universe_profile_policy_audit = subparsers.add_parser(
         "universe-profile-policy-audit",
@@ -2156,6 +2216,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--pit-universe-evidence-update-ingestion-root",
         help="PIT universe evidence update ingestion artifact root directory",
+    )
+    research_status.add_argument(
+        "--pit-evidence-checklist-validator-root",
+        help="PIT evidence checklist validator artifact root directory",
     )
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
@@ -3668,6 +3732,88 @@ def _handle_pit_universe_evidence_update_ingestion_status(args: argparse.Namespa
         "external API, or cache mutation was invoked."
     )
     return 1 if result.status == "FAIL" else 0
+
+
+def _handle_pit_evidence_checklist_validator(args: argparse.Namespace) -> int:
+    result = build_pit_evidence_checklist_validator(
+        completed_updates=args.completed_updates,
+        stock_checklist=args.stock_checklist,
+        etf_checklist=args.etf_checklist,
+        source_acceptance=args.source_acceptance,
+        output_dir=args.output_dir,
+    )
+    print(f"validator_id: {result.validator_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"checklist_pass_count: {result.checklist_pass_count}")
+    print(f"blocked_count: {result.blocked_count}")
+    print(f"stock_core_blocked_count: {result.stock_core_blocked_count}")
+    print(f"etf_core_blocked_count: {result.etf_core_blocked_count}")
+    print(f"validation_csv_path: {result.artifact_paths['validation_csv']}")
+    print(f"summary_csv_path: {result.artifact_paths['summary_csv']}")
+    print(f"missing_evidence_matrix_path: {result.artifact_paths['missing_evidence_matrix']}")
+    print(f"approval_candidate_preview_path: {result.artifact_paths['approval_candidate_preview']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_evidence_checklist_validator_index(args: argparse.Namespace) -> int:
+    result = build_pit_evidence_checklist_validator_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Index CSV path: {result['artifact_paths']['index_csv']}")
+    print(f"artifact_count: {result['artifact_count']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_evidence_checklist_validator_health(args: argparse.Namespace) -> int:
+    result = check_pit_evidence_checklist_validator_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Health report path: {result['artifact_paths']['report']}")
+    print(f"Health status: {result['status']}")
+    print(f"checked_artifact_count: {result['checked_artifact_count']}")
+    print(f"issue_count: {result['issue_count']}")
+    print(f"error_count: {result['error_count']}")
+    print(f"warning_count: {result['warning_count']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_pit_evidence_checklist_validator_status(args: argparse.Namespace) -> int:
+    result = run_pit_evidence_checklist_validator_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Status report path: {result['artifact_paths']['report']}")
+    print(f"status: {result['status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"latest_validator_id: {result['latest_validator_id']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"row_count: {result['row_count']}")
+    print(f"checklist_pass_count: {result['checklist_pass_count']}")
+    print(f"blocked_count: {result['blocked_count']}")
+    print(f"stock_core_blocked_count: {result['stock_core_blocked_count']}")
+    print(f"etf_core_blocked_count: {result['etf_core_blocked_count']}")
+    print(f"report_path: {result['report_path']}")
+    print(f"next_manual_action: {result['next_manual_action']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result["status"] == "FAIL" else 0
 
 
 def _handle_universe_profile_policy_audit(args: argparse.Namespace) -> int:
@@ -5995,6 +6141,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         pit_universe_evidence_completion_helper_root=args.pit_universe_evidence_completion_helper_root,
         pit_universe_evidence_review_worklist_root=args.pit_universe_evidence_review_worklist_root,
         pit_universe_evidence_update_ingestion_root=args.pit_universe_evidence_update_ingestion_root,
+        pit_evidence_checklist_validator_root=args.pit_evidence_checklist_validator_root,
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -6372,6 +6519,29 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "pit_universe_evidence_update_ingestion_next_action: "
         f"{result.pit_universe_evidence_update_ingestion_next_action}"
     )
+    print(f"latest_pit_evidence_checklist_validator_id: {result.latest_pit_evidence_checklist_validator_id}")
+    print(f"pit_evidence_checklist_validator_status: {result.pit_evidence_checklist_validator_status}")
+    print(f"pit_evidence_checklist_validator_stage: {result.pit_evidence_checklist_validator_stage}")
+    print(
+        "pit_evidence_checklist_validator_health_status: "
+        f"{result.pit_evidence_checklist_validator_health_status}"
+    )
+    print(f"pit_evidence_checklist_validator_row_count: {result.pit_evidence_checklist_validator_row_count}")
+    print(
+        "pit_evidence_checklist_validator_checklist_pass_count: "
+        f"{result.pit_evidence_checklist_validator_checklist_pass_count}"
+    )
+    print(f"pit_evidence_checklist_validator_blocked_count: {result.pit_evidence_checklist_validator_blocked_count}")
+    print(
+        "pit_evidence_checklist_validator_stock_core_blocked_count: "
+        f"{result.pit_evidence_checklist_validator_stock_core_blocked_count}"
+    )
+    print(
+        "pit_evidence_checklist_validator_etf_core_blocked_count: "
+        f"{result.pit_evidence_checklist_validator_etf_core_blocked_count}"
+    )
+    print(f"pit_evidence_checklist_validator_report_path: {result.pit_evidence_checklist_validator_report_path}")
+    print(f"pit_evidence_checklist_validator_next_action: {result.pit_evidence_checklist_validator_next_action}")
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")
