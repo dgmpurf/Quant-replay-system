@@ -19,6 +19,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a PIT universe evidence update ingestion run validated reviewer-completed updates into clean review-updates rows?
 - Has a PIT evidence checklist validator checked strict stock/ETF evidence completeness before any approval review?
 - Has a PIT evidence policy profile comparison shown whether an opt-in EOD/post-close policy would relax only timing/cache-support blockers?
+- Has a PIT official status evidence packet consolidated official/source-access context and local EOD support without applying approvals?
 - Has an activated replacement worklist produced profile-specific manual evidence update packages?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
@@ -60,6 +61,7 @@ outputs/reports/point_in_time_universe_evidence_review_worklist/status/
 outputs/reports/point_in_time_universe_evidence_update_ingestion/status/
 outputs/reports/pit_evidence_checklist_validator/status/
 outputs/reports/pit_evidence_policy_profile_comparison/status/
+outputs/reports/pit_official_status_evidence_packet/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -227,6 +229,16 @@ The unified summary records the latest comparison id, comparison status/stage, h
 When the status reports `PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED`, the dashboard treats the warning as expected reviewable evidence-policy work. It means the opt-in `EOD_POST_CLOSE_LOW_BUDGET_PIT` profile did not make any row checklist-pass; remaining non-relaxed PIT evidence gaps still need review. When the status reports `PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_HAS_CANDIDATE_PREVIEWS`, rows are only manual preview candidates and are not approved.
 
 PIT evidence policy profile comparison is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to profile comparison; comparison fields remain visible for audit. If comparison health fails because strict defaults changed, approval/export/data-write/current-candidates/snapshot/forward-label/trading safety flags are violated, or the profile is not opt-in, `research-status` surfaces the failure as actionable when this layer is active.
+
+## PIT Official Status Evidence Packet Status
+
+`research-status` includes `pit-official-status-evidence-packet-status` as PIT official/source evidence context when those artifacts exist.
+
+The unified summary records the latest packet id, packet status/stage, health status, row count, evidence packet row count, strong official date-specific count, supporting official symbol-level count, supporting local EOD cache count, context-only count, missing evidence count, checklist-pass count, blocked count, EOD low-budget checklist-pass count, report path, and next manual action.
+
+When the status reports `PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED`, the dashboard treats the warning as expected reviewable evidence-acquisition work. It means evidence packets found some context or support but rows still lack complete approval evidence. It does not mean PIT review failed, candidate generation failed, strategy performance failed, or paper workflow failed.
+
+PIT official status evidence packets are earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to packet status; packet fields remain visible for audit. If packet health fails because required files/columns are missing or approval/export/data-write/current-candidates/snapshot/forward-label/trading safety flags are violated, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Universe Profile Policy Audit Status
 

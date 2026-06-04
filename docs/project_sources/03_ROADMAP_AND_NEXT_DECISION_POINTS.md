@@ -29,6 +29,7 @@ The project is now a broad local research system with:
 - guarded reviewed replacement worklist activation;
 - activated replacement worklist evidence update planning;
 - PIT evidence checklist validator;
+- PIT evidence policy profile comparison;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -57,12 +58,13 @@ Completed or largely complete:
 - guarded reviewed replacement worklist activation;
 - activated replacement worklist evidence update plan;
 - PIT evidence checklist validator;
+- PIT evidence policy profile comparison;
 - index / health / status and research-status integration for these stages.
 
-Current PIT evidence checklist validation state:
+Current PIT evidence policy profile comparison state:
 
 ```text
-PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
+PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
 ```
 
 Latest known state:
@@ -82,6 +84,7 @@ activation_id: a8e74161f9bb
 evidence_update_plan_id: 4e268d67bd7d
 latest_diagnostics_ingestion_id: 734f3a722ddf
 validator_id: 62e9eb747197
+policy_comparison_id: 0ef6d2f3bae6
 ```
 
 ```text
@@ -122,43 +125,52 @@ checklist_pass_count: 0
 blocked_count: 16
 stock_core_blocked_count: 8
 etf_core_blocked_count: 8
+
+policy profile comparison:
+comparison_id: 0ef6d2f3bae6
+profile: EOD_POST_CLOSE_LOW_BUDGET_PIT
+strict_checklist_pass_count: 0
+eod_low_budget_checklist_pass_count: 0
+relaxed_blocker_count: 16
+remaining_blocked_count: 16
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Codex-Driven Official Evidence Acquisition for Checklist Blockers
+### Branch: Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition
 
 Suggested sequence:
 
-1. Use the validator report and missing-evidence matrix as the driver.
+1. Use the strict validator report and policy comparison remaining blockers as the driver.
 2. Search local artifacts first.
 3. Use browser/web/plugin access only for light official/public evidence discovery.
-4. Target the exact blocking categories:
-   - active / listed as of signal date;
-   - not delisted before signal date;
-   - ST/no-ST for stock rows;
-   - suspension status and timing;
-   - PIT-safe `as_of_date` and `available_time`;
-   - survivorship-bias resolution basis.
+4. Target the non-relaxed blocking categories:
+   - not-delisted evidence;
+   - stock ST/no-ST evidence;
+   - survivorship-bias resolution basis;
+   - reviewer / reviewed_at / evidence-reference completeness;
+   - official active/status evidence.
 5. Record evidence URLs / files / source type / fetch time / PIT suitability.
 6. Generate updated draft completed update CSVs only when evidence is actually found.
 7. Keep draft rows non-applied and diagnostics-only.
 8. Run `pit-universe-evidence-update-ingestion` against draft updates in a diagnostics output directory.
-9. Rerun `pit-evidence-checklist-validator` against the validated drafts.
-10. Report checklist-pass candidates and blocked rows.
-11. Do not run PIT overlay review application, export-readiness, staging, snapshot, or current-candidates in this branch.
+9. Rerun `pit-evidence-checklist-validator`.
+10. Rerun `pit-evidence-policy-profile-comparison` if useful.
+11. Report checklist-pass candidates and blocked rows.
+12. Do not run PIT overlay review application, export-readiness, staging, snapshot, or current-candidates in this branch.
 
-## What Official Evidence Acquisition Must Solve
+## What Non-Relaxed Evidence Acquisition Must Solve
 
 It should answer:
 
-- Can Codex find official/public evidence for the remaining first-batch blockers?
-- Which fields are symbol-level and reusable across all 8 dates?
-- Which fields must remain date-specific?
-- Which official sources are acceptable for strict PIT evidence?
-- Can any first-batch row become a checklist-pass approval candidate?
+- Can Codex find official/public evidence for not-delisted status?
+- Can Codex find official/public evidence for ST/no-ST status for 000001 over the selected dates?
+- Can Codex support survivorship-bias resolution without relying on future-dated universe hints?
+- Which evidence fields are symbol-level and reusable across all 8 dates?
+- Which evidence fields must remain date-specific?
+- Can any first-batch row become a strict or EOD low-budget checklist-pass approval candidate?
 - If no row passes, which exact blockers remain?
 - Which blockers require user judgment, credentials, CAPTCHA/login/paywall, or a practical-low-budget policy decision?
 
@@ -291,6 +303,7 @@ Do not yet:
 - treat reviewed replacement activation as PIT row approval or usable universe input;
 - treat activated evidence update plans or evidence packages as clean review updates;
 - treat checklist validator output as approval;
+- treat policy comparison output as approval or strict validator default behavior;
 - export PIT universe input without real approved/export-ready rows;
 - write `data/raw` or `data/processed` from PIT staging;
 - run current-candidates backfill without reviewed/exported PIT universe rows;

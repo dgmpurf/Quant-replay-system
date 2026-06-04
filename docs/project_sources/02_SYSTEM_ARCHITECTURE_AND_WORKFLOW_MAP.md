@@ -53,7 +53,8 @@ Multi-Date Evidence Preparation
   ├─ reviewed-replacement-worklist-acceptance
   ├─ reviewed-replacement-worklist-activation
   ├─ activated-replacement-worklist-evidence-update-plan
-  └─ pit-evidence-checklist-validator
+  ├─ pit-evidence-checklist-validator
+  └─ pit-evidence-policy-profile-comparison
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -110,7 +111,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Replacement Evidence Planning, and Checklist Validation
+### Multi-Date Candidate Planning, PIT Universe Review, Replacement Evidence Planning, Checklist Validation, and Policy Comparison
 
 ```text
 market cache coverage
@@ -134,6 +135,8 @@ market cache coverage
 → Codex diagnostics evidence discovery / gap closure
 → strict PIT evidence checklist
 → pit-evidence-checklist-validator
+→ EOD_POST_CLOSE_LOW_BUDGET_PIT policy audit
+→ pit-evidence-policy-profile-comparison
 → index / health / status
 → research-status
 ```
@@ -141,7 +144,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
+PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -301,6 +304,37 @@ checklist_pass_count: 0
 blocked_count: 16
 ```
 
+### PIT Evidence Policy Profile Comparison Fields
+
+The policy profile comparison workflow compares strict validation with an opt-in low-budget EOD/post-close policy profile.
+
+It reports:
+
+```text
+comparison_id
+profile_name
+row_count
+strict_checklist_pass_count
+eod_low_budget_checklist_pass_count
+relaxed_blocker_count
+remaining_blocked_count
+relaxed_blocker_matrix
+remaining_blocker_matrix
+```
+
+Current comparison state:
+
+```text
+comparison_id: 0ef6d2f3bae6
+profile: EOD_POST_CLOSE_LOW_BUDGET_PIT
+strict_checklist_pass_count: 0
+eod_low_budget_checklist_pass_count: 0
+relaxed_blocker_count: 16
+remaining_blocked_count: 16
+```
+
+`EOD_POST_CLOSE_LOW_BUDGET_PIT` is opt-in and report-only. It may relax timing/cache-support context only when explicit decision-time rules are satisfied. It must not become the default strict profile, apply approval, run PIT review, or export universe files.
+
 ### PIT Evidence Update Ingestion Fields
 
 Evidence update ingestion validates reviewer-completed rows and may write a clean `review_updates.csv` artifact under `outputs/reports`.
@@ -339,19 +373,20 @@ Reviewed replacement worklist activation: activation planning context, 56 stock_
 Activated replacement evidence update plan: 56 stock_core rows, 16 etf_core rows, 0 mixed_demo_core rows, stock first batch 8 rows, ETF first batch 8 rows, no clean review updates
 Codex diagnostics evidence discovery: 16 NEEDS_MORE_EVIDENCE rows pass ingestion schema, but 0 approval candidates
 PIT evidence checklist validator: 16 rows blocked, 0 checklist-pass approval candidates
+PIT evidence policy profile comparison: EOD low-budget profile relaxes 16 timing/context blockers but still leaves 16 rows blocked, 0 pass candidates
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Codex-Driven Official Evidence Acquisition for Checklist Blockers v0.1
+Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition v0.1
 ```
 
 Purpose:
 
-- use Codex to target the exact blockers from `pit-evidence-checklist-validator`;
-- find official/public PIT evidence for active/not-delisted, ST/no-ST, survivorship-bias, and decision-time availability;
-- update draft CSVs only when real evidence exists;
-- rerun ingestion and checklist validator in diagnostics-only scope.
+- target blockers not relaxed by EOD_POST_CLOSE_LOW_BUDGET_PIT;
+- find official/public evidence for not-delisted status, stock ST/no-ST status, survivorship-bias resolution, reviewer/evidence-reference completeness, and official active/status evidence;
+- update draft completed CSVs only when real evidence exists;
+- rerun diagnostics-only ingestion, strict checklist validator, and policy comparison if useful.
 
 Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.

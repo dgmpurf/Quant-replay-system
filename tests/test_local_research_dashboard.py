@@ -1393,6 +1393,71 @@ def test_cli_research_status_prints_pit_evidence_policy_profile_comparison_field
     assert "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count: 0" in output.out
 
 
+def test_dashboard_includes_pit_official_status_evidence_packet_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_official_status_evidence_packet_artifact(root, packet_id="packet-blocked")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_official_status_evidence_packet_id == "packet-blocked"
+    assert result.pit_official_status_evidence_packet_status == "WARN"
+    assert result.pit_official_status_evidence_packet_stage == "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED"
+    assert result.pit_official_status_evidence_packet_health_status == "PASS"
+    assert result.pit_official_status_evidence_packet_row_count == 16
+    assert result.pit_official_status_evidence_packet_blocked_count == 16
+    assert result.pit_official_status_evidence_packet_supporting_local_eod_cache_count == 16
+    assert result.workflow_stage == "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED"
+    assert row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_official_status_evidence_packet(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_official_status_evidence_packet_artifact(root, packet_id="packet-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_official_status_evidence_packet_id == "packet-paper-context"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+
+
+def test_cli_research_status_prints_pit_official_status_evidence_packet_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_official_status_evidence_packet_artifact(root, packet_id="packet-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_official_status_evidence_packet_id: packet-cli" in output.out
+    assert "pit_official_status_evidence_packet_status: WARN" in output.out
+    assert "pit_official_status_evidence_packet_stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED" in output.out
+    assert "pit_official_status_evidence_packet_blocked_count: 16" in output.out
+
+
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
     tmp_path: Path,
 ) -> None:
@@ -6112,6 +6177,204 @@ def _pit_evidence_policy_profile_comparison_artifact(
                 "relaxed_blocker_matrix": str(relaxed_csv),
                 "remaining_blocker_matrix": str(remaining_csv),
                 "policy_snapshot": str(snapshot_csv),
+                "report": str(report),
+                "metadata": str(metadata),
+            },
+        },
+    )
+    return folder
+
+
+def _pit_official_status_evidence_packet_artifact(
+    root: Path,
+    *,
+    packet_id: str = "packet-a",
+    status: str = "WARN",
+    row_count: int = 16,
+    evidence_packet_row_count: int = 64,
+    strong_official_date_specific_count: int = 0,
+    supporting_official_symbol_level_count: int = 16,
+    supporting_local_eod_cache_count: int = 16,
+    context_only_count: int = 0,
+    missing_count: int = 32,
+    checklist_pass_count: int = 0,
+    blocked_count: int = 16,
+    eod_low_budget_checklist_pass_count: int = 0,
+    created_at: str = "2026-06-05T09:10:00+08:00",
+) -> Path:
+    folder = root / "pit_official_status_evidence_packet" / packet_id
+    folder.mkdir(parents=True, exist_ok=True)
+    packet_csv = folder / "pit_official_status_evidence_packet.csv"
+    source_csv = folder / "source_coverage_summary.csv"
+    per_date_csv = folder / "per_symbol_date_status_evidence.csv"
+    matrix_csv = folder / "evidence_strength_matrix.csv"
+    draft_csv = folder / "updated_draft_completed_updates.csv"
+    report = folder / "report.md"
+    metadata = folder / "metadata.json"
+    pd.DataFrame(
+        [
+            {
+                "packet_id": packet_id,
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "universe_name": "stock_core",
+                "evidence_field": "not_delisted",
+                "evidence_strength": "MISSING",
+                "source_name": "",
+                "source_url_or_path": "",
+                "source_type": "",
+                "accessed_at": "",
+                "pit_suitability": "MISSING",
+                "fields_supported": "",
+                "field_status": "missing",
+                "blocker_status": "missing not-delisted/ST/survivorship evidence",
+                "evidence_reference": "",
+                "context_only_or_approval_candidate": "missing",
+                "approval_candidate_preview_only": False,
+                "should_apply_approval": False,
+                "no_approval_applied": True,
+                "no_pit_review_run": True,
+                "no_export_readiness_run": True,
+                "no_staging_run": True,
+                "no_universe_export": True,
+                "no_data_raw_write": True,
+                "no_data_processed_write": True,
+                "no_current_candidates_generated": True,
+                "no_snapshot_built": True,
+                "no_forward_labels": True,
+                "no_live_trading": True,
+                "no_broker_api": True,
+                "no_order_placement": True,
+                "no_message_sent": True,
+                "packet_only": True,
+            }
+        ]
+    ).to_csv(packet_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "packet_id": packet_id,
+                "source_name": "local_market_cache",
+                "source_url_or_path": "data/cache/market/daily_bars.csv",
+                "source_type": "local_market_cache",
+                "access_status": "readable",
+                "parseable": True,
+                "symbols_observed": "000001,159915",
+                "dates_observed": "2024-04",
+                "pit_suitability": "EOD_SUPPORT_ONLY",
+                "strong_official_date_specific_count": 0,
+                "supporting_official_symbol_level_count": 0,
+                "supporting_local_eod_cache_count": supporting_local_eod_cache_count,
+                "context_only_count": 0,
+                "missing_count": 0,
+            }
+        ]
+    ).to_csv(source_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "packet_id": packet_id,
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "universe_name": "stock_core",
+                "strong_official_date_specific_count": 0,
+                "supporting_official_symbol_level_count": 1,
+                "supporting_local_eod_cache_count": 1,
+                "context_only_count": 0,
+                "missing_count": 2,
+                "checklist_pass": False,
+                "blocked": True,
+                "blocker_reason": "missing not-delisted/ST/survivorship evidence",
+                "review_status": "NEEDS_MORE_EVIDENCE",
+                "include_flag": False,
+                "survivorship_bias_resolved": False,
+            }
+        ]
+    ).to_csv(per_date_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "packet_id": packet_id,
+                "symbol": "000001",
+                "universe_name": "stock_core",
+                "evidence_field": "not_delisted",
+                "evidence_strength": "MISSING",
+                "row_count": 1,
+            }
+        ]
+    ).to_csv(matrix_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "universe_name": "stock_core",
+                "review_status": "NEEDS_MORE_EVIDENCE",
+                "include_flag": False,
+                "reviewer": "",
+                "reviewed_at": "",
+                "review_reason": "packet fixture remains blocked",
+                "evidence_source": "local_market_cache_context",
+                "evidence_path": "data/cache/market/daily_bars.csv",
+                "evidence_reference": "local_market_cache:000001:2024-04-02",
+                "listed_date": "",
+                "delisted_date": "",
+                "is_active": "",
+                "is_st": "",
+                "is_suspended": "",
+                "listed_date_evidence": "",
+                "delisted_date_evidence": "",
+                "is_active_evidence": "",
+                "survivorship_bias_resolved": False,
+                "as_of_date": "",
+                "name": "",
+                "instrument_type": "STOCK",
+                "exchange": "SZSE",
+                "industry": "",
+                "min_lot": "",
+                "t_plus_rule": "",
+                "available_time": "",
+                "revision_id": "",
+                "source": "",
+            }
+        ]
+    ).to_csv(draft_csv, index=False)
+    report.write_text("No approval applied. Packet only.", encoding="utf-8")
+    _write_json(
+        metadata,
+        {
+            "packet_id": packet_id,
+            "created_at": created_at,
+            "status": status,
+            "row_count": row_count,
+            "evidence_packet_row_count": evidence_packet_row_count,
+            "strong_official_date_specific_count": strong_official_date_specific_count,
+            "supporting_official_symbol_level_count": supporting_official_symbol_level_count,
+            "supporting_local_eod_cache_count": supporting_local_eod_cache_count,
+            "context_only_count": context_only_count,
+            "missing_count": missing_count,
+            "checklist_pass_count": checklist_pass_count,
+            "blocked_count": blocked_count,
+            "eod_low_budget_checklist_pass_count": eod_low_budget_checklist_pass_count,
+            "approval_applied": False,
+            "pit_review_run": False,
+            "export_readiness_run": False,
+            "export_staging_run": False,
+            "universe_exported": False,
+            "active_worklist_mutated": False,
+            "no_data_raw_write": True,
+            "no_data_processed_write": True,
+            "no_current_candidates_generated": True,
+            "no_snapshot_built": True,
+            "no_forward_labels": True,
+            "cache_mutated": False,
+            "packet_only": True,
+            "output_files": {
+                "packet_csv": str(packet_csv),
+                "source_coverage_summary": str(source_csv),
+                "per_symbol_date_status_evidence": str(per_date_csv),
+                "evidence_strength_matrix": str(matrix_csv),
+                "updated_draft_completed_updates": str(draft_csv),
                 "report": str(report),
                 "metadata": str(metadata),
             },

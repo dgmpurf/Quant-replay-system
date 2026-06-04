@@ -2,7 +2,7 @@
 
 > Status: working memory document  
 > Last generated: 2026-06-04  
-> Intended use: replace previous Project Source Pack after v1.14.0 PIT evidence checklist validator checkpoint.  
+> Intended use: replace previous Project Source Pack after v1.15.0 PIT evidence policy profile comparison checkpoint.  
 > Permanence: temporary and replaceable. Refresh only after major checkpoint / stage changes, not after every small audit.
 
 ## Purpose
@@ -32,6 +32,7 @@ This pack is based on:
 - v1.12.0 guarded reviewed replacement worklist activation;
 - v1.13.0 activated replacement worklist evidence update planning;
 - v1.14.0 PIT evidence checklist validator;
+- v1.15.0 PIT evidence policy profile comparison;
 - China A-share event-driven and industry-chain factor taxonomy sources.
 
 ## Accuracy Note
@@ -42,7 +43,7 @@ Many local outputs under `outputs/`, `data/raw/`, `data/cache`, and `data/proces
 
 ## Current Project Source Set
 
-Replace these after v1.14.0:
+Replace these after v1.15.0:
 
 ```text
 00_PROJECT_SOURCE_INDEX.md
@@ -66,7 +67,7 @@ FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
 
 ## Current Project State Summary
 
-The project has reached a PIT evidence checklist validator checkpoint:
+The project has reached a PIT evidence policy profile comparison checkpoint:
 
 ```text
 local market data / reviewed exports / quality gates
@@ -92,13 +93,15 @@ local market data / reviewed exports / quality gates
 → Codex-driven diagnostics evidence discovery and gap closure
 → strict PIT evidence checklist
 → pit-evidence-checklist-validator
+→ EOD_POST_CLOSE_LOW_BUDGET_PIT policy audit
+→ pit-evidence-policy-profile-comparison
 → index / health / status / research-status context
 ```
 
-Current PIT evidence checklist validation state:
+Current PIT evidence policy profile comparison state:
 
 ```text
-PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
+PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
 ```
 
 Latest known active / planning artifacts:
@@ -118,9 +121,10 @@ activation_id: a8e74161f9bb
 evidence_update_plan_id: 4e268d67bd7d
 latest_diagnostics_ingestion_id: 734f3a722ddf
 validator_id: 62e9eb747197
+policy_comparison_id: 0ef6d2f3bae6
 ```
 
-Current evidence and validator counts:
+Current evidence / validator / policy comparison counts:
 
 ```text
 approved rows: 0
@@ -164,6 +168,15 @@ strict checklist validator:
   blocked_count: 16
   stock_core_blocked_count: 8
   etf_core_blocked_count: 8
+
+EOD low-budget policy comparison:
+  comparison_id: 0ef6d2f3bae6
+  profile: EOD_POST_CLOSE_LOW_BUDGET_PIT
+  row_count: 16
+  strict_checklist_pass_count: 0
+  eod_low_budget_checklist_pass_count: 0
+  relaxed_blocker_count: 16
+  remaining_blocked_count: 16
 ```
 
 Key conclusion:
@@ -177,22 +190,24 @@ Reviewed replacement worklist acceptance acknowledges those templates as plannin
 Guarded activation creates separate planning artifacts for stock_core and etf_core evidence work, but still does not approve rows, export universe files, or replace the legacy active worklist.
 Activated replacement worklist evidence update planning creates profile-specific evidence packages and first-batch packages, but does not create clean review_updates.csv or apply approvals.
 Codex diagnostics can create NEEDS_MORE_EVIDENCE draft updates and validate ingestion schema, but no row currently passes the strict PIT evidence checklist.
+The EOD_POST_CLOSE_LOW_BUDGET_PIT profile is opt-in and report-only. It relaxes timing/cache-support context only; it does not change strict defaults or create approvals. Current 16 rows remain blocked under both strict and EOD low-budget profiles.
 ```
 
 ## Current Recommended Next Branch
 
 ```text
-Codex-Driven Official Evidence Acquisition for Checklist Blockers v0.1
+Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition v0.1
 ```
 
-This branch should use Codex to target the exact blockers exposed by `pit-evidence-checklist-validator`:
+This branch should use Codex to target the remaining non-relaxed blockers exposed by the strict validator and policy comparison:
 
 ```text
-official/public source discovery for active/not-delisted/ST/survivorship/timing evidence
+official/public evidence for not-delisted status, stock ST/no-ST status, survivorship-bias resolution, reviewer/evidence-reference completeness, and official active/status evidence
 → evidence source records
 → updated draft completed CSV only if evidence is real
 → diagnostics-only ingestion validation
 → checklist validator rerun
+→ policy comparison rerun if useful
 ```
 
 It should remain diagnostics/report-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
@@ -228,9 +243,9 @@ Add a new source document when a topic becomes too important to live only in cha
 
 - justify live trading;
 - treat worklist rows as reviewed evidence;
-- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, or checklist validator outputs as usable universe input;
+- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, or policy comparison outputs as usable universe input;
 - treat evidence packages as clean `review_updates.csv`;
-- treat checklist pass as applied approval;
+- treat checklist pass or policy comparison candidate preview as applied approval;
 - treat staging preview files as accepted local universe input;
 - treat approved PIT universe rows as exported usable universe files unless a future accepted export workflow says so;
 - treat legacy `etf_core` artifacts as ETF-only;

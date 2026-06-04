@@ -50,6 +50,7 @@ It is not a live trading system.
 - Guarded reviewed replacement worklist activation.
 - Activated replacement worklist evidence update planning.
 - PIT evidence checklist validator.
+- PIT evidence policy profile comparison.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -123,6 +124,7 @@ activation_id: a8e74161f9bb
 evidence_update_plan_id: 4e268d67bd7d
 latest_diagnostics_ingestion_id: 734f3a722ddf
 validator_id: 62e9eb747197
+policy_comparison_id: 0ef6d2f3bae6
 ```
 
 Current counts:
@@ -178,23 +180,33 @@ checklist_pass_count: 0
 blocked_count: 16
 stock_core_blocked_count: 8
 etf_core_blocked_count: 8
+
+PIT evidence policy profile comparison:
+comparison_id: 0ef6d2f3bae6
+profile: EOD_POST_CLOSE_LOW_BUDGET_PIT
+strict_checklist_pass_count: 0
+eod_low_budget_checklist_pass_count: 0
+relaxed_blocker_count: 16
+remaining_blocked_count: 16
 ```
 
-Current PIT evidence checklist validation stage:
+Current PIT evidence policy profile comparison stage:
 
 ```text
-PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
+PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
 ```
 
 Meaning:
 
-The project has moved from “profile-specific evidence update packages exist” to “strict evidence checklist validation now blocks all current first-batch rows.”
+The project has moved from “strict evidence checklist validation blocks all current first-batch rows” to “strict vs EOD/post-close low-budget policy comparison exists and also leaves all current first-batch rows blocked.”
 
-The 16 diagnostics rows can pass evidence ingestion as `NEEDS_MORE_EVIDENCE`, but no row currently satisfies the strict PIT evidence checklist. There are no approval candidates.
+The `EOD_POST_CLOSE_LOW_BUDGET_PIT` profile is opt-in and report-only. It may relax timing/cache-support context when explicit decision-time rules are satisfied, but it does not change strict defaults and it does not create approvals.
+
+The 16 diagnostics rows can pass evidence ingestion as `NEEDS_MORE_EVIDENCE`, but no row currently satisfies the strict checklist or the EOD low-budget policy comparison as an approval-candidate preview.
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-The next blocker is Codex-driven acquisition of official/public evidence for the exact checklist blockers: active/not-delisted status, ST/no-ST status for stock rows, survivorship-bias resolution, and PIT-safe timing.
+The next blocker is Codex-driven acquisition of non-relaxed official/public evidence: not-delisted status, ST/no-ST status for stock rows, survivorship-bias resolution, reviewer/evidence-reference completeness, and official active/status evidence.
 
 ## Current External Data Strategy
 
@@ -214,17 +226,17 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Codex-Driven Official Evidence Acquisition for Checklist Blockers v0.1
+Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition v0.1
 ```
 
 Purpose:
 
-- use Codex to target the exact blockers from `pit-evidence-checklist-validator`;
+- target the remaining blockers not relaxed by `EOD_POST_CLOSE_LOW_BUDGET_PIT`;
 - inspect local artifacts first;
 - use browser/web/plugin access only for light official/public evidence discovery;
-- gather official source evidence for active/not-delisted, ST/no-ST, suspension, survivorship, and PIT-safe timing;
+- gather official source evidence for not-delisted, ST/no-ST, survivorship, reviewer/evidence-reference completeness, and official active/status evidence;
 - update draft completed CSVs only when real evidence exists;
-- rerun diagnostics-only ingestion and checklist validation;
+- rerun diagnostics-only ingestion, checklist validation, and policy comparison;
 - avoid automatic approval, rejection, export, or candidate generation.
 
 Do not yet:
@@ -262,9 +274,10 @@ Recent milestone direction:
 - v1.12.0: guarded reviewed replacement worklist activation.
 - v1.13.0: activated replacement worklist evidence update planning.
 - v1.14.0: PIT evidence checklist validator.
+- v1.15.0: PIT evidence policy profile comparison.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Codex-Driven Official Evidence Acquisition for Checklist Blockers v0.1.
+Give me Codex tasks for Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition v0.1.
 ```

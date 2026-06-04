@@ -134,6 +134,18 @@ from quant_replay_system.pit_evidence_policy_profile_comparison_index import (
 from quant_replay_system.pit_evidence_policy_profile_comparison_status import (
     run_pit_evidence_policy_profile_comparison_status,
 )
+from quant_replay_system.pit_official_status_evidence_packet import (
+    build_pit_official_status_evidence_packet,
+)
+from quant_replay_system.pit_official_status_evidence_packet_health import (
+    check_pit_official_status_evidence_packet_health,
+)
+from quant_replay_system.pit_official_status_evidence_packet_index import (
+    build_pit_official_status_evidence_packet_index,
+)
+from quant_replay_system.pit_official_status_evidence_packet_status import (
+    run_pit_official_status_evidence_packet_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1083,6 +1095,96 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pit_evidence_policy_profile_comparison_status.set_defaults(
         handler=_handle_pit_evidence_policy_profile_comparison_status
+    )
+
+    pit_official_status_evidence_packet = subparsers.add_parser(
+        "pit-official-status-evidence-packet",
+        help="Build report-only PIT official status evidence packets for first-batch evidence rows",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--source-smoke-root",
+        default="outputs/reports/manual_diagnostics/szse_status_source_access_smoke_v0_1",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--non-relaxed-root",
+        default="outputs/reports/manual_diagnostics/codex_non_relaxed_pit_evidence_gap_acquisition_v0_1",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--policy-comparison",
+        default="outputs/reports/pit_evidence_policy_profile_comparison/0ef6d2f3bae6",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--validator",
+        default="outputs/reports/pit_evidence_checklist_validator/62e9eb747197",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--activated-plan",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan/4e268d67bd7d",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--stock-checklist",
+        default="outputs/reports/manual_diagnostics/pit_strict_evidence_checklist_v0_3/stock_core_strict_evidence_checklist.csv",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--etf-checklist",
+        default="outputs/reports/manual_diagnostics/pit_strict_evidence_checklist_v0_3/etf_core_strict_evidence_checklist.csv",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--source-acceptance",
+        default="outputs/reports/manual_diagnostics/pit_strict_evidence_checklist_v0_3/source_acceptance_matrix.csv",
+    )
+    pit_official_status_evidence_packet.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_official_status_evidence_packet",
+    )
+    pit_official_status_evidence_packet.set_defaults(handler=_handle_pit_official_status_evidence_packet)
+
+    pit_official_status_evidence_packet_index = subparsers.add_parser(
+        "pit-official-status-evidence-packet-index",
+        help="Build a local index of PIT official status evidence packet artifacts",
+    )
+    pit_official_status_evidence_packet_index.add_argument(
+        "--root",
+        default="outputs/reports/pit_official_status_evidence_packet",
+    )
+    pit_official_status_evidence_packet_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_official_status_evidence_packet/index",
+    )
+    pit_official_status_evidence_packet_index.set_defaults(
+        handler=_handle_pit_official_status_evidence_packet_index
+    )
+
+    pit_official_status_evidence_packet_health = subparsers.add_parser(
+        "pit-official-status-evidence-packet-health",
+        help="Check local PIT official status evidence packet artifact health",
+    )
+    pit_official_status_evidence_packet_health.add_argument(
+        "--root",
+        default="outputs/reports/pit_official_status_evidence_packet",
+    )
+    pit_official_status_evidence_packet_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_official_status_evidence_packet/health",
+    )
+    pit_official_status_evidence_packet_health.set_defaults(
+        handler=_handle_pit_official_status_evidence_packet_health
+    )
+
+    pit_official_status_evidence_packet_status = subparsers.add_parser(
+        "pit-official-status-evidence-packet-status",
+        help="Summarize latest PIT official status evidence packet status",
+    )
+    pit_official_status_evidence_packet_status.add_argument(
+        "--root",
+        default="outputs/reports/pit_official_status_evidence_packet",
+    )
+    pit_official_status_evidence_packet_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_official_status_evidence_packet/status",
+    )
+    pit_official_status_evidence_packet_status.set_defaults(
+        handler=_handle_pit_official_status_evidence_packet_status
     )
 
     universe_profile_policy_audit = subparsers.add_parser(
@@ -2300,6 +2402,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--pit-evidence-policy-profile-comparison-root",
         help="PIT evidence policy profile comparison artifact root directory",
+    )
+    research_status.add_argument(
+        "--pit-official-status-evidence-packet-root",
+        help="PIT official status evidence packet artifact root directory",
     )
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
@@ -3973,6 +4079,100 @@ def _handle_pit_evidence_policy_profile_comparison_status(args: argparse.Namespa
     print(f"eod_low_budget_checklist_pass_count: {result['eod_low_budget_checklist_pass_count']}")
     print(f"relaxed_blocker_count: {result['relaxed_blocker_count']}")
     print(f"remaining_blocked_count: {result['remaining_blocked_count']}")
+    print(f"report_path: {result['report_path']}")
+    print(f"next_manual_action: {result['next_manual_action']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_pit_official_status_evidence_packet(args: argparse.Namespace) -> int:
+    result = build_pit_official_status_evidence_packet(
+        source_smoke_root=args.source_smoke_root,
+        non_relaxed_root=args.non_relaxed_root,
+        policy_comparison=args.policy_comparison,
+        validator=args.validator,
+        activated_plan=args.activated_plan,
+        stock_checklist=args.stock_checklist,
+        etf_checklist=args.etf_checklist,
+        source_acceptance=args.source_acceptance,
+        output_dir=args.output_dir,
+    )
+    print(f"packet_id: {result.packet_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"evidence_packet_row_count: {result.evidence_packet_row_count}")
+    print(f"strong_official_date_specific_count: {result.strong_official_date_specific_count}")
+    print(f"supporting_official_symbol_level_count: {result.supporting_official_symbol_level_count}")
+    print(f"supporting_local_eod_cache_count: {result.supporting_local_eod_cache_count}")
+    print(f"context_only_count: {result.context_only_count}")
+    print(f"missing_count: {result.missing_count}")
+    print(f"checklist_pass_count: {result.checklist_pass_count}")
+    print(f"blocked_count: {result.blocked_count}")
+    print(f"eod_low_budget_checklist_pass_count: {result.eod_low_budget_checklist_pass_count}")
+    print(f"packet_csv_path: {result.artifact_paths['packet_csv']}")
+    print(f"updated_draft_completed_updates_path: {result.artifact_paths['updated_draft_completed_updates']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_official_status_evidence_packet_index(args: argparse.Namespace) -> int:
+    result = build_pit_official_status_evidence_packet_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Index CSV path: {result['artifact_paths']['index_csv']}")
+    print(f"artifact_count: {result['artifact_count']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_official_status_evidence_packet_health(args: argparse.Namespace) -> int:
+    result = check_pit_official_status_evidence_packet_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Health report path: {result['artifact_paths']['report']}")
+    print(f"Health status: {result['status']}")
+    print(f"checked_artifact_count: {result['checked_artifact_count']}")
+    print(f"issue_count: {result['issue_count']}")
+    print(f"error_count: {result['error_count']}")
+    print(f"warning_count: {result['warning_count']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_pit_official_status_evidence_packet_status(args: argparse.Namespace) -> int:
+    result = run_pit_official_status_evidence_packet_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Status report path: {result['artifact_paths']['report']}")
+    print(f"status: {result['status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"latest_packet_id: {result['latest_packet_id']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"row_count: {result['row_count']}")
+    print(f"evidence_packet_row_count: {result['evidence_packet_row_count']}")
+    print(f"strong_official_date_specific_count: {result['strong_official_date_specific_count']}")
+    print(f"supporting_official_symbol_level_count: {result['supporting_official_symbol_level_count']}")
+    print(f"supporting_local_eod_cache_count: {result['supporting_local_eod_cache_count']}")
+    print(f"context_only_count: {result['context_only_count']}")
+    print(f"missing_count: {result['missing_count']}")
+    print(f"checklist_pass_count: {result['checklist_pass_count']}")
+    print(f"blocked_count: {result['blocked_count']}")
+    print(f"eod_low_budget_checklist_pass_count: {result['eod_low_budget_checklist_pass_count']}")
     print(f"report_path: {result['report_path']}")
     print(f"next_manual_action: {result['next_manual_action']}")
     print(
@@ -6310,6 +6510,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         pit_universe_evidence_update_ingestion_root=args.pit_universe_evidence_update_ingestion_root,
         pit_evidence_checklist_validator_root=args.pit_evidence_checklist_validator_root,
         pit_evidence_policy_profile_comparison_root=args.pit_evidence_policy_profile_comparison_root,
+        pit_official_status_evidence_packet_root=args.pit_official_status_evidence_packet_root,
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -6757,6 +6958,70 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "pit_evidence_policy_profile_comparison_next_action: "
         f"{result.pit_evidence_policy_profile_comparison_next_action}"
+    )
+    print(
+        "latest_pit_official_status_evidence_packet_id: "
+        f"{result.latest_pit_official_status_evidence_packet_id}"
+    )
+    print(
+        "pit_official_status_evidence_packet_status: "
+        f"{result.pit_official_status_evidence_packet_status}"
+    )
+    print(
+        "pit_official_status_evidence_packet_stage: "
+        f"{result.pit_official_status_evidence_packet_stage}"
+    )
+    print(
+        "pit_official_status_evidence_packet_health_status: "
+        f"{result.pit_official_status_evidence_packet_health_status}"
+    )
+    print(
+        "pit_official_status_evidence_packet_row_count: "
+        f"{result.pit_official_status_evidence_packet_row_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_evidence_packet_row_count: "
+        f"{result.pit_official_status_evidence_packet_evidence_packet_row_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_strong_official_date_specific_count: "
+        f"{result.pit_official_status_evidence_packet_strong_official_date_specific_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_supporting_official_symbol_level_count: "
+        f"{result.pit_official_status_evidence_packet_supporting_official_symbol_level_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_supporting_local_eod_cache_count: "
+        f"{result.pit_official_status_evidence_packet_supporting_local_eod_cache_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_context_only_count: "
+        f"{result.pit_official_status_evidence_packet_context_only_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_missing_count: "
+        f"{result.pit_official_status_evidence_packet_missing_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_checklist_pass_count: "
+        f"{result.pit_official_status_evidence_packet_checklist_pass_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_blocked_count: "
+        f"{result.pit_official_status_evidence_packet_blocked_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_eod_low_budget_checklist_pass_count: "
+        f"{result.pit_official_status_evidence_packet_eod_low_budget_checklist_pass_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_report_path: "
+        f"{result.pit_official_status_evidence_packet_report_path}"
+    )
+    print(
+        "pit_official_status_evidence_packet_next_action: "
+        f"{result.pit_official_status_evidence_packet_next_action}"
     )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
