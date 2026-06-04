@@ -55,3 +55,7 @@ Health checks verify required files, manual activation metadata, safety flags, a
 `research-status` includes reviewed replacement worklist activation context. It shows the latest activation id, lineage to the acceptance/replacement/split/policy/worklist artifacts, row counts, health status, and whether the active legacy worklist was mutated.
 
 Later workflow stages, including `PAPER_WORKFLOW_READY`, remain higher priority. Activation is planning context only.
+
+## Follow-on Evidence Planning
+
+After a reviewed activation artifact exists, use `activated-replacement-worklist-evidence-update-plan` to create profile-specific manual evidence packages for `stock_core` and `etf_core`. That follow-on workflow still writes only `outputs/reports` artifacts and does not approve rows, create clean review updates, export universe files, run current-candidates, build snapshots, or compute forward labels.

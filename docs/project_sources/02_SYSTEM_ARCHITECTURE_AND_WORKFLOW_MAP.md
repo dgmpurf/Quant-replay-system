@@ -50,7 +50,8 @@ Multi-Date Evidence Preparation
   ├─ universe-profile-policy-audit
   ├─ universe-profile-split-worklist-plan
   ├─ reviewed-replacement-worklist-plan
-  └─ reviewed-replacement-worklist-acceptance
+  ├─ reviewed-replacement-worklist-acceptance
+  └─ reviewed-replacement-worklist-activation
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -107,7 +108,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Staging, Universe Profile Governance, Replacement Planning, and Acceptance
+### Multi-Date Candidate Planning, PIT Universe Review, Staging, Universe Profile Governance, Replacement Planning, Acceptance, and Activation
 
 ```text
 market cache coverage
@@ -126,6 +127,7 @@ market cache coverage
 → universe profile split-worklist plan
 → reviewed replacement worklist plan
 → reviewed replacement worklist acceptance
+→ reviewed replacement worklist activation
 → index / health / status
 → research-status
 ```
@@ -133,10 +135,10 @@ market cache coverage
 Current active preparation state:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_ACCEPTED_AS_PLANNING_CONTEXT
+REVIEWED_REPLACEMENT_WORKLIST_ACTIVATED_AS_PLANNING_CONTEXT
 ```
 
-The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, activated replacement worklists, or live trades.
+The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, or live trades.
 
 ## Important Data Contracts
 
@@ -242,6 +244,20 @@ plan_only=true, acceptance_only=true
 
 Acceptance artifacts acknowledge replacement templates as reviewed planning context only. They do not activate a worklist, approve PIT rows, reject rows, or export universe files.
 
+### Reviewed Replacement Worklist Activation Fields
+
+Replacement activation is still planning context, not a usable universe input. It should preserve:
+
+```text
+activation_id, acceptance_id, replacement_plan_id, policy_audit_id, split_plan_id,
+legacy_worklist_id, stock_core_row_count, etf_core_row_count, mixed_demo_core_row_count,
+active_worklist_mutated=false, should_approve=false, should_reject=false,
+no_universe_export=true, no_data_raw_write=true, no_data_processed_write=true,
+plan_only=true, activation_only=true
+```
+
+Activation artifacts may produce activated replacement templates under `outputs/reports`, but they must not mutate the active legacy worklist or imply PIT approval/export.
+
 ### PIT Evidence Update Ingestion Fields
 
 Evidence update ingestion validates reviewer-completed rows and may write a clean `review_updates.csv` artifact under `outputs/reports`.
@@ -276,19 +292,19 @@ Universe profile policy audit: 72 ambiguous legacy mixed-demo rows
 Split-worklist plan: 56 future stock_core rows, 16 future etf_core rows, 0 mixed_demo_core rows, 56 profile conflicts
 Reviewed replacement worklist plan: 56 stock_core replacement rows, 16 etf_core replacement rows, 0 mixed_demo_core rows, active legacy worklist untouched
 Reviewed replacement worklist acceptance: acknowledged as planning context, active legacy worklist untouched
+Reviewed replacement worklist activation: activation planning context, 56 stock_core rows, 16 etf_core rows, active legacy worklist untouched
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Guarded Replacement Worklist Activation Read-only Audit v0.1
+Activated Replacement Worklist Evidence Update Planning Read-only Audit v0.1
 ```
 
 Purpose:
 
-- inspect whether accepted replacement worklists should ever become the active evidence worklist;
-- define explicit activation flags / manual confirmation requirements;
-- keep the active legacy worklist untouched;
+- inspect how activated stock_core and etf_core planning templates should be used for manual PIT evidence update work;
+- decide whether to create profile-specific evidence work packages or only diagnostics;
 - keep the branch read-only before any implementation.
 
 Do not skip directly to accepted universe export, snapshot preparation, or current-candidates backfill runner.

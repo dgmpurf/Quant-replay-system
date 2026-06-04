@@ -17,6 +17,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a PIT universe overlay plan produced manual-review rows for point-in-time universe preparation?
 - Has a reviewed PIT universe overlay workflow approved rows or identified evidence gaps?
 - Has a PIT universe evidence update ingestion run validated reviewer-completed updates into clean review-updates rows?
+- Has an activated replacement worklist produced profile-specific manual evidence update packages?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
 - Are current-candidate artifacts healthy?
@@ -52,6 +53,15 @@ outputs/reports/point_in_time_universe_overlay_plan/status/
 outputs/reports/point_in_time_universe_overlay_review/status/
 outputs/reports/point_in_time_universe_overlay_export_readiness/status/
 outputs/reports/point_in_time_universe_export_staging/status/
+outputs/reports/point_in_time_universe_evidence_completion_helper/status/
+outputs/reports/point_in_time_universe_evidence_review_worklist/status/
+outputs/reports/point_in_time_universe_evidence_update_ingestion/status/
+outputs/reports/universe_profile_policy_audit/status/
+outputs/reports/universe_profile_split_worklist_plan/status/
+outputs/reports/reviewed_replacement_worklist_plan/status/
+outputs/reports/reviewed_replacement_worklist_acceptance/status/
+outputs/reports/reviewed_replacement_worklist_activation/status/
+outputs/reports/activated_replacement_worklist_evidence_update_plan/status/
 outputs/reports/advisory_profile_calibration/status/
 outputs/reports/calibration_to_signal_semantics/status/
 outputs/reports/signal_semantics/status/
@@ -243,6 +253,16 @@ The unified summary records the latest activation id, activation status/stage, h
 Activation means the accepted replacement templates were acknowledged as the active planning context only. It does not replace active worklists, approve or reject PIT rows, export universe files, generate candidates, build snapshots, compute labels, or validate strategy performance.
 
 Reviewed replacement worklist activation is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to activation status; activation fields remain visible for audit. If health fails because an artifact claims active worklist mutation, approval, rejection, data writes, universe export, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
+
+## Activated Replacement Worklist Evidence Update Plan Status
+
+`research-status` includes `activated-replacement-worklist-evidence-update-plan-status` as profile-specific manual evidence collection planning context when those artifacts exist.
+
+The unified summary records the latest evidence-update plan id, plan status/stage, health status, activation id, replacement plan id, source worklist id, total row count, `stock_core`, `etf_core`, and `mixed_demo_core` row counts, approved/rejected counts, valid-for-signal-date count, clean-review-updates flag, active-worklist mutation flag, report path, and the plan layer's next manual action.
+
+Evidence update plans use activated replacement templates as planning context only. They create profile-specific worklists, update templates, first-batch packages, and an evidence source checklist. They do not create clean review updates, approve or reject PIT rows, export universe files, replace active worklists, generate candidates, build snapshots, compute labels, or validate strategy performance.
+
+Activated replacement evidence update plans are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to evidence-update planning; evidence package fields remain visible for audit. If health fails because an artifact claims approval, rejection, clean review updates, active worklist mutation, data writes, universe export, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Advisory Profile Calibration Status
 

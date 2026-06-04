@@ -2,7 +2,7 @@
 
 > Status: working memory document  
 > Last generated: 2026-06-04  
-> Intended use: replace previous Project Source Pack after v1.11.0 reviewed replacement worklist acceptance checkpoint.  
+> Intended use: replace previous Project Source Pack after v1.12.0 reviewed replacement worklist activation checkpoint.  
 > Permanence: temporary and replaceable. Refresh when the project changes stage.
 
 ## Purpose
@@ -29,6 +29,7 @@ This pack is based on:
 - v1.9.0 universe profile split-worklist planning;
 - v1.10.0 reviewed replacement worklist planning;
 - v1.11.0 reviewed replacement worklist acceptance;
+- v1.12.0 guarded reviewed replacement worklist activation;
 - China A-share event-driven and industry-chain factor taxonomy sources.
 
 ## Accuracy Note
@@ -39,7 +40,7 @@ Many local outputs under `outputs/`, `data/raw/`, `data/cache`, and `data/proces
 
 ## Current Project Source Set
 
-Replace these after v1.11.0:
+Replace these after v1.12.0:
 
 ```text
 00_PROJECT_SOURCE_INDEX.md
@@ -63,7 +64,7 @@ FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
 
 ## Current Project State Summary
 
-The project has reached a reviewed replacement worklist acceptance checkpoint:
+The project has reached a guarded reviewed replacement worklist activation checkpoint:
 
 ```text
 local market data / reviewed exports / quality gates
@@ -84,13 +85,14 @@ local market data / reviewed exports / quality gates
 → universe profile split-worklist plan
 → reviewed replacement worklist plan
 → reviewed replacement worklist acceptance
+→ guarded reviewed replacement worklist activation
 → index / health / status / research-status context
 ```
 
-Current reviewed replacement worklist acceptance state:
+Current reviewed replacement worklist activation state:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_ACCEPTED_AS_PLANNING_CONTEXT
+REVIEWED_REPLACEMENT_WORKLIST_ACTIVATED_AS_PLANNING_CONTEXT
 ```
 
 Latest known active / planning artifacts:
@@ -106,6 +108,7 @@ policy_audit_id: 844794b3aae1
 split_plan_id: db2c09268c14
 replacement_plan_id: 0774d0a1fdb9
 acceptance_id: c723c0c476b1
+activation_id: a8e74161f9bb
 
 approved rows: 0
 export-ready rows: 0
@@ -124,6 +127,7 @@ future etf_core replacement rows: 16
 future mixed_demo_core rows: 0
 active legacy worklist mutated: false
 acceptance_acknowledged: true
+activation_created_as_planning_context: true
 ```
 
 Key conclusion:
@@ -134,16 +138,16 @@ They are not ETF-only artifacts.
 They should not be mutated in place.
 Replacement worklist planning creates future stock_core and etf_core templates under outputs/reports only.
 Reviewed replacement worklist acceptance acknowledges those templates as planning context only.
-It does not activate replacement worklists, approve/reject rows, or export universe files.
+Guarded activation creates separate planning artifacts for stock_core and etf_core evidence work, but still does not approve rows, export universe files, or replace the legacy active worklist.
 ```
 
 ## Current Recommended Next Branch
 
 ```text
-Guarded Replacement Worklist Activation Read-only Audit v0.1
+Activated Replacement Worklist Evidence Update Planning Read-only Audit v0.1
 ```
 
-This branch should audit how accepted replacement worklists might later become activated as the user's evidence review working set, while preserving legacy artifacts and avoiding accidental mutation.
+This branch should audit how the activated stock_core and etf_core planning templates should be used for manual PIT evidence update work.
 
 It should remain read-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
 
@@ -151,7 +155,7 @@ It should remain read-only first. It must not approve rows, reject rows, mutate 
 
 Add a new source document when a topic becomes too important to live only in chat, such as:
 
-- accepted/activated replacement worklist semantics;
+- activated replacement worklist evidence update semantics;
 - accepted PIT universe export workflow;
 - per-date snapshot preparation;
 - forward-return labels;
@@ -166,11 +170,11 @@ Add a new source document when a topic becomes too important to live only in cha
 
 - justify live trading;
 - treat worklist rows as reviewed evidence;
-- treat policy audit, split guidance, replacement worklist plans, or replacement acceptance artifacts as active universe replacement;
+- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, or activation artifacts as usable universe input;
 - treat staging preview files as accepted local universe input;
 - treat approved PIT universe rows as exported usable universe files unless a future accepted export workflow says so;
 - treat legacy `etf_core` artifacts as ETF-only;
-- activate or mutate active worklists without an explicit guarded activation workflow;
+- mutate active worklists without an explicit guarded workflow;
 - skip point-in-time checks;
 - skip data/snapshot quality;
 - approve real message delivery or broker automation;

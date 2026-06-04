@@ -1046,6 +1046,9 @@ class LocalResearchDashboardSettings(BaseModel):
     reviewed_replacement_worklist_plan_root: Path = Path("outputs/reports/reviewed_replacement_worklist_plan")
     reviewed_replacement_worklist_acceptance_root: Path = Path("outputs/reports/reviewed_replacement_worklist_acceptance")
     reviewed_replacement_worklist_activation_root: Path = Path("outputs/reports/reviewed_replacement_worklist_activation")
+    activated_replacement_worklist_evidence_update_plan_root: Path = Path(
+        "outputs/reports/activated_replacement_worklist_evidence_update_plan"
+    )
     advisory_profile_calibration_root: Path = Path("outputs/reports/advisory_profile_calibration")
     signal_semantics_root: Path = Path("outputs/reports/signal_semantics")
     signal_advisory_root: Path = Path("outputs/reports/signals")

@@ -40,7 +40,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, and accepted replacement planning artifacts that are not activated worklists.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, and activated replacement planning artifacts that are not PIT-approved universe inputs.
 
 ## Diagnostic vs Active Artifacts
 
@@ -210,23 +210,48 @@ They must not:
 - build snapshots;
 - compute forward labels.
 
-Acceptance is not activation. Accepted replacement planning artifacts still require a future guarded activation workflow before they can become the user's active evidence worklist.
+Acceptance is not activation. Accepted replacement planning artifacts still require a guarded activation workflow before they can become replacement evidence-work planning context.
 
-## Future Replacement Worklist Activation Workflows
+## Reviewed Replacement Worklist Activation Workflows
 
-A future replacement worklist activation workflow should be audited before implementation.
+Reviewed replacement worklist activation artifacts are planning context, not usable universe input.
 
-It should require explicit manual activation flags and should preserve lineage. It must distinguish:
+They may:
+
+- create separate activated replacement planning artifacts under `outputs/reports`;
+- create stock_core and etf_core activated templates for future manual evidence work;
+- preserve lineage to legacy worklist, policy audit, split plan, replacement plan, and acceptance artifacts;
+- expose activated replacement planning context in research-status.
+
+They must not:
+
+- mutate the active legacy worklist;
+- approve PIT rows;
+- reject PIT rows;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- run current-candidates;
+- build snapshots;
+- compute forward labels;
+- imply a usable current-candidates universe input exists.
+
+Activation is still not approval, export, or candidate generation.
+
+## Future Activated Replacement Evidence Update Planning Workflows
+
+A future activated replacement evidence update planning workflow should be audited before implementation.
+
+It should distinguish:
 
 ```text
-planned replacement worklist
-accepted replacement worklist
-activated replacement worklist
-active legacy worklist
-active PIT review artifact
+activated replacement planning artifact
+profile-specific evidence update template
+clean review_updates.csv
+applied PIT review artifact
+accepted universe export
 ```
 
-Activation must not imply approval of any PIT row or export of any universe file.
+It must not skip evidence update ingestion, review, export-readiness, staging, accepted export, snapshot-quality, or current-candidates gates.
 
 ## Export-Readiness Workflows
 
@@ -263,6 +288,7 @@ export_readiness_only=true
 staging_only=true
 audit_only=true
 acceptance_only=true
+activation_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -291,7 +317,7 @@ Rows derived from a future universe must keep survivorship-bias warnings until r
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
 
 ## When to Refresh This Document
 
@@ -301,7 +327,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- replacement worklist activation semantics are implemented;
+- activated replacement evidence update planning semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.

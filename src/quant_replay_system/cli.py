@@ -222,6 +222,18 @@ from quant_replay_system.reviewed_replacement_worklist_activation_index import (
 from quant_replay_system.reviewed_replacement_worklist_activation_status import (
     run_reviewed_replacement_worklist_activation_status,
 )
+from quant_replay_system.activated_replacement_worklist_evidence_update_plan import (
+    build_activated_replacement_worklist_evidence_update_plan,
+)
+from quant_replay_system.activated_replacement_worklist_evidence_update_plan_health import (
+    check_activated_replacement_worklist_evidence_update_plan_health,
+)
+from quant_replay_system.activated_replacement_worklist_evidence_update_plan_index import (
+    build_activated_replacement_worklist_evidence_update_plan_index,
+)
+from quant_replay_system.activated_replacement_worklist_evidence_update_plan_status import (
+    run_activated_replacement_worklist_evidence_update_plan_status,
+)
 from quant_replay_system.signal_advisory import build_signal_advisory_from_candidates
 from quant_replay_system.signal_advisory_health import check_signal_advisory_health
 from quant_replay_system.signal_advisory_index import build_signal_advisory_index
@@ -1363,6 +1375,81 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_reviewed_replacement_worklist_activation_status
     )
 
+    activated_evidence_update_plan = subparsers.add_parser(
+        "activated-replacement-worklist-evidence-update-plan",
+        help="Create profile-specific evidence update packages from activated replacement worklists",
+    )
+    activated_evidence_update_plan.add_argument(
+        "--activation",
+        default=(
+            "outputs/reports/reviewed_replacement_worklist_activation/"
+            "a8e74161f9bb/reviewed_replacement_worklist_activation.csv"
+        ),
+        help="Reviewed replacement worklist activation CSV",
+    )
+    activated_evidence_update_plan.add_argument(
+        "--output-dir",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan",
+        help="Evidence update plan output directory",
+    )
+    activated_evidence_update_plan.set_defaults(
+        handler=_handle_activated_replacement_worklist_evidence_update_plan
+    )
+
+    activated_evidence_update_plan_index = subparsers.add_parser(
+        "activated-replacement-worklist-evidence-update-plan-index",
+        help="Build a local index of activated replacement worklist evidence update plan artifacts",
+    )
+    activated_evidence_update_plan_index.add_argument(
+        "--root",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan",
+        help="Evidence update plan artifact root",
+    )
+    activated_evidence_update_plan_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan/index",
+        help="Index output directory",
+    )
+    activated_evidence_update_plan_index.set_defaults(
+        handler=_handle_activated_replacement_worklist_evidence_update_plan_index
+    )
+
+    activated_evidence_update_plan_health = subparsers.add_parser(
+        "activated-replacement-worklist-evidence-update-plan-health",
+        help="Check activated replacement worklist evidence update plan health",
+    )
+    activated_evidence_update_plan_health.add_argument(
+        "--root",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan",
+        help="Evidence update plan artifact root",
+    )
+    activated_evidence_update_plan_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan/health",
+        help="Health output directory",
+    )
+    activated_evidence_update_plan_health.set_defaults(
+        handler=_handle_activated_replacement_worklist_evidence_update_plan_health
+    )
+
+    activated_evidence_update_plan_status = subparsers.add_parser(
+        "activated-replacement-worklist-evidence-update-plan-status",
+        help="Summarize latest activated replacement worklist evidence update plan status",
+    )
+    activated_evidence_update_plan_status.add_argument(
+        "--root",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan",
+        help="Evidence update plan artifact root",
+    )
+    activated_evidence_update_plan_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan/status",
+        help="Status output directory",
+    )
+    activated_evidence_update_plan_status.set_defaults(
+        handler=_handle_activated_replacement_worklist_evidence_update_plan_status
+    )
+
     pit_universe_evidence_completion_helper_index = subparsers.add_parser(
         "pit-universe-evidence-completion-helper-index",
         help="Build a local index of PIT universe evidence completion helper artifacts",
@@ -2089,6 +2176,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--reviewed-replacement-worklist-activation-root",
         help="Reviewed replacement worklist activation artifact root directory",
+    )
+    research_status.add_argument(
+        "--activated-replacement-worklist-evidence-update-plan-root",
+        help="Activated replacement worklist evidence update plan artifact root directory",
     )
     research_status.add_argument(
         "--advisory-profile-calibration-root",
@@ -4158,6 +4249,120 @@ def _handle_reviewed_replacement_worklist_activation_status(args: argparse.Names
     return 1 if result.status == "FAIL" else 0
 
 
+def _handle_activated_replacement_worklist_evidence_update_plan(args: argparse.Namespace) -> int:
+    result = build_activated_replacement_worklist_evidence_update_plan(
+        activation=args.activation,
+        output_dir=args.output_dir,
+    )
+    print(f"plan_id: {result.plan_id}")
+    print(f"status: {result.status}")
+    print(f"activation_id: {result.activation_id}")
+    print(f"acceptance_id: {result.acceptance_id}")
+    print(f"replacement_plan_id: {result.replacement_plan_id}")
+    print(f"source_split_plan_id: {result.source_split_plan_id}")
+    print(f"source_policy_audit_id: {result.source_policy_audit_id}")
+    print(f"source_worklist_id: {result.source_worklist_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_core_row_count: {result.stock_core_row_count}")
+    print(f"etf_core_row_count: {result.etf_core_row_count}")
+    print(f"mixed_demo_core_row_count: {result.mixed_demo_core_row_count}")
+    print(f"stock_core_first_batch_row_count: {result.stock_core_first_batch_row_count}")
+    print(f"etf_core_first_batch_row_count: {result.etf_core_first_batch_row_count}")
+    print(f"approved_count: {result.approved_count}")
+    print(f"rejected_count: {result.rejected_count}")
+    print(f"valid_for_signal_date_count: {result.valid_for_signal_date_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"plan_csv_path: {result.artifact_paths['plan_csv']}")
+    print(f"stock_core_update_template_path: {result.artifact_paths['stock_core_update_template']}")
+    print(f"etf_core_update_template_path: {result.artifact_paths['etf_core_update_template']}")
+    print(f"stock_core_first_batch_package_path: {result.artifact_paths['stock_core_first_batch_package']}")
+    print(f"etf_core_first_batch_package_path: {result.artifact_paths['etf_core_first_batch_package']}")
+    print(f"evidence_source_checklist_path: {result.artifact_paths['evidence_source_checklist']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_activated_replacement_worklist_evidence_update_plan_index(args: argparse.Namespace) -> int:
+    result = build_activated_replacement_worklist_evidence_update_plan_index(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_activated_replacement_worklist_evidence_update_plan_health(args: argparse.Namespace) -> int:
+    result = check_activated_replacement_worklist_evidence_update_plan_health(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_activated_replacement_worklist_evidence_update_plan_status(args: argparse.Namespace) -> int:
+    result = run_activated_replacement_worklist_evidence_update_plan_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_plan_id: {result.latest_plan_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"activation_id: {result.activation_id}")
+    print(f"acceptance_id: {result.acceptance_id}")
+    print(f"replacement_plan_id: {result.replacement_plan_id}")
+    print(f"source_split_plan_id: {result.source_split_plan_id}")
+    print(f"source_policy_audit_id: {result.source_policy_audit_id}")
+    print(f"source_worklist_id: {result.source_worklist_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_core_row_count: {result.stock_core_row_count}")
+    print(f"etf_core_row_count: {result.etf_core_row_count}")
+    print(f"mixed_demo_core_row_count: {result.mixed_demo_core_row_count}")
+    print(f"approved_count: {result.approved_count}")
+    print(f"valid_for_signal_date_count: {result.valid_for_signal_date_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
 def _handle_pit_universe_evidence_completion_helper_index(args: argparse.Namespace) -> int:
     result = build_pit_universe_evidence_completion_helper_index(
         root=args.root,
@@ -5745,6 +5950,10 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["reviewed_replacement_worklist_activation_root"] = Path(
             args.reviewed_replacement_worklist_activation_root
         )
+    if args.activated_replacement_worklist_evidence_update_plan_root:
+        updates["activated_replacement_worklist_evidence_update_plan_root"] = Path(
+            args.activated_replacement_worklist_evidence_update_plan_root
+        )
     if args.advisory_profile_calibration_root:
         updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
     if args.calibration_to_signal_semantics_root:
@@ -5791,6 +6000,9 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
         reviewed_replacement_worklist_acceptance_root=args.reviewed_replacement_worklist_acceptance_root,
         reviewed_replacement_worklist_activation_root=args.reviewed_replacement_worklist_activation_root,
+        activated_replacement_worklist_evidence_update_plan_root=(
+            args.activated_replacement_worklist_evidence_update_plan_root
+        ),
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -6400,6 +6612,42 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "reviewed_replacement_worklist_activation_next_action: "
         f"{result.reviewed_replacement_worklist_activation_next_action}"
+    )
+    print(
+        "latest_activated_replacement_worklist_evidence_update_plan_id: "
+        f"{result.latest_activated_replacement_worklist_evidence_update_plan_id}"
+    )
+    print(
+        "activated_replacement_worklist_evidence_update_plan_status: "
+        f"{result.activated_replacement_worklist_evidence_update_plan_status}"
+    )
+    print(
+        "activated_replacement_worklist_evidence_update_plan_stage: "
+        f"{result.activated_replacement_worklist_evidence_update_plan_stage}"
+    )
+    print(
+        "activated_replacement_worklist_evidence_update_plan_health_status: "
+        f"{result.activated_replacement_worklist_evidence_update_plan_health_status}"
+    )
+    print(
+        "activated_replacement_worklist_evidence_update_plan_stock_core_row_count: "
+        f"{result.activated_replacement_worklist_evidence_update_plan_stock_core_row_count}"
+    )
+    print(
+        "activated_replacement_worklist_evidence_update_plan_etf_core_row_count: "
+        f"{result.activated_replacement_worklist_evidence_update_plan_etf_core_row_count}"
+    )
+    print(
+        "activated_replacement_worklist_evidence_update_plan_valid_for_signal_date_count: "
+        f"{result.activated_replacement_worklist_evidence_update_plan_valid_for_signal_date_count}"
+    )
+    print(
+        "activated_replacement_worklist_evidence_update_plan_clean_review_updates_created: "
+        f"{result.activated_replacement_worklist_evidence_update_plan_clean_review_updates_created}"
+    )
+    print(
+        "activated_replacement_worklist_evidence_update_plan_next_action: "
+        f"{result.activated_replacement_worklist_evidence_update_plan_next_action}"
     )
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")

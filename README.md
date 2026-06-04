@@ -145,6 +145,10 @@ Use `reviewed-replacement-worklist-acceptance` to acknowledge reviewed replaceme
 
 Use `reviewed-replacement-worklist-activation` to create a guarded activated replacement worklist planning artifact under `outputs/reports` only; see [docs/reviewed_replacement_worklist_activation.md](docs/reviewed_replacement_worklist_activation.md). The command requires explicit manual activation metadata and still does not mutate active legacy worklists, approve/reject PIT rows, export universe files, run current-candidates, build snapshots, or compute labels.
 
+Use `activated-replacement-worklist-evidence-update-plan` to create profile-specific manual evidence update packages from an activation artifact; see [docs/activated_replacement_worklist_evidence_update_plan.md](docs/activated_replacement_worklist_evidence_update_plan.md). The workflow writes planning artifacts under `outputs/reports` only, keeps rows non-approved, and does not create clean review updates, export universe files, run current-candidates, build snapshots, or compute labels.
+
+Use `activated-replacement-worklist-evidence-update-plan-index`, `activated-replacement-worklist-evidence-update-plan-health`, and `activated-replacement-worklist-evidence-update-plan-status` to discover, safety-check, and summarize evidence-update planning artifacts. `research-status` includes this context while preserving later paper workflow priority.
+
 Use `reviewed-replacement-worklist-acceptance-index`, `reviewed-replacement-worklist-acceptance-health`, and `reviewed-replacement-worklist-acceptance-status` to discover, safety-check, and summarize acceptance artifacts. `research-status` includes acceptance context while preserving later paper workflow priority.
 
 Use `universe-profile-split-worklist-plan` to apply `config/universe_profiles.yaml` and write report-only future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_split_worklist_plan.md](docs/universe_profile_split_worklist_plan.md). The planner leaves active worklists unchanged and does not approve/reject rows, export universe files, build snapshots, run current-candidates, or compute labels.
@@ -158,6 +162,8 @@ For the v1.4.0 checkpoint covering PIT universe export-readiness gate-ordering a
 For the v1.5.0 checkpoint covering PIT universe export staging artifact views and `research-status` integration, see [docs/release_checkpoint_v1.5.0.md](docs/release_checkpoint_v1.5.0.md).
 
 For the v1.6.0 checkpoint covering PIT universe evidence review worklist artifact views and `research-status` integration, see [docs/release_checkpoint_v1.6.0.md](docs/release_checkpoint_v1.6.0.md).
+
+For the v1.13.0 checkpoint covering activated replacement worklist evidence update planning and `research-status` integration, see [docs/release_checkpoint_v1.13.0.md](docs/release_checkpoint_v1.13.0.md).
 
 For the v1.7.0 checkpoint covering PIT universe evidence update ingestion artifact views and `research-status` integration, see [docs/release_checkpoint_v1.7.0.md](docs/release_checkpoint_v1.7.0.md).
 
