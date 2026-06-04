@@ -1319,6 +1319,80 @@ def test_cli_research_status_prints_pit_evidence_checklist_validator_fields(
     assert "pit_evidence_checklist_validator_blocked_count: 16" in output.out
 
 
+def test_dashboard_includes_pit_evidence_policy_profile_comparison_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_evidence_policy_profile_comparison_artifact(root, comparison_id="comparison-blocked")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_evidence_policy_profile_comparison_id == "comparison-blocked"
+    assert result.pit_evidence_policy_profile_comparison_status == "WARN"
+    assert (
+        result.pit_evidence_policy_profile_comparison_stage
+        == "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED"
+    )
+    assert result.pit_evidence_policy_profile_comparison_health_status == "PASS"
+    assert result.pit_evidence_policy_profile_comparison_profile_name == "EOD_POST_CLOSE_LOW_BUDGET_PIT"
+    assert result.pit_evidence_policy_profile_comparison_row_count == 16
+    assert result.pit_evidence_policy_profile_comparison_strict_pass_count == 0
+    assert result.pit_evidence_policy_profile_comparison_eod_low_budget_pass_count == 0
+    assert result.pit_evidence_policy_profile_comparison_relaxed_blocker_count == 16
+    assert result.pit_evidence_policy_profile_comparison_remaining_blocked_count == 16
+    assert result.workflow_stage == "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED"
+    assert row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_evidence_policy_profile_comparison(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_evidence_policy_profile_comparison_artifact(root, comparison_id="comparison-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_evidence_policy_profile_comparison_id == "comparison-paper-context"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+
+
+def test_cli_research_status_prints_pit_evidence_policy_profile_comparison_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_evidence_policy_profile_comparison_artifact(root, comparison_id="comparison-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_evidence_policy_profile_comparison_id: comparison-cli" in output.out
+    assert "pit_evidence_policy_profile_comparison_status: WARN" in output.out
+    assert (
+        "pit_evidence_policy_profile_comparison_stage: "
+        "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED"
+    ) in output.out
+    assert "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count: 0" in output.out
+
+
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
     tmp_path: Path,
 ) -> None:
@@ -5922,6 +5996,125 @@ def _pit_evidence_checklist_validator_artifact(
             "broker_api_invoked": False,
             "order_placement_enabled": False,
             "message_sent": False,
+        },
+    )
+    return folder
+
+
+def _pit_evidence_policy_profile_comparison_artifact(
+    root: Path,
+    *,
+    comparison_id: str = "comparison-a",
+    status: str = "WARN",
+    row_count: int = 16,
+    strict_pass_count: int = 0,
+    eod_low_budget_pass_count: int = 0,
+    relaxed_blocker_count: int = 16,
+    remaining_blocked_count: int = 16,
+    created_at: str = "2026-06-04T16:10:00+08:00",
+) -> Path:
+    folder = root / "pit_evidence_policy_profile_comparison" / comparison_id
+    folder.mkdir(parents=True, exist_ok=True)
+    comparison_csv = folder / "pit_evidence_policy_profile_comparison.csv"
+    summary_csv = folder / "pit_evidence_policy_profile_summary.csv"
+    relaxed_csv = folder / "relaxed_blocker_matrix.csv"
+    remaining_csv = folder / "remaining_blocker_matrix.csv"
+    snapshot_csv = folder / "eod_post_close_policy_profile_snapshot.csv"
+    report = folder / "report.md"
+    metadata = folder / "metadata.json"
+    pd.DataFrame(
+        [
+            {
+                "comparison_id": comparison_id,
+                "symbol": "000001",
+                "signal_date": "2024-04-02",
+                "recommended_future_universe": "stock_core",
+                "profile_name": "EOD_POST_CLOSE_LOW_BUDGET_PIT",
+                "strict_status": "CHECKLIST_BLOCKED_PIT_TIMING",
+                "eod_low_budget_status": "EOD_LOW_BUDGET_BLOCKED",
+                "strict_blockers": "PIT timing blocked; survivorship unresolved",
+                "relaxed_blockers": "PIT_TIMING_BLOCKED",
+                "remaining_blockers": "survivorship unresolved",
+                "available_time": "2024-04-02 15:30:00",
+                "decision_time": "2024-04-02 16:00:00",
+                "available_time_within_decision_time": True,
+                "same_day_market_cache_used_as_support": True,
+                "active_context_supported_by_cache": True,
+                "suspension_context_supported_by_cache": True,
+                "not_delisted_still_required": True,
+                "st_no_st_still_required": True,
+                "survivorship_still_required": True,
+                "checklist_pass_under_strict": False,
+                "checklist_pass_under_eod_low_budget": False,
+                "approval_candidate_preview_only": False,
+                "should_apply_approval": False,
+                "no_pit_review_run": True,
+                "no_export_readiness_run": True,
+                "no_staging_run": True,
+                "no_universe_export": True,
+                "no_data_raw_write": True,
+                "no_data_processed_write": True,
+                "no_current_candidates_generated": True,
+                "comparison_only": True,
+            }
+        ]
+    ).to_csv(comparison_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "comparison_id": comparison_id,
+                "status": status,
+                "reference_profile_name": "STRICT_PIT",
+                "profile_name": "EOD_POST_CLOSE_LOW_BUDGET_PIT",
+                "profile_is_opt_in": True,
+                "strict_default_unchanged": True,
+                "row_count": row_count,
+                "strict_checklist_pass_count": strict_pass_count,
+                "eod_low_budget_checklist_pass_count": eod_low_budget_pass_count,
+                "relaxed_blocker_count": relaxed_blocker_count,
+                "remaining_blocked_count": remaining_blocked_count,
+                "approval_candidate_preview_count": eod_low_budget_pass_count,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    pd.DataFrame([{"comparison_id": comparison_id, "symbol": "000001", "signal_date": "2024-04-02", "blocker": "PIT_TIMING_BLOCKED"}]).to_csv(relaxed_csv, index=False)
+    pd.DataFrame([{"comparison_id": comparison_id, "symbol": "000001", "signal_date": "2024-04-02", "blocker": "survivorship unresolved"}]).to_csv(remaining_csv, index=False)
+    pd.DataFrame([{"field_name": "available_time", "rule": "available_time <= decision_time"}]).to_csv(snapshot_csv, index=False)
+    report.write_text("No approval applied. Comparison only.", encoding="utf-8")
+    _write_json(
+        metadata,
+        {
+            "comparison_id": comparison_id,
+            "created_at": created_at,
+            "status": status,
+            "reference_profile_name": "STRICT_PIT",
+            "profile_name": "EOD_POST_CLOSE_LOW_BUDGET_PIT",
+            "profile_is_opt_in": True,
+            "strict_default_unchanged": True,
+            "row_count": row_count,
+            "strict_checklist_pass_count": strict_pass_count,
+            "eod_low_budget_checklist_pass_count": eod_low_budget_pass_count,
+            "relaxed_blocker_count": relaxed_blocker_count,
+            "remaining_blocked_count": remaining_blocked_count,
+            "approval_applied": False,
+            "pit_review_run": False,
+            "export_readiness_run": False,
+            "export_staging_run": False,
+            "universe_exported": False,
+            "active_worklist_mutated": False,
+            "no_data_raw_write": True,
+            "no_data_processed_write": True,
+            "no_current_candidates_generated": True,
+            "comparison_only": True,
+            "output_files": {
+                "comparison_csv": str(comparison_csv),
+                "summary_csv": str(summary_csv),
+                "relaxed_blocker_matrix": str(relaxed_csv),
+                "remaining_blocker_matrix": str(remaining_csv),
+                "policy_snapshot": str(snapshot_csv),
+                "report": str(report),
+                "metadata": str(metadata),
+            },
         },
     )
     return folder

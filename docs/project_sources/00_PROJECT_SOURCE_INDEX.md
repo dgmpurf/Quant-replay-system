@@ -2,7 +2,7 @@
 
 > Status: working memory document  
 > Last generated: 2026-06-04  
-> Intended use: replace previous Project Source Pack after v1.13.0 activated replacement worklist evidence update planning checkpoint.  
+> Intended use: replace previous Project Source Pack after v1.14.0 PIT evidence checklist validator checkpoint.  
 > Permanence: temporary and replaceable. Refresh only after major checkpoint / stage changes, not after every small audit.
 
 ## Purpose
@@ -31,6 +31,7 @@ This pack is based on:
 - v1.11.0 reviewed replacement worklist acceptance;
 - v1.12.0 guarded reviewed replacement worklist activation;
 - v1.13.0 activated replacement worklist evidence update planning;
+- v1.14.0 PIT evidence checklist validator;
 - China A-share event-driven and industry-chain factor taxonomy sources.
 
 ## Accuracy Note
@@ -41,7 +42,7 @@ Many local outputs under `outputs/`, `data/raw/`, `data/cache`, and `data/proces
 
 ## Current Project Source Set
 
-Replace these after v1.13.0:
+Replace these after v1.14.0:
 
 ```text
 00_PROJECT_SOURCE_INDEX.md
@@ -65,7 +66,7 @@ FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
 
 ## Current Project State Summary
 
-The project has reached an activated replacement worklist evidence update planning checkpoint:
+The project has reached a PIT evidence checklist validator checkpoint:
 
 ```text
 local market data / reviewed exports / quality gates
@@ -88,13 +89,16 @@ local market data / reviewed exports / quality gates
 → reviewed replacement worklist acceptance
 → guarded reviewed replacement worklist activation
 → activated replacement worklist evidence update plan
+→ Codex-driven diagnostics evidence discovery and gap closure
+→ strict PIT evidence checklist
+→ pit-evidence-checklist-validator
 → index / health / status / research-status context
 ```
 
-Current activated replacement worklist evidence update planning state:
+Current PIT evidence checklist validation state:
 
 ```text
-ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_READY
+PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
 ```
 
 Latest known active / planning artifacts:
@@ -104,7 +108,7 @@ review_id: 7bc8ba08bf5a
 export_readiness_id: 75c6975e93e4
 helper_id: 4cf008a09f04
 staging_id: 41bfd31a9e2c
-worklist_id: 1c7972988f59
+legacy_worklist_id: 1c7972988f59
 ingestion_id: 284058e7f1e4
 policy_audit_id: 844794b3aae1
 split_plan_id: db2c09268c14
@@ -112,7 +116,13 @@ replacement_plan_id: 0774d0a1fdb9
 acceptance_id: c723c0c476b1
 activation_id: a8e74161f9bb
 evidence_update_plan_id: 4e268d67bd7d
+latest_diagnostics_ingestion_id: 734f3a722ddf
+validator_id: 62e9eb747197
+```
 
+Current evidence and validator counts:
+
+```text
 approved rows: 0
 export-ready rows: 0
 staged rows: 0
@@ -139,6 +149,21 @@ activated evidence update plan:
   stock first-batch package rows: 8
   ETF first-batch package rows: 8
   clean_review_updates_created: false
+
+Codex diagnostics first batch:
+  inspected rows: 16
+  diagnostics ingestion ready_for_review_update_count: 16
+  diagnostics ingestion blocked_count: 0
+  approval_requested_count: 0
+  approved_ready_count: 0
+
+strict checklist validator:
+  validator_id: 62e9eb747197
+  row_count: 16
+  checklist_pass_count: 0
+  blocked_count: 16
+  stock_core_blocked_count: 8
+  etf_core_blocked_count: 8
 ```
 
 Key conclusion:
@@ -151,21 +176,23 @@ Replacement worklist planning creates future stock_core and etf_core templates u
 Reviewed replacement worklist acceptance acknowledges those templates as planning context only.
 Guarded activation creates separate planning artifacts for stock_core and etf_core evidence work, but still does not approve rows, export universe files, or replace the legacy active worklist.
 Activated replacement worklist evidence update planning creates profile-specific evidence packages and first-batch packages, but does not create clean review_updates.csv or apply approvals.
+Codex diagnostics can create NEEDS_MORE_EVIDENCE draft updates and validate ingestion schema, but no row currently passes the strict PIT evidence checklist.
 ```
 
 ## Current Recommended Next Branch
 
 ```text
-Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation v0.1
+Codex-Driven Official Evidence Acquisition for Checklist Blockers v0.1
 ```
 
-This branch should use Codex to do as much of the manual evidence preparation as possible:
+This branch should use Codex to target the exact blockers exposed by `pit-evidence-checklist-validator`:
 
 ```text
-local/public evidence discovery
-→ evidence source records / source checklist
-→ draft completed update CSV for a tiny first batch
-→ diagnostics-only pit-universe-evidence-update-ingestion validation
+official/public source discovery for active/not-delisted/ST/survivorship/timing evidence
+→ evidence source records
+→ updated draft completed CSV only if evidence is real
+→ diagnostics-only ingestion validation
+→ checklist validator rerun
 ```
 
 It should remain diagnostics/report-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
@@ -186,7 +213,7 @@ Add or replace Source when:
 
 Add a new source document when a topic becomes too important to live only in chat, such as:
 
-- activated replacement worklist evidence update semantics;
+- official evidence acquisition and PIT checklist satisfaction semantics;
 - accepted PIT universe export workflow;
 - per-date snapshot preparation;
 - forward-return labels;
@@ -201,8 +228,9 @@ Add a new source document when a topic becomes too important to live only in cha
 
 - justify live trading;
 - treat worklist rows as reviewed evidence;
-- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, or evidence update plans as usable universe input;
+- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, or checklist validator outputs as usable universe input;
 - treat evidence packages as clean `review_updates.csv`;
+- treat checklist pass as applied approval;
 - treat staging preview files as accepted local universe input;
 - treat approved PIT universe rows as exported usable universe files unless a future accepted export workflow says so;
 - treat legacy `etf_core` artifacts as ETF-only;

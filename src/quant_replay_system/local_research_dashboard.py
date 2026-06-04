@@ -44,6 +44,9 @@ from quant_replay_system.point_in_time_universe_evidence_update_ingestion_status
     run_pit_universe_evidence_update_ingestion_status,
 )
 from quant_replay_system.pit_evidence_checklist_validator_status import run_pit_evidence_checklist_validator_status
+from quant_replay_system.pit_evidence_policy_profile_comparison_status import (
+    run_pit_evidence_policy_profile_comparison_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -245,6 +248,18 @@ SUMMARY_COLUMNS = [
     "pit_evidence_checklist_validator_etf_core_blocked_count",
     "pit_evidence_checklist_validator_report_path",
     "pit_evidence_checklist_validator_next_action",
+    "pit_evidence_policy_profile_comparison_status",
+    "latest_pit_evidence_policy_profile_comparison_id",
+    "pit_evidence_policy_profile_comparison_stage",
+    "pit_evidence_policy_profile_comparison_health_status",
+    "pit_evidence_policy_profile_comparison_profile_name",
+    "pit_evidence_policy_profile_comparison_row_count",
+    "pit_evidence_policy_profile_comparison_strict_pass_count",
+    "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count",
+    "pit_evidence_policy_profile_comparison_relaxed_blocker_count",
+    "pit_evidence_policy_profile_comparison_remaining_blocked_count",
+    "pit_evidence_policy_profile_comparison_report_path",
+    "pit_evidence_policy_profile_comparison_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -561,6 +576,7 @@ COMPONENTS = [
     "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
     "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS",
     "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS",
+    "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -610,6 +626,7 @@ WORKFLOW_AREAS = {
     "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS": "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
     "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS": "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION",
     "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS": "PIT_EVIDENCE_CHECKLIST_VALIDATOR",
+    "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS": "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON",
     "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS": "CALIBRATION_TO_SIGNAL_SEMANTICS",
     "SIGNAL_SEMANTICS_STATUS": "SIGNAL_SEMANTICS",
@@ -791,6 +808,18 @@ class LocalResearchDashboardResult:
     pit_evidence_checklist_validator_etf_core_blocked_count: int
     pit_evidence_checklist_validator_report_path: str
     pit_evidence_checklist_validator_next_action: str
+    pit_evidence_policy_profile_comparison_status: str
+    latest_pit_evidence_policy_profile_comparison_id: str
+    pit_evidence_policy_profile_comparison_stage: str
+    pit_evidence_policy_profile_comparison_health_status: str
+    pit_evidence_policy_profile_comparison_profile_name: str
+    pit_evidence_policy_profile_comparison_row_count: int
+    pit_evidence_policy_profile_comparison_strict_pass_count: int
+    pit_evidence_policy_profile_comparison_eod_low_budget_pass_count: int
+    pit_evidence_policy_profile_comparison_relaxed_blocker_count: int
+    pit_evidence_policy_profile_comparison_remaining_blocked_count: int
+    pit_evidence_policy_profile_comparison_report_path: str
+    pit_evidence_policy_profile_comparison_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1087,6 +1116,7 @@ def run_local_research_dashboard(
     pit_universe_evidence_review_worklist_root: str | Path | None = None,
     pit_universe_evidence_update_ingestion_root: str | Path | None = None,
     pit_evidence_checklist_validator_root: str | Path | None = None,
+    pit_evidence_policy_profile_comparison_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1188,6 +1218,11 @@ def run_local_research_dashboard(
         Path(pit_evidence_checklist_validator_root)
         if pit_evidence_checklist_validator_root is not None
         else effective_root / "pit_evidence_checklist_validator"
+    )
+    effective_pit_evidence_policy_profile_comparison_root = (
+        Path(pit_evidence_policy_profile_comparison_root)
+        if pit_evidence_policy_profile_comparison_root is not None
+        else effective_root / "pit_evidence_policy_profile_comparison"
     )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
@@ -1304,6 +1339,10 @@ def run_local_research_dashboard(
             )
         if pit_evidence_checklist_validator_root is None:
             effective_pit_evidence_checklist_validator_root = effective_root / "pit_evidence_checklist_validator"
+        if pit_evidence_policy_profile_comparison_root is None:
+            effective_pit_evidence_policy_profile_comparison_root = (
+                effective_root / "pit_evidence_policy_profile_comparison"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -1358,6 +1397,7 @@ def run_local_research_dashboard(
         pit_universe_evidence_review_worklist_root=effective_pit_universe_evidence_review_worklist_root,
         pit_universe_evidence_update_ingestion_root=effective_pit_universe_evidence_update_ingestion_root,
         pit_evidence_checklist_validator_root=effective_pit_evidence_checklist_validator_root,
+        pit_evidence_policy_profile_comparison_root=effective_pit_evidence_policy_profile_comparison_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -1418,6 +1458,7 @@ def run_local_research_dashboard(
         "pit_universe_evidence_review_worklist_root": effective_pit_universe_evidence_review_worklist_root,
         "pit_universe_evidence_update_ingestion_root": effective_pit_universe_evidence_update_ingestion_root,
         "pit_evidence_checklist_validator_root": effective_pit_evidence_checklist_validator_root,
+        "pit_evidence_policy_profile_comparison_root": effective_pit_evidence_policy_profile_comparison_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
@@ -1816,6 +1857,42 @@ def run_local_research_dashboard(
         ),
         pit_evidence_checklist_validator_next_action=str(
             summary.get("pit_evidence_checklist_validator_next_action", "")
+        ),
+        pit_evidence_policy_profile_comparison_status=str(
+            summary.get("pit_evidence_policy_profile_comparison_status", "MISSING")
+        ),
+        latest_pit_evidence_policy_profile_comparison_id=str(
+            summary.get("latest_pit_evidence_policy_profile_comparison_id", "")
+        ),
+        pit_evidence_policy_profile_comparison_stage=str(
+            summary.get("pit_evidence_policy_profile_comparison_stage", "")
+        ),
+        pit_evidence_policy_profile_comparison_health_status=str(
+            summary.get("pit_evidence_policy_profile_comparison_health_status", "")
+        ),
+        pit_evidence_policy_profile_comparison_profile_name=str(
+            summary.get("pit_evidence_policy_profile_comparison_profile_name", "")
+        ),
+        pit_evidence_policy_profile_comparison_row_count=_int_or_zero(
+            summary.get("pit_evidence_policy_profile_comparison_row_count")
+        ),
+        pit_evidence_policy_profile_comparison_strict_pass_count=_int_or_zero(
+            summary.get("pit_evidence_policy_profile_comparison_strict_pass_count")
+        ),
+        pit_evidence_policy_profile_comparison_eod_low_budget_pass_count=_int_or_zero(
+            summary.get("pit_evidence_policy_profile_comparison_eod_low_budget_pass_count")
+        ),
+        pit_evidence_policy_profile_comparison_relaxed_blocker_count=_int_or_zero(
+            summary.get("pit_evidence_policy_profile_comparison_relaxed_blocker_count")
+        ),
+        pit_evidence_policy_profile_comparison_remaining_blocked_count=_int_or_zero(
+            summary.get("pit_evidence_policy_profile_comparison_remaining_blocked_count")
+        ),
+        pit_evidence_policy_profile_comparison_report_path=str(
+            summary.get("pit_evidence_policy_profile_comparison_report_path", "")
+        ),
+        pit_evidence_policy_profile_comparison_next_action=str(
+            summary.get("pit_evidence_policy_profile_comparison_next_action", "")
         ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
@@ -2442,6 +2519,7 @@ def scan_local_research_workflow_artifacts(
     pit_universe_evidence_review_worklist_root: str | Path,
     pit_universe_evidence_update_ingestion_root: str | Path,
     pit_evidence_checklist_validator_root: str | Path,
+    pit_evidence_policy_profile_comparison_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -2478,6 +2556,7 @@ def scan_local_research_workflow_artifacts(
     pit_universe_evidence_review_worklist_path = Path(pit_universe_evidence_review_worklist_root)
     pit_universe_evidence_update_ingestion_path = Path(pit_universe_evidence_update_ingestion_root)
     pit_evidence_checklist_validator_path = Path(pit_evidence_checklist_validator_root)
+    pit_evidence_policy_profile_comparison_path = Path(pit_evidence_policy_profile_comparison_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -2520,6 +2599,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_pit_universe_evidence_review_worklist_status(pit_universe_evidence_review_worklist_path))
     records.extend(_scan_pit_universe_evidence_update_ingestion_status(pit_universe_evidence_update_ingestion_path))
     records.extend(_scan_pit_evidence_checklist_validator_status(pit_evidence_checklist_validator_path))
+    records.extend(_scan_pit_evidence_policy_profile_comparison_status(pit_evidence_policy_profile_comparison_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -2943,6 +3023,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS",
         "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS",
+        "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "CURRENT_CANDIDATES",
@@ -2960,6 +3041,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
     post_pit_universe_evidence_worklist_components = {
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS",
         "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS",
+        "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "CURRENT_CANDIDATES",
@@ -2976,6 +3058,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
     }
     post_pit_universe_evidence_update_ingestion_components = {
         "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS",
+        "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -2993,6 +3076,26 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         *paper_started_components,
     }
     post_pit_evidence_checklist_validator_components = {
+        "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+        "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
+        "ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
+    post_pit_evidence_policy_profile_comparison_components = {
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -3286,6 +3389,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_pit_evidence_checklist_validator_components
         ),
+        "post_pit_evidence_policy_profile_comparison_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_pit_evidence_policy_profile_comparison_components
+        ),
         "post_universe_profile_policy_audit_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_universe_profile_policy_audit_components
@@ -3483,6 +3590,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS":
         return _pit_evidence_checklist_validator_warning_actionability(row, context)
+
+    if component == "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS":
+        return _pit_evidence_policy_profile_comparison_warning_actionability(row, context)
 
     if component == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS":
         return _universe_profile_policy_audit_warning_actionability(row, context)
@@ -4421,6 +4531,56 @@ def _pit_evidence_checklist_validator_warning_actionability(
     }
 
 
+def _pit_evidence_policy_profile_comparison_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if context.get("post_pit_evidence_policy_profile_comparison_workflow_started") and status in {"WARN", "FAIL"}:
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage in {
+        "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED",
+        "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_READY",
+    }:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
 def _universe_profile_policy_audit_warning_actionability(
     row: dict[str, Any],
     context: dict[str, Any],
@@ -5314,6 +5474,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         ):
             return "PIT_EVIDENCE_CHECKLIST_VALIDATION_FAILED"
         if (
+            not _has_post_pit_evidence_policy_profile_comparison_workflow_component(dashboard_frame)
+            and statuses["PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS"] == "FAIL"
+        ):
+            return "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_FAILED"
+        if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
         ):
@@ -5455,6 +5620,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _pit_evidence_checklist_validator_stage_from_frame(dashboard_frame)
     ):
         return _pit_evidence_checklist_validator_stage_from_frame(dashboard_frame)
+    if (
+        not _has_post_pit_evidence_policy_profile_comparison_workflow_component(dashboard_frame)
+        and statuses["PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS"] in {"PASS", "WARN", "READY"}
+        and _pit_evidence_policy_profile_comparison_stage_from_frame(dashboard_frame)
+    ):
+        return _pit_evidence_policy_profile_comparison_stage_from_frame(dashboard_frame)
     if (
         not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
         and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
@@ -5757,6 +5928,7 @@ def summarize_local_research_status(
                     "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS",
                     "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS",
                     "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS",
+                    "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -6444,6 +6616,62 @@ def summarize_local_research_status(
         ),
         "pit_evidence_checklist_validator_next_action": _parse_note_value(
             by_component.get("PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "pit_evidence_policy_profile_comparison_status": _component_status(
+            by_component,
+            "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
+        ),
+        "latest_pit_evidence_policy_profile_comparison_id": _string_or_empty(
+            by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("latest_artifact_id")
+        ),
+        "pit_evidence_policy_profile_comparison_stage": _string_or_empty(
+            by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("stage")
+        ),
+        "pit_evidence_policy_profile_comparison_health_status": _parse_note_value(
+            by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "pit_evidence_policy_profile_comparison_profile_name": _parse_note_value(
+            by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+            "profile_name",
+        ),
+        "pit_evidence_policy_profile_comparison_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+                "row_count",
+            )
+        ),
+        "pit_evidence_policy_profile_comparison_strict_pass_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+                "strict_checklist_pass_count",
+            )
+        ),
+        "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+                "eod_low_budget_checklist_pass_count",
+            )
+        ),
+        "pit_evidence_policy_profile_comparison_relaxed_blocker_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+                "relaxed_blocker_count",
+            )
+        ),
+        "pit_evidence_policy_profile_comparison_remaining_blocked_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+                "remaining_blocked_count",
+            )
+        ),
+        "pit_evidence_policy_profile_comparison_report_path": _parse_note_value(
+            by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "pit_evidence_policy_profile_comparison_next_action": _parse_note_value(
+            by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -7883,6 +8111,38 @@ def build_local_research_dashboard_metadata(
         ),
         "pit_evidence_checklist_validator_report_path": result.pit_evidence_checklist_validator_report_path,
         "pit_evidence_checklist_validator_next_action": result.pit_evidence_checklist_validator_next_action,
+        "latest_pit_evidence_policy_profile_comparison_id": (
+            result.latest_pit_evidence_policy_profile_comparison_id
+        ),
+        "pit_evidence_policy_profile_comparison_status": result.pit_evidence_policy_profile_comparison_status,
+        "pit_evidence_policy_profile_comparison_stage": result.pit_evidence_policy_profile_comparison_stage,
+        "pit_evidence_policy_profile_comparison_health_status": (
+            result.pit_evidence_policy_profile_comparison_health_status
+        ),
+        "pit_evidence_policy_profile_comparison_profile_name": (
+            result.pit_evidence_policy_profile_comparison_profile_name
+        ),
+        "pit_evidence_policy_profile_comparison_row_count": (
+            result.pit_evidence_policy_profile_comparison_row_count
+        ),
+        "pit_evidence_policy_profile_comparison_strict_pass_count": (
+            result.pit_evidence_policy_profile_comparison_strict_pass_count
+        ),
+        "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count": (
+            result.pit_evidence_policy_profile_comparison_eod_low_budget_pass_count
+        ),
+        "pit_evidence_policy_profile_comparison_relaxed_blocker_count": (
+            result.pit_evidence_policy_profile_comparison_relaxed_blocker_count
+        ),
+        "pit_evidence_policy_profile_comparison_remaining_blocked_count": (
+            result.pit_evidence_policy_profile_comparison_remaining_blocked_count
+        ),
+        "pit_evidence_policy_profile_comparison_report_path": (
+            result.pit_evidence_policy_profile_comparison_report_path
+        ),
+        "pit_evidence_policy_profile_comparison_next_action": (
+            result.pit_evidence_policy_profile_comparison_next_action
+        ),
         "latest_universe_profile_policy_audit_id": result.latest_universe_profile_policy_audit_id,
         "universe_profile_policy_audit_status": result.universe_profile_policy_audit_status,
         "universe_profile_policy_audit_stage": result.universe_profile_policy_audit_stage,
@@ -9939,6 +10199,50 @@ def _pit_evidence_checklist_validator_notes(summary: dict[str, Any]) -> str:
         f"blocked_count={_string_or_empty(summary.get('blocked_count'))}; "
         f"stock_core_blocked_count={_string_or_empty(summary.get('stock_core_blocked_count'))}; "
         f"etf_core_blocked_count={_string_or_empty(summary.get('etf_core_blocked_count'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_pit_evidence_policy_profile_comparison_status(root: Path) -> list[dict[str, Any]]:
+    comparison_root = root.parent if root.name == "status" else root
+    if not comparison_root.exists():
+        return []
+    try:
+        result = run_pit_evidence_policy_profile_comparison_status(
+            root=comparison_root,
+            output_dir=comparison_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.get("latest_comparison_id"):
+        return []
+    summary = result["summary_frame"].iloc[0].to_dict() if not result["summary_frame"].empty else {}
+    return [
+        _record(
+            workflow_area="PIT_EVIDENCE_POLICY_PROFILE_COMPARISON",
+            component="PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
+            status=result["status"],
+            stage=result["workflow_stage"],
+            latest_artifact_id=result["latest_comparison_id"],
+            report_path=result["artifact_paths"].get("report", ""),
+            metadata_path=result["artifact_paths"].get("metadata", ""),
+            warning_count=1 if result["status"] == "WARN" else 0,
+            error_count=1 if result["status"] == "FAIL" else 0,
+            notes=_pit_evidence_policy_profile_comparison_notes(summary),
+        )
+    ]
+
+
+def _pit_evidence_policy_profile_comparison_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(summary.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"profile_name={_string_or_empty(summary.get('profile_name'))}; "
+        f"row_count={_string_or_empty(summary.get('row_count'))}; "
+        f"strict_checklist_pass_count={_string_or_empty(summary.get('strict_checklist_pass_count'))}; "
+        f"eod_low_budget_checklist_pass_count={_string_or_empty(summary.get('eod_low_budget_checklist_pass_count'))}; "
+        f"relaxed_blocker_count={_string_or_empty(summary.get('relaxed_blocker_count'))}; "
+        f"remaining_blocked_count={_string_or_empty(summary.get('remaining_blocked_count'))}; "
         f"report_path={_note_safe_text(summary.get('report_path'))}"
     )
 
@@ -12159,6 +12463,14 @@ def _pit_evidence_checklist_validator_stage_from_frame(dashboard_frame: pd.DataF
     return _string_or_empty(rows.iloc[0].get("stage"))
 
 
+def _pit_evidence_policy_profile_comparison_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
 def _universe_profile_policy_audit_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"]
@@ -12644,6 +12956,40 @@ def _has_post_pit_universe_evidence_update_ingestion_workflow_component(dashboar
 
 
 def _has_post_pit_evidence_checklist_validator_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+        "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
+        "ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_pit_evidence_policy_profile_comparison_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",

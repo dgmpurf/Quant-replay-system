@@ -122,6 +122,18 @@ from quant_replay_system.pit_evidence_checklist_validator import build_pit_evide
 from quant_replay_system.pit_evidence_checklist_validator_health import check_pit_evidence_checklist_validator_health
 from quant_replay_system.pit_evidence_checklist_validator_index import build_pit_evidence_checklist_validator_index
 from quant_replay_system.pit_evidence_checklist_validator_status import run_pit_evidence_checklist_validator_status
+from quant_replay_system.pit_evidence_policy_profile_comparison import (
+    build_pit_evidence_policy_profile_comparison,
+)
+from quant_replay_system.pit_evidence_policy_profile_comparison_health import (
+    check_pit_evidence_policy_profile_comparison_health,
+)
+from quant_replay_system.pit_evidence_policy_profile_comparison_index import (
+    build_pit_evidence_policy_profile_comparison_index,
+)
+from quant_replay_system.pit_evidence_policy_profile_comparison_status import (
+    run_pit_evidence_policy_profile_comparison_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1008,6 +1020,70 @@ def build_parser() -> argparse.ArgumentParser:
         default="outputs/reports/pit_evidence_checklist_validator/status",
     )
     pit_evidence_checklist_validator_status.set_defaults(handler=_handle_pit_evidence_checklist_validator_status)
+
+    pit_evidence_policy_profile_comparison = subparsers.add_parser(
+        "pit-evidence-policy-profile-comparison",
+        help="Compare strict PIT evidence validation with an opt-in policy profile under reports only",
+    )
+    pit_evidence_policy_profile_comparison.add_argument("--validator", required=True)
+    pit_evidence_policy_profile_comparison.add_argument("--completed-updates", required=True)
+    pit_evidence_policy_profile_comparison.add_argument("--policy-audit", required=True)
+    pit_evidence_policy_profile_comparison.add_argument("--profile", default="EOD_POST_CLOSE_LOW_BUDGET_PIT")
+    pit_evidence_policy_profile_comparison.add_argument("--decision-policy", default="EOD_POST_CLOSE")
+    pit_evidence_policy_profile_comparison.add_argument("--decision-time")
+    pit_evidence_policy_profile_comparison.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_evidence_policy_profile_comparison",
+    )
+    pit_evidence_policy_profile_comparison.set_defaults(handler=_handle_pit_evidence_policy_profile_comparison)
+
+    pit_evidence_policy_profile_comparison_index = subparsers.add_parser(
+        "pit-evidence-policy-profile-comparison-index",
+        help="Build a local index of PIT evidence policy profile comparison artifacts",
+    )
+    pit_evidence_policy_profile_comparison_index.add_argument(
+        "--root",
+        default="outputs/reports/pit_evidence_policy_profile_comparison",
+    )
+    pit_evidence_policy_profile_comparison_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_evidence_policy_profile_comparison/index",
+    )
+    pit_evidence_policy_profile_comparison_index.set_defaults(
+        handler=_handle_pit_evidence_policy_profile_comparison_index
+    )
+
+    pit_evidence_policy_profile_comparison_health = subparsers.add_parser(
+        "pit-evidence-policy-profile-comparison-health",
+        help="Check local PIT evidence policy profile comparison artifact health",
+    )
+    pit_evidence_policy_profile_comparison_health.add_argument(
+        "--root",
+        default="outputs/reports/pit_evidence_policy_profile_comparison",
+    )
+    pit_evidence_policy_profile_comparison_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_evidence_policy_profile_comparison/health",
+    )
+    pit_evidence_policy_profile_comparison_health.set_defaults(
+        handler=_handle_pit_evidence_policy_profile_comparison_health
+    )
+
+    pit_evidence_policy_profile_comparison_status = subparsers.add_parser(
+        "pit-evidence-policy-profile-comparison-status",
+        help="Summarize latest PIT evidence policy profile comparison status",
+    )
+    pit_evidence_policy_profile_comparison_status.add_argument(
+        "--root",
+        default="outputs/reports/pit_evidence_policy_profile_comparison",
+    )
+    pit_evidence_policy_profile_comparison_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_evidence_policy_profile_comparison/status",
+    )
+    pit_evidence_policy_profile_comparison_status.set_defaults(
+        handler=_handle_pit_evidence_policy_profile_comparison_status
+    )
 
     universe_profile_policy_audit = subparsers.add_parser(
         "universe-profile-policy-audit",
@@ -2220,6 +2296,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--pit-evidence-checklist-validator-root",
         help="PIT evidence checklist validator artifact root directory",
+    )
+    research_status.add_argument(
+        "--pit-evidence-policy-profile-comparison-root",
+        help="PIT evidence policy profile comparison artifact root directory",
     )
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
@@ -3806,6 +3886,93 @@ def _handle_pit_evidence_checklist_validator_status(args: argparse.Namespace) ->
     print(f"blocked_count: {result['blocked_count']}")
     print(f"stock_core_blocked_count: {result['stock_core_blocked_count']}")
     print(f"etf_core_blocked_count: {result['etf_core_blocked_count']}")
+    print(f"report_path: {result['report_path']}")
+    print(f"next_manual_action: {result['next_manual_action']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_pit_evidence_policy_profile_comparison(args: argparse.Namespace) -> int:
+    result = build_pit_evidence_policy_profile_comparison(
+        validator=args.validator,
+        completed_updates=args.completed_updates,
+        policy_audit=args.policy_audit,
+        profile=args.profile,
+        decision_policy=args.decision_policy,
+        decision_time=args.decision_time,
+        output_dir=args.output_dir,
+    )
+    print(f"comparison_id: {result.comparison_id}")
+    print(f"status: {result.status}")
+    print(f"reference_profile_name: {result.reference_profile_name}")
+    print(f"profile_name: {result.profile_name}")
+    print(f"profile_is_opt_in: {result.profile_is_opt_in}")
+    print(f"strict_default_unchanged: {result.strict_default_unchanged}")
+    print(f"row_count: {result.row_count}")
+    print(f"strict_checklist_pass_count: {result.strict_checklist_pass_count}")
+    print(f"eod_low_budget_checklist_pass_count: {result.eod_low_budget_checklist_pass_count}")
+    print(f"relaxed_blocker_count: {result.relaxed_blocker_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"comparison_csv_path: {result.artifact_paths['comparison_csv']}")
+    print(f"summary_csv_path: {result.artifact_paths['summary_csv']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_evidence_policy_profile_comparison_index(args: argparse.Namespace) -> int:
+    result = build_pit_evidence_policy_profile_comparison_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Index CSV path: {result['artifact_paths']['index_csv']}")
+    print(f"artifact_count: {result['artifact_count']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_evidence_policy_profile_comparison_health(args: argparse.Namespace) -> int:
+    result = check_pit_evidence_policy_profile_comparison_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Health report path: {result['artifact_paths']['report']}")
+    print(f"Health status: {result['status']}")
+    print(f"checked_artifact_count: {result['checked_artifact_count']}")
+    print(f"issue_count: {result['issue_count']}")
+    print(f"error_count: {result['error_count']}")
+    print(f"warning_count: {result['warning_count']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_pit_evidence_policy_profile_comparison_status(args: argparse.Namespace) -> int:
+    result = run_pit_evidence_policy_profile_comparison_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Status report path: {result['artifact_paths']['report']}")
+    print(f"status: {result['status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"latest_comparison_id: {result['latest_comparison_id']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"profile_name: {result['profile_name']}")
+    print(f"row_count: {result['row_count']}")
+    print(f"strict_checklist_pass_count: {result['strict_checklist_pass_count']}")
+    print(f"eod_low_budget_checklist_pass_count: {result['eod_low_budget_checklist_pass_count']}")
+    print(f"relaxed_blocker_count: {result['relaxed_blocker_count']}")
+    print(f"remaining_blocked_count: {result['remaining_blocked_count']}")
     print(f"report_path: {result['report_path']}")
     print(f"next_manual_action: {result['next_manual_action']}")
     print(
@@ -6142,6 +6309,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         pit_universe_evidence_review_worklist_root=args.pit_universe_evidence_review_worklist_root,
         pit_universe_evidence_update_ingestion_root=args.pit_universe_evidence_update_ingestion_root,
         pit_evidence_checklist_validator_root=args.pit_evidence_checklist_validator_root,
+        pit_evidence_policy_profile_comparison_root=args.pit_evidence_policy_profile_comparison_root,
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -6542,6 +6710,54 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"pit_evidence_checklist_validator_report_path: {result.pit_evidence_checklist_validator_report_path}")
     print(f"pit_evidence_checklist_validator_next_action: {result.pit_evidence_checklist_validator_next_action}")
+    print(
+        "latest_pit_evidence_policy_profile_comparison_id: "
+        f"{result.latest_pit_evidence_policy_profile_comparison_id}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_status: "
+        f"{result.pit_evidence_policy_profile_comparison_status}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_stage: "
+        f"{result.pit_evidence_policy_profile_comparison_stage}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_health_status: "
+        f"{result.pit_evidence_policy_profile_comparison_health_status}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_profile_name: "
+        f"{result.pit_evidence_policy_profile_comparison_profile_name}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_row_count: "
+        f"{result.pit_evidence_policy_profile_comparison_row_count}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_strict_pass_count: "
+        f"{result.pit_evidence_policy_profile_comparison_strict_pass_count}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count: "
+        f"{result.pit_evidence_policy_profile_comparison_eod_low_budget_pass_count}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_relaxed_blocker_count: "
+        f"{result.pit_evidence_policy_profile_comparison_relaxed_blocker_count}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_remaining_blocked_count: "
+        f"{result.pit_evidence_policy_profile_comparison_remaining_blocked_count}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_report_path: "
+        f"{result.pit_evidence_policy_profile_comparison_report_path}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_next_action: "
+        f"{result.pit_evidence_policy_profile_comparison_next_action}"
+    )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

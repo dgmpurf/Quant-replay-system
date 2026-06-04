@@ -171,6 +171,8 @@ For the v1.13.0 checkpoint covering activated replacement worklist evidence upda
 
 For the v1.14.0 checkpoint covering PIT evidence checklist validation, artifact views, and `research-status` integration, see [docs/release_checkpoint_v1.14.0.md](docs/release_checkpoint_v1.14.0.md).
 
+For the v1.15.0 checkpoint covering EOD post-close low-budget PIT policy profile comparison and `research-status` integration, see [docs/release_checkpoint_v1.15.0.md](docs/release_checkpoint_v1.15.0.md).
+
 For the v1.7.0 checkpoint covering PIT universe evidence update ingestion artifact views and `research-status` integration, see [docs/release_checkpoint_v1.7.0.md](docs/release_checkpoint_v1.7.0.md).
 
 For the v1.2.0 checkpoint covering PIT universe overlay export-readiness artifact views and `research-status` integration, see [docs/release_checkpoint_v1.2.0.md](docs/release_checkpoint_v1.2.0.md).

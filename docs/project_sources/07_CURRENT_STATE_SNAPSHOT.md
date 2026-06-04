@@ -49,6 +49,7 @@ It is not a live trading system.
 - Reviewed replacement worklist acceptance.
 - Guarded reviewed replacement worklist activation.
 - Activated replacement worklist evidence update planning.
+- PIT evidence checklist validator.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -108,12 +109,11 @@ local market cache has enough data for selected warmup-aware signal dates
 PIT universe active / planning artifacts:
 
 ```text
-overlay_plan_id: 38a254c54024
 review_id: 7bc8ba08bf5a
 export_readiness_id: 75c6975e93e4
 helper_id: 4cf008a09f04
 staging_id: 41bfd31a9e2c
-worklist_id: 1c7972988f59
+legacy_worklist_id: 1c7972988f59
 ingestion_id: 284058e7f1e4
 policy_audit_id: 844794b3aae1
 split_plan_id: db2c09268c14
@@ -121,6 +121,8 @@ replacement_plan_id: 0774d0a1fdb9
 acceptance_id: c723c0c476b1
 activation_id: a8e74161f9bb
 evidence_update_plan_id: 4e268d67bd7d
+latest_diagnostics_ingestion_id: 734f3a722ddf
+validator_id: 62e9eb747197
 ```
 
 Current counts:
@@ -160,23 +162,39 @@ mixed_demo_core evidence rows: 0
 stock_core first batch rows: 8
 etf_core first batch rows: 8
 clean_review_updates_created: false
+
+Codex diagnostics evidence discovery / gap closure:
+inspected rows: 16
+ingestion ready_for_review_update_count: 16
+ingestion blocked_count: 0
+approval_requested_count: 0
+approved_ready_count: 0
+all rows remain NEEDS_MORE_EVIDENCE
+
+PIT evidence checklist validator:
+validator_id: 62e9eb747197
+row_count: 16
+checklist_pass_count: 0
+blocked_count: 16
+stock_core_blocked_count: 8
+etf_core_blocked_count: 8
 ```
 
-Current activated replacement evidence update planning stage:
+Current PIT evidence checklist validation stage:
 
 ```text
-ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_READY
+PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
 ```
 
 Meaning:
 
-The project has moved from “replacement stock_core and etf_core templates are activated as planning context” to “profile-specific evidence update packages and first-batch packages exist as planning context.”
+The project has moved from “profile-specific evidence update packages exist” to “strict evidence checklist validation now blocks all current first-batch rows.”
+
+The 16 diagnostics rows can pass evidence ingestion as `NEEDS_MORE_EVIDENCE`, but no row currently satisfies the strict PIT evidence checklist. There are no approval candidates.
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-Activated evidence update plan artifacts exist under `outputs/reports`, but they are not clean `review_updates.csv`, not PIT-approved rows, not exported universe files, and not current-candidates universe input.
-
-The next blocker is Codex-driven evidence discovery and draft update validation for the generated stock_core / etf_core first-batch packages.
+The next blocker is Codex-driven acquisition of official/public evidence for the exact checklist blockers: active/not-delisted status, ST/no-ST status for stock rows, survivorship-bias resolution, and PIT-safe timing.
 
 ## Current External Data Strategy
 
@@ -196,20 +214,25 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation v0.1
+Codex-Driven Official Evidence Acquisition for Checklist Blockers v0.1
 ```
 
 Purpose:
 
-- inspect local artifacts for evidence that can support first-batch stock_core / etf_core rows;
-- optionally use browser/web/plugin access for light official/public evidence discovery if available;
-- create evidence source records and draft completed update CSVs only when evidence exists;
-- run diagnostics-only evidence update ingestion validation;
+- use Codex to target the exact blockers from `pit-evidence-checklist-validator`;
+- inspect local artifacts first;
+- use browser/web/plugin access only for light official/public evidence discovery;
+- gather official source evidence for active/not-delisted, ST/no-ST, suspension, survivorship, and PIT-safe timing;
+- update draft completed CSVs only when real evidence exists;
+- rerun diagnostics-only ingestion and checklist validation;
 - avoid automatic approval, rejection, export, or candidate generation.
 
 Do not yet:
 
 - approve or reject rows;
+- run PIT overlay review;
+- run export-readiness;
+- run staging;
 - write usable universe files;
 - write `data/raw` or `data/processed`;
 - generate multi-date candidates;
@@ -238,9 +261,10 @@ Recent milestone direction:
 - v1.11.0: reviewed replacement worklist acceptance.
 - v1.12.0: guarded reviewed replacement worklist activation.
 - v1.13.0: activated replacement worklist evidence update planning.
+- v1.14.0: PIT evidence checklist validator.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation v0.1.
+Give me Codex tasks for Codex-Driven Official Evidence Acquisition for Checklist Blockers v0.1.
 ```

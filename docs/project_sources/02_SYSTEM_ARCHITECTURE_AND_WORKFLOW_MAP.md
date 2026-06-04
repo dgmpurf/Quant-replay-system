@@ -52,7 +52,8 @@ Multi-Date Evidence Preparation
   ├─ reviewed-replacement-worklist-plan
   ├─ reviewed-replacement-worklist-acceptance
   ├─ reviewed-replacement-worklist-activation
-  └─ activated-replacement-worklist-evidence-update-plan
+  ├─ activated-replacement-worklist-evidence-update-plan
+  └─ pit-evidence-checklist-validator
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -109,7 +110,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Staging, Universe Profile Governance, Replacement Planning, Acceptance, Activation, and Evidence Planning
+### Multi-Date Candidate Planning, PIT Universe Review, Replacement Evidence Planning, and Checklist Validation
 
 ```text
 market cache coverage
@@ -130,6 +131,9 @@ market cache coverage
 → reviewed replacement worklist acceptance
 → reviewed replacement worklist activation
 → activated replacement worklist evidence update plan
+→ Codex diagnostics evidence discovery / gap closure
+→ strict PIT evidence checklist
+→ pit-evidence-checklist-validator
 → index / health / status
 → research-status
 ```
@@ -137,10 +141,10 @@ market cache coverage
 Current active preparation state:
 
 ```text
-ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_READY
+PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
 ```
 
-The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real review updates, or live trades.
+The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
 
 ## Important Data Contracts
 
@@ -271,6 +275,32 @@ mixed_demo_core
 
 They are not clean `review_updates.csv` artifacts and must not be fed directly as applied approvals.
 
+### PIT Evidence Checklist Validator Fields
+
+The checklist validator evaluates draft/completed update CSV rows against the strict PIT evidence checklist.
+
+It reports:
+
+```text
+validator_id
+row_count
+checklist_pass_count
+blocked_count
+stock_core_blocked_count
+etf_core_blocked_count
+missing_evidence_matrix
+approval_candidate_preview
+```
+
+Validator outputs are gate reports, not approvals. A row passing the checklist would only be an approval candidate preview until a later explicit PIT review workflow is run. The current validator result has:
+
+```text
+validator_id: 62e9eb747197
+row_count: 16
+checklist_pass_count: 0
+blocked_count: 16
+```
+
 ### PIT Evidence Update Ingestion Fields
 
 Evidence update ingestion validates reviewer-completed rows and may write a clean `review_updates.csv` artifact under `outputs/reports`.
@@ -307,19 +337,21 @@ Reviewed replacement worklist plan: 56 stock_core replacement rows, 16 etf_core 
 Reviewed replacement worklist acceptance: acknowledged as planning context, active legacy worklist untouched
 Reviewed replacement worklist activation: activation planning context, 56 stock_core rows, 16 etf_core rows, active legacy worklist untouched
 Activated replacement evidence update plan: 56 stock_core rows, 16 etf_core rows, 0 mixed_demo_core rows, stock first batch 8 rows, ETF first batch 8 rows, no clean review updates
+Codex diagnostics evidence discovery: 16 NEEDS_MORE_EVIDENCE rows pass ingestion schema, but 0 approval candidates
+PIT evidence checklist validator: 16 rows blocked, 0 checklist-pass approval candidates
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation v0.1
+Codex-Driven Official Evidence Acquisition for Checklist Blockers v0.1
 ```
 
 Purpose:
 
-- use Codex to perform local and public evidence discovery for first-batch stock_core / etf_core rows;
-- create evidence source records and draft completed update CSVs if evidence is found;
-- run diagnostics-only `pit-universe-evidence-update-ingestion` validation;
-- keep the branch diagnostics-only before any applied PIT review.
+- use Codex to target the exact blockers from `pit-evidence-checklist-validator`;
+- find official/public PIT evidence for active/not-delisted, ST/no-ST, survivorship-bias, and decision-time availability;
+- update draft CSVs only when real evidence exists;
+- rerun ingestion and checklist validator in diagnostics-only scope.
 
 Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.

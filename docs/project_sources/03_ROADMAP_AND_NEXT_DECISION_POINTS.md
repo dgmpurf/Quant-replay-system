@@ -28,6 +28,7 @@ The project is now a broad local research system with:
 - reviewed replacement worklist acceptance;
 - guarded reviewed replacement worklist activation;
 - activated replacement worklist evidence update planning;
+- PIT evidence checklist validator;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -55,12 +56,13 @@ Completed or largely complete:
 - reviewed replacement worklist acceptance;
 - guarded reviewed replacement worklist activation;
 - activated replacement worklist evidence update plan;
+- PIT evidence checklist validator;
 - index / health / status and research-status integration for these stages.
 
-Current activated replacement evidence update planning state:
+Current PIT evidence checklist validation state:
 
 ```text
-ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_READY
+PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
 ```
 
 Latest known state:
@@ -70,7 +72,7 @@ review_id: 7bc8ba08bf5a
 export_readiness_id: 75c6975e93e4
 helper_id: 4cf008a09f04
 staging_id: 41bfd31a9e2c
-worklist_id: 1c7972988f59
+legacy_worklist_id: 1c7972988f59
 ingestion_id: 284058e7f1e4
 policy_audit_id: 844794b3aae1
 split_plan_id: db2c09268c14
@@ -78,7 +80,11 @@ replacement_plan_id: 0774d0a1fdb9
 acceptance_id: c723c0c476b1
 activation_id: a8e74161f9bb
 evidence_update_plan_id: 4e268d67bd7d
+latest_diagnostics_ingestion_id: 734f3a722ddf
+validator_id: 62e9eb747197
+```
 
+```text
 approved rows: 0
 export-ready rows: 0
 staged rows: 0
@@ -102,40 +108,59 @@ etf_core evidence package rows: 16
 stock_core first-batch rows: 8
 etf_core first-batch rows: 8
 clean_review_updates_created: false
+
+Codex diagnostics evidence discovery / gap closure:
+inspected rows: 16
+ready_for_review_update_count: 16
+approval_requested_count: 0
+approved_ready_count: 0
+all rows remain NEEDS_MORE_EVIDENCE
+
+strict checklist validator:
+validator_id: 62e9eb747197
+checklist_pass_count: 0
+blocked_count: 16
+stock_core_blocked_count: 8
+etf_core_blocked_count: 8
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Codex-Driven Profile-Specific PIT Evidence Discovery and Draft Update Validation
+### Branch: Codex-Driven Official Evidence Acquisition for Checklist Blockers
 
 Suggested sequence:
 
-1. Read-only / diagnostics-first evidence discovery for the generated first-batch packages.
-2. Prefer Codex-side automation for any manual-looking step.
-3. Search local artifacts first.
-4. If browser/web/plugin access is available, use light public official source discovery.
+1. Use the validator report and missing-evidence matrix as the driver.
+2. Search local artifacts first.
+3. Use browser/web/plugin access only for light official/public evidence discovery.
+4. Target the exact blocking categories:
+   - active / listed as of signal date;
+   - not delisted before signal date;
+   - ST/no-ST for stock rows;
+   - suspension status and timing;
+   - PIT-safe `as_of_date` and `available_time`;
+   - survivorship-bias resolution basis.
 5. Record evidence URLs / files / source type / fetch time / PIT suitability.
-6. Generate draft completed update CSVs only when evidence is actually found.
+6. Generate updated draft completed update CSVs only when evidence is actually found.
 7. Keep draft rows non-applied and diagnostics-only.
 8. Run `pit-universe-evidence-update-ingestion` against draft updates in a diagnostics output directory.
-9. Report ready/blocked rows.
-10. Do not run PIT review application, export-readiness, staging, snapshot, or current-candidates in this branch.
+9. Rerun `pit-evidence-checklist-validator` against the validated drafts.
+10. Report checklist-pass candidates and blocked rows.
+11. Do not run PIT overlay review application, export-readiness, staging, snapshot, or current-candidates in this branch.
 
-## What Evidence Discovery Must Solve
+## What Official Evidence Acquisition Must Solve
 
 It should answer:
 
-- Which first-batch stock_core rows are easiest to evidence?
-- Which first-batch etf_core rows are easiest to evidence?
-- Which fields can be supported by local artifacts?
-- Which fields require public official evidence?
-- Which fields remain impossible or unsafe without user intervention?
-- Which evidence is point-in-time safe?
-- Which evidence is only current/future-dated context?
-- Can Codex produce a draft completed update CSV that passes ingestion for at least one row?
-- If not, which exact blockers remain?
+- Can Codex find official/public evidence for the remaining first-batch blockers?
+- Which fields are symbol-level and reusable across all 8 dates?
+- Which fields must remain date-specific?
+- Which official sources are acceptable for strict PIT evidence?
+- Can any first-batch row become a checklist-pass approval candidate?
+- If no row passes, which exact blockers remain?
+- Which blockers require user judgment, credentials, CAPTCHA/login/paywall, or a practical-low-budget policy decision?
 
 ## Current Preference for Manual Steps
 
@@ -160,7 +185,7 @@ User intervention should be required only for:
 - subjective judgment;
 - explicit approval/export/activation decisions.
 
-## After Evidence Discovery and Draft Update Validation
+## After Checklist-Pass Evidence Candidates Exist
 
 ### 1. Evidence Update Ingestion
 
@@ -176,9 +201,9 @@ Expected safe outcomes:
 - ready clean review updates only when reviewer fields, PIT dates, metadata, and evidence pass validation;
 - no approval applied automatically.
 
-### 2. Rerun Review / Export-Readiness / Staging
+### 2. PIT Review / Export-Readiness / Staging
 
-Only with validated real review updates:
+Only with validated real review updates and explicit user approval:
 
 ```text
 pit-universe-overlay-review
@@ -265,6 +290,7 @@ Do not yet:
 - treat reviewed replacement acceptance as activation;
 - treat reviewed replacement activation as PIT row approval or usable universe input;
 - treat activated evidence update plans or evidence packages as clean review updates;
+- treat checklist validator output as approval;
 - export PIT universe input without real approved/export-ready rows;
 - write `data/raw` or `data/processed` from PIT staging;
 - run current-candidates backfill without reviewed/exported PIT universe rows;

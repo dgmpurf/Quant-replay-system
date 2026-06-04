@@ -18,6 +18,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a reviewed PIT universe overlay workflow approved rows or identified evidence gaps?
 - Has a PIT universe evidence update ingestion run validated reviewer-completed updates into clean review-updates rows?
 - Has a PIT evidence checklist validator checked strict stock/ETF evidence completeness before any approval review?
+- Has a PIT evidence policy profile comparison shown whether an opt-in EOD/post-close policy would relax only timing/cache-support blockers?
 - Has an activated replacement worklist produced profile-specific manual evidence update packages?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
@@ -58,6 +59,7 @@ outputs/reports/point_in_time_universe_evidence_completion_helper/status/
 outputs/reports/point_in_time_universe_evidence_review_worklist/status/
 outputs/reports/point_in_time_universe_evidence_update_ingestion/status/
 outputs/reports/pit_evidence_checklist_validator/status/
+outputs/reports/pit_evidence_policy_profile_comparison/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -215,6 +217,16 @@ The unified summary records the latest validator id, validator status/stage, hea
 When the status reports `PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED`, the dashboard treats the warning as expected reviewable PIT evidence work. It means strict evidence is still missing or blocked by PIT timing, ST/no-ST, active/not-delisted, survivorship, or source-acceptance checks. It does not mean candidate generation failed, because no candidate generation was run. When the status reports `PIT_EVIDENCE_CHECKLIST_VALIDATION_HAS_APPROVAL_CANDIDATES`, rows are only preview candidates for a later explicit manual review workflow.
 
 PIT evidence checklist validation is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to checklist validation; validator fields remain visible for audit. If validator health fails because files are missing, required columns are missing, approval/export/data-write/current-candidates/snapshot/forward-label/trading safety flags are violated, `research-status` surfaces the failure as actionable when this layer is active.
+
+## PIT Evidence Policy Profile Comparison Status
+
+`research-status` includes `pit-evidence-policy-profile-comparison-status` as PIT evidence policy context when those artifacts exist.
+
+The unified summary records the latest comparison id, comparison status/stage, health status, profile name, row count, strict checklist pass count, EOD low-budget pass count, relaxed blocker count, remaining blocked count, report path, and the comparison layer's next manual action. This is comparison-only context: it does not change the strict validator default, apply approval, run `pit-universe-overlay-review`, run export readiness, run export staging, export universe files, write `data/raw`, write `data/processed`, run current-candidates, build snapshots, compute forward labels, mutate cache, call APIs, send messages, connect to brokers, or place orders.
+
+When the status reports `PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED`, the dashboard treats the warning as expected reviewable evidence-policy work. It means the opt-in `EOD_POST_CLOSE_LOW_BUDGET_PIT` profile did not make any row checklist-pass; remaining non-relaxed PIT evidence gaps still need review. When the status reports `PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_HAS_CANDIDATE_PREVIEWS`, rows are only manual preview candidates and are not approved.
+
+PIT evidence policy profile comparison is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to profile comparison; comparison fields remain visible for audit. If comparison health fails because strict defaults changed, approval/export/data-write/current-candidates/snapshot/forward-label/trading safety flags are violated, or the profile is not opt-in, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Universe Profile Policy Audit Status
 

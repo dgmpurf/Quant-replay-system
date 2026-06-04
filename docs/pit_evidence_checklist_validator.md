@@ -160,3 +160,7 @@ The workflow records:
 - Post-close local cache timing remains blocked unless a future reviewed EOD policy is added.
 - Checklist passes do not prove strategy performance, market edge, or universe export readiness.
 - A separate explicit `pit-universe-overlay-review` run is still required before any row can become a reviewed PIT universe row.
+
+## Policy Profile Comparison
+
+`pit-evidence-policy-profile-comparison` can compare strict validator output with the opt-in `EOD_POST_CLOSE_LOW_BUDGET_PIT` profile. The comparison is report-only: it does not change the strict validator default, does not apply approvals, and does not create approval updates. See [pit_evidence_policy_profile_comparison.md](pit_evidence_policy_profile_comparison.md).
