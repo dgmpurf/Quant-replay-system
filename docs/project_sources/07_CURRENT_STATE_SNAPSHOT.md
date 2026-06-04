@@ -46,6 +46,7 @@ It is not a live trading system.
 - Universe profile policy audit.
 - Universe profile registry and split-worklist planning.
 - Reviewed replacement worklist planning.
+- Reviewed replacement worklist acceptance.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -115,6 +116,7 @@ ingestion_id: 284058e7f1e4
 policy_audit_id: 844794b3aae1
 split_plan_id: db2c09268c14
 replacement_plan_id: 0774d0a1fdb9
+acceptance_id: c723c0c476b1
 ```
 
 Current counts:
@@ -143,24 +145,25 @@ profile conflicts: 56
 reviewed replacement stock_core rows: 56
 reviewed replacement etf_core rows: 16
 reviewed replacement mixed_demo_core rows: 0
+reviewed replacement acceptance acknowledged: true
 active legacy worklist mutated: false
 ```
 
-Current reviewed replacement worklist planning stage:
+Current reviewed replacement worklist acceptance stage:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_PLAN_READY
+REVIEWED_REPLACEMENT_WORKLIST_ACCEPTED_AS_PLANNING_CONTEXT
 ```
 
 Meaning:
 
-The project has moved from “how should legacy mixed etf_core be split?” to “future stock_core and etf_core replacement worklist templates now exist as planning artifacts.”
+The project has moved from “future stock_core and etf_core replacement templates exist as planning artifacts” to “those replacement templates are acknowledged as reviewed planning context.”
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-Replacement worklist templates exist under `outputs/reports`, but they are not accepted active worklists yet.
+Replacement worklist templates and acceptance artifacts exist under `outputs/reports`, but they are not activated active worklists yet.
 
-The next blocker is designing a guarded acceptance workflow. Without an acceptance design, replacement templates should not be treated as active review worklists.
+The next blocker is designing guarded activation. Without an activation design, accepted replacement templates should not be treated as the active evidence review worklist.
 
 ## Current External Data Strategy
 
@@ -180,20 +183,20 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Reviewed Replacement Worklist Acceptance Read-only Audit v0.1
+Guarded Replacement Worklist Activation Read-only Audit v0.1
 ```
 
 Purpose:
 
-- inspect how planned replacement worklist templates might become accepted reviewed planning artifacts;
-- define explicit accept flags and manual confirmation requirements;
-- preserve lineage from legacy worklist, policy audit, split plan, and replacement plan;
-- keep active legacy worklist unchanged;
+- inspect how accepted replacement worklists might become activated as the user's evidence review working set;
+- define explicit activation flags and manual confirmation requirements;
+- preserve lineage from legacy worklist, policy audit, split plan, replacement plan, and acceptance artifact;
+- keep active legacy worklist unchanged unless a future activation artifact is explicitly created;
 - avoid automatic approval, rejection, export, or candidate generation.
 
 Do not yet:
 
-- accept replacement worklists automatically;
+- activate replacement worklists automatically;
 - mutate active worklists;
 - approve or reject rows;
 - write usable universe files;
@@ -221,9 +224,10 @@ Recent milestone direction:
 - v1.8.0: universe profile policy audit.
 - v1.9.0: universe profile split-worklist planning.
 - v1.10.0: reviewed replacement worklist planning.
+- v1.11.0: reviewed replacement worklist acceptance.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Reviewed Replacement Worklist Acceptance Read-only Audit v0.1.
+Give me Codex tasks for Guarded Replacement Worklist Activation Read-only Audit v0.1.
 ```

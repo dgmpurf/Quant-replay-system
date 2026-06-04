@@ -234,6 +234,16 @@ Acceptance means the replacement templates were acknowledged as planning artifac
 
 Reviewed replacement worklist acceptance is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to acceptance status; acceptance fields remain visible for audit. If health fails because an artifact claims active worklist mutation, approval, rejection, data writes, universe export, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
 
+## Reviewed Replacement Worklist Activation Status
+
+`research-status` includes `reviewed-replacement-worklist-activation-status` as report-only activated replacement-template planning context when those artifacts exist.
+
+The unified summary records the latest activation id, activation status/stage, health status, replacement plan id, lineage ids, total row count, `stock_core`, `etf_core`, and `mixed_demo_core` row counts, profile-conflict count, activation acknowledgement flag, active-worklist mutation flag, report path, and the activation layer's next manual action.
+
+Activation means the accepted replacement templates were acknowledged as the active planning context only. It does not replace active worklists, approve or reject PIT rows, export universe files, generate candidates, build snapshots, compute labels, or validate strategy performance.
+
+Reviewed replacement worklist activation is earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to activation status; activation fields remain visible for audit. If health fails because an artifact claims active worklist mutation, approval, rejection, data writes, universe export, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

@@ -25,6 +25,7 @@ The project is now a broad local research system with:
 - universe profile policy audit;
 - universe profile split-worklist planning;
 - reviewed replacement worklist planning;
+- reviewed replacement worklist acceptance;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -49,12 +50,13 @@ Completed or largely complete:
 - universe profile policy audit;
 - universe profile registry and split-worklist plan;
 - reviewed replacement worklist plan;
+- reviewed replacement worklist acceptance;
 - index / health / status and research-status integration for these stages.
 
-Current reviewed replacement worklist planning state:
+Current reviewed replacement worklist acceptance state:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_PLAN_READY
+REVIEWED_REPLACEMENT_WORKLIST_ACCEPTED_AS_PLANNING_CONTEXT
 ```
 
 Latest known state:
@@ -69,6 +71,7 @@ ingestion_id: 284058e7f1e4
 policy_audit_id: 844794b3aae1
 split_plan_id: db2c09268c14
 replacement_plan_id: 0774d0a1fdb9
+acceptance_id: c723c0c476b1
 
 approved rows: 0
 export-ready rows: 0
@@ -86,21 +89,22 @@ stock_core replacement rows: 56
 etf_core replacement rows: 16
 mixed_demo_core replacement rows: 0
 active legacy worklist mutated: false
+acceptance acknowledged: true
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Reviewed Replacement Worklist Acceptance
+### Branch: Guarded Replacement Worklist Activation
 
 Suggested sequence:
 
-1. Read-only audit for reviewed replacement worklist acceptance.
-2. Define what “accepting” replacement worklists means.
-3. Decide whether acceptance should remain `outputs/reports` only or create a separate reviewed accepted planning artifact.
-4. Require explicit accept flags and manual confirmation before any accepted artifact exists.
-5. Keep current active legacy `etf_core` worklist unchanged.
+1. Read-only audit for guarded replacement worklist activation.
+2. Define what “activating” replacement worklists means.
+3. Decide whether activation should create a new active worklist artifact, a routing pointer, or only an accepted planning context.
+4. Require explicit activation flags and manual confirmation before any activated artifact exists.
+5. Keep current active legacy `etf_core` worklist unchanged unless a future workflow explicitly creates a separate activated artifact.
 6. Do not approve/reject rows.
 7. Do not export universe files.
 8. Do not run current-candidates or snapshot workflows.
@@ -109,24 +113,24 @@ Suggested sequence:
 
 Do not skip directly to accepted universe export or multi-date candidate generation.
 
-## What Replacement Worklist Acceptance Must Solve
+## What Replacement Worklist Activation Must Solve
 
 It should answer:
 
-- Should replacement templates ever become accepted replacement worklists?
-- What exact manual acceptance flag is required?
-- Does acceptance create an active artifact, or only a reviewed planning artifact?
-- How should accepted replacement artifacts preserve lineage to the legacy worklist, policy audit, and split plan?
-- How should research-status distinguish planned replacement worklists from accepted replacement worklists?
-- How should stock_core and etf_core accepted templates remain non-approved and evidence-incomplete until separately reviewed?
+- Should accepted replacement worklists ever become active evidence worklists?
+- What exact manual activation flag is required?
+- Does activation create an active artifact, or only a routing pointer?
+- How should activated replacement artifacts preserve lineage to the legacy worklist, policy audit, split plan, replacement plan, and acceptance artifact?
+- How should research-status distinguish planned replacement worklists, accepted replacement worklists, and activated replacement worklists?
+- How should stock_core and etf_core activated templates remain non-approved and evidence-incomplete until separately reviewed?
 - How should the system prevent accidental mutation of the legacy worklist?
 - How should the system prevent replacement templates from being treated as current-candidates universe input?
 
-## After Replacement Worklist Acceptance Design
+## After Replacement Worklist Activation Design
 
 ### 1. Real Evidence Completion on Correct Profile
 
-Use replacement worklist templates to fill real evidence for the appropriate profile:
+Use activated or accepted replacement worklist templates to fill real evidence for the appropriate profile:
 
 ```text
 stock_core for STOCK symbols
@@ -234,6 +238,7 @@ Do not yet:
 - treat evidence update ingestion as approval application;
 - treat universe profile split guidance as active worklist replacement;
 - treat reviewed replacement worklist plans as accepted active replacement worklists;
+- treat reviewed replacement acceptance as activation;
 - export PIT universe input without real approved/export-ready rows;
 - write `data/raw` or `data/processed` from PIT staging;
 - run current-candidates backfill without reviewed/exported PIT universe rows;

@@ -210,6 +210,18 @@ from quant_replay_system.reviewed_replacement_worklist_acceptance_index import (
 from quant_replay_system.reviewed_replacement_worklist_acceptance_status import (
     run_reviewed_replacement_worklist_acceptance_status,
 )
+from quant_replay_system.reviewed_replacement_worklist_activation import (
+    build_reviewed_replacement_worklist_activation,
+)
+from quant_replay_system.reviewed_replacement_worklist_activation_health import (
+    check_reviewed_replacement_worklist_activation_health,
+)
+from quant_replay_system.reviewed_replacement_worklist_activation_index import (
+    build_reviewed_replacement_worklist_activation_index,
+)
+from quant_replay_system.reviewed_replacement_worklist_activation_status import (
+    run_reviewed_replacement_worklist_activation_status,
+)
 from quant_replay_system.signal_advisory import build_signal_advisory_from_candidates
 from quant_replay_system.signal_advisory_health import check_signal_advisory_health
 from quant_replay_system.signal_advisory_index import build_signal_advisory_index
@@ -1255,6 +1267,102 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_reviewed_replacement_worklist_acceptance_status
     )
 
+    reviewed_replacement_worklist_activation = subparsers.add_parser(
+        "reviewed-replacement-worklist-activation",
+        help="Activate accepted replacement templates as report-only planning context",
+    )
+    reviewed_replacement_worklist_activation.add_argument(
+        "--acceptance",
+        default=(
+            "outputs/reports/reviewed_replacement_worklist_acceptance/"
+            "c723c0c476b1/reviewed_replacement_worklist_acceptance.csv"
+        ),
+        help="Reviewed replacement worklist acceptance CSV",
+    )
+    reviewed_replacement_worklist_activation.add_argument("--activated-by", required=True, help="Manual activator name/id")
+    reviewed_replacement_worklist_activation.add_argument("--activated-at", required=True, help="Manual activation timestamp")
+    reviewed_replacement_worklist_activation.add_argument(
+        "--activation-reason",
+        required=True,
+        help="Manual activation reason for planning context",
+    )
+    reviewed_replacement_worklist_activation.add_argument(
+        "--manual-activation",
+        action="store_true",
+        help="Required explicit activation acknowledgement flag",
+    )
+    reviewed_replacement_worklist_activation.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewed_replacement_worklist_activation",
+        help="Reviewed replacement worklist activation output directory",
+    )
+    reviewed_replacement_worklist_activation.set_defaults(
+        handler=_handle_reviewed_replacement_worklist_activation
+    )
+
+    reviewed_replacement_worklist_activation_index = subparsers.add_parser(
+        "reviewed-replacement-worklist-activation-index",
+        help="Build a local index of reviewed replacement worklist activation artifacts",
+    )
+    reviewed_replacement_worklist_activation_index.add_argument(
+        "--root",
+        default="outputs/reports/reviewed_replacement_worklist_activation",
+        help="Reviewed replacement worklist activation artifact root",
+    )
+    reviewed_replacement_worklist_activation_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewed_replacement_worklist_activation/index",
+        help="Index output directory",
+    )
+    reviewed_replacement_worklist_activation_index.add_argument(
+        "--include-missing-metadata",
+        action="store_true",
+        help="Include folders missing metadata.json",
+    )
+    reviewed_replacement_worklist_activation_index.set_defaults(
+        handler=_handle_reviewed_replacement_worklist_activation_index
+    )
+
+    reviewed_replacement_worklist_activation_health = subparsers.add_parser(
+        "reviewed-replacement-worklist-activation-health",
+        help="Check local reviewed replacement worklist activation artifact health",
+    )
+    reviewed_replacement_worklist_activation_health.add_argument(
+        "--root",
+        default="outputs/reports/reviewed_replacement_worklist_activation",
+        help="Reviewed replacement worklist activation artifact root",
+    )
+    reviewed_replacement_worklist_activation_health.add_argument(
+        "--index",
+        help="Optional replacement activation index CSV path",
+    )
+    reviewed_replacement_worklist_activation_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewed_replacement_worklist_activation/health",
+        help="Health output directory",
+    )
+    reviewed_replacement_worklist_activation_health.set_defaults(
+        handler=_handle_reviewed_replacement_worklist_activation_health
+    )
+
+    reviewed_replacement_worklist_activation_status = subparsers.add_parser(
+        "reviewed-replacement-worklist-activation-status",
+        help="Summarize latest local reviewed replacement worklist activation status",
+    )
+    reviewed_replacement_worklist_activation_status.add_argument(
+        "--root",
+        default="outputs/reports/reviewed_replacement_worklist_activation",
+        help="Reviewed replacement worklist activation artifact root",
+    )
+    reviewed_replacement_worklist_activation_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewed_replacement_worklist_activation/status",
+        help="Status output directory",
+    )
+    reviewed_replacement_worklist_activation_status.set_defaults(
+        handler=_handle_reviewed_replacement_worklist_activation_status
+    )
+
     pit_universe_evidence_completion_helper_index = subparsers.add_parser(
         "pit-universe-evidence-completion-helper-index",
         help="Build a local index of PIT universe evidence completion helper artifacts",
@@ -1977,6 +2085,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--reviewed-replacement-worklist-acceptance-root",
         help="Reviewed replacement worklist acceptance artifact root directory",
+    )
+    research_status.add_argument(
+        "--reviewed-replacement-worklist-activation-root",
+        help="Reviewed replacement worklist activation artifact root directory",
     )
     research_status.add_argument(
         "--advisory-profile-calibration-root",
@@ -3924,6 +4036,128 @@ def _handle_reviewed_replacement_worklist_acceptance_status(args: argparse.Names
     return 1 if result.status == "FAIL" else 0
 
 
+def _handle_reviewed_replacement_worklist_activation(args: argparse.Namespace) -> int:
+    result = build_reviewed_replacement_worklist_activation(
+        acceptance=args.acceptance,
+        activated_by=args.activated_by,
+        activated_at=args.activated_at,
+        activation_reason=args.activation_reason,
+        manual_activation=bool(args.manual_activation),
+        output_dir=args.output_dir,
+    )
+    print(f"activation_id: {result.activation_id}")
+    print(f"status: {result.status}")
+    print(f"replacement_plan_id: {result.replacement_plan_id}")
+    print(f"source_split_plan_id: {result.source_split_plan_id}")
+    print(f"source_policy_audit_id: {result.source_policy_audit_id}")
+    print(f"source_worklist_id: {result.source_worklist_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_core_row_count: {result.stock_core_row_count}")
+    print(f"etf_core_row_count: {result.etf_core_row_count}")
+    print(f"mixed_demo_core_row_count: {result.mixed_demo_core_row_count}")
+    print(f"profile_conflict_count: {result.profile_conflict_count}")
+    print(f"activation_acknowledged: {result.activation_acknowledged}")
+    print(f"active_worklist_mutated: {result.active_worklist_mutated}")
+    print(f"activation_csv_path: {result.artifact_paths['reviewed_replacement_worklist_activation']}")
+    print(f"activated_replacement_worklist_stock_core_path: {result.artifact_paths['activated_replacement_worklist_stock_core']}")
+    print(f"activated_replacement_worklist_etf_core_path: {result.artifact_paths['activated_replacement_worklist_etf_core']}")
+    print(
+        "activated_replacement_worklist_mixed_demo_core_path: "
+        f"{result.artifact_paths['activated_replacement_worklist_mixed_demo_core']}"
+    )
+    print(f"activated_update_template_stock_core_path: {result.artifact_paths['activated_update_template_stock_core']}")
+    print(f"activated_update_template_etf_core_path: {result.artifact_paths['activated_update_template_etf_core']}")
+    print(
+        "activated_update_template_mixed_demo_core_path: "
+        f"{result.artifact_paths['activated_update_template_mixed_demo_core']}"
+    )
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_reviewed_replacement_worklist_activation_index(args: argparse.Namespace) -> int:
+    result = build_reviewed_replacement_worklist_activation_index(
+        root=args.root,
+        output_dir=args.output_dir,
+        include_missing_metadata=bool(args.include_missing_metadata),
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['reviewed_replacement_worklist_activation_index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_reviewed_replacement_worklist_activation_health(args: argparse.Namespace) -> int:
+    result = check_reviewed_replacement_worklist_activation_health(
+        root=args.root,
+        index_path=args.index,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['reviewed_replacement_worklist_activation_health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_reviewed_replacement_worklist_activation_status(args: argparse.Namespace) -> int:
+    result = run_reviewed_replacement_worklist_activation_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['reviewed_replacement_worklist_activation_status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_activation_id: {result.latest_activation_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"replacement_plan_id: {result.replacement_plan_id}")
+    print(f"source_split_plan_id: {result.source_split_plan_id}")
+    print(f"source_policy_audit_id: {result.source_policy_audit_id}")
+    print(f"source_worklist_id: {result.source_worklist_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_core_row_count: {result.stock_core_row_count}")
+    print(f"etf_core_row_count: {result.etf_core_row_count}")
+    print(f"mixed_demo_core_row_count: {result.mixed_demo_core_row_count}")
+    print(f"profile_conflict_count: {result.profile_conflict_count}")
+    print(f"activation_acknowledged: {result.activation_acknowledged}")
+    print(f"active_worklist_mutated: {result.active_worklist_mutated}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No approval, rejection, active worklist mutation, universe export, data/raw write, "
+        "data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, network/API, LLM/API, "
+        "or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
 def _handle_pit_universe_evidence_completion_helper_index(args: argparse.Namespace) -> int:
     result = build_pit_universe_evidence_completion_helper_index(
         root=args.root,
@@ -5507,6 +5741,10 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["reviewed_replacement_worklist_acceptance_root"] = Path(
             args.reviewed_replacement_worklist_acceptance_root
         )
+    if args.reviewed_replacement_worklist_activation_root:
+        updates["reviewed_replacement_worklist_activation_root"] = Path(
+            args.reviewed_replacement_worklist_activation_root
+        )
     if args.advisory_profile_calibration_root:
         updates["advisory_profile_calibration_root"] = Path(args.advisory_profile_calibration_root)
     if args.calibration_to_signal_semantics_root:
@@ -5552,6 +5790,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
         reviewed_replacement_worklist_acceptance_root=args.reviewed_replacement_worklist_acceptance_root,
+        reviewed_replacement_worklist_activation_root=args.reviewed_replacement_worklist_activation_root,
         advisory_profile_calibration_root=args.advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=args.calibration_to_signal_semantics_root,
         signal_semantics_root=args.signal_semantics_root,
@@ -6097,6 +6336,70 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "reviewed_replacement_worklist_acceptance_next_action: "
         f"{result.reviewed_replacement_worklist_acceptance_next_action}"
+    )
+    print(
+        "latest_reviewed_replacement_worklist_activation_id: "
+        f"{result.latest_reviewed_replacement_worklist_activation_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_status: "
+        f"{result.reviewed_replacement_worklist_activation_status}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_stage: "
+        f"{result.reviewed_replacement_worklist_activation_stage}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_health_status: "
+        f"{result.reviewed_replacement_worklist_activation_health_status}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_replacement_plan_id: "
+        f"{result.reviewed_replacement_worklist_activation_replacement_plan_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_source_split_plan_id: "
+        f"{result.reviewed_replacement_worklist_activation_source_split_plan_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_source_policy_audit_id: "
+        f"{result.reviewed_replacement_worklist_activation_source_policy_audit_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_source_worklist_id: "
+        f"{result.reviewed_replacement_worklist_activation_source_worklist_id}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_row_count: "
+        f"{result.reviewed_replacement_worklist_activation_row_count}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_stock_core_row_count: "
+        f"{result.reviewed_replacement_worklist_activation_stock_core_row_count}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_etf_core_row_count: "
+        f"{result.reviewed_replacement_worklist_activation_etf_core_row_count}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_mixed_demo_core_row_count: "
+        f"{result.reviewed_replacement_worklist_activation_mixed_demo_core_row_count}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_activation_acknowledged: "
+        f"{result.reviewed_replacement_worklist_activation_activation_acknowledged}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_active_worklist_mutated: "
+        f"{result.reviewed_replacement_worklist_activation_active_worklist_mutated}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_report_path: "
+        f"{result.reviewed_replacement_worklist_activation_report_path}"
+    )
+    print(
+        "reviewed_replacement_worklist_activation_next_action: "
+        f"{result.reviewed_replacement_worklist_activation_next_action}"
     )
     print(f"latest_advisory_profile_calibration_run_id: {result.latest_advisory_profile_calibration_run_id}")
     print(f"advisory_profile_calibration_status: {result.advisory_profile_calibration_status}")

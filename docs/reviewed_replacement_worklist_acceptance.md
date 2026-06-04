@@ -68,3 +68,7 @@ Health checks verify required files, acceptance metadata, safety flags, and that
 `research-status` includes reviewed replacement worklist acceptance context. It shows the latest acceptance id, row counts, lineage, health status, and whether the active legacy worklist was mutated.
 
 Later workflow stages, including `PAPER_WORKFLOW_READY`, remain higher priority. Acceptance is planning context only.
+
+## Next Planning Step
+
+After acceptance, `reviewed-replacement-worklist-activation` can create a separate activated planning artifact under `outputs/reports` only. Activation still does not mutate active worklists, approve/reject rows, export universe files, run current-candidates, build snapshots, or compute labels. See [reviewed_replacement_worklist_activation.md](reviewed_replacement_worklist_activation.md).

@@ -143,6 +143,8 @@ Use `reviewed-replacement-worklist-plan-index`, `reviewed-replacement-worklist-p
 
 Use `reviewed-replacement-worklist-acceptance` to acknowledge reviewed replacement templates as planning context only; see [docs/reviewed_replacement_worklist_acceptance.md](docs/reviewed_replacement_worklist_acceptance.md). The command requires explicit manual acceptance metadata and still does not activate worklists, approve/reject PIT rows, export universe files, run current-candidates, build snapshots, or compute labels.
 
+Use `reviewed-replacement-worklist-activation` to create a guarded activated replacement worklist planning artifact under `outputs/reports` only; see [docs/reviewed_replacement_worklist_activation.md](docs/reviewed_replacement_worklist_activation.md). The command requires explicit manual activation metadata and still does not mutate active legacy worklists, approve/reject PIT rows, export universe files, run current-candidates, build snapshots, or compute labels.
+
 Use `reviewed-replacement-worklist-acceptance-index`, `reviewed-replacement-worklist-acceptance-health`, and `reviewed-replacement-worklist-acceptance-status` to discover, safety-check, and summarize acceptance artifacts. `research-status` includes acceptance context while preserving later paper workflow priority.
 
 Use `universe-profile-split-worklist-plan` to apply `config/universe_profiles.yaml` and write report-only future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_split_worklist_plan.md](docs/universe_profile_split_worklist_plan.md). The planner leaves active worklists unchanged and does not approve/reject rows, export universe files, build snapshots, run current-candidates, or compute labels.
@@ -644,6 +646,8 @@ See [docs/release_checkpoint_v1.10.0.md](docs/release_checkpoint_v1.10.0.md) for
 `v1.11.0` marks the Reviewed Replacement Worklist Acceptance checkpoint, covering report-only acknowledgement of replacement templates, acceptance index/health/status views, dashboard visibility, lineage preservation, and preservation of later paper workflow priority.
 
 See [docs/release_checkpoint_v1.11.0.md](docs/release_checkpoint_v1.11.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
+
+See [docs/release_checkpoint_v1.12.0.md](docs/release_checkpoint_v1.12.0.md) for the milestone summary, workflow impact, safety boundaries, validation baseline, known limitations, and recommended tag.
 
 ## Project Layout
 

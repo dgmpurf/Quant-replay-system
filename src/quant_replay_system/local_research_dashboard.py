@@ -51,6 +51,9 @@ from quant_replay_system.reviewed_replacement_worklist_plan_status import run_re
 from quant_replay_system.reviewed_replacement_worklist_acceptance_status import (
     run_reviewed_replacement_worklist_acceptance_status,
 )
+from quant_replay_system.reviewed_replacement_worklist_activation_status import (
+    run_reviewed_replacement_worklist_activation_status,
+)
 from quant_replay_system.signal_advisory_status import run_signal_advisory_status
 from quant_replay_system.signal_semantics_status import run_signal_semantics_status
 from quant_replay_system.single_symbol_advisory_answer_status import run_single_symbol_advisory_answer_status
@@ -285,6 +288,23 @@ SUMMARY_COLUMNS = [
     "reviewed_replacement_worklist_acceptance_active_worklist_mutated",
     "reviewed_replacement_worklist_acceptance_report_path",
     "reviewed_replacement_worklist_acceptance_next_action",
+    "reviewed_replacement_worklist_activation_status",
+    "latest_reviewed_replacement_worklist_activation_id",
+    "reviewed_replacement_worklist_activation_stage",
+    "reviewed_replacement_worklist_activation_health_status",
+    "reviewed_replacement_worklist_activation_replacement_plan_id",
+    "reviewed_replacement_worklist_activation_source_split_plan_id",
+    "reviewed_replacement_worklist_activation_source_policy_audit_id",
+    "reviewed_replacement_worklist_activation_source_worklist_id",
+    "reviewed_replacement_worklist_activation_row_count",
+    "reviewed_replacement_worklist_activation_stock_core_row_count",
+    "reviewed_replacement_worklist_activation_etf_core_row_count",
+    "reviewed_replacement_worklist_activation_mixed_demo_core_row_count",
+    "reviewed_replacement_worklist_activation_profile_conflict_count",
+    "reviewed_replacement_worklist_activation_activation_acknowledged",
+    "reviewed_replacement_worklist_activation_active_worklist_mutated",
+    "reviewed_replacement_worklist_activation_report_path",
+    "reviewed_replacement_worklist_activation_next_action",
     "advisory_profile_calibration_status",
     "latest_advisory_profile_calibration_run_id",
     "advisory_profile_calibration_stage",
@@ -511,6 +531,7 @@ COMPONENTS = [
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS",
+    "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
     "ADVISORY_PROFILE_CALIBRATION_STATUS",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
     "SIGNAL_SEMANTICS_STATUS",
@@ -547,6 +568,7 @@ WORKFLOW_AREAS = {
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_PLAN",
     "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE",
+    "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION",
     "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS": "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
     "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS": "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION",
     "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
@@ -777,6 +799,23 @@ class LocalResearchDashboardResult:
     reviewed_replacement_worklist_acceptance_active_worklist_mutated: bool
     reviewed_replacement_worklist_acceptance_report_path: str
     reviewed_replacement_worklist_acceptance_next_action: str
+    reviewed_replacement_worklist_activation_status: str
+    latest_reviewed_replacement_worklist_activation_id: str
+    reviewed_replacement_worklist_activation_stage: str
+    reviewed_replacement_worklist_activation_health_status: str
+    reviewed_replacement_worklist_activation_replacement_plan_id: str
+    reviewed_replacement_worklist_activation_source_split_plan_id: str
+    reviewed_replacement_worklist_activation_source_policy_audit_id: str
+    reviewed_replacement_worklist_activation_source_worklist_id: str
+    reviewed_replacement_worklist_activation_row_count: int
+    reviewed_replacement_worklist_activation_stock_core_row_count: int
+    reviewed_replacement_worklist_activation_etf_core_row_count: int
+    reviewed_replacement_worklist_activation_mixed_demo_core_row_count: int
+    reviewed_replacement_worklist_activation_profile_conflict_count: int
+    reviewed_replacement_worklist_activation_activation_acknowledged: bool
+    reviewed_replacement_worklist_activation_active_worklist_mutated: bool
+    reviewed_replacement_worklist_activation_report_path: str
+    reviewed_replacement_worklist_activation_next_action: str
     advisory_profile_calibration_status: str
     latest_advisory_profile_calibration_run_id: str
     advisory_profile_calibration_stage: str
@@ -983,6 +1022,7 @@ def run_local_research_dashboard(
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_acceptance_root: str | Path | None = None,
+    reviewed_replacement_worklist_activation_root: str | Path | None = None,
     advisory_profile_calibration_root: str | Path | None = None,
     calibration_to_signal_semantics_root: str | Path | None = None,
     signal_semantics_root: str | Path | None = None,
@@ -1094,6 +1134,11 @@ def run_local_research_dashboard(
         if reviewed_replacement_worklist_acceptance_root is not None
         else effective_root / "reviewed_replacement_worklist_acceptance"
     )
+    effective_reviewed_replacement_worklist_activation_root = (
+        Path(reviewed_replacement_worklist_activation_root)
+        if reviewed_replacement_worklist_activation_root is not None
+        else effective_root / "reviewed_replacement_worklist_activation"
+    )
     effective_advisory_profile_calibration_root = (
         Path(advisory_profile_calibration_root)
         if advisory_profile_calibration_root is not None
@@ -1187,6 +1232,10 @@ def run_local_research_dashboard(
             effective_reviewed_replacement_worklist_acceptance_root = (
                 effective_root / "reviewed_replacement_worklist_acceptance"
             )
+        if reviewed_replacement_worklist_activation_root is None:
+            effective_reviewed_replacement_worklist_activation_root = (
+                effective_root / "reviewed_replacement_worklist_activation"
+            )
         if advisory_profile_calibration_root is None:
             effective_advisory_profile_calibration_root = effective_root / "advisory_profile_calibration"
         if calibration_to_signal_semantics_root is None:
@@ -1226,6 +1275,7 @@ def run_local_research_dashboard(
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
         reviewed_replacement_worklist_acceptance_root=effective_reviewed_replacement_worklist_acceptance_root,
+        reviewed_replacement_worklist_activation_root=effective_reviewed_replacement_worklist_activation_root,
         advisory_profile_calibration_root=effective_advisory_profile_calibration_root,
         calibration_to_signal_semantics_root=effective_calibration_to_signal_semantics_root,
         signal_semantics_root=effective_signal_semantics_root,
@@ -1281,6 +1331,7 @@ def run_local_research_dashboard(
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
         "reviewed_replacement_worklist_acceptance_root": effective_reviewed_replacement_worklist_acceptance_root,
+        "reviewed_replacement_worklist_activation_root": effective_reviewed_replacement_worklist_activation_root,
         "advisory_profile_calibration_root": effective_advisory_profile_calibration_root,
         "calibration_to_signal_semantics_root": effective_calibration_to_signal_semantics_root,
         "signal_semantics_root": effective_signal_semantics_root,
@@ -1813,6 +1864,57 @@ def run_local_research_dashboard(
         reviewed_replacement_worklist_acceptance_next_action=str(
             summary.get("reviewed_replacement_worklist_acceptance_next_action", "")
         ),
+        reviewed_replacement_worklist_activation_status=str(
+            summary.get("reviewed_replacement_worklist_activation_status", "MISSING")
+        ),
+        latest_reviewed_replacement_worklist_activation_id=str(
+            summary.get("latest_reviewed_replacement_worklist_activation_id", "")
+        ),
+        reviewed_replacement_worklist_activation_stage=str(
+            summary.get("reviewed_replacement_worklist_activation_stage", "")
+        ),
+        reviewed_replacement_worklist_activation_health_status=str(
+            summary.get("reviewed_replacement_worklist_activation_health_status", "")
+        ),
+        reviewed_replacement_worklist_activation_replacement_plan_id=str(
+            summary.get("reviewed_replacement_worklist_activation_replacement_plan_id", "")
+        ),
+        reviewed_replacement_worklist_activation_source_split_plan_id=str(
+            summary.get("reviewed_replacement_worklist_activation_source_split_plan_id", "")
+        ),
+        reviewed_replacement_worklist_activation_source_policy_audit_id=str(
+            summary.get("reviewed_replacement_worklist_activation_source_policy_audit_id", "")
+        ),
+        reviewed_replacement_worklist_activation_source_worklist_id=str(
+            summary.get("reviewed_replacement_worklist_activation_source_worklist_id", "")
+        ),
+        reviewed_replacement_worklist_activation_row_count=_int_or_zero(
+            summary.get("reviewed_replacement_worklist_activation_row_count")
+        ),
+        reviewed_replacement_worklist_activation_stock_core_row_count=_int_or_zero(
+            summary.get("reviewed_replacement_worklist_activation_stock_core_row_count")
+        ),
+        reviewed_replacement_worklist_activation_etf_core_row_count=_int_or_zero(
+            summary.get("reviewed_replacement_worklist_activation_etf_core_row_count")
+        ),
+        reviewed_replacement_worklist_activation_mixed_demo_core_row_count=_int_or_zero(
+            summary.get("reviewed_replacement_worklist_activation_mixed_demo_core_row_count")
+        ),
+        reviewed_replacement_worklist_activation_profile_conflict_count=_int_or_zero(
+            summary.get("reviewed_replacement_worklist_activation_profile_conflict_count")
+        ),
+        reviewed_replacement_worklist_activation_activation_acknowledged=_bool_from_text(
+            summary.get("reviewed_replacement_worklist_activation_activation_acknowledged")
+        ),
+        reviewed_replacement_worklist_activation_active_worklist_mutated=_bool_from_text(
+            summary.get("reviewed_replacement_worklist_activation_active_worklist_mutated")
+        ),
+        reviewed_replacement_worklist_activation_report_path=str(
+            summary.get("reviewed_replacement_worklist_activation_report_path", "")
+        ),
+        reviewed_replacement_worklist_activation_next_action=str(
+            summary.get("reviewed_replacement_worklist_activation_next_action", "")
+        ),
         advisory_profile_calibration_status=str(
             summary.get("advisory_profile_calibration_status", "MISSING")
         ),
@@ -2162,6 +2264,7 @@ def scan_local_research_workflow_artifacts(
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_acceptance_root: str | Path,
+    reviewed_replacement_worklist_activation_root: str | Path,
     advisory_profile_calibration_root: str | Path,
     calibration_to_signal_semantics_root: str | Path,
     signal_semantics_root: str | Path,
@@ -2195,6 +2298,7 @@ def scan_local_research_workflow_artifacts(
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
     reviewed_replacement_worklist_acceptance_path = Path(reviewed_replacement_worklist_acceptance_root)
+    reviewed_replacement_worklist_activation_path = Path(reviewed_replacement_worklist_activation_root)
     advisory_profile_calibration_path = Path(advisory_profile_calibration_root)
     calibration_to_signal_semantics_path = Path(calibration_to_signal_semantics_root)
     signal_semantics_path = Path(signal_semantics_root)
@@ -2232,6 +2336,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_acceptance_status(reviewed_replacement_worklist_acceptance_path))
+    records.extend(_scan_reviewed_replacement_worklist_activation_status(reviewed_replacement_worklist_activation_path))
     records.extend(_scan_advisory_profile_calibration_status(advisory_profile_calibration_path))
     records.extend(_scan_calibration_to_signal_semantics_status(calibration_to_signal_semantics_path))
     records.extend(_scan_signal_semantics_status(signal_semantics_path))
@@ -4807,6 +4912,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         ):
             return "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_FAILED"
         if (
+            not _has_post_reviewed_replacement_worklist_activation_workflow_component(dashboard_frame)
+            and statuses["REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS"] == "FAIL"
+        ):
+            return "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_FAILED"
+        if (
             not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
             and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] == "FAIL"
         ):
@@ -4936,6 +5046,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _reviewed_replacement_worklist_acceptance_stage_from_frame(dashboard_frame)
     ):
         return _reviewed_replacement_worklist_acceptance_stage_from_frame(dashboard_frame)
+    if (
+        not _has_post_reviewed_replacement_worklist_activation_workflow_component(dashboard_frame)
+        and statuses["REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS"] in {"PASS", "WARN", "READY"}
+        and _reviewed_replacement_worklist_activation_stage_from_frame(dashboard_frame)
+    ):
+        return _reviewed_replacement_worklist_activation_stage_from_frame(dashboard_frame)
     if (
         not _has_post_advisory_profile_calibration_workflow_component(dashboard_frame)
         and statuses["ADVISORY_PROFILE_CALIBRATION_STATUS"] in {"PASS", "WARN", "READY"}
@@ -5111,6 +5227,9 @@ def infer_local_research_next_action(
         "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTED_AS_PLANNING_CONTEXT": "Use accepted replacement templates as planning context only; keep active legacy worklist unchanged.",
         "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_HEALTH_WARN": "Review replacement worklist acceptance health warnings before any acceptance handoff.",
         "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_FAILED": "Repair reviewed replacement worklist acceptance artifacts before using accepted planning context.",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATED_AS_PLANNING_CONTEXT": "Use activated replacement templates as planning context only; keep active legacy worklist unchanged.",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_HEALTH_WARN": "Review replacement worklist activation health warnings before any activation handoff.",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_FAILED": "Repair reviewed replacement worklist activation artifacts before using activated planning context.",
         "DEMO_ADVISORY_PROFILE_CALIBRATION_VALIDATED": "Demo advisory profile calibration validated; do not treat DEMO_ONLY labels as strategy recommendations.",
         "ADVISORY_PROFILE_CALIBRATION_READY_FOR_REVIEW": "Review calibration labels manually; REVIEW_BUY_CANDIDATE is not an order and auto-order remains disabled.",
         "ADVISORY_PROFILE_CALIBRATION_HEALTH_WARN": "Review advisory profile calibration health warnings before using threshold analysis.",
@@ -5199,6 +5318,7 @@ def summarize_local_research_status(
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS",
+                    "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
                     "ADVISORY_PROFILE_CALIBRATION_STATUS",
                     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
                     "SIGNAL_SEMANTICS_STATUS",
@@ -6116,6 +6236,86 @@ def summarize_local_research_status(
         ),
         "reviewed_replacement_worklist_acceptance_next_action": _parse_note_value(
             by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "reviewed_replacement_worklist_activation_status": _component_status(
+            by_component,
+            "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
+        ),
+        "latest_reviewed_replacement_worklist_activation_id": _string_or_empty(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("latest_artifact_id")
+        ),
+        "reviewed_replacement_worklist_activation_stage": _string_or_empty(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("stage")
+        ),
+        "reviewed_replacement_worklist_activation_health_status": _parse_note_value(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "reviewed_replacement_worklist_activation_replacement_plan_id": _parse_note_value(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+            "replacement_plan_id",
+        ),
+        "reviewed_replacement_worklist_activation_source_split_plan_id": _parse_note_value(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+            "source_split_plan_id",
+        ),
+        "reviewed_replacement_worklist_activation_source_policy_audit_id": _parse_note_value(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+            "source_policy_audit_id",
+        ),
+        "reviewed_replacement_worklist_activation_source_worklist_id": _parse_note_value(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+            "source_worklist_id",
+        ),
+        "reviewed_replacement_worklist_activation_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+                "row_count",
+            )
+        ),
+        "reviewed_replacement_worklist_activation_stock_core_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+                "stock_core_row_count",
+            )
+        ),
+        "reviewed_replacement_worklist_activation_etf_core_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+                "etf_core_row_count",
+            )
+        ),
+        "reviewed_replacement_worklist_activation_mixed_demo_core_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+                "mixed_demo_core_row_count",
+            )
+        ),
+        "reviewed_replacement_worklist_activation_profile_conflict_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+                "profile_conflict_count",
+            )
+        ),
+        "reviewed_replacement_worklist_activation_activation_acknowledged": _bool_from_text(
+            _parse_note_value(
+                by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+                "activation_acknowledged",
+            )
+        ),
+        "reviewed_replacement_worklist_activation_active_worklist_mutated": _bool_from_text(
+            _parse_note_value(
+                by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+                "active_worklist_mutated",
+            )
+        ),
+        "reviewed_replacement_worklist_activation_report_path": _parse_note_value(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "reviewed_replacement_worklist_activation_next_action": _parse_note_value(
+            by_component.get("REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "advisory_profile_calibration_status": _component_status(
@@ -7225,6 +7425,57 @@ def build_local_research_dashboard_metadata(
         ),
         "reviewed_replacement_worklist_acceptance_next_action": (
             result.reviewed_replacement_worklist_acceptance_next_action
+        ),
+        "latest_reviewed_replacement_worklist_activation_id": (
+            result.latest_reviewed_replacement_worklist_activation_id
+        ),
+        "reviewed_replacement_worklist_activation_status": (
+            result.reviewed_replacement_worklist_activation_status
+        ),
+        "reviewed_replacement_worklist_activation_stage": (
+            result.reviewed_replacement_worklist_activation_stage
+        ),
+        "reviewed_replacement_worklist_activation_health_status": (
+            result.reviewed_replacement_worklist_activation_health_status
+        ),
+        "reviewed_replacement_worklist_activation_replacement_plan_id": (
+            result.reviewed_replacement_worklist_activation_replacement_plan_id
+        ),
+        "reviewed_replacement_worklist_activation_source_split_plan_id": (
+            result.reviewed_replacement_worklist_activation_source_split_plan_id
+        ),
+        "reviewed_replacement_worklist_activation_source_policy_audit_id": (
+            result.reviewed_replacement_worklist_activation_source_policy_audit_id
+        ),
+        "reviewed_replacement_worklist_activation_source_worklist_id": (
+            result.reviewed_replacement_worklist_activation_source_worklist_id
+        ),
+        "reviewed_replacement_worklist_activation_row_count": (
+            result.reviewed_replacement_worklist_activation_row_count
+        ),
+        "reviewed_replacement_worklist_activation_stock_core_row_count": (
+            result.reviewed_replacement_worklist_activation_stock_core_row_count
+        ),
+        "reviewed_replacement_worklist_activation_etf_core_row_count": (
+            result.reviewed_replacement_worklist_activation_etf_core_row_count
+        ),
+        "reviewed_replacement_worklist_activation_mixed_demo_core_row_count": (
+            result.reviewed_replacement_worklist_activation_mixed_demo_core_row_count
+        ),
+        "reviewed_replacement_worklist_activation_profile_conflict_count": (
+            result.reviewed_replacement_worklist_activation_profile_conflict_count
+        ),
+        "reviewed_replacement_worklist_activation_activation_acknowledged": (
+            result.reviewed_replacement_worklist_activation_activation_acknowledged
+        ),
+        "reviewed_replacement_worklist_activation_active_worklist_mutated": (
+            result.reviewed_replacement_worklist_activation_active_worklist_mutated
+        ),
+        "reviewed_replacement_worklist_activation_report_path": (
+            result.reviewed_replacement_worklist_activation_report_path
+        ),
+        "reviewed_replacement_worklist_activation_next_action": (
+            result.reviewed_replacement_worklist_activation_next_action
         ),
         "latest_advisory_profile_calibration_run_id": result.latest_advisory_profile_calibration_run_id,
         "advisory_profile_calibration_status": result.advisory_profile_calibration_status,
@@ -9350,6 +9601,64 @@ def _reviewed_replacement_worklist_acceptance_notes(metadata: dict[str, Any], su
     )
 
 
+def _scan_reviewed_replacement_worklist_activation_status(root: Path) -> list[dict[str, Any]]:
+    computed = _computed_reviewed_replacement_worklist_activation_status_record(root)
+    return [computed] if computed is not None else []
+
+
+def _computed_reviewed_replacement_worklist_activation_status_record(root: Path) -> dict[str, Any] | None:
+    activation_root = root.parent if root.name == "status" else root
+    if not activation_root.exists():
+        return None
+    try:
+        result = run_reviewed_replacement_worklist_activation_status(
+            root=activation_root,
+            output_dir=activation_root / "status",
+        )
+    except Exception:
+        return None
+    if not result.latest_activation_id:
+        return None
+    warning_count = len(result.warnings)
+    if result.status == "WARN" and warning_count == 0:
+        warning_count = 1
+    return _record(
+        workflow_area="REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION",
+        component="REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
+        status=result.status,
+        stage=result.workflow_stage,
+        latest_artifact_id=result.latest_activation_id,
+        report_path=result.artifact_paths.get("reviewed_replacement_worklist_activation_status_report", ""),
+        metadata_path=result.artifact_paths.get("metadata", ""),
+        issue_count=0,
+        warning_count=warning_count,
+        error_count=1 if result.status == "FAIL" else 0,
+        notes=_reviewed_replacement_worklist_activation_notes(
+            {"next_manual_action": result.next_manual_action},
+            result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {},
+        ),
+    )
+
+
+def _reviewed_replacement_worklist_activation_notes(metadata: dict[str, Any], summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(metadata.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"replacement_plan_id={_string_or_empty(summary.get('replacement_plan_id'))}; "
+        f"source_split_plan_id={_string_or_empty(summary.get('source_split_plan_id'))}; "
+        f"source_policy_audit_id={_string_or_empty(summary.get('source_policy_audit_id'))}; "
+        f"source_worklist_id={_string_or_empty(summary.get('source_worklist_id'))}; "
+        f"row_count={_string_or_empty(summary.get('row_count'))}; "
+        f"stock_core_row_count={_string_or_empty(summary.get('stock_core_row_count'))}; "
+        f"etf_core_row_count={_string_or_empty(summary.get('etf_core_row_count'))}; "
+        f"mixed_demo_core_row_count={_string_or_empty(summary.get('mixed_demo_core_row_count'))}; "
+        f"profile_conflict_count={_string_or_empty(summary.get('profile_conflict_count'))}; "
+        f"activation_acknowledged={_string_or_empty(summary.get('activation_acknowledged'))}; "
+        f"active_worklist_mutated={_string_or_empty(summary.get('active_worklist_mutated'))}; "
+        f"report_path={_string_or_empty(summary.get('report_path'))}"
+    )
+
+
 def _scan_advisory_profile_calibration_status(root: Path) -> list[dict[str, Any]]:
     computed = _computed_advisory_profile_calibration_status_record(root)
     if computed is not None:
@@ -10909,6 +11218,12 @@ def _component_next_action(component: str, status: str) -> str:
             if status == "MISSING"
             else "Review clean review_updates artifact manually before a separate overlay review run."
         )
+    if component == "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS":
+        return (
+            "Run reviewed-replacement-worklist-activation after acceptance planning context is reviewed."
+            if status == "MISSING"
+            else "Use activated replacement templates as planning context only; keep active legacy worklist unchanged."
+        )
     if component == "ADVISORY_PROFILE_CALIBRATION_STATUS":
         return (
             "Run advisory-profile-calibration on a local candidates or scored artifact."
@@ -11101,6 +11416,14 @@ def _reviewed_replacement_worklist_plan_stage_from_frame(dashboard_frame: pd.Dat
 def _reviewed_replacement_worklist_acceptance_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _reviewed_replacement_worklist_activation_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))
@@ -11628,6 +11951,34 @@ def _has_post_reviewed_replacement_worklist_plan_workflow_component(dashboard_fr
 
 
 def _has_post_reviewed_replacement_worklist_acceptance_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_reviewed_replacement_worklist_activation_workflow_component(dashboard_frame: pd.DataFrame) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "CURRENT_CANDIDATES",

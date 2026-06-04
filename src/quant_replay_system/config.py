@@ -1042,6 +1042,10 @@ class LocalResearchDashboardSettings(BaseModel):
         "outputs/reports/point_in_time_universe_evidence_update_ingestion"
     )
     universe_profile_policy_audit_root: Path = Path("outputs/reports/universe_profile_policy_audit")
+    universe_profile_split_worklist_plan_root: Path = Path("outputs/reports/universe_profile_split_worklist_plan")
+    reviewed_replacement_worklist_plan_root: Path = Path("outputs/reports/reviewed_replacement_worklist_plan")
+    reviewed_replacement_worklist_acceptance_root: Path = Path("outputs/reports/reviewed_replacement_worklist_acceptance")
+    reviewed_replacement_worklist_activation_root: Path = Path("outputs/reports/reviewed_replacement_worklist_activation")
     advisory_profile_calibration_root: Path = Path("outputs/reports/advisory_profile_calibration")
     signal_semantics_root: Path = Path("outputs/reports/signal_semantics")
     signal_advisory_root: Path = Path("outputs/reports/signals")

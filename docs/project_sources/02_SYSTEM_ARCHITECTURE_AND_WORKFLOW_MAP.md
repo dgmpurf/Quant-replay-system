@@ -49,7 +49,8 @@ Multi-Date Evidence Preparation
   ├─ point-in-time-universe-evidence-update-ingestion
   ├─ universe-profile-policy-audit
   ├─ universe-profile-split-worklist-plan
-  └─ reviewed-replacement-worklist-plan
+  ├─ reviewed-replacement-worklist-plan
+  └─ reviewed-replacement-worklist-acceptance
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -106,7 +107,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Staging, Universe Profile Governance, and Replacement Planning
+### Multi-Date Candidate Planning, PIT Universe Review, Staging, Universe Profile Governance, Replacement Planning, and Acceptance
 
 ```text
 market cache coverage
@@ -124,6 +125,7 @@ market cache coverage
 → universe profile policy audit
 → universe profile split-worklist plan
 → reviewed replacement worklist plan
+→ reviewed replacement worklist acceptance
 → index / health / status
 → research-status
 ```
@@ -131,10 +133,10 @@ market cache coverage
 Current active preparation state:
 
 ```text
-REVIEWED_REPLACEMENT_WORKLIST_PLAN_READY
+REVIEWED_REPLACEMENT_WORKLIST_ACCEPTED_AS_PLANNING_CONTEXT
 ```
 
-The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, or live trades.
+The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, activated replacement worklists, or live trades.
 
 ## Important Data Contracts
 
@@ -225,6 +227,21 @@ should_approve=false, should_reject=false, plan_only=true
 
 Replacement plans create future templates under `outputs/reports` only. They are not active review artifacts and do not replace the active legacy worklist.
 
+### Reviewed Replacement Worklist Acceptance Fields
+
+Replacement acceptance is a report-only planning acknowledgement. It should preserve:
+
+```text
+acceptance_id, replacement_plan_id, policy_audit_id, split_plan_id,
+legacy_worklist_id, accepted_by, accepted_at, acceptance_reason,
+acceptance_acknowledged=true, active_worklist_mutated=false,
+should_activate=false, should_approve=false, should_reject=false,
+no_universe_export=true, no_data_raw_write=true, no_data_processed_write=true,
+plan_only=true, acceptance_only=true
+```
+
+Acceptance artifacts acknowledge replacement templates as reviewed planning context only. They do not activate a worklist, approve PIT rows, reject rows, or export universe files.
+
 ### PIT Evidence Update Ingestion Fields
 
 Evidence update ingestion validates reviewer-completed rows and may write a clean `review_updates.csv` artifact under `outputs/reports`.
@@ -258,18 +275,19 @@ Evidence update ingestion: 72 rows, 0 ready clean updates, 72 blocked
 Universe profile policy audit: 72 ambiguous legacy mixed-demo rows
 Split-worklist plan: 56 future stock_core rows, 16 future etf_core rows, 0 mixed_demo_core rows, 56 profile conflicts
 Reviewed replacement worklist plan: 56 stock_core replacement rows, 16 etf_core replacement rows, 0 mixed_demo_core rows, active legacy worklist untouched
+Reviewed replacement worklist acceptance: acknowledged as planning context, active legacy worklist untouched
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Reviewed Replacement Worklist Acceptance Read-only Audit v0.1
+Guarded Replacement Worklist Activation Read-only Audit v0.1
 ```
 
 Purpose:
 
-- inspect whether replacement worklist templates should ever be accepted as a reviewed planning artifact;
-- define explicit accept flags / manual confirmation requirements;
+- inspect whether accepted replacement worklists should ever become the active evidence worklist;
+- define explicit activation flags / manual confirmation requirements;
 - keep the active legacy worklist untouched;
 - keep the branch read-only before any implementation.
 

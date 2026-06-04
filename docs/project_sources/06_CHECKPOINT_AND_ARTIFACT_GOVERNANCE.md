@@ -40,7 +40,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, and replacement worklist plans that are not accepted active worklists.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, and accepted replacement planning artifacts that are not activated worklists.
 
 ## Diagnostic vs Active Artifacts
 
@@ -188,20 +188,45 @@ They must not:
 
 Replacement templates under `outputs/reports` are planning artifacts only until a future guarded acceptance workflow explicitly accepts them.
 
-## Future Replacement Worklist Acceptance Workflows
+## Reviewed Replacement Worklist Acceptance Workflows
 
-A future replacement worklist acceptance workflow should be audited before implementation.
+Reviewed replacement worklist acceptance artifacts are planning acknowledgements.
 
-It should require explicit manual accept flags and should preserve lineage. It must distinguish:
+They may:
+
+- acknowledge replacement worklist templates as reviewed planning context;
+- preserve lineage to legacy worklist, policy audit, split plan, and replacement plan artifacts;
+- expose stock_core / etf_core replacement rows in research-status context.
+
+They must not:
+
+- activate replacement worklists;
+- mutate the active legacy worklist;
+- approve rows;
+- reject rows;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- run current-candidates;
+- build snapshots;
+- compute forward labels.
+
+Acceptance is not activation. Accepted replacement planning artifacts still require a future guarded activation workflow before they can become the user's active evidence worklist.
+
+## Future Replacement Worklist Activation Workflows
+
+A future replacement worklist activation workflow should be audited before implementation.
+
+It should require explicit manual activation flags and should preserve lineage. It must distinguish:
 
 ```text
 planned replacement worklist
 accepted replacement worklist
+activated replacement worklist
 active legacy worklist
 active PIT review artifact
 ```
 
-Acceptance must not imply approval of any PIT row or export of any universe file.
+Activation must not imply approval of any PIT row or export of any universe file.
 
 ## Export-Readiness Workflows
 
@@ -237,6 +262,7 @@ ingestion_only=true
 export_readiness_only=true
 staging_only=true
 audit_only=true
+acceptance_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -265,7 +291,7 @@ Rows derived from a future universe must keep survivorship-bias warnings until r
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
 
 ## When to Refresh This Document
 
@@ -275,7 +301,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- replacement worklist acceptance semantics are implemented;
+- replacement worklist activation semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.
