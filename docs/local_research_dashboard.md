@@ -266,6 +266,16 @@ When the status reports `REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTED_AS_SUPPORTING_
 
 Reviewer no-hit source coverage acceptance is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to reviewer acceptance; acceptance fields remain visible for audit. If acceptance health fails because files are missing, accepted rows lack reviewer evidence, approval text appears, or safety flags are violated, `research-status` surfaces the failure as actionable when this layer is active.
 
+## Reviewer No-Hit Acceptance Downstream Impact Status
+
+`research-status` includes `reviewer-no-hit-acceptance-downstream-impact-status` as report-only context when downstream impact artifacts exist.
+
+The unified summary records the latest downstream impact id, status/stage, health status, accepted no-hit context count, packet context gap reduced count, checklist-pass count, remaining-blocked count, approval-applied flag, report path, and next manual action.
+
+When the status reports `REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT`, no reviewer-accepted no-hit context is linked yet. When it reports `REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_SUPPORTING_CONTEXT_ONLY`, accepted no-hit rows are linked only as supporting context. Neither stage creates `APPROVED_FOR_PIT_UNIVERSE`, clean review updates, universe exports, snapshot manifests, current-candidates outputs, or checklist-pass rows.
+
+Reviewer no-hit acceptance downstream impact is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to downstream impact; impact fields remain visible for audit. If health fails because artifacts claim approval, create review updates, change strict checklist behavior, or violate data-write/current-candidates/snapshot/forward-label/trading safety flags, `research-status` surfaces the failure as actionable when this layer is active.
+
 ## Universe Profile Policy Audit Status
 
 `research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.

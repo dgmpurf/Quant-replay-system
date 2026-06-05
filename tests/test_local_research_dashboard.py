@@ -16,6 +16,9 @@ from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
     build_reviewer_no_hit_source_coverage_acceptance,
 )
+from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact import (
+    build_reviewer_no_hit_acceptance_downstream_impact,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 
 
@@ -1538,6 +1541,85 @@ def test_cli_research_status_prints_pit_official_status_evidence_packet_enrichme
         "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED"
     ) in output.out
     assert "pit_official_status_evidence_packet_enrichment_remaining_blocked_count: 16" in output.out
+
+
+def test_dashboard_includes_reviewer_no_hit_downstream_impact_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    impact_dir = _reviewer_no_hit_downstream_impact_artifact(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.latest_reviewer_no_hit_acceptance_downstream_impact_id == impact_dir.name
+    assert result.reviewer_no_hit_downstream_impact_status == "WARN"
+    assert (
+        result.reviewer_no_hit_downstream_impact_stage
+        == "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT"
+    )
+    assert result.reviewer_no_hit_downstream_impact_health_status == "PASS"
+    assert result.reviewer_no_hit_downstream_impact_accepted_no_hit_context_count == 0
+    assert result.reviewer_no_hit_downstream_impact_checklist_pass_count == 0
+    assert result.reviewer_no_hit_downstream_impact_remaining_blocked_count == 2
+    assert not result.reviewer_no_hit_downstream_impact_approval_applied
+    assert result.workflow_stage == "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT"
+    assert row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+    assert summary.loc[0, "latest_reviewer_no_hit_acceptance_downstream_impact_id"] == impact_dir.name
+    assert metadata["reviewer_no_hit_downstream_impact_checklist_pass_count"] == 0
+
+
+def test_dashboard_preserves_later_paper_priority_over_reviewer_no_hit_downstream_impact(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _reviewer_no_hit_downstream_impact_artifact(root)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_reviewer_no_hit_acceptance_downstream_impact_id
+    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+
+
+def test_cli_research_status_prints_reviewer_no_hit_downstream_impact_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    impact_dir = _reviewer_no_hit_downstream_impact_artifact(root)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert (
+        "latest_reviewer_no_hit_acceptance_downstream_impact_id: "
+        f"{impact_dir.name}"
+    ) in output.out
+    assert "reviewer_no_hit_downstream_impact_status: WARN" in output.out
+    assert (
+        "reviewer_no_hit_downstream_impact_stage: "
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT"
+    ) in output.out
+    assert "reviewer_no_hit_downstream_impact_approval_applied: False" in output.out
 
 
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
@@ -7727,5 +7809,55 @@ def _reviewer_no_hit_acceptance_artifact(root: Path) -> Path:
         audit=audit,
         policy_comparison=comparison,
         output_dir=root / "reviewer_no_hit_source_coverage_acceptance",
+    )
+    return result.artifact_paths["artifact_dir"]
+
+
+def _reviewer_no_hit_downstream_impact_artifact(root: Path) -> Path:
+    acceptance = _reviewer_no_hit_acceptance_artifact(root)
+    validator = root / "_fixtures" / "validator-a"
+    validator.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "universe_name": "stock_core",
+                "checklist_pass": False,
+                "blocker_reason": "remaining PIT evidence required",
+            },
+            {
+                "signal_date": "2024-04-02",
+                "symbol": "159915",
+                "universe_name": "etf_core",
+                "checklist_pass": False,
+                "blocker_reason": "remaining PIT evidence required",
+            },
+        ]
+    ).to_csv(validator / "pit_evidence_checklist_validation.csv", index=False)
+    _write_json(validator / "metadata.json", {"validator_id": "validator-a"})
+    policy = root / "_fixtures" / "comparison-a"
+    policy.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "recommended_future_universe": "stock_core",
+            },
+            {
+                "signal_date": "2024-04-02",
+                "symbol": "159915",
+                "recommended_future_universe": "etf_core",
+            },
+        ]
+    ).to_csv(policy / "pit_evidence_policy_profile_comparison.csv", index=False)
+    _write_json(policy / "metadata.json", {"comparison_id": "comparison-a"})
+    result = build_reviewer_no_hit_acceptance_downstream_impact(
+        acceptance=acceptance,
+        enrichment=root / "_fixtures" / "enrichment-a",
+        validator=validator,
+        policy_comparison=policy,
+        output_dir=root / "reviewer_no_hit_acceptance_downstream_impact",
     )
     return result.artifact_paths["artifact_dir"]

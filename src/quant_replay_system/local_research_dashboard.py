@@ -56,6 +56,9 @@ from quant_replay_system.pit_official_status_evidence_packet_enrichment_status i
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance_status import (
     run_reviewer_no_hit_source_coverage_acceptance_status,
 )
+from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact_status import (
+    run_reviewer_no_hit_acceptance_downstream_impact_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -320,6 +323,17 @@ SUMMARY_COLUMNS = [
     "reviewer_no_hit_acceptance_remaining_blocked_count",
     "reviewer_no_hit_acceptance_report_path",
     "reviewer_no_hit_acceptance_next_action",
+    "reviewer_no_hit_downstream_impact_status",
+    "latest_reviewer_no_hit_acceptance_downstream_impact_id",
+    "reviewer_no_hit_downstream_impact_stage",
+    "reviewer_no_hit_downstream_impact_health_status",
+    "reviewer_no_hit_downstream_impact_accepted_no_hit_context_count",
+    "reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count",
+    "reviewer_no_hit_downstream_impact_checklist_pass_count",
+    "reviewer_no_hit_downstream_impact_remaining_blocked_count",
+    "reviewer_no_hit_downstream_impact_approval_applied",
+    "reviewer_no_hit_downstream_impact_report_path",
+    "reviewer_no_hit_downstream_impact_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -640,6 +654,7 @@ COMPONENTS = [
     "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_STATUS",
     "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS",
     "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS",
+    "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -696,6 +711,9 @@ WORKFLOW_AREAS = {
     ),
     "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS": (
         "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE"
+    ),
+    "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS": (
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT"
     ),
     "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS": "CALIBRATION_TO_SIGNAL_SEMANTICS",
@@ -941,6 +959,17 @@ class LocalResearchDashboardResult:
     reviewer_no_hit_acceptance_remaining_blocked_count: int
     reviewer_no_hit_acceptance_report_path: str
     reviewer_no_hit_acceptance_next_action: str
+    reviewer_no_hit_downstream_impact_status: str
+    latest_reviewer_no_hit_acceptance_downstream_impact_id: str
+    reviewer_no_hit_downstream_impact_stage: str
+    reviewer_no_hit_downstream_impact_health_status: str
+    reviewer_no_hit_downstream_impact_accepted_no_hit_context_count: int
+    reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count: int
+    reviewer_no_hit_downstream_impact_checklist_pass_count: int
+    reviewer_no_hit_downstream_impact_remaining_blocked_count: int
+    reviewer_no_hit_downstream_impact_approval_applied: bool
+    reviewer_no_hit_downstream_impact_report_path: str
+    reviewer_no_hit_downstream_impact_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1241,6 +1270,7 @@ def run_local_research_dashboard(
     pit_official_status_evidence_packet_root: str | Path | None = None,
     pit_official_status_evidence_packet_enrichment_root: str | Path | None = None,
     reviewer_no_hit_source_coverage_acceptance_root: str | Path | None = None,
+    reviewer_no_hit_acceptance_downstream_impact_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1362,6 +1392,11 @@ def run_local_research_dashboard(
         Path(reviewer_no_hit_source_coverage_acceptance_root)
         if reviewer_no_hit_source_coverage_acceptance_root is not None
         else effective_root / "reviewer_no_hit_source_coverage_acceptance"
+    )
+    effective_reviewer_no_hit_acceptance_downstream_impact_root = (
+        Path(reviewer_no_hit_acceptance_downstream_impact_root)
+        if reviewer_no_hit_acceptance_downstream_impact_root is not None
+        else effective_root / "reviewer_no_hit_acceptance_downstream_impact"
     )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
@@ -1494,6 +1529,10 @@ def run_local_research_dashboard(
             effective_reviewer_no_hit_source_coverage_acceptance_root = (
                 effective_root / "reviewer_no_hit_source_coverage_acceptance"
             )
+        if reviewer_no_hit_acceptance_downstream_impact_root is None:
+            effective_reviewer_no_hit_acceptance_downstream_impact_root = (
+                effective_root / "reviewer_no_hit_acceptance_downstream_impact"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -1555,6 +1594,9 @@ def run_local_research_dashboard(
         ),
         reviewer_no_hit_source_coverage_acceptance_root=(
             effective_reviewer_no_hit_source_coverage_acceptance_root
+        ),
+        reviewer_no_hit_acceptance_downstream_impact_root=(
+            effective_reviewer_no_hit_acceptance_downstream_impact_root
         ),
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -1623,6 +1665,9 @@ def run_local_research_dashboard(
         ),
         "reviewer_no_hit_source_coverage_acceptance_root": (
             effective_reviewer_no_hit_source_coverage_acceptance_root
+        ),
+        "reviewer_no_hit_acceptance_downstream_impact_root": (
+            effective_reviewer_no_hit_acceptance_downstream_impact_root
         ),
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
@@ -2198,6 +2243,39 @@ def run_local_research_dashboard(
         ),
         reviewer_no_hit_acceptance_report_path=str(summary.get("reviewer_no_hit_acceptance_report_path", "")),
         reviewer_no_hit_acceptance_next_action=str(summary.get("reviewer_no_hit_acceptance_next_action", "")),
+        reviewer_no_hit_downstream_impact_status=str(
+            summary.get("reviewer_no_hit_downstream_impact_status", "MISSING")
+        ),
+        latest_reviewer_no_hit_acceptance_downstream_impact_id=str(
+            summary.get("latest_reviewer_no_hit_acceptance_downstream_impact_id", "")
+        ),
+        reviewer_no_hit_downstream_impact_stage=str(
+            summary.get("reviewer_no_hit_downstream_impact_stage", "")
+        ),
+        reviewer_no_hit_downstream_impact_health_status=str(
+            summary.get("reviewer_no_hit_downstream_impact_health_status", "")
+        ),
+        reviewer_no_hit_downstream_impact_accepted_no_hit_context_count=_int_or_zero(
+            summary.get("reviewer_no_hit_downstream_impact_accepted_no_hit_context_count")
+        ),
+        reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count=_int_or_zero(
+            summary.get("reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count")
+        ),
+        reviewer_no_hit_downstream_impact_checklist_pass_count=_int_or_zero(
+            summary.get("reviewer_no_hit_downstream_impact_checklist_pass_count")
+        ),
+        reviewer_no_hit_downstream_impact_remaining_blocked_count=_int_or_zero(
+            summary.get("reviewer_no_hit_downstream_impact_remaining_blocked_count")
+        ),
+        reviewer_no_hit_downstream_impact_approval_applied=_bool_from_text(
+            summary.get("reviewer_no_hit_downstream_impact_approval_applied")
+        ),
+        reviewer_no_hit_downstream_impact_report_path=str(
+            summary.get("reviewer_no_hit_downstream_impact_report_path", "")
+        ),
+        reviewer_no_hit_downstream_impact_next_action=str(
+            summary.get("reviewer_no_hit_downstream_impact_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -2827,6 +2905,7 @@ def scan_local_research_workflow_artifacts(
     pit_official_status_evidence_packet_root: str | Path,
     pit_official_status_evidence_packet_enrichment_root: str | Path,
     reviewer_no_hit_source_coverage_acceptance_root: str | Path,
+    reviewer_no_hit_acceptance_downstream_impact_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -2867,6 +2946,7 @@ def scan_local_research_workflow_artifacts(
     pit_official_status_evidence_packet_path = Path(pit_official_status_evidence_packet_root)
     pit_official_status_evidence_packet_enrichment_path = Path(pit_official_status_evidence_packet_enrichment_root)
     reviewer_no_hit_source_coverage_acceptance_path = Path(reviewer_no_hit_source_coverage_acceptance_root)
+    reviewer_no_hit_acceptance_downstream_impact_path = Path(reviewer_no_hit_acceptance_downstream_impact_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -2919,6 +2999,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_reviewer_no_hit_source_coverage_acceptance_status(
             reviewer_no_hit_source_coverage_acceptance_path
+        )
+    )
+    records.extend(
+        _scan_reviewer_no_hit_acceptance_downstream_impact_status(
+            reviewer_no_hit_acceptance_downstream_impact_path
         )
     )
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
@@ -3428,6 +3513,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_STATUS",
         "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS",
         "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS",
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -3449,6 +3535,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
     post_pit_official_status_evidence_packet_components = {
         "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS",
         "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS",
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -3469,6 +3556,7 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
     }
     post_pit_official_status_evidence_packet_enrichment_components = {
         "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS",
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -3488,6 +3576,26 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
         *paper_started_components,
     }
     post_reviewer_no_hit_source_coverage_acceptance_components = {
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+        "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
+        "ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        *paper_started_components,
+    }
+    post_reviewer_no_hit_acceptance_downstream_impact_components = {
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -3797,6 +3905,10 @@ def _local_warning_context(frame: pd.DataFrame) -> dict[str, Any]:
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_reviewer_no_hit_source_coverage_acceptance_components
         ),
+        "post_reviewer_no_hit_acceptance_downstream_impact_workflow_started": any(
+            _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
+            for component in post_reviewer_no_hit_acceptance_downstream_impact_components
+        ),
         "post_universe_profile_policy_audit_workflow_started": any(
             _string_or_empty(by_component.get(component, {}).get("status")) != "MISSING"
             for component in post_universe_profile_policy_audit_components
@@ -4006,6 +4118,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS":
         return _reviewer_no_hit_source_coverage_acceptance_warning_actionability(row, context)
+
+    if component == "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS":
+        return _reviewer_no_hit_acceptance_downstream_impact_warning_actionability(row, context)
 
     if component == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS":
         return _universe_profile_policy_audit_warning_actionability(row, context)
@@ -5151,6 +5266,59 @@ def _reviewer_no_hit_source_coverage_acceptance_warning_actionability(
     }
 
 
+def _reviewer_no_hit_acceptance_downstream_impact_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if (
+        context.get("post_reviewer_no_hit_acceptance_downstream_impact_workflow_started")
+        and status in {"WARN", "FAIL"}
+    ):
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage in {
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT",
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_SUPPORTING_CONTEXT_ONLY",
+    }:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
 def _universe_profile_policy_audit_warning_actionability(
     row: dict[str, Any],
     context: dict[str, Any],
@@ -6064,6 +6232,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         ):
             return "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_FAILED"
         if (
+            not _has_post_reviewer_no_hit_acceptance_downstream_impact_workflow_component(dashboard_frame)
+            and statuses["REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS"] == "FAIL"
+        ):
+            return "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_FAILED"
+        if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
         ):
@@ -6229,6 +6402,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _reviewer_no_hit_source_coverage_acceptance_stage_from_frame(dashboard_frame)
     ):
         return _reviewer_no_hit_source_coverage_acceptance_stage_from_frame(dashboard_frame)
+    if (
+        not _has_post_reviewer_no_hit_acceptance_downstream_impact_workflow_component(dashboard_frame)
+        and statuses["REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS"] in {"PASS", "WARN", "READY"}
+        and _reviewer_no_hit_acceptance_downstream_impact_stage_from_frame(dashboard_frame)
+    ):
+        return _reviewer_no_hit_acceptance_downstream_impact_stage_from_frame(dashboard_frame)
     if (
         not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
         and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
@@ -6535,6 +6714,7 @@ def summarize_local_research_status(
                     "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_STATUS",
                     "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS",
                     "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS",
+                    "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -7534,6 +7714,56 @@ def summarize_local_research_status(
         ),
         "reviewer_no_hit_acceptance_next_action": _parse_note_value(
             by_component.get("REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "reviewer_no_hit_downstream_impact_status": _component_status(
+            by_component,
+            "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
+        ),
+        "latest_reviewer_no_hit_acceptance_downstream_impact_id": _string_or_empty(
+            by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("latest_artifact_id")
+        ),
+        "reviewer_no_hit_downstream_impact_stage": _string_or_empty(
+            by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("stage")
+        ),
+        "reviewer_no_hit_downstream_impact_health_status": _parse_note_value(
+            by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "reviewer_no_hit_downstream_impact_accepted_no_hit_context_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("notes"),
+                "accepted_no_hit_context_count",
+            )
+        ),
+        "reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("notes"),
+                "packet_context_gap_reduced_count",
+            )
+        ),
+        "reviewer_no_hit_downstream_impact_checklist_pass_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("notes"),
+                "checklist_pass_count",
+            )
+        ),
+        "reviewer_no_hit_downstream_impact_remaining_blocked_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("notes"),
+                "remaining_blocked_count",
+            )
+        ),
+        "reviewer_no_hit_downstream_impact_approval_applied": _parse_note_value(
+            by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("notes"),
+            "approval_applied",
+        ),
+        "reviewer_no_hit_downstream_impact_report_path": _parse_note_value(
+            by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "reviewer_no_hit_downstream_impact_next_action": _parse_note_value(
+            by_component.get("REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -9118,6 +9348,31 @@ def build_local_research_dashboard_metadata(
         "reviewer_no_hit_acceptance_remaining_blocked_count": result.reviewer_no_hit_acceptance_remaining_blocked_count,
         "reviewer_no_hit_acceptance_report_path": result.reviewer_no_hit_acceptance_report_path,
         "reviewer_no_hit_acceptance_next_action": result.reviewer_no_hit_acceptance_next_action,
+        "latest_reviewer_no_hit_acceptance_downstream_impact_id": (
+            result.latest_reviewer_no_hit_acceptance_downstream_impact_id
+        ),
+        "reviewer_no_hit_downstream_impact_status": result.reviewer_no_hit_downstream_impact_status,
+        "reviewer_no_hit_downstream_impact_stage": result.reviewer_no_hit_downstream_impact_stage,
+        "reviewer_no_hit_downstream_impact_health_status": (
+            result.reviewer_no_hit_downstream_impact_health_status
+        ),
+        "reviewer_no_hit_downstream_impact_accepted_no_hit_context_count": (
+            result.reviewer_no_hit_downstream_impact_accepted_no_hit_context_count
+        ),
+        "reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count": (
+            result.reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count
+        ),
+        "reviewer_no_hit_downstream_impact_checklist_pass_count": (
+            result.reviewer_no_hit_downstream_impact_checklist_pass_count
+        ),
+        "reviewer_no_hit_downstream_impact_remaining_blocked_count": (
+            result.reviewer_no_hit_downstream_impact_remaining_blocked_count
+        ),
+        "reviewer_no_hit_downstream_impact_approval_applied": (
+            result.reviewer_no_hit_downstream_impact_approval_applied
+        ),
+        "reviewer_no_hit_downstream_impact_report_path": result.reviewer_no_hit_downstream_impact_report_path,
+        "reviewer_no_hit_downstream_impact_next_action": result.reviewer_no_hit_downstream_impact_next_action,
         "latest_universe_profile_policy_audit_id": result.latest_universe_profile_policy_audit_id,
         "universe_profile_policy_audit_status": result.universe_profile_policy_audit_status,
         "universe_profile_policy_audit_stage": result.universe_profile_policy_audit_stage,
@@ -11372,6 +11627,56 @@ def _reviewer_no_hit_source_coverage_acceptance_notes(summary: dict[str, Any]) -
     )
 
 
+def _scan_reviewer_no_hit_acceptance_downstream_impact_status(root: Path) -> list[dict[str, Any]]:
+    impact_root = root.parent if root.name == "status" else root
+    if not impact_root.exists():
+        return []
+    try:
+        result = run_reviewer_no_hit_acceptance_downstream_impact_status(
+            root=impact_root,
+            output_dir=impact_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.get("latest_impact_id"):
+        return []
+    summary = result["summary_frame"].iloc[0].to_dict() if not result["summary_frame"].empty else {}
+    return [
+        _record(
+            workflow_area="REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT",
+            component="REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
+            status=result["status"],
+            stage=result["workflow_stage"],
+            latest_artifact_id=result["latest_impact_id"],
+            report_path=result["artifact_paths"].get("report", ""),
+            metadata_path=result["artifact_paths"].get("metadata", ""),
+            warning_count=1 if result["status"] == "WARN" else 0,
+            error_count=1 if result["status"] == "FAIL" else 0,
+            notes=_reviewer_no_hit_acceptance_downstream_impact_notes(summary),
+        )
+    ]
+
+
+def _reviewer_no_hit_acceptance_downstream_impact_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(summary.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"acceptance_id={_string_or_empty(summary.get('acceptance_id'))}; "
+        f"enrichment_id={_string_or_empty(summary.get('enrichment_id'))}; "
+        f"source_packet_id={_string_or_empty(summary.get('source_packet_id'))}; "
+        f"reviewed_no_hit_policy_comparison_id="
+        f"{_string_or_empty(summary.get('reviewed_no_hit_policy_comparison_id'))}; "
+        f"validator_id={_string_or_empty(summary.get('validator_id'))}; "
+        f"row_count={_string_or_empty(summary.get('row_count'))}; "
+        f"accepted_no_hit_context_count={_string_or_empty(summary.get('accepted_no_hit_context_count'))}; "
+        f"packet_context_gap_reduced_count={_string_or_empty(summary.get('packet_context_gap_reduced_count'))}; "
+        f"checklist_pass_count={_string_or_empty(summary.get('checklist_pass_count'))}; "
+        f"remaining_blocked_count={_string_or_empty(summary.get('remaining_blocked_count'))}; "
+        f"approval_applied={_string_or_empty(summary.get('approval_applied'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
 def _scan_universe_profile_policy_audit_status(root: Path) -> list[dict[str, Any]]:
     computed = _computed_universe_profile_policy_audit_status_record(root)
     if computed is not None:
@@ -13620,6 +13925,14 @@ def _reviewer_no_hit_source_coverage_acceptance_stage_from_frame(dashboard_frame
     return _string_or_empty(rows.iloc[0].get("stage"))
 
 
+def _reviewer_no_hit_acceptance_downstream_impact_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
 def _universe_profile_policy_audit_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"]
@@ -14108,6 +14421,7 @@ def _has_post_pit_evidence_checklist_validator_workflow_component(dashboard_fram
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS",
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -14142,6 +14456,7 @@ def _has_post_pit_evidence_policy_profile_comparison_workflow_component(dashboar
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_STATUS",
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -14176,6 +14491,7 @@ def _has_post_pit_official_status_evidence_packet_workflow_component(dashboard_f
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS",
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -14212,6 +14528,7 @@ def _has_post_pit_official_status_evidence_packet_enrichment_workflow_component(
     frame = _finalize_dashboard_frame(dashboard_frame)
     later_components = {
         "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS",
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
         "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
         "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
         "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -14243,6 +14560,42 @@ def _has_post_pit_official_status_evidence_packet_enrichment_workflow_component(
 
 
 def _has_post_reviewer_no_hit_source_coverage_acceptance_workflow_component(
+    dashboard_frame: pd.DataFrame,
+) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    later_components = {
+        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
+        "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
+        "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACCEPTANCE_STATUS",
+        "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS",
+        "ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_STATUS",
+        "CURRENT_CANDIDATES",
+        "CURRENT_CANDIDATE_HEALTH",
+        "ADVISORY_PROFILE_CALIBRATION_STATUS",
+        "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_SEMANTICS_STATUS",
+        "SIGNAL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_STATUS",
+        "SINGLE_SYMBOL_ADVISORY_ANSWER_STATUS",
+        "ADVISORY_CONVERSATION_STATUS",
+        "MARKET_UPDATE_HANDOFF_STATUS",
+        "CURRENT_TO_PAPER_HANDOFF",
+        "CURRENT_TO_PAPER_REVIEW_HANDOFF",
+        "REVIEW_TEMPLATE_HEALTH",
+        "PAPER_REVIEW",
+        "DAILY_PAPER",
+        "RECONCILIATION",
+        "PAPER_WORKFLOW_STATUS",
+    }
+    rows = frame.loc[frame["component"].isin(later_components)]
+    if rows.empty:
+        return False
+    return bool((rows["status"].astype(str).str.upper() != "MISSING").any())
+
+
+def _has_post_reviewer_no_hit_acceptance_downstream_impact_workflow_component(
     dashboard_frame: pd.DataFrame,
 ) -> bool:
     frame = _finalize_dashboard_frame(dashboard_frame)

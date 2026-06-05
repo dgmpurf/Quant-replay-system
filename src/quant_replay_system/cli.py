@@ -170,6 +170,18 @@ from quant_replay_system.reviewer_no_hit_source_coverage_acceptance_index import
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance_status import (
     run_reviewer_no_hit_source_coverage_acceptance_status,
 )
+from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact import (
+    build_reviewer_no_hit_acceptance_downstream_impact,
+)
+from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact_health import (
+    check_reviewer_no_hit_acceptance_downstream_impact_health,
+)
+from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact_index import (
+    build_reviewer_no_hit_acceptance_downstream_impact_index,
+)
+from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact_status import (
+    run_reviewer_no_hit_acceptance_downstream_impact_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1347,6 +1359,80 @@ def build_parser() -> argparse.ArgumentParser:
         default="outputs/reports/reviewer_no_hit_source_coverage_acceptance/status",
     )
     reviewer_no_hit_acceptance_status.set_defaults(handler=_handle_reviewer_no_hit_source_coverage_acceptance_status)
+
+    reviewer_no_hit_downstream_impact = subparsers.add_parser(
+        "reviewer-no-hit-acceptance-downstream-impact",
+        help="Create report-only downstream impact views for reviewer no-hit acceptance context",
+    )
+    reviewer_no_hit_downstream_impact.add_argument(
+        "--acceptance",
+        default="outputs/reports/reviewer_no_hit_source_coverage_acceptance/2e05e4b74794",
+    )
+    reviewer_no_hit_downstream_impact.add_argument(
+        "--enrichment",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment/cb5f323d3c8c",
+    )
+    reviewer_no_hit_downstream_impact.add_argument(
+        "--validator",
+        default="outputs/reports/pit_evidence_checklist_validator/62e9eb747197",
+    )
+    reviewer_no_hit_downstream_impact.add_argument(
+        "--policy-comparison",
+        default="outputs/reports/pit_evidence_policy_profile_comparison/c1a75d1091c6",
+    )
+    reviewer_no_hit_downstream_impact.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact",
+    )
+    reviewer_no_hit_downstream_impact.set_defaults(handler=_handle_reviewer_no_hit_acceptance_downstream_impact)
+
+    reviewer_no_hit_downstream_impact_index = subparsers.add_parser(
+        "reviewer-no-hit-acceptance-downstream-impact-index",
+        help="Build a local index of reviewer no-hit acceptance downstream impact artifacts",
+    )
+    reviewer_no_hit_downstream_impact_index.add_argument(
+        "--root",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact",
+    )
+    reviewer_no_hit_downstream_impact_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact/index",
+    )
+    reviewer_no_hit_downstream_impact_index.set_defaults(
+        handler=_handle_reviewer_no_hit_acceptance_downstream_impact_index
+    )
+
+    reviewer_no_hit_downstream_impact_health = subparsers.add_parser(
+        "reviewer-no-hit-acceptance-downstream-impact-health",
+        help="Check reviewer no-hit acceptance downstream impact artifact health",
+    )
+    reviewer_no_hit_downstream_impact_health.add_argument(
+        "--root",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact",
+    )
+    reviewer_no_hit_downstream_impact_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact/health",
+    )
+    reviewer_no_hit_downstream_impact_health.set_defaults(
+        handler=_handle_reviewer_no_hit_acceptance_downstream_impact_health
+    )
+
+    reviewer_no_hit_downstream_impact_status = subparsers.add_parser(
+        "reviewer-no-hit-acceptance-downstream-impact-status",
+        help="Summarize latest reviewer no-hit acceptance downstream impact status",
+    )
+    reviewer_no_hit_downstream_impact_status.add_argument(
+        "--root",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact",
+    )
+    reviewer_no_hit_downstream_impact_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact/status",
+    )
+    reviewer_no_hit_downstream_impact_status.set_defaults(
+        handler=_handle_reviewer_no_hit_acceptance_downstream_impact_status
+    )
 
     universe_profile_policy_audit = subparsers.add_parser(
         "universe-profile-policy-audit",
@@ -2575,6 +2661,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--reviewer-no-hit-source-coverage-acceptance-root",
         help="Reviewer no-hit source coverage acceptance artifact root directory",
+    )
+    research_status.add_argument(
+        "--reviewer-no-hit-acceptance-downstream-impact-root",
+        help="Reviewer no-hit acceptance downstream impact artifact root directory",
     )
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
@@ -4507,6 +4597,83 @@ def _handle_reviewer_no_hit_source_coverage_acceptance_status(args: argparse.Nam
     print(f"report_path: {result['report_path']}")
     print(f"next_manual_action: {result['next_manual_action']}")
     print("No approval, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_reviewer_no_hit_acceptance_downstream_impact(args: argparse.Namespace) -> int:
+    result = build_reviewer_no_hit_acceptance_downstream_impact(
+        acceptance=args.acceptance,
+        enrichment=args.enrichment,
+        validator=args.validator,
+        policy_comparison=args.policy_comparison,
+        output_dir=args.output_dir,
+    )
+    print(f"impact_id: {result.impact_id}")
+    print(f"status: {result.status}")
+    print(f"acceptance_id: {result.acceptance_id}")
+    print(f"enrichment_id: {result.enrichment_id}")
+    print(f"source_packet_id: {result.source_packet_id}")
+    print(f"reviewed_no_hit_policy_comparison_id: {result.reviewed_no_hit_policy_comparison_id}")
+    print(f"validator_id: {result.validator_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"accepted_no_hit_context_count: {result.accepted_no_hit_context_count}")
+    print(f"packet_context_gap_reduced_count: {result.packet_context_gap_reduced_count}")
+    print(f"checklist_pass_count: {result.checklist_pass_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"impact_csv_path: {result.artifact_paths['impact_csv']}")
+    print(f"packet_linkage_csv_path: {result.artifact_paths['packet_linkage_csv']}")
+    print(f"checklist_policy_csv_path: {result.artifact_paths['checklist_policy_csv']}")
+    print(f"remaining_blockers_csv_path: {result.artifact_paths['remaining_blockers_csv']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_reviewer_no_hit_acceptance_downstream_impact_index(args: argparse.Namespace) -> int:
+    result = build_reviewer_no_hit_acceptance_downstream_impact_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Index CSV path: {result['artifact_paths']['index_csv']}")
+    print(f"artifact_count: {result['artifact_count']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_reviewer_no_hit_acceptance_downstream_impact_health(args: argparse.Namespace) -> int:
+    result = check_reviewer_no_hit_acceptance_downstream_impact_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Health report path: {result['artifact_paths']['report']}")
+    print(f"Health status: {result['status']}")
+    print(f"checked_artifact_count: {result['checked_artifact_count']}")
+    print(f"issue_count: {result['issue_count']}")
+    print(f"error_count: {result['error_count']}")
+    print(f"warning_count: {result['warning_count']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_reviewer_no_hit_acceptance_downstream_impact_status(args: argparse.Namespace) -> int:
+    result = run_reviewer_no_hit_acceptance_downstream_impact_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Status report path: {result['artifact_paths']['report']}")
+    print(f"status: {result['status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"latest_impact_id: {result['latest_impact_id']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"acceptance_id: {result['acceptance_id']}")
+    print(f"enrichment_id: {result['enrichment_id']}")
+    print(f"source_packet_id: {result['source_packet_id']}")
+    print(f"reviewed_no_hit_policy_comparison_id: {result['reviewed_no_hit_policy_comparison_id']}")
+    print(f"validator_id: {result['validator_id']}")
+    print(f"row_count: {result['row_count']}")
+    print(f"accepted_no_hit_context_count: {result['accepted_no_hit_context_count']}")
+    print(f"packet_context_gap_reduced_count: {result['packet_context_gap_reduced_count']}")
+    print(f"checklist_pass_count: {result['checklist_pass_count']}")
+    print(f"remaining_blocked_count: {result['remaining_blocked_count']}")
+    print(f"approval_applied: {result['approval_applied']}")
+    print(f"report_path: {result['report_path']}")
+    print(f"next_manual_action: {result['next_manual_action']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
     return 1 if result["status"] == "FAIL" else 0
 
 
@@ -6844,6 +7011,9 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         reviewer_no_hit_source_coverage_acceptance_root=(
             args.reviewer_no_hit_source_coverage_acceptance_root
         ),
+        reviewer_no_hit_acceptance_downstream_impact_root=(
+            args.reviewer_no_hit_acceptance_downstream_impact_root
+        ),
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -7457,6 +7627,35 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"reviewer_no_hit_acceptance_remaining_blocked_count: {result.reviewer_no_hit_acceptance_remaining_blocked_count}")
     print(f"reviewer_no_hit_acceptance_report_path: {result.reviewer_no_hit_acceptance_report_path}")
     print(f"reviewer_no_hit_acceptance_next_action: {result.reviewer_no_hit_acceptance_next_action}")
+    print(
+        "latest_reviewer_no_hit_acceptance_downstream_impact_id: "
+        f"{result.latest_reviewer_no_hit_acceptance_downstream_impact_id}"
+    )
+    print(f"reviewer_no_hit_downstream_impact_status: {result.reviewer_no_hit_downstream_impact_status}")
+    print(f"reviewer_no_hit_downstream_impact_stage: {result.reviewer_no_hit_downstream_impact_stage}")
+    print(
+        "reviewer_no_hit_downstream_impact_health_status: "
+        f"{result.reviewer_no_hit_downstream_impact_health_status}"
+    )
+    print(
+        "reviewer_no_hit_downstream_impact_accepted_no_hit_context_count: "
+        f"{result.reviewer_no_hit_downstream_impact_accepted_no_hit_context_count}"
+    )
+    print(
+        "reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count: "
+        f"{result.reviewer_no_hit_downstream_impact_packet_context_gap_reduced_count}"
+    )
+    print(
+        "reviewer_no_hit_downstream_impact_checklist_pass_count: "
+        f"{result.reviewer_no_hit_downstream_impact_checklist_pass_count}"
+    )
+    print(
+        "reviewer_no_hit_downstream_impact_remaining_blocked_count: "
+        f"{result.reviewer_no_hit_downstream_impact_remaining_blocked_count}"
+    )
+    print(f"reviewer_no_hit_downstream_impact_approval_applied: {result.reviewer_no_hit_downstream_impact_approval_applied}")
+    print(f"reviewer_no_hit_downstream_impact_report_path: {result.reviewer_no_hit_downstream_impact_report_path}")
+    print(f"reviewer_no_hit_downstream_impact_next_action: {result.reviewer_no_hit_downstream_impact_next_action}")
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")
