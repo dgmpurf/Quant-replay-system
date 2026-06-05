@@ -56,7 +56,8 @@ Multi-Date Evidence Preparation
   ├─ pit-evidence-checklist-validator
   ├─ pit-evidence-policy-profile-comparison
   ├─ pit-official-status-evidence-packet
-  └─ pit-official-status-evidence-packet-enrichment
+  ├─ pit-official-status-evidence-packet-enrichment
+  └─ reviewer-no-hit-source-coverage-acceptance
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -145,6 +146,7 @@ market cache coverage
 → official no-hit evidence policy audit
 → EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT policy profile
 → PIT official status evidence packet enrichment
+→ reviewer-no-hit-source-coverage-acceptance
 → index / health / status
 → research-status
 ```
@@ -152,7 +154,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
+REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -409,7 +411,7 @@ Current enrichment state:
 enrichment_id: cb5f323d3c8c
 source_packet_id: 8efabe2ffe62
 policy_comparison_id: c1a75d1091c6
-stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
+stage: REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
 row_count: 16
 strong_official_same_date_quotation_count: 16
 reviewed_no_hit_context_supported_count: 16
@@ -419,6 +421,41 @@ remaining_blocked_count: 16
 ```
 
 Enrichment artifacts are not approvals. They do not make no-hit context approval-grade and do not create usable current-candidates universe input.
+
+### Reviewer No-Hit Source Coverage Acceptance Fields
+
+The reviewer no-hit source coverage acceptance workflow records source coverage, query-window acceptance, no-hit inference limits, and survivorship rationale as report-only context.
+
+It reports:
+
+```text
+acceptance_id
+source_enrichment_id
+row_count
+accepted_count
+needs_review_count
+reviewer_acceptance_required_count
+survivorship_rationale_required_count
+checklist_pass_count
+remaining_blocked_count
+```
+
+Current reviewer no-hit acceptance state:
+
+```text
+acceptance_id: 2e05e4b74794
+source_enrichment_id: cb5f323d3c8c
+stage: REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
+row_count: 64
+accepted_count: 0
+needs_review_count: 64
+reviewer_acceptance_required_count: 64
+survivorship_rationale_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
+```
+
+Reviewer no-hit acceptance artifacts are supporting-context records only. They do not apply PIT approval, create clean review updates, export universe files, or create usable current-candidates input.
 
 ### PIT Evidence Update Ingestion Fields
 
@@ -463,19 +500,20 @@ PIT official status evidence packet: 72 evidence packet rows, 0 strong official 
 SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-presence rows found
 Reviewed no-hit support policy comparison: no-hit context supported for 16 rows, reviewer acceptance required for 16 rows, 0 pass candidates
 PIT official status evidence packet enrichment: 16/16 same-date quotation evidence, 16/16 reviewed no-hit context support, 16/16 reviewer acceptance required, 0 checklist pass, 16 blocked
+Reviewer no-hit source coverage acceptance: 64 rows, 0 accepted, 64 needs review, 64 reviewer acceptance required, 16 survivorship rationale required, 0 checklist pass, 16 blocked
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Reviewer No-Hit Source Coverage Acceptance Read-only Audit v0.1
+Tiny Reviewer-Completed No-Hit Acceptance Update Smoke v0.1
 ```
 
 Purpose:
 
-- design a report-only reviewer acceptance artifact for no-hit source coverage, query windows, and survivorship rationale;
-- keep reviewer acceptance distinct from PIT approval;
-- determine which no-hit observations could be accepted as supporting context by a reviewer;
-- keep the branch read-only / diagnostics-first before any applied PIT review.
+- create a one-row diagnostics-only reviewer-completed no-hit acceptance update fixture;
+- verify that it becomes `ACCEPTED_AS_SUPPORTING_CONTEXT` only;
+- verify that checklist pass remains 0, no PIT approval is applied, and no usable universe input is created;
+- keep the branch diagnostics-only before any applied PIT review.
 
 Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.

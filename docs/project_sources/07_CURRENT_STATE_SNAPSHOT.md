@@ -54,6 +54,7 @@ It is not a live trading system.
 - PIT official status evidence packet.
 - Reviewed no-hit support policy profile.
 - PIT official status evidence packet enrichment.
+- Reviewer no-hit source coverage acceptance.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -238,25 +239,35 @@ reviewed_no_hit_context_supported_count: 16
 reviewer_acceptance_required_count: 16
 checklist_pass_count: 0
 remaining_blocked_count: 16
+
+Reviewer no-hit source coverage acceptance:
+acceptance_id: 2e05e4b74794
+row_count: 64
+accepted_count: 0
+needs_review_count: 64
+reviewer_acceptance_required_count: 64
+survivorship_rationale_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
 ```
 
-Current PIT official status evidence packet enrichment stage:
+Current reviewer no-hit source coverage acceptance stage:
 
 ```text
-PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
+REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
 ```
 
 Meaning:
 
-The project has moved from “policy comparison can now express reviewed no-hit support context” to “PIT official status evidence packet enrichment integrates SZSE 1815 quotation evidence and reviewed no-hit support context, but still leaves all first-batch rows blocked.”
+The project has moved from “PIT official status evidence packet enrichment integrates SZSE 1815 quotation evidence and reviewed no-hit support context” to “reviewer no-hit source coverage acceptance exists as a report-only supporting-context workflow, but all first-batch rows remain blocked.”
 
-The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile is opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. It does not change strict defaults and it does not create approvals.
+The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile is opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. The reviewer no-hit acceptance workflow can record source coverage, query-window acceptance, and survivorship rationale, but it still does not change strict defaults or create PIT approvals.
 
-The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment milestone incorporates that evidence into packet context, but it still does not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by itself.
+The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment and acceptance milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-The next blocker is designing reviewer no-hit source coverage acceptance so source coverage, query windows, and survivorship rationale can be recorded without applying PIT approvals.
+The next blocker is a tiny reviewer-completed no-hit acceptance update smoke to verify accepted rows remain supporting context only.
 
 ## Current External Data Strategy
 
@@ -276,14 +287,14 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Reviewer No-Hit Source Coverage Acceptance Read-only Audit v0.1
+Tiny Reviewer-Completed No-Hit Acceptance Update Smoke v0.1
 ```
 
 Purpose:
 
-- design a report-only reviewer acceptance artifact for no-hit source coverage, query windows, and survivorship rationale;
-- keep reviewer acceptance distinct from PIT row approval;
-- decide what fields a future acceptance artifact must contain;
+- create a tiny reviewer-completed no-hit acceptance update fixture for one row;
+- verify it becomes `ACCEPTED_AS_SUPPORTING_CONTEXT` only;
+- verify checklist-pass remains blocked and no PIT approval/export/current-candidates workflow is triggered;
 - keep all rows non-approved unless a future explicit PIT review workflow is run.
 
 Do not yet:
@@ -325,9 +336,10 @@ Recent milestone direction:
 - v1.16.0: PIT official status evidence packet.
 - v1.17.0: reviewed no-hit support policy profile.
 - v1.18.0: PIT official status evidence packet enrichment.
+- v1.19.0: reviewer no-hit source coverage acceptance.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Reviewer No-Hit Source Coverage Acceptance Read-only Audit v0.1.
+Give me Codex tasks for Tiny Reviewer-Completed No-Hit Acceptance Update Smoke v0.1.
 ```

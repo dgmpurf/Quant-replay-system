@@ -42,7 +42,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
 
 ## Diagnostic vs Active Artifacts
 
@@ -60,6 +60,7 @@ Examples:
 - SZSE/CNInfo exception no-hit diagnostics;
 - official no-hit evidence policy diagnostics;
 - PIT official status evidence packet enrichment dry-runs;
+- reviewer no-hit source coverage acceptance dry-runs;
 - ignored dry-run files.
 
 ## Plan-Only Workflows
@@ -278,6 +279,48 @@ remaining_blocked_count: 16
 
 SZSE 1815 diagnostics provide strong official date-specific evidence for quotation/traded presence for all 16 first-batch rows. The enrichment milestone integrates that evidence, but it still does not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by itself.
 
+## Reviewer No-Hit Source Coverage Acceptance Workflows
+
+Reviewer no-hit source coverage acceptance artifacts are report-only supporting-context records.
+
+They may:
+
+- record reviewer acceptance of source coverage, query windows, no-hit inference limits, and survivorship rationale;
+- create reviewer acceptance templates;
+- validate reviewer-completed no-hit acceptance updates;
+- expose accepted, needs-review, reviewer-required, and survivorship-rationale-required counts in research-status.
+
+They must not:
+
+- apply PIT approvals;
+- set `APPROVED_FOR_PIT_UNIVERSE`;
+- create approval update CSVs;
+- run PIT review;
+- run export-readiness;
+- run staging;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- mutate active worklists or market cache;
+- run current-candidates;
+- build snapshots;
+- compute forward labels.
+
+Current reviewer no-hit acceptance state:
+
+```text
+acceptance_id: 2e05e4b74794
+stage: REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
+row_count: 64
+accepted_count: 0
+needs_review_count: 64
+reviewer_acceptance_required_count: 64
+survivorship_rationale_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
+```
+
+Accepted no-hit coverage is supporting context only and still does not by itself create checklist-pass rows, PIT approvals, export-ready universe rows, or usable current-candidates input.
+
 ## Export-Readiness Workflows
 
 Export-readiness blocks export when there are no approved rows, evidence is missing, survivorship is unresolved, required universe columns are missing, duplicates exist, or PIT dates are invalid. It must not write `data/raw` or `data/processed`.
@@ -319,6 +362,7 @@ checklist_validation_only=true
 policy_profile_comparison_only=true
 evidence_packet_only=true
 evidence_packet_enrichment_only=true
+reviewer_no_hit_acceptance_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -357,7 +401,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- reviewer no-hit source coverage acceptance semantics are implemented;
+- accepted-supporting-context smoke semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.

@@ -33,6 +33,7 @@ The project is now a broad local research system with:
 - PIT official status evidence packet;
 - reviewed no-hit support policy profile;
 - PIT official status evidence packet enrichment;
+- reviewer no-hit source coverage acceptance;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -65,12 +66,13 @@ Completed or largely complete:
 - PIT official status evidence packet;
 - reviewed no-hit support policy profile;
 - PIT official status evidence packet enrichment;
+- reviewer no-hit source coverage acceptance;
 - index / health / status and research-status integration for these stages.
 
-Current PIT official status evidence packet enrichment state:
+Current reviewer no-hit source coverage acceptance state:
 
 ```text
-PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
+REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
 ```
 
 Latest known state:
@@ -97,6 +99,7 @@ packet_rerun_validator_id: 498a3d0786af
 packet_rerun_policy_comparison_id: b7e7ec8f66f5
 reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 enrichment_id: cb5f323d3c8c
+reviewer_no_hit_acceptance_id: 2e05e4b74794
 ```
 
 ```text
@@ -178,42 +181,43 @@ reviewed_no_hit_context_supported_count: 16
 reviewer_acceptance_required_count: 16
 checklist_pass_count: 0
 remaining_blocked_count: 16
+
+Reviewer no-hit source coverage acceptance:
+acceptance_id: 2e05e4b74794
+row_count: 64
+accepted_count: 0
+needs_review_count: 64
+reviewer_acceptance_required_count: 64
+survivorship_rationale_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Reviewer No-Hit Source Coverage Acceptance
+### Branch: Tiny Reviewer-Completed No-Hit Acceptance Update Smoke
 
 Suggested sequence:
 
-1. Use the enriched official status evidence packet as the base.
-2. Design a report-only acceptance artifact for no-hit source coverage, query windows, and reviewer rationale.
-3. Keep reviewer source coverage acceptance separate from PIT row approval.
-4. Preserve evidence categories from the enriched packet:
-   - `STRONG_OFFICIAL_DATE_SPECIFIC_QUOTATION`
-   - `REVIEWED_NO_HIT_SUPPORT_CONTEXT`
-   - `SUPPORTING_OFFICIAL_SYMBOL_LEVEL`
-   - `SUPPORTING_LOCAL_EOD_CACHE`
-   - `MISSING`
-5. Define required reviewer fields and survivorship rationale fields.
-6. Report what would still block checklist pass after reviewer acceptance.
-7. Do not create approval update CSVs unless a future explicit workflow is requested.
-8. Do not run PIT overlay review, export-readiness, staging, snapshot, or current-candidates.
+1. Use the reviewer no-hit source coverage acceptance artifact as the base.
+2. Create a tiny diagnostics-only reviewer-completed acceptance update fixture for one row and one or more exception types.
+3. Validate that accepted rows become `ACCEPTED_AS_SUPPORTING_CONTEXT` only.
+4. Verify that reviewer acceptance does not create clean review updates, PIT approval, export readiness, staging, snapshot, or current-candidates.
+5. Verify that survivorship rationale remains required where applicable.
+6. Report remaining blockers after the accepted-supporting-context smoke.
 
-## What Reviewer No-Hit Source Coverage Acceptance Must Solve
+## What Tiny Reviewer Acceptance Smoke Must Solve
 
 It should answer:
 
-- What source coverage must a reviewer accept for no-hit evidence to become supporting context?
-- What query windows are required for delisting, ST/risk-warning, and suspension/resumption checks?
-- What reviewer fields and evidence references are required?
-- How should survivorship-bias rationale be documented?
-- Which rows would still lack not-delisted evidence after acceptance?
-- Which rows would still lack ST/no-ST evidence for 000001 after acceptance?
-- Can any first-batch row become a strict or reviewed-no-hit policy checklist-pass approval candidate?
-- If no row passes, which exact blockers remain?
+- Can the acceptance workflow ingest a completed reviewer fixture and preserve leading-zero symbols?
+- Does one row become accepted as supporting context only?
+- Does the result leave checklist pass at 0 and remaining blocked rows at 16?
+- Which fields are still missing after no-hit source coverage acceptance?
+- Does survivorship rationale stay separate from PIT approval?
+- Does the workflow preserve all safety boundaries?
 
 ## Current Preference for Manual Steps
 
