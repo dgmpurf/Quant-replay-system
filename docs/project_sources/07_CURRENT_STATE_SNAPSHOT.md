@@ -53,6 +53,7 @@ It is not a live trading system.
 - PIT evidence policy profile comparison.
 - PIT official status evidence packet.
 - Reviewed no-hit support policy profile.
+- PIT official status evidence packet enrichment.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -132,6 +133,7 @@ packet_rerun_ingestion_id: ac6846aef520
 packet_rerun_validator_id: 498a3d0786af
 packet_rerun_policy_comparison_id: b7e7ec8f66f5
 reviewed_no_hit_policy_comparison_id: c1a75d1091c6
+enrichment_id: cb5f323d3c8c
 ```
 
 Current counts:
@@ -226,25 +228,35 @@ reviewed_no_hit_support_pass_count: 0
 no_hit_context_supported_count: 16
 reviewer_acceptance_required_count: 16
 remaining_blocked_count: 16
+
+PIT official status evidence packet enrichment:
+enrichment_id: cb5f323d3c8c
+source_packet_id: 8efabe2ffe62
+policy_comparison_id: c1a75d1091c6
+strong_official_same_date_quotation_count: 16
+reviewed_no_hit_context_supported_count: 16
+reviewer_acceptance_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
 ```
 
-Current PIT evidence policy comparison stage:
+Current PIT official status evidence packet enrichment stage:
 
 ```text
-PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
+PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
 ```
 
 Meaning:
 
-The project has moved from “PIT official status evidence packets classify current evidence strength and still leave all first-batch rows blocked” to “policy comparison can now express reviewed no-hit support context, but still leaves all first-batch rows blocked.”
+The project has moved from “policy comparison can now express reviewed no-hit support context” to “PIT official status evidence packet enrichment integrates SZSE 1815 quotation evidence and reviewed no-hit support context, but still leaves all first-batch rows blocked.”
 
 The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile is opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. It does not change strict defaults and it does not create approvals.
 
-The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. This is the strongest current date-specific evidence, but it still does not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by itself.
+The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment milestone incorporates that evidence into packet context, but it still does not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by itself.
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-The next blocker is enriching the PIT official status evidence packet with SZSE 1815 same-date quotation evidence and reviewed no-hit context while preserving all safety gates.
+The next blocker is designing reviewer no-hit source coverage acceptance so source coverage, query windows, and survivorship rationale can be recorded without applying PIT approvals.
 
 ## Current External Data Strategy
 
@@ -264,14 +276,14 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-PIT Official Status Evidence Packet Enrichment v0.1
+Reviewer No-Hit Source Coverage Acceptance Read-only Audit v0.1
 ```
 
 Purpose:
 
-- enrich the existing packet with SZSE 1815 official same-date quotation/traded-presence evidence;
-- incorporate reviewed no-hit support context as context only;
-- rerun diagnostics-only ingestion, checklist validation, and policy profile comparison;
+- design a report-only reviewer acceptance artifact for no-hit source coverage, query windows, and survivorship rationale;
+- keep reviewer acceptance distinct from PIT row approval;
+- decide what fields a future acceptance artifact must contain;
 - keep all rows non-approved unless a future explicit PIT review workflow is run.
 
 Do not yet:
@@ -312,9 +324,10 @@ Recent milestone direction:
 - v1.15.0: PIT evidence policy profile comparison.
 - v1.16.0: PIT official status evidence packet.
 - v1.17.0: reviewed no-hit support policy profile.
+- v1.18.0: PIT official status evidence packet enrichment.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for PIT Official Status Evidence Packet Enrichment v0.1.
+Give me Codex tasks for Reviewer No-Hit Source Coverage Acceptance Read-only Audit v0.1.
 ```

@@ -42,7 +42,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets that are not PIT approvals, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
 
 ## Diagnostic vs Active Artifacts
 
@@ -59,6 +59,7 @@ Examples:
 - SZSE 1815 quotation probe diagnostics;
 - SZSE/CNInfo exception no-hit diagnostics;
 - official no-hit evidence policy diagnostics;
+- PIT official status evidence packet enrichment dry-runs;
 - ignored dry-run files.
 
 ## Plan-Only Workflows
@@ -235,12 +236,12 @@ A policy comparison is not approval and does not make a profile the default.
 
 ## PIT Official Status Evidence Packet Workflows
 
-PIT official status evidence packet artifacts are evidence-packet reports.
+PIT official status evidence packet artifacts and enrichment artifacts are evidence-packet reports.
 
 They may:
 
-- combine source access smoke results, prior evidence discovery diagnostics, local EOD cache context, official symbol-level sources, SZSE 1815 same-date quotation diagnostics, and no-hit support context into per-symbol/per-date packets;
-- classify evidence as `STRONG_OFFICIAL_DATE_SPECIFIC`, `SUPPORTING_OFFICIAL_SYMBOL_LEVEL`, `SUPPORTING_LOCAL_EOD_CACHE`, `REVIEWED_NO_HIT_SUPPORT_CONTEXT`, `CONTEXT_ONLY`, or `MISSING`;
+- combine source access smoke results, prior evidence discovery diagnostics, local EOD cache context, official symbol-level sources, SZSE 1815 same-date quotation diagnostics, reviewed no-hit support context, and enrichment lineage into per-symbol/per-date packets;
+- classify evidence as `STRONG_OFFICIAL_DATE_SPECIFIC`, `STRONG_OFFICIAL_DATE_SPECIFIC_QUOTATION`, `SUPPORTING_OFFICIAL_SYMBOL_LEVEL`, `SUPPORTING_LOCAL_EOD_CACHE`, `REVIEWED_NO_HIT_SUPPORT_CONTEXT`, `CONTEXT_ONLY`, or `MISSING`;
 - rerun diagnostics-only ingestion, checklist validation, and policy comparison;
 - expose evidence packet counts in research-status.
 
@@ -262,20 +263,20 @@ They must not:
 - build snapshots;
 - compute forward labels.
 
-Current official status evidence packet state:
+Current official status evidence packet enrichment state:
 
 ```text
-packet_id: 8efabe2ffe62
-stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
-strong_official_date_specific_count: 0
-supporting_official_symbol_level_count: 16
-supporting_local_eod_cache_count: 16
-missing_count: 40
+enrichment_id: cb5f323d3c8c
+source_packet_id: 8efabe2ffe62
+stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
+strong_official_same_date_quotation_count: 16
+reviewed_no_hit_context_supported_count: 16
+reviewer_acceptance_required_count: 16
 checklist_pass_count: 0
-blocked_count: 16
+remaining_blocked_count: 16
 ```
 
-SZSE 1815 diagnostics currently provide strong official date-specific evidence for quotation/traded presence for all 16 first-batch rows, but this has not yet been integrated into a refreshed packet milestone.
+SZSE 1815 diagnostics provide strong official date-specific evidence for quotation/traded presence for all 16 first-batch rows. The enrichment milestone integrates that evidence, but it still does not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by itself.
 
 ## Export-Readiness Workflows
 
@@ -317,6 +318,7 @@ evidence_update_plan_only=true
 checklist_validation_only=true
 policy_profile_comparison_only=true
 evidence_packet_only=true
+evidence_packet_enrichment_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -355,7 +357,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- PIT official status evidence packet enrichment semantics are implemented;
+- reviewer no-hit source coverage acceptance semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.

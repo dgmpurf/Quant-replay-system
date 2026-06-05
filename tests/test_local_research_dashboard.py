@@ -13,6 +13,9 @@ from quant_replay_system.local_research_dashboard import (
     run_local_research_dashboard,
 )
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
+from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
+    build_reviewer_no_hit_source_coverage_acceptance,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 
 
@@ -7633,3 +7636,96 @@ def _market_update_handoff_artifact(
 def _write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def test_research_status_includes_reviewer_no_hit_acceptance_when_active(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _reviewer_no_hit_acceptance_artifact(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.reviewer_no_hit_acceptance_status == "WARN"
+    assert result.reviewer_no_hit_acceptance_stage == "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW"
+    assert result.reviewer_no_hit_acceptance_row_count == 8
+    assert result.reviewer_no_hit_acceptance_reviewer_acceptance_required_count == 8
+    assert result.reviewer_no_hit_acceptance_checklist_pass_count == 0
+    assert result.workflow_stage == "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW"
+
+
+def test_research_status_preserves_later_paper_priority_with_reviewer_no_hit_acceptance(tmp_path: Path) -> None:
+    root = _workflow_to_daily(_reports_root(tmp_path))
+    _reviewer_no_hit_acceptance_artifact(root)
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.reviewer_no_hit_acceptance_stage == "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW"
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS"
+    ].iloc[0]
+    assert row["stale_warning_count"] >= 1
+    assert row["actionable_warning_count"] == 0
+
+
+def test_research_status_metadata_exports_reviewer_no_hit_acceptance_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _reviewer_no_hit_acceptance_artifact(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], keep_default_na=False)
+    metadata = json.loads(Path(result.artifact_paths["metadata"]).read_text(encoding="utf-8"))
+
+    assert summary.loc[0, "latest_reviewer_no_hit_acceptance_id"]
+    assert summary.loc[0, "reviewer_no_hit_acceptance_row_count"] == 8
+    assert metadata["reviewer_no_hit_acceptance_status"] == "WARN"
+    assert metadata["reviewer_no_hit_acceptance_checklist_pass_count"] == 0
+
+
+def _reviewer_no_hit_acceptance_artifact(root: Path) -> Path:
+    enrichment = root / "_fixtures" / "enrichment-a"
+    enrichment.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {"signal_date": "2024-04-02", "symbol": "000001", "universe_name": "stock_core"},
+            {"signal_date": "2024-04-02", "symbol": "159915", "universe_name": "etf_core"},
+        ]
+    ).to_csv(enrichment / "pit_official_status_evidence_packet_enrichment.csv", index=False)
+    _write_json(
+        enrichment / "metadata.json",
+        {
+            "enrichment_id": "enrichment-a",
+            "source_packet_id": "packet-a",
+            "policy_comparison_id": "comparison-a",
+            "created_at": "2026-06-05T00:00:00Z",
+        },
+    )
+    audit = root / "_fixtures" / "audit"
+    audit.mkdir(parents=True, exist_ok=True)
+    for name in [
+        "source_coverage_acceptance_rules.csv",
+        "query_window_rules.csv",
+        "survivorship_rationale_template.csv",
+        "blocker_after_acceptance_matrix.csv",
+    ]:
+        pd.DataFrame([{"rule": "review_required"}]).to_csv(audit / name, index=False)
+    comparison = root / "_fixtures" / "comparison-a"
+    comparison.mkdir(parents=True, exist_ok=True)
+    _write_json(comparison / "metadata.json", {"comparison_id": "comparison-a"})
+    result = build_reviewer_no_hit_source_coverage_acceptance(
+        enrichment=enrichment,
+        audit=audit,
+        policy_comparison=comparison,
+        output_dir=root / "reviewer_no_hit_source_coverage_acceptance",
+    )
+    return result.artifact_paths["artifact_dir"]

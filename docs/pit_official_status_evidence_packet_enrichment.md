@@ -31,6 +31,8 @@ The enrichment records whether each symbol/date row has:
 
 Official quotation presence can support date-specific traded-presence context, but it does not automatically prove not-delisted status, no-ST status, suspension status, or survivorship-bias resolution. Reviewed no-hit context remains reviewer-accepted context only.
 
+Use `reviewer-no-hit-source-coverage-acceptance` after enrichment when a human reviewer is ready to accept source coverage, query windows, inference limits, and survivorship rationale as supporting context. The acceptance workflow is still report-only and does not approve PIT rows. See [reviewer_no_hit_source_coverage_acceptance.md](reviewer_no_hit_source_coverage_acceptance.md).
+
 ## Outputs
 
 Artifacts are written under:
@@ -54,6 +56,8 @@ Files:
 `research-status` includes the latest enrichment status as PIT evidence-preparation context. A blocked enrichment means quotation and no-hit context were consolidated but the row still lacks reviewer acceptance, complete PIT metadata, or survivorship rationale. It is not a current-candidates failure, strategy failure, paper workflow failure, or trading signal.
 
 Later paper workflow priority is preserved. If paper workflow artifacts are already more advanced, enrichment fields remain visible but do not override `PAPER_WORKFLOW_READY`.
+
+Reviewer no-hit source coverage acceptance is the next evidence-preparation layer after enrichment and before universe-profile policy/replacement planning. If acceptance exists, enrichment remains visible as upstream context while acceptance records the active reviewer-required state.
 
 ## Known Limitations
 

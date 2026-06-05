@@ -55,7 +55,8 @@ Multi-Date Evidence Preparation
   ├─ activated-replacement-worklist-evidence-update-plan
   ├─ pit-evidence-checklist-validator
   ├─ pit-evidence-policy-profile-comparison
-  └─ pit-official-status-evidence-packet
+  ├─ pit-official-status-evidence-packet
+  └─ pit-official-status-evidence-packet-enrichment
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -143,6 +144,7 @@ market cache coverage
 → SZSE/CNInfo exception no-hit diagnostics
 → official no-hit evidence policy audit
 → EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT policy profile
+→ PIT official status evidence packet enrichment
 → index / health / status
 → research-status
 ```
@@ -150,7 +152,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
+PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -383,6 +385,41 @@ STRONG_OFFICIAL_DATE_SPECIFIC for quotation/traded presence: 16/16
 
 This is strong date-specific evidence for quotation/traded presence only. It does not automatically prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution.
 
+### PIT Official Status Evidence Packet Enrichment Fields
+
+The enrichment workflow folds SZSE 1815 quotation diagnostics and reviewed no-hit support context into a refreshed report-only packet.
+
+It reports:
+
+```text
+enrichment_id
+source_packet_id
+policy_comparison_id
+row_count
+strong_official_same_date_quotation_count
+reviewed_no_hit_context_supported_count
+reviewer_acceptance_required_count
+checklist_pass_count
+remaining_blocked_count
+```
+
+Current enrichment state:
+
+```text
+enrichment_id: cb5f323d3c8c
+source_packet_id: 8efabe2ffe62
+policy_comparison_id: c1a75d1091c6
+stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
+row_count: 16
+strong_official_same_date_quotation_count: 16
+reviewed_no_hit_context_supported_count: 16
+reviewer_acceptance_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
+```
+
+Enrichment artifacts are not approvals. They do not make no-hit context approval-grade and do not create usable current-candidates universe input.
+
 ### PIT Evidence Update Ingestion Fields
 
 Evidence update ingestion validates reviewer-completed rows and may write a clean `review_updates.csv` artifact under `outputs/reports`.
@@ -425,19 +462,20 @@ PIT evidence policy profile comparison: EOD low-budget profile relaxes 16 timing
 PIT official status evidence packet: 72 evidence packet rows, 0 strong official date-specific, 16 supporting official symbol-level, 16 supporting local EOD cache, 40 missing, 16 blocked rows
 SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-presence rows found
 Reviewed no-hit support policy comparison: no-hit context supported for 16 rows, reviewer acceptance required for 16 rows, 0 pass candidates
+PIT official status evidence packet enrichment: 16/16 same-date quotation evidence, 16/16 reviewed no-hit context support, 16/16 reviewer acceptance required, 0 checklist pass, 16 blocked
 ```
 
 ## Current Next Technical Branch
 
 ```text
-PIT Official Status Evidence Packet Enrichment v0.1
+Reviewer No-Hit Source Coverage Acceptance Read-only Audit v0.1
 ```
 
 Purpose:
 
-- enrich the existing evidence packet with the SZSE 1815 same-date quotation diagnostics and reviewed no-hit support policy context;
-- keep evidence strength separation explicit: date-specific traded presence, no-hit supporting context, symbol-level context, local EOD context, and missing fields;
-- rerun diagnostics-only ingestion, checklist validation, and policy comparison;
-- keep the branch report-only before any applied PIT review.
+- design a report-only reviewer acceptance artifact for no-hit source coverage, query windows, and survivorship rationale;
+- keep reviewer acceptance distinct from PIT approval;
+- determine which no-hit observations could be accepted as supporting context by a reviewer;
+- keep the branch read-only / diagnostics-first before any applied PIT review.
 
 Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.

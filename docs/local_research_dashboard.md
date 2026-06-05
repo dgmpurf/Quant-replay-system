@@ -21,6 +21,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a PIT evidence policy profile comparison shown whether an opt-in EOD/post-close policy would relax only timing/cache-support blockers?
 - Has a PIT official status evidence packet consolidated official/source-access context and local EOD support without applying approvals?
 - Has a PIT official status evidence packet enrichment merged same-date quotation context and reviewed no-hit support without applying approvals?
+- Has reviewer no-hit source coverage acceptance recorded source/query-window/survivorship review context without applying approvals?
 - Has an activated replacement worklist produced profile-specific manual evidence update packages?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
@@ -64,6 +65,7 @@ outputs/reports/pit_evidence_checklist_validator/status/
 outputs/reports/pit_evidence_policy_profile_comparison/status/
 outputs/reports/pit_official_status_evidence_packet/status/
 outputs/reports/pit_official_status_evidence_packet_enrichment/status/
+outputs/reports/reviewer_no_hit_source_coverage_acceptance/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -251,6 +253,18 @@ The unified summary records the latest enrichment id, enrichment status/stage, h
 When the status reports `PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED`, the dashboard treats the warning as expected reviewable evidence-preparation work. It means same-date quotation context and reviewed no-hit support have been merged, but rows still require manual acceptance and complete PIT/survivorship evidence. It does not mean PIT review failed, candidate generation failed, strategy performance failed, or paper workflow failed.
 
 PIT official status evidence packet enrichment is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to enrichment status; enrichment fields remain visible for audit. If enrichment health fails because required files/columns are missing, checklist-pass rows appear, or approval/export/data-write/current-candidates/snapshot/forward-label/trading safety flags are violated, `research-status` surfaces the failure as actionable when this layer is active.
+
+## Reviewer No-Hit Source Coverage Acceptance Status
+
+`research-status` includes `reviewer-no-hit-source-coverage-acceptance-status` as PIT evidence-preparation context when those artifacts exist.
+
+The unified summary records the latest acceptance id, acceptance status/stage, health status, linked enrichment id, linked source packet id, linked policy comparison id, row count, accepted supporting-context count, needs-review count, needs-more-evidence count, reviewer-acceptance-required count, survivorship-rationale-required count, checklist-pass count, remaining-blocked count, report path, and next manual action.
+
+When the status reports `REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW`, the dashboard treats the warning as expected reviewable no-hit evidence work. It means no-hit source coverage, query windows, inference limits, and survivorship rationale still require reviewer completion. It does not mean PIT review failed, candidate generation failed, strategy performance failed, or paper workflow failed.
+
+When the status reports `REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTED_AS_SUPPORTING_CONTEXT`, accepted rows are still supporting context only. They do not create `APPROVED_FOR_PIT_UNIVERSE` rows, clean review updates, universe exports, snapshot manifests, current-candidates outputs, or checklist-pass rows by themselves.
+
+Reviewer no-hit source coverage acceptance is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to reviewer acceptance; acceptance fields remain visible for audit. If acceptance health fails because files are missing, accepted rows lack reviewer evidence, approval text appears, or safety flags are violated, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Universe Profile Policy Audit Status
 

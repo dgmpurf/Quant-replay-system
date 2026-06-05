@@ -32,6 +32,7 @@ The project is now a broad local research system with:
 - PIT evidence policy profile comparison;
 - PIT official status evidence packet;
 - reviewed no-hit support policy profile;
+- PIT official status evidence packet enrichment;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -63,12 +64,13 @@ Completed or largely complete:
 - PIT evidence policy profile comparison;
 - PIT official status evidence packet;
 - reviewed no-hit support policy profile;
+- PIT official status evidence packet enrichment;
 - index / health / status and research-status integration for these stages.
 
-Current PIT evidence policy comparison state:
+Current PIT official status evidence packet enrichment state:
 
 ```text
-PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
+PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
 ```
 
 Latest known state:
@@ -94,6 +96,7 @@ packet_rerun_ingestion_id: ac6846aef520
 packet_rerun_validator_id: 498a3d0786af
 packet_rerun_policy_comparison_id: b7e7ec8f66f5
 reviewed_no_hit_policy_comparison_id: c1a75d1091c6
+enrichment_id: cb5f323d3c8c
 ```
 
 ```text
@@ -165,46 +168,52 @@ reviewed_no_hit_support_pass_count: 0
 no_hit_context_supported_count: 16
 reviewer_acceptance_required_count: 16
 remaining_blocked_count: 16
+
+PIT official status evidence packet enrichment:
+enrichment_id: cb5f323d3c8c
+source_packet_id: 8efabe2ffe62
+policy_comparison_id: c1a75d1091c6
+strong_official_same_date_quotation_count: 16
+reviewed_no_hit_context_supported_count: 16
+reviewer_acceptance_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: PIT Official Status Evidence Packet Enrichment
+### Branch: Reviewer No-Hit Source Coverage Acceptance
 
 Suggested sequence:
 
-1. Use the existing official status evidence packet as the base.
-2. Add SZSE 1815 same-date quotation diagnostics as `STRONG_OFFICIAL_DATE_SPECIFIC` for quotation/traded presence only.
-3. Add reviewed no-hit support policy context as reviewer-accepted support only, not approval.
-4. Preserve existing official symbol-level context and local EOD cache context.
-5. Keep evidence categories distinct:
+1. Use the enriched official status evidence packet as the base.
+2. Design a report-only acceptance artifact for no-hit source coverage, query windows, and reviewer rationale.
+3. Keep reviewer source coverage acceptance separate from PIT row approval.
+4. Preserve evidence categories from the enriched packet:
    - `STRONG_OFFICIAL_DATE_SPECIFIC_QUOTATION`
    - `REVIEWED_NO_HIT_SUPPORT_CONTEXT`
    - `SUPPORTING_OFFICIAL_SYMBOL_LEVEL`
    - `SUPPORTING_LOCAL_EOD_CACHE`
    - `MISSING`
-6. Generate updated draft completed updates only where evidence exists.
-7. Rerun diagnostics-only:
-   - `pit-universe-evidence-update-ingestion`
-   - `pit-evidence-checklist-validator`
-   - `pit-evidence-policy-profile-comparison`
-8. Report whether any rows become approval-candidate previews.
-9. Do not run PIT overlay review, export-readiness, staging, snapshot, or current-candidates.
+5. Define required reviewer fields and survivorship rationale fields.
+6. Report what would still block checklist pass after reviewer acceptance.
+7. Do not create approval update CSVs unless a future explicit workflow is requested.
+8. Do not run PIT overlay review, export-readiness, staging, snapshot, or current-candidates.
 
-## What Packet Enrichment Must Solve
+## What Reviewer No-Hit Source Coverage Acceptance Must Solve
 
 It should answer:
 
-- Can the evidence packet now show 16/16 official date-specific quotation/traded presence?
-- Which rows still lack not-delisted evidence?
-- Which rows still lack ST/no-ST evidence for 000001?
-- Which rows still require survivorship-bias rationale?
-- Does reviewed no-hit support reduce context gaps without creating approval?
+- What source coverage must a reviewer accept for no-hit evidence to become supporting context?
+- What query windows are required for delisting, ST/risk-warning, and suspension/resumption checks?
+- What reviewer fields and evidence references are required?
+- How should survivorship-bias rationale be documented?
+- Which rows would still lack not-delisted evidence after acceptance?
+- Which rows would still lack ST/no-ST evidence for 000001 after acceptance?
 - Can any first-batch row become a strict or reviewed-no-hit policy checklist-pass approval candidate?
 - If no row passes, which exact blockers remain?
-- Which blockers require user judgment or explicit reviewer acceptance?
 
 ## Current Preference for Manual Steps
 
