@@ -194,6 +194,18 @@ from quant_replay_system.first_batch_reviewer_evidence_completion_plan_index imp
 from quant_replay_system.first_batch_reviewer_evidence_completion_plan_status import (
     run_first_batch_reviewer_evidence_completion_plan_status,
 )
+from quant_replay_system.first_batch_partial_completion_impact import (
+    build_first_batch_partial_completion_impact,
+)
+from quant_replay_system.first_batch_partial_completion_impact_health import (
+    check_first_batch_partial_completion_impact_health,
+)
+from quant_replay_system.first_batch_partial_completion_impact_index import (
+    build_first_batch_partial_completion_impact_index,
+)
+from quant_replay_system.first_batch_partial_completion_impact_status import (
+    run_first_batch_partial_completion_impact_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1518,6 +1530,73 @@ def build_parser() -> argparse.ArgumentParser:
     )
     first_batch_completion_plan_status.set_defaults(handler=_handle_first_batch_reviewer_evidence_completion_plan_status)
 
+    first_batch_partial_completion_impact = subparsers.add_parser(
+        "first-batch-partial-completion-impact",
+        help="Compare partial first-batch reviewer completion fixtures against the completion plan",
+    )
+    first_batch_partial_completion_impact.add_argument(
+        "--completion-plan",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan/c630522f235a",
+    )
+    first_batch_partial_completion_impact.add_argument(
+        "--partial-completion",
+        default=None,
+        help="Optional partial reviewer completion fixture CSV",
+    )
+    first_batch_partial_completion_impact.add_argument(
+        "--output-dir",
+        default="outputs/reports/first_batch_partial_completion_impact",
+    )
+    first_batch_partial_completion_impact.set_defaults(handler=_handle_first_batch_partial_completion_impact)
+
+    first_batch_partial_completion_impact_index = subparsers.add_parser(
+        "first-batch-partial-completion-impact-index",
+        help="Build a local index of first-batch partial completion impact artifacts",
+    )
+    first_batch_partial_completion_impact_index.add_argument(
+        "--root",
+        default="outputs/reports/first_batch_partial_completion_impact",
+    )
+    first_batch_partial_completion_impact_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/first_batch_partial_completion_impact/index",
+    )
+    first_batch_partial_completion_impact_index.set_defaults(
+        handler=_handle_first_batch_partial_completion_impact_index
+    )
+
+    first_batch_partial_completion_impact_health = subparsers.add_parser(
+        "first-batch-partial-completion-impact-health",
+        help="Check first-batch partial completion impact artifact health",
+    )
+    first_batch_partial_completion_impact_health.add_argument(
+        "--root",
+        default="outputs/reports/first_batch_partial_completion_impact",
+    )
+    first_batch_partial_completion_impact_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/first_batch_partial_completion_impact/health",
+    )
+    first_batch_partial_completion_impact_health.set_defaults(
+        handler=_handle_first_batch_partial_completion_impact_health
+    )
+
+    first_batch_partial_completion_impact_status = subparsers.add_parser(
+        "first-batch-partial-completion-impact-status",
+        help="Summarize latest first-batch partial completion impact status",
+    )
+    first_batch_partial_completion_impact_status.add_argument(
+        "--root",
+        default="outputs/reports/first_batch_partial_completion_impact",
+    )
+    first_batch_partial_completion_impact_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/first_batch_partial_completion_impact/status",
+    )
+    first_batch_partial_completion_impact_status.set_defaults(
+        handler=_handle_first_batch_partial_completion_impact_status
+    )
+
     universe_profile_policy_audit = subparsers.add_parser(
         "universe-profile-policy-audit",
         help="Audit local universe profile naming and instrument-type policy without mutating artifacts",
@@ -2753,6 +2832,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--first-batch-reviewer-evidence-completion-plan-root",
         help="First-batch reviewer evidence completion plan artifact root directory",
+    )
+    research_status.add_argument(
+        "--first-batch-partial-completion-impact-root",
+        help="First-batch partial completion impact artifact root directory",
     )
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
@@ -4844,6 +4927,78 @@ def _handle_first_batch_reviewer_evidence_completion_plan_status(args: argparse.
     print(f"no_hit_acceptance_required_count: {result.no_hit_acceptance_required_count}")
     print(f"survivorship_rationale_required_count: {result.survivorship_rationale_required_count}")
     print(f"metadata_completion_required_count: {result.metadata_completion_required_count}")
+    print(f"checklist_pass_count: {result.checklist_pass_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_first_batch_partial_completion_impact(args: argparse.Namespace) -> int:
+    result = build_first_batch_partial_completion_impact(
+        completion_plan=args.completion_plan,
+        partial_completion=args.partial_completion,
+        output_dir=args.output_dir,
+    )
+    print(f"impact_id: {result.impact_id}")
+    print(f"status: {result.status}")
+    print(f"completion_plan_id: {result.completion_plan_id}")
+    print(f"partial_completion_path: {result.partial_completion_path}")
+    print(f"row_count: {result.row_count}")
+    print(f"completed_row_count: {result.completed_row_count}")
+    print(f"completed_field_count: {result.completed_field_count}")
+    print(f"blocker_reduced_count: {result.blocker_reduced_count}")
+    print(f"material_blocker_reduced_count: {result.material_blocker_reduced_count}")
+    print(f"checklist_pass_count: {result.checklist_pass_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"impact_csv_path: {result.artifact_paths['impact_csv']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_first_batch_partial_completion_impact_index(args: argparse.Namespace) -> int:
+    result = build_first_batch_partial_completion_impact_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_first_batch_partial_completion_impact_health(args: argparse.Namespace) -> int:
+    result = check_first_batch_partial_completion_impact_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_first_batch_partial_completion_impact_status(args: argparse.Namespace) -> int:
+    result = run_first_batch_partial_completion_impact_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_impact_id: {result.latest_impact_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"completion_plan_id: {result.completion_plan_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"completed_row_count: {result.completed_row_count}")
+    print(f"completed_field_count: {result.completed_field_count}")
+    print(f"blocker_reduced_count: {result.blocker_reduced_count}")
+    print(f"material_blocker_reduced_count: {result.material_blocker_reduced_count}")
     print(f"checklist_pass_count: {result.checklist_pass_count}")
     print(f"remaining_blocked_count: {result.remaining_blocked_count}")
     print(f"clean_review_updates_created: {result.clean_review_updates_created}")
@@ -7194,6 +7349,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         first_batch_reviewer_evidence_completion_plan_root=(
             args.first_batch_reviewer_evidence_completion_plan_root
         ),
+        first_batch_partial_completion_impact_root=args.first_batch_partial_completion_impact_root,
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -7895,6 +8051,62 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "first_batch_reviewer_evidence_completion_plan_next_action: "
         f"{result.first_batch_reviewer_evidence_completion_plan_next_action}"
+    )
+    print(
+        "latest_first_batch_partial_completion_impact_id: "
+        f"{result.latest_first_batch_partial_completion_impact_id}"
+    )
+    print(
+        "first_batch_partial_completion_impact_status: "
+        f"{result.first_batch_partial_completion_impact_status}"
+    )
+    print(
+        "first_batch_partial_completion_impact_stage: "
+        f"{result.first_batch_partial_completion_impact_stage}"
+    )
+    print(
+        "first_batch_partial_completion_impact_health_status: "
+        f"{result.first_batch_partial_completion_impact_health_status}"
+    )
+    print(
+        "first_batch_partial_completion_impact_completed_row_count: "
+        f"{result.first_batch_partial_completion_impact_completed_row_count}"
+    )
+    print(
+        "first_batch_partial_completion_impact_completed_field_count: "
+        f"{result.first_batch_partial_completion_impact_completed_field_count}"
+    )
+    print(
+        "first_batch_partial_completion_impact_blocker_reduced_count: "
+        f"{result.first_batch_partial_completion_impact_blocker_reduced_count}"
+    )
+    print(
+        "first_batch_partial_completion_impact_material_blocker_reduced_count: "
+        f"{result.first_batch_partial_completion_impact_material_blocker_reduced_count}"
+    )
+    print(
+        "first_batch_partial_completion_impact_checklist_pass_count: "
+        f"{result.first_batch_partial_completion_impact_checklist_pass_count}"
+    )
+    print(
+        "first_batch_partial_completion_impact_remaining_blocked_count: "
+        f"{result.first_batch_partial_completion_impact_remaining_blocked_count}"
+    )
+    print(
+        "first_batch_partial_completion_impact_clean_review_updates_created: "
+        f"{result.first_batch_partial_completion_impact_clean_review_updates_created}"
+    )
+    print(
+        "first_batch_partial_completion_impact_approval_applied: "
+        f"{result.first_batch_partial_completion_impact_approval_applied}"
+    )
+    print(
+        "first_batch_partial_completion_impact_report_path: "
+        f"{result.first_batch_partial_completion_impact_report_path}"
+    )
+    print(
+        "first_batch_partial_completion_impact_next_action: "
+        f"{result.first_batch_partial_completion_impact_next_action}"
     )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")

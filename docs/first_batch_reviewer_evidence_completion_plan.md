@@ -80,6 +80,8 @@ Reviewer no-hit source coverage remains supporting context only. It does not cre
 
 This context does not imply PIT approval, export readiness, export staging, universe export, snapshot build, current-candidates generation, or trading. Later paper workflow artifacts keep final workflow priority while first-batch completion fields remain visible.
 
+Partial reviewer completions can be inspected with `first-batch-partial-completion-impact`. That workflow compares diagnostics-only completed fields against the completion plan and reports blocker deltas, but it still does not create clean `review_updates.csv`, set `include_flag=true`, set `valid_for_signal_date=true`, or approve rows. See [first_batch_partial_completion_impact.md](first_batch_partial_completion_impact.md).
+
 ## Health Checks
 
 Health fails if required artifacts are missing, required columns are missing, rows claim `APPROVED_FOR_PIT_UNIVERSE`, rows set `include_flag=true`, rows set `valid_for_signal_date=true`, metadata claims approval, a clean `review_updates.csv` is created, PIT review/export/staging/current-candidates are run, `data/raw` or `data/processed` is written, snapshots or forward labels are created, or the report-only flag is missing.

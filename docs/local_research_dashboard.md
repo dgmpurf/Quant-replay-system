@@ -286,6 +286,16 @@ When the status reports `FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REV
 
 The completion plan keeps every row non-approved. It does not create `APPROVED_FOR_PIT_UNIVERSE`, clean `review_updates.csv`, universe exports, snapshot manifests, current-candidates outputs, or checklist-pass rows. Later paper workflow artifacts keep final workflow priority while first-batch completion fields remain visible for audit.
 
+## First-Batch Partial Completion Impact Status
+
+`research-status` includes `first-batch-partial-completion-impact-status` as report-only reviewer completion impact context when those artifacts exist.
+
+The unified summary records the latest impact id, status/stage, health status, completed row count, completed field count, blocker reduction count, material blocker reduction count, checklist-pass count, remaining-blocked count, clean-review-updates-created flag, approval-applied flag, report path, and next manual action.
+
+When the status reports `FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION`, no partial reviewer fixture has reduced any blocker. When it reports `FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_METADATA_ONLY_REDUCTION`, reviewer metadata was observed, but material PIT evidence blockers remain. These stages are expected planning context; they do not mean PIT review failed, candidate generation failed, export failed, strategy performance failed, or paper workflow failed.
+
+Partial completion impact artifacts keep every row non-approved. They do not create `APPROVED_FOR_PIT_UNIVERSE`, clean `review_updates.csv`, `include_flag=true`, `valid_for_signal_date=true`, universe exports, snapshot manifests, current-candidates outputs, or checklist-pass rows. Later paper workflow artifacts keep final workflow priority while partial completion impact fields remain visible for reviewer planning.
+
 ## Universe Profile Policy Audit Status
 
 `research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.

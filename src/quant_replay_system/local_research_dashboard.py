@@ -62,6 +62,9 @@ from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact_status imp
 from quant_replay_system.first_batch_reviewer_evidence_completion_plan_status import (
     run_first_batch_reviewer_evidence_completion_plan_status,
 )
+from quant_replay_system.first_batch_partial_completion_impact_status import (
+    run_first_batch_partial_completion_impact_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -352,6 +355,20 @@ SUMMARY_COLUMNS = [
     "first_batch_reviewer_evidence_completion_plan_approval_applied",
     "first_batch_reviewer_evidence_completion_plan_report_path",
     "first_batch_reviewer_evidence_completion_plan_next_action",
+    "first_batch_partial_completion_impact_status",
+    "latest_first_batch_partial_completion_impact_id",
+    "first_batch_partial_completion_impact_stage",
+    "first_batch_partial_completion_impact_health_status",
+    "first_batch_partial_completion_impact_completed_row_count",
+    "first_batch_partial_completion_impact_completed_field_count",
+    "first_batch_partial_completion_impact_blocker_reduced_count",
+    "first_batch_partial_completion_impact_material_blocker_reduced_count",
+    "first_batch_partial_completion_impact_checklist_pass_count",
+    "first_batch_partial_completion_impact_remaining_blocked_count",
+    "first_batch_partial_completion_impact_clean_review_updates_created",
+    "first_batch_partial_completion_impact_approval_applied",
+    "first_batch_partial_completion_impact_report_path",
+    "first_batch_partial_completion_impact_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -674,6 +691,7 @@ COMPONENTS = [
     "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS",
     "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
     "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS",
+    "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -737,6 +755,7 @@ WORKFLOW_AREAS = {
     "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS": (
         "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN"
     ),
+    "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS": "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT",
     "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS": "CALIBRATION_TO_SIGNAL_SEMANTICS",
     "SIGNAL_SEMANTICS_STATUS": "SIGNAL_SEMANTICS",
@@ -1007,6 +1026,20 @@ class LocalResearchDashboardResult:
     first_batch_reviewer_evidence_completion_plan_approval_applied: bool
     first_batch_reviewer_evidence_completion_plan_report_path: str
     first_batch_reviewer_evidence_completion_plan_next_action: str
+    first_batch_partial_completion_impact_status: str
+    latest_first_batch_partial_completion_impact_id: str
+    first_batch_partial_completion_impact_stage: str
+    first_batch_partial_completion_impact_health_status: str
+    first_batch_partial_completion_impact_completed_row_count: int
+    first_batch_partial_completion_impact_completed_field_count: int
+    first_batch_partial_completion_impact_blocker_reduced_count: int
+    first_batch_partial_completion_impact_material_blocker_reduced_count: int
+    first_batch_partial_completion_impact_checklist_pass_count: int
+    first_batch_partial_completion_impact_remaining_blocked_count: int
+    first_batch_partial_completion_impact_clean_review_updates_created: bool
+    first_batch_partial_completion_impact_approval_applied: bool
+    first_batch_partial_completion_impact_report_path: str
+    first_batch_partial_completion_impact_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1309,6 +1342,7 @@ def run_local_research_dashboard(
     reviewer_no_hit_source_coverage_acceptance_root: str | Path | None = None,
     reviewer_no_hit_acceptance_downstream_impact_root: str | Path | None = None,
     first_batch_reviewer_evidence_completion_plan_root: str | Path | None = None,
+    first_batch_partial_completion_impact_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1440,6 +1474,11 @@ def run_local_research_dashboard(
         Path(first_batch_reviewer_evidence_completion_plan_root)
         if first_batch_reviewer_evidence_completion_plan_root is not None
         else effective_root / "first_batch_reviewer_evidence_completion_plan"
+    )
+    effective_first_batch_partial_completion_impact_root = (
+        Path(first_batch_partial_completion_impact_root)
+        if first_batch_partial_completion_impact_root is not None
+        else effective_root / "first_batch_partial_completion_impact"
     )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
@@ -1580,6 +1619,10 @@ def run_local_research_dashboard(
             effective_first_batch_reviewer_evidence_completion_plan_root = (
                 effective_root / "first_batch_reviewer_evidence_completion_plan"
             )
+        if first_batch_partial_completion_impact_root is None:
+            effective_first_batch_partial_completion_impact_root = (
+                effective_root / "first_batch_partial_completion_impact"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -1648,6 +1691,7 @@ def run_local_research_dashboard(
         first_batch_reviewer_evidence_completion_plan_root=(
             effective_first_batch_reviewer_evidence_completion_plan_root
         ),
+        first_batch_partial_completion_impact_root=effective_first_batch_partial_completion_impact_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -1722,6 +1766,7 @@ def run_local_research_dashboard(
         "first_batch_reviewer_evidence_completion_plan_root": (
             effective_first_batch_reviewer_evidence_completion_plan_root
         ),
+        "first_batch_partial_completion_impact_root": effective_first_batch_partial_completion_impact_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
@@ -2374,6 +2419,48 @@ def run_local_research_dashboard(
         first_batch_reviewer_evidence_completion_plan_next_action=str(
             summary.get("first_batch_reviewer_evidence_completion_plan_next_action", "")
         ),
+        first_batch_partial_completion_impact_status=str(
+            summary.get("first_batch_partial_completion_impact_status", "MISSING")
+        ),
+        latest_first_batch_partial_completion_impact_id=str(
+            summary.get("latest_first_batch_partial_completion_impact_id", "")
+        ),
+        first_batch_partial_completion_impact_stage=str(
+            summary.get("first_batch_partial_completion_impact_stage", "")
+        ),
+        first_batch_partial_completion_impact_health_status=str(
+            summary.get("first_batch_partial_completion_impact_health_status", "")
+        ),
+        first_batch_partial_completion_impact_completed_row_count=_int_or_zero(
+            summary.get("first_batch_partial_completion_impact_completed_row_count")
+        ),
+        first_batch_partial_completion_impact_completed_field_count=_int_or_zero(
+            summary.get("first_batch_partial_completion_impact_completed_field_count")
+        ),
+        first_batch_partial_completion_impact_blocker_reduced_count=_int_or_zero(
+            summary.get("first_batch_partial_completion_impact_blocker_reduced_count")
+        ),
+        first_batch_partial_completion_impact_material_blocker_reduced_count=_int_or_zero(
+            summary.get("first_batch_partial_completion_impact_material_blocker_reduced_count")
+        ),
+        first_batch_partial_completion_impact_checklist_pass_count=_int_or_zero(
+            summary.get("first_batch_partial_completion_impact_checklist_pass_count")
+        ),
+        first_batch_partial_completion_impact_remaining_blocked_count=_int_or_zero(
+            summary.get("first_batch_partial_completion_impact_remaining_blocked_count")
+        ),
+        first_batch_partial_completion_impact_clean_review_updates_created=_bool_from_text(
+            summary.get("first_batch_partial_completion_impact_clean_review_updates_created")
+        ),
+        first_batch_partial_completion_impact_approval_applied=_bool_from_text(
+            summary.get("first_batch_partial_completion_impact_approval_applied")
+        ),
+        first_batch_partial_completion_impact_report_path=str(
+            summary.get("first_batch_partial_completion_impact_report_path", "")
+        ),
+        first_batch_partial_completion_impact_next_action=str(
+            summary.get("first_batch_partial_completion_impact_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -3005,6 +3092,7 @@ def scan_local_research_workflow_artifacts(
     reviewer_no_hit_source_coverage_acceptance_root: str | Path,
     reviewer_no_hit_acceptance_downstream_impact_root: str | Path,
     first_batch_reviewer_evidence_completion_plan_root: str | Path,
+    first_batch_partial_completion_impact_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -3047,6 +3135,7 @@ def scan_local_research_workflow_artifacts(
     reviewer_no_hit_source_coverage_acceptance_path = Path(reviewer_no_hit_source_coverage_acceptance_root)
     reviewer_no_hit_acceptance_downstream_impact_path = Path(reviewer_no_hit_acceptance_downstream_impact_root)
     first_batch_reviewer_evidence_completion_plan_path = Path(first_batch_reviewer_evidence_completion_plan_root)
+    first_batch_partial_completion_impact_path = Path(first_batch_partial_completion_impact_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -3111,6 +3200,7 @@ def scan_local_research_workflow_artifacts(
             first_batch_reviewer_evidence_completion_plan_path
         )
     )
+    records.extend(_scan_first_batch_partial_completion_impact_status(first_batch_partial_completion_impact_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -4229,6 +4319,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS":
         return _first_batch_reviewer_evidence_completion_plan_warning_actionability(row, context)
+
+    if component == "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS":
+        return _first_batch_partial_completion_impact_warning_actionability(row, context)
 
     if component == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS":
         return _universe_profile_policy_audit_warning_actionability(row, context)
@@ -5468,6 +5561,48 @@ def _first_batch_reviewer_evidence_completion_plan_warning_actionability(
     }
 
 
+def _first_batch_partial_completion_impact_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    _ = context
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage in {
+        "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION",
+        "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_METADATA_ONLY_REDUCTION",
+        "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_MATERIAL_BLOCKERS_REMAIN",
+    }:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
 def _universe_profile_policy_audit_warning_actionability(
     row: dict[str, Any],
     context: dict[str, Any],
@@ -6387,6 +6522,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             return "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_FAILED"
         if statuses["FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS"] == "FAIL":
             return "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_FAILED"
+        if statuses["FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS"] == "FAIL":
+            return "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_FAILED"
         if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
@@ -6564,6 +6701,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _first_batch_reviewer_evidence_completion_plan_stage_from_frame(dashboard_frame)
     ):
         return _first_batch_reviewer_evidence_completion_plan_stage_from_frame(dashboard_frame)
+    if (
+        statuses["FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS"] in {"PASS", "WARN", "READY"}
+        and _first_batch_partial_completion_impact_stage_from_frame(dashboard_frame)
+    ):
+        return _first_batch_partial_completion_impact_stage_from_frame(dashboard_frame)
     if (
         not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
         and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
@@ -6872,6 +7014,7 @@ def summarize_local_research_status(
                     "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS",
                     "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS",
                     "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS",
+                    "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -7993,6 +8136,72 @@ def summarize_local_research_status(
         ),
         "first_batch_reviewer_evidence_completion_plan_next_action": _parse_note_value(
             by_component.get("FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "first_batch_partial_completion_impact_status": _component_status(
+            by_component,
+            "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS",
+        ),
+        "latest_first_batch_partial_completion_impact_id": _string_or_empty(
+            by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("latest_artifact_id")
+        ),
+        "first_batch_partial_completion_impact_stage": _string_or_empty(
+            by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("stage")
+        ),
+        "first_batch_partial_completion_impact_health_status": _parse_note_value(
+            by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "first_batch_partial_completion_impact_completed_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+                "completed_row_count",
+            )
+        ),
+        "first_batch_partial_completion_impact_completed_field_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+                "completed_field_count",
+            )
+        ),
+        "first_batch_partial_completion_impact_blocker_reduced_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+                "blocker_reduced_count",
+            )
+        ),
+        "first_batch_partial_completion_impact_material_blocker_reduced_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+                "material_blocker_reduced_count",
+            )
+        ),
+        "first_batch_partial_completion_impact_checklist_pass_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+                "checklist_pass_count",
+            )
+        ),
+        "first_batch_partial_completion_impact_remaining_blocked_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+                "remaining_blocked_count",
+            )
+        ),
+        "first_batch_partial_completion_impact_clean_review_updates_created": _parse_note_value(
+            by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+            "clean_review_updates_created",
+        ),
+        "first_batch_partial_completion_impact_approval_applied": _parse_note_value(
+            by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+            "approval_applied",
+        ),
+        "first_batch_partial_completion_impact_report_path": _parse_note_value(
+            by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "first_batch_partial_completion_impact_next_action": _parse_note_value(
+            by_component.get("FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -10044,6 +10253,48 @@ def build_local_research_dashboard_metadata(
         "first_batch_reviewer_evidence_completion_plan_next_action": (
             result.first_batch_reviewer_evidence_completion_plan_next_action
         ),
+        "first_batch_partial_completion_impact_status": (
+            result.first_batch_partial_completion_impact_status
+        ),
+        "latest_first_batch_partial_completion_impact_id": (
+            result.latest_first_batch_partial_completion_impact_id
+        ),
+        "first_batch_partial_completion_impact_stage": (
+            result.first_batch_partial_completion_impact_stage
+        ),
+        "first_batch_partial_completion_impact_health_status": (
+            result.first_batch_partial_completion_impact_health_status
+        ),
+        "first_batch_partial_completion_impact_completed_row_count": (
+            result.first_batch_partial_completion_impact_completed_row_count
+        ),
+        "first_batch_partial_completion_impact_completed_field_count": (
+            result.first_batch_partial_completion_impact_completed_field_count
+        ),
+        "first_batch_partial_completion_impact_blocker_reduced_count": (
+            result.first_batch_partial_completion_impact_blocker_reduced_count
+        ),
+        "first_batch_partial_completion_impact_material_blocker_reduced_count": (
+            result.first_batch_partial_completion_impact_material_blocker_reduced_count
+        ),
+        "first_batch_partial_completion_impact_checklist_pass_count": (
+            result.first_batch_partial_completion_impact_checklist_pass_count
+        ),
+        "first_batch_partial_completion_impact_remaining_blocked_count": (
+            result.first_batch_partial_completion_impact_remaining_blocked_count
+        ),
+        "first_batch_partial_completion_impact_clean_review_updates_created": (
+            result.first_batch_partial_completion_impact_clean_review_updates_created
+        ),
+        "first_batch_partial_completion_impact_approval_applied": (
+            result.first_batch_partial_completion_impact_approval_applied
+        ),
+        "first_batch_partial_completion_impact_report_path": (
+            result.first_batch_partial_completion_impact_report_path
+        ),
+        "first_batch_partial_completion_impact_next_action": (
+            result.first_batch_partial_completion_impact_next_action
+        ),
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -12002,6 +12253,55 @@ def _first_batch_reviewer_evidence_completion_plan_notes(summary: dict[str, Any]
         f"{_string_or_empty(summary.get('survivorship_rationale_required_count'))}; "
         f"metadata_completion_required_count="
         f"{_string_or_empty(summary.get('metadata_completion_required_count'))}; "
+        f"checklist_pass_count={_string_or_empty(summary.get('checklist_pass_count'))}; "
+        f"remaining_blocked_count={_string_or_empty(summary.get('remaining_blocked_count'))}; "
+        f"clean_review_updates_created={_string_or_empty(summary.get('clean_review_updates_created'))}; "
+        f"approval_applied={_string_or_empty(summary.get('approval_applied'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_first_batch_partial_completion_impact_status(root: Path) -> list[dict[str, Any]]:
+    impact_root = root.parent if root.name == "status" else root
+    if not impact_root.exists():
+        return []
+    try:
+        result = run_first_batch_partial_completion_impact_status(
+            root=impact_root,
+            output_dir=impact_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_impact_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    return [
+        _record(
+            workflow_area="FIRST_BATCH_PARTIAL_COMPLETION_IMPACT",
+            component="FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_impact_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_first_batch_partial_completion_impact_notes(summary),
+        )
+    ]
+
+
+def _first_batch_partial_completion_impact_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(summary.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"completion_plan_id={_string_or_empty(summary.get('completion_plan_id'))}; "
+        f"partial_completion_path={_note_safe_text(summary.get('partial_completion_path'))}; "
+        f"row_count={_string_or_empty(summary.get('row_count'))}; "
+        f"completed_row_count={_string_or_empty(summary.get('completed_row_count'))}; "
+        f"completed_field_count={_string_or_empty(summary.get('completed_field_count'))}; "
+        f"blocker_reduced_count={_string_or_empty(summary.get('blocker_reduced_count'))}; "
+        f"material_blocker_reduced_count={_string_or_empty(summary.get('material_blocker_reduced_count'))}; "
         f"checklist_pass_count={_string_or_empty(summary.get('checklist_pass_count'))}; "
         f"remaining_blocked_count={_string_or_empty(summary.get('remaining_blocked_count'))}; "
         f"clean_review_updates_created={_string_or_empty(summary.get('clean_review_updates_created'))}; "
@@ -14269,6 +14569,14 @@ def _reviewer_no_hit_acceptance_downstream_impact_stage_from_frame(dashboard_fra
 def _first_batch_reviewer_evidence_completion_plan_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _first_batch_partial_completion_impact_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

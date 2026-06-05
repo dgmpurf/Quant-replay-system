@@ -4,6 +4,18 @@ from pathlib import Path
 import pandas as pd
 
 from quant_replay_system import cli
+from quant_replay_system.first_batch_partial_completion_impact import (
+    build_first_batch_partial_completion_impact,
+)
+from quant_replay_system.first_batch_partial_completion_impact_health import (
+    check_first_batch_partial_completion_impact_health,
+)
+from quant_replay_system.first_batch_partial_completion_impact_index import (
+    build_first_batch_partial_completion_impact_index,
+)
+from quant_replay_system.first_batch_partial_completion_impact_status import (
+    run_first_batch_partial_completion_impact_status,
+)
 from quant_replay_system.first_batch_reviewer_evidence_completion_plan import (
     build_first_batch_reviewer_evidence_completion_plan,
 )
@@ -286,6 +298,294 @@ def test_research_status_includes_completion_plan_and_preserves_paper_priority(t
     assert metadata["first_batch_reviewer_evidence_completion_plan_reviewer_completion_required_count"] == 16
 
 
+def test_partial_completion_impact_without_fixture_keeps_all_rows_blocked(tmp_path: Path) -> None:
+    inputs = _write_inputs(tmp_path)
+    plan = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=tmp_path / "completion_plan",
+    )
+
+    impact = build_first_batch_partial_completion_impact(
+        completion_plan=plan.artifact_paths["artifact_dir"],
+        output_dir=tmp_path / "impact",
+    )
+
+    assert impact.row_count == 16
+    assert impact.completed_field_count == 0
+    assert impact.blocker_reduced_count == 0
+    assert impact.checklist_pass_count == 0
+    assert impact.remaining_blocked_count == 16
+    assert impact.clean_review_updates_created is False
+    assert impact.approval_applied is False
+
+    frame = pd.read_csv(impact.artifact_paths["impact_csv"], dtype=str, keep_default_na=False)
+    assert set(frame["symbol"]) == {"000001", "159915"}
+    assert set(frame["checklist_pass_after_partial_completion"]) == {"False"}
+    assert set(frame["approval_candidate_after_partial_completion"]) == {"False"}
+    assert set(frame["include_flag_after_partial_completion"]) == {"False"}
+    assert set(frame["valid_for_signal_date_after_partial_completion"]) == {"False"}
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in impact.artifact_paths["impact_csv"].read_text(encoding="utf-8")
+    assert not (impact.artifact_paths["artifact_dir"] / "review_updates.csv").exists()
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
+
+
+def test_partial_completion_impact_fixture_reduces_only_reviewer_metadata(tmp_path: Path, capsys) -> None:
+    inputs = _write_inputs(tmp_path)
+    plan = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=tmp_path / "completion_plan",
+    )
+    fixture = _write_tiny_manual_completion_fixture(plan.artifact_paths["reviewer_completion_template"], tmp_path)
+
+    impact = build_first_batch_partial_completion_impact(
+        completion_plan=plan.artifact_paths["artifact_dir"],
+        partial_completion=fixture,
+        output_dir=tmp_path / "impact",
+    )
+
+    assert impact.row_count == 16
+    assert impact.completed_row_count == 1
+    assert impact.completed_field_count == 5
+    assert impact.blocker_reduced_count == 1
+    assert impact.material_blocker_reduced_count == 0
+    assert impact.checklist_pass_count == 0
+    assert impact.remaining_blocked_count == 16
+    assert impact.clean_review_updates_created is False
+    assert impact.approval_applied is False
+
+    frame = pd.read_csv(impact.artifact_paths["impact_csv"], dtype=str, keep_default_na=False)
+    target = frame.loc[
+        (frame["signal_date"] == "2024-04-02")
+        & (frame["symbol"] == "000001")
+        & (frame["universe_name"] == "stock_core")
+    ]
+    assert len(target) == 1
+    row = target.iloc[0]
+    assert row["symbol"] == "000001"
+    assert row["partial_completion_found"] == "True"
+    assert row["completed_reviewer_metadata"] == "reviewer;reviewed_at;review_reason;evidence_source;evidence_reference"
+    assert row["blocker_reduction_class"] == "REVIEWER_METADATA_ONLY"
+    assert row["material_checklist_blocker_reduced"] == "False"
+    assert row["review_status_after_partial_completion"] == "NEEDS_MORE_EVIDENCE"
+    assert row["include_flag_after_partial_completion"] == "False"
+    assert row["valid_for_signal_date_after_partial_completion"] == "False"
+    assert row["survivorship_bias_resolved_after_partial_completion"] == "False"
+    assert "as_of_date" in row["remaining_missing_evidence_fields"]
+    assert "survivorship_bias_resolution" in row["remaining_missing_evidence_categories"]
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in impact.artifact_paths["impact_csv"].read_text(encoding="utf-8")
+    assert not (impact.artifact_paths["artifact_dir"] / "review_updates.csv").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_review").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_export_readiness").exists()
+    assert not (tmp_path / "point_in_time_universe_export_staging").exists()
+    assert not (tmp_path / "current_candidates").exists()
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
+
+    assert (
+        cli.main(
+            [
+                "first-batch-partial-completion-impact",
+                "--completion-plan",
+                str(plan.artifact_paths["artifact_dir"]),
+                "--partial-completion",
+                str(fixture),
+                "--output-dir",
+                str(tmp_path / "impact_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "row_count: 16" in output
+    assert "completed_row_count: 1" in output
+    assert "checklist_pass_count: 0" in output
+    assert "approval_applied: False" in output
+
+
+def test_partial_completion_impact_index_health_status_and_cli(tmp_path: Path, capsys) -> None:
+    inputs = _write_inputs(tmp_path)
+    plan = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=tmp_path / "completion_plan",
+    )
+    impact = build_first_batch_partial_completion_impact(
+        completion_plan=plan.artifact_paths["artifact_dir"],
+        output_dir=tmp_path / "impact",
+    )
+
+    index = build_first_batch_partial_completion_impact_index(
+        root=tmp_path / "impact",
+        output_dir=tmp_path / "impact_index",
+    )
+    assert index.artifact_count == 1
+    assert index.index_frame.iloc[0]["impact_id"] == impact.impact_id
+    assert index.index_frame.iloc[0]["completed_row_count"] == 0
+
+    health = check_first_batch_partial_completion_impact_health(
+        root=tmp_path / "impact",
+        output_dir=tmp_path / "impact_health",
+    )
+    assert health.status == "PASS"
+    assert health.issue_count == 0
+
+    status = run_first_batch_partial_completion_impact_status(
+        root=tmp_path / "impact",
+        output_dir=tmp_path / "impact_status",
+    )
+    assert status.status == "WARN"
+    assert status.workflow_stage == "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION"
+    assert status.latest_impact_id == impact.impact_id
+    assert status.completed_row_count == 0
+    assert status.approval_applied is False
+    assert status.clean_review_updates_created is False
+
+    for command in [
+        "first-batch-partial-completion-impact-index",
+        "first-batch-partial-completion-impact-health",
+        "first-batch-partial-completion-impact-status",
+    ]:
+        assert cli.main([command, "--root", str(tmp_path / "impact"), "--output-dir", str(tmp_path / command)]) == 0
+    output = capsys.readouterr().out
+    assert "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION" in output
+
+
+def test_partial_completion_impact_health_fails_for_unsafe_artifacts(tmp_path: Path) -> None:
+    inputs = _write_inputs(tmp_path)
+    plan = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=tmp_path / "completion_plan",
+    )
+    impact = build_first_batch_partial_completion_impact(
+        completion_plan=plan.artifact_paths["artifact_dir"],
+        output_dir=tmp_path / "impact",
+    )
+
+    metadata = json.loads(impact.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    metadata["approval_applied"] = True
+    impact.artifact_paths["metadata"].write_text(json.dumps(metadata), encoding="utf-8")
+
+    frame = pd.read_csv(impact.artifact_paths["impact_csv"], dtype=str, keep_default_na=False)
+    frame.loc[0, "review_status_after_partial_completion"] = "APPROVED_FOR_PIT_UNIVERSE"
+    frame.to_csv(impact.artifact_paths["impact_csv"], index=False)
+    (impact.artifact_paths["artifact_dir"] / "review_updates.csv").write_text("symbol\n000001\n", encoding="utf-8")
+
+    health = check_first_batch_partial_completion_impact_health(
+        root=tmp_path / "impact",
+        output_dir=tmp_path / "impact_health",
+    )
+
+    assert health.status == "FAIL"
+    issues = set(health.health_frame["issue_code"])
+    assert "APPROVAL_APPLIED_DETECTED" in issues
+    assert "APPROVED_FOR_PIT_UNIVERSE_DETECTED" in issues
+    assert "CLEAN_REVIEW_UPDATES_FILE_DETECTED" in issues
+
+
+def test_partial_completion_impact_status_for_metadata_only_fixture(tmp_path: Path) -> None:
+    inputs = _write_inputs(tmp_path)
+    plan = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=tmp_path / "completion_plan",
+    )
+    fixture = _write_tiny_manual_completion_fixture(plan.artifact_paths["reviewer_completion_template"], tmp_path)
+    impact = build_first_batch_partial_completion_impact(
+        completion_plan=plan.artifact_paths["artifact_dir"],
+        partial_completion=fixture,
+        output_dir=tmp_path / "impact",
+    )
+
+    status = run_first_batch_partial_completion_impact_status(
+        root=tmp_path / "impact",
+        output_dir=tmp_path / "impact_status",
+    )
+
+    assert status.latest_impact_id == impact.impact_id
+    assert status.workflow_stage == "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_METADATA_ONLY_REDUCTION"
+    assert status.completed_row_count == 1
+    assert status.completed_field_count == 5
+    assert status.blocker_reduced_count == 1
+    assert status.material_blocker_reduced_count == 0
+    assert status.checklist_pass_count == 0
+    assert status.remaining_blocked_count == 16
+    assert status.approval_applied is False
+
+
+def test_research_status_includes_partial_completion_impact_and_preserves_paper_priority(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    reports = tmp_path / "reports"
+    inputs = _write_inputs(tmp_path / "inputs")
+    plan = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=reports / "first_batch_reviewer_evidence_completion_plan",
+    )
+    impact = build_first_batch_partial_completion_impact(
+        completion_plan=plan.artifact_paths["artifact_dir"],
+        output_dir=reports / "first_batch_partial_completion_impact",
+    )
+    _write_paper_workflow_status(reports)
+
+    result = run_local_research_dashboard(root=reports, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_first_batch_partial_completion_impact_id == impact.impact_id
+    assert result.first_batch_partial_completion_impact_stage == "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION"
+    assert result.first_batch_partial_completion_impact_completed_row_count == 0
+    assert result.first_batch_partial_completion_impact_checklist_pass_count == 0
+    assert result.first_batch_partial_completion_impact_remaining_blocked_count == 16
+    assert result.first_batch_partial_completion_impact_clean_review_updates_created is False
+    assert result.first_batch_partial_completion_impact_approval_applied is False
+
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str, keep_default_na=False)
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    assert summary.iloc[0]["latest_first_batch_partial_completion_impact_id"] == impact.impact_id
+    assert metadata["latest_first_batch_partial_completion_impact_id"] == impact.impact_id
+    assert metadata["first_batch_partial_completion_impact_remaining_blocked_count"] == 16
+
+    assert (
+        cli.main(
+            [
+                "research-status",
+                "--root",
+                str(reports),
+                "--output-dir",
+                str(tmp_path / "dashboard_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"latest_first_batch_partial_completion_impact_id: {impact.impact_id}" in output
+    assert "first_batch_partial_completion_impact_stage: FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION" in output
+    assert "first_batch_partial_completion_impact_approval_applied: False" in output
+
+
 def _write_inputs(tmp_path: Path) -> dict[str, Path]:
     evidence_update_plan = _write_evidence_update_plan(tmp_path)
     downstream = _write_downstream_impact(tmp_path)
@@ -547,3 +847,27 @@ def _write_paper_workflow_status(root: Path) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def _write_tiny_manual_completion_fixture(template_path: Path, tmp_path: Path) -> Path:
+    template = pd.read_csv(template_path, dtype=str, keep_default_na=False)
+    fixture = template.loc[
+        (template["signal_date"] == "2024-04-02")
+        & (template["symbol"] == "000001")
+        & (template["universe_name"] == "stock_core")
+    ].copy()
+    assert len(fixture) == 1
+    fixture.loc[:, "review_status"] = "NEEDS_MORE_EVIDENCE"
+    fixture.loc[:, "include_flag"] = "False"
+    fixture.loc[:, "valid_for_signal_date"] = "False"
+    fixture.loc[:, "survivorship_bias_resolved"] = "False"
+    fixture.loc[:, "reviewer"] = "diagnostics_reviewer"
+    fixture.loc[:, "reviewed_at"] = "2026-06-06T00:00:00+08:00"
+    fixture.loc[:, "review_reason"] = "Diagnostics-only manual completion smoke; not PIT approval."
+    fixture.loc[:, "evidence_source"] = "DIAGNOSTICS_ONLY_FIXTURE"
+    fixture.loc[:, "evidence_reference"] = "Shape validation only; no authoritative PIT evidence asserted."
+    fixture_dir = tmp_path / "manual_diagnostics"
+    fixture_dir.mkdir(parents=True, exist_ok=True)
+    fixture_path = fixture_dir / "tiny_manual_reviewer_completion_fixture.csv"
+    fixture.to_csv(fixture_path, index=False)
+    return fixture_path
