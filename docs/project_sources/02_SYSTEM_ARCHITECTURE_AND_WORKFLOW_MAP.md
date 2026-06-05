@@ -1,7 +1,7 @@
 # System Architecture and Workflow Map
 
 > Status: working memory document  
-> Last generated: 2026-06-04  
+> Last generated: 2026-06-05  
 > Permanence: temporary; update after major architecture or workflow additions.
 
 ## High-Level Architecture
@@ -112,7 +112,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Evidence Planning, Checklist Validation, Policy Comparison, and Evidence Packet
+### Multi-Date Candidate Planning, PIT Evidence, Policy Comparison, and Evidence Packets
 
 ```text
 market cache coverage
@@ -139,6 +139,10 @@ market cache coverage
 → EOD_POST_CLOSE_LOW_BUDGET_PIT policy audit
 → pit-evidence-policy-profile-comparison
 → PIT official status evidence packet
+→ SZSE 1815 quotation diagnostics
+→ SZSE/CNInfo exception no-hit diagnostics
+→ official no-hit evidence policy audit
+→ EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT policy profile
 → index / health / status
 → research-status
 ```
@@ -146,7 +150,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
+PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -301,7 +305,7 @@ Validator outputs are gate reports, not approvals. A row passing the checklist w
 
 ### PIT Evidence Policy Profile Comparison Fields
 
-The policy profile comparison workflow compares strict validation with an opt-in low-budget EOD/post-close policy profile.
+The policy profile comparison workflow compares strict validation with opt-in policy profiles.
 
 It reports:
 
@@ -311,13 +315,40 @@ profile_name
 row_count
 strict_checklist_pass_count
 eod_low_budget_checklist_pass_count
+reviewed_no_hit_support_pass_count
+no_hit_context_supported_count
+reviewer_acceptance_required_count
 relaxed_blocker_count
 remaining_blocked_count
-relaxed_blocker_matrix
-remaining_blocker_matrix
 ```
 
-`EOD_POST_CLOSE_LOW_BUDGET_PIT` is opt-in and report-only. It may relax timing/cache-support context only when explicit decision-time rules are satisfied. It must not become the default strict profile, apply approval, run PIT review, or export universe files.
+Known profiles:
+
+```text
+STRICT_PIT
+EOD_POST_CLOSE_LOW_BUDGET_PIT
+EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
+```
+
+`EOD_POST_CLOSE_LOW_BUDGET_PIT` is opt-in and report-only. It may relax timing/cache-support context only when explicit decision-time rules are satisfied.
+
+`EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` is opt-in and report-only. It may treat no-hit observations as reviewer-accepted supporting context only when source coverage, query window, and reviewer acceptance are explicit.
+
+Neither profile changes strict defaults, applies approval, runs PIT review, exports universe files, or creates usable current-candidates input.
+
+Current reviewed no-hit profile comparison state:
+
+```text
+comparison_id: c1a75d1091c6
+profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
+row_count: 16
+strict_checklist_pass_count: 0
+eod_low_budget_checklist_pass_count: 0
+reviewed_no_hit_support_pass_count: 0
+no_hit_context_supported_count: 16
+reviewer_acceptance_required_count: 16
+remaining_blocked_count: 16
+```
 
 ### PIT Official Status Evidence Packet Fields
 
@@ -338,22 +369,19 @@ checklist_pass_count
 blocked_count
 ```
 
-Current packet state:
+Evidence packets are report-only. Supporting official symbol-level evidence does not become date-specific proof, and local EOD cache remains supporting EOD context only.
+
+### SZSE 1815 Quotation Diagnostics
+
+Diagnostics have shown:
 
 ```text
-packet_id: 8efabe2ffe62
-stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
-row_count: 16
-evidence_packet_row_count: 72
-strong_official_date_specific_count: 0
-supporting_official_symbol_level_count: 16
-supporting_local_eod_cache_count: 16
-missing_count: 40
-checklist_pass_count: 0
-blocked_count: 16
+000001: 8/8 official same-date quotation rows found
+159915: 8/8 official same-date quotation rows found
+STRONG_OFFICIAL_DATE_SPECIFIC for quotation/traded presence: 16/16
 ```
 
-Evidence packets are report-only. Supporting official symbol-level evidence does not become date-specific proof, and local EOD cache remains supporting EOD context only.
+This is strong date-specific evidence for quotation/traded presence only. It does not automatically prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution.
 
 ### PIT Evidence Update Ingestion Fields
 
@@ -395,18 +423,21 @@ Codex diagnostics evidence discovery: 16 NEEDS_MORE_EVIDENCE rows pass ingestion
 PIT evidence checklist validator: 16 rows blocked, 0 checklist-pass approval candidates
 PIT evidence policy profile comparison: EOD low-budget profile relaxes 16 timing/context blockers but still leaves 16 rows blocked, 0 pass candidates
 PIT official status evidence packet: 72 evidence packet rows, 0 strong official date-specific, 16 supporting official symbol-level, 16 supporting local EOD cache, 40 missing, 16 blocked rows
+SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-presence rows found
+Reviewed no-hit support policy comparison: no-hit context supported for 16 rows, reviewer acceptance required for 16 rows, 0 pass candidates
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Official Date-Specific Status Evidence Source Design Audit v0.1
+PIT Official Status Evidence Packet Enrichment v0.1
 ```
 
 Purpose:
 
-- target sources capable of producing `STRONG_OFFICIAL_DATE_SPECIFIC` evidence;
-- determine whether official SZSE/CNInfo source design can solve daily not-delisted, ST/no-ST, suspension/trading status, and survivorship-bias resolution;
-- keep this as read-only / diagnostics-first before any implementation.
+- enrich the existing evidence packet with the SZSE 1815 same-date quotation diagnostics and reviewed no-hit support policy context;
+- keep evidence strength separation explicit: date-specific traded presence, no-hit supporting context, symbol-level context, local EOD context, and missing fields;
+- rerun diagnostics-only ingestion, checklist validation, and policy comparison;
+- keep the branch report-only before any applied PIT review.
 
 Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.

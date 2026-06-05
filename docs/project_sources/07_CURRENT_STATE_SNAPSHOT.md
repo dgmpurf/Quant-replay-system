@@ -1,7 +1,7 @@
 # Current State Snapshot
 
 > Status: working memory document  
-> Last generated: 2026-06-04  
+> Last generated: 2026-06-05  
 > Permanence: temporary; refresh after the next major checkpoint or when source state changes.
 
 ## Summary
@@ -52,6 +52,7 @@ It is not a live trading system.
 - PIT evidence checklist validator.
 - PIT evidence policy profile comparison.
 - PIT official status evidence packet.
+- Reviewed no-hit support policy profile.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -130,6 +131,7 @@ packet_id: 8efabe2ffe62
 packet_rerun_ingestion_id: ac6846aef520
 packet_rerun_validator_id: 498a3d0786af
 packet_rerun_policy_comparison_id: b7e7ec8f66f5
+reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 ```
 
 Current counts:
@@ -204,27 +206,45 @@ supporting_local_eod_cache_count: 16
 missing_count: 40
 checklist_pass_count: 0
 blocked_count: 16
+
+SZSE 1815 same-date quotation diagnostics:
+request_count: 16
+HTTP 200 + JSON parse count: 16
+rows found for 000001: 8 / 8
+rows found for 159915: 8 / 8
+STRONG_OFFICIAL_DATE_SPECIFIC for quotation/traded presence: 16 / 16
+
+Exception / no-hit diagnostics:
+positive hits found: context-only / not approval-grade
+no-hit observations: policy-dependent
+strong date-specific exception evidence found: 0
+
+Reviewed no-hit support policy profile:
+comparison_id: c1a75d1091c6
+profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
+reviewed_no_hit_support_pass_count: 0
+no_hit_context_supported_count: 16
+reviewer_acceptance_required_count: 16
+remaining_blocked_count: 16
 ```
 
-Current PIT official status evidence packet stage:
+Current PIT evidence policy comparison stage:
 
 ```text
-PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
+PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
 ```
 
 Meaning:
 
-The project has moved from “strict vs EOD/post-close low-budget policy comparison exists and also leaves all first-batch rows blocked” to “PIT official status evidence packets classify current evidence strength and still leave all first-batch rows blocked.”
+The project has moved from “PIT official status evidence packets classify current evidence strength and still leave all first-batch rows blocked” to “policy comparison can now express reviewed no-hit support context, but still leaves all first-batch rows blocked.”
 
-The packet confirms:
+The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile is opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. It does not change strict defaults and it does not create approvals.
 
-- there is no complete official date-specific daily status evidence yet;
-- official symbol-level evidence is useful context/support only;
-- local market cache is supporting EOD context only;
-- no row currently satisfies strict or EOD low-budget checklist-pass requirements;
-- existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
+The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. This is the strongest current date-specific evidence, but it still does not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by itself.
 
-The next blocker is designing or finding an official date-specific evidence source chain for daily listed/active/status, not-delisted, ST/no-ST, suspension/trading status, and survivorship-bias resolution.
+Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
+
+The next blocker is enriching the PIT official status evidence packet with SZSE 1815 same-date quotation evidence and reviewed no-hit context while preserving all safety gates.
 
 ## Current External Data Strategy
 
@@ -244,15 +264,15 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Official Date-Specific Status Evidence Source Design Audit v0.1
+PIT Official Status Evidence Packet Enrichment v0.1
 ```
 
 Purpose:
 
-- target sources capable of producing `STRONG_OFFICIAL_DATE_SPECIFIC` evidence;
-- inspect official/public candidate sources for date-specific listed/active/status proof;
-- decide whether a future acquisition workflow is feasible;
-- avoid adding more context-only evidence when the blocker is date-specific proof.
+- enrich the existing packet with SZSE 1815 official same-date quotation/traded-presence evidence;
+- incorporate reviewed no-hit support context as context only;
+- rerun diagnostics-only ingestion, checklist validation, and policy profile comparison;
+- keep all rows non-approved unless a future explicit PIT review workflow is run.
 
 Do not yet:
 
@@ -291,9 +311,10 @@ Recent milestone direction:
 - v1.14.0: PIT evidence checklist validator.
 - v1.15.0: PIT evidence policy profile comparison.
 - v1.16.0: PIT official status evidence packet.
+- v1.17.0: reviewed no-hit support policy profile.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Official Date-Specific Status Evidence Source Design Audit v0.1.
+Give me Codex tasks for PIT Official Status Evidence Packet Enrichment v0.1.
 ```

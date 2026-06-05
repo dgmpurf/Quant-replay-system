@@ -19,6 +19,18 @@ from quant_replay_system.pit_official_status_evidence_packet_index import (
 from quant_replay_system.pit_official_status_evidence_packet_status import (
     run_pit_official_status_evidence_packet_status,
 )
+from quant_replay_system.pit_official_status_evidence_packet_enrichment import (
+    build_pit_official_status_evidence_packet_enrichment,
+)
+from quant_replay_system.pit_official_status_evidence_packet_enrichment_health import (
+    check_pit_official_status_evidence_packet_enrichment_health,
+)
+from quant_replay_system.pit_official_status_evidence_packet_enrichment_index import (
+    build_pit_official_status_evidence_packet_enrichment_index,
+)
+from quant_replay_system.pit_official_status_evidence_packet_enrichment_status import (
+    run_pit_official_status_evidence_packet_enrichment_status,
+)
 
 
 def test_build_packet_preserves_symbols_and_classifies_evidence_strength(tmp_path: Path) -> None:
@@ -148,6 +160,88 @@ def test_packet_cli_builds_report_only_artifacts(tmp_path: Path, capsys) -> None
     assert "No approval applied" in output.out
 
 
+def test_enrichment_merges_quotation_and_reviewed_no_hit_context_without_approval(tmp_path: Path) -> None:
+    inputs = _write_enrichment_inputs(tmp_path)
+
+    result = build_pit_official_status_evidence_packet_enrichment(
+        packet=inputs["packet"],
+        quotation_probe=inputs["quotation"],
+        policy_comparison=inputs["comparison"],
+        output_dir=tmp_path / "enrichment",
+    )
+
+    assert result.row_count == 2
+    assert result.strong_official_date_specific_quotation_count == 2
+    assert result.reviewed_no_hit_context_supported_count == 2
+    assert result.reviewer_acceptance_required_count == 2
+    assert result.checklist_pass_count == 0
+    assert result.remaining_blocked_count == 2
+    assert result.enriched_frame["symbol"].tolist() == ["000001", "159915"]
+    assert set(result.enriched_frame["no_approval_applied"]) == {True}
+    assert set(result.enriched_frame["no_universe_export"]) == {True}
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in set(result.enriched_frame.get("review_status", []))
+
+
+def test_enrichment_index_health_status_and_cli_work(tmp_path: Path, capsys) -> None:
+    inputs = _write_enrichment_inputs(tmp_path)
+    root = tmp_path / "enrichment"
+    build_pit_official_status_evidence_packet_enrichment(
+        packet=inputs["packet"],
+        quotation_probe=inputs["quotation"],
+        policy_comparison=inputs["comparison"],
+        output_dir=root,
+    )
+
+    index = build_pit_official_status_evidence_packet_enrichment_index(root=root, output_dir=tmp_path / "index")
+    health = check_pit_official_status_evidence_packet_enrichment_health(root=root, output_dir=tmp_path / "health")
+    status = run_pit_official_status_evidence_packet_enrichment_status(root=root, output_dir=tmp_path / "status")
+
+    assert index["artifact_count"] == 1
+    assert health["status"] == "PASS"
+    assert status["workflow_stage"] == "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED"
+    assert status["strong_official_date_specific_quotation_count"] == 2
+    assert status["reviewed_no_hit_context_supported_count"] == 2
+    assert status["remaining_blocked_count"] == 2
+
+    code = cli.main(
+        [
+            "pit-official-status-evidence-packet-enrichment-status",
+            "--root",
+            str(root),
+            "--output-dir",
+            str(tmp_path / "cli-status"),
+        ]
+    )
+    output = capsys.readouterr()
+    assert code == 0
+    assert "workflow_stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED" in output.out
+    assert "remaining_blocked_count: 2" in output.out
+
+
+def test_enrichment_cli_builds_report_only_artifacts(tmp_path: Path, capsys) -> None:
+    inputs = _write_enrichment_inputs(tmp_path)
+
+    code = cli.main(
+        [
+            "pit-official-status-evidence-packet-enrichment",
+            "--packet",
+            str(inputs["packet"]),
+            "--quotation-probe",
+            str(inputs["quotation"]),
+            "--policy-comparison",
+            str(inputs["comparison"]),
+            "--output-dir",
+            str(tmp_path / "enrichment"),
+        ]
+    )
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "row_count: 2" in output.out
+    assert "checklist_pass_count: 0" in output.out
+    assert "No approval applied" in output.out
+
+
 def _write_packet_inputs(tmp_path: Path) -> dict[str, Path]:
     smoke = tmp_path / "smoke"
     smoke.mkdir()
@@ -264,6 +358,129 @@ def _write_packet_inputs(tmp_path: Path) -> dict[str, Path]:
         "etf_checklist": etf_checklist,
         "source_acceptance": source_acceptance,
     }
+
+
+def _write_enrichment_inputs(tmp_path: Path) -> dict[str, Path]:
+    packet = tmp_path / "packet" / "packet-a"
+    packet.mkdir(parents=True)
+    quotation = tmp_path / "quotation"
+    quotation.mkdir()
+    comparison = tmp_path / "comparison" / "comparison-a"
+    comparison.mkdir(parents=True)
+    rows = [
+        {
+            "signal_date": "2024-04-02",
+            "symbol": "000001",
+            "universe_name": "stock_core",
+            "review_status": "NEEDS_MORE_EVIDENCE",
+            "include_flag": "False",
+            "reviewer": "",
+            "reviewed_at": "",
+            "review_reason": "diagnostics-only draft",
+            "evidence_source": "official_public_sources;local_market_cache_context",
+            "evidence_path": "data/cache/market/daily_bars.csv",
+            "evidence_reference": "local_market_cache:000001:2024-04-02",
+            "listed_date": "1991-04-03",
+            "delisted_date": "",
+            "is_active": "",
+            "is_st": "",
+            "is_suspended": "False",
+            "listed_date_evidence": "official_symbol_level",
+            "delisted_date_evidence": "",
+            "is_active_evidence": "",
+            "survivorship_bias_resolved": "False",
+            "as_of_date": "",
+            "name": "Ping An Bank",
+            "instrument_type": "STOCK",
+            "exchange": "SZSE",
+            "industry": "",
+            "min_lot": "100",
+            "t_plus_rule": "T+1_context",
+            "available_time": "2024-04-02 15:30:00",
+            "revision_id": "draft",
+            "source": "AKSHARE_OPTIONAL",
+        },
+        {
+            "signal_date": "2024-04-02",
+            "symbol": "159915",
+            "universe_name": "etf_core",
+            "review_status": "NEEDS_MORE_EVIDENCE",
+            "include_flag": "False",
+            "reviewer": "",
+            "reviewed_at": "",
+            "review_reason": "diagnostics-only draft",
+            "evidence_source": "official_public_sources;local_market_cache_context",
+            "evidence_path": "data/cache/market/daily_bars.csv",
+            "evidence_reference": "local_market_cache:159915:2024-04-02",
+            "listed_date": "2011-12-09",
+            "delisted_date": "",
+            "is_active": "",
+            "is_st": "",
+            "is_suspended": "False",
+            "listed_date_evidence": "official_symbol_level",
+            "delisted_date_evidence": "",
+            "is_active_evidence": "",
+            "survivorship_bias_resolved": "False",
+            "as_of_date": "",
+            "name": "ChiNext ETF",
+            "instrument_type": "ETF",
+            "exchange": "SZSE",
+            "industry": "",
+            "min_lot": "100",
+            "t_plus_rule": "T+1_context",
+            "available_time": "2024-04-02 15:30:00",
+            "revision_id": "draft",
+            "source": "AKSHARE_OPTIONAL",
+        },
+    ]
+    pd.DataFrame(rows).to_csv(packet / "updated_draft_completed_updates.csv", index=False)
+    (packet / "metadata.json").write_text('{"packet_id":"packet-a","status":"WARN"}', encoding="utf-8")
+    pd.DataFrame(
+        [
+            {
+                "symbol": row["symbol"],
+                "signal_date": row["signal_date"],
+                "universe_name": row["universe_name"],
+                "tabkey_used": "tab1" if row["symbol"] == "000001" else "tab2",
+                "request_url": f"https://www.szse.cn/api/report/ShowReport?symbol={row['symbol']}",
+                "access_status": "HTTP_200",
+                "response_status": "OK",
+                "parse_status": "PARSED",
+                "symbol_found": "true",
+                "date_found": "true",
+                "fields_observed": "symbol,date,close,volume",
+                "source_timestamp_or_as_of_date": row["signal_date"],
+                "can_support_traded_context": "true",
+                "can_support_active_context": "true",
+                "can_support_suspension_context": "false",
+                "can_support_not_delisted_context": "policy_dependent",
+                "can_support_ST_no_ST_context": "false",
+                "PIT_suitability": "DATE_SPECIFIC_QUOTATION",
+                "evidence_strength_recommendation": "STRONG_OFFICIAL_DATE_SPECIFIC",
+            }
+            for row in rows
+        ]
+    ).to_csv(quotation / "per_symbol_date_quotation_presence.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                "comparison_id": "comparison-a",
+                "signal_date": row["signal_date"],
+                "symbol": row["symbol"],
+                "universe_name": row["universe_name"],
+                "strict_checklist_pass": "false",
+                "eod_low_budget_checklist_pass": "false",
+                "reviewed_no_hit_support_pass": "false",
+                "no_hit_context_supported": "true",
+                "reviewer_acceptance_required": "true",
+                "remaining_blocked": "true",
+                "remaining_blockers": "reviewer_no_hit_acceptance;survivorship_bias_resolution",
+            }
+            for row in rows
+        ]
+    ).to_csv(comparison / "pit_evidence_policy_profile_comparison.csv", index=False)
+    (comparison / "metadata.json").write_text('{"comparison_id":"comparison-a","status":"WARN"}', encoding="utf-8")
+    return {"packet": packet, "quotation": quotation, "comparison": comparison}
 
 
 def _update_rows() -> list[dict]:

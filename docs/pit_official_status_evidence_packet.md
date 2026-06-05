@@ -13,6 +13,8 @@ python -m quant_replay_system.cli pit-official-status-evidence-packet-health
 python -m quant_replay_system.cli pit-official-status-evidence-packet-status
 ```
 
+Use `pit-official-status-evidence-packet-enrichment` after the diagnostics-only SZSE 1815 quotation and reviewed no-hit policy comparison probes are available. The enrichment command is also report-only; it consolidates strong official same-date quotation context and reviewed no-hit support context without approving rows or exporting universe files. See [pit_official_status_evidence_packet_enrichment.md](pit_official_status_evidence_packet_enrichment.md).
+
 The build command defaults to the current first-batch diagnostics inputs:
 
 - `outputs/reports/manual_diagnostics/szse_status_source_access_smoke_v0_1/`
@@ -56,9 +58,13 @@ Files:
 
 `updated_draft_completed_updates.csv` is still a draft. Incomplete rows remain `NEEDS_MORE_EVIDENCE`, `include_flag=False`, and `survivorship_bias_resolved=False`.
 
+Enrichment artifacts are written under `outputs/reports/pit_official_status_evidence_packet_enrichment/<enrichment_id>/`. The enrichment layer keeps `checklist_pass=false` and records remaining blockers such as reviewer no-hit acceptance, missing PIT-safe `as_of_date`, active/not-delisted evidence, stock ST/no-ST evidence, and survivorship-bias resolution.
+
 ## Research Status
 
 `research-status` includes the latest packet status as PIT evidence-preparation context. A blocked packet means evidence is still missing; it is not a current-candidates failure, strategy failure, paper workflow failure, or trading signal.
+
+`research-status` also includes the latest packet enrichment status when present, including source packet id, policy comparison id, official quotation count, reviewed no-hit context count, reviewer acceptance required count, checklist-pass count, remaining blocked count, report path, and next manual action.
 
 Later paper workflow priority is preserved. If paper workflow artifacts are already more advanced, packet fields remain visible but do not override `PAPER_WORKFLOW_READY`.
 

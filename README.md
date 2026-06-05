@@ -137,6 +137,10 @@ Use `pit-official-status-evidence-packet` to consolidate official/public source-
 
 Use `pit-official-status-evidence-packet-index`, `pit-official-status-evidence-packet-health`, and `pit-official-status-evidence-packet-status` to discover, safety-check, and summarize packet artifacts. `research-status` includes the latest packet context, including supporting official symbol-level counts, local EOD cache counts, missing evidence counts, checklist-pass counts, and blocked counts while preserving later paper workflow priority.
 
+Use `pit-official-status-evidence-packet-enrichment` to merge official same-date SZSE quotation context and reviewed no-hit policy support into the latest PIT evidence packet; see [docs/pit_official_status_evidence_packet_enrichment.md](docs/pit_official_status_evidence_packet_enrichment.md). The enrichment remains report-only: it does not approve rows, run PIT review, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
+
+Use `pit-official-status-evidence-packet-enrichment-index`, `pit-official-status-evidence-packet-enrichment-health`, and `pit-official-status-evidence-packet-enrichment-status` to discover, safety-check, and summarize enrichment artifacts. `research-status` includes the latest enrichment context, including strong same-date quotation counts, reviewed no-hit support counts, reviewer-acceptance-required counts, checklist-pass counts, and remaining blocked counts while preserving later paper workflow priority.
+
 Use `universe-profile-policy-audit` to classify local universe labels such as legacy mixed `etf_core`, report STOCK/ETF distribution, and produce future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_policy_audit.md](docs/universe_profile_policy_audit.md). The audit is report-only and does not approve/reject rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
 
 Use `universe-profile-policy-audit-index`, `universe-profile-policy-audit-health`, and `universe-profile-policy-audit-status` to discover, safety-check, and summarize universe profile policy audit artifacts. `research-status` includes this policy context, including mixed-universe and split-guidance counts, while preserving later paper workflow priority.
@@ -178,6 +182,8 @@ For the v1.14.0 checkpoint covering PIT evidence checklist validation, artifact 
 For the v1.15.0 checkpoint covering EOD post-close low-budget PIT policy profile comparison and `research-status` integration, see [docs/release_checkpoint_v1.15.0.md](docs/release_checkpoint_v1.15.0.md).
 
 For the v1.16.0 checkpoint covering PIT official status evidence packet artifacts and `research-status` integration, see [docs/release_checkpoint_v1.16.0.md](docs/release_checkpoint_v1.16.0.md).
+
+For the v1.18.0 checkpoint covering PIT official status evidence packet enrichment and `research-status` integration, see [docs/release_checkpoint_v1.18.0.md](docs/release_checkpoint_v1.18.0.md).
 
 For the v1.17.0 checkpoint covering reviewed no-hit support in PIT evidence policy profile comparison, see [docs/release_checkpoint_v1.17.0.md](docs/release_checkpoint_v1.17.0.md).
 

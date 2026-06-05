@@ -1,8 +1,8 @@
 # Quant Replay System Project Source Pack Index
 
 > Status: working memory document  
-> Last generated: 2026-06-04  
-> Intended use: replace previous Project Source Pack after v1.16.0 PIT official status evidence packet checkpoint.  
+> Last generated: 2026-06-05  
+> Intended use: replace previous Project Source Pack after v1.17.0 reviewed no-hit support policy profile checkpoint.  
 > Permanence: temporary and replaceable. Refresh only after major checkpoint / stage changes, not after every small audit.
 
 ## Purpose
@@ -34,6 +34,8 @@ This pack is based on:
 - v1.14.0 PIT evidence checklist validator;
 - v1.15.0 PIT evidence policy profile comparison;
 - v1.16.0 PIT official status evidence packet;
+- v1.17.0 reviewed no-hit support policy profile;
+- diagnostics for SZSE 1815 same-date quotation, exception/no-hit probes, and official no-hit policy audit;
 - China A-share event-driven and industry-chain factor taxonomy sources.
 
 ## Accuracy Note
@@ -44,7 +46,7 @@ Many local outputs under `outputs/`, `data/raw/`, `data/cache`, and `data/proces
 
 ## Current Project Source Set
 
-Replace these after v1.16.0:
+Replace these after v1.17.0:
 
 ```text
 00_PROJECT_SOURCE_INDEX.md
@@ -68,7 +70,7 @@ FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
 
 ## Current Project State Summary
 
-The project has reached a PIT official status evidence packet checkpoint:
+The project has reached a reviewed no-hit support policy profile checkpoint:
 
 ```text
 local market data / reviewed exports / quality gates
@@ -97,16 +99,20 @@ local market data / reviewed exports / quality gates
 → EOD_POST_CLOSE_LOW_BUDGET_PIT policy audit
 → pit-evidence-policy-profile-comparison
 → PIT official status evidence packet
+→ SZSE 1815 same-date quotation probe
+→ SZSE/CNInfo exception no-hit probe
+→ official no-hit evidence policy audit
+→ EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT policy profile
 → index / health / status / research-status context
 ```
 
-Current PIT official status evidence packet state:
+Current PIT evidence policy profile comparison state:
 
 ```text
-PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
+PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
 ```
 
-Latest known active / planning artifacts:
+Latest known active / planning artifacts and diagnostics:
 
 ```text
 review_id: 7bc8ba08bf5a
@@ -128,9 +134,10 @@ packet_id: 8efabe2ffe62
 packet_rerun_ingestion_id: ac6846aef520
 packet_rerun_validator_id: 498a3d0786af
 packet_rerun_policy_comparison_id: b7e7ec8f66f5
+reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 ```
 
-Current evidence / validator / packet counts:
+Current evidence / validator / packet / policy counts:
 
 ```text
 approved rows: 0
@@ -194,41 +201,74 @@ PIT official status evidence packet:
   missing_count: 40
   checklist_pass_count: 0
   blocked_count: 16
+
+SZSE 1815 same-date quotation diagnostics:
+  target_rows: 16
+  http_200_json_parse_count: 16
+  rows_found_for_000001: 8 / 8
+  rows_found_for_159915: 8 / 8
+  strong_official_date_specific_for_quotation_traded_presence: 16 / 16
+
+Exception / no-hit diagnostics:
+  strong_date_specific_exception_evidence_found: 0
+  no_hit_observations: policy-dependent only
+
+Reviewed no-hit support profile:
+  comparison_id: c1a75d1091c6
+  profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
+  row_count: 16
+  strict_checklist_pass_count: 0
+  eod_low_budget_checklist_pass_count: 0
+  reviewed_no_hit_support_pass_count: 0
+  no_hit_context_supported_count: 16
+  reviewer_acceptance_required_count: 16
+  remaining_blocked_count: 16
 ```
 
-Key conclusion:
+## Key Conclusions
 
 ```text
 Existing etf_core artifacts are legacy_mixed_demo_universe / POLICY_AMBIGUOUS_DEMO_MIXED_UNIVERSE.
 They are not ETF-only artifacts.
 They should not be mutated in place.
+```
+
+```text
 Replacement worklist planning creates future stock_core and etf_core templates under outputs/reports only.
 Reviewed replacement worklist acceptance acknowledges those templates as planning context only.
 Guarded activation creates separate planning artifacts for stock_core and etf_core evidence work, but still does not approve rows, export universe files, or replace the legacy active worklist.
 Activated replacement worklist evidence update planning creates profile-specific evidence packages and first-batch packages, but does not create clean review_updates.csv or apply approvals.
+```
+
+```text
 Codex diagnostics can create NEEDS_MORE_EVIDENCE draft updates and validate ingestion schema, but no row currently passes the strict PIT evidence checklist.
-The EOD_POST_CLOSE_LOW_BUDGET_PIT profile is opt-in and report-only. It relaxes timing/cache-support context only; it does not change strict defaults or create approvals. Current 16 rows remain blocked under both strict and EOD low-budget profiles.
-The PIT official status evidence packet classifies existing evidence into strong/supporting/context/missing categories. Current evidence is useful for context and EOD support, but there is still no complete official date-specific daily status evidence.
+The EOD_POST_CLOSE_LOW_BUDGET_PIT profile is opt-in and report-only. It relaxes timing/cache-support context only; it does not change strict defaults or create approvals.
+The EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT profile is opt-in and report-only. It treats no-hit evidence only as reviewer-accepted supporting context; it does not create approvals or checklist-pass rows automatically.
+```
+
+```text
+The SZSE 1815 same-date quotation probe is the strongest current evidence breakthrough: it produced official date-specific quotation/traded-presence evidence for all 16 first-batch rows.
+However, quotation presence alone still does not prove not-delisted, ST/no-ST, suspension status, or survivorship-bias resolution.
 ```
 
 ## Current Recommended Next Branch
 
 ```text
-Official Date-Specific Status Evidence Source Design Audit v0.1
+PIT Official Status Evidence Packet Enrichment v0.1
 ```
 
-This branch should target sources capable of producing `STRONG_OFFICIAL_DATE_SPECIFIC` evidence for the current first-batch rows:
+This branch should use the new diagnostics to enrich the evidence packet, still report-only:
 
 ```text
-official daily listed/active/status evidence
-→ official not-delisted or no-hit delisting evidence policy
-→ official ST/no-ST status evidence for 000001
-→ official suspension/trading status evidence by signal date
-→ survivorship-bias resolution basis
-→ diagnostics-only source design before any implementation
+SZSE 1815 official same-date quotation evidence
++ reviewed no-hit support context
++ prior official symbol-level context
++ local EOD cache support
+→ enriched evidence packet
+→ diagnostics-only ingestion/checklist/policy comparison reruns
 ```
 
-It should remain read-only / diagnostics-first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
+It should remain report-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
 
 User preference: if a step looks manual, first try to make Codex perform local/public evidence discovery, draft artifact generation, and validation. The user should only intervene for final evidence acceptance, credentials, CAPTCHA/login/paywall, or subjective judgment.
 
@@ -246,7 +286,7 @@ Add or replace Source when:
 
 Add a new source document when a topic becomes too important to live only in chat, such as:
 
-- official date-specific evidence acquisition semantics;
+- official date-specific evidence acquisition and reviewed no-hit support semantics;
 - accepted PIT universe export workflow;
 - per-date snapshot preparation;
 - forward-return labels;
@@ -261,11 +301,13 @@ Add a new source document when a topic becomes too important to live only in cha
 
 - justify live trading;
 - treat worklist rows as reviewed evidence;
-- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, policy comparison outputs, or official status evidence packets as usable universe input;
+- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, policy comparison outputs, official status evidence packets, SZSE 1815 quotation diagnostics, exception no-hit diagnostics, or reviewed no-hit profile outputs as usable universe input;
 - treat evidence packages as clean `review_updates.csv`;
 - treat checklist pass or policy comparison candidate preview as applied approval;
 - treat supporting official symbol-level evidence as date-specific daily status proof;
 - treat local EOD cache context as official date-specific status proof;
+- treat SZSE 1815 same-date quotation presence as not-delisted, no-ST, no-suspension, or survivorship resolution by itself;
+- treat no-hit observations as approval-grade without reviewer acceptance and source coverage documentation;
 - treat staging preview files as accepted local universe input;
 - treat approved PIT universe rows as exported usable universe files unless a future accepted export workflow says so;
 - treat legacy `etf_core` artifacts as ETF-only;

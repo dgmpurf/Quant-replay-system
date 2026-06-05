@@ -1462,6 +1462,81 @@ def test_cli_research_status_prints_pit_official_status_evidence_packet_fields(
     assert "pit_official_status_evidence_packet_blocked_count: 16" in output.out
 
 
+def test_dashboard_includes_pit_official_status_evidence_packet_enrichment_when_no_later_workflow_exists(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_official_status_evidence_packet_enrichment_artifact(root, enrichment_id="enrich-blocked")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_official_status_evidence_packet_enrichment_id == "enrich-blocked"
+    assert result.pit_official_status_evidence_packet_enrichment_status == "WARN"
+    assert (
+        result.pit_official_status_evidence_packet_enrichment_stage
+        == "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED"
+    )
+    assert result.pit_official_status_evidence_packet_enrichment_health_status == "PASS"
+    assert result.pit_official_status_evidence_packet_enrichment_source_packet_id == "packet-a"
+    assert result.pit_official_status_evidence_packet_enrichment_policy_comparison_id == "comparison-a"
+    assert result.pit_official_status_evidence_packet_enrichment_row_count == 16
+    assert result.pit_official_status_evidence_packet_enrichment_strong_official_date_specific_quotation_count == 16
+    assert result.pit_official_status_evidence_packet_enrichment_reviewed_no_hit_context_supported_count == 16
+    assert result.pit_official_status_evidence_packet_enrichment_reviewer_acceptance_required_count == 16
+    assert result.pit_official_status_evidence_packet_enrichment_checklist_pass_count == 0
+    assert result.pit_official_status_evidence_packet_enrichment_remaining_blocked_count == 16
+    assert row["warning_classification"] == "EXPECTED_REVIEWABLE_WARNING"
+
+
+def test_dashboard_preserves_later_paper_priority_over_pit_official_status_evidence_packet_enrichment(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_official_status_evidence_packet_enrichment_artifact(root, enrichment_id="enrich-paper-context")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS"
+    ].iloc[0]
+
+    assert result.latest_pit_official_status_evidence_packet_enrichment_id == "enrich-paper-context"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+
+
+def test_cli_research_status_prints_pit_official_status_evidence_packet_enrichment_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _pit_official_status_evidence_packet_enrichment_artifact(root, enrichment_id="enrich-cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_pit_official_status_evidence_packet_enrichment_id: enrich-cli" in output.out
+    assert "pit_official_status_evidence_packet_enrichment_status: WARN" in output.out
+    assert (
+        "pit_official_status_evidence_packet_enrichment_stage: "
+        "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED"
+    ) in output.out
+    assert "pit_official_status_evidence_packet_enrichment_remaining_blocked_count: 16" in output.out
+
+
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
     tmp_path: Path,
 ) -> None:
@@ -6391,6 +6466,127 @@ def _pit_official_status_evidence_packet_artifact(
                 "per_symbol_date_status_evidence": str(per_date_csv),
                 "evidence_strength_matrix": str(matrix_csv),
                 "updated_draft_completed_updates": str(draft_csv),
+                "report": str(report),
+                "metadata": str(metadata),
+            },
+        },
+    )
+    return folder
+
+
+def _pit_official_status_evidence_packet_enrichment_artifact(
+    root: Path,
+    *,
+    enrichment_id: str = "enrich-a",
+    status: str = "WARN",
+    source_packet_id: str = "packet-a",
+    policy_comparison_id: str = "comparison-a",
+    row_count: int = 16,
+    strong_official_date_specific_quotation_count: int = 16,
+    reviewed_no_hit_context_supported_count: int = 16,
+    reviewer_acceptance_required_count: int = 16,
+    checklist_pass_count: int = 0,
+    remaining_blocked_count: int = 16,
+    created_at: str = "2026-06-05T09:20:00+08:00",
+) -> Path:
+    folder = root / "pit_official_status_evidence_packet_enrichment" / enrichment_id
+    folder.mkdir(parents=True, exist_ok=True)
+    enriched_csv = folder / "pit_official_status_evidence_packet_enrichment.csv"
+    summary_csv = folder / "pit_official_status_evidence_packet_enrichment_summary.csv"
+    blockers_csv = folder / "remaining_enrichment_blockers.csv"
+    report = folder / "report.md"
+    metadata = folder / "metadata.json"
+    pd.DataFrame(
+        [
+            {
+                "enrichment_id": enrichment_id,
+                "source_packet_id": source_packet_id,
+                "policy_comparison_id": policy_comparison_id,
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "universe_name": "stock_core",
+                "strong_official_date_specific_quotation": True,
+                "quotation_source_url": "https://www.szse.cn/api/report/ShowReport?symbol=000001",
+                "quotation_fields_observed": "symbol,date,close,volume",
+                "reviewed_no_hit_context_supported": True,
+                "reviewer_acceptance_required": True,
+                "prior_official_symbol_level_context": True,
+                "local_eod_cache_context": True,
+                "missing_evidence_categories": "reviewer_no_hit_acceptance; survivorship_bias_resolution",
+                "remaining_blocked": True,
+                "checklist_pass": False,
+                "no_approval_applied": True,
+                "no_universe_export": True,
+                "no_current_candidates_generated": True,
+            }
+        ]
+    ).to_csv(enriched_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "enrichment_id": enrichment_id,
+                "status": status,
+                "source_packet_id": source_packet_id,
+                "policy_comparison_id": policy_comparison_id,
+                "row_count": row_count,
+                "strong_official_date_specific_quotation_count": (
+                    strong_official_date_specific_quotation_count
+                ),
+                "reviewed_no_hit_context_supported_count": reviewed_no_hit_context_supported_count,
+                "reviewer_acceptance_required_count": reviewer_acceptance_required_count,
+                "prior_official_symbol_level_context_count": 16,
+                "local_eod_cache_context_count": 16,
+                "checklist_pass_count": checklist_pass_count,
+                "remaining_blocked_count": remaining_blocked_count,
+            }
+        ]
+    ).to_csv(summary_csv, index=False)
+    pd.DataFrame(
+        [
+            {
+                "enrichment_id": enrichment_id,
+                "signal_date": "2024-04-02",
+                "symbol": "000001",
+                "blocker": "reviewer_no_hit_acceptance",
+            }
+        ]
+    ).to_csv(blockers_csv, index=False)
+    report.write_text("No approval applied. Enrichment only.", encoding="utf-8")
+    _write_json(
+        metadata,
+        {
+            "enrichment_id": enrichment_id,
+            "created_at": created_at,
+            "status": status,
+            "source_packet_id": source_packet_id,
+            "policy_comparison_id": policy_comparison_id,
+            "row_count": row_count,
+            "strong_official_date_specific_quotation_count": (
+                strong_official_date_specific_quotation_count
+            ),
+            "reviewed_no_hit_context_supported_count": reviewed_no_hit_context_supported_count,
+            "reviewer_acceptance_required_count": reviewer_acceptance_required_count,
+            "prior_official_symbol_level_context_count": 16,
+            "local_eod_cache_context_count": 16,
+            "checklist_pass_count": checklist_pass_count,
+            "remaining_blocked_count": remaining_blocked_count,
+            "approval_applied": False,
+            "pit_review_run": False,
+            "export_readiness_run": False,
+            "export_staging_run": False,
+            "universe_exported": False,
+            "active_worklist_mutated": False,
+            "no_data_raw_write": True,
+            "no_data_processed_write": True,
+            "no_current_candidates_generated": True,
+            "no_snapshot_built": True,
+            "no_forward_labels": True,
+            "cache_mutated": False,
+            "enrichment_only": True,
+            "output_files": {
+                "enriched_csv": str(enriched_csv),
+                "summary_csv": str(summary_csv),
+                "blocker_matrix": str(blockers_csv),
                 "report": str(report),
                 "metadata": str(metadata),
             },

@@ -20,6 +20,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a PIT evidence checklist validator checked strict stock/ETF evidence completeness before any approval review?
 - Has a PIT evidence policy profile comparison shown whether an opt-in EOD/post-close policy would relax only timing/cache-support blockers?
 - Has a PIT official status evidence packet consolidated official/source-access context and local EOD support without applying approvals?
+- Has a PIT official status evidence packet enrichment merged same-date quotation context and reviewed no-hit support without applying approvals?
 - Has an activated replacement worklist produced profile-specific manual evidence update packages?
 - Has a reviewed offline market update handoff produced snapshot/current-candidate artifacts?
 - Have current candidates been generated?
@@ -62,6 +63,7 @@ outputs/reports/point_in_time_universe_evidence_update_ingestion/status/
 outputs/reports/pit_evidence_checklist_validator/status/
 outputs/reports/pit_evidence_policy_profile_comparison/status/
 outputs/reports/pit_official_status_evidence_packet/status/
+outputs/reports/pit_official_status_evidence_packet_enrichment/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -239,6 +241,16 @@ The unified summary records the latest packet id, packet status/stage, health st
 When the status reports `PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED`, the dashboard treats the warning as expected reviewable evidence-acquisition work. It means evidence packets found some context or support but rows still lack complete approval evidence. It does not mean PIT review failed, candidate generation failed, strategy performance failed, or paper workflow failed.
 
 PIT official status evidence packets are earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to packet status; packet fields remain visible for audit. If packet health fails because required files/columns are missing or approval/export/data-write/current-candidates/snapshot/forward-label/trading safety flags are violated, `research-status` surfaces the failure as actionable when this layer is active.
+
+## PIT Official Status Evidence Packet Enrichment Status
+
+`research-status` includes `pit-official-status-evidence-packet-enrichment-status` as PIT official evidence enrichment context when those artifacts exist.
+
+The unified summary records the latest enrichment id, enrichment status/stage, health status, source packet id, policy comparison id, row count, strong official same-date quotation count, reviewed no-hit context supported count, reviewer acceptance required count, checklist-pass count, remaining blocked count, report path, and next manual action.
+
+When the status reports `PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED`, the dashboard treats the warning as expected reviewable evidence-preparation work. It means same-date quotation context and reviewed no-hit support have been merged, but rows still require manual acceptance and complete PIT/survivorship evidence. It does not mean PIT review failed, candidate generation failed, strategy performance failed, or paper workflow failed.
+
+PIT official status evidence packet enrichment is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to enrichment status; enrichment fields remain visible for audit. If enrichment health fails because required files/columns are missing, checklist-pass rows appear, or approval/export/data-write/current-candidates/snapshot/forward-label/trading safety flags are violated, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Universe Profile Policy Audit Status
 

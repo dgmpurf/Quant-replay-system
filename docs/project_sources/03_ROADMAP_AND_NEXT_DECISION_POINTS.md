@@ -1,7 +1,7 @@
 # Roadmap and Next Decision Points
 
 > Status: working memory document  
-> Last generated: 2026-06-04  
+> Last generated: 2026-06-05  
 > Permanence: temporary; update after each major checkpoint.
 
 ## Current Position
@@ -31,6 +31,7 @@ The project is now a broad local research system with:
 - PIT evidence checklist validator;
 - PIT evidence policy profile comparison;
 - PIT official status evidence packet;
+- reviewed no-hit support policy profile;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -61,12 +62,13 @@ Completed or largely complete:
 - PIT evidence checklist validator;
 - PIT evidence policy profile comparison;
 - PIT official status evidence packet;
+- reviewed no-hit support policy profile;
 - index / health / status and research-status integration for these stages.
 
-Current PIT official status evidence packet state:
+Current PIT evidence policy comparison state:
 
 ```text
-PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
+PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
 ```
 
 Latest known state:
@@ -91,6 +93,7 @@ packet_id: 8efabe2ffe62
 packet_rerun_ingestion_id: ac6846aef520
 packet_rerun_validator_id: 498a3d0786af
 packet_rerun_policy_comparison_id: b7e7ec8f66f5
+reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 ```
 
 ```text
@@ -149,42 +152,59 @@ supporting local EOD cache: 16
 missing: 40
 checklist_pass_count: 0
 blocked_count: 16
+
+SZSE 1815 same-date quotation diagnostics:
+rows found for 000001: 8 / 8
+rows found for 159915: 8 / 8
+strong official date-specific quotation/traded-presence evidence: 16 / 16
+
+reviewed no-hit support profile:
+comparison_id: c1a75d1091c6
+profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
+reviewed_no_hit_support_pass_count: 0
+no_hit_context_supported_count: 16
+reviewer_acceptance_required_count: 16
+remaining_blocked_count: 16
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Official Date-Specific Status Evidence Source Design Audit
+### Branch: PIT Official Status Evidence Packet Enrichment
 
 Suggested sequence:
 
-1. Use the PIT official status evidence packet as the driver.
-2. Focus only on evidence capable of becoming `STRONG_OFFICIAL_DATE_SPECIFIC`.
-3. Search local artifacts first.
-4. Use browser/web/plugin access only for light official/public source discovery.
-5. Target the remaining strongest blockers:
-   - daily not-delisted evidence;
-   - daily or as-of ST/no-ST evidence for 000001;
-   - daily suspension/trading status evidence;
-   - official active/listed status by signal date;
-   - survivorship-bias resolution basis that does not rely on future-dated universe hints.
-6. Record source URL/path, source type, date coverage, symbol coverage, access method, parseability, and PIT suitability.
-7. Do not build a permanent acquisition workflow until source feasibility is clear.
-8. Do not run PIT overlay review, export-readiness, staging, snapshot, or current-candidates in this branch.
+1. Use the existing official status evidence packet as the base.
+2. Add SZSE 1815 same-date quotation diagnostics as `STRONG_OFFICIAL_DATE_SPECIFIC` for quotation/traded presence only.
+3. Add reviewed no-hit support policy context as reviewer-accepted support only, not approval.
+4. Preserve existing official symbol-level context and local EOD cache context.
+5. Keep evidence categories distinct:
+   - `STRONG_OFFICIAL_DATE_SPECIFIC_QUOTATION`
+   - `REVIEWED_NO_HIT_SUPPORT_CONTEXT`
+   - `SUPPORTING_OFFICIAL_SYMBOL_LEVEL`
+   - `SUPPORTING_LOCAL_EOD_CACHE`
+   - `MISSING`
+6. Generate updated draft completed updates only where evidence exists.
+7. Rerun diagnostics-only:
+   - `pit-universe-evidence-update-ingestion`
+   - `pit-evidence-checklist-validator`
+   - `pit-evidence-policy-profile-comparison`
+8. Report whether any rows become approval-candidate previews.
+9. Do not run PIT overlay review, export-readiness, staging, snapshot, or current-candidates.
 
-## What Date-Specific Source Design Must Solve
+## What Packet Enrichment Must Solve
 
 It should answer:
 
-- Which official/public sources can provide daily or as-of security status for 000001 and 159915?
-- Which official/public sources can prove not-delisted status as of the selected signal dates?
-- Which official/public sources can prove ST/no-ST status for 000001 as of the selected signal dates?
-- Which official/public sources can prove suspension/trading status by signal date?
-- Which sources are parseable without paid APIs, login, CAPTCHA, paywalls, or private endpoints?
-- Which evidence can be symbol-level only, and which must be date-specific?
-- Can any current first-batch row become a strict or EOD low-budget checklist-pass approval candidate after date-specific evidence is added?
-- If not, which blockers require user judgment or an explicit evidence policy decision?
+- Can the evidence packet now show 16/16 official date-specific quotation/traded presence?
+- Which rows still lack not-delisted evidence?
+- Which rows still lack ST/no-ST evidence for 000001?
+- Which rows still require survivorship-bias rationale?
+- Does reviewed no-hit support reduce context gaps without creating approval?
+- Can any first-batch row become a strict or reviewed-no-hit policy checklist-pass approval candidate?
+- If no row passes, which exact blockers remain?
+- Which blockers require user judgment or explicit reviewer acceptance?
 
 ## Current Preference for Manual Steps
 
@@ -317,6 +337,8 @@ Do not yet:
 - treat checklist validator output as approval;
 - treat policy comparison output as approval or strict validator default behavior;
 - treat evidence packet output as approval, date-specific proof, or strict validator default behavior;
+- treat SZSE 1815 quotation presence as not-delisted / no-ST / no-suspension / survivorship evidence by itself;
+- treat no-hit observations as approval-grade without reviewer acceptance and source coverage documentation;
 - export PIT universe input without real approved/export-ready rows;
 - write `data/raw` or `data/processed` from PIT staging;
 - run current-candidates backfill without reviewed/exported PIT universe rows;

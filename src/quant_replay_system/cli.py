@@ -146,6 +146,18 @@ from quant_replay_system.pit_official_status_evidence_packet_index import (
 from quant_replay_system.pit_official_status_evidence_packet_status import (
     run_pit_official_status_evidence_packet_status,
 )
+from quant_replay_system.pit_official_status_evidence_packet_enrichment import (
+    build_pit_official_status_evidence_packet_enrichment,
+)
+from quant_replay_system.pit_official_status_evidence_packet_enrichment_health import (
+    check_pit_official_status_evidence_packet_enrichment_health,
+)
+from quant_replay_system.pit_official_status_evidence_packet_enrichment_index import (
+    build_pit_official_status_evidence_packet_enrichment_index,
+)
+from quant_replay_system.pit_official_status_evidence_packet_enrichment_status import (
+    run_pit_official_status_evidence_packet_enrichment_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1185,6 +1197,78 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pit_official_status_evidence_packet_status.set_defaults(
         handler=_handle_pit_official_status_evidence_packet_status
+    )
+
+    pit_official_status_evidence_packet_enrichment = subparsers.add_parser(
+        "pit-official-status-evidence-packet-enrichment",
+        help="Enrich PIT official status evidence packets with quotation and reviewed no-hit context",
+    )
+    pit_official_status_evidence_packet_enrichment.add_argument(
+        "--packet",
+        default="outputs/reports/pit_official_status_evidence_packet/8efabe2ffe62",
+    )
+    pit_official_status_evidence_packet_enrichment.add_argument(
+        "--quotation-probe",
+        default="outputs/reports/manual_diagnostics/szse_1815_same_date_quotation_probe_v0_1",
+    )
+    pit_official_status_evidence_packet_enrichment.add_argument(
+        "--policy-comparison",
+        default="outputs/reports/pit_evidence_policy_profile_comparison/c1a75d1091c6",
+    )
+    pit_official_status_evidence_packet_enrichment.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment",
+    )
+    pit_official_status_evidence_packet_enrichment.set_defaults(
+        handler=_handle_pit_official_status_evidence_packet_enrichment
+    )
+
+    pit_official_status_evidence_packet_enrichment_index = subparsers.add_parser(
+        "pit-official-status-evidence-packet-enrichment-index",
+        help="Build a local index of PIT official status evidence packet enrichment artifacts",
+    )
+    pit_official_status_evidence_packet_enrichment_index.add_argument(
+        "--root",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment",
+    )
+    pit_official_status_evidence_packet_enrichment_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment/index",
+    )
+    pit_official_status_evidence_packet_enrichment_index.set_defaults(
+        handler=_handle_pit_official_status_evidence_packet_enrichment_index
+    )
+
+    pit_official_status_evidence_packet_enrichment_health = subparsers.add_parser(
+        "pit-official-status-evidence-packet-enrichment-health",
+        help="Check local PIT official status evidence packet enrichment artifact health",
+    )
+    pit_official_status_evidence_packet_enrichment_health.add_argument(
+        "--root",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment",
+    )
+    pit_official_status_evidence_packet_enrichment_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment/health",
+    )
+    pit_official_status_evidence_packet_enrichment_health.set_defaults(
+        handler=_handle_pit_official_status_evidence_packet_enrichment_health
+    )
+
+    pit_official_status_evidence_packet_enrichment_status = subparsers.add_parser(
+        "pit-official-status-evidence-packet-enrichment-status",
+        help="Summarize latest PIT official status evidence packet enrichment status",
+    )
+    pit_official_status_evidence_packet_enrichment_status.add_argument(
+        "--root",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment",
+    )
+    pit_official_status_evidence_packet_enrichment_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment/status",
+    )
+    pit_official_status_evidence_packet_enrichment_status.set_defaults(
+        handler=_handle_pit_official_status_evidence_packet_enrichment_status
     )
 
     universe_profile_policy_audit = subparsers.add_parser(
@@ -2406,6 +2490,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--pit-official-status-evidence-packet-root",
         help="PIT official status evidence packet artifact root directory",
+    )
+    research_status.add_argument(
+        "--pit-official-status-evidence-packet-enrichment-root",
+        help="PIT official status evidence packet enrichment artifact root directory",
     )
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
@@ -4186,6 +4274,80 @@ def _handle_pit_official_status_evidence_packet_status(args: argparse.Namespace)
         "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
         "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
     )
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_pit_official_status_evidence_packet_enrichment(args: argparse.Namespace) -> int:
+    result = build_pit_official_status_evidence_packet_enrichment(
+        packet=args.packet,
+        quotation_probe=args.quotation_probe,
+        policy_comparison=args.policy_comparison,
+        output_dir=args.output_dir,
+    )
+    print(f"enrichment_id: {result.enrichment_id}")
+    print(f"status: {result.status}")
+    print(f"source_packet_id: {result.source_packet_id}")
+    print(f"policy_comparison_id: {result.policy_comparison_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"strong_official_date_specific_quotation_count: {result.strong_official_date_specific_quotation_count}")
+    print(f"reviewed_no_hit_context_supported_count: {result.reviewed_no_hit_context_supported_count}")
+    print(f"reviewer_acceptance_required_count: {result.reviewer_acceptance_required_count}")
+    print(f"prior_official_symbol_level_context_count: {result.prior_official_symbol_level_context_count}")
+    print(f"local_eod_cache_context_count: {result.local_eod_cache_context_count}")
+    print(f"checklist_pass_count: {result.checklist_pass_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"enriched_csv_path: {result.artifact_paths['enriched_csv']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
+        "data/raw write, data/processed write, current-candidates generation, snapshot build, forward labels, "
+        "live trading, broker API, order placement, message delivery, LLM/API, external API, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_pit_official_status_evidence_packet_enrichment_index(args: argparse.Namespace) -> int:
+    result = build_pit_official_status_evidence_packet_enrichment_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Index CSV path: {result['artifact_paths']['index_csv']}")
+    print(f"artifact_count: {result['artifact_count']}")
+    print("No approval, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_pit_official_status_evidence_packet_enrichment_health(args: argparse.Namespace) -> int:
+    result = check_pit_official_status_evidence_packet_enrichment_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Health report path: {result['artifact_paths']['report']}")
+    print(f"Health status: {result['status']}")
+    print(f"checked_artifact_count: {result['checked_artifact_count']}")
+    print(f"issue_count: {result['issue_count']}")
+    print(f"error_count: {result['error_count']}")
+    print(f"warning_count: {result['warning_count']}")
+    print("No approval, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_pit_official_status_evidence_packet_enrichment_status(args: argparse.Namespace) -> int:
+    result = run_pit_official_status_evidence_packet_enrichment_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result['artifact_paths']['artifact_dir']}")
+    print(f"Status report path: {result['artifact_paths']['report']}")
+    print(f"status: {result['status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"latest_enrichment_id: {result['latest_enrichment_id']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"source_packet_id: {result['source_packet_id']}")
+    print(f"policy_comparison_id: {result['policy_comparison_id']}")
+    print(f"row_count: {result['row_count']}")
+    print(f"strong_official_date_specific_quotation_count: {result['strong_official_date_specific_quotation_count']}")
+    print(f"reviewed_no_hit_context_supported_count: {result['reviewed_no_hit_context_supported_count']}")
+    print(f"reviewer_acceptance_required_count: {result['reviewer_acceptance_required_count']}")
+    print(f"checklist_pass_count: {result['checklist_pass_count']}")
+    print(f"remaining_blocked_count: {result['remaining_blocked_count']}")
+    print(f"report_path: {result['report_path']}")
+    print(f"next_manual_action: {result['next_manual_action']}")
+    print("No approval, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
     return 1 if result["status"] == "FAIL" else 0
 
 
@@ -6517,6 +6679,9 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         pit_evidence_checklist_validator_root=args.pit_evidence_checklist_validator_root,
         pit_evidence_policy_profile_comparison_root=args.pit_evidence_policy_profile_comparison_root,
         pit_official_status_evidence_packet_root=args.pit_official_status_evidence_packet_root,
+        pit_official_status_evidence_packet_enrichment_root=(
+            args.pit_official_status_evidence_packet_enrichment_root
+        ),
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -7040,6 +7205,62 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "pit_official_status_evidence_packet_next_action: "
         f"{result.pit_official_status_evidence_packet_next_action}"
+    )
+    print(
+        "latest_pit_official_status_evidence_packet_enrichment_id: "
+        f"{result.latest_pit_official_status_evidence_packet_enrichment_id}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_status: "
+        f"{result.pit_official_status_evidence_packet_enrichment_status}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_stage: "
+        f"{result.pit_official_status_evidence_packet_enrichment_stage}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_health_status: "
+        f"{result.pit_official_status_evidence_packet_enrichment_health_status}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_source_packet_id: "
+        f"{result.pit_official_status_evidence_packet_enrichment_source_packet_id}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_policy_comparison_id: "
+        f"{result.pit_official_status_evidence_packet_enrichment_policy_comparison_id}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_row_count: "
+        f"{result.pit_official_status_evidence_packet_enrichment_row_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_strong_official_date_specific_quotation_count: "
+        f"{result.pit_official_status_evidence_packet_enrichment_strong_official_date_specific_quotation_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_reviewed_no_hit_context_supported_count: "
+        f"{result.pit_official_status_evidence_packet_enrichment_reviewed_no_hit_context_supported_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_reviewer_acceptance_required_count: "
+        f"{result.pit_official_status_evidence_packet_enrichment_reviewer_acceptance_required_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_checklist_pass_count: "
+        f"{result.pit_official_status_evidence_packet_enrichment_checklist_pass_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_remaining_blocked_count: "
+        f"{result.pit_official_status_evidence_packet_enrichment_remaining_blocked_count}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_report_path: "
+        f"{result.pit_official_status_evidence_packet_enrichment_report_path}"
+    )
+    print(
+        "pit_official_status_evidence_packet_enrichment_next_action: "
+        f"{result.pit_official_status_evidence_packet_enrichment_next_action}"
     )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
