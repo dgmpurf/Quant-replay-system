@@ -86,6 +86,62 @@ def test_builds_report_only_first_batch_completion_plan(tmp_path: Path) -> None:
     assert not (tmp_path / "data" / "processed").exists()
 
 
+def test_tiny_manual_reviewer_completion_fixture_remains_non_approved(tmp_path: Path) -> None:
+    inputs = _write_inputs(tmp_path)
+    result = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=tmp_path / "out",
+    )
+    template = pd.read_csv(result.artifact_paths["reviewer_completion_template"], dtype=str, keep_default_na=False)
+    target = template.loc[
+        (template["signal_date"] == "2024-04-02")
+        & (template["symbol"] == "000001")
+        & (template["universe_name"] == "stock_core")
+    ]
+    assert len(target) == 1
+
+    fixture = target.copy()
+    fixture.loc[:, "review_status"] = "NEEDS_MORE_EVIDENCE"
+    fixture.loc[:, "include_flag"] = "False"
+    fixture.loc[:, "valid_for_signal_date"] = "False"
+    fixture.loc[:, "survivorship_bias_resolved"] = "False"
+    fixture.loc[:, "reviewer"] = "diagnostics_reviewer"
+    fixture.loc[:, "reviewed_at"] = "2026-06-06T00:00:00+08:00"
+    fixture.loc[:, "review_reason"] = "Diagnostics-only manual completion smoke; not PIT approval."
+    fixture.loc[:, "evidence_source"] = "DIAGNOSTICS_ONLY_FIXTURE"
+    fixture.loc[:, "evidence_reference"] = "Shape validation only; no authoritative PIT evidence asserted."
+    fixture_dir = tmp_path / "manual_diagnostics" / "tiny_manual_reviewer_completion_smoke"
+    fixture_dir.mkdir(parents=True)
+    fixture_path = fixture_dir / "tiny_manual_reviewer_completion_fixture.csv"
+    fixture.to_csv(fixture_path, index=False)
+
+    validated = pd.read_csv(fixture_path, dtype=str, keep_default_na=False)
+    assert len(validated) == 1
+    assert validated.iloc[0]["symbol"] == "000001"
+    assert validated.iloc[0]["review_status"] == "NEEDS_MORE_EVIDENCE"
+    assert validated.iloc[0]["include_flag"] == "False"
+    assert validated.iloc[0]["valid_for_signal_date"] == "False"
+    assert validated.iloc[0]["survivorship_bias_resolved"] == "False"
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in fixture_path.read_text(encoding="utf-8")
+    assert result.checklist_pass_count == 0
+    assert result.remaining_blocked_count == 16
+    assert result.clean_review_updates_created is False
+    assert result.approval_applied is False
+    assert not (fixture_dir / "review_updates.csv").exists()
+    assert not (fixture_dir / "clean_review_updates.csv").exists()
+    assert not (result.artifact_paths["artifact_dir"] / "review_updates.csv").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_review").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_export_readiness").exists()
+    assert not (tmp_path / "point_in_time_universe_export_staging").exists()
+    assert not (tmp_path / "current_candidates").exists()
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
+
+
 def test_outputs_missing_evidence_and_todo_matrices(tmp_path: Path) -> None:
     inputs = _write_inputs(tmp_path)
     result = build_first_batch_reviewer_evidence_completion_plan(

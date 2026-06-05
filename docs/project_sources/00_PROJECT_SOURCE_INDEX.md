@@ -2,14 +2,14 @@
 
 > Status: working memory document  
 > Last generated: 2026-06-05  
-> Intended use: replace previous Project Source Pack after v1.20.0 reviewer no-hit acceptance downstream impact checkpoint.  
+> Intended use: replace previous Project Source Pack after v1.21.0 First-Batch Reviewer Evidence Completion Planning checkpoint.  
 > Permanence: temporary and replaceable. Refresh only after major checkpoint / stage changes, not after every small audit.
 
 ## Purpose
 
 This pack condenses the current `quant-replay-system` direction, engineering state, artifact governance rules, and roadmap for ChatGPT Project Sources.
 
-It is designed to reduce reliance on a very long chat transcript and help future ChatGPT/Codex sessions recover the current project state quickly.
+It is designed to reduce reliance on the long chat transcript and help future ChatGPT/Codex sessions recover the current project state quickly.
 
 ## Source Basis
 
@@ -17,28 +17,9 @@ This pack is based on:
 
 - the long ChatGPT/Codex collaboration history;
 - repository docs for `dgmpurf/Quant-replay-system`;
-- v1.0.0 research infrastructure;
-- v1.1.0 reviewed PIT universe overlay approval workflow;
-- v1.2.0 PIT universe export-readiness;
-- v1.3.0 PIT universe evidence completion helper;
-- v1.4.0 PIT universe required metadata support;
-- v1.5.0 guarded PIT universe export staging;
-- v1.6.0 PIT universe evidence review worklist;
-- v1.7.0 PIT universe evidence update ingestion validator;
-- v1.8.0 universe profile policy audit;
-- v1.9.0 universe profile split-worklist planning;
-- v1.10.0 reviewed replacement worklist planning;
-- v1.11.0 reviewed replacement worklist acceptance;
-- v1.12.0 guarded reviewed replacement worklist activation;
-- v1.13.0 activated replacement worklist evidence update planning;
-- v1.14.0 PIT evidence checklist validator;
-- v1.15.0 PIT evidence policy profile comparison;
-- v1.16.0 PIT official status evidence packet;
-- v1.17.0 reviewed no-hit support policy profile;
-- v1.18.0 PIT official status evidence packet enrichment;
-- v1.19.0 reviewer no-hit source coverage acceptance;
-- v1.20.0 reviewer no-hit acceptance downstream impact;
-- diagnostics for SZSE 1815 same-date quotation, exception/no-hit probes, official no-hit policy audit, and reviewer acceptance smoke tests;
+- v1.0.0 through v1.20.0 research, PIT evidence, reviewer no-hit acceptance, and downstream impact checkpoints;
+- v1.21.0 First-Batch Reviewer Evidence Completion Planning checkpoint;
+- diagnostics for SZSE 1815 same-date quotation, exception/no-hit probes, official no-hit policy audit, reviewer acceptance smoke tests, and downstream impact smoke tests;
 - China A-share event-driven and industry-chain factor taxonomy sources.
 
 ## Accuracy Note
@@ -49,7 +30,7 @@ Many local outputs under `outputs/`, `data/raw/`, `data/cache`, and `data/proces
 
 ## Current Project Source Set
 
-Replace these after v1.20.0:
+Replace these after v1.21.0:
 
 ```text
 00_PROJECT_SOURCE_INDEX.md
@@ -73,7 +54,7 @@ FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
 
 ## Current Project State Summary
 
-The project has reached a reviewer no-hit acceptance downstream impact checkpoint:
+The project has reached a First-Batch Reviewer Evidence Completion Planning checkpoint:
 
 ```text
 local market data / reviewed exports / quality gates
@@ -109,13 +90,14 @@ local market data / reviewed exports / quality gates
 → PIT official status evidence packet enrichment
 → reviewer-no-hit-source-coverage-acceptance
 → reviewer-no-hit-acceptance-downstream-impact
+→ first-batch-reviewer-evidence-completion-plan
 → index / health / status / research-status context
 ```
 
-Current reviewer no-hit acceptance downstream impact state:
+Current first-batch reviewer evidence completion planning state:
 
 ```text
-REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
+FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
 ```
 
 Latest known active / planning artifacts and diagnostics:
@@ -144,10 +126,10 @@ reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 enrichment_id: cb5f323d3c8c
 reviewer_no_hit_acceptance_id: 2e05e4b74794
 reviewer_no_hit_downstream_impact_id: 9e164963455e
-diagnostics_downstream_impact_id: 4423bdd3e843
+first_batch_reviewer_evidence_completion_plan_id: c630522f235a
 ```
 
-Current evidence / validator / packet / policy counts:
+Current evidence / validator / planning counts:
 
 ```text
 approved rows: 0
@@ -263,12 +245,18 @@ Reviewer no-hit acceptance downstream impact:
   remaining_blocked_count: 16
   approval_applied: false
 
-Diagnostics downstream impact smoke:
-  impact_id: 4423bdd3e843
-  accepted_no_hit_context_count: 4
-  packet_context_gap_reduced_count: 1
+First-batch reviewer evidence completion plan:
+  plan_id: c630522f235a
+  row_count: 16
+  stock_core_row_count: 8
+  etf_core_row_count: 8
+  reviewer_completion_required_count: 16
+  no_hit_acceptance_required_count: 16
+  survivorship_rationale_required_count: 16
+  metadata_completion_required_count: 16
   checklist_pass_count: 0
   remaining_blocked_count: 16
+  clean_review_updates_created: false
   approval_applied: false
 ```
 
@@ -298,28 +286,27 @@ Reviewer no-hit source coverage acceptance and downstream impact workflows recor
 The SZSE 1815 same-date quotation probe is the strongest current evidence breakthrough: it produced official date-specific quotation/traded-presence evidence for all 16 first-batch rows.
 The v1.18.0 enrichment milestone incorporated quotation evidence and reviewed no-hit support context into a report-only evidence packet enrichment.
 The v1.19.0 reviewer no-hit source coverage acceptance milestone added a report-only acceptance layer for source coverage, query windows, and survivorship rationale.
-The v1.20.0 downstream impact milestone links accepted no-hit supporting context back to packet/checklist/policy reporting, while preserving checklist_pass_count=0 and approval_applied=false.
-All rows remain blocked: quotation presence, no-hit support, reviewer acceptance, and downstream impact still do not prove not-delisted, ST/no-ST, suspension status, or survivorship-bias resolution by themselves.
+The v1.20.0 downstream impact milestone linked accepted no-hit supporting context back to packet/checklist/policy reporting, while preserving checklist_pass_count=0 and approval_applied=false.
+The v1.21.0 first-batch reviewer evidence completion plan converts all prior evidence context into a concrete reviewer fill plan for 16 rows, while preserving checklist_pass_count=0, remaining_blocked_count=16, clean_review_updates_created=false, and approval_applied=false.
+All rows remain blocked: quotation presence, no-hit support, reviewer acceptance, downstream impact, and reviewer completion planning still do not prove not-delisted, ST/no-ST, suspension status, survivorship-bias resolution, or full PIT metadata by themselves.
 ```
 
 ## Current Recommended Next Branch
 
 ```text
-First-Batch Reviewer Evidence Completion Planning v0.1
+Tiny Manual Reviewer Completion Smoke v0.1
 ```
 
-This branch should use downstream impact output to plan actual reviewer evidence completion for the 16 first-batch rows. It should list missing PIT evidence fields, proposed evidence sources, and review/update responsibilities without applying PIT approvals.
+This branch should use the generated first-batch reviewer completion template and create a tiny diagnostics-only completed evidence row to verify one manually completed row can flow through planning validation without becoming PIT approval.
 
 ```text
-downstream impact output
-+ checklist blocker matrix
-+ enriched evidence packet
-+ reviewer no-hit acceptance context
-→ reviewer evidence completion plan
+first-batch reviewer completion template
+→ one-row manual completion fixture
+→ diagnostics-only validation
 → no PIT approval / no export / no current-candidates
 ```
 
-It should remain read-only / diagnostics-first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
+It should remain diagnostics-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
 
 User preference: if a step looks manual, first try to make Codex perform local/public evidence discovery, draft artifact generation, and validation. The user should only intervene for final evidence acceptance, credentials, CAPTCHA/login/paywall, or subjective judgment.
 
@@ -337,7 +324,7 @@ Add or replace Source when:
 
 Add a new source document when a topic becomes too important to live only in chat, such as:
 
-- official date-specific evidence acquisition, reviewed no-hit support semantics, reviewer no-hit source coverage acceptance semantics, accepted-supporting-context validation semantics, and downstream impact semantics;
+- official date-specific evidence acquisition, reviewed no-hit support semantics, reviewer no-hit source coverage acceptance semantics, accepted-supporting-context validation semantics, downstream impact semantics, and first-batch reviewer evidence completion planning semantics;
 - accepted PIT universe export workflow;
 - per-date snapshot preparation;
 - forward-return labels;
@@ -352,13 +339,13 @@ Add a new source document when a topic becomes too important to live only in cha
 
 - justify live trading;
 - treat worklist rows as reviewed evidence;
-- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, policy comparison outputs, official status evidence packets, official status evidence packet enrichment outputs, reviewer no-hit acceptance artifacts, reviewer no-hit downstream impact artifacts, SZSE 1815 quotation diagnostics, exception no-hit diagnostics, or reviewed no-hit profile outputs as usable universe input;
-- treat evidence packages as clean `review_updates.csv`;
+- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, policy comparison outputs, official status evidence packets, official status evidence packet enrichment outputs, reviewer no-hit acceptance artifacts, reviewer no-hit downstream impact artifacts, first-batch reviewer evidence completion plans, SZSE 1815 quotation diagnostics, exception no-hit diagnostics, or reviewed no-hit profile outputs as usable universe input;
+- treat evidence packages or reviewer completion templates as clean `review_updates.csv`;
 - treat checklist pass or policy comparison candidate preview as applied approval;
 - treat supporting official symbol-level evidence as date-specific daily status proof;
 - treat local EOD cache context as official date-specific status proof;
 - treat SZSE 1815 same-date quotation presence as not-delisted, no-ST, no-suspension, or survivorship resolution by itself;
-- treat no-hit observations, reviewed no-hit support context, reviewer no-hit acceptance rows, or downstream impact rows as PIT approval, export readiness, or usable universe input;
+- treat no-hit observations, reviewed no-hit support context, reviewer no-hit acceptance rows, downstream impact rows, or reviewer completion planning rows as PIT approval, export readiness, or usable universe input;
 - treat staging preview files as accepted local universe input;
 - treat approved PIT universe rows as exported usable universe files unless a future accepted export workflow says so;
 - treat legacy `etf_core` artifacts as ETF-only;

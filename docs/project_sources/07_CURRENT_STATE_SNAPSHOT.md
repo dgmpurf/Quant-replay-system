@@ -56,6 +56,7 @@ It is not a live trading system.
 - PIT official status evidence packet enrichment.
 - Reviewer no-hit source coverage acceptance.
 - Reviewer no-hit acceptance downstream impact.
+- First-batch reviewer evidence completion planning.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -138,6 +139,7 @@ reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 enrichment_id: cb5f323d3c8c
 reviewer_no_hit_acceptance_id: 2e05e4b74794
 reviewer_no_hit_downstream_impact_id: 9e164963455e
+first_batch_reviewer_evidence_completion_plan_id: c630522f235a
 ```
 
 Current counts:
@@ -202,29 +204,6 @@ eod_low_budget_checklist_pass_count: 0
 relaxed_blocker_count: 16
 remaining_blocked_count: 16
 
-PIT official status evidence packet:
-packet_id: 8efabe2ffe62
-row_count: 16
-evidence_packet_row_count: 72
-strong_official_date_specific_count: 0
-supporting_official_symbol_level_count: 16
-supporting_local_eod_cache_count: 16
-missing_count: 40
-checklist_pass_count: 0
-blocked_count: 16
-
-SZSE 1815 same-date quotation diagnostics:
-request_count: 16
-HTTP 200 + JSON parse count: 16
-rows found for 000001: 8 / 8
-rows found for 159915: 8 / 8
-STRONG_OFFICIAL_DATE_SPECIFIC for quotation/traded presence: 16 / 16
-
-Exception / no-hit diagnostics:
-positive hits found: context-only / not approval-grade
-no-hit observations: policy-dependent
-strong date-specific exception evidence found: 0
-
 Reviewed no-hit support policy profile:
 comparison_id: c1a75d1091c6
 profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
@@ -253,32 +232,48 @@ survivorship_rationale_required_count: 16
 checklist_pass_count: 0
 remaining_blocked_count: 16
 
-Reviewer no-hit acceptance downstream impact:
+Reviewer no-hit downstream impact:
 impact_id: 9e164963455e
 accepted_no_hit_context_count: 0
 packet_context_gap_reduced_count: 0
 checklist_pass_count: 0
 remaining_blocked_count: 16
 approval_applied: false
+
+First-batch reviewer evidence completion plan:
+plan_id: c630522f235a
+row_count: 16
+stock_core_row_count: 8
+etf_core_row_count: 8
+reviewer_completion_required_count: 16
+no_hit_acceptance_required_count: 16
+survivorship_rationale_required_count: 16
+metadata_completion_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
+clean_review_updates_created: false
+approval_applied: false
 ```
 
-Current reviewer no-hit downstream impact stage:
+Current first-batch reviewer evidence completion planning stage:
 
 ```text
-REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
+FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
 ```
 
 Meaning:
 
-The project has moved from “reviewer no-hit source coverage acceptance exists as supporting context workflow” to “downstream impact reporting exists, but the active acceptance artifact has zero accepted no-hit context and all first-batch rows remain blocked.”
+The project has moved from “reviewer no-hit downstream impact reporting exists, but active accepted no-hit context is 0” to “the first-batch reviewer evidence completion plan now enumerates what must be manually completed for the 16 first-batch rows.”
 
-The downstream impact workflow can show how accepted no-hit context would reduce packet context gaps, but it still does not create checklist-pass rows, PIT approvals, clean review updates, export-ready rows, or current-candidates input.
+The plan is report-only. It does not make any row approval-ready, does not create clean `review_updates.csv`, and does not apply PIT approval.
 
-The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment, acceptance, and downstream impact milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
+The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile remains opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. The first-batch plan can list no-hit acceptance to-dos and survivorship rationale to-dos, but it still does not change strict defaults or create PIT approvals.
+
+The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment, acceptance, downstream impact, and first-batch planning milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-The next blocker is planning actual first-batch reviewer evidence completion across the remaining PIT metadata and evidence fields.
+The next blocker is a tiny manual reviewer-completion smoke against the generated first-batch template.
 
 ## Current External Data Strategy
 
@@ -298,15 +293,15 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-First-Batch Reviewer Evidence Completion Planning v0.1
+Tiny Manual Reviewer Completion Smoke v0.1
 ```
 
 Purpose:
 
-- produce a row-level plan for completing PIT evidence for the 16 first-batch rows;
-- identify fields already supported by official quotation evidence, supporting no-hit context, symbol-level evidence, or local EOD cache;
-- identify fields requiring manual reviewer acceptance or policy judgment;
-- generate a plan/template only, not clean review updates or PIT approvals.
+- use the generated first-batch reviewer completion template;
+- create a tiny diagnostics-only completed evidence row;
+- verify the completed row can flow through planning validation without becoming approval;
+- keep all rows non-approved unless a future explicit PIT review workflow is run.
 
 Do not yet:
 
@@ -349,9 +344,10 @@ Recent milestone direction:
 - v1.18.0: PIT official status evidence packet enrichment.
 - v1.19.0: reviewer no-hit source coverage acceptance.
 - v1.20.0: reviewer no-hit acceptance downstream impact.
+- v1.21.0: first-batch reviewer evidence completion planning.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for First-Batch Reviewer Evidence Completion Planning v0.1.
+Give me Codex tasks for Tiny Manual Reviewer Completion Smoke v0.1.
 ```

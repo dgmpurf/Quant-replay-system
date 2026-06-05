@@ -35,46 +35,17 @@ The project is now a broad local research system with:
 - PIT official status evidence packet enrichment;
 - reviewer no-hit source coverage acceptance;
 - reviewer no-hit acceptance downstream impact;
+- first-batch reviewer evidence completion planning;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
 
 ## Immediate Technical State
 
-Completed or largely complete:
-
-- shared `signal_semantics`;
-- advisory and single-symbol products;
-- calibration and proposal reporting;
-- warmup-aware current-candidates backfill plan;
-- current-candidates execution manifest;
-- PIT universe overlay plan/template;
-- PIT universe overlay review/approval workflow;
-- PIT universe export-readiness;
-- evidence completion helper;
-- required PIT universe metadata support;
-- guarded export staging;
-- evidence review worklist;
-- evidence update ingestion validator;
-- universe profile policy audit;
-- universe profile registry and split-worklist plan;
-- reviewed replacement worklist plan;
-- reviewed replacement worklist acceptance;
-- guarded reviewed replacement worklist activation;
-- activated replacement worklist evidence update plan;
-- PIT evidence checklist validator;
-- PIT evidence policy profile comparison;
-- PIT official status evidence packet;
-- reviewed no-hit support policy profile;
-- PIT official status evidence packet enrichment;
-- reviewer no-hit source coverage acceptance;
-- reviewer no-hit acceptance downstream impact;
-- index / health / status and research-status integration for these stages.
-
-Current reviewer no-hit acceptance downstream impact state:
+Current first-batch reviewer evidence completion planning state:
 
 ```text
-REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
+FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
 ```
 
 Latest known state:
@@ -96,13 +67,11 @@ latest_diagnostics_ingestion_id: 734f3a722ddf
 validator_id: 62e9eb747197
 policy_comparison_id: 0ef6d2f3bae6
 packet_id: 8efabe2ffe62
-packet_rerun_ingestion_id: ac6846aef520
-packet_rerun_validator_id: 498a3d0786af
-packet_rerun_policy_comparison_id: b7e7ec8f66f5
 reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 enrichment_id: cb5f323d3c8c
 reviewer_no_hit_acceptance_id: 2e05e4b74794
 reviewer_no_hit_downstream_impact_id: 9e164963455e
+first_batch_reviewer_evidence_completion_plan_id: c630522f235a
 ```
 
 ```text
@@ -187,71 +156,47 @@ packet_context_gap_reduced_count: 0
 checklist_pass_count: 0
 remaining_blocked_count: 16
 approval_applied: false
+
+First-batch reviewer evidence completion plan:
+plan_id: c630522f235a
+row_count: 16
+stock_core_row_count: 8
+etf_core_row_count: 8
+reviewer_completion_required_count: 16
+no_hit_acceptance_required_count: 16
+survivorship_rationale_required_count: 16
+metadata_completion_required_count: 16
+checklist_pass_count: 0
+remaining_blocked_count: 16
+clean_review_updates_created: false
+approval_applied: false
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: First-Batch Reviewer Evidence Completion Planning
+### Branch: Tiny Manual Reviewer Completion Smoke
 
 Suggested sequence:
 
-1. Use the downstream impact artifact as the planning driver.
-2. Join or reference the current evidence packet enrichment, checklist validator, policy comparison, reviewer no-hit acceptance, and activated evidence update plan.
-3. Produce a row-level plan for the 16 first-batch rows.
-4. List missing PIT metadata and evidence fields, including:
-   - `as_of_date`;
-   - `is_active`;
-   - `is_active_evidence`;
-   - `listed_date` and `listed_date_evidence` where still missing;
-   - `is_st` and `is_st_evidence` for stock rows;
-   - `is_suspended` and `is_suspended_evidence` if not yet sufficient;
-   - `industry`;
-   - `revision_id`;
-   - `t_plus_rule`;
-   - `available_time`;
-   - survivorship rationale;
-   - reviewer / reviewed_at / review_reason;
-   - evidence_source / evidence_reference.
-5. Distinguish fields Codex can draft from existing official/local evidence from fields that require explicit reviewer acceptance.
-6. Do not create clean `review_updates.csv` unless a later explicit workflow is requested.
-7. Do not run PIT overlay review, export-readiness, staging, snapshot, or current-candidates.
+1. Use the first-batch reviewer evidence completion plan artifact as the base.
+2. Create a tiny diagnostics-only reviewer-completed evidence row from the generated reviewer completion template.
+3. Validate that the row flows through planning validation without becoming PIT approval.
+4. Verify that the row remains non-approved unless a future explicit PIT review workflow is run.
+5. Verify no clean review updates, export readiness, staging, snapshot, forward labels, current-candidates, cache mutation, messages, broker, or orders are triggered.
+6. Report exactly which blockers remain after the smoke.
 
-## What First-Batch Reviewer Evidence Completion Planning Must Solve
+## What Tiny Manual Reviewer Completion Smoke Must Solve
 
 It should answer:
 
-- Which exact fields are still missing for each of the 16 rows?
-- Which missing fields are already supported by official same-date quotation evidence?
-- Which missing fields are only supported by reviewed no-hit context?
-- Which missing fields require reviewer acceptance or manual policy judgment?
-- Which fields can Codex draft in a later completed-update CSV?
-- Which rows are closest to checklist-pass candidate status?
-- What validation command should be run before any PIT review workflow?
-
-## Current Preference for Manual Steps
-
-The user prefers that Codex automate evidence preparation whenever possible.
-
-Default handling:
-
-```text
-If a step looks manual, first try to make Codex do it as:
-local evidence discovery
-public source discovery
-source checklist generation
-draft update CSV generation
-diagnostics-only validation
-```
-
-User intervention should be required only for:
-
-- credentials;
-- CAPTCHA/login/paywall;
-- final acceptance of evidence sufficiency;
-- subjective judgment;
-- explicit approval/export/activation decisions.
+- Can the generated reviewer completion template be filled for a single row without breaking schema or leading-zero symbols?
+- Does a completed row still avoid `APPROVED_FOR_PIT_UNIVERSE` and `include_flag=true`?
+- Does the smoke avoid creating clean `review_updates.csv` unless a future explicit ingestion workflow says so?
+- Does the planning layer keep checklist_pass_count at 0 unless all strict evidence gates are satisfied?
+- Which fields remain missing after a partial/manual completion fixture?
+- Does the workflow preserve all safety boundaries?
 
 ## After Checklist-Pass Evidence Candidates Exist
 
@@ -361,9 +306,10 @@ Do not yet:
 - treat checklist validator output as approval;
 - treat policy comparison output as approval or strict validator default behavior;
 - treat evidence packet output as approval, date-specific proof, or strict validator default behavior;
+- treat reviewer no-hit acceptance or downstream impact as PIT approval, export-readiness, or usable universe input;
+- treat reviewer evidence completion plans or templates as clean review updates or applied approvals;
 - treat SZSE 1815 quotation presence as not-delisted / no-ST / no-suspension / survivorship evidence by itself;
 - treat no-hit observations as approval-grade without reviewer acceptance and source coverage documentation;
-- treat reviewer no-hit acceptance or downstream impact as PIT approval, export-readiness, or usable universe input;
 - export PIT universe input without real approved/export-ready rows;
 - write `data/raw` or `data/processed` from PIT staging;
 - run current-candidates backfill without reviewed/exported PIT universe rows;

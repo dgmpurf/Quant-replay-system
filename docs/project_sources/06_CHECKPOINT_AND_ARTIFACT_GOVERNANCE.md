@@ -42,7 +42,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, reviewer no-hit downstream impact artifacts that do not apply approvals, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, reviewer no-hit downstream impact artifacts that do not apply approvals, first-batch reviewer evidence completion plan artifacts that are planning context only, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
 
 ## Diagnostic vs Active Artifacts
 
@@ -62,25 +62,16 @@ Examples:
 - PIT official status evidence packet enrichment dry-runs;
 - reviewer no-hit source coverage acceptance dry-runs;
 - reviewer no-hit downstream impact dry-runs;
+- first-batch reviewer evidence completion plan dry-runs;
 - ignored dry-run files.
 
 ## Review-Only and Evidence Workflows
 
 PIT universe overlay review artifacts may create statuses such as `NEEDS_MANUAL_REVIEW`, `APPROVED_FOR_PIT_UNIVERSE`, `REJECTED`, and `NEEDS_MORE_EVIDENCE`, but review-only does not mean exported universe input.
 
-Evidence completion helper artifacts, evidence review worklist artifacts, and evidence update ingestion artifacts organize or validate evidence. They must not export universe files, write `data/raw` / `data/processed`, run current-candidates, build snapshots, or compute forward labels.
+Evidence completion helper artifacts, evidence review worklist artifacts, evidence update ingestion artifacts, reviewer no-hit acceptance artifacts, downstream impact artifacts, and first-batch completion planning artifacts organize, validate, or plan evidence. They must not export universe files, write `data/raw` / `data/processed`, run current-candidates, build snapshots, or compute forward labels.
 
 A clean `review_updates.csv` is not an applied approval; it is a validated input that may be manually passed to the review workflow later.
-
-## Universe Profile and Replacement Workflows
-
-Universe profile policy audit artifacts are governance-only and must not approve/reject rows or mutate worklists.
-
-Split-worklist plan artifacts are planning-only and must not create active replacement worklists.
-
-Reviewed replacement worklist plan, acceptance, and activation artifacts are planning context only. Activation is still not approval, export, or candidate generation.
-
-All replacement-related workflows must preserve lineage and must not mutate the active legacy worklist, approve PIT rows, reject PIT rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute forward labels, or imply a usable current-candidates universe input exists.
 
 ## PIT Evidence Checklist Validator Workflows
 
@@ -128,59 +119,35 @@ MISSING
 
 They must not apply approvals, set `APPROVED_FOR_PIT_UNIVERSE` as an applied value, treat supporting official symbol-level evidence as date-specific proof, treat local EOD cache as official date-specific proof, treat no-hit observations as approval-grade without explicit reviewer acceptance and documented source coverage, run PIT review/export-readiness/staging, export universe files, write `data/raw` or `data/processed`, mutate active worklists, mutate market cache, run current-candidates, build snapshots, or compute forward labels.
 
-Current official status evidence packet enrichment state:
-
-```text
-enrichment_id: cb5f323d3c8c
-source_packet_id: 8efabe2ffe62
-stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_BLOCKED
-strong_official_same_date_quotation_count: 16
-reviewed_no_hit_context_supported_count: 16
-reviewer_acceptance_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
-```
-
-## Reviewer No-Hit Source Coverage Acceptance Workflows
+## Reviewer No-Hit Acceptance and Downstream Impact Workflows
 
 Reviewer no-hit source coverage acceptance artifacts are report-only supporting-context records.
 
 They may record reviewer acceptance of source coverage, query windows, no-hit inference limits, and survivorship rationale; create reviewer acceptance templates; validate reviewer-completed no-hit acceptance updates; and expose accepted, needs-review, reviewer-required, and survivorship-rationale-required counts in research-status.
 
-They must not apply PIT approvals, set `APPROVED_FOR_PIT_UNIVERSE`, create approval update CSVs, run PIT review/export-readiness/staging, export universe files, write `data/raw` or `data/processed`, mutate active worklists or market cache, run current-candidates, build snapshots, or compute forward labels.
+They must not apply PIT approvals, set `APPROVED_FOR_PIT_UNIVERSE`, create approval update CSVs, run PIT review, run export-readiness, run staging, export universe files, write `data/raw` or `data/processed`, mutate active worklists or market cache, run current-candidates, build snapshots, or compute forward labels.
 
-Current reviewer no-hit acceptance state:
+Reviewer no-hit acceptance downstream impact artifacts are report-only downstream context summaries. They may link accepted no-hit context to packet/checklist/policy impact reports and expose context counts in research-status, but they must not change strict checklist behavior or apply approvals.
 
-```text
-acceptance_id: 2e05e4b74794
-stage: REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
-row_count: 64
-accepted_count: 0
-needs_review_count: 64
-reviewer_acceptance_required_count: 64
-survivorship_rationale_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
-```
+## First-Batch Reviewer Evidence Completion Plan Workflows
 
-Accepted no-hit coverage is supporting context only and still does not by itself create checklist-pass rows, PIT approvals, export-ready universe rows, or usable current-candidates input.
-
-## Reviewer No-Hit Acceptance Downstream Impact Workflows
-
-Reviewer no-hit acceptance downstream impact artifacts are report-only downstream context summaries.
+First-batch reviewer evidence completion plan artifacts are report-only reviewer planning artifacts.
 
 They may:
 
-- link accepted no-hit supporting context to packet/checklist/policy context by `signal_date + symbol + universe_name + exception_type`;
-- preserve lineage to acceptance, enrichment, packet, policy comparison, and validator artifacts;
-- report accepted no-hit context counts and packet context gap reductions;
-- report remaining checklist blockers and approval flags;
-- expose downstream impact counts in research-status.
+- build a 16-row first-batch planning table for `000001` stock_core and `159915` etf_core;
+- preserve lineage to evidence update plan, validator, policy comparison, reviewed no-hit policy comparison, official status packet, enrichment, reviewer no-hit acceptance, and downstream impact artifacts;
+- classify missing evidence into reusable symbol-level evidence, date-specific evidence, reviewer no-hit acceptance to-do, survivorship rationale to-do, and metadata completion to-do;
+- create a reviewer completion template;
+- expose reviewer completion required, no-hit acceptance required, survivorship rationale required, metadata completion required, checklist pass, remaining blocked, clean-review-update, and approval-applied counts in research-status.
 
 They must not:
 
-- apply PIT approvals;
+- apply approvals;
+- reject rows;
 - set `APPROVED_FOR_PIT_UNIVERSE`;
+- set `include_flag=true`;
+- set `valid_for_signal_date=true`;
 - create clean `review_updates.csv`;
 - run PIT review;
 - run export-readiness;
@@ -192,28 +159,37 @@ They must not:
 - build snapshots;
 - compute forward labels.
 
-Current active downstream impact state:
+Current first-batch plan state:
 
 ```text
-impact_id: 9e164963455e
-stage: REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
-accepted_no_hit_context_count: 0
-packet_context_gap_reduced_count: 0
+plan_id: c630522f235a
+stage: FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
+row_count: 16
+stock_core_row_count: 8
+etf_core_row_count: 8
+reviewer_completion_required_count: 16
+no_hit_acceptance_required_count: 16
+survivorship_rationale_required_count: 16
+metadata_completion_required_count: 16
 checklist_pass_count: 0
 remaining_blocked_count: 16
+clean_review_updates_created: false
 approval_applied: false
 ```
 
-Diagnostics fixture downstream impact demonstrates accepted supporting context without approval:
+A reviewer completion template is not a clean review update and must not be fed directly as an applied approval.
+
+## Export-Readiness and Export-Staging Workflows
+
+Export-readiness blocks export when there are no approved rows, evidence is missing, survivorship is unresolved, required universe columns are missing, duplicates exist, or PIT dates are invalid. It must not write `data/raw` or `data/processed`.
+
+Export staging is guarded and outputs-only. It may create reviewable previews under:
 
 ```text
-impact_id: 4423bdd3e843
-accepted_no_hit_context_count: 4
-packet_context_gap_reduced_count: 1
-checklist_pass_count: 0
-remaining_blocked_count: 16
-approval_applied: false
+outputs/reports/point_in_time_universe_export_staging/<staging_id>/
 ```
+
+Staging previews are not accepted local universe inputs.
 
 ## Safety Flags
 
@@ -244,6 +220,7 @@ evidence_packet_only=true
 evidence_packet_enrichment_only=true
 reviewer_no_hit_acceptance_only=true
 downstream_impact_only=true
+first_batch_reviewer_completion_plan_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -272,7 +249,7 @@ Rows derived from a future universe must keep survivorship-bias warnings until r
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, reviewer no-hit acceptance blockers, downstream impact blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, reviewer no-hit acceptance blockers, downstream impact blockers, first-batch reviewer completion planning blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
 
 ## When to Refresh This Document
 
@@ -282,7 +259,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- first-batch reviewer evidence completion planning semantics are implemented;
+- reviewer completion template semantics change;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.

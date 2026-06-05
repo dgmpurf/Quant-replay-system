@@ -58,7 +58,8 @@ Multi-Date Evidence Preparation
   ├─ pit-official-status-evidence-packet
   ├─ pit-official-status-evidence-packet-enrichment
   ├─ reviewer-no-hit-source-coverage-acceptance
-  └─ reviewer-no-hit-acceptance-downstream-impact
+  ├─ reviewer-no-hit-acceptance-downstream-impact
+  └─ first-batch-reviewer-evidence-completion-plan
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -149,6 +150,7 @@ market cache coverage
 → PIT official status evidence packet enrichment
 → reviewer-no-hit-source-coverage-acceptance
 → reviewer-no-hit-acceptance-downstream-impact
+→ first-batch-reviewer-evidence-completion-plan
 → index / health / status
 → research-status
 ```
@@ -156,7 +158,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
+FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -211,33 +213,13 @@ mixed_demo_core:
   profile_type: demo_mixed
 ```
 
-### Legacy etf_core Meaning
+Existing `etf_core` artifacts remain legacy mixed-demo context and should not be treated as ETF-only or mutated in place.
 
-Existing `etf_core` artifacts are not ETF-only.
+## PIT Evidence and Reviewer Context Contracts
 
-Current 72-row legacy worklist distribution:
+### PIT Evidence Checklist Validator
 
-```text
-STOCK rows: 56
-ETF rows: 16
-legacy mixed-demo rows: 72
-profile conflicts: 56
-```
-
-Therefore existing `etf_core` artifacts should be treated as:
-
-```text
-legacy_mixed_demo_universe
-POLICY_AMBIGUOUS_DEMO_MIXED_UNIVERSE
-```
-
-They should not be mutated in place.
-
-### PIT Evidence Checklist Validator Fields
-
-The checklist validator evaluates draft/completed update CSV rows against the strict PIT evidence checklist.
-
-It reports:
+The checklist validator reports:
 
 ```text
 validator_id
@@ -250,26 +232,9 @@ missing_evidence_matrix
 approval_candidate_preview
 ```
 
-Validator outputs are gate reports, not approvals. A row passing the checklist would only be an approval candidate preview until a later explicit PIT review workflow is run.
+Validator outputs are gate reports, not approvals. A checklist-pass row would only be an approval-candidate preview until a later explicit PIT review workflow is run.
 
-### PIT Evidence Policy Profile Comparison Fields
-
-The policy profile comparison workflow compares strict validation with opt-in policy profiles.
-
-It reports:
-
-```text
-comparison_id
-profile_name
-row_count
-strict_checklist_pass_count
-eod_low_budget_checklist_pass_count
-reviewed_no_hit_support_pass_count
-no_hit_context_supported_count
-reviewer_acceptance_required_count
-relaxed_blocker_count
-remaining_blocked_count
-```
+### PIT Evidence Policy Profile Comparison
 
 Known profiles:
 
@@ -293,102 +258,16 @@ STRONG_OFFICIAL_DATE_SPECIFIC for quotation/traded presence: 16/16
 
 This is strong date-specific evidence for quotation/traded presence only. It does not automatically prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution.
 
-### PIT Official Status Evidence Packet Enrichment Fields
+### Reviewer No-Hit Acceptance and Downstream Impact
 
-The enrichment workflow folds SZSE 1815 quotation diagnostics and reviewed no-hit support context into a refreshed report-only packet.
+Reviewer no-hit source coverage acceptance records source coverage, query-window acceptance, no-hit inference limits, and survivorship rationale as report-only context.
 
-It reports:
-
-```text
-enrichment_id
-source_packet_id
-policy_comparison_id
-row_count
-strong_official_same_date_quotation_count
-reviewed_no_hit_context_supported_count
-reviewer_acceptance_required_count
-checklist_pass_count
-remaining_blocked_count
-```
-
-Current enrichment state:
-
-```text
-enrichment_id: cb5f323d3c8c
-source_packet_id: 8efabe2ffe62
-policy_comparison_id: c1a75d1091c6
-row_count: 16
-strong_official_same_date_quotation_count: 16
-reviewed_no_hit_context_supported_count: 16
-reviewer_acceptance_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
-```
-
-Enrichment artifacts are not approvals. They do not make no-hit context approval-grade and do not create usable current-candidates universe input.
-
-### Reviewer No-Hit Source Coverage Acceptance Fields
-
-The reviewer no-hit source coverage acceptance workflow records source coverage, query-window acceptance, no-hit inference limits, and survivorship rationale as report-only context.
-
-It reports:
-
-```text
-acceptance_id
-source_enrichment_id
-row_count
-accepted_count
-needs_review_count
-reviewer_acceptance_required_count
-survivorship_rationale_required_count
-checklist_pass_count
-remaining_blocked_count
-```
-
-Current reviewer no-hit acceptance state:
-
-```text
-acceptance_id: 2e05e4b74794
-source_enrichment_id: cb5f323d3c8c
-stage: REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
-row_count: 64
-accepted_count: 0
-needs_review_count: 64
-reviewer_acceptance_required_count: 64
-survivorship_rationale_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
-```
-
-Reviewer no-hit acceptance artifacts are supporting-context records only. They do not apply PIT approval, create clean review updates, export universe files, or create usable current-candidates input.
-
-### Reviewer No-Hit Acceptance Downstream Impact Fields
-
-The downstream impact workflow links reviewer-accepted no-hit supporting context back to packet, checklist, and policy context while preserving approval boundaries.
-
-It reports:
-
-```text
-impact_id
-acceptance_id
-enrichment_id
-source_packet_id
-policy_comparison_id
-validator_id
-accepted_no_hit_context_count
-packet_context_gap_reduced_count
-checklist_pass_count
-remaining_blocked_count
-approval_applied
-```
+The downstream impact workflow links accepted no-hit supporting context back to packet, checklist, and policy context while preserving approval boundaries.
 
 Current active downstream impact state:
 
 ```text
 impact_id: 9e164963455e
-acceptance_id: 2e05e4b74794
-enrichment_id: cb5f323d3c8c
-stage: REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
 accepted_no_hit_context_count: 0
 packet_context_gap_reduced_count: 0
 checklist_pass_count: 0
@@ -396,33 +275,62 @@ remaining_blocked_count: 16
 approval_applied: false
 ```
 
-Diagnostics fixture downstream impact:
+### First-Batch Reviewer Evidence Completion Plan
+
+The first-batch reviewer evidence completion plan converts active evidence context into a concrete reviewer fill plan for the 16 first-batch rows.
+
+It reports:
 
 ```text
-impact_id: 4423bdd3e843
-accepted_no_hit_context_count: 4
-packet_context_gap_reduced_count: 1
+plan_id
+row_count
+stock_core_row_count
+etf_core_row_count
+reviewer_completion_required_count
+no_hit_acceptance_required_count
+survivorship_rationale_required_count
+metadata_completion_required_count
+checklist_pass_count
+remaining_blocked_count
+clean_review_updates_created
+approval_applied
+```
+
+Current plan state:
+
+```text
+plan_id: c630522f235a
+stage: FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
+row_count: 16
+stock_core_row_count: 8
+etf_core_row_count: 8
+reviewer_completion_required_count: 16
+no_hit_acceptance_required_count: 16
+survivorship_rationale_required_count: 16
+metadata_completion_required_count: 16
 checklist_pass_count: 0
 remaining_blocked_count: 16
+clean_review_updates_created: false
 approval_applied: false
 ```
 
-Downstream impact artifacts are supporting-context summaries only. They must not create clean `review_updates.csv`, apply PIT approval, run PIT review/export/staging/current-candidates, or write `data/raw` / `data/processed`.
-
-### PIT Evidence Update Ingestion Fields
-
-Evidence update ingestion validates reviewer-completed rows and may write a clean `review_updates.csv` artifact under `outputs/reports`.
-
-It must not:
+Plan artifacts may include:
 
 ```text
-apply approvals
-export universe files
-write data/raw or data/processed
-run current-candidates
-build snapshots
-compute forward labels
+first_batch_reviewer_evidence_completion_plan.csv
+row_level_missing_evidence_matrix.csv
+reusable_symbol_level_evidence_plan.csv
+date_specific_evidence_plan.csv
+reviewer_completion_template.csv
+reviewer_no_hit_acceptance_todo.csv
+survivorship_rationale_todo.csv
+metadata_completion_todo.csv
+source_lineage_summary.csv
+report.md
+metadata.json
 ```
+
+These artifacts are reviewer planning context only. They are not clean review updates, applied approvals, accepted universe files, or current-candidates inputs.
 
 ## Current Multi-Date Planning State
 
@@ -445,29 +353,24 @@ Reviewed replacement worklist plan: 56 stock_core replacement rows, 16 etf_core 
 Reviewed replacement worklist acceptance: acknowledged as planning context, active legacy worklist untouched
 Reviewed replacement worklist activation: activation planning context, 56 stock_core rows, 16 etf_core rows, active legacy worklist untouched
 Activated replacement evidence update plan: 56 stock_core rows, 16 etf_core rows, 0 mixed_demo_core rows, stock first batch 8 rows, ETF first batch 8 rows, no clean review updates
-Codex diagnostics evidence discovery: 16 NEEDS_MORE_EVIDENCE rows pass ingestion schema, but 0 approval candidates
 PIT evidence checklist validator: 16 rows blocked, 0 checklist-pass approval candidates
 PIT evidence policy profile comparison: EOD low-budget profile relaxes 16 timing/context blockers but still leaves 16 rows blocked, 0 pass candidates
 PIT official status evidence packet: 72 evidence packet rows, 0 strong official date-specific, 16 supporting official symbol-level, 16 supporting local EOD cache, 40 missing, 16 blocked rows
 SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-presence rows found
-Reviewed no-hit support policy comparison: no-hit context supported for 16 rows, reviewer acceptance required for 16 rows, 0 pass candidates
-PIT official status evidence packet enrichment: 16/16 same-date quotation evidence, 16/16 reviewed no-hit context support, 16/16 reviewer acceptance required, 0 checklist pass, 16 blocked
-Reviewer no-hit source coverage acceptance: 64 rows, 0 accepted, 64 needs review, 64 reviewer acceptance required, 16 survivorship rationale required, 0 checklist pass, 16 blocked
 Reviewer no-hit downstream impact: 0 accepted active context, 0 packet gaps reduced, 0 checklist pass, 16 blocked, approval_applied=false
+First-batch reviewer evidence completion plan: 16 rows, 16 reviewer-completion required, 16 no-hit acceptance required, 16 survivorship rationale required, 16 metadata completion required, 0 checklist pass, 16 blocked
 ```
 
 ## Current Next Technical Branch
 
 ```text
-First-Batch Reviewer Evidence Completion Planning v0.1
+Tiny Manual Reviewer Completion Smoke v0.1
 ```
 
 Purpose:
 
-- use downstream impact output, checklist blockers, enriched evidence packet, and reviewer no-hit acceptance context;
-- produce a row-level plan for completing PIT evidence for the current 16 first-batch rows;
-- list missing fields such as `as_of_date`, `is_active`, `is_active_evidence`, `industry`, `revision_id`, `t_plus_rule`, `available_time`, stock `is_st`, and survivorship rationale;
-- recommend which fields Codex can draft from existing evidence and which require explicit reviewer acceptance;
-- keep the branch read-only / diagnostics-first before any real completed update CSV is generated.
-
-Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.
+- use the generated first-batch reviewer completion template;
+- create a one-row diagnostics-only manual completion fixture;
+- verify the fixture can flow through planning validation without becoming PIT approval;
+- confirm checklist_pass_count and remaining blockers behave as expected;
+- confirm no clean review updates, export, snapshot, forward labels, current-candidates, messages, broker, orders, or cache mutation.
