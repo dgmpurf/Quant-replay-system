@@ -187,6 +187,101 @@ def test_tiny_reviewer_no_hit_acceptance_smoke_accepts_one_supporting_context_on
     assert baseline_metadata["remaining_blocked_count"] == 16
 
 
+def test_reviewer_no_hit_multi_exception_smoke_accepts_supporting_context_only(
+    tmp_path: Path,
+) -> None:
+    enrichment = _first_batch_enrichment_fixture(tmp_path)
+    audit = _audit_fixture(tmp_path)
+    comparison = _comparison_fixture(tmp_path)
+    exception_types = [
+        "DELISTING",
+        "ST_RISK_WARNING",
+        "SUSPENSION_RESUMPTION",
+        "SURVIVORSHIP_RATIONALE",
+    ]
+
+    updates = tmp_path / "reviewer_no_hit_multi_exception_update.csv"
+    update_rows = []
+    for exception_type in exception_types:
+        row = {
+            "signal_date": "2024-04-02",
+            "symbol": "000001",
+            "universe_name": "stock_core",
+            "exception_type": exception_type,
+            "acceptance_status": "ACCEPTED_AS_SUPPORTING_CONTEXT",
+            "source_coverage_accepted": True,
+            "query_window_accepted": True,
+            "no_hit_inference_accepted": True,
+            "accepted_by": "diagnostics_reviewer",
+            "accepted_at": "2026-06-05T18:15:00+08:00",
+            "acceptance_reason": (
+                "Diagnostics-only multi-exception smoke accepts recorded no-hit source coverage "
+                "as supporting context only."
+            ),
+            "limitations": (
+                "No-hit support remains policy-dependent and does not prove PIT approval, "
+                "checklist pass, universe export, or candidate generation."
+            ),
+            "survivorship_rationale": "",
+            "evidence_reference": "local-fixture://reviewer-no-hit-multi-exception-smoke",
+        }
+        if exception_type == "SURVIVORSHIP_RATIONALE":
+            row["survivorship_rationale"] = (
+                "Reviewer accepts documented source coverage and query windows as survivorship-bias "
+                "supporting context only; PIT approval remains blocked pending the full evidence checklist."
+            )
+        update_rows.append(row)
+    pd.DataFrame(update_rows).to_csv(updates, index=False)
+
+    result = build_reviewer_no_hit_source_coverage_acceptance(
+        enrichment=enrichment,
+        audit=audit,
+        policy_comparison=comparison,
+        reviewer_acceptance=updates,
+        output_dir=tmp_path / "diagnostics_acceptance",
+    )
+
+    accepted = result.acceptance_frame.loc[
+        result.acceptance_frame["acceptance_status"] == "ACCEPTED_AS_SUPPORTING_CONTEXT"
+    ].copy()
+    assert len(accepted) == 4
+    assert set(accepted["exception_type"]) == set(exception_types)
+    assert set(accepted["signal_date"]) == {"2024-04-02"}
+    assert set(accepted["symbol"]) == {"000001"}
+    assert set(accepted["universe_name"]) == {"stock_core"}
+    assert result.accepted_count == 4
+    assert result.accepted_supporting_context_count == 4
+    assert result.needs_review_count == 60
+    assert result.checklist_pass_count == 0
+    assert result.remaining_blocked_count == 16
+
+    truthy_safety_columns = [
+        "accepted_as_supporting_context",
+        "remaining_blocked",
+        "no_clean_review_updates_created",
+        "no_data_raw_write",
+        "no_data_processed_write",
+        "no_current_candidates_generated",
+        "acceptance_only",
+    ]
+    for column in truthy_safety_columns:
+        assert accepted[column].map(bool).all()
+    false_safety_columns = [
+        "checklist_pass_candidate",
+        "approval_applied",
+        "pit_review_run",
+        "export_readiness_run",
+        "export_staging_run",
+        "universe_exported",
+    ]
+    for column in false_safety_columns:
+        assert not accepted[column].map(bool).any()
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in result.acceptance_frame.to_csv(index=False)
+    assert not list(result.artifact_paths["artifact_dir"].glob("*review_updates*.csv"))
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
+
+
 def test_reviewer_no_hit_acceptance_blocks_incomplete_survivorship_acceptance(tmp_path: Path) -> None:
     enrichment = _enrichment_fixture(tmp_path)
     audit = _audit_fixture(tmp_path)
