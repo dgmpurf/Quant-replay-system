@@ -1341,6 +1341,9 @@ def test_dashboard_includes_pit_evidence_policy_profile_comparison_when_no_later
     assert result.pit_evidence_policy_profile_comparison_row_count == 16
     assert result.pit_evidence_policy_profile_comparison_strict_pass_count == 0
     assert result.pit_evidence_policy_profile_comparison_eod_low_budget_pass_count == 0
+    assert result.pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count == 0
+    assert result.pit_evidence_policy_profile_comparison_no_hit_context_supported_count == 0
+    assert result.pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count == 0
     assert result.pit_evidence_policy_profile_comparison_relaxed_blocker_count == 16
     assert result.pit_evidence_policy_profile_comparison_remaining_blocked_count == 16
     assert result.workflow_stage == "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED"
@@ -1391,6 +1394,7 @@ def test_cli_research_status_prints_pit_evidence_policy_profile_comparison_field
         "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED"
     ) in output.out
     assert "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count: 0" in output.out
+    assert "pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count: 0" in output.out
 
 
 def test_dashboard_includes_pit_official_status_evidence_packet_when_no_later_workflow_exists(
@@ -6074,6 +6078,9 @@ def _pit_evidence_policy_profile_comparison_artifact(
     row_count: int = 16,
     strict_pass_count: int = 0,
     eod_low_budget_pass_count: int = 0,
+    reviewed_no_hit_support_pass_count: int = 0,
+    no_hit_context_supported_count: int = 0,
+    reviewer_acceptance_required_count: int = 0,
     relaxed_blocker_count: int = 16,
     remaining_blocked_count: int = 16,
     created_at: str = "2026-06-04T16:10:00+08:00",
@@ -6111,6 +6118,9 @@ def _pit_evidence_policy_profile_comparison_artifact(
                 "survivorship_still_required": True,
                 "checklist_pass_under_strict": False,
                 "checklist_pass_under_eod_low_budget": False,
+                "checklist_pass_under_reviewed_no_hit_support": False,
+                "no_hit_context_supported": False,
+                "reviewer_acceptance_required": False,
                 "approval_candidate_preview_only": False,
                 "should_apply_approval": False,
                 "no_pit_review_run": True,
@@ -6136,6 +6146,9 @@ def _pit_evidence_policy_profile_comparison_artifact(
                 "row_count": row_count,
                 "strict_checklist_pass_count": strict_pass_count,
                 "eod_low_budget_checklist_pass_count": eod_low_budget_pass_count,
+                "reviewed_no_hit_support_pass_count": reviewed_no_hit_support_pass_count,
+                "no_hit_context_supported_count": no_hit_context_supported_count,
+                "reviewer_acceptance_required_count": reviewer_acceptance_required_count,
                 "relaxed_blocker_count": relaxed_blocker_count,
                 "remaining_blocked_count": remaining_blocked_count,
                 "approval_candidate_preview_count": eod_low_budget_pass_count,
@@ -6159,6 +6172,9 @@ def _pit_evidence_policy_profile_comparison_artifact(
             "row_count": row_count,
             "strict_checklist_pass_count": strict_pass_count,
             "eod_low_budget_checklist_pass_count": eod_low_budget_pass_count,
+            "reviewed_no_hit_support_pass_count": reviewed_no_hit_support_pass_count,
+            "no_hit_context_supported_count": no_hit_context_supported_count,
+            "reviewer_acceptance_required_count": reviewer_acceptance_required_count,
             "relaxed_blocker_count": relaxed_blocker_count,
             "remaining_blocked_count": remaining_blocked_count,
             "approval_applied": False,

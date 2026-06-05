@@ -19,6 +19,7 @@ from quant_replay_system.data import read_csv_preserve_symbol_columns
 
 
 PROFILE_NAME = "EOD_POST_CLOSE_LOW_BUDGET_PIT"
+REVIEWED_NO_HIT_PROFILE_NAME = "EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT"
 REFERENCE_PROFILE_NAME = "STRICT_PIT"
 SAFETY_STATEMENT = (
     "No approval applied, PIT review, export-readiness, staging, universe export, active mutation, "
@@ -34,20 +35,34 @@ COMPARISON_COLUMNS = [
     "profile_name",
     "strict_status",
     "eod_low_budget_status",
+    "reviewed_no_hit_status",
     "strict_blockers",
     "relaxed_blockers",
+    "no_hit_relaxed_context",
     "remaining_blockers",
     "available_time",
     "decision_time",
     "available_time_within_decision_time",
+    "official_quotation_presence_supported",
     "same_day_market_cache_used_as_support",
     "active_context_supported_by_cache",
     "suspension_context_supported_by_cache",
+    "no_hit_context_supported",
+    "no_hit_not_delisted_context_supported",
+    "no_hit_no_suspension_context_supported",
+    "no_hit_no_st_context_supported",
+    "reviewer_acceptance_required",
+    "reviewer_acceptance_present",
+    "source_coverage_required",
+    "source_coverage_documented",
+    "query_window_documented",
     "not_delisted_still_required",
     "st_no_st_still_required",
     "survivorship_still_required",
+    "survivorship_rationale_required",
     "checklist_pass_under_strict",
     "checklist_pass_under_eod_low_budget",
+    "checklist_pass_under_reviewed_no_hit_support",
     "approval_candidate_preview_only",
     "should_apply_approval",
     "no_pit_review_run",
@@ -70,6 +85,9 @@ SUMMARY_COLUMNS = [
     "row_count",
     "strict_checklist_pass_count",
     "eod_low_budget_checklist_pass_count",
+    "reviewed_no_hit_support_pass_count",
+    "no_hit_context_supported_count",
+    "reviewer_acceptance_required_count",
     "relaxed_blocker_count",
     "remaining_blocked_count",
     "approval_candidate_preview_count",
@@ -87,6 +105,9 @@ class PitEvidencePolicyProfileComparisonResult:
     row_count: int
     strict_checklist_pass_count: int
     eod_low_budget_checklist_pass_count: int
+    reviewed_no_hit_support_pass_count: int
+    no_hit_context_supported_count: int
+    reviewer_acceptance_required_count: int
     relaxed_blocker_count: int
     remaining_blocked_count: int
     comparison_frame: pd.DataFrame
@@ -125,6 +146,7 @@ def build_pit_evidence_policy_profile_comparison(
         }
     )
     validation_by_key = {_key(row): row for row in validation.to_dict("records")}
+    no_hit_policy_available = _no_hit_policy_available(policy_audit_dir)
     rows = [
         _compare_row(
             comparison_id=comparison_id,
@@ -133,6 +155,7 @@ def build_pit_evidence_policy_profile_comparison(
             profile=profile,
             decision_policy=decision_policy,
             decision_time=decision_time,
+            no_hit_policy_available=no_hit_policy_available,
         )
         for row in updates.to_dict("records")
     ]
@@ -152,8 +175,11 @@ def build_pit_evidence_policy_profile_comparison(
         row_count=len(comparison_frame),
         strict_checklist_pass_count=_true_count(comparison_frame, "checklist_pass_under_strict"),
         eod_low_budget_checklist_pass_count=_true_count(comparison_frame, "checklist_pass_under_eod_low_budget"),
+        reviewed_no_hit_support_pass_count=_true_count(comparison_frame, "checklist_pass_under_reviewed_no_hit_support"),
+        no_hit_context_supported_count=_true_count(comparison_frame, "no_hit_context_supported"),
+        reviewer_acceptance_required_count=_true_count(comparison_frame, "reviewer_acceptance_required"),
         relaxed_blocker_count=len(relaxed_frame),
-        remaining_blocked_count=int((~comparison_frame["checklist_pass_under_eod_low_budget"].map(_bool)).sum())
+        remaining_blocked_count=int((~comparison_frame[_active_pass_column(profile)].map(_bool)).sum())
         if not comparison_frame.empty
         else 0,
         comparison_frame=comparison_frame,
@@ -170,6 +196,9 @@ def build_pit_evidence_policy_profile_comparison(
             "decision_time": decision_time or "",
             "reference_profile_name": REFERENCE_PROFILE_NAME,
             "profile_is_opt_in": True,
+            "reviewed_no_hit_profile_name": REVIEWED_NO_HIT_PROFILE_NAME,
+            "reviewed_no_hit_profile_is_opt_in": profile.upper() == REVIEWED_NO_HIT_PROFILE_NAME,
+            "no_hit_policy_available": no_hit_policy_available,
             "strict_default_unchanged": True,
             "approval_applied": False,
             "pit_review_run": False,
@@ -203,6 +232,7 @@ def _compare_row(
     profile: str,
     decision_policy: str,
     decision_time: str | None,
+    no_hit_policy_available: bool,
 ) -> dict[str, Any]:
     signal_date = _string(update.get("signal_date"))
     available_time = _string(update.get("available_time"))
@@ -219,6 +249,28 @@ def _compare_row(
         relaxed.append("PIT_TIMING_BLOCKED")
     remaining = _remaining_blockers(strict, update, relaxed, local_cache)
     eod_pass = strict_pass or (not remaining and not _bool(strict.get("survivorship_blocker")))
+    profile_is_reviewed_no_hit = profile.upper() == REVIEWED_NO_HIT_PROFILE_NAME
+    reviewer_acceptance_present = _reviewer_acceptance_present(update)
+    source_coverage_documented = profile_is_reviewed_no_hit and no_hit_policy_available
+    query_window_documented = source_coverage_documented
+    official_quotation_presence_supported = local_cache and available_ok
+    no_hit_context_supported = (
+        profile_is_reviewed_no_hit
+        and official_quotation_presence_supported
+        and source_coverage_documented
+        and query_window_documented
+        and reviewer_acceptance_present
+    )
+    no_hit_context = _no_hit_relaxed_context(update, no_hit_context_supported)
+    reviewed_remaining = _reviewed_no_hit_remaining_blockers(
+        remaining=remaining,
+        update=update,
+        no_hit_context_supported=no_hit_context_supported,
+        source_coverage_documented=source_coverage_documented,
+        query_window_documented=query_window_documented,
+        reviewer_acceptance_present=reviewer_acceptance_present,
+    )
+    reviewed_pass = strict_pass or (profile_is_reviewed_no_hit and not reviewed_remaining)
     return {
         "comparison_id": comparison_id,
         "symbol": _string(update.get("symbol")),
@@ -227,21 +279,35 @@ def _compare_row(
         "profile_name": profile,
         "strict_status": strict_status,
         "eod_low_budget_status": "EOD_LOW_BUDGET_PASS_PREVIEW" if eod_pass else "EOD_LOW_BUDGET_BLOCKED",
+        "reviewed_no_hit_status": "REVIEWED_NO_HIT_PASS_PREVIEW" if reviewed_pass else "REVIEWED_NO_HIT_BLOCKED",
         "strict_blockers": strict_blockers,
         "relaxed_blockers": ", ".join(relaxed),
-        "remaining_blockers": "; ".join(remaining),
+        "no_hit_relaxed_context": ", ".join(no_hit_context),
+        "remaining_blockers": "; ".join(reviewed_remaining if profile_is_reviewed_no_hit else remaining),
         "available_time": available_time,
         "decision_time": effective_decision_time,
         "available_time_within_decision_time": available_ok,
+        "official_quotation_presence_supported": official_quotation_presence_supported,
         "same_day_market_cache_used_as_support": local_cache and available_ok,
         "active_context_supported_by_cache": local_cache and available_ok and bool(_string(update.get("is_suspended"))),
         "suspension_context_supported_by_cache": local_cache and available_ok and bool(_string(update.get("is_suspended"))),
-        "not_delisted_still_required": not strict_pass,
-        "st_no_st_still_required": _string(update.get("universe_name")) == "stock_core" and not strict_pass,
+        "no_hit_context_supported": no_hit_context_supported,
+        "no_hit_not_delisted_context_supported": no_hit_context_supported,
+        "no_hit_no_suspension_context_supported": no_hit_context_supported,
+        "no_hit_no_st_context_supported": no_hit_context_supported and _string(update.get("universe_name")) == "stock_core",
+        "reviewer_acceptance_required": profile_is_reviewed_no_hit,
+        "reviewer_acceptance_present": reviewer_acceptance_present,
+        "source_coverage_required": profile_is_reviewed_no_hit,
+        "source_coverage_documented": source_coverage_documented,
+        "query_window_documented": query_window_documented,
+        "not_delisted_still_required": not strict_pass and not no_hit_context_supported,
+        "st_no_st_still_required": _string(update.get("universe_name")) == "stock_core" and not strict_pass and not no_hit_context_supported,
         "survivorship_still_required": not _bool(update.get("survivorship_bias_resolved")),
+        "survivorship_rationale_required": profile_is_reviewed_no_hit,
         "checklist_pass_under_strict": strict_pass,
         "checklist_pass_under_eod_low_budget": eod_pass,
-        "approval_candidate_preview_only": eod_pass,
+        "checklist_pass_under_reviewed_no_hit_support": reviewed_pass,
+        "approval_candidate_preview_only": eod_pass or reviewed_pass,
         "should_apply_approval": False,
         "no_pit_review_run": True,
         "no_export_readiness_run": True,
@@ -280,6 +346,57 @@ def _remaining_blockers(strict: dict[str, Any], update: dict[str, Any], relaxed:
     return sorted(set(remaining))
 
 
+def _reviewed_no_hit_remaining_blockers(
+    *,
+    remaining: list[str],
+    update: dict[str, Any],
+    no_hit_context_supported: bool,
+    source_coverage_documented: bool,
+    query_window_documented: bool,
+    reviewer_acceptance_present: bool,
+) -> list[str]:
+    reviewed_remaining = list(remaining)
+    if no_hit_context_supported:
+        relaxable_fragments = [
+            "not-delisted",
+            "not_delisted",
+            "ST/no-ST",
+            "stock ST/no-ST",
+            "suspension",
+            "is_active requires reviewed EOD/local-source policy",
+        ]
+        reviewed_remaining = [
+            item
+            for item in reviewed_remaining
+            if not any(fragment.lower() in item.lower() for fragment in relaxable_fragments)
+        ]
+    if not reviewer_acceptance_present:
+        reviewed_remaining.append("reviewer acceptance missing for reviewed no-hit support")
+    if not source_coverage_documented:
+        reviewed_remaining.append("official no-hit source coverage not documented")
+    if not query_window_documented:
+        reviewed_remaining.append("official no-hit query window not documented")
+    if not _bool(update.get("survivorship_bias_resolved")):
+        reviewed_remaining.append("survivorship-bias rationale still required")
+    return sorted(set(reviewed_remaining))
+
+
+def _no_hit_relaxed_context(update: dict[str, Any], supported: bool) -> list[str]:
+    if not supported:
+        return []
+    contexts = ["NOT_DELISTED_CONTEXT", "NO_SUSPENSION_CONTEXT"]
+    if _string(update.get("universe_name")) == "stock_core":
+        contexts.append("NO_ST_CONTEXT")
+    return contexts
+
+
+def _reviewer_acceptance_present(update: dict[str, Any]) -> bool:
+    return all(
+        _string(update.get(field))
+        for field in ["reviewer", "reviewed_at", "review_reason", "evidence_source"]
+    ) and bool(_string(update.get("evidence_reference")) or _string(update.get("evidence_path")))
+
+
 def _read_validator_validation(validator_dir: Path) -> pd.DataFrame:
     path = validator_dir / "pit_evidence_checklist_validation.csv"
     if not path.exists():
@@ -292,6 +409,17 @@ def _read_policy_snapshot(policy_audit_dir: Path) -> pd.DataFrame:
     if path.exists():
         return read_csv_preserve_symbol_columns(path, keep_default_na=False)
     return pd.DataFrame([{"field_name": "profile", "eod_post_close_low_budget_rule": "Policy audit file not found."}])
+
+
+def _no_hit_policy_available(policy_audit_dir: Path) -> bool:
+    return all(
+        (policy_audit_dir / name).exists()
+        for name in [
+            "source_coverage_requirements.csv",
+            "no_hit_inference_rules.csv",
+            "blocker_decision_matrix.csv",
+        ]
+    )
 
 
 def _relaxed_matrix(frame: pd.DataFrame) -> pd.DataFrame:
@@ -312,8 +440,10 @@ def _remaining_matrix(frame: pd.DataFrame) -> pd.DataFrame:
 
 def _summary(comparison_id: str, profile: str, frame: pd.DataFrame) -> pd.DataFrame:
     eod_pass = _true_count(frame, "checklist_pass_under_eod_low_budget")
-    remaining = int((~frame["checklist_pass_under_eod_low_budget"].map(_bool)).sum()) if not frame.empty else 0
-    status = "PASS" if eod_pass and remaining == 0 else "WARN"
+    reviewed_pass = _true_count(frame, "checklist_pass_under_reviewed_no_hit_support")
+    active_pass_column = _active_pass_column(profile)
+    remaining = int((~frame[active_pass_column].map(_bool)).sum()) if not frame.empty else 0
+    status = "PASS" if _true_count(frame, active_pass_column) and remaining == 0 else "WARN"
     return pd.DataFrame(
         [
             {
@@ -326,9 +456,12 @@ def _summary(comparison_id: str, profile: str, frame: pd.DataFrame) -> pd.DataFr
                 "row_count": len(frame),
                 "strict_checklist_pass_count": _true_count(frame, "checklist_pass_under_strict"),
                 "eod_low_budget_checklist_pass_count": eod_pass,
+                "reviewed_no_hit_support_pass_count": reviewed_pass,
+                "no_hit_context_supported_count": _true_count(frame, "no_hit_context_supported"),
+                "reviewer_acceptance_required_count": _true_count(frame, "reviewer_acceptance_required"),
                 "relaxed_blocker_count": int(frame["relaxed_blockers"].map(lambda x: bool(_string(x))).sum()) if not frame.empty else 0,
                 "remaining_blocked_count": remaining,
-                "approval_candidate_preview_count": eod_pass,
+                "approval_candidate_preview_count": _true_count(frame, active_pass_column),
             }
         ],
         columns=SUMMARY_COLUMNS,
@@ -353,6 +486,9 @@ def _write_artifacts(result: PitEvidencePolicyProfileComparisonResult) -> None:
         "row_count": result.row_count,
         "strict_checklist_pass_count": result.strict_checklist_pass_count,
         "eod_low_budget_checklist_pass_count": result.eod_low_budget_checklist_pass_count,
+        "reviewed_no_hit_support_pass_count": result.reviewed_no_hit_support_pass_count,
+        "no_hit_context_supported_count": result.no_hit_context_supported_count,
+        "reviewer_acceptance_required_count": result.reviewer_acceptance_required_count,
         "relaxed_blocker_count": result.relaxed_blocker_count,
         "remaining_blocked_count": result.remaining_blocked_count,
         "created_at": pd.Timestamp.utcnow().isoformat(),
@@ -378,6 +514,7 @@ def _render_report(result: PitEvidencePolicyProfileComparisonResult) -> str:
             "## Interpretation",
             "",
             "STRICT_PIT remains the reference/default profile. EOD_POST_CLOSE_LOW_BUDGET_PIT is opt-in and comparison-only.",
+            "EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT is also opt-in and treats official no-hit evidence as reviewer-accepted supporting context only.",
             "Rows that pass this comparison are approval-candidate previews only; this workflow does not apply approval.",
             "",
         ]
@@ -438,11 +575,23 @@ def _finalize(frame: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
         "same_day_market_cache_used_as_support",
         "active_context_supported_by_cache",
         "suspension_context_supported_by_cache",
+        "official_quotation_presence_supported",
+        "no_hit_context_supported",
+        "no_hit_not_delisted_context_supported",
+        "no_hit_no_suspension_context_supported",
+        "no_hit_no_st_context_supported",
+        "reviewer_acceptance_required",
+        "reviewer_acceptance_present",
+        "source_coverage_required",
+        "source_coverage_documented",
+        "query_window_documented",
         "not_delisted_still_required",
         "st_no_st_still_required",
         "survivorship_still_required",
+        "survivorship_rationale_required",
         "checklist_pass_under_strict",
         "checklist_pass_under_eod_low_budget",
+        "checklist_pass_under_reviewed_no_hit_support",
         "approval_candidate_preview_only",
         "should_apply_approval",
         "no_pit_review_run",
@@ -463,6 +612,12 @@ def _true_count(frame: pd.DataFrame, column: str) -> int:
     if frame.empty or column not in frame.columns:
         return 0
     return int(frame[column].map(_bool).sum())
+
+
+def _active_pass_column(profile: str) -> str:
+    if profile.upper() == REVIEWED_NO_HIT_PROFILE_NAME:
+        return "checklist_pass_under_reviewed_no_hit_support"
+    return "checklist_pass_under_eod_low_budget"
 
 
 def _bool(value: Any) -> bool:

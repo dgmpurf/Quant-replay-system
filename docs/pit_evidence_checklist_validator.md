@@ -163,4 +163,4 @@ The workflow records:
 
 ## Policy Profile Comparison
 
-`pit-evidence-policy-profile-comparison` can compare strict validator output with the opt-in `EOD_POST_CLOSE_LOW_BUDGET_PIT` profile. The comparison is report-only: it does not change the strict validator default, does not apply approvals, and does not create approval updates. See [pit_evidence_policy_profile_comparison.md](pit_evidence_policy_profile_comparison.md).
+`pit-evidence-policy-profile-comparison` can compare strict validator output with opt-in profiles such as `EOD_POST_CLOSE_LOW_BUDGET_PIT` and `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT`. The reviewed no-hit profile treats no-hit evidence as reviewer-accepted supporting context only; it does not change the strict validator default, apply approvals, resolve survivorship automatically, or create approval updates. See [pit_evidence_policy_profile_comparison.md](pit_evidence_policy_profile_comparison.md).

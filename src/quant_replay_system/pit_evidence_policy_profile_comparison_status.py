@@ -39,6 +39,10 @@ def run_pit_evidence_policy_profile_comparison_status(
         status = "FAIL"
         stage = FAILED_STAGE
         next_action = "Repair policy profile comparison artifacts before using them as research-status context."
+    elif _int(latest.get("reviewed_no_hit_support_pass_count")) > 0:
+        status = "PASS"
+        stage = PREVIEW_STAGE
+        next_action = "Review opt-in reviewed no-hit support previews manually; no approval has been applied."
     elif _int(latest.get("eod_low_budget_checklist_pass_count")) > 0:
         status = "PASS"
         stage = PREVIEW_STAGE
@@ -46,7 +50,10 @@ def run_pit_evidence_policy_profile_comparison_status(
     elif _int(latest.get("remaining_blocked_count")) > 0:
         status = "WARN"
         stage = ALL_BLOCKED_STAGE
-        next_action = "Rows remain blocked under EOD low-budget policy; close non-relaxed PIT evidence gaps before approval review."
+        if _int(latest.get("no_hit_context_supported_count")) > 0:
+            next_action = "Rows remain blocked; reviewed no-hit context is visible but manual acceptance, complete evidence, and survivorship rationale are still required."
+        else:
+            next_action = "Rows remain blocked under EOD low-budget policy; close non-relaxed PIT evidence gaps before approval review."
     else:
         status = "PASS"
         stage = READY_STAGE
@@ -64,6 +71,9 @@ def run_pit_evidence_policy_profile_comparison_status(
         "row_count": _int(latest.get("row_count")),
         "strict_checklist_pass_count": _int(latest.get("strict_checklist_pass_count")),
         "eod_low_budget_checklist_pass_count": _int(latest.get("eod_low_budget_checklist_pass_count")),
+        "reviewed_no_hit_support_pass_count": _int(latest.get("reviewed_no_hit_support_pass_count")),
+        "no_hit_context_supported_count": _int(latest.get("no_hit_context_supported_count")),
+        "reviewer_acceptance_required_count": _int(latest.get("reviewer_acceptance_required_count")),
         "relaxed_blocker_count": _int(latest.get("relaxed_blocker_count")),
         "remaining_blocked_count": _int(latest.get("remaining_blocked_count")),
         "report_path": _string(latest.get("report_path")),
@@ -79,6 +89,9 @@ def run_pit_evidence_policy_profile_comparison_status(
                 "row_count": summary["row_count"],
                 "strict_checklist_pass_count": summary["strict_checklist_pass_count"],
                 "eod_low_budget_checklist_pass_count": summary["eod_low_budget_checklist_pass_count"],
+                "reviewed_no_hit_support_pass_count": summary["reviewed_no_hit_support_pass_count"],
+                "no_hit_context_supported_count": summary["no_hit_context_supported_count"],
+                "reviewer_acceptance_required_count": summary["reviewer_acceptance_required_count"],
                 "remaining_blocked_count": summary["remaining_blocked_count"],
                 "next_action": next_action,
             }
@@ -92,7 +105,7 @@ def run_pit_evidence_policy_profile_comparison_status(
     pd.DataFrame([summary]).to_csv(summary_csv, index=False)
     metadata.write_text(json.dumps({"status_id": comparison_id, **summary, "approval_applied": False, "universe_exported": False}, indent=2, sort_keys=True), encoding="utf-8")
     report.write_text(f"# PIT Evidence Policy Profile Comparison Status\n\nstatus: {status}\nworkflow_stage: {stage}\nnext_manual_action: {next_action}\n", encoding="utf-8")
-    return {"status": status, "workflow_stage": stage, "latest_comparison_id": summary["latest_comparison_id"], "health_status": health["status"], "profile_name": summary["profile_name"], "row_count": summary["row_count"], "strict_checklist_pass_count": summary["strict_checklist_pass_count"], "eod_low_budget_checklist_pass_count": summary["eod_low_budget_checklist_pass_count"], "relaxed_blocker_count": summary["relaxed_blocker_count"], "remaining_blocked_count": summary["remaining_blocked_count"], "report_path": summary["report_path"], "next_manual_action": next_action, "status_frame": frame, "summary_frame": pd.DataFrame([summary]), "artifact_paths": {"artifact_dir": artifact_dir, "report": report, "metadata": metadata}}
+    return {"status": status, "workflow_stage": stage, "latest_comparison_id": summary["latest_comparison_id"], "health_status": health["status"], "profile_name": summary["profile_name"], "row_count": summary["row_count"], "strict_checklist_pass_count": summary["strict_checklist_pass_count"], "eod_low_budget_checklist_pass_count": summary["eod_low_budget_checklist_pass_count"], "reviewed_no_hit_support_pass_count": summary["reviewed_no_hit_support_pass_count"], "no_hit_context_supported_count": summary["no_hit_context_supported_count"], "reviewer_acceptance_required_count": summary["reviewer_acceptance_required_count"], "relaxed_blocker_count": summary["relaxed_blocker_count"], "remaining_blocked_count": summary["remaining_blocked_count"], "report_path": summary["report_path"], "next_manual_action": next_action, "status_frame": frame, "summary_frame": pd.DataFrame([summary]), "artifact_paths": {"artifact_dir": artifact_dir, "report": report, "metadata": metadata}}
 
 
 def _int(value: Any) -> int:

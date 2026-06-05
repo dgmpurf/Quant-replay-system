@@ -54,7 +54,8 @@ Multi-Date Evidence Preparation
   ├─ reviewed-replacement-worklist-activation
   ├─ activated-replacement-worklist-evidence-update-plan
   ├─ pit-evidence-checklist-validator
-  └─ pit-evidence-policy-profile-comparison
+  ├─ pit-evidence-policy-profile-comparison
+  └─ pit-official-status-evidence-packet
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -111,7 +112,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Universe Review, Replacement Evidence Planning, Checklist Validation, and Policy Comparison
+### Multi-Date Candidate Planning, PIT Universe Review, Evidence Planning, Checklist Validation, Policy Comparison, and Evidence Packet
 
 ```text
 market cache coverage
@@ -137,6 +138,7 @@ market cache coverage
 → pit-evidence-checklist-validator
 → EOD_POST_CLOSE_LOW_BUDGET_PIT policy audit
 → pit-evidence-policy-profile-comparison
+→ PIT official status evidence packet
 → index / health / status
 → research-status
 ```
@@ -144,7 +146,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
+PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -295,14 +297,7 @@ missing_evidence_matrix
 approval_candidate_preview
 ```
 
-Validator outputs are gate reports, not approvals. A row passing the checklist would only be an approval candidate preview until a later explicit PIT review workflow is run. The current validator result has:
-
-```text
-validator_id: 62e9eb747197
-row_count: 16
-checklist_pass_count: 0
-blocked_count: 16
-```
+Validator outputs are gate reports, not approvals. A row passing the checklist would only be an approval candidate preview until a later explicit PIT review workflow is run.
 
 ### PIT Evidence Policy Profile Comparison Fields
 
@@ -322,18 +317,43 @@ relaxed_blocker_matrix
 remaining_blocker_matrix
 ```
 
-Current comparison state:
+`EOD_POST_CLOSE_LOW_BUDGET_PIT` is opt-in and report-only. It may relax timing/cache-support context only when explicit decision-time rules are satisfied. It must not become the default strict profile, apply approval, run PIT review, or export universe files.
+
+### PIT Official Status Evidence Packet Fields
+
+The PIT official status evidence packet workflow classifies current official/public/local evidence into strength buckets.
+
+It reports:
 
 ```text
-comparison_id: 0ef6d2f3bae6
-profile: EOD_POST_CLOSE_LOW_BUDGET_PIT
-strict_checklist_pass_count: 0
-eod_low_budget_checklist_pass_count: 0
-relaxed_blocker_count: 16
-remaining_blocked_count: 16
+packet_id
+row_count
+evidence_packet_row_count
+strong_official_date_specific_count
+supporting_official_symbol_level_count
+supporting_local_eod_cache_count
+context_only_count
+missing_count
+checklist_pass_count
+blocked_count
 ```
 
-`EOD_POST_CLOSE_LOW_BUDGET_PIT` is opt-in and report-only. It may relax timing/cache-support context only when explicit decision-time rules are satisfied. It must not become the default strict profile, apply approval, run PIT review, or export universe files.
+Current packet state:
+
+```text
+packet_id: 8efabe2ffe62
+stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
+row_count: 16
+evidence_packet_row_count: 72
+strong_official_date_specific_count: 0
+supporting_official_symbol_level_count: 16
+supporting_local_eod_cache_count: 16
+missing_count: 40
+checklist_pass_count: 0
+blocked_count: 16
+```
+
+Evidence packets are report-only. Supporting official symbol-level evidence does not become date-specific proof, and local EOD cache remains supporting EOD context only.
 
 ### PIT Evidence Update Ingestion Fields
 
@@ -374,19 +394,19 @@ Activated replacement evidence update plan: 56 stock_core rows, 16 etf_core rows
 Codex diagnostics evidence discovery: 16 NEEDS_MORE_EVIDENCE rows pass ingestion schema, but 0 approval candidates
 PIT evidence checklist validator: 16 rows blocked, 0 checklist-pass approval candidates
 PIT evidence policy profile comparison: EOD low-budget profile relaxes 16 timing/context blockers but still leaves 16 rows blocked, 0 pass candidates
+PIT official status evidence packet: 72 evidence packet rows, 0 strong official date-specific, 16 supporting official symbol-level, 16 supporting local EOD cache, 40 missing, 16 blocked rows
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition v0.1
+Official Date-Specific Status Evidence Source Design Audit v0.1
 ```
 
 Purpose:
 
-- target blockers not relaxed by EOD_POST_CLOSE_LOW_BUDGET_PIT;
-- find official/public evidence for not-delisted status, stock ST/no-ST status, survivorship-bias resolution, reviewer/evidence-reference completeness, and official active/status evidence;
-- update draft completed CSVs only when real evidence exists;
-- rerun diagnostics-only ingestion, strict checklist validator, and policy comparison if useful.
+- target sources capable of producing `STRONG_OFFICIAL_DATE_SPECIFIC` evidence;
+- determine whether official SZSE/CNInfo source design can solve daily not-delisted, ST/no-ST, suspension/trading status, and survivorship-bias resolution;
+- keep this as read-only / diagnostics-first before any implementation.
 
 Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.

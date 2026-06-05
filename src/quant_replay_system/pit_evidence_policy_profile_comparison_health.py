@@ -9,9 +9,34 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.pit_evidence_policy_profile_comparison import COMPARISON_COLUMNS, SUMMARY_COLUMNS
+from quant_replay_system.pit_evidence_policy_profile_comparison import (
+    REFERENCE_PROFILE_NAME,
+    REVIEWED_NO_HIT_PROFILE_NAME,
+)
 from quant_replay_system.pit_evidence_policy_profile_comparison_index import (
     scan_pit_evidence_policy_profile_comparison_artifacts,
 )
+
+
+OPTIONAL_LEGACY_COLUMNS = {
+    "reviewed_no_hit_status",
+    "no_hit_relaxed_context",
+    "official_quotation_presence_supported",
+    "no_hit_context_supported",
+    "no_hit_not_delisted_context_supported",
+    "no_hit_no_suspension_context_supported",
+    "no_hit_no_st_context_supported",
+    "reviewer_acceptance_required",
+    "reviewer_acceptance_present",
+    "source_coverage_required",
+    "source_coverage_documented",
+    "query_window_documented",
+    "survivorship_rationale_required",
+    "checklist_pass_under_reviewed_no_hit_support",
+    "reviewed_no_hit_support_pass_count",
+    "no_hit_context_supported_count",
+    "reviewer_acceptance_required_count",
+}
 
 
 def check_pit_evidence_policy_profile_comparison_health(
@@ -40,11 +65,28 @@ def check_pit_evidence_policy_profile_comparison_health(
                 except Exception as exc:
                     issues.append(_issue(comparison_id, field, path, "ERROR", f"UNREADABLE_{field.upper()}", str(exc)))
                     continue
-                missing = [column for column in required_columns if column not in frame.columns]
+                profile_names = set(frame["profile_name"].map(lambda value: _string(value).upper())) if "profile_name" in frame.columns else set()
+                reviewed_profile_present = REVIEWED_NO_HIT_PROFILE_NAME in profile_names
+                missing = [
+                    column
+                    for column in required_columns
+                    if column not in frame.columns and (reviewed_profile_present or column not in OPTIONAL_LEGACY_COLUMNS)
+                ]
                 if missing:
                     issues.append(_issue(comparison_id, field, path, "ERROR", "MISSING_REQUIRED_COLUMNS", ", ".join(missing)))
                 if field == "comparison_csv_path" and "should_apply_approval" in frame.columns and frame["should_apply_approval"].map(_bool).any():
                     issues.append(_issue(comparison_id, field, path, "ERROR", "APPROVAL_UPDATE_CREATED", "comparison must not request approval."))
+                if field == "comparison_csv_path" and "profile_name" in frame.columns:
+                    reviewed = frame["profile_name"].map(lambda value: _string(value).upper() == REVIEWED_NO_HIT_PROFILE_NAME)
+                    if reviewed.any():
+                        if "reviewer_acceptance_required" not in frame.columns:
+                            issues.append(_issue(comparison_id, field, path, "ERROR", "MISSING_REVIEWER_ACCEPTANCE_FLAG", "reviewed no-hit rows must expose reviewer_acceptance_required."))
+                        elif not frame.loc[reviewed, "reviewer_acceptance_required"].map(_bool).all():
+                            issues.append(_issue(comparison_id, field, path, "ERROR", "REVIEWER_ACCEPTANCE_NOT_REQUIRED", "reviewed no-hit rows must require reviewer acceptance."))
+                        if "checklist_pass_under_reviewed_no_hit_support" in frame.columns and "survivorship_still_required" in frame.columns:
+                            bad = reviewed & frame["checklist_pass_under_reviewed_no_hit_support"].map(_bool) & frame["survivorship_still_required"].map(_bool)
+                            if bad.any():
+                                issues.append(_issue(comparison_id, field, path, "ERROR", "SURVIVORSHIP_AUTO_RELAXED", "reviewed no-hit support must not resolve survivorship automatically."))
         checks = [
             ("profile_is_opt_in", True, "PROFILE_NOT_OPT_IN"),
             ("strict_default_unchanged", True, "STRICT_DEFAULT_MODIFIED"),
@@ -63,6 +105,10 @@ def check_pit_evidence_policy_profile_comparison_health(
             value = _bool(row.get(field))
             if value != expected:
                 issues.append(_issue(comparison_id, "metadata_path", row.get("metadata_path"), "ERROR", code, f"{field} expected {expected}."))
+        if _string(row.get("reference_profile_name")) != REFERENCE_PROFILE_NAME:
+            issues.append(_issue(comparison_id, "metadata_path", row.get("metadata_path"), "ERROR", "STRICT_REFERENCE_NOT_DEFAULT", "STRICT_PIT must remain the reference profile."))
+        if _string(row.get("profile_name")).upper() == REFERENCE_PROFILE_NAME:
+            issues.append(_issue(comparison_id, "metadata_path", row.get("metadata_path"), "ERROR", "PROFILE_BECAME_STRICT_DEFAULT", "Policy comparison profile must be opt-in, not the strict reference."))
     issue_frame = pd.DataFrame(issues, columns=["comparison_id", "path_field", "path_value", "severity", "issue_code", "issue_message"])
     error_count = int((issue_frame["severity"] == "ERROR").sum()) if not issue_frame.empty else 0
     warning_count = int((issue_frame["severity"] == "WARN").sum()) if not issue_frame.empty else 0

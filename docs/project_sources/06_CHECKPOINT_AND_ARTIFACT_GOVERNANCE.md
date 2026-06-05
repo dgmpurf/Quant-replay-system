@@ -42,7 +42,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, and policy profile comparison outputs that do not change strict validator defaults.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, and official status evidence packets that are not PIT approvals.
 
 ## Diagnostic vs Active Artifacts
 
@@ -55,6 +55,7 @@ Examples:
 - synthetic evidence update apply smoke;
 - Codex evidence discovery diagnostics;
 - policy profile audit diagnostics;
+- official status source access smoke diagnostics;
 - ignored dry-run files.
 
 ## Plan-Only Workflows
@@ -88,84 +89,19 @@ NEEDS_MORE_EVIDENCE
 
 Review-only does not mean exported universe input. Approved review rows are not the same as accepted current-candidates universe files.
 
-## Evidence Completion Helper Workflows
+## Evidence Completion / Worklist / Ingestion Workflows
 
-Evidence completion helper artifacts may produce:
-
-- evidence completion templates;
-- evidence gap reports;
-- non-authoritative `suggested_*` hints.
-
-They must not approve rows, set `valid_for_signal_date=true`, convert future-dated hints into evidence, export universe files, or write `data/raw` / `data/processed`.
-
-## Evidence Review Worklist Workflows
-
-Evidence review worklist artifacts are worklist-only.
-
-They may produce:
-
-- row-level worklists;
-- symbol summaries;
-- date summaries;
-- reviewer update templates.
-
-They must not approve rows, set `valid_for_signal_date=true`, export universe files, write `data/raw` / `data/processed`, run current-candidates, build snapshots, or compute forward labels.
-
-A worklist is not evidence; it only organizes what a reviewer needs to fill.
-
-## Evidence Update Ingestion Workflows
-
-PIT universe evidence update ingestion validates reviewer-completed worklist updates and produces a clean `review_updates.csv` artifact.
-
-It should block ingestion when:
-
-- identity keys are missing;
-- duplicate `signal_date + symbol + universe_name` rows exist;
-- reviewer/reviewed_at is missing;
-- evidence source/path/reference is missing;
-- approval is requested but survivorship risk is unresolved;
-- PIT dates are invalid;
-- suggested fields are copied into authoritative fields without review reason.
-
-It must not export universe files, write `data/raw`, write `data/processed`, run current-candidates, build snapshots, or compute forward labels.
+Evidence completion helper artifacts, evidence review worklist artifacts, and evidence update ingestion artifacts organize or validate evidence. They must not export universe files, write `data/raw` / `data/processed`, run current-candidates, build snapshots, or compute forward labels.
 
 A clean `review_updates.csv` is not an applied approval; it is a validated input that may be manually passed to the review workflow later.
 
-## Universe Profile Policy Audit Workflows
+## Universe Profile and Replacement Workflows
 
-Universe profile policy audit artifacts are governance-only.
+Universe profile policy audit artifacts are governance-only and must not approve/reject rows or mutate worklists.
 
-They may classify existing artifacts as:
+Split-worklist plan artifacts are planning-only and must not create active replacement worklists.
 
-```text
-legacy_mixed_demo_universe
-POLICY_AMBIGUOUS_DEMO_MIXED_UNIVERSE
-```
-
-They must not approve or reject rows. They must not mutate existing worklists.
-
-## Universe Profile Split-Worklist Plan Workflows
-
-Split-worklist plan artifacts are planning-only.
-
-They may produce:
-
-- registry snapshots;
-- split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`;
-- profile conflict counts;
-- future replacement worklist guidance.
-
-They must not mutate the active legacy worklist, generate active replacement worklists, approve rows, reject rows, export universe files, write `data/raw` or `data/processed`, or run current-candidates.
-
-Profile conflicts are governance context, not candidate generation failures.
-
-## Reviewed Replacement Worklist Plan / Acceptance / Activation
-
-Reviewed replacement worklist plan artifacts are planning-only. They may create future stock_core and etf_core templates, but they are not active review artifacts.
-
-Reviewed replacement worklist acceptance artifacts are planning acknowledgements. Acceptance is not activation.
-
-Reviewed replacement worklist activation artifacts are planning context, not usable universe input. Activation is still not approval, export, or candidate generation.
+Reviewed replacement worklist plan, acceptance, and activation artifacts are planning context only. Activation is still not approval, export, or candidate generation.
 
 All replacement-related workflows must preserve lineage to:
 
@@ -216,7 +152,7 @@ They must not:
 - build snapshots;
 - compute forward labels.
 
-A future Codex-driven evidence discovery workflow may use these packages to search local/public evidence and draft completed update CSVs, but actual approval remains gated by evidence update ingestion, strict checklist validation, policy comparison context, and PIT review.
+A future Codex-driven evidence discovery workflow may use these packages to search local/public evidence and draft completed update CSVs, but actual approval remains gated by evidence update ingestion, strict checklist validation, policy comparison context, official status evidence packet context, and PIT review.
 
 ## PIT Evidence Checklist Validator Workflows
 
@@ -244,15 +180,6 @@ They must not:
 
 A checklist-pass row is only an approval-candidate preview. It still requires explicit PIT review before any approval artifact exists.
 
-Current validator state:
-
-```text
-validator_id: 62e9eb747197
-stage: PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED
-checklist_pass_count: 0
-blocked_count: 16
-```
-
 ## PIT Evidence Policy Profile Comparison Workflows
 
 PIT evidence policy profile comparison artifacts are report-only policy context.
@@ -279,19 +206,48 @@ They must not:
 - build snapshots;
 - compute forward labels.
 
-Current policy comparison state:
+A policy comparison is not approval and does not make a profile the default.
+
+## PIT Official Status Evidence Packet Workflows
+
+PIT official status evidence packet artifacts are evidence-packet reports.
+
+They may:
+
+- combine source access smoke results, prior evidence discovery diagnostics, local EOD cache context, and official symbol-level sources into per-symbol/per-date packets;
+- classify evidence as `STRONG_OFFICIAL_DATE_SPECIFIC`, `SUPPORTING_OFFICIAL_SYMBOL_LEVEL`, `SUPPORTING_LOCAL_EOD_CACHE`, `CONTEXT_ONLY`, or `MISSING`;
+- rerun diagnostics-only ingestion, checklist validation, and policy comparison;
+- expose evidence packet counts in research-status.
+
+They must not:
+
+- apply approvals;
+- set `APPROVED_FOR_PIT_UNIVERSE` as an applied value;
+- treat supporting official symbol-level evidence as date-specific proof;
+- treat local EOD cache as official date-specific proof;
+- run PIT review;
+- run export-readiness;
+- run staging;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- mutate active worklists;
+- mutate market cache;
+- run current-candidates;
+- build snapshots;
+- compute forward labels.
+
+Current official status evidence packet state:
 
 ```text
-comparison_id: 0ef6d2f3bae6
-profile: EOD_POST_CLOSE_LOW_BUDGET_PIT
-stage: PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
-strict_checklist_pass_count: 0
-eod_low_budget_checklist_pass_count: 0
-relaxed_blocker_count: 16
-remaining_blocked_count: 16
+packet_id: 8efabe2ffe62
+stage: PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
+strong_official_date_specific_count: 0
+supporting_official_symbol_level_count: 16
+supporting_local_eod_cache_count: 16
+missing_count: 40
+checklist_pass_count: 0
+blocked_count: 16
 ```
-
-A policy comparison is not approval and does not make a profile the default.
 
 ## Export-Readiness Workflows
 
@@ -332,6 +288,7 @@ activation_only=true
 evidence_update_plan_only=true
 checklist_validation_only=true
 policy_profile_comparison_only=true
+evidence_packet_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -360,7 +317,7 @@ Rows derived from a future universe must keep survivorship-bias warnings until r
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
 
 ## When to Refresh This Document
 
@@ -370,7 +327,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- Codex-driven non-relaxed PIT evidence acquisition semantics are implemented;
+- official date-specific evidence acquisition semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.

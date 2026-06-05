@@ -2,7 +2,7 @@
 
 > Status: working memory document  
 > Last generated: 2026-06-04  
-> Intended use: replace previous Project Source Pack after v1.15.0 PIT evidence policy profile comparison checkpoint.  
+> Intended use: replace previous Project Source Pack after v1.16.0 PIT official status evidence packet checkpoint.  
 > Permanence: temporary and replaceable. Refresh only after major checkpoint / stage changes, not after every small audit.
 
 ## Purpose
@@ -33,6 +33,7 @@ This pack is based on:
 - v1.13.0 activated replacement worklist evidence update planning;
 - v1.14.0 PIT evidence checklist validator;
 - v1.15.0 PIT evidence policy profile comparison;
+- v1.16.0 PIT official status evidence packet;
 - China A-share event-driven and industry-chain factor taxonomy sources.
 
 ## Accuracy Note
@@ -43,7 +44,7 @@ Many local outputs under `outputs/`, `data/raw/`, `data/cache`, and `data/proces
 
 ## Current Project Source Set
 
-Replace these after v1.15.0:
+Replace these after v1.16.0:
 
 ```text
 00_PROJECT_SOURCE_INDEX.md
@@ -67,7 +68,7 @@ FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
 
 ## Current Project State Summary
 
-The project has reached a PIT evidence policy profile comparison checkpoint:
+The project has reached a PIT official status evidence packet checkpoint:
 
 ```text
 local market data / reviewed exports / quality gates
@@ -95,13 +96,14 @@ local market data / reviewed exports / quality gates
 → pit-evidence-checklist-validator
 → EOD_POST_CLOSE_LOW_BUDGET_PIT policy audit
 → pit-evidence-policy-profile-comparison
+→ PIT official status evidence packet
 → index / health / status / research-status context
 ```
 
-Current PIT evidence policy profile comparison state:
+Current PIT official status evidence packet state:
 
 ```text
-PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
+PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
 ```
 
 Latest known active / planning artifacts:
@@ -122,9 +124,13 @@ evidence_update_plan_id: 4e268d67bd7d
 latest_diagnostics_ingestion_id: 734f3a722ddf
 validator_id: 62e9eb747197
 policy_comparison_id: 0ef6d2f3bae6
+packet_id: 8efabe2ffe62
+packet_rerun_ingestion_id: ac6846aef520
+packet_rerun_validator_id: 498a3d0786af
+packet_rerun_policy_comparison_id: b7e7ec8f66f5
 ```
 
-Current evidence / validator / policy comparison counts:
+Current evidence / validator / packet counts:
 
 ```text
 approved rows: 0
@@ -177,6 +183,17 @@ EOD low-budget policy comparison:
   eod_low_budget_checklist_pass_count: 0
   relaxed_blocker_count: 16
   remaining_blocked_count: 16
+
+PIT official status evidence packet:
+  packet_id: 8efabe2ffe62
+  row_count: 16
+  evidence_packet_row_count: 72
+  strong_official_date_specific_count: 0
+  supporting_official_symbol_level_count: 16
+  supporting_local_eod_cache_count: 16
+  missing_count: 40
+  checklist_pass_count: 0
+  blocked_count: 16
 ```
 
 Key conclusion:
@@ -191,26 +208,27 @@ Guarded activation creates separate planning artifacts for stock_core and etf_co
 Activated replacement worklist evidence update planning creates profile-specific evidence packages and first-batch packages, but does not create clean review_updates.csv or apply approvals.
 Codex diagnostics can create NEEDS_MORE_EVIDENCE draft updates and validate ingestion schema, but no row currently passes the strict PIT evidence checklist.
 The EOD_POST_CLOSE_LOW_BUDGET_PIT profile is opt-in and report-only. It relaxes timing/cache-support context only; it does not change strict defaults or create approvals. Current 16 rows remain blocked under both strict and EOD low-budget profiles.
+The PIT official status evidence packet classifies existing evidence into strong/supporting/context/missing categories. Current evidence is useful for context and EOD support, but there is still no complete official date-specific daily status evidence.
 ```
 
 ## Current Recommended Next Branch
 
 ```text
-Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition v0.1
+Official Date-Specific Status Evidence Source Design Audit v0.1
 ```
 
-This branch should use Codex to target the remaining non-relaxed blockers exposed by the strict validator and policy comparison:
+This branch should target sources capable of producing `STRONG_OFFICIAL_DATE_SPECIFIC` evidence for the current first-batch rows:
 
 ```text
-official/public evidence for not-delisted status, stock ST/no-ST status, survivorship-bias resolution, reviewer/evidence-reference completeness, and official active/status evidence
-→ evidence source records
-→ updated draft completed CSV only if evidence is real
-→ diagnostics-only ingestion validation
-→ checklist validator rerun
-→ policy comparison rerun if useful
+official daily listed/active/status evidence
+→ official not-delisted or no-hit delisting evidence policy
+→ official ST/no-ST status evidence for 000001
+→ official suspension/trading status evidence by signal date
+→ survivorship-bias resolution basis
+→ diagnostics-only source design before any implementation
 ```
 
-It should remain diagnostics/report-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
+It should remain read-only / diagnostics-first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
 
 User preference: if a step looks manual, first try to make Codex perform local/public evidence discovery, draft artifact generation, and validation. The user should only intervene for final evidence acceptance, credentials, CAPTCHA/login/paywall, or subjective judgment.
 
@@ -228,7 +246,7 @@ Add or replace Source when:
 
 Add a new source document when a topic becomes too important to live only in chat, such as:
 
-- official evidence acquisition and PIT checklist satisfaction semantics;
+- official date-specific evidence acquisition semantics;
 - accepted PIT universe export workflow;
 - per-date snapshot preparation;
 - forward-return labels;
@@ -243,9 +261,11 @@ Add a new source document when a topic becomes too important to live only in cha
 
 - justify live trading;
 - treat worklist rows as reviewed evidence;
-- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, or policy comparison outputs as usable universe input;
+- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, policy comparison outputs, or official status evidence packets as usable universe input;
 - treat evidence packages as clean `review_updates.csv`;
 - treat checklist pass or policy comparison candidate preview as applied approval;
+- treat supporting official symbol-level evidence as date-specific daily status proof;
+- treat local EOD cache context as official date-specific status proof;
 - treat staging preview files as accepted local universe input;
 - treat approved PIT universe rows as exported usable universe files unless a future accepted export workflow says so;
 - treat legacy `etf_core` artifacts as ETF-only;

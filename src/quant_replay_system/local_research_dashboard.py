@@ -259,6 +259,9 @@ SUMMARY_COLUMNS = [
     "pit_evidence_policy_profile_comparison_row_count",
     "pit_evidence_policy_profile_comparison_strict_pass_count",
     "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count",
+    "pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count",
+    "pit_evidence_policy_profile_comparison_no_hit_context_supported_count",
+    "pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count",
     "pit_evidence_policy_profile_comparison_relaxed_blocker_count",
     "pit_evidence_policy_profile_comparison_remaining_blocked_count",
     "pit_evidence_policy_profile_comparison_report_path",
@@ -837,6 +840,9 @@ class LocalResearchDashboardResult:
     pit_evidence_policy_profile_comparison_row_count: int
     pit_evidence_policy_profile_comparison_strict_pass_count: int
     pit_evidence_policy_profile_comparison_eod_low_budget_pass_count: int
+    pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count: int
+    pit_evidence_policy_profile_comparison_no_hit_context_supported_count: int
+    pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count: int
     pit_evidence_policy_profile_comparison_relaxed_blocker_count: int
     pit_evidence_policy_profile_comparison_remaining_blocked_count: int
     pit_evidence_policy_profile_comparison_report_path: str
@@ -1930,6 +1936,15 @@ def run_local_research_dashboard(
         ),
         pit_evidence_policy_profile_comparison_eod_low_budget_pass_count=_int_or_zero(
             summary.get("pit_evidence_policy_profile_comparison_eod_low_budget_pass_count")
+        ),
+        pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count=_int_or_zero(
+            summary.get("pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count")
+        ),
+        pit_evidence_policy_profile_comparison_no_hit_context_supported_count=_int_or_zero(
+            summary.get("pit_evidence_policy_profile_comparison_no_hit_context_supported_count")
+        ),
+        pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count=_int_or_zero(
+            summary.get("pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count")
         ),
         pit_evidence_policy_profile_comparison_relaxed_blocker_count=_int_or_zero(
             summary.get("pit_evidence_policy_profile_comparison_relaxed_blocker_count")
@@ -6847,6 +6862,24 @@ def summarize_local_research_status(
                 "eod_low_budget_checklist_pass_count",
             )
         ),
+        "pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+                "reviewed_no_hit_support_pass_count",
+            )
+        ),
+        "pit_evidence_policy_profile_comparison_no_hit_context_supported_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+                "no_hit_context_supported_count",
+            )
+        ),
+        "pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
+                "reviewer_acceptance_required_count",
+            )
+        ),
         "pit_evidence_policy_profile_comparison_relaxed_blocker_count": _int_or_zero(
             _parse_note_value(
                 by_component.get("PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS", {}).get("notes"),
@@ -8405,6 +8438,15 @@ def build_local_research_dashboard_metadata(
         ),
         "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count": (
             result.pit_evidence_policy_profile_comparison_eod_low_budget_pass_count
+        ),
+        "pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count": (
+            result.pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count
+        ),
+        "pit_evidence_policy_profile_comparison_no_hit_context_supported_count": (
+            result.pit_evidence_policy_profile_comparison_no_hit_context_supported_count
+        ),
+        "pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count": (
+            result.pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count
         ),
         "pit_evidence_policy_profile_comparison_relaxed_blocker_count": (
             result.pit_evidence_policy_profile_comparison_relaxed_blocker_count
@@ -10550,6 +10592,9 @@ def _pit_evidence_policy_profile_comparison_notes(summary: dict[str, Any]) -> st
         f"row_count={_string_or_empty(summary.get('row_count'))}; "
         f"strict_checklist_pass_count={_string_or_empty(summary.get('strict_checklist_pass_count'))}; "
         f"eod_low_budget_checklist_pass_count={_string_or_empty(summary.get('eod_low_budget_checklist_pass_count'))}; "
+        f"reviewed_no_hit_support_pass_count={_string_or_empty(summary.get('reviewed_no_hit_support_pass_count'))}; "
+        f"no_hit_context_supported_count={_string_or_empty(summary.get('no_hit_context_supported_count'))}; "
+        f"reviewer_acceptance_required_count={_string_or_empty(summary.get('reviewer_acceptance_required_count'))}; "
         f"relaxed_blocker_count={_string_or_empty(summary.get('relaxed_blocker_count'))}; "
         f"remaining_blocked_count={_string_or_empty(summary.get('remaining_blocked_count'))}; "
         f"report_path={_note_safe_text(summary.get('report_path'))}"

@@ -5,6 +5,7 @@ import pandas as pd
 from quant_replay_system import cli
 from quant_replay_system.pit_evidence_policy_profile_comparison import (
     COMPARISON_COLUMNS,
+    REVIEWED_NO_HIT_PROFILE_NAME,
     build_pit_evidence_policy_profile_comparison,
 )
 from quant_replay_system.pit_evidence_policy_profile_comparison_health import (
@@ -72,6 +73,44 @@ def test_eod_policy_relaxes_timing_only_and_keeps_non_relaxed_blockers(tmp_path:
     assert row["should_apply_approval"] is False
 
 
+def test_reviewed_no_hit_profile_is_opt_in_context_only_and_keeps_rows_blocked(tmp_path: Path) -> None:
+    validator = _write_validator_artifact(tmp_path)
+    updates = _write_updates(tmp_path)
+    policy_audit = _write_no_hit_policy_audit(tmp_path)
+
+    result = build_pit_evidence_policy_profile_comparison(
+        validator=validator,
+        completed_updates=updates,
+        policy_audit=policy_audit,
+        profile=REVIEWED_NO_HIT_PROFILE_NAME,
+        decision_policy="EOD_POST_CLOSE",
+        decision_time="16:00:00",
+        output_dir=tmp_path / "comparison",
+    )
+
+    assert result.profile_name == REVIEWED_NO_HIT_PROFILE_NAME
+    assert result.reference_profile_name == "STRICT_PIT"
+    assert result.profile_is_opt_in is True
+    assert result.strict_default_unchanged is True
+    assert result.eod_low_budget_checklist_pass_count == 0
+    assert result.reviewed_no_hit_support_pass_count == 0
+    assert result.no_hit_context_supported_count == 4
+    assert result.reviewer_acceptance_required_count == 4
+    assert result.remaining_blocked_count == 4
+
+    row = result.comparison_frame.loc[result.comparison_frame["symbol"] == "000001"].iloc[0]
+    assert row["no_hit_context_supported"] is True
+    assert row["no_hit_not_delisted_context_supported"] is True
+    assert row["no_hit_no_suspension_context_supported"] is True
+    assert row["no_hit_no_st_context_supported"] is True
+    assert row["reviewer_acceptance_required"] is True
+    assert row["reviewer_acceptance_present"] is True
+    assert row["source_coverage_documented"] is True
+    assert row["survivorship_still_required"] is True
+    assert row["checklist_pass_under_reviewed_no_hit_support"] is False
+    assert row["should_apply_approval"] is False
+
+
 def test_complete_etf_row_can_be_preview_only_under_eod_profile(tmp_path: Path) -> None:
     validator = _write_validator_artifact(tmp_path, complete_etf=True)
     updates = _write_updates(tmp_path, complete_etf=True)
@@ -121,6 +160,27 @@ def test_index_health_status_and_cli_work(tmp_path: Path, capsys) -> None:
     output = capsys.readouterr()
     assert code == 0
     assert "workflow_stage: PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED" in output.out
+
+
+def test_health_fails_if_profile_becomes_strict_default(tmp_path: Path) -> None:
+    validator = _write_validator_artifact(tmp_path)
+    updates = _write_updates(tmp_path)
+    policy_audit = _write_policy_audit(tmp_path)
+    root = tmp_path / "comparison"
+    result = build_pit_evidence_policy_profile_comparison(
+        validator=validator,
+        completed_updates=updates,
+        policy_audit=policy_audit,
+        profile="STRICT_PIT",
+        decision_policy="EOD_POST_CLOSE",
+        output_dir=root,
+    )
+
+    health = check_pit_evidence_policy_profile_comparison_health(root=root, output_dir=tmp_path / "health")
+
+    assert result.profile_name == "STRICT_PIT"
+    assert health["status"] == "FAIL"
+    assert "PROFILE_BECAME_STRICT_DEFAULT" in set(health["health_frame"]["issue_code"])
 
 
 def test_cli_comparison_command_works(tmp_path: Path, capsys) -> None:
@@ -288,4 +348,35 @@ def _write_policy_audit(tmp_path: Path) -> Path:
         ]
     ).to_csv(root / "policy_profile_field_rules.csv", index=False)
     (root / "eod_post_close_low_budget_pit_policy_report.md").write_text("profile is opt-in", encoding="utf-8")
+    return root
+
+
+def _write_no_hit_policy_audit(tmp_path: Path) -> Path:
+    root = _write_policy_audit(tmp_path)
+    pd.DataFrame(
+        [
+            {
+                "evidence_use": "not_delisted_context",
+                "eod_low_budget_requirement": "1815 quote plus no-hit with reviewer acceptance.",
+                "reviewer_acceptance_required": "true",
+            }
+        ]
+    ).to_csv(root / "source_coverage_requirements.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                "rule_id": "NO_HIT_NOT_APPROVAL",
+                "inference": "No-hit is supporting context only.",
+                "can_set_approved_for_pit_universe": "false",
+            }
+        ]
+    ).to_csv(root / "no_hit_inference_rules.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                "blocker": "survivorship_bias_resolution",
+                "eod_low_budget_decision": "STILL_REQUIRES_HUMAN_REVIEWER_POLICY",
+            }
+        ]
+    ).to_csv(root / "blocker_decision_matrix.csv", index=False)
     return root

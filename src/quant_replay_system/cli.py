@@ -4021,6 +4021,9 @@ def _handle_pit_evidence_policy_profile_comparison(args: argparse.Namespace) -> 
     print(f"row_count: {result.row_count}")
     print(f"strict_checklist_pass_count: {result.strict_checklist_pass_count}")
     print(f"eod_low_budget_checklist_pass_count: {result.eod_low_budget_checklist_pass_count}")
+    print(f"reviewed_no_hit_support_pass_count: {result.reviewed_no_hit_support_pass_count}")
+    print(f"no_hit_context_supported_count: {result.no_hit_context_supported_count}")
+    print(f"reviewer_acceptance_required_count: {result.reviewer_acceptance_required_count}")
     print(f"relaxed_blocker_count: {result.relaxed_blocker_count}")
     print(f"remaining_blocked_count: {result.remaining_blocked_count}")
     print(f"comparison_csv_path: {result.artifact_paths['comparison_csv']}")
@@ -4077,6 +4080,9 @@ def _handle_pit_evidence_policy_profile_comparison_status(args: argparse.Namespa
     print(f"row_count: {result['row_count']}")
     print(f"strict_checklist_pass_count: {result['strict_checklist_pass_count']}")
     print(f"eod_low_budget_checklist_pass_count: {result['eod_low_budget_checklist_pass_count']}")
+    print(f"reviewed_no_hit_support_pass_count: {result['reviewed_no_hit_support_pass_count']}")
+    print(f"no_hit_context_supported_count: {result['no_hit_context_supported_count']}")
+    print(f"reviewer_acceptance_required_count: {result['reviewer_acceptance_required_count']}")
     print(f"relaxed_blocker_count: {result['relaxed_blocker_count']}")
     print(f"remaining_blocked_count: {result['remaining_blocked_count']}")
     print(f"report_path: {result['report_path']}")
@@ -6942,6 +6948,18 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "pit_evidence_policy_profile_comparison_eod_low_budget_pass_count: "
         f"{result.pit_evidence_policy_profile_comparison_eod_low_budget_pass_count}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count: "
+        f"{result.pit_evidence_policy_profile_comparison_reviewed_no_hit_support_pass_count}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_no_hit_context_supported_count: "
+        f"{result.pit_evidence_policy_profile_comparison_no_hit_context_supported_count}"
+    )
+    print(
+        "pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count: "
+        f"{result.pit_evidence_policy_profile_comparison_reviewer_acceptance_required_count}"
     )
     print(
         "pit_evidence_policy_profile_comparison_relaxed_blocker_count: "

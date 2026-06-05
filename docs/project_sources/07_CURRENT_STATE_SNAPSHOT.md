@@ -51,6 +51,7 @@ It is not a live trading system.
 - Activated replacement worklist evidence update planning.
 - PIT evidence checklist validator.
 - PIT evidence policy profile comparison.
+- PIT official status evidence packet.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -125,6 +126,10 @@ evidence_update_plan_id: 4e268d67bd7d
 latest_diagnostics_ingestion_id: 734f3a722ddf
 validator_id: 62e9eb747197
 policy_comparison_id: 0ef6d2f3bae6
+packet_id: 8efabe2ffe62
+packet_rerun_ingestion_id: ac6846aef520
+packet_rerun_validator_id: 498a3d0786af
+packet_rerun_policy_comparison_id: b7e7ec8f66f5
 ```
 
 Current counts:
@@ -188,25 +193,38 @@ strict_checklist_pass_count: 0
 eod_low_budget_checklist_pass_count: 0
 relaxed_blocker_count: 16
 remaining_blocked_count: 16
+
+PIT official status evidence packet:
+packet_id: 8efabe2ffe62
+row_count: 16
+evidence_packet_row_count: 72
+strong_official_date_specific_count: 0
+supporting_official_symbol_level_count: 16
+supporting_local_eod_cache_count: 16
+missing_count: 40
+checklist_pass_count: 0
+blocked_count: 16
 ```
 
-Current PIT evidence policy profile comparison stage:
+Current PIT official status evidence packet stage:
 
 ```text
-PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
+PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_BLOCKED
 ```
 
 Meaning:
 
-The project has moved from “strict evidence checklist validation blocks all current first-batch rows” to “strict vs EOD/post-close low-budget policy comparison exists and also leaves all current first-batch rows blocked.”
+The project has moved from “strict vs EOD/post-close low-budget policy comparison exists and also leaves all first-batch rows blocked” to “PIT official status evidence packets classify current evidence strength and still leave all first-batch rows blocked.”
 
-The `EOD_POST_CLOSE_LOW_BUDGET_PIT` profile is opt-in and report-only. It may relax timing/cache-support context when explicit decision-time rules are satisfied, but it does not change strict defaults and it does not create approvals.
+The packet confirms:
 
-The 16 diagnostics rows can pass evidence ingestion as `NEEDS_MORE_EVIDENCE`, but no row currently satisfies the strict checklist or the EOD low-budget policy comparison as an approval-candidate preview.
+- there is no complete official date-specific daily status evidence yet;
+- official symbol-level evidence is useful context/support only;
+- local market cache is supporting EOD context only;
+- no row currently satisfies strict or EOD low-budget checklist-pass requirements;
+- existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
-
-The next blocker is Codex-driven acquisition of non-relaxed official/public evidence: not-delisted status, ST/no-ST status for stock rows, survivorship-bias resolution, reviewer/evidence-reference completeness, and official active/status evidence.
+The next blocker is designing or finding an official date-specific evidence source chain for daily listed/active/status, not-delisted, ST/no-ST, suspension/trading status, and survivorship-bias resolution.
 
 ## Current External Data Strategy
 
@@ -226,18 +244,15 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition v0.1
+Official Date-Specific Status Evidence Source Design Audit v0.1
 ```
 
 Purpose:
 
-- target the remaining blockers not relaxed by `EOD_POST_CLOSE_LOW_BUDGET_PIT`;
-- inspect local artifacts first;
-- use browser/web/plugin access only for light official/public evidence discovery;
-- gather official source evidence for not-delisted, ST/no-ST, survivorship, reviewer/evidence-reference completeness, and official active/status evidence;
-- update draft completed CSVs only when real evidence exists;
-- rerun diagnostics-only ingestion, checklist validation, and policy comparison;
-- avoid automatic approval, rejection, export, or candidate generation.
+- target sources capable of producing `STRONG_OFFICIAL_DATE_SPECIFIC` evidence;
+- inspect official/public candidate sources for date-specific listed/active/status proof;
+- decide whether a future acquisition workflow is feasible;
+- avoid adding more context-only evidence when the blocker is date-specific proof.
 
 Do not yet:
 
@@ -275,9 +290,10 @@ Recent milestone direction:
 - v1.13.0: activated replacement worklist evidence update planning.
 - v1.14.0: PIT evidence checklist validator.
 - v1.15.0: PIT evidence policy profile comparison.
+- v1.16.0: PIT official status evidence packet.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Codex-Driven Non-Relaxed PIT Evidence Gap Acquisition v0.1.
+Give me Codex tasks for Official Date-Specific Status Evidence Source Design Audit v0.1.
 ```
