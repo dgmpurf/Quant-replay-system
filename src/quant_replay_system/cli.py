@@ -182,6 +182,18 @@ from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact_index impo
 from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact_status import (
     run_reviewer_no_hit_acceptance_downstream_impact_status,
 )
+from quant_replay_system.first_batch_reviewer_evidence_completion_plan import (
+    build_first_batch_reviewer_evidence_completion_plan,
+)
+from quant_replay_system.first_batch_reviewer_evidence_completion_plan_health import (
+    check_first_batch_reviewer_evidence_completion_plan_health,
+)
+from quant_replay_system.first_batch_reviewer_evidence_completion_plan_index import (
+    build_first_batch_reviewer_evidence_completion_plan_index,
+)
+from quant_replay_system.first_batch_reviewer_evidence_completion_plan_status import (
+    run_first_batch_reviewer_evidence_completion_plan_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1434,6 +1446,78 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_reviewer_no_hit_acceptance_downstream_impact_status
     )
 
+    first_batch_completion_plan = subparsers.add_parser(
+        "first-batch-reviewer-evidence-completion-plan",
+        help="Create a report-only first-batch reviewer evidence completion plan",
+    )
+    first_batch_completion_plan.add_argument(
+        "--evidence-update-plan",
+        default="outputs/reports/activated_replacement_worklist_evidence_update_plan/4e268d67bd7d",
+    )
+    first_batch_completion_plan.add_argument(
+        "--downstream-impact",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact/9e164963455e",
+    )
+    first_batch_completion_plan.add_argument(
+        "--enrichment",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment/cb5f323d3c8c",
+    )
+    first_batch_completion_plan.add_argument(
+        "--validator",
+        default="outputs/reports/pit_evidence_checklist_validator/62e9eb747197",
+    )
+    first_batch_completion_plan.add_argument(
+        "--policy-comparison",
+        default="outputs/reports/pit_evidence_policy_profile_comparison/c1a75d1091c6",
+    )
+    first_batch_completion_plan.add_argument(
+        "--output-dir",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan",
+    )
+    first_batch_completion_plan.set_defaults(handler=_handle_first_batch_reviewer_evidence_completion_plan)
+
+    first_batch_completion_plan_index = subparsers.add_parser(
+        "first-batch-reviewer-evidence-completion-plan-index",
+        help="Build a local index of first-batch reviewer evidence completion plans",
+    )
+    first_batch_completion_plan_index.add_argument(
+        "--root",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan",
+    )
+    first_batch_completion_plan_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan/index",
+    )
+    first_batch_completion_plan_index.set_defaults(handler=_handle_first_batch_reviewer_evidence_completion_plan_index)
+
+    first_batch_completion_plan_health = subparsers.add_parser(
+        "first-batch-reviewer-evidence-completion-plan-health",
+        help="Check first-batch reviewer evidence completion plan health",
+    )
+    first_batch_completion_plan_health.add_argument(
+        "--root",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan",
+    )
+    first_batch_completion_plan_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan/health",
+    )
+    first_batch_completion_plan_health.set_defaults(handler=_handle_first_batch_reviewer_evidence_completion_plan_health)
+
+    first_batch_completion_plan_status = subparsers.add_parser(
+        "first-batch-reviewer-evidence-completion-plan-status",
+        help="Summarize latest first-batch reviewer evidence completion plan status",
+    )
+    first_batch_completion_plan_status.add_argument(
+        "--root",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan",
+    )
+    first_batch_completion_plan_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan/status",
+    )
+    first_batch_completion_plan_status.set_defaults(handler=_handle_first_batch_reviewer_evidence_completion_plan_status)
+
     universe_profile_policy_audit = subparsers.add_parser(
         "universe-profile-policy-audit",
         help="Audit local universe profile naming and instrument-type policy without mutating artifacts",
@@ -2665,6 +2749,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--reviewer-no-hit-acceptance-downstream-impact-root",
         help="Reviewer no-hit acceptance downstream impact artifact root directory",
+    )
+    research_status.add_argument(
+        "--first-batch-reviewer-evidence-completion-plan-root",
+        help="First-batch reviewer evidence completion plan artifact root directory",
     )
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
@@ -4675,6 +4763,95 @@ def _handle_reviewer_no_hit_acceptance_downstream_impact_status(args: argparse.N
     print(f"next_manual_action: {result['next_manual_action']}")
     print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
     return 1 if result["status"] == "FAIL" else 0
+
+
+def _handle_first_batch_reviewer_evidence_completion_plan(args: argparse.Namespace) -> int:
+    result = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=args.evidence_update_plan,
+        downstream_impact=args.downstream_impact,
+        enrichment=args.enrichment,
+        validator=args.validator,
+        policy_comparison=args.policy_comparison,
+        output_dir=args.output_dir,
+    )
+    print(f"plan_id: {result.plan_id}")
+    print(f"status: {result.status}")
+    print(f"source_evidence_update_plan_id: {result.source_evidence_update_plan_id}")
+    print(f"downstream_impact_id: {result.downstream_impact_id}")
+    print(f"reviewer_no_hit_acceptance_id: {result.reviewer_no_hit_acceptance_id}")
+    print(f"enrichment_id: {result.enrichment_id}")
+    print(f"source_packet_id: {result.source_packet_id}")
+    print(f"reviewed_no_hit_policy_comparison_id: {result.reviewed_no_hit_policy_comparison_id}")
+    print(f"validator_id: {result.validator_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"stock_core_row_count: {result.stock_core_row_count}")
+    print(f"etf_core_row_count: {result.etf_core_row_count}")
+    print(f"reviewer_completion_required_count: {result.reviewer_completion_required_count}")
+    print(f"no_hit_acceptance_required_count: {result.no_hit_acceptance_required_count}")
+    print(f"survivorship_rationale_required_count: {result.survivorship_rationale_required_count}")
+    print(f"metadata_completion_required_count: {result.metadata_completion_required_count}")
+    print(f"checklist_pass_count: {result.checklist_pass_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"plan_csv_path: {result.artifact_paths['plan_csv']}")
+    print(f"reviewer_completion_template_path: {result.artifact_paths['reviewer_completion_template']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_first_batch_reviewer_evidence_completion_plan_index(args: argparse.Namespace) -> int:
+    result = build_first_batch_reviewer_evidence_completion_plan_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_first_batch_reviewer_evidence_completion_plan_health(args: argparse.Namespace) -> int:
+    result = check_first_batch_reviewer_evidence_completion_plan_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_first_batch_reviewer_evidence_completion_plan_status(args: argparse.Namespace) -> int:
+    result = run_first_batch_reviewer_evidence_completion_plan_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_plan_id: {result.latest_plan_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"source_evidence_update_plan_id: {result.source_evidence_update_plan_id}")
+    print(f"downstream_impact_id: {result.downstream_impact_id}")
+    print(f"reviewer_no_hit_acceptance_id: {result.reviewer_no_hit_acceptance_id}")
+    print(f"enrichment_id: {result.enrichment_id}")
+    print(f"source_packet_id: {result.source_packet_id}")
+    print(f"reviewed_no_hit_policy_comparison_id: {result.reviewed_no_hit_policy_comparison_id}")
+    print(f"validator_id: {result.validator_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"reviewer_completion_required_count: {result.reviewer_completion_required_count}")
+    print(f"no_hit_acceptance_required_count: {result.no_hit_acceptance_required_count}")
+    print(f"survivorship_rationale_required_count: {result.survivorship_rationale_required_count}")
+    print(f"metadata_completion_required_count: {result.metadata_completion_required_count}")
+    print(f"checklist_pass_count: {result.checklist_pass_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
 
 
 def _handle_universe_profile_policy_audit(args: argparse.Namespace) -> int:
@@ -7014,6 +7191,9 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         reviewer_no_hit_acceptance_downstream_impact_root=(
             args.reviewer_no_hit_acceptance_downstream_impact_root
         ),
+        first_batch_reviewer_evidence_completion_plan_root=(
+            args.first_batch_reviewer_evidence_completion_plan_root
+        ),
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -7656,6 +7836,66 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"reviewer_no_hit_downstream_impact_approval_applied: {result.reviewer_no_hit_downstream_impact_approval_applied}")
     print(f"reviewer_no_hit_downstream_impact_report_path: {result.reviewer_no_hit_downstream_impact_report_path}")
     print(f"reviewer_no_hit_downstream_impact_next_action: {result.reviewer_no_hit_downstream_impact_next_action}")
+    print(
+        "latest_first_batch_reviewer_evidence_completion_plan_id: "
+        f"{result.latest_first_batch_reviewer_evidence_completion_plan_id}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_status: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_status}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_stage: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_stage}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_health_status: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_health_status}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_row_count: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_row_count}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_reviewer_completion_required_count: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_reviewer_completion_required_count}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_no_hit_acceptance_required_count: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_no_hit_acceptance_required_count}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_survivorship_rationale_required_count: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_survivorship_rationale_required_count}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_metadata_completion_required_count: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_metadata_completion_required_count}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_checklist_pass_count: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_checklist_pass_count}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_remaining_blocked_count: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_remaining_blocked_count}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_clean_review_updates_created: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_clean_review_updates_created}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_approval_applied: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_approval_applied}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_report_path: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_report_path}"
+    )
+    print(
+        "first_batch_reviewer_evidence_completion_plan_next_action: "
+        f"{result.first_batch_reviewer_evidence_completion_plan_next_action}"
+    )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

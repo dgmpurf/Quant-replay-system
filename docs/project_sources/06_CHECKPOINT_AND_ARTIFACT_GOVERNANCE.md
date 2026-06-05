@@ -42,7 +42,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, reviewer no-hit downstream impact artifacts that do not apply approvals, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
 
 ## Diagnostic vs Active Artifacts
 
@@ -61,40 +61,12 @@ Examples:
 - official no-hit evidence policy diagnostics;
 - PIT official status evidence packet enrichment dry-runs;
 - reviewer no-hit source coverage acceptance dry-runs;
+- reviewer no-hit downstream impact dry-runs;
 - ignored dry-run files.
 
-## Plan-Only Workflows
+## Review-Only and Evidence Workflows
 
-Plan-only workflows include:
-
-- `current-candidates-backfill-plan`
-- `current-candidates-backfill-execution-manifest`
-- `pit-universe-overlay-plan`
-- `universe-profile-split-worklist-plan`
-- `reviewed-replacement-worklist-plan`
-- `activated-replacement-worklist-evidence-update-plan`
-- calibration-to-signal-semantics proposal reports
-
-Plan-only means no candidate generation, no snapshot build, no forward labels, no cache mutation, no messages, and no broker/order behavior.
-
-## Review-Template Workflows
-
-PIT universe overlay plans are review-template workflows. `NEEDS_MANUAL_REVIEW` rows are not valid PIT universe rows until reviewed.
-
-## Review-Only Workflows
-
-PIT universe overlay review artifacts may create statuses:
-
-```text
-NEEDS_MANUAL_REVIEW
-APPROVED_FOR_PIT_UNIVERSE
-REJECTED
-NEEDS_MORE_EVIDENCE
-```
-
-Review-only does not mean exported universe input. Approved review rows are not the same as accepted current-candidates universe files.
-
-## Evidence Completion / Worklist / Ingestion Workflows
+PIT universe overlay review artifacts may create statuses such as `NEEDS_MANUAL_REVIEW`, `APPROVED_FOR_PIT_UNIVERSE`, `REJECTED`, and `NEEDS_MORE_EVIDENCE`, but review-only does not mean exported universe input.
 
 Evidence completion helper artifacts, evidence review worklist artifacts, and evidence update ingestion artifacts organize or validate evidence. They must not export universe files, write `data/raw` / `data/processed`, run current-candidates, build snapshots, or compute forward labels.
 
@@ -108,80 +80,15 @@ Split-worklist plan artifacts are planning-only and must not create active repla
 
 Reviewed replacement worklist plan, acceptance, and activation artifacts are planning context only. Activation is still not approval, export, or candidate generation.
 
-All replacement-related workflows must preserve lineage to:
-
-```text
-legacy worklist
-policy audit
-split plan
-replacement plan
-acceptance
-activation
-```
-
-They must not:
-
-- mutate the active legacy worklist;
-- approve PIT rows;
-- reject PIT rows;
-- export universe files;
-- write `data/raw` or `data/processed`;
-- run current-candidates;
-- build snapshots;
-- compute forward labels;
-- imply a usable current-candidates universe input exists.
-
-## Activated Replacement Evidence Update Planning Workflows
-
-Activated replacement evidence update plan artifacts are evidence-preparation planning context.
-
-They may:
-
-- create profile-specific evidence worklists for `stock_core`, `etf_core`, and `mixed_demo_core`;
-- create profile-specific update templates;
-- create first-batch evidence packages;
-- create evidence source checklists;
-- expose planning counts in research-status.
-
-They must not:
-
-- create clean `review_updates.csv`;
-- approve rows;
-- reject rows;
-- set `valid_for_signal_date=true`;
-- set `include_flag=true`;
-- treat hints as authoritative PIT evidence;
-- export universe files;
-- write `data/raw` or `data/processed`;
-- run current-candidates;
-- build snapshots;
-- compute forward labels.
-
-A future Codex-driven evidence discovery workflow may use these packages to search local/public evidence and draft completed update CSVs, but actual approval remains gated by evidence update ingestion, strict checklist validation, policy comparison context, official status evidence packet context, reviewed no-hit support context, and PIT review.
+All replacement-related workflows must preserve lineage and must not mutate the active legacy worklist, approve PIT rows, reject PIT rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute forward labels, or imply a usable current-candidates universe input exists.
 
 ## PIT Evidence Checklist Validator Workflows
 
 PIT evidence checklist validator artifacts are evidence-gate reports.
 
-They may:
+They may evaluate draft or completed update CSV rows against strict stock/ETF evidence checklists, produce missing-evidence matrices, produce approval-candidate previews, and expose checklist pass/block counts in research-status.
 
-- evaluate draft or completed update CSV rows against strict stock/ETF evidence checklists;
-- produce missing-evidence matrices;
-- produce approval-candidate previews;
-- expose checklist pass/block counts in research-status.
-
-They must not:
-
-- apply approvals;
-- set `APPROVED_FOR_PIT_UNIVERSE`;
-- run PIT review;
-- run export-readiness;
-- run staging;
-- export universe files;
-- write `data/raw` or `data/processed`;
-- run current-candidates;
-- build snapshots;
-- compute forward labels.
+They must not apply approvals, set `APPROVED_FOR_PIT_UNIVERSE`, run PIT review, run export-readiness, run staging, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute forward labels.
 
 A checklist-pass row is only an approval-candidate preview. It still requires explicit PIT review before any approval artifact exists.
 
@@ -189,27 +96,9 @@ A checklist-pass row is only an approval-candidate preview. It still requires ex
 
 PIT evidence policy profile comparison artifacts are report-only policy context.
 
-They may:
+They may compare `STRICT_PIT` with opt-in profiles such as `EOD_POST_CLOSE_LOW_BUDGET_PIT` and `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT`, report relaxed blockers, no-hit context support, reviewer-acceptance requirements, and remaining blockers.
 
-- compare `STRICT_PIT` with opt-in profiles such as `EOD_POST_CLOSE_LOW_BUDGET_PIT` and `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT`;
-- report relaxed blockers, no-hit context support, reviewer-acceptance requirements, and remaining blockers;
-- show whether rows would become approval-candidate previews under a policy profile;
-- expose comparison counts in research-status.
-
-They must not:
-
-- change the strict validator default behavior;
-- apply approvals;
-- set `APPROVED_FOR_PIT_UNIVERSE`;
-- create approval update CSVs;
-- run PIT review;
-- run export-readiness;
-- run staging;
-- export universe files;
-- write `data/raw` or `data/processed`;
-- run current-candidates;
-- build snapshots;
-- compute forward labels.
+They must not change strict validator default behavior, apply approvals, set `APPROVED_FOR_PIT_UNIVERSE`, create approval update CSVs, run PIT review/export-readiness/staging, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute forward labels.
 
 Known profiles:
 
@@ -219,50 +108,25 @@ EOD_POST_CLOSE_LOW_BUDGET_PIT
 EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
 ```
 
-Current reviewed no-hit support comparison state:
-
-```text
-comparison_id: c1a75d1091c6
-profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
-stage: PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_ALL_BLOCKED
-strict_checklist_pass_count: 0
-eod_low_budget_checklist_pass_count: 0
-reviewed_no_hit_support_pass_count: 0
-no_hit_context_supported_count: 16
-reviewer_acceptance_required_count: 16
-remaining_blocked_count: 16
-```
-
-A policy comparison is not approval and does not make a profile the default.
-
-## PIT Official Status Evidence Packet Workflows
+## PIT Official Status Evidence Packet and Enrichment Workflows
 
 PIT official status evidence packet artifacts and enrichment artifacts are evidence-packet reports.
 
-They may:
+They may combine source access smoke results, prior evidence discovery diagnostics, local EOD cache context, official symbol-level sources, SZSE 1815 same-date quotation diagnostics, reviewed no-hit support context, and enrichment lineage into per-symbol/per-date packets.
 
-- combine source access smoke results, prior evidence discovery diagnostics, local EOD cache context, official symbol-level sources, SZSE 1815 same-date quotation diagnostics, reviewed no-hit support context, and enrichment lineage into per-symbol/per-date packets;
-- classify evidence as `STRONG_OFFICIAL_DATE_SPECIFIC`, `STRONG_OFFICIAL_DATE_SPECIFIC_QUOTATION`, `SUPPORTING_OFFICIAL_SYMBOL_LEVEL`, `SUPPORTING_LOCAL_EOD_CACHE`, `REVIEWED_NO_HIT_SUPPORT_CONTEXT`, `CONTEXT_ONLY`, or `MISSING`;
-- rerun diagnostics-only ingestion, checklist validation, and policy comparison;
-- expose evidence packet counts in research-status.
+They may classify evidence as:
 
-They must not:
+```text
+STRONG_OFFICIAL_DATE_SPECIFIC
+STRONG_OFFICIAL_DATE_SPECIFIC_QUOTATION
+SUPPORTING_OFFICIAL_SYMBOL_LEVEL
+SUPPORTING_LOCAL_EOD_CACHE
+REVIEWED_NO_HIT_SUPPORT_CONTEXT
+CONTEXT_ONLY
+MISSING
+```
 
-- apply approvals;
-- set `APPROVED_FOR_PIT_UNIVERSE` as an applied value;
-- treat supporting official symbol-level evidence as date-specific proof;
-- treat local EOD cache as official date-specific proof;
-- treat no-hit observations as approval-grade without explicit reviewer acceptance and documented source coverage;
-- run PIT review;
-- run export-readiness;
-- run staging;
-- export universe files;
-- write `data/raw` or `data/processed`;
-- mutate active worklists;
-- mutate market cache;
-- run current-candidates;
-- build snapshots;
-- compute forward labels.
+They must not apply approvals, set `APPROVED_FOR_PIT_UNIVERSE` as an applied value, treat supporting official symbol-level evidence as date-specific proof, treat local EOD cache as official date-specific proof, treat no-hit observations as approval-grade without explicit reviewer acceptance and documented source coverage, run PIT review/export-readiness/staging, export universe files, write `data/raw` or `data/processed`, mutate active worklists, mutate market cache, run current-candidates, build snapshots, or compute forward labels.
 
 Current official status evidence packet enrichment state:
 
@@ -277,33 +141,13 @@ checklist_pass_count: 0
 remaining_blocked_count: 16
 ```
 
-SZSE 1815 diagnostics provide strong official date-specific evidence for quotation/traded presence for all 16 first-batch rows. The enrichment milestone integrates that evidence, but it still does not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by itself.
-
 ## Reviewer No-Hit Source Coverage Acceptance Workflows
 
 Reviewer no-hit source coverage acceptance artifacts are report-only supporting-context records.
 
-They may:
+They may record reviewer acceptance of source coverage, query windows, no-hit inference limits, and survivorship rationale; create reviewer acceptance templates; validate reviewer-completed no-hit acceptance updates; and expose accepted, needs-review, reviewer-required, and survivorship-rationale-required counts in research-status.
 
-- record reviewer acceptance of source coverage, query windows, no-hit inference limits, and survivorship rationale;
-- create reviewer acceptance templates;
-- validate reviewer-completed no-hit acceptance updates;
-- expose accepted, needs-review, reviewer-required, and survivorship-rationale-required counts in research-status.
-
-They must not:
-
-- apply PIT approvals;
-- set `APPROVED_FOR_PIT_UNIVERSE`;
-- create approval update CSVs;
-- run PIT review;
-- run export-readiness;
-- run staging;
-- export universe files;
-- write `data/raw` or `data/processed`;
-- mutate active worklists or market cache;
-- run current-candidates;
-- build snapshots;
-- compute forward labels.
+They must not apply PIT approvals, set `APPROVED_FOR_PIT_UNIVERSE`, create approval update CSVs, run PIT review/export-readiness/staging, export universe files, write `data/raw` or `data/processed`, mutate active worklists or market cache, run current-candidates, build snapshots, or compute forward labels.
 
 Current reviewer no-hit acceptance state:
 
@@ -321,19 +165,55 @@ remaining_blocked_count: 16
 
 Accepted no-hit coverage is supporting context only and still does not by itself create checklist-pass rows, PIT approvals, export-ready universe rows, or usable current-candidates input.
 
-## Export-Readiness Workflows
+## Reviewer No-Hit Acceptance Downstream Impact Workflows
 
-Export-readiness blocks export when there are no approved rows, evidence is missing, survivorship is unresolved, required universe columns are missing, duplicates exist, or PIT dates are invalid. It must not write `data/raw` or `data/processed`.
+Reviewer no-hit acceptance downstream impact artifacts are report-only downstream context summaries.
 
-## Export-Staging Workflows
+They may:
 
-Export staging is guarded and outputs-only. It may create reviewable previews under:
+- link accepted no-hit supporting context to packet/checklist/policy context by `signal_date + symbol + universe_name + exception_type`;
+- preserve lineage to acceptance, enrichment, packet, policy comparison, and validator artifacts;
+- report accepted no-hit context counts and packet context gap reductions;
+- report remaining checklist blockers and approval flags;
+- expose downstream impact counts in research-status.
+
+They must not:
+
+- apply PIT approvals;
+- set `APPROVED_FOR_PIT_UNIVERSE`;
+- create clean `review_updates.csv`;
+- run PIT review;
+- run export-readiness;
+- run staging;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- mutate active worklists or market cache;
+- run current-candidates;
+- build snapshots;
+- compute forward labels.
+
+Current active downstream impact state:
 
 ```text
-outputs/reports/point_in_time_universe_export_staging/<staging_id>/
+impact_id: 9e164963455e
+stage: REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
+accepted_no_hit_context_count: 0
+packet_context_gap_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+approval_applied: false
 ```
 
-Staging previews are not accepted local universe inputs.
+Diagnostics fixture downstream impact demonstrates accepted supporting context without approval:
+
+```text
+impact_id: 4423bdd3e843
+accepted_no_hit_context_count: 4
+packet_context_gap_reduced_count: 1
+checklist_pass_count: 0
+remaining_blocked_count: 16
+approval_applied: false
+```
 
 ## Safety Flags
 
@@ -363,6 +243,7 @@ policy_profile_comparison_only=true
 evidence_packet_only=true
 evidence_packet_enrichment_only=true
 reviewer_no_hit_acceptance_only=true
+downstream_impact_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -391,7 +272,7 @@ Rows derived from a future universe must keep survivorship-bias warnings until r
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, reviewer no-hit acceptance blockers, downstream impact blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
 
 ## When to Refresh This Document
 
@@ -401,7 +282,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- accepted-supporting-context smoke semantics are implemented;
+- first-batch reviewer evidence completion planning semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
 - real alert delivery or broker integration is introduced.

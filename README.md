@@ -147,6 +147,8 @@ Use `reviewer-no-hit-source-coverage-acceptance-index`, `reviewer-no-hit-source-
 
 Use `reviewer-no-hit-acceptance-downstream-impact` to link reviewer-accepted no-hit supporting context into downstream packet/checklist/policy impact reporting; see [docs/reviewer_no_hit_acceptance_downstream_impact.md](docs/reviewer_no_hit_acceptance_downstream_impact.md). Its index, health, and status commands make this report-only impact visible in `research-status` without creating PIT approvals, clean review updates, export readiness, staging, current-candidates outputs, snapshots, or forward labels.
 
+Use `first-batch-reviewer-evidence-completion-plan` to turn first-batch PIT evidence gaps into manual completion templates and TODO matrices; see [docs/first_batch_reviewer_evidence_completion_plan.md](docs/first_batch_reviewer_evidence_completion_plan.md). Its index, health, and status commands make first-batch manual evidence requirements visible in `research-status` without approving rows, creating clean review updates, exporting universe files, running current-candidates, building snapshots, or computing forward labels.
+
 Use `universe-profile-policy-audit` to classify local universe labels such as legacy mixed `etf_core`, report STOCK/ETF distribution, and produce future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_policy_audit.md](docs/universe_profile_policy_audit.md). The audit is report-only and does not approve/reject rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
 
 Use `universe-profile-policy-audit-index`, `universe-profile-policy-audit-health`, and `universe-profile-policy-audit-status` to discover, safety-check, and summarize universe profile policy audit artifacts. `research-status` includes this policy context, including mixed-universe and split-guidance counts, while preserving later paper workflow priority.
@@ -188,6 +190,8 @@ For the v1.14.0 checkpoint covering PIT evidence checklist validation, artifact 
 For the v1.19.0 checkpoint covering reviewer no-hit source coverage acceptance, artifact views, and `research-status` integration, see [docs/release_checkpoint_v1.19.0.md](docs/release_checkpoint_v1.19.0.md).
 
 For the v1.20.0 checkpoint covering reviewer no-hit acceptance downstream impact artifact views and `research-status` integration, see [docs/release_checkpoint_v1.20.0.md](docs/release_checkpoint_v1.20.0.md).
+
+For the v1.21.0 checkpoint covering first-batch reviewer evidence completion planning, artifact views, and `research-status` integration, see [docs/release_checkpoint_v1.21.0.md](docs/release_checkpoint_v1.21.0.md).
 
 For the v1.15.0 checkpoint covering EOD post-close low-budget PIT policy profile comparison and `research-status` integration, see [docs/release_checkpoint_v1.15.0.md](docs/release_checkpoint_v1.15.0.md).
 

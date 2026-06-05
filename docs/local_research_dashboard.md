@@ -276,6 +276,16 @@ When the status reports `REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTE
 
 Reviewer no-hit acceptance downstream impact is earlier than universe profile policy/replacement planning, generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to downstream impact; impact fields remain visible for audit. If health fails because artifacts claim approval, create review updates, change strict checklist behavior, or violate data-write/current-candidates/snapshot/forward-label/trading safety flags, `research-status` surfaces the failure as actionable when this layer is active.
 
+## First-Batch Reviewer Evidence Completion Plan Status
+
+`research-status` includes `first-batch-reviewer-evidence-completion-plan-status` as report-only manual evidence completion context when those artifacts exist.
+
+The unified summary records the latest completion plan id, status/stage, health status, row count, reviewer completion required count, no-hit acceptance required count, survivorship rationale required count, metadata completion required count, checklist-pass count, remaining-blocked count, clean-review-updates-created flag, approval-applied flag, report path, and next manual action.
+
+When the status reports `FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW`, the dashboard treats the warning as expected reviewable evidence-preparation work. It means first-batch reviewer evidence fields are still incomplete. It does not mean PIT review failed, candidate generation failed, strategy performance failed, export failed, or paper workflow failed.
+
+The completion plan keeps every row non-approved. It does not create `APPROVED_FOR_PIT_UNIVERSE`, clean `review_updates.csv`, universe exports, snapshot manifests, current-candidates outputs, or checklist-pass rows. Later paper workflow artifacts keep final workflow priority while first-batch completion fields remain visible for audit.
+
 ## Universe Profile Policy Audit Status
 
 `research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.

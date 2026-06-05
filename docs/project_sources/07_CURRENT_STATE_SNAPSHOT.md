@@ -55,6 +55,7 @@ It is not a live trading system.
 - Reviewed no-hit support policy profile.
 - PIT official status evidence packet enrichment.
 - Reviewer no-hit source coverage acceptance.
+- Reviewer no-hit acceptance downstream impact.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -135,6 +136,8 @@ packet_rerun_validator_id: 498a3d0786af
 packet_rerun_policy_comparison_id: b7e7ec8f66f5
 reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 enrichment_id: cb5f323d3c8c
+reviewer_no_hit_acceptance_id: 2e05e4b74794
+reviewer_no_hit_downstream_impact_id: 9e164963455e
 ```
 
 Current counts:
@@ -249,25 +252,33 @@ reviewer_acceptance_required_count: 64
 survivorship_rationale_required_count: 16
 checklist_pass_count: 0
 remaining_blocked_count: 16
+
+Reviewer no-hit acceptance downstream impact:
+impact_id: 9e164963455e
+accepted_no_hit_context_count: 0
+packet_context_gap_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+approval_applied: false
 ```
 
-Current reviewer no-hit source coverage acceptance stage:
+Current reviewer no-hit downstream impact stage:
 
 ```text
-REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
+REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
 ```
 
 Meaning:
 
-The project has moved from “PIT official status evidence packet enrichment integrates SZSE 1815 quotation evidence and reviewed no-hit support context” to “reviewer no-hit source coverage acceptance exists as a report-only supporting-context workflow, but all first-batch rows remain blocked.”
+The project has moved from “reviewer no-hit source coverage acceptance exists as supporting context workflow” to “downstream impact reporting exists, but the active acceptance artifact has zero accepted no-hit context and all first-batch rows remain blocked.”
 
-The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile is opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. The reviewer no-hit acceptance workflow can record source coverage, query-window acceptance, and survivorship rationale, but it still does not change strict defaults or create PIT approvals.
+The downstream impact workflow can show how accepted no-hit context would reduce packet context gaps, but it still does not create checklist-pass rows, PIT approvals, clean review updates, export-ready rows, or current-candidates input.
 
-The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment and acceptance milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
+The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment, acceptance, and downstream impact milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-The next blocker is a tiny reviewer-completed no-hit acceptance update smoke to verify accepted rows remain supporting context only.
+The next blocker is planning actual first-batch reviewer evidence completion across the remaining PIT metadata and evidence fields.
 
 ## Current External Data Strategy
 
@@ -287,15 +298,15 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Tiny Reviewer-Completed No-Hit Acceptance Update Smoke v0.1
+First-Batch Reviewer Evidence Completion Planning v0.1
 ```
 
 Purpose:
 
-- create a tiny reviewer-completed no-hit acceptance update fixture for one row;
-- verify it becomes `ACCEPTED_AS_SUPPORTING_CONTEXT` only;
-- verify checklist-pass remains blocked and no PIT approval/export/current-candidates workflow is triggered;
-- keep all rows non-approved unless a future explicit PIT review workflow is run.
+- produce a row-level plan for completing PIT evidence for the 16 first-batch rows;
+- identify fields already supported by official quotation evidence, supporting no-hit context, symbol-level evidence, or local EOD cache;
+- identify fields requiring manual reviewer acceptance or policy judgment;
+- generate a plan/template only, not clean review updates or PIT approvals.
 
 Do not yet:
 
@@ -337,9 +348,10 @@ Recent milestone direction:
 - v1.17.0: reviewed no-hit support policy profile.
 - v1.18.0: PIT official status evidence packet enrichment.
 - v1.19.0: reviewer no-hit source coverage acceptance.
+- v1.20.0: reviewer no-hit acceptance downstream impact.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Tiny Reviewer-Completed No-Hit Acceptance Update Smoke v0.1.
+Give me Codex tasks for First-Batch Reviewer Evidence Completion Planning v0.1.
 ```

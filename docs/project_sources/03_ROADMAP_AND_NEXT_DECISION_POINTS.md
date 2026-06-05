@@ -34,6 +34,7 @@ The project is now a broad local research system with:
 - reviewed no-hit support policy profile;
 - PIT official status evidence packet enrichment;
 - reviewer no-hit source coverage acceptance;
+- reviewer no-hit acceptance downstream impact;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
@@ -67,12 +68,13 @@ Completed or largely complete:
 - reviewed no-hit support policy profile;
 - PIT official status evidence packet enrichment;
 - reviewer no-hit source coverage acceptance;
+- reviewer no-hit acceptance downstream impact;
 - index / health / status and research-status integration for these stages.
 
-Current reviewer no-hit source coverage acceptance state:
+Current reviewer no-hit acceptance downstream impact state:
 
 ```text
-REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
+REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
 ```
 
 Latest known state:
@@ -100,6 +102,7 @@ packet_rerun_policy_comparison_id: b7e7ec8f66f5
 reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 enrichment_id: cb5f323d3c8c
 reviewer_no_hit_acceptance_id: 2e05e4b74794
+reviewer_no_hit_downstream_impact_id: 9e164963455e
 ```
 
 ```text
@@ -149,21 +152,6 @@ eod_low_budget_checklist_pass_count: 0
 relaxed_blocker_count: 16
 remaining_blocked_count: 16
 
-PIT official status evidence packet:
-packet_id: 8efabe2ffe62
-evidence_packet_row_count: 72
-strong official date-specific: 0
-supporting official symbol-level: 16
-supporting local EOD cache: 16
-missing: 40
-checklist_pass_count: 0
-blocked_count: 16
-
-SZSE 1815 same-date quotation diagnostics:
-rows found for 000001: 8 / 8
-rows found for 159915: 8 / 8
-strong official date-specific quotation/traded-presence evidence: 16 / 16
-
 reviewed no-hit support profile:
 comparison_id: c1a75d1091c6
 profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
@@ -191,33 +179,56 @@ reviewer_acceptance_required_count: 64
 survivorship_rationale_required_count: 16
 checklist_pass_count: 0
 remaining_blocked_count: 16
+
+Reviewer no-hit downstream impact:
+impact_id: 9e164963455e
+accepted_no_hit_context_count: 0
+packet_context_gap_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+approval_applied: false
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Tiny Reviewer-Completed No-Hit Acceptance Update Smoke
+### Branch: First-Batch Reviewer Evidence Completion Planning
 
 Suggested sequence:
 
-1. Use the reviewer no-hit source coverage acceptance artifact as the base.
-2. Create a tiny diagnostics-only reviewer-completed acceptance update fixture for one row and one or more exception types.
-3. Validate that accepted rows become `ACCEPTED_AS_SUPPORTING_CONTEXT` only.
-4. Verify that reviewer acceptance does not create clean review updates, PIT approval, export readiness, staging, snapshot, or current-candidates.
-5. Verify that survivorship rationale remains required where applicable.
-6. Report remaining blockers after the accepted-supporting-context smoke.
+1. Use the downstream impact artifact as the planning driver.
+2. Join or reference the current evidence packet enrichment, checklist validator, policy comparison, reviewer no-hit acceptance, and activated evidence update plan.
+3. Produce a row-level plan for the 16 first-batch rows.
+4. List missing PIT metadata and evidence fields, including:
+   - `as_of_date`;
+   - `is_active`;
+   - `is_active_evidence`;
+   - `listed_date` and `listed_date_evidence` where still missing;
+   - `is_st` and `is_st_evidence` for stock rows;
+   - `is_suspended` and `is_suspended_evidence` if not yet sufficient;
+   - `industry`;
+   - `revision_id`;
+   - `t_plus_rule`;
+   - `available_time`;
+   - survivorship rationale;
+   - reviewer / reviewed_at / review_reason;
+   - evidence_source / evidence_reference.
+5. Distinguish fields Codex can draft from existing official/local evidence from fields that require explicit reviewer acceptance.
+6. Do not create clean `review_updates.csv` unless a later explicit workflow is requested.
+7. Do not run PIT overlay review, export-readiness, staging, snapshot, or current-candidates.
 
-## What Tiny Reviewer Acceptance Smoke Must Solve
+## What First-Batch Reviewer Evidence Completion Planning Must Solve
 
 It should answer:
 
-- Can the acceptance workflow ingest a completed reviewer fixture and preserve leading-zero symbols?
-- Does one row become accepted as supporting context only?
-- Does the result leave checklist pass at 0 and remaining blocked rows at 16?
-- Which fields are still missing after no-hit source coverage acceptance?
-- Does survivorship rationale stay separate from PIT approval?
-- Does the workflow preserve all safety boundaries?
+- Which exact fields are still missing for each of the 16 rows?
+- Which missing fields are already supported by official same-date quotation evidence?
+- Which missing fields are only supported by reviewed no-hit context?
+- Which missing fields require reviewer acceptance or manual policy judgment?
+- Which fields can Codex draft in a later completed-update CSV?
+- Which rows are closest to checklist-pass candidate status?
+- What validation command should be run before any PIT review workflow?
 
 ## Current Preference for Manual Steps
 
@@ -352,6 +363,7 @@ Do not yet:
 - treat evidence packet output as approval, date-specific proof, or strict validator default behavior;
 - treat SZSE 1815 quotation presence as not-delisted / no-ST / no-suspension / survivorship evidence by itself;
 - treat no-hit observations as approval-grade without reviewer acceptance and source coverage documentation;
+- treat reviewer no-hit acceptance or downstream impact as PIT approval, export-readiness, or usable universe input;
 - export PIT universe input without real approved/export-ready rows;
 - write `data/raw` or `data/processed` from PIT staging;
 - run current-candidates backfill without reviewed/exported PIT universe rows;

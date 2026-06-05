@@ -57,7 +57,8 @@ Multi-Date Evidence Preparation
   ├─ pit-evidence-policy-profile-comparison
   ├─ pit-official-status-evidence-packet
   ├─ pit-official-status-evidence-packet-enrichment
-  └─ reviewer-no-hit-source-coverage-acceptance
+  ├─ reviewer-no-hit-source-coverage-acceptance
+  └─ reviewer-no-hit-acceptance-downstream-impact
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -114,7 +115,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Evidence, Policy Comparison, and Evidence Packets
+### Multi-Date Candidate Planning, PIT Evidence, Policy Comparison, and Evidence Context
 
 ```text
 market cache coverage
@@ -147,6 +148,7 @@ market cache coverage
 → EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT policy profile
 → PIT official status evidence packet enrichment
 → reviewer-no-hit-source-coverage-acceptance
+→ reviewer-no-hit-acceptance-downstream-impact
 → index / health / status
 → research-status
 ```
@@ -154,7 +156,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
+REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -231,63 +233,6 @@ POLICY_AMBIGUOUS_DEMO_MIXED_UNIVERSE
 
 They should not be mutated in place.
 
-### Replacement / Acceptance / Activation Fields
-
-Replacement planning, acceptance, and activation are all outputs-only planning context.
-
-They preserve lineage to:
-
-```text
-legacy_worklist_id
-policy_audit_id
-split_plan_id
-replacement_plan_id
-acceptance_id
-activation_id
-```
-
-They must preserve safety flags:
-
-```text
-active_worklist_mutated=false
-should_approve=false
-should_reject=false
-no_universe_export=true
-no_data_raw_write=true
-no_data_processed_write=true
-plan_only=true
-```
-
-Activation artifacts may produce activated replacement templates under `outputs/reports`, but they must not mutate the active legacy worklist or imply PIT approval/export.
-
-### Activated Replacement Evidence Update Plan Fields
-
-Activated replacement evidence update planning is report-only and should preserve:
-
-```text
-plan_id, activation_id, acceptance_id, replacement_plan_id, split_plan_id,
-policy_audit_id, legacy_worklist_id, recommended_future_universe,
-signal_date, symbol, resolved_instrument_type, review_status,
-include_flag=false, valid_for_signal_date=false,
-survivorship_bias_resolved=false, manual_review_required=true,
-evidence_gap_summary, required_next_evidence_fields,
-suggested_next_review_action, hint_authoritative_for_pit=false,
-clean_review_updates_created=false, no_universe_export=true,
-no_data_raw_write=true, no_data_processed_write=true,
-no_current_candidates_generated=true, no_snapshot_built=true,
-no_forward_labels=true, plan_only=true
-```
-
-Evidence update plans may produce profile-specific worklists and update templates for:
-
-```text
-stock_core
-etf_core
-mixed_demo_core
-```
-
-They are not clean `review_updates.csv` artifacts and must not be fed directly as applied approvals.
-
 ### PIT Evidence Checklist Validator Fields
 
 The checklist validator evaluates draft/completed update CSV rows against the strict PIT evidence checklist.
@@ -334,46 +279,7 @@ EOD_POST_CLOSE_LOW_BUDGET_PIT
 EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
 ```
 
-`EOD_POST_CLOSE_LOW_BUDGET_PIT` is opt-in and report-only. It may relax timing/cache-support context only when explicit decision-time rules are satisfied.
-
-`EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` is opt-in and report-only. It may treat no-hit observations as reviewer-accepted supporting context only when source coverage, query window, and reviewer acceptance are explicit.
-
 Neither profile changes strict defaults, applies approval, runs PIT review, exports universe files, or creates usable current-candidates input.
-
-Current reviewed no-hit profile comparison state:
-
-```text
-comparison_id: c1a75d1091c6
-profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
-row_count: 16
-strict_checklist_pass_count: 0
-eod_low_budget_checklist_pass_count: 0
-reviewed_no_hit_support_pass_count: 0
-no_hit_context_supported_count: 16
-reviewer_acceptance_required_count: 16
-remaining_blocked_count: 16
-```
-
-### PIT Official Status Evidence Packet Fields
-
-The PIT official status evidence packet workflow classifies current official/public/local evidence into strength buckets.
-
-It reports:
-
-```text
-packet_id
-row_count
-evidence_packet_row_count
-strong_official_date_specific_count
-supporting_official_symbol_level_count
-supporting_local_eod_cache_count
-context_only_count
-missing_count
-checklist_pass_count
-blocked_count
-```
-
-Evidence packets are report-only. Supporting official symbol-level evidence does not become date-specific proof, and local EOD cache remains supporting EOD context only.
 
 ### SZSE 1815 Quotation Diagnostics
 
@@ -411,7 +317,6 @@ Current enrichment state:
 enrichment_id: cb5f323d3c8c
 source_packet_id: 8efabe2ffe62
 policy_comparison_id: c1a75d1091c6
-stage: REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_NEEDS_REVIEW
 row_count: 16
 strong_official_same_date_quotation_count: 16
 reviewed_no_hit_context_supported_count: 16
@@ -457,6 +362,53 @@ remaining_blocked_count: 16
 
 Reviewer no-hit acceptance artifacts are supporting-context records only. They do not apply PIT approval, create clean review updates, export universe files, or create usable current-candidates input.
 
+### Reviewer No-Hit Acceptance Downstream Impact Fields
+
+The downstream impact workflow links reviewer-accepted no-hit supporting context back to packet, checklist, and policy context while preserving approval boundaries.
+
+It reports:
+
+```text
+impact_id
+acceptance_id
+enrichment_id
+source_packet_id
+policy_comparison_id
+validator_id
+accepted_no_hit_context_count
+packet_context_gap_reduced_count
+checklist_pass_count
+remaining_blocked_count
+approval_applied
+```
+
+Current active downstream impact state:
+
+```text
+impact_id: 9e164963455e
+acceptance_id: 2e05e4b74794
+enrichment_id: cb5f323d3c8c
+stage: REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT
+accepted_no_hit_context_count: 0
+packet_context_gap_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+approval_applied: false
+```
+
+Diagnostics fixture downstream impact:
+
+```text
+impact_id: 4423bdd3e843
+accepted_no_hit_context_count: 4
+packet_context_gap_reduced_count: 1
+checklist_pass_count: 0
+remaining_blocked_count: 16
+approval_applied: false
+```
+
+Downstream impact artifacts are supporting-context summaries only. They must not create clean `review_updates.csv`, apply PIT approval, run PIT review/export/staging/current-candidates, or write `data/raw` / `data/processed`.
+
 ### PIT Evidence Update Ingestion Fields
 
 Evidence update ingestion validates reviewer-completed rows and may write a clean `review_updates.csv` artifact under `outputs/reports`.
@@ -501,19 +453,21 @@ SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-prese
 Reviewed no-hit support policy comparison: no-hit context supported for 16 rows, reviewer acceptance required for 16 rows, 0 pass candidates
 PIT official status evidence packet enrichment: 16/16 same-date quotation evidence, 16/16 reviewed no-hit context support, 16/16 reviewer acceptance required, 0 checklist pass, 16 blocked
 Reviewer no-hit source coverage acceptance: 64 rows, 0 accepted, 64 needs review, 64 reviewer acceptance required, 16 survivorship rationale required, 0 checklist pass, 16 blocked
+Reviewer no-hit downstream impact: 0 accepted active context, 0 packet gaps reduced, 0 checklist pass, 16 blocked, approval_applied=false
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Tiny Reviewer-Completed No-Hit Acceptance Update Smoke v0.1
+First-Batch Reviewer Evidence Completion Planning v0.1
 ```
 
 Purpose:
 
-- create a one-row diagnostics-only reviewer-completed no-hit acceptance update fixture;
-- verify that it becomes `ACCEPTED_AS_SUPPORTING_CONTEXT` only;
-- verify that checklist pass remains 0, no PIT approval is applied, and no usable universe input is created;
-- keep the branch diagnostics-only before any applied PIT review.
+- use downstream impact output, checklist blockers, enriched evidence packet, and reviewer no-hit acceptance context;
+- produce a row-level plan for completing PIT evidence for the current 16 first-batch rows;
+- list missing fields such as `as_of_date`, `is_active`, `is_active_evidence`, `industry`, `revision_id`, `t_plus_rule`, `available_time`, stock `is_st`, and survivorship rationale;
+- recommend which fields Codex can draft from existing evidence and which require explicit reviewer acceptance;
+- keep the branch read-only / diagnostics-first before any real completed update CSV is generated.
 
 Do not skip directly to PIT review application, accepted universe export, snapshot preparation, or current-candidates backfill runner.
