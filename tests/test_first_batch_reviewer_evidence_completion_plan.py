@@ -29,6 +29,18 @@ from quant_replay_system.first_batch_reviewer_evidence_completion_plan_status im
     run_first_batch_reviewer_evidence_completion_plan_status,
 )
 from quant_replay_system.local_research_dashboard import run_local_research_dashboard
+from quant_replay_system.material_pit_evidence_gate_closure_plan import (
+    build_material_pit_evidence_gate_closure_plan,
+)
+from quant_replay_system.material_pit_evidence_gate_closure_plan_health import (
+    check_material_pit_evidence_gate_closure_plan_health,
+)
+from quant_replay_system.material_pit_evidence_gate_closure_plan_index import (
+    build_material_pit_evidence_gate_closure_plan_index,
+)
+from quant_replay_system.material_pit_evidence_gate_closure_plan_status import (
+    run_material_pit_evidence_gate_closure_plan_status,
+)
 
 
 DATES = [
@@ -584,6 +596,361 @@ def test_research_status_includes_partial_completion_impact_and_preserves_paper_
     assert f"latest_first_batch_partial_completion_impact_id: {impact.impact_id}" in output
     assert "first_batch_partial_completion_impact_stage: FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION" in output
     assert "first_batch_partial_completion_impact_approval_applied: False" in output
+
+
+def test_material_pit_evidence_gate_closure_plan_builds_report_only_templates(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    completion_plan = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=tmp_path / "completion_plan",
+    )
+    partial_impact = build_first_batch_partial_completion_impact(
+        completion_plan=completion_plan.artifact_paths["artifact_dir"],
+        output_dir=tmp_path / "partial_impact",
+    )
+
+    result = build_material_pit_evidence_gate_closure_plan(
+        audit=None,
+        partial_impact=partial_impact.artifact_paths["artifact_dir"],
+        completion_plan=completion_plan.artifact_paths["artifact_dir"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "material_plan",
+    )
+
+    assert result.row_count == 16
+    assert result.checklist_pass_candidate_count == 0
+    assert result.remaining_blocked_count == 16
+    assert result.reusable_symbol_level_closure_count == 2
+    assert result.date_specific_closure_required_count == 16
+    assert result.reviewer_no_hit_acceptance_required_count == 16
+    assert result.survivorship_rationale_required_count == 16
+    assert result.metadata_closure_required_count == 16
+    assert result.stock_st_no_st_required_count == 8
+    assert result.clean_review_updates_created is False
+    assert result.approval_applied is False
+
+    plan = pd.read_csv(result.artifact_paths["plan_csv"], dtype=str, keep_default_na=False)
+    assert len(plan) == 16
+    assert set(plan["symbol"]) == {"000001", "159915"}
+    assert set(plan["universe_name"]) == {"stock_core", "etf_core"}
+    assert not plan.duplicated(["signal_date", "symbol", "universe_name"]).any()
+    assert set(plan.loc[plan["symbol"] == "000001", "stock_st_no_st_required"]) == {"True"}
+    assert set(plan.loc[plan["symbol"] == "159915", "stock_st_no_st_required"]) == {"False"}
+    assert set(plan["checklist_pass_candidate"]) == {"False"}
+    assert set(plan["include_flag"]) == {"False"}
+    assert set(plan["valid_for_signal_date"]) == {"False"}
+    assert set(plan["approval_applied"]) == {"False"}
+    assert set(plan["clean_review_updates_created"]) == {"False"}
+    assert set(plan["no_data_raw_write"]) == {"True"}
+    assert set(plan["no_data_processed_write"]) == {"True"}
+    assert set(plan["no_current_candidates_generated"]) == {"True"}
+    assert set(plan["no_snapshot_built"]) == {"True"}
+    assert set(plan["no_forward_labels"]) == {"True"}
+    assert "REUSABLE_SYMBOL_LEVEL" in ";".join(plan["closure_paths_required"])
+    assert "DATE_SPECIFIC" in ";".join(plan["closure_paths_required"])
+    assert "REVIEWER_NO_HIT_ACCEPTANCE" in ";".join(plan["closure_paths_required"])
+    assert "SURVIVORSHIP_RATIONALE" in ";".join(plan["closure_paths_required"])
+    assert "PIT_METADATA" in ";".join(plan["closure_paths_required"])
+    assert "STOCK_ONLY_ST_NO_ST" in ";".join(plan.loc[plan["symbol"] == "000001", "closure_paths_required"])
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in result.artifact_paths["plan_csv"].read_text(encoding="utf-8")
+
+    reusable = pd.read_csv(
+        result.artifact_paths["reusable_symbol_level_closure_plan"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    date_specific = pd.read_csv(result.artifact_paths["date_specific_closure_plan"], dtype=str, keep_default_na=False)
+    no_hit = pd.read_csv(
+        result.artifact_paths["reviewer_no_hit_acceptance_closure_plan"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    survivorship = pd.read_csv(
+        result.artifact_paths["survivorship_rationale_closure_plan"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    metadata = pd.read_csv(result.artifact_paths["metadata_closure_plan"], dtype=str, keep_default_na=False)
+    fill_template = pd.read_csv(
+        result.artifact_paths["reviewer_fill_template_by_closure_path"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    lineage = pd.read_csv(result.artifact_paths["source_lineage_summary"], dtype=str, keep_default_na=False)
+    requirements = pd.read_csv(
+        result.artifact_paths["checklist_pass_candidate_requirements"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    blocker_matrix = pd.read_csv(
+        result.artifact_paths["row_level_material_blocker_matrix"],
+        dtype=str,
+        keep_default_na=False,
+    )
+
+    assert len(reusable) == 2
+    assert len(date_specific) == 16
+    assert len(no_hit) == 64
+    assert len(survivorship) == 16
+    assert len(metadata) == 16
+    assert len(requirements) == 16
+    assert len(blocker_matrix) == 16
+    assert set(fill_template["review_status"]) == {"NEEDS_MORE_EVIDENCE"}
+    assert set(fill_template["include_flag"]) == {"False"}
+    assert set(fill_template["valid_for_signal_date"]) == {"False"}
+    assert set(fill_template["approval_applied"]) == {"False"}
+    assert "first_batch_reviewer_evidence_completion_plan_id" in set(lineage["lineage_field"])
+    assert not (result.artifact_paths["artifact_dir"] / "review_updates.csv").exists()
+    assert not (result.artifact_paths["artifact_dir"] / "clean_review_updates.csv").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_review").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_export_readiness").exists()
+    assert not (tmp_path / "point_in_time_universe_export_staging").exists()
+    assert not (tmp_path / "current_candidates").exists()
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
+
+    assert (
+        cli.main(
+            [
+                "material-pit-evidence-gate-closure-plan",
+                "--audit",
+                "",
+                "--partial-impact",
+                str(partial_impact.artifact_paths["artifact_dir"]),
+                "--completion-plan",
+                str(completion_plan.artifact_paths["artifact_dir"]),
+                "--validator",
+                str(inputs["validator"]),
+                "--policy-comparison",
+                str(inputs["policy_comparison"]),
+                "--enrichment",
+                str(inputs["enrichment"]),
+                "--reviewer-no-hit-acceptance",
+                "",
+                "--reviewer-no-hit-downstream-impact",
+                str(inputs["downstream_impact"]),
+                "--output-dir",
+                str(tmp_path / "material_plan_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "row_count: 16" in output
+    assert "checklist_pass_candidate_count: 0" in output
+    assert "remaining_blocked_count: 16" in output
+    assert "stock_st_no_st_required_count: 8" in output
+    assert "approval_applied: False" in output
+
+
+def test_material_pit_evidence_gate_closure_plan_index_health_status_and_cli(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    result = _build_material_gate_closure_plan(tmp_path, inputs)
+    plan_root = tmp_path / "material_pit_evidence_gate_closure_plan"
+
+    index = build_material_pit_evidence_gate_closure_plan_index(
+        root=plan_root,
+        output_dir=tmp_path / "material_plan_index",
+    )
+    assert index.artifact_count == 1
+    assert index.index_frame.iloc[0]["plan_id"] == result.plan_id
+    assert index.index_frame.iloc[0]["row_count"] == 16
+
+    health = check_material_pit_evidence_gate_closure_plan_health(
+        root=plan_root,
+        output_dir=tmp_path / "material_plan_health",
+    )
+    assert health.status == "PASS"
+    assert health.issue_count == 0
+
+    status = run_material_pit_evidence_gate_closure_plan_status(
+        root=plan_root,
+        output_dir=tmp_path / "material_plan_status",
+    )
+    assert status.status == "WARN"
+    assert status.workflow_stage == "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE"
+    assert status.latest_plan_id == result.plan_id
+    assert status.row_count == 16
+    assert status.checklist_pass_candidate_count == 0
+    assert status.remaining_blocked_count == 16
+    assert status.reusable_symbol_level_closure_count == 2
+    assert status.date_specific_closure_required_count == 16
+    assert status.reviewer_no_hit_acceptance_required_count == 16
+    assert status.survivorship_rationale_required_count == 16
+    assert status.metadata_closure_required_count == 16
+    assert status.stock_st_no_st_required_count == 8
+    assert status.clean_review_updates_created is False
+    assert status.approval_applied is False
+
+    assert (
+        cli.main(
+            [
+                "material-pit-evidence-gate-closure-plan-index",
+                "--root",
+                str(plan_root),
+                "--output-dir",
+                str(tmp_path / "material_plan_index_cli"),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli.main(
+            [
+                "material-pit-evidence-gate-closure-plan-health",
+                "--root",
+                str(plan_root),
+                "--output-dir",
+                str(tmp_path / "material_plan_health_cli"),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli.main(
+            [
+                "material-pit-evidence-gate-closure-plan-status",
+                "--root",
+                str(plan_root),
+                "--output-dir",
+                str(tmp_path / "material_plan_status_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "artifact_count: 1" in output
+    assert "Health status: PASS" in output
+    assert "workflow_stage: MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE" in output
+
+
+def test_material_pit_evidence_gate_closure_plan_health_fails_for_unsafe_artifacts(
+    tmp_path: Path,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    result = _build_material_gate_closure_plan(tmp_path, inputs)
+    plan_root = tmp_path / "material_pit_evidence_gate_closure_plan"
+
+    metadata_path = result.artifact_paths["metadata"]
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["approval_applied"] = True
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+    plan = pd.read_csv(result.artifact_paths["plan_csv"], dtype=str, keep_default_na=False)
+    plan.loc[0, "include_flag"] = "True"
+    plan.loc[0, "valid_for_signal_date"] = "True"
+    plan.loc[0, "closure_paths_required"] = "APPROVED_FOR_PIT_UNIVERSE"
+    plan.to_csv(result.artifact_paths["plan_csv"], index=False)
+    (result.artifact_paths["artifact_dir"] / "review_updates.csv").write_text("symbol\n000001\n", encoding="utf-8")
+
+    health = check_material_pit_evidence_gate_closure_plan_health(
+        root=plan_root,
+        output_dir=tmp_path / "material_plan_health",
+    )
+
+    assert health.status == "FAIL"
+    issues = set(health.health_frame["issue_code"])
+    assert "APPROVAL_APPLIED_DETECTED" in issues
+    assert "INCLUDE_FLAG_TRUE_DETECTED" in issues
+    assert "VALID_FOR_SIGNAL_DATE_TRUE_DETECTED" in issues
+    assert "APPROVED_FOR_PIT_UNIVERSE_DETECTED" in issues
+    assert "CLEAN_REVIEW_UPDATES_FILE_DETECTED" in issues
+
+
+def test_research_status_includes_material_gate_closure_plan_and_preserves_paper_priority(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    reports = tmp_path / "reports"
+    inputs = _write_inputs(tmp_path / "inputs")
+    result = _build_material_gate_closure_plan(reports, inputs)
+    _write_paper_workflow_status(reports)
+
+    dashboard = run_local_research_dashboard(root=reports, output_dir=tmp_path / "dashboard")
+
+    assert dashboard.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert dashboard.latest_material_pit_evidence_gate_closure_plan_id == result.plan_id
+    assert (
+        dashboard.material_pit_evidence_gate_closure_plan_stage
+        == "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE"
+    )
+    assert dashboard.material_pit_evidence_gate_closure_plan_row_count == 16
+    assert dashboard.material_pit_evidence_gate_closure_plan_checklist_pass_candidate_count == 0
+    assert dashboard.material_pit_evidence_gate_closure_plan_remaining_blocked_count == 16
+    assert dashboard.material_pit_evidence_gate_closure_plan_reusable_symbol_level_closure_count == 2
+    assert dashboard.material_pit_evidence_gate_closure_plan_date_specific_closure_required_count == 16
+    assert dashboard.material_pit_evidence_gate_closure_plan_stock_st_no_st_required_count == 8
+    assert dashboard.material_pit_evidence_gate_closure_plan_clean_review_updates_created is False
+    assert dashboard.material_pit_evidence_gate_closure_plan_approval_applied is False
+
+    summary = pd.read_csv(dashboard.artifact_paths["local_research_summary"], dtype=str, keep_default_na=False)
+    metadata = json.loads(dashboard.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    assert summary.iloc[0]["latest_material_pit_evidence_gate_closure_plan_id"] == result.plan_id
+    assert metadata["latest_material_pit_evidence_gate_closure_plan_id"] == result.plan_id
+    assert metadata["material_pit_evidence_gate_closure_plan_remaining_blocked_count"] == 16
+
+    assert (
+        cli.main(
+            [
+                "research-status",
+                "--root",
+                str(reports),
+                "--output-dir",
+                str(tmp_path / "dashboard_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"latest_material_pit_evidence_gate_closure_plan_id: {result.plan_id}" in output
+    assert (
+        "material_pit_evidence_gate_closure_plan_stage: "
+        "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE"
+    ) in output
+    assert "material_pit_evidence_gate_closure_plan_approval_applied: False" in output
+
+
+def _build_material_gate_closure_plan(
+    output_root: Path,
+    inputs: dict[str, Path],
+):
+    completion_plan = build_first_batch_reviewer_evidence_completion_plan(
+        evidence_update_plan=inputs["evidence_update_plan"],
+        downstream_impact=inputs["downstream_impact"],
+        enrichment=inputs["enrichment"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        output_dir=output_root / "first_batch_reviewer_evidence_completion_plan",
+    )
+    partial_impact = build_first_batch_partial_completion_impact(
+        completion_plan=completion_plan.artifact_paths["artifact_dir"],
+        output_dir=output_root / "first_batch_partial_completion_impact",
+    )
+    return build_material_pit_evidence_gate_closure_plan(
+        audit=None,
+        partial_impact=partial_impact.artifact_paths["artifact_dir"],
+        completion_plan=completion_plan.artifact_paths["artifact_dir"],
+        validator=inputs["validator"],
+        policy_comparison=inputs["policy_comparison"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=output_root / "material_pit_evidence_gate_closure_plan",
+    )
 
 
 def _write_inputs(tmp_path: Path) -> dict[str, Path]:

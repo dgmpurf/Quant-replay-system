@@ -206,6 +206,18 @@ from quant_replay_system.first_batch_partial_completion_impact_index import (
 from quant_replay_system.first_batch_partial_completion_impact_status import (
     run_first_batch_partial_completion_impact_status,
 )
+from quant_replay_system.material_pit_evidence_gate_closure_plan import (
+    build_material_pit_evidence_gate_closure_plan,
+)
+from quant_replay_system.material_pit_evidence_gate_closure_plan_health import (
+    check_material_pit_evidence_gate_closure_plan_health,
+)
+from quant_replay_system.material_pit_evidence_gate_closure_plan_index import (
+    build_material_pit_evidence_gate_closure_plan_index,
+)
+from quant_replay_system.material_pit_evidence_gate_closure_plan_status import (
+    run_material_pit_evidence_gate_closure_plan_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1597,6 +1609,96 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_first_batch_partial_completion_impact_status
     )
 
+    material_pit_gate_closure_plan = subparsers.add_parser(
+        "material-pit-evidence-gate-closure-plan",
+        help="Create report-only material PIT evidence gate closure plans and fill templates",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--audit",
+        default="outputs/reports/manual_diagnostics/material_pit_evidence_gate_closure_planning_audit_v0_1",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--partial-impact",
+        default="outputs/reports/first_batch_partial_completion_impact/ea81f81ae764",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--completion-plan",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan/c630522f235a",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--validator",
+        default="outputs/reports/pit_evidence_checklist_validator/62e9eb747197",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--policy-comparison",
+        default="outputs/reports/pit_evidence_policy_profile_comparison/c1a75d1091c6",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--enrichment",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment/cb5f323d3c8c",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--reviewer-no-hit-acceptance",
+        default="outputs/reports/reviewer_no_hit_source_coverage_acceptance/2e05e4b74794",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--reviewer-no-hit-downstream-impact",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact/9e164963455e",
+    )
+    material_pit_gate_closure_plan.add_argument(
+        "--output-dir",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan",
+    )
+    material_pit_gate_closure_plan.set_defaults(handler=_handle_material_pit_evidence_gate_closure_plan)
+
+    material_pit_gate_closure_plan_index = subparsers.add_parser(
+        "material-pit-evidence-gate-closure-plan-index",
+        help="Build a local index of material PIT evidence gate closure plan artifacts",
+    )
+    material_pit_gate_closure_plan_index.add_argument(
+        "--root",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan",
+    )
+    material_pit_gate_closure_plan_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan/index",
+    )
+    material_pit_gate_closure_plan_index.set_defaults(
+        handler=_handle_material_pit_evidence_gate_closure_plan_index
+    )
+
+    material_pit_gate_closure_plan_health = subparsers.add_parser(
+        "material-pit-evidence-gate-closure-plan-health",
+        help="Check material PIT evidence gate closure plan artifact health",
+    )
+    material_pit_gate_closure_plan_health.add_argument(
+        "--root",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan",
+    )
+    material_pit_gate_closure_plan_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan/health",
+    )
+    material_pit_gate_closure_plan_health.set_defaults(
+        handler=_handle_material_pit_evidence_gate_closure_plan_health
+    )
+
+    material_pit_gate_closure_plan_status = subparsers.add_parser(
+        "material-pit-evidence-gate-closure-plan-status",
+        help="Summarize latest material PIT evidence gate closure plan status",
+    )
+    material_pit_gate_closure_plan_status.add_argument(
+        "--root",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan",
+    )
+    material_pit_gate_closure_plan_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan/status",
+    )
+    material_pit_gate_closure_plan_status.set_defaults(
+        handler=_handle_material_pit_evidence_gate_closure_plan_status
+    )
+
     universe_profile_policy_audit = subparsers.add_parser(
         "universe-profile-policy-audit",
         help="Audit local universe profile naming and instrument-type policy without mutating artifacts",
@@ -2836,6 +2938,10 @@ def build_parser() -> argparse.ArgumentParser:
     research_status.add_argument(
         "--first-batch-partial-completion-impact-root",
         help="First-batch partial completion impact artifact root directory",
+    )
+    research_status.add_argument(
+        "--material-pit-evidence-gate-closure-plan-root",
+        help="Material PIT evidence gate closure plan artifact root directory",
     )
     research_status.add_argument(
         "--universe-profile-policy-audit-root",
@@ -5001,6 +5107,86 @@ def _handle_first_batch_partial_completion_impact_status(args: argparse.Namespac
     print(f"material_blocker_reduced_count: {result.material_blocker_reduced_count}")
     print(f"checklist_pass_count: {result.checklist_pass_count}")
     print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_material_pit_evidence_gate_closure_plan(args: argparse.Namespace) -> int:
+    result = build_material_pit_evidence_gate_closure_plan(
+        audit=args.audit,
+        partial_impact=args.partial_impact,
+        completion_plan=args.completion_plan,
+        validator=args.validator,
+        policy_comparison=args.policy_comparison,
+        enrichment=args.enrichment,
+        reviewer_no_hit_acceptance=args.reviewer_no_hit_acceptance,
+        reviewer_no_hit_downstream_impact=args.reviewer_no_hit_downstream_impact,
+        output_dir=args.output_dir,
+    )
+    print(f"plan_id: {result.plan_id}")
+    print(f"status: {result.status}")
+    print(f"row_count: {result.row_count}")
+    print(f"checklist_pass_candidate_count: {result.checklist_pass_candidate_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"reusable_symbol_level_closure_count: {result.reusable_symbol_level_closure_count}")
+    print(f"date_specific_closure_required_count: {result.date_specific_closure_required_count}")
+    print(f"reviewer_no_hit_acceptance_required_count: {result.reviewer_no_hit_acceptance_required_count}")
+    print(f"survivorship_rationale_required_count: {result.survivorship_rationale_required_count}")
+    print(f"metadata_closure_required_count: {result.metadata_closure_required_count}")
+    print(f"stock_st_no_st_required_count: {result.stock_st_no_st_required_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"plan_csv_path: {result.artifact_paths['plan_csv']}")
+    print(f"reviewer_fill_template_path: {result.artifact_paths['reviewer_fill_template_by_closure_path']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_material_pit_evidence_gate_closure_plan_index(args: argparse.Namespace) -> int:
+    result = build_material_pit_evidence_gate_closure_plan_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_material_pit_evidence_gate_closure_plan_health(args: argparse.Namespace) -> int:
+    result = check_material_pit_evidence_gate_closure_plan_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_material_pit_evidence_gate_closure_plan_status(args: argparse.Namespace) -> int:
+    result = run_material_pit_evidence_gate_closure_plan_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_plan_id: {result.latest_plan_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"row_count: {result.row_count}")
+    print(f"checklist_pass_candidate_count: {result.checklist_pass_candidate_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"reusable_symbol_level_closure_count: {result.reusable_symbol_level_closure_count}")
+    print(f"date_specific_closure_required_count: {result.date_specific_closure_required_count}")
+    print(f"reviewer_no_hit_acceptance_required_count: {result.reviewer_no_hit_acceptance_required_count}")
+    print(f"survivorship_rationale_required_count: {result.survivorship_rationale_required_count}")
+    print(f"metadata_closure_required_count: {result.metadata_closure_required_count}")
+    print(f"stock_st_no_st_required_count: {result.stock_st_no_st_required_count}")
     print(f"clean_review_updates_created: {result.clean_review_updates_created}")
     print(f"approval_applied: {result.approval_applied}")
     print(f"report_path: {result.report_path}")
@@ -7350,6 +7536,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
             args.first_batch_reviewer_evidence_completion_plan_root
         ),
         first_batch_partial_completion_impact_root=args.first_batch_partial_completion_impact_root,
+        material_pit_evidence_gate_closure_plan_root=args.material_pit_evidence_gate_closure_plan_root,
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -8107,6 +8294,74 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "first_batch_partial_completion_impact_next_action: "
         f"{result.first_batch_partial_completion_impact_next_action}"
+    )
+    print(
+        "latest_material_pit_evidence_gate_closure_plan_id: "
+        f"{result.latest_material_pit_evidence_gate_closure_plan_id}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_status: "
+        f"{result.material_pit_evidence_gate_closure_plan_status}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_stage: "
+        f"{result.material_pit_evidence_gate_closure_plan_stage}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_health_status: "
+        f"{result.material_pit_evidence_gate_closure_plan_health_status}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_row_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_row_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_checklist_pass_candidate_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_checklist_pass_candidate_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_remaining_blocked_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_remaining_blocked_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_reusable_symbol_level_closure_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_reusable_symbol_level_closure_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_date_specific_closure_required_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_date_specific_closure_required_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_reviewer_no_hit_acceptance_required_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_reviewer_no_hit_acceptance_required_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_survivorship_rationale_required_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_survivorship_rationale_required_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_metadata_closure_required_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_metadata_closure_required_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_stock_st_no_st_required_count: "
+        f"{result.material_pit_evidence_gate_closure_plan_stock_st_no_st_required_count}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_clean_review_updates_created: "
+        f"{result.material_pit_evidence_gate_closure_plan_clean_review_updates_created}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_approval_applied: "
+        f"{result.material_pit_evidence_gate_closure_plan_approval_applied}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_report_path: "
+        f"{result.material_pit_evidence_gate_closure_plan_report_path}"
+    )
+    print(
+        "material_pit_evidence_gate_closure_plan_next_action: "
+        f"{result.material_pit_evidence_gate_closure_plan_next_action}"
     )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
