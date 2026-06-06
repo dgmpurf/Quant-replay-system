@@ -218,6 +218,18 @@ from quant_replay_system.material_pit_evidence_gate_closure_plan_index import (
 from quant_replay_system.material_pit_evidence_gate_closure_plan_status import (
     run_material_pit_evidence_gate_closure_plan_status,
 )
+from quant_replay_system.reviewer_material_evidence_fill_guidance import (
+    build_reviewer_material_evidence_fill_guidance,
+)
+from quant_replay_system.reviewer_material_evidence_fill_guidance_health import (
+    check_reviewer_material_evidence_fill_guidance_health,
+)
+from quant_replay_system.reviewer_material_evidence_fill_guidance_index import (
+    build_reviewer_material_evidence_fill_guidance_index,
+)
+from quant_replay_system.reviewer_material_evidence_fill_guidance_status import (
+    run_reviewer_material_evidence_fill_guidance_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1697,6 +1709,98 @@ def build_parser() -> argparse.ArgumentParser:
     )
     material_pit_gate_closure_plan_status.set_defaults(
         handler=_handle_material_pit_evidence_gate_closure_plan_status
+    )
+
+    reviewer_material_evidence_fill_guidance = subparsers.add_parser(
+        "reviewer-material-evidence-fill-guidance",
+        help="Create report-only reviewer material evidence fill guidance from a material PIT gate closure plan",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--material-plan",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan/2d6ab8e7f9f8",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--audit",
+        default="outputs/reports/manual_diagnostics/reviewer_material_evidence_fill_guidance_audit_v0_1",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--completion-plan",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan/c630522f235a",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--partial-impact",
+        default="outputs/reports/first_batch_partial_completion_impact/ea81f81ae764",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--validator",
+        default="outputs/reports/pit_evidence_checklist_validator/62e9eb747197",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--enrichment",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment/cb5f323d3c8c",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--reviewer-no-hit-acceptance",
+        default="outputs/reports/reviewer_no_hit_source_coverage_acceptance/2e05e4b74794",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--reviewer-no-hit-downstream-impact",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact/9e164963455e",
+    )
+    reviewer_material_evidence_fill_guidance.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewer_material_evidence_fill_guidance",
+    )
+    reviewer_material_evidence_fill_guidance.set_defaults(
+        handler=_handle_reviewer_material_evidence_fill_guidance
+    )
+
+    reviewer_material_evidence_fill_guidance_index = subparsers.add_parser(
+        "reviewer-material-evidence-fill-guidance-index",
+        help="Build a local index of reviewer material evidence fill guidance artifacts",
+    )
+    reviewer_material_evidence_fill_guidance_index.add_argument(
+        "--root",
+        default="outputs/reports/reviewer_material_evidence_fill_guidance",
+    )
+    reviewer_material_evidence_fill_guidance_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewer_material_evidence_fill_guidance/index",
+    )
+    reviewer_material_evidence_fill_guidance_index.set_defaults(
+        handler=_handle_reviewer_material_evidence_fill_guidance_index
+    )
+
+    reviewer_material_evidence_fill_guidance_health = subparsers.add_parser(
+        "reviewer-material-evidence-fill-guidance-health",
+        help="Check reviewer material evidence fill guidance artifact health",
+    )
+    reviewer_material_evidence_fill_guidance_health.add_argument(
+        "--root",
+        default="outputs/reports/reviewer_material_evidence_fill_guidance",
+    )
+    reviewer_material_evidence_fill_guidance_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewer_material_evidence_fill_guidance/health",
+    )
+    reviewer_material_evidence_fill_guidance_health.set_defaults(
+        handler=_handle_reviewer_material_evidence_fill_guidance_health
+    )
+
+    reviewer_material_evidence_fill_guidance_status = subparsers.add_parser(
+        "reviewer-material-evidence-fill-guidance-status",
+        help="Summarize latest reviewer material evidence fill guidance status",
+    )
+    reviewer_material_evidence_fill_guidance_status.add_argument(
+        "--root",
+        default="outputs/reports/reviewer_material_evidence_fill_guidance",
+    )
+    reviewer_material_evidence_fill_guidance_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/reviewer_material_evidence_fill_guidance/status",
+    )
+    reviewer_material_evidence_fill_guidance_status.set_defaults(
+        handler=_handle_reviewer_material_evidence_fill_guidance_status
     )
 
     universe_profile_policy_audit = subparsers.add_parser(
@@ -5195,6 +5299,93 @@ def _handle_material_pit_evidence_gate_closure_plan_status(args: argparse.Namesp
     return 1 if result.status == "FAIL" else 0
 
 
+def _handle_reviewer_material_evidence_fill_guidance(args: argparse.Namespace) -> int:
+    result = build_reviewer_material_evidence_fill_guidance(
+        material_plan=args.material_plan,
+        audit=args.audit,
+        completion_plan=args.completion_plan,
+        partial_impact=args.partial_impact,
+        validator=args.validator,
+        enrichment=args.enrichment,
+        reviewer_no_hit_acceptance=args.reviewer_no_hit_acceptance,
+        reviewer_no_hit_downstream_impact=args.reviewer_no_hit_downstream_impact,
+        output_dir=args.output_dir,
+    )
+    print(f"guidance_id: {result.guidance_id}")
+    print(f"status: {result.status}")
+    print(f"material_pit_evidence_gate_closure_plan_id: {result.material_pit_evidence_gate_closure_plan_id}")
+    print(f"first_batch_partial_completion_impact_id: {result.first_batch_partial_completion_impact_id}")
+    print(f"first_batch_reviewer_evidence_completion_plan_id: {result.first_batch_reviewer_evidence_completion_plan_id}")
+    print(f"validator_id: {result.validator_id}")
+    print(f"enrichment_id: {result.enrichment_id}")
+    print(f"reviewer_no_hit_acceptance_id: {result.reviewer_no_hit_acceptance_id}")
+    print(f"reviewer_no_hit_downstream_impact_id: {result.reviewer_no_hit_downstream_impact_id}")
+    print(f"row_count: {result.row_count}")
+    print(f"reviewer_guidance_row_count: {result.reviewer_guidance_row_count}")
+    print(f"symbol_level_guidance_count: {result.symbol_level_guidance_count}")
+    print(f"date_specific_guidance_count: {result.date_specific_guidance_count}")
+    print(f"no_hit_acceptance_guidance_count: {result.no_hit_acceptance_guidance_count}")
+    print(f"survivorship_rationale_guidance_count: {result.survivorship_rationale_guidance_count}")
+    print(f"metadata_guidance_count: {result.metadata_guidance_count}")
+    print(f"checklist_pass_candidate_count: {result.checklist_pass_candidate_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"guidance_csv_path: {result.artifact_paths['guidance_csv']}")
+    print(f"reviewer_fill_template_safe_defaults_path: {result.artifact_paths['reviewer_fill_template_safe_defaults']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_reviewer_material_evidence_fill_guidance_index(args: argparse.Namespace) -> int:
+    result = build_reviewer_material_evidence_fill_guidance_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_reviewer_material_evidence_fill_guidance_health(args: argparse.Namespace) -> int:
+    result = check_reviewer_material_evidence_fill_guidance_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_reviewer_material_evidence_fill_guidance_status(args: argparse.Namespace) -> int:
+    result = run_reviewer_material_evidence_fill_guidance_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_guidance_id: {result.latest_guidance_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"row_count: {result.row_count}")
+    print(f"reviewer_guidance_row_count: {result.reviewer_guidance_row_count}")
+    print(f"symbol_level_guidance_count: {result.symbol_level_guidance_count}")
+    print(f"date_specific_guidance_count: {result.date_specific_guidance_count}")
+    print(f"no_hit_acceptance_guidance_count: {result.no_hit_acceptance_guidance_count}")
+    print(f"survivorship_rationale_guidance_count: {result.survivorship_rationale_guidance_count}")
+    print(f"metadata_guidance_count: {result.metadata_guidance_count}")
+    print(f"checklist_pass_candidate_count: {result.checklist_pass_candidate_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
 def _handle_universe_profile_policy_audit(args: argparse.Namespace) -> int:
     result = build_universe_profile_policy_audit(
         worklist=args.worklist,
@@ -8362,6 +8553,74 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "material_pit_evidence_gate_closure_plan_next_action: "
         f"{result.material_pit_evidence_gate_closure_plan_next_action}"
+    )
+    print(
+        "latest_reviewer_material_evidence_fill_guidance_id: "
+        f"{result.latest_reviewer_material_evidence_fill_guidance_id}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_status: "
+        f"{result.reviewer_material_evidence_fill_guidance_status}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_stage: "
+        f"{result.reviewer_material_evidence_fill_guidance_stage}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_health_status: "
+        f"{result.reviewer_material_evidence_fill_guidance_health_status}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_row_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_row_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_symbol_level_guidance_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_symbol_level_guidance_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_date_specific_guidance_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_date_specific_guidance_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_metadata_guidance_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_metadata_guidance_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_remaining_blocked_count: "
+        f"{result.reviewer_material_evidence_fill_guidance_remaining_blocked_count}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_clean_review_updates_created: "
+        f"{result.reviewer_material_evidence_fill_guidance_clean_review_updates_created}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_approval_applied: "
+        f"{result.reviewer_material_evidence_fill_guidance_approval_applied}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_report_path: "
+        f"{result.reviewer_material_evidence_fill_guidance_report_path}"
+    )
+    print(
+        "reviewer_material_evidence_fill_guidance_next_action: "
+        f"{result.reviewer_material_evidence_fill_guidance_next_action}"
     )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")

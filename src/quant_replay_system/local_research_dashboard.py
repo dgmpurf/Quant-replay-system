@@ -68,6 +68,9 @@ from quant_replay_system.first_batch_partial_completion_impact_status import (
 from quant_replay_system.material_pit_evidence_gate_closure_plan_status import (
     run_material_pit_evidence_gate_closure_plan_status,
 )
+from quant_replay_system.reviewer_material_evidence_fill_guidance_status import (
+    run_reviewer_material_evidence_fill_guidance_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -389,6 +392,23 @@ SUMMARY_COLUMNS = [
     "material_pit_evidence_gate_closure_plan_approval_applied",
     "material_pit_evidence_gate_closure_plan_report_path",
     "material_pit_evidence_gate_closure_plan_next_action",
+    "reviewer_material_evidence_fill_guidance_status",
+    "latest_reviewer_material_evidence_fill_guidance_id",
+    "reviewer_material_evidence_fill_guidance_stage",
+    "reviewer_material_evidence_fill_guidance_health_status",
+    "reviewer_material_evidence_fill_guidance_row_count",
+    "reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count",
+    "reviewer_material_evidence_fill_guidance_symbol_level_guidance_count",
+    "reviewer_material_evidence_fill_guidance_date_specific_guidance_count",
+    "reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count",
+    "reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count",
+    "reviewer_material_evidence_fill_guidance_metadata_guidance_count",
+    "reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count",
+    "reviewer_material_evidence_fill_guidance_remaining_blocked_count",
+    "reviewer_material_evidence_fill_guidance_clean_review_updates_created",
+    "reviewer_material_evidence_fill_guidance_approval_applied",
+    "reviewer_material_evidence_fill_guidance_report_path",
+    "reviewer_material_evidence_fill_guidance_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -713,6 +733,7 @@ COMPONENTS = [
     "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS",
     "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS",
     "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS",
+    "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -751,6 +772,18 @@ WORKFLOW_AREAS = {
     "PIT_UNIVERSE_EXPORT_READINESS_STATUS": "PIT_UNIVERSE_EXPORT_READINESS",
     "PIT_UNIVERSE_EXPORT_STAGING_STATUS": "PIT_UNIVERSE_EXPORT_STAGING",
     "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER_STATUS": "PIT_UNIVERSE_EVIDENCE_COMPLETION_HELPER",
+    "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS": "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
+    "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS": "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION",
+    "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS": "PIT_EVIDENCE_CHECKLIST_VALIDATOR",
+    "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS": "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON",
+    "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_STATUS": "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET",
+    "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS": "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT",
+    "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS": "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE",
+    "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS": "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT",
+    "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS": "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN",
+    "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS": "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT",
+    "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS": "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN",
+    "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS": "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_PLAN",
@@ -759,25 +792,6 @@ WORKFLOW_AREAS = {
     "ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN_STATUS": (
         "ACTIVATED_REPLACEMENT_WORKLIST_EVIDENCE_UPDATE_PLAN"
     ),
-    "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST_STATUS": "PIT_UNIVERSE_EVIDENCE_REVIEW_WORKLIST",
-    "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_STATUS": "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION",
-    "PIT_EVIDENCE_CHECKLIST_VALIDATOR_STATUS": "PIT_EVIDENCE_CHECKLIST_VALIDATOR",
-    "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON_STATUS": "PIT_EVIDENCE_POLICY_PROFILE_COMPARISON",
-    "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_STATUS": "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET",
-    "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT_STATUS": (
-        "PIT_OFFICIAL_STATUS_EVIDENCE_PACKET_ENRICHMENT"
-    ),
-    "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE_STATUS": (
-        "REVIEWER_NO_HIT_SOURCE_COVERAGE_ACCEPTANCE"
-    ),
-    "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_STATUS": (
-        "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT"
-    ),
-    "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS": (
-        "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN"
-    ),
-    "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS": "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT",
-    "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS": "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN",
     "ADVISORY_PROFILE_CALIBRATION_STATUS": "ADVISORY_PROFILE_CALIBRATION",
     "CALIBRATION_TO_SIGNAL_SEMANTICS_STATUS": "CALIBRATION_TO_SIGNAL_SEMANTICS",
     "SIGNAL_SEMANTICS_STATUS": "SIGNAL_SEMANTICS",
@@ -1079,6 +1093,23 @@ class LocalResearchDashboardResult:
     material_pit_evidence_gate_closure_plan_approval_applied: bool
     material_pit_evidence_gate_closure_plan_report_path: str
     material_pit_evidence_gate_closure_plan_next_action: str
+    reviewer_material_evidence_fill_guidance_status: str
+    latest_reviewer_material_evidence_fill_guidance_id: str
+    reviewer_material_evidence_fill_guidance_stage: str
+    reviewer_material_evidence_fill_guidance_health_status: str
+    reviewer_material_evidence_fill_guidance_row_count: int
+    reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count: int
+    reviewer_material_evidence_fill_guidance_symbol_level_guidance_count: int
+    reviewer_material_evidence_fill_guidance_date_specific_guidance_count: int
+    reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count: int
+    reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count: int
+    reviewer_material_evidence_fill_guidance_metadata_guidance_count: int
+    reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count: int
+    reviewer_material_evidence_fill_guidance_remaining_blocked_count: int
+    reviewer_material_evidence_fill_guidance_clean_review_updates_created: bool
+    reviewer_material_evidence_fill_guidance_approval_applied: bool
+    reviewer_material_evidence_fill_guidance_report_path: str
+    reviewer_material_evidence_fill_guidance_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1383,6 +1414,7 @@ def run_local_research_dashboard(
     first_batch_reviewer_evidence_completion_plan_root: str | Path | None = None,
     first_batch_partial_completion_impact_root: str | Path | None = None,
     material_pit_evidence_gate_closure_plan_root: str | Path | None = None,
+    reviewer_material_evidence_fill_guidance_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1524,6 +1556,11 @@ def run_local_research_dashboard(
         Path(material_pit_evidence_gate_closure_plan_root)
         if material_pit_evidence_gate_closure_plan_root is not None
         else effective_root / "material_pit_evidence_gate_closure_plan"
+    )
+    effective_reviewer_material_evidence_fill_guidance_root = (
+        Path(reviewer_material_evidence_fill_guidance_root)
+        if reviewer_material_evidence_fill_guidance_root is not None
+        else effective_root / "reviewer_material_evidence_fill_guidance"
     )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
@@ -1672,6 +1709,10 @@ def run_local_research_dashboard(
             effective_material_pit_evidence_gate_closure_plan_root = (
                 effective_root / "material_pit_evidence_gate_closure_plan"
             )
+        if reviewer_material_evidence_fill_guidance_root is None:
+            effective_reviewer_material_evidence_fill_guidance_root = (
+                effective_root / "reviewer_material_evidence_fill_guidance"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -1742,6 +1783,7 @@ def run_local_research_dashboard(
         ),
         first_batch_partial_completion_impact_root=effective_first_batch_partial_completion_impact_root,
         material_pit_evidence_gate_closure_plan_root=effective_material_pit_evidence_gate_closure_plan_root,
+        reviewer_material_evidence_fill_guidance_root=effective_reviewer_material_evidence_fill_guidance_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -2565,6 +2607,57 @@ def run_local_research_dashboard(
         material_pit_evidence_gate_closure_plan_next_action=str(
             summary.get("material_pit_evidence_gate_closure_plan_next_action", "")
         ),
+        reviewer_material_evidence_fill_guidance_status=str(
+            summary.get("reviewer_material_evidence_fill_guidance_status", "MISSING")
+        ),
+        latest_reviewer_material_evidence_fill_guidance_id=str(
+            summary.get("latest_reviewer_material_evidence_fill_guidance_id", "")
+        ),
+        reviewer_material_evidence_fill_guidance_stage=str(
+            summary.get("reviewer_material_evidence_fill_guidance_stage", "")
+        ),
+        reviewer_material_evidence_fill_guidance_health_status=str(
+            summary.get("reviewer_material_evidence_fill_guidance_health_status", "")
+        ),
+        reviewer_material_evidence_fill_guidance_row_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_row_count")
+        ),
+        reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count")
+        ),
+        reviewer_material_evidence_fill_guidance_symbol_level_guidance_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_symbol_level_guidance_count")
+        ),
+        reviewer_material_evidence_fill_guidance_date_specific_guidance_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_date_specific_guidance_count")
+        ),
+        reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count")
+        ),
+        reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count")
+        ),
+        reviewer_material_evidence_fill_guidance_metadata_guidance_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_metadata_guidance_count")
+        ),
+        reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count")
+        ),
+        reviewer_material_evidence_fill_guidance_remaining_blocked_count=_int_or_zero(
+            summary.get("reviewer_material_evidence_fill_guidance_remaining_blocked_count")
+        ),
+        reviewer_material_evidence_fill_guidance_clean_review_updates_created=_bool_from_text(
+            summary.get("reviewer_material_evidence_fill_guidance_clean_review_updates_created")
+        ),
+        reviewer_material_evidence_fill_guidance_approval_applied=_bool_from_text(
+            summary.get("reviewer_material_evidence_fill_guidance_approval_applied")
+        ),
+        reviewer_material_evidence_fill_guidance_report_path=str(
+            summary.get("reviewer_material_evidence_fill_guidance_report_path", "")
+        ),
+        reviewer_material_evidence_fill_guidance_next_action=str(
+            summary.get("reviewer_material_evidence_fill_guidance_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -3198,6 +3291,7 @@ def scan_local_research_workflow_artifacts(
     first_batch_reviewer_evidence_completion_plan_root: str | Path,
     first_batch_partial_completion_impact_root: str | Path,
     material_pit_evidence_gate_closure_plan_root: str | Path,
+    reviewer_material_evidence_fill_guidance_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -3242,6 +3336,7 @@ def scan_local_research_workflow_artifacts(
     first_batch_reviewer_evidence_completion_plan_path = Path(first_batch_reviewer_evidence_completion_plan_root)
     first_batch_partial_completion_impact_path = Path(first_batch_partial_completion_impact_root)
     material_pit_evidence_gate_closure_plan_path = Path(material_pit_evidence_gate_closure_plan_root)
+    reviewer_material_evidence_fill_guidance_path = Path(reviewer_material_evidence_fill_guidance_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -3308,6 +3403,7 @@ def scan_local_research_workflow_artifacts(
     )
     records.extend(_scan_first_batch_partial_completion_impact_status(first_batch_partial_completion_impact_path))
     records.extend(_scan_material_pit_evidence_gate_closure_plan_status(material_pit_evidence_gate_closure_plan_path))
+    records.extend(_scan_reviewer_material_evidence_fill_guidance_status(reviewer_material_evidence_fill_guidance_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -4432,6 +4528,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS":
         return _material_pit_evidence_gate_closure_plan_warning_actionability(row, context)
+
+    if component == "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS":
+        return _reviewer_material_evidence_fill_guidance_warning_actionability(row, context)
 
     if component == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS":
         return _universe_profile_policy_audit_warning_actionability(row, context)
@@ -5713,6 +5812,47 @@ def _first_batch_partial_completion_impact_warning_actionability(
     }
 
 
+def _reviewer_material_evidence_fill_guidance_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    _ = context
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage in {
+        "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL",
+        "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_READY_FOR_REVIEWER",
+    }:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
 def _material_pit_evidence_gate_closure_plan_warning_actionability(
     row: dict[str, Any],
     context: dict[str, Any],
@@ -6865,6 +7005,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
     ):
         return _material_pit_evidence_gate_closure_plan_stage_from_frame(dashboard_frame)
     if (
+        statuses["REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS"] in {"PASS", "WARN", "READY"}
+        and _reviewer_material_evidence_fill_guidance_stage_from_frame(dashboard_frame)
+    ):
+        return _reviewer_material_evidence_fill_guidance_stage_from_frame(dashboard_frame)
+    if (
         not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
         and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
         and _universe_profile_policy_audit_stage_from_frame(dashboard_frame)
@@ -7174,6 +7319,7 @@ def summarize_local_research_status(
                     "FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_STATUS",
                     "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS",
                     "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS",
+                    "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -8445,6 +8591,90 @@ def summarize_local_research_status(
         ),
         "material_pit_evidence_gate_closure_plan_next_action": _parse_note_value(
             by_component.get("MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "reviewer_material_evidence_fill_guidance_status": _component_status(
+            by_component,
+            "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS",
+        ),
+        "latest_reviewer_material_evidence_fill_guidance_id": _string_or_empty(
+            by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "reviewer_material_evidence_fill_guidance_stage": _string_or_empty(
+            by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("stage")
+        ),
+        "reviewer_material_evidence_fill_guidance_health_status": _parse_note_value(
+            by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "reviewer_material_evidence_fill_guidance_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "row_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "reviewer_guidance_row_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_symbol_level_guidance_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "symbol_level_guidance_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_date_specific_guidance_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "date_specific_guidance_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "no_hit_acceptance_guidance_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "survivorship_rationale_guidance_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_metadata_guidance_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "metadata_guidance_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "checklist_pass_candidate_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_remaining_blocked_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+                "remaining_blocked_count",
+            )
+        ),
+        "reviewer_material_evidence_fill_guidance_clean_review_updates_created": _parse_note_value(
+            by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+            "clean_review_updates_created",
+        ),
+        "reviewer_material_evidence_fill_guidance_approval_applied": _parse_note_value(
+            by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+            "approval_applied",
+        ),
+        "reviewer_material_evidence_fill_guidance_report_path": _parse_note_value(
+            by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "reviewer_material_evidence_fill_guidance_next_action": _parse_note_value(
+            by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -10589,6 +10819,57 @@ def build_local_research_dashboard_metadata(
         "material_pit_evidence_gate_closure_plan_next_action": (
             result.material_pit_evidence_gate_closure_plan_next_action
         ),
+        "reviewer_material_evidence_fill_guidance_status": (
+            result.reviewer_material_evidence_fill_guidance_status
+        ),
+        "latest_reviewer_material_evidence_fill_guidance_id": (
+            result.latest_reviewer_material_evidence_fill_guidance_id
+        ),
+        "reviewer_material_evidence_fill_guidance_stage": (
+            result.reviewer_material_evidence_fill_guidance_stage
+        ),
+        "reviewer_material_evidence_fill_guidance_health_status": (
+            result.reviewer_material_evidence_fill_guidance_health_status
+        ),
+        "reviewer_material_evidence_fill_guidance_row_count": (
+            result.reviewer_material_evidence_fill_guidance_row_count
+        ),
+        "reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count": (
+            result.reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count
+        ),
+        "reviewer_material_evidence_fill_guidance_symbol_level_guidance_count": (
+            result.reviewer_material_evidence_fill_guidance_symbol_level_guidance_count
+        ),
+        "reviewer_material_evidence_fill_guidance_date_specific_guidance_count": (
+            result.reviewer_material_evidence_fill_guidance_date_specific_guidance_count
+        ),
+        "reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count": (
+            result.reviewer_material_evidence_fill_guidance_no_hit_acceptance_guidance_count
+        ),
+        "reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count": (
+            result.reviewer_material_evidence_fill_guidance_survivorship_rationale_guidance_count
+        ),
+        "reviewer_material_evidence_fill_guidance_metadata_guidance_count": (
+            result.reviewer_material_evidence_fill_guidance_metadata_guidance_count
+        ),
+        "reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count": (
+            result.reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count
+        ),
+        "reviewer_material_evidence_fill_guidance_remaining_blocked_count": (
+            result.reviewer_material_evidence_fill_guidance_remaining_blocked_count
+        ),
+        "reviewer_material_evidence_fill_guidance_clean_review_updates_created": (
+            result.reviewer_material_evidence_fill_guidance_clean_review_updates_created
+        ),
+        "reviewer_material_evidence_fill_guidance_approval_applied": (
+            result.reviewer_material_evidence_fill_guidance_approval_applied
+        ),
+        "reviewer_material_evidence_fill_guidance_report_path": (
+            result.reviewer_material_evidence_fill_guidance_report_path
+        ),
+        "reviewer_material_evidence_fill_guidance_next_action": (
+            result.reviewer_material_evidence_fill_guidance_next_action
+        ),
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -12653,6 +12934,57 @@ def _material_pit_evidence_gate_closure_plan_notes(summary: dict[str, Any]) -> s
         f"metadata_closure_required_count="
         f"{_string_or_empty(summary.get('metadata_closure_required_count'))}; "
         f"stock_st_no_st_required_count={_string_or_empty(summary.get('stock_st_no_st_required_count'))}; "
+        f"clean_review_updates_created={_string_or_empty(summary.get('clean_review_updates_created'))}; "
+        f"approval_applied={_string_or_empty(summary.get('approval_applied'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_reviewer_material_evidence_fill_guidance_status(root: Path) -> list[dict[str, Any]]:
+    guidance_root = root.parent if root.name == "status" else root
+    if not guidance_root.exists():
+        return []
+    try:
+        result = run_reviewer_material_evidence_fill_guidance_status(
+            root=guidance_root,
+            output_dir=guidance_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_guidance_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    return [
+        _record(
+            workflow_area="REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE",
+            component="REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_guidance_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_reviewer_material_evidence_fill_guidance_notes(summary),
+        )
+    ]
+
+
+def _reviewer_material_evidence_fill_guidance_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(summary.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"row_count={_string_or_empty(summary.get('row_count'))}; "
+        f"reviewer_guidance_row_count={_string_or_empty(summary.get('reviewer_guidance_row_count'))}; "
+        f"symbol_level_guidance_count={_string_or_empty(summary.get('symbol_level_guidance_count'))}; "
+        f"date_specific_guidance_count={_string_or_empty(summary.get('date_specific_guidance_count'))}; "
+        f"no_hit_acceptance_guidance_count="
+        f"{_string_or_empty(summary.get('no_hit_acceptance_guidance_count'))}; "
+        f"survivorship_rationale_guidance_count="
+        f"{_string_or_empty(summary.get('survivorship_rationale_guidance_count'))}; "
+        f"metadata_guidance_count={_string_or_empty(summary.get('metadata_guidance_count'))}; "
+        f"checklist_pass_candidate_count={_string_or_empty(summary.get('checklist_pass_candidate_count'))}; "
+        f"remaining_blocked_count={_string_or_empty(summary.get('remaining_blocked_count'))}; "
         f"clean_review_updates_created={_string_or_empty(summary.get('clean_review_updates_created'))}; "
         f"approval_applied={_string_or_empty(summary.get('approval_applied'))}; "
         f"report_path={_note_safe_text(summary.get('report_path'))}"
@@ -14934,6 +15266,14 @@ def _first_batch_partial_completion_impact_stage_from_frame(dashboard_frame: pd.
 def _material_pit_evidence_gate_closure_plan_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _reviewer_material_evidence_fill_guidance_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

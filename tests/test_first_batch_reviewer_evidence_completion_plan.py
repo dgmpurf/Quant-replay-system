@@ -41,6 +41,18 @@ from quant_replay_system.material_pit_evidence_gate_closure_plan_index import (
 from quant_replay_system.material_pit_evidence_gate_closure_plan_status import (
     run_material_pit_evidence_gate_closure_plan_status,
 )
+from quant_replay_system.reviewer_material_evidence_fill_guidance import (
+    build_reviewer_material_evidence_fill_guidance,
+)
+from quant_replay_system.reviewer_material_evidence_fill_guidance_health import (
+    check_reviewer_material_evidence_fill_guidance_health,
+)
+from quant_replay_system.reviewer_material_evidence_fill_guidance_index import (
+    build_reviewer_material_evidence_fill_guidance_index,
+)
+from quant_replay_system.reviewer_material_evidence_fill_guidance_status import (
+    run_reviewer_material_evidence_fill_guidance_status,
+)
 
 
 DATES = [
@@ -922,6 +934,351 @@ def test_research_status_includes_material_gate_closure_plan_and_preserves_paper
         "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE"
     ) in output
     assert "material_pit_evidence_gate_closure_plan_approval_applied: False" in output
+
+
+def test_reviewer_material_evidence_fill_guidance_builds_report_only_guidance(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+
+    result = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_guidance",
+    )
+
+    assert result.row_count == 16
+    assert result.symbol_level_guidance_count == 2
+    assert result.date_specific_guidance_count == 16
+    assert result.no_hit_acceptance_guidance_count == 64
+    assert result.survivorship_rationale_guidance_count == 16
+    assert result.metadata_guidance_count == 16
+    assert result.reviewer_guidance_row_count == 114
+    assert result.checklist_pass_candidate_count == 0
+    assert result.remaining_blocked_count == 16
+    assert result.clean_review_updates_created is False
+    assert result.approval_applied is False
+    assert result.material_pit_evidence_gate_closure_plan_id == material_plan.plan_id
+    assert result.first_batch_partial_completion_impact_id == material_plan.lineage[
+        "first_batch_partial_completion_impact_id"
+    ]
+    assert result.first_batch_reviewer_evidence_completion_plan_id == material_plan.lineage[
+        "first_batch_reviewer_evidence_completion_plan_id"
+    ]
+    assert result.validator_id == material_plan.lineage["validator_id"]
+    assert result.enrichment_id == material_plan.lineage["enrichment_id"]
+    assert result.reviewer_no_hit_downstream_impact_id == material_plan.lineage[
+        "reviewer_no_hit_downstream_impact_id"
+    ]
+
+    guidance = pd.read_csv(result.artifact_paths["guidance_csv"], dtype=str, keep_default_na=False)
+    assert len(guidance) == 16
+    assert set(guidance["symbol"]) == {"000001", "159915"}
+    assert set(guidance["universe_name"]) == {"stock_core", "etf_core"}
+    assert not guidance.duplicated(["signal_date", "symbol", "universe_name"]).any()
+    assert set(guidance["checklist_pass_candidate"]) == {"False"}
+    assert set(guidance["include_flag"]) == {"False"}
+    assert set(guidance["valid_for_signal_date"]) == {"False"}
+    assert set(guidance["survivorship_bias_resolved"]) == {"False"}
+    assert set(guidance["approval_applied"]) == {"False"}
+    assert guidance.loc[guidance["symbol"] == "000001", "fill_groups_required"].str.contains(
+        "DATE_SPECIFIC_PIT_STATUS"
+    ).all()
+
+    fill_order = pd.read_csv(result.artifact_paths["recommended_fill_order"], dtype=str, keep_default_na=False)
+    assert fill_order.iloc[0]["fill_group"] == "SAFETY_BASELINE"
+    assert "REUSABLE_SYMBOL_LEVEL" in set(fill_order["fill_group"])
+    assert "DATE_SPECIFIC_PIT_STATUS" in set(fill_order["fill_group"])
+
+    symbol_guidance = pd.read_csv(
+        result.artifact_paths["symbol_level_fill_guidance"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    date_guidance = pd.read_csv(
+        result.artifact_paths["date_specific_fill_guidance"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    no_hit = pd.read_csv(result.artifact_paths["no_hit_acceptance_fill_guidance"], dtype=str, keep_default_na=False)
+    survivorship = pd.read_csv(
+        result.artifact_paths["survivorship_rationale_fill_guidance"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    metadata = pd.read_csv(result.artifact_paths["metadata_fill_guidance"], dtype=str, keep_default_na=False)
+    template = pd.read_csv(
+        result.artifact_paths["reviewer_fill_template_safe_defaults"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    risk = pd.read_csv(result.artifact_paths["reviewer_risk_controls"], dtype=str, keep_default_na=False)
+
+    assert len(symbol_guidance) == 2
+    assert len(date_guidance) == 16
+    assert len(no_hit) == 64
+    assert set(no_hit["supporting_context_only"]) == {"True"}
+    assert set(no_hit["can_approve_row"]) == {"False"}
+    assert len(survivorship) == 16
+    assert len(metadata) == 16
+    assert len(template) == 88
+    assert set(template["review_status"]) == {"NEEDS_MORE_EVIDENCE"}
+    assert set(template["include_flag"]) == {"False"}
+    assert set(template["valid_for_signal_date"]) == {"False"}
+    assert set(template["survivorship_bias_resolved"]) == {"False"}
+    assert set(template["approval_applied"]) == {"False"}
+    assert risk["risk_control"].str.contains("Do not create clean review_updates.csv here.").any()
+
+    artifact_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for key, path in result.artifact_paths.items()
+        if key != "artifact_dir" and path.suffix in {".csv", ".md", ".json"}
+    )
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in artifact_text
+    assert not (result.artifact_paths["artifact_dir"] / "review_updates.csv").exists()
+    assert not (result.artifact_paths["artifact_dir"] / "clean_review_updates.csv").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_review").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_export_readiness").exists()
+    assert not (tmp_path / "point_in_time_universe_export_staging").exists()
+    assert not (tmp_path / "current_candidates").exists()
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
+
+    assert (
+        cli.main(
+            [
+                "reviewer-material-evidence-fill-guidance",
+                "--material-plan",
+                str(material_plan.artifact_paths["artifact_dir"]),
+                "--audit",
+                "",
+                "--completion-plan",
+                str(tmp_path / "first_batch_reviewer_evidence_completion_plan"),
+                "--partial-impact",
+                str(tmp_path / "first_batch_partial_completion_impact"),
+                "--validator",
+                str(inputs["validator"]),
+                "--enrichment",
+                str(inputs["enrichment"]),
+                "--reviewer-no-hit-acceptance",
+                "",
+                "--reviewer-no-hit-downstream-impact",
+                str(inputs["downstream_impact"]),
+                "--output-dir",
+                str(tmp_path / "reviewer_guidance_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "row_count: 16" in output
+    assert "symbol_level_guidance_count: 2" in output
+    assert "date_specific_guidance_count: 16" in output
+    assert "no_hit_acceptance_guidance_count: 64" in output
+    assert "approval_applied: False" in output
+
+
+def test_reviewer_material_evidence_fill_guidance_index_health_status_and_cli(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+
+    index = build_reviewer_material_evidence_fill_guidance_index(
+        root=tmp_path / "reviewer_material_evidence_fill_guidance",
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance" / "index",
+    )
+    assert index.artifact_count == 1
+    assert index.index_frame.iloc[0]["guidance_id"] == guidance.guidance_id
+    assert index.index_frame.iloc[0]["row_count"] == 16
+
+    health = check_reviewer_material_evidence_fill_guidance_health(
+        root=tmp_path / "reviewer_material_evidence_fill_guidance",
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance" / "health",
+    )
+    assert health.status == "PASS"
+    assert health.issue_count == 0
+
+    status = run_reviewer_material_evidence_fill_guidance_status(
+        root=tmp_path / "reviewer_material_evidence_fill_guidance",
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance" / "status",
+    )
+    assert status.latest_guidance_id == guidance.guidance_id
+    assert status.status == "WARN"
+    assert status.workflow_stage == "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL"
+    assert status.health_status == "PASS"
+    assert status.row_count == 16
+    assert status.reviewer_guidance_row_count == 114
+    assert status.checklist_pass_candidate_count == 0
+    assert status.remaining_blocked_count == 16
+    assert status.clean_review_updates_created is False
+    assert status.approval_applied is False
+
+    assert (
+        cli.main(
+            [
+                "reviewer-material-evidence-fill-guidance-index",
+                "--root",
+                str(tmp_path / "reviewer_material_evidence_fill_guidance"),
+                "--output-dir",
+                str(tmp_path / "reviewer_material_evidence_fill_guidance_cli" / "index"),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli.main(
+            [
+                "reviewer-material-evidence-fill-guidance-health",
+                "--root",
+                str(tmp_path / "reviewer_material_evidence_fill_guidance"),
+                "--output-dir",
+                str(tmp_path / "reviewer_material_evidence_fill_guidance_cli" / "health"),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli.main(
+            [
+                "reviewer-material-evidence-fill-guidance-status",
+                "--root",
+                str(tmp_path / "reviewer_material_evidence_fill_guidance"),
+                "--output-dir",
+                str(tmp_path / "reviewer_material_evidence_fill_guidance_cli" / "status"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"latest_guidance_id: {guidance.guidance_id}" in output
+    assert "workflow_stage: REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL" in output
+    assert "approval_applied: False" in output
+
+
+def test_reviewer_material_evidence_fill_guidance_health_fails_for_unsafe_artifacts(
+    tmp_path: Path,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+    metadata_path = guidance.artifact_paths["metadata"]
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["approval_applied"] = True
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+    guidance_frame = pd.read_csv(guidance.artifact_paths["guidance_csv"], dtype=str, keep_default_na=False)
+    guidance_frame.loc[0, "include_flag"] = "True"
+    guidance_frame.loc[0, "valid_for_signal_date"] = "True"
+    guidance_frame.loc[0, "first_reviewer_action"] = "APPROVED_FOR_PIT_UNIVERSE"
+    guidance_frame.to_csv(guidance.artifact_paths["guidance_csv"], index=False)
+    (guidance.artifact_paths["artifact_dir"] / "review_updates.csv").write_text(
+        "signal_date,symbol,universe_name\n2024-04-02,000001,stock_core\n",
+        encoding="utf-8",
+    )
+
+    health = check_reviewer_material_evidence_fill_guidance_health(
+        root=tmp_path / "reviewer_material_evidence_fill_guidance",
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance" / "health",
+    )
+    issue_codes = set(health.health_frame["issue_code"])
+    assert health.status == "FAIL"
+    assert "APPROVAL_APPLIED_DETECTED" in issue_codes
+    assert "INCLUDE_FLAG_TRUE_DETECTED" in issue_codes
+    assert "VALID_FOR_SIGNAL_DATE_TRUE_DETECTED" in issue_codes
+    assert "APPROVED_FOR_PIT_UNIVERSE_DETECTED" in issue_codes
+    assert "CLEAN_REVIEW_UPDATES_FILE_DETECTED" in issue_codes
+
+
+def test_research_status_includes_reviewer_material_guidance_and_preserves_paper_priority(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    reports = tmp_path / "reports"
+    material_plan = _build_material_gate_closure_plan(reports, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=reports / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=reports / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=reports / "reviewer_material_evidence_fill_guidance",
+    )
+    _write_paper_workflow_status(reports)
+
+    dashboard = run_local_research_dashboard(root=reports, output_dir=tmp_path / "dashboard")
+
+    assert dashboard.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert dashboard.latest_reviewer_material_evidence_fill_guidance_id == guidance.guidance_id
+    assert (
+        dashboard.reviewer_material_evidence_fill_guidance_stage
+        == "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL"
+    )
+    assert dashboard.reviewer_material_evidence_fill_guidance_row_count == 16
+    assert dashboard.reviewer_material_evidence_fill_guidance_reviewer_guidance_row_count == 114
+    assert dashboard.reviewer_material_evidence_fill_guidance_checklist_pass_candidate_count == 0
+    assert dashboard.reviewer_material_evidence_fill_guidance_remaining_blocked_count == 16
+    assert dashboard.reviewer_material_evidence_fill_guidance_clean_review_updates_created is False
+    assert dashboard.reviewer_material_evidence_fill_guidance_approval_applied is False
+
+    summary = pd.read_csv(dashboard.artifact_paths["local_research_summary"], dtype=str, keep_default_na=False)
+    metadata = json.loads(dashboard.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    assert summary.iloc[0]["latest_reviewer_material_evidence_fill_guidance_id"] == guidance.guidance_id
+    assert metadata["latest_reviewer_material_evidence_fill_guidance_id"] == guidance.guidance_id
+    assert metadata["reviewer_material_evidence_fill_guidance_remaining_blocked_count"] == 16
+
+    assert (
+        cli.main(
+            [
+                "research-status",
+                "--root",
+                str(reports),
+                "--output-dir",
+                str(tmp_path / "dashboard_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"latest_reviewer_material_evidence_fill_guidance_id: {guidance.guidance_id}" in output
+    assert (
+        "reviewer_material_evidence_fill_guidance_stage: "
+        "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL"
+    ) in output
+    assert "reviewer_material_evidence_fill_guidance_approval_applied: False" in output
 
 
 def _build_material_gate_closure_plan(

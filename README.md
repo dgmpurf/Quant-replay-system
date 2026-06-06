@@ -153,6 +153,8 @@ Use `first-batch-partial-completion-impact` to compare diagnostics-only partial 
 
 Use `material-pit-evidence-gate-closure-plan` to convert first-batch material PIT blockers into reviewer closure-path planning matrices; see [docs/material_pit_evidence_gate_closure_plan.md](docs/material_pit_evidence_gate_closure_plan.md). Its index, health, and status commands make reusable symbol-level, date-specific, reviewer no-hit, survivorship, metadata, and stock ST/no-ST closure requirements visible in `research-status` without approving rows, creating clean review updates, exporting universe files, running current-candidates, building snapshots, or computing forward labels.
 
+Use `reviewer-material-evidence-fill-guidance` to turn the material gate closure plan into report-only human reviewer fill guidance; see [docs/reviewer_material_evidence_fill_guidance.md](docs/reviewer_material_evidence_fill_guidance.md). Its index, health, and status commands make symbol-level, date-specific, no-hit, survivorship, and metadata fill guidance visible in `research-status` without approving rows, creating clean review updates, running PIT review/export/staging/current-candidates, writing data inputs, building snapshots, or computing labels.
+
 Use `universe-profile-policy-audit` to classify local universe labels such as legacy mixed `etf_core`, report STOCK/ETF distribution, and produce future split guidance for `stock_core`, `etf_core`, and `mixed_demo_core`; see [docs/universe_profile_policy_audit.md](docs/universe_profile_policy_audit.md). The audit is report-only and does not approve/reject rows, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
 
 Use `universe-profile-policy-audit-index`, `universe-profile-policy-audit-health`, and `universe-profile-policy-audit-status` to discover, safety-check, and summarize universe profile policy audit artifacts. `research-status` includes this policy context, including mixed-universe and split-guidance counts, while preserving later paper workflow priority.
@@ -200,6 +202,8 @@ For the v1.21.0 checkpoint covering first-batch reviewer evidence completion pla
 For the v1.22.0 checkpoint covering first-batch partial completion impact artifact views and `research-status` integration, see [docs/release_checkpoint_v1.22.0.md](docs/release_checkpoint_v1.22.0.md).
 
 For the v1.23.0 checkpoint covering material PIT evidence gate closure plan artifact views and `research-status` integration, see [docs/release_checkpoint_v1.23.0.md](docs/release_checkpoint_v1.23.0.md).
+
+For the v1.24.0 checkpoint covering reviewer material evidence fill guidance artifact views and `research-status` integration, see [docs/release_checkpoint_v1.24.0.md](docs/release_checkpoint_v1.24.0.md).
 
 For the v1.15.0 checkpoint covering EOD post-close low-budget PIT policy profile comparison and `research-status` integration, see [docs/release_checkpoint_v1.15.0.md](docs/release_checkpoint_v1.15.0.md).
 

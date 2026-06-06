@@ -306,6 +306,16 @@ When the status reports `MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE`
 
 Material PIT evidence gate closure plans are report-only. They do not create `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, `valid_for_signal_date=true`, clean `review_updates.csv`, PIT review artifacts, export-readiness artifacts, staging artifacts, universe exports, snapshot manifests, current-candidates outputs, or forward labels. Later paper workflow artifacts keep final workflow priority while material-gate closure plan fields remain visible for reviewer planning.
 
+## Reviewer Material Evidence Fill Guidance Status
+
+`research-status` includes `reviewer-material-evidence-fill-guidance-status` as manual PIT evidence fill guidance context when those artifacts exist.
+
+The unified summary records the latest guidance id, status/stage, health status, row count, reviewer guidance row count, symbol-level guidance count, date-specific guidance count, no-hit acceptance guidance count, survivorship rationale guidance count, metadata guidance count, checklist-pass candidate count, remaining-blocked count, clean-review-updates-created flag, approval-applied flag, report path, and next manual action.
+
+When the status reports `REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL`, reviewer evidence remains incomplete and the dashboard treats the warning as expected manual evidence-preparation context. It does not imply PIT approval, clean review updates, export-readiness, staging, current-candidates generation, snapshot build, forward labels, or trading readiness.
+
+Reviewer material evidence fill guidance is report-only. Health fails if guidance artifacts contain `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, `valid_for_signal_date=true`, clean `review_updates.csv`, approval-applied flags, data writes, PIT review/export/staging/current-candidates outputs, snapshots, or forward labels. Later paper workflow artifacts keep final workflow priority while reviewer guidance fields remain visible for audit.
+
 ## Universe Profile Policy Audit Status
 
 `research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.
