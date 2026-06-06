@@ -1,7 +1,7 @@
 # Current State Snapshot
 
 > Status: working memory document  
-> Last generated: 2026-06-05  
+> Last generated: 2026-06-06  
 > Permanence: temporary; refresh after the next major checkpoint or when source state changes.
 
 ## Summary
@@ -58,6 +58,8 @@ It is not a live trading system.
 - Reviewer no-hit acceptance downstream impact.
 - First-batch reviewer evidence completion planning.
 - First-batch partial completion impact.
+- Material PIT evidence gate closure planning.
+- Reviewer material evidence fill guidance.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -83,12 +85,6 @@ It is not a live trading system.
 - Research-status integration.
 - Current recommendation: keep defaults, do not expand buy review, collect more evidence.
 
-### Factor Taxonomy Sources
-
-- Canonical China A-share factor taxonomy exists.
-- Event-driven/industry-chain framework exists.
-- These are design sources, not executable signal logic.
-
 ## Current Quantitative Evidence Status
 
 Current evidence is not enough to validate non-demo buy signals.
@@ -106,15 +102,7 @@ Known gaps:
 
 ## Current Multi-Date Backfill State
 
-Market/cache feasibility:
-
-```text
-local market cache has enough data for selected warmup-aware signal dates
-60 trading day warmup modeled
-1d/3d/5d/10d forward horizon modeled
-```
-
-PIT universe active / planning artifacts:
+Known active / planning artifacts:
 
 ```text
 review_id: 7bc8ba08bf5a
@@ -133,172 +121,80 @@ latest_diagnostics_ingestion_id: 734f3a722ddf
 validator_id: 62e9eb747197
 policy_comparison_id: 0ef6d2f3bae6
 packet_id: 8efabe2ffe62
-packet_rerun_ingestion_id: ac6846aef520
-packet_rerun_validator_id: 498a3d0786af
-packet_rerun_policy_comparison_id: b7e7ec8f66f5
 reviewed_no_hit_policy_comparison_id: c1a75d1091c6
 enrichment_id: cb5f323d3c8c
 reviewer_no_hit_acceptance_id: 2e05e4b74794
 reviewer_no_hit_downstream_impact_id: 9e164963455e
 first_batch_reviewer_evidence_completion_plan_id: c630522f235a
 first_batch_partial_completion_impact_id: ea81f81ae764
+material_pit_evidence_gate_closure_plan_id: 2d6ab8e7f9f8
+reviewer_material_evidence_fill_guidance_id: 94f5ff204662
 ```
 
 Current counts:
 
 ```text
-selected signal dates: 8
-symbols: 9
-PIT rows: 72
 approved rows: 0
-valid-for-signal-date rows: 0
 export-ready rows: 0
 staged rows: 0
 clean ready review updates: 0
+worklist rows: 72
 needs evidence rows: 72
 future-dated hints: 72
 authoritative hints: 0
-
 STOCK rows: 56
 ETF rows: 16
 legacy mixed-demo rows: 72
-recommended future stock_core rows: 56
-recommended future etf_core rows: 16
-recommended future mixed_demo_core rows: 0
 profile conflicts: 56
-
-reviewed replacement stock_core rows: 56
-reviewed replacement etf_core rows: 16
-reviewed replacement mixed_demo_core rows: 0
-reviewed replacement acceptance acknowledged: true
-reviewed replacement activation planning context created: true
+stock_core replacement rows: 56
+etf_core replacement rows: 16
+mixed_demo_core replacement rows: 0
 active legacy worklist mutated: false
-
-activated evidence update planning:
-stock_core evidence rows: 56
-etf_core evidence rows: 16
-mixed_demo_core evidence rows: 0
-stock_core first batch rows: 8
-etf_core first batch rows: 8
-clean_review_updates_created: false
-
-Codex diagnostics evidence discovery / gap closure:
-inspected rows: 16
-ingestion ready_for_review_update_count: 16
-ingestion blocked_count: 0
-approval_requested_count: 0
-approved_ready_count: 0
-all rows remain NEEDS_MORE_EVIDENCE
-
-PIT evidence checklist validator:
-validator_id: 62e9eb747197
-row_count: 16
-checklist_pass_count: 0
-blocked_count: 16
-stock_core_blocked_count: 8
-etf_core_blocked_count: 8
-
-PIT evidence policy profile comparison:
-comparison_id: 0ef6d2f3bae6
-profile: EOD_POST_CLOSE_LOW_BUDGET_PIT
-strict_checklist_pass_count: 0
-eod_low_budget_checklist_pass_count: 0
-relaxed_blocker_count: 16
-remaining_blocked_count: 16
-
-Reviewed no-hit support policy profile:
-comparison_id: c1a75d1091c6
-profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
-reviewed_no_hit_support_pass_count: 0
-no_hit_context_supported_count: 16
-reviewer_acceptance_required_count: 16
-remaining_blocked_count: 16
-
-PIT official status evidence packet enrichment:
-enrichment_id: cb5f323d3c8c
-source_packet_id: 8efabe2ffe62
-policy_comparison_id: c1a75d1091c6
-strong_official_same_date_quotation_count: 16
-reviewed_no_hit_context_supported_count: 16
-reviewer_acceptance_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
-
-Reviewer no-hit source coverage acceptance:
-acceptance_id: 2e05e4b74794
-row_count: 64
-accepted_count: 0
-needs_review_count: 64
-reviewer_acceptance_required_count: 64
-survivorship_rationale_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
-
-Reviewer no-hit downstream impact:
-impact_id: 9e164963455e
-accepted_no_hit_context_count: 0
-packet_context_gap_reduced_count: 0
-checklist_pass_count: 0
-remaining_blocked_count: 16
-approval_applied: false
-
-First-batch reviewer evidence completion plan:
-plan_id: c630522f235a
-row_count: 16
-stock_core_row_count: 8
-etf_core_row_count: 8
-reviewer_completion_required_count: 16
-no_hit_acceptance_required_count: 16
-survivorship_rationale_required_count: 16
-metadata_completion_required_count: 16
+accepted replacement planning context: true
+activation planning context created: true
+stock_core first-batch rows: 8
+etf_core first-batch rows: 8
 checklist_pass_count: 0
 remaining_blocked_count: 16
 clean_review_updates_created: false
 approval_applied: false
-
-First-batch partial completion impact:
-impact_id: ea81f81ae764
-row_count: 16
-completed_row_count: 0
-completed_field_count: 0
-blocker_reduced_count: 0
-material_blocker_reduced_count: 0
-checklist_pass_count: 0
-remaining_blocked_count: 16
-clean_review_updates_created: false
-approval_applied: false
-
-diagnostics partial completion fixture:
-impact_id: 93a8341407a1
-completed_row_count: 1
-completed_field_count: 5
-blocker_reduced_count: 1
-material_blocker_reduced_count: 0
-checklist_pass_count: 0
-remaining_blocked_count: 16
 ```
 
-Current first-batch partial completion impact stage:
+PIT evidence / planning details:
 
 ```text
-FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
+selected signal dates: 8
+symbols: 9
+PIT rows: 72
+stock_core first batch rows: 8
+etf_core first batch rows: 8
+PIT evidence checklist validator: 16 rows blocked, 0 checklist-pass approval candidates
+SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-presence rows found
+Reviewer no-hit acceptance: 64 rows, accepted_count=0, needs_review_count=64
+Reviewer no-hit downstream impact: accepted_no_hit_context_count=0, remaining_blocked_count=16, approval_applied=false
+First-batch reviewer evidence completion plan: 16 rows, all require reviewer completion, no-hit acceptance, survivorship rationale, and metadata completion
+First-batch partial completion impact: active plan has 0 completed rows, 0 blockers reduced, 0 material blockers reduced, 0 checklist pass, 16 blocked
+Material PIT evidence gate closure plan: 16 rows, 0 checklist-pass candidates, 16 blocked
+Reviewer material evidence fill guidance: 16 rows, 114 guidance rows, 0 checklist-pass candidates, 16 blocked
+```
+
+Current reviewer material evidence fill guidance stage:
+
+```text
+REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL
 ```
 
 Meaning:
 
-The project has moved from “first-batch reviewer evidence completion planning enumerates missing evidence” to “partial completion impact can report blocker deltas from reviewer-completion fixtures.”
+The project has moved from “material gate closure plan enumerates what reviewed evidence is needed” to “reviewer-oriented fill guidance exists for how to fill the remaining material evidence.”
 
-The active partial completion impact has no completed rows and does not reduce blockers. A diagnostics fixture reduced only metadata/row-shape blockers, not material PIT evidence blockers.
+The guidance is report-only. It does not make any row approval-ready, does not create clean `review_updates.csv`, and does not apply PIT approval.
 
-The workflow is report-only. It does not make any row approval-ready, does not create clean `review_updates.csv`, and does not apply PIT approval.
+The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile remains opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. The fill guidance can list no-hit acceptance and survivorship rationale steps, but it still does not change strict defaults or create PIT approvals.
 
-The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile remains opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. The first-batch plan and partial completion impact workflows can list no-hit acceptance to-dos and survivorship rationale to-dos, but they still do not change strict defaults or create PIT approvals.
-
-The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment, acceptance, downstream impact, first-batch planning, and partial impact milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
+The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment, acceptance, downstream impact, first-batch planning, partial impact, material gate closure, and fill guidance milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
-
-The next blocker is material PIT evidence gate closure planning.
 
 ## Current External Data Strategy
 
@@ -318,28 +214,16 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Material PIT Evidence Gate Closure Planning v0.1
+Reviewer Fill Fixture Impact Validation v0.1
 ```
 
 Purpose:
 
-- identify exact reviewed evidence needed to close material PIT evidence gates for at least one first-batch row;
-- separate material PIT evidence closure from reviewer metadata completion;
+- use the reviewer material evidence fill guidance template;
+- create a tiny diagnostics-only reviewer fill fixture;
+- verify the completed fields reduce only intended blockers;
+- verify the fixture can flow through impact validation without becoming approval;
 - keep all rows non-approved unless a future explicit PIT review workflow is run.
-
-Focus blockers:
-
-```text
-as_of_date
-industry
-is_active
-is_active_evidence
-revision_id
-t_plus_rule
-000001 is_st / no-ST evidence
-survivorship_bias_resolution
-reviewer_no_hit_acceptance
-```
 
 Do not yet:
 
@@ -347,6 +231,7 @@ Do not yet:
 - run PIT overlay review;
 - run export-readiness;
 - run staging;
+- create clean review updates;
 - write usable universe files;
 - write `data/raw` or `data/processed`;
 - generate multi-date candidates;
@@ -361,32 +246,14 @@ Do not yet:
 
 Recent milestone direction:
 
-- v1.0.0: research infrastructure with PIT universe overlay planning/status.
-- v1.1.0: reviewed PIT universe overlay approval workflow.
-- v1.2.0: PIT universe export-readiness.
-- v1.3.0: PIT universe evidence completion helper.
-- v1.4.0: PIT universe required metadata support.
-- v1.5.0: guarded PIT universe export staging.
-- v1.6.0: PIT universe evidence review worklist.
-- v1.7.0: PIT universe evidence update ingestion.
-- v1.8.0: universe profile policy audit.
-- v1.9.0: universe profile split-worklist planning.
-- v1.10.0: reviewed replacement worklist planning.
-- v1.11.0: reviewed replacement worklist acceptance.
-- v1.12.0: guarded reviewed replacement worklist activation.
-- v1.13.0: activated replacement worklist evidence update planning.
-- v1.14.0: PIT evidence checklist validator.
-- v1.15.0: PIT evidence policy profile comparison.
-- v1.16.0: PIT official status evidence packet.
-- v1.17.0: reviewed no-hit support policy profile.
-- v1.18.0: PIT official status evidence packet enrichment.
-- v1.19.0: reviewer no-hit source coverage acceptance.
 - v1.20.0: reviewer no-hit acceptance downstream impact.
 - v1.21.0: first-batch reviewer evidence completion planning.
 - v1.22.0: first-batch partial completion impact.
+- v1.23.0: material PIT evidence gate closure plan.
+- v1.24.0: reviewer material evidence fill guidance.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Material PIT Evidence Gate Closure Planning v0.1.
+Give me Codex tasks for Reviewer Fill Fixture Impact Validation v0.1.
 ```

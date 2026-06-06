@@ -73,6 +73,10 @@ EXCEPTION_TYPES = [
 ]
 
 
+def _has_truthy_value(frame: pd.DataFrame, column: str) -> bool:
+    return frame[column].astype(str).str.lower().isin({"true", "1", "yes", "y"}).any()
+
+
 def test_builds_report_only_first_batch_completion_plan(tmp_path: Path) -> None:
     inputs = _write_inputs(tmp_path)
 
@@ -1084,6 +1088,129 @@ def test_reviewer_material_evidence_fill_guidance_builds_report_only_guidance(
     assert "date_specific_guidance_count: 16" in output
     assert "no_hit_acceptance_guidance_count: 64" in output
     assert "approval_applied: False" in output
+
+
+def test_reviewer_fill_fixture_impact_validation_reduces_only_shape_blocker(
+    tmp_path: Path,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+
+    template = pd.read_csv(
+        guidance.artifact_paths["reviewer_fill_template_safe_defaults"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    target_mask = (
+        (template["signal_date"] == "2024-04-02")
+        & (template["symbol"] == "000001")
+        & (template["universe_name"] == "stock_core")
+    )
+    fixture = template.loc[target_mask].copy()
+    assert len(fixture) == 6
+    assert set(fixture["symbol"]) == {"000001"}
+    assert set(fixture["closure_path"]) == {
+        "REUSABLE_SYMBOL_LEVEL",
+        "DATE_SPECIFIC",
+        "REVIEWER_NO_HIT_ACCEPTANCE",
+        "SURVIVORSHIP_RATIONALE",
+        "PIT_METADATA",
+        "STOCK_ONLY_ST_NO_ST",
+    }
+
+    fixture.loc[:, "review_status"] = "NEEDS_MORE_EVIDENCE"
+    fixture.loc[:, "reviewer"] = "diagnostics_reviewer"
+    fixture.loc[:, "reviewed_at"] = "2026-06-06T00:00:00+08:00"
+    fixture.loc[:, "review_reason"] = "Diagnostics-only reviewer fill fixture; not PIT approval."
+    fixture.loc[:, "evidence_source"] = "DIAGNOSTICS_ONLY_FIXTURE"
+    fixture.loc[:, "evidence_reference"] = "Shape validation only; no authoritative PIT evidence asserted."
+    fixture.loc[:, "source_limitations"] = "Fixture only; material PIT blockers remain."
+    fixture.loc[:, "reviewer_notes"] = "Reviewer shape fields completed for validation only."
+    fixture.loc[:, "include_flag"] = "False"
+    fixture.loc[:, "valid_for_signal_date"] = "False"
+    fixture.loc[:, "approval_applied"] = "False"
+
+    fixture_dir = tmp_path / "manual_diagnostics" / "reviewer_fill_fixture_impact_validation"
+    fixture_dir.mkdir(parents=True)
+    fixture_path = fixture_dir / "reviewer_fill_fixture.csv"
+    fixture.to_csv(fixture_path, index=False)
+
+    validated = pd.read_csv(fixture_path, dtype=str, keep_default_na=False)
+    assert len(validated) == 6
+    assert set(validated["symbol"]) == {"000001"}
+    assert set(validated["review_status"]) == {"NEEDS_MORE_EVIDENCE"}
+    assert not _has_truthy_value(validated, "include_flag")
+    assert not _has_truthy_value(validated, "valid_for_signal_date")
+    assert not _has_truthy_value(validated, "approval_applied")
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in fixture_path.read_text(encoding="utf-8")
+
+    reviewer_shape_fields = ["reviewer", "reviewed_at", "review_reason", "evidence_source", "evidence_reference"]
+    reviewer_shape_blocker_reduced_count = int(
+        validated[reviewer_shape_fields].apply(lambda column: column.astype(str).str.len().gt(0).all()).all()
+    )
+    assert reviewer_shape_blocker_reduced_count == 1
+
+    blocker_matrix = pd.read_csv(
+        material_plan.artifact_paths["row_level_material_blocker_matrix"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    blocker_row = blocker_matrix.loc[
+        (blocker_matrix["signal_date"] == "2024-04-02")
+        & (blocker_matrix["symbol"] == "000001")
+        & (blocker_matrix["universe_name"] == "stock_core")
+    ].iloc[0]
+    assert blocker_row["remaining_blocked"] == "True"
+    assert blocker_row["checklist_pass_candidate"] == "False"
+    assert blocker_row["missing_as_of_date"] == "True"
+    assert blocker_row["missing_industry"] == "True"
+    assert blocker_row["missing_is_active"] == "True"
+    assert blocker_row["missing_is_active_evidence"] == "True"
+    assert blocker_row["missing_revision_id"] == "True"
+    assert blocker_row["missing_t_plus_rule"] == "True"
+    assert blocker_row["missing_is_st"] == "True"
+
+    requirements = pd.read_csv(
+        material_plan.artifact_paths["checklist_pass_candidate_requirements"],
+        dtype=str,
+        keep_default_na=False,
+    )
+    requirement_row = requirements.loc[
+        (requirements["signal_date"] == "2024-04-02")
+        & (requirements["symbol"] == "000001")
+        & (requirements["universe_name"] == "stock_core")
+    ].iloc[0]
+    assert requirement_row["checklist_pass_candidate_now"] == "False"
+    assert requirement_row["approval_allowed_now"] == "False"
+    assert requirement_row["clean_review_updates_allowed_now"] == "False"
+
+    assert guidance.checklist_pass_candidate_count == 0
+    assert guidance.remaining_blocked_count == 16
+    assert material_plan.checklist_pass_candidate_count == 0
+    assert material_plan.remaining_blocked_count == 16
+    material_blocker_reduced_count = 0
+    assert material_blocker_reduced_count == 0
+    assert not (fixture_dir / "review_updates.csv").exists()
+    assert not (fixture_dir / "clean_review_updates.csv").exists()
+    assert not (guidance.artifact_paths["artifact_dir"] / "review_updates.csv").exists()
+    assert not (guidance.artifact_paths["artifact_dir"] / "clean_review_updates.csv").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_review").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_export_readiness").exists()
+    assert not (tmp_path / "point_in_time_universe_export_staging").exists()
+    assert not (tmp_path / "current_candidates").exists()
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
 
 
 def test_reviewer_material_evidence_fill_guidance_index_health_status_and_cli(

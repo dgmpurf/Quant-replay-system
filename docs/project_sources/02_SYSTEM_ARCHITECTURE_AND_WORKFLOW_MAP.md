@@ -1,7 +1,7 @@
 # System Architecture and Workflow Map
 
 > Status: working memory document  
-> Last generated: 2026-06-05  
+> Last generated: 2026-06-06  
 > Permanence: temporary; update after major architecture or workflow additions.
 
 ## High-Level Architecture
@@ -60,7 +60,9 @@ Multi-Date Evidence Preparation
   ├─ reviewer-no-hit-source-coverage-acceptance
   ├─ reviewer-no-hit-acceptance-downstream-impact
   ├─ first-batch-reviewer-evidence-completion-plan
-  └─ first-batch-partial-completion-impact
+  ├─ first-batch-partial-completion-impact
+  ├─ material-pit-evidence-gate-closure-plan
+  └─ reviewer-material-evidence-fill-guidance
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -107,17 +109,7 @@ current-candidates
 → research-status
 ```
 
-### Advisory and Semantics
-
-```text
-current-candidates
-→ signal-semantics
-→ signal-advisory / single-symbol-advisory / advisory-conversation
-→ index / health / status
-→ research-status
-```
-
-### Multi-Date Candidate Planning, PIT Evidence, Policy Comparison, and Evidence Context
+### Multi-Date Candidate Planning, PIT Evidence, Policy Comparison, and Reviewer Guidance
 
 ```text
 market cache coverage
@@ -153,6 +145,8 @@ market cache coverage
 → reviewer-no-hit-acceptance-downstream-impact
 → first-batch-reviewer-evidence-completion-plan
 → first-batch-partial-completion-impact
+→ material-pit-evidence-gate-closure-plan
+→ reviewer-material-evidence-fill-guidance
 → index / health / status
 → research-status
 ```
@@ -160,7 +154,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
+REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -190,55 +184,11 @@ revision_id
 source
 ```
 
-### Universe Profile Registry
+### PIT Evidence and Reviewer Context Contracts
 
-The initial profile registry lives in:
+PIT checklist validator outputs are gate reports, not approvals. A checklist-pass row would only be an approval-candidate preview until an explicit PIT review workflow is run.
 
-```text
-config/universe_profiles.yaml
-```
-
-Initial profile intent:
-
-```text
-stock_core:
-  allowed_instrument_types: STOCK
-  mixed_allowed: false
-
-etf_core:
-  allowed_instrument_types: ETF
-  mixed_allowed: false
-
-mixed_demo_core:
-  allowed_instrument_types: STOCK, ETF
-  mixed_allowed: true
-  profile_type: demo_mixed
-```
-
-Existing `etf_core` artifacts remain legacy mixed-demo context and should not be treated as ETF-only or mutated in place.
-
-## PIT Evidence and Reviewer Context Contracts
-
-### PIT Evidence Checklist Validator
-
-The checklist validator reports:
-
-```text
-validator_id
-row_count
-checklist_pass_count
-blocked_count
-stock_core_blocked_count
-etf_core_blocked_count
-missing_evidence_matrix
-approval_candidate_preview
-```
-
-Validator outputs are gate reports, not approvals. A checklist-pass row would only be an approval-candidate preview until a later explicit PIT review workflow is run.
-
-### PIT Evidence Policy Profile Comparison
-
-Known profiles:
+Known policy profiles:
 
 ```text
 STRICT_PIT
@@ -246,7 +196,7 @@ EOD_POST_CLOSE_LOW_BUDGET_PIT
 EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
 ```
 
-Neither profile changes strict defaults, applies approval, runs PIT review, exports universe files, or creates usable current-candidates input.
+None of these profiles changes strict defaults, applies approval, runs PIT review, exports universe files, or creates usable current-candidates input.
 
 ### SZSE 1815 Quotation Diagnostics
 
@@ -260,149 +210,62 @@ STRONG_OFFICIAL_DATE_SPECIFIC for quotation/traded presence: 16/16
 
 This is strong date-specific evidence for quotation/traded presence only. It does not automatically prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution.
 
-### First-Batch Reviewer Evidence Completion Plan
+### Material PIT Evidence Gate Closure Plan
 
-The first-batch reviewer evidence completion plan converts active evidence context into a concrete reviewer fill plan for the 16 first-batch rows.
+The material gate closure plan identifies exact reviewed evidence needed to close material PIT gates for first-batch rows.
 
 Current plan state:
 
 ```text
-plan_id: c630522f235a
-stage: FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
+plan_id: 2d6ab8e7f9f8
+stage: MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE
 row_count: 16
-stock_core_row_count: 8
-etf_core_row_count: 8
-reviewer_completion_required_count: 16
-no_hit_acceptance_required_count: 16
+checklist_pass_candidate_count: 0
+remaining_blocked_count: 16
+reusable_symbol_level_closure_count: 2
+date_specific_closure_required_count: 16
+reviewer_no_hit_acceptance_required_count: 16
 survivorship_rationale_required_count: 16
-metadata_completion_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
+metadata_closure_required_count: 16
+stock_st_no_st_required_count: 8
 clean_review_updates_created: false
 approval_applied: false
 ```
 
-The reviewer completion template is not a clean `review_updates.csv` artifact and must not be fed directly as applied approval.
+### Reviewer Material Evidence Fill Guidance
 
-### First-Batch Partial Completion Impact
+The fill guidance workflow converts material gate closure requirements into human-readable reviewer guidance.
 
-The first-batch partial completion impact workflow compares partial reviewer completion fixtures against the first-batch completion plan and reports blocker deltas.
-
-It reports:
+Current guidance state:
 
 ```text
-impact_id
-row_count
-completed_row_count
-completed_field_count
-blocker_reduced_count
-material_blocker_reduced_count
-checklist_pass_count
-remaining_blocked_count
-clean_review_updates_created
-approval_applied
-```
-
-Current active impact state:
-
-```text
-impact_id: ea81f81ae764
-stage: FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
+guidance_id: 94f5ff204662
+stage: REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL
 row_count: 16
-completed_row_count: 0
-completed_field_count: 0
-blocker_reduced_count: 0
-material_blocker_reduced_count: 0
-checklist_pass_count: 0
+reviewer_guidance_row_count: 114
+symbol_level_guidance_count: 2
+date_specific_guidance_count: 16
+no_hit_acceptance_guidance_count: 64
+survivorship_rationale_guidance_count: 16
+metadata_guidance_count: 16
+checklist_pass_candidate_count: 0
 remaining_blocked_count: 16
 clean_review_updates_created: false
 approval_applied: false
 ```
 
-A diagnostics fixture showed:
-
-```text
-impact_id: 93a8341407a1
-completed_row_count: 1
-completed_field_count: 5
-blocker_reduced_count: 1
-material_blocker_reduced_count: 0
-checklist_pass_count: 0
-remaining_blocked_count: 16
-```
-
-Partial completion impact is report-only. Metadata-only reviewer completion does not satisfy material PIT evidence gates and does not produce approval, clean review updates, export readiness, or current-candidates input.
-
-## Current Multi-Date Planning State
-
-Known current state:
-
-```text
-Market cache: 1335 rows, 9 symbols, 2024-01-02 to 2024-05-20
-Warmup-aware signal dates: 2024-04-02 to 2024-05-06
-Execution manifest: 8 rows, all blocked by BLOCKED_UNIVERSE_AS_OF
-PIT overlay plan: 72 rows, 8 dates, 9 symbols
-PIT review: 72 rows, 0 approved, 72 unresolved survivorship warnings
-Export readiness: 0 approved, 0 export-ready, 72 blocked
-Evidence helper: 72 needs evidence, 72 future-dated hints, 0 authoritative hints
-Export staging: 0 staged rows, 72 blocked
-Evidence review worklist: 72 rows, 9 symbols, 8 dates, 72 needs evidence
-Evidence update ingestion: 72 rows, 0 ready clean updates, 72 blocked
-Universe profile policy audit: 72 ambiguous legacy mixed-demo rows
-Split-worklist plan: 56 future stock_core rows, 16 future etf_core rows, 0 mixed_demo_core rows, 56 profile conflicts
-Reviewed replacement worklist plan: 56 stock_core replacement rows, 16 etf_core replacement rows, 0 mixed_demo_core rows, active legacy worklist untouched
-Reviewed replacement worklist acceptance: acknowledged as planning context, active legacy worklist untouched
-Reviewed replacement worklist activation: activation planning context, 56 stock_core rows, 16 etf_core rows, active legacy worklist untouched
-Activated replacement evidence update plan: 56 stock_core rows, 16 etf_core rows, 0 mixed_demo_core rows, stock first batch 8 rows, ETF first batch 8 rows, no clean review updates
-PIT evidence checklist validator: 16 rows blocked, 0 checklist-pass approval candidates
-PIT evidence policy profile comparison: EOD low-budget profile relaxes 16 timing/context blockers but still leaves 16 rows blocked, 0 pass candidates
-PIT official status evidence packet: 72 evidence packet rows, 0 strong official date-specific, 16 supporting official symbol-level, 16 supporting local EOD cache, 40 missing, 16 blocked rows
-SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-presence rows found
-Reviewer no-hit downstream impact: 0 accepted active context, 0 packet gaps reduced, 0 checklist pass, 16 blocked, approval_applied=false
-First-batch reviewer evidence completion plan: 16 rows, 16 reviewer-completion required, 16 no-hit acceptance required, 16 survivorship rationale required, 16 metadata completion required, 0 checklist pass, 16 blocked
-First-batch partial completion impact: active plan has 0 completed rows, 0 blockers reduced, 0 material blockers reduced, 0 checklist pass, 16 blocked
-```
+This guidance is not approval, not export-readiness, not staging, and not current-candidates input.
 
 ## Current Next Technical Branch
 
 ```text
-Material PIT Evidence Gate Closure Planning v0.1
+Reviewer Fill Fixture Impact Validation v0.1
 ```
 
 Purpose:
 
-- identify exact reviewed evidence needed to close material PIT evidence gates for at least one first-batch row;
-- separate material PIT evidence closure from reviewer metadata completion;
-- avoid clean review-update candidates until material gates are actually satisfied;
-- keep the branch read-only / diagnostics-first.
-
-Focus blockers:
-
-```text
-as_of_date
-industry
-is_active
-is_active_evidence
-revision_id
-t_plus_rule
-000001 is_st / no-ST evidence
-survivorship_bias_resolution
-reviewer_no_hit_acceptance
-```
-
-Do not yet:
-
-- approve or reject rows;
-- run PIT overlay review;
-- run export-readiness;
-- run staging;
-- create clean review updates;
-- write usable universe files;
-- write `data/raw` or `data/processed`;
-- generate multi-date candidates;
-- build per-date snapshot manifests;
-- compute forward returns;
-- change non-demo thresholds;
-- add news scraping;
-- add broker integration;
-- send real messages.
+- create a diagnostics-only reviewer fill fixture from the guidance template;
+- validate it against partial-completion/material-gate impact reporting;
+- prove completed fields reduce only intended blockers;
+- keep `checklist_pass_candidate_count=0` unless strict gates are truly satisfied;
+- prevent clean review updates, PIT approval, export, current-candidates, snapshots, forward labels, cache mutation, messages, broker, or orders.

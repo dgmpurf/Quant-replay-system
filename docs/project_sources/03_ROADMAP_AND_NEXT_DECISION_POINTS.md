@@ -1,7 +1,7 @@
 # Roadmap and Next Decision Points
 
 > Status: working memory document  
-> Last generated: 2026-06-05  
+> Last generated: 2026-06-06  
 > Permanence: temporary; update after each major checkpoint.
 
 ## Current Position
@@ -37,16 +37,18 @@ The project is now a broad local research system with:
 - reviewer no-hit acceptance downstream impact;
 - first-batch reviewer evidence completion planning;
 - first-batch partial completion impact;
+- material PIT evidence gate closure planning;
+- reviewer material evidence fill guidance;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
 
 ## Immediate Technical State
 
-Current first-batch partial completion impact state:
+Current reviewer material evidence fill guidance state:
 
 ```text
-FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
+REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL
 ```
 
 Latest known state:
@@ -74,7 +76,8 @@ reviewer_no_hit_acceptance_id: 2e05e4b74794
 reviewer_no_hit_downstream_impact_id: 9e164963455e
 first_batch_reviewer_evidence_completion_plan_id: c630522f235a
 first_batch_partial_completion_impact_id: ea81f81ae764
-diagnostics_partial_completion_impact_id: 93a8341407a1
+material_pit_evidence_gate_closure_plan_id: 2d6ab8e7f9f8
+reviewer_material_evidence_fill_guidance_id: 94f5ff204662
 ```
 
 ```text
@@ -94,93 +97,35 @@ stock_core replacement rows: 56
 etf_core replacement rows: 16
 mixed_demo_core replacement rows: 0
 active legacy worklist mutated: false
-acceptance acknowledged: true
+accepted replacement planning context: true
 activation planning context created: true
-stock_core evidence package rows: 56
-etf_core evidence package rows: 16
 stock_core first-batch rows: 8
 etf_core first-batch rows: 8
-clean_review_updates_created: false
-
-Codex diagnostics evidence discovery / gap closure:
-inspected rows: 16
-ready_for_review_update_count: 16
-approval_requested_count: 0
-approved_ready_count: 0
-all rows remain NEEDS_MORE_EVIDENCE
-
-strict checklist validator:
-validator_id: 62e9eb747197
-checklist_pass_count: 0
-blocked_count: 16
-stock_core_blocked_count: 8
-etf_core_blocked_count: 8
-
-policy profile comparison:
-comparison_id: 0ef6d2f3bae6
-profile: EOD_POST_CLOSE_LOW_BUDGET_PIT
-strict_checklist_pass_count: 0
-eod_low_budget_checklist_pass_count: 0
-relaxed_blocker_count: 16
-remaining_blocked_count: 16
-
-reviewed no-hit support profile:
-comparison_id: c1a75d1091c6
-profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
-reviewed_no_hit_support_pass_count: 0
-no_hit_context_supported_count: 16
-reviewer_acceptance_required_count: 16
-remaining_blocked_count: 16
-
-PIT official status evidence packet enrichment:
-enrichment_id: cb5f323d3c8c
-source_packet_id: 8efabe2ffe62
-policy_comparison_id: c1a75d1091c6
-strong_official_same_date_quotation_count: 16
-reviewed_no_hit_context_supported_count: 16
-reviewer_acceptance_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
-
-Reviewer no-hit source coverage acceptance:
-acceptance_id: 2e05e4b74794
-row_count: 64
-accepted_count: 0
-needs_review_count: 64
-reviewer_acceptance_required_count: 64
-survivorship_rationale_required_count: 16
-checklist_pass_count: 0
-remaining_blocked_count: 16
-
-Reviewer no-hit downstream impact:
-impact_id: 9e164963455e
-accepted_no_hit_context_count: 0
-packet_context_gap_reduced_count: 0
-checklist_pass_count: 0
-remaining_blocked_count: 16
-approval_applied: false
-
-First-batch reviewer evidence completion plan:
-plan_id: c630522f235a
-row_count: 16
-stock_core_row_count: 8
-etf_core_row_count: 8
-reviewer_completion_required_count: 16
-no_hit_acceptance_required_count: 16
-survivorship_rationale_required_count: 16
-metadata_completion_required_count: 16
 checklist_pass_count: 0
 remaining_blocked_count: 16
 clean_review_updates_created: false
 approval_applied: false
 
-First-batch partial completion impact:
-impact_id: ea81f81ae764
-completed_row_count: 0
-completed_field_count: 0
-blocker_reduced_count: 0
-material_blocker_reduced_count: 0
-checklist_pass_count: 0
+Material PIT evidence gate closure plan:
+plan_id: 2d6ab8e7f9f8
+checklist_pass_candidate_count: 0
+remaining_blocked_count: 16
+reusable_symbol_level_closure_count: 2
+date_specific_closure_required_count: 16
+reviewer_no_hit_acceptance_required_count: 16
+survivorship_rationale_required_count: 16
+metadata_closure_required_count: 16
+stock_st_no_st_required_count: 8
+
+Reviewer material evidence fill guidance:
+guidance_id: 94f5ff204662
+reviewer_guidance_row_count: 114
+symbol_level_guidance_count: 2
+date_specific_guidance_count: 16
+no_hit_acceptance_guidance_count: 64
+survivorship_rationale_guidance_count: 16
+metadata_guidance_count: 16
+checklist_pass_candidate_count: 0
 remaining_blocked_count: 16
 clean_review_updates_created: false
 approval_applied: false
@@ -190,66 +135,27 @@ A synthetic diagnostic fixture proved that a complete reviewed row with all requ
 
 ## Recommended Next Branch
 
-### Branch: Material PIT Evidence Gate Closure Planning
+### Branch: Reviewer Fill Fixture Impact Validation
 
 Suggested sequence:
 
-1. Use the first-batch partial completion impact artifact as the planning driver.
-2. Join or reference the first-batch reviewer evidence completion plan, PIT checklist validator, policy comparison, official status evidence packet enrichment, reviewer no-hit acceptance, and downstream impact artifacts.
-3. Identify the exact reviewed evidence needed to close material PIT gates for at least one first-batch row.
-4. Separate reviewer metadata completion from material evidence closure.
-5. Keep the workflow read-only / diagnostics-first before implementing any clean review-update candidate preview.
-6. Report what can be closed using existing official/local/supporting context and what still needs external/manual reviewer evidence.
+1. Use the reviewer material evidence fill guidance artifact as the base.
+2. Create a diagnostics-only reviewer fill fixture from the safe template.
+3. Run impact validation through partial completion / material gate reporting.
+4. Verify completed fields reduce only intended blockers.
+5. Verify all approval/export/current-candidates boundaries remain intact.
+6. Report exactly which blockers remain after the fixture.
 
-## What Material PIT Evidence Gate Closure Planning Must Solve
+## What Reviewer Fill Fixture Impact Validation Must Solve
 
 It should answer:
 
-- Which material blockers remain for each of the 16 first-batch rows?
-- Which blockers can be addressed by reusable symbol-level evidence?
-- Which blockers require date-specific evidence?
-- Which blockers require reviewer no-hit acceptance?
-- Which blockers require survivorship rationale?
-- Which blockers require missing PIT metadata?
-- What evidence would be needed before any row could become a checklist-pass candidate preview?
-- Should the next implementation be a report-only material gate closure plan?
-
-Current blocker focus:
-
-```text
-as_of_date
-industry
-is_active
-is_active_evidence
-revision_id
-t_plus_rule
-000001 is_st / no-ST evidence
-survivorship_bias_resolution
-reviewer_no_hit_acceptance
-```
-
-## Current Preference for Manual Steps
-
-The user prefers that Codex automate evidence preparation whenever possible.
-
-Default handling:
-
-```text
-If a step looks manual, first try to make Codex do it as:
-local evidence discovery
-public source discovery
-source checklist generation
-draft artifact generation
-diagnostics-only validation
-```
-
-User intervention should be required only for:
-
-- credentials;
-- CAPTCHA/login/paywall;
-- final acceptance of evidence sufficiency;
-- subjective judgment;
-- explicit approval/export/activation decisions.
+- Can a reviewer fill fixture be created from the guidance template without breaking schema or leading-zero symbols?
+- Does the fixture keep all default safety flags false?
+- Which blockers are reduced by the fixture?
+- Which material blockers remain?
+- Does `checklist_pass_candidate_count` remain 0 unless all strict material gates are satisfied?
+- Does the workflow avoid clean `review_updates.csv`, PIT review, export-readiness, staging, snapshots, current-candidates, forward labels, messages, broker, and orders?
 
 ## After Checklist-Pass Evidence Candidates Exist
 
@@ -303,25 +209,9 @@ Scope should remain:
 
 Only after accepted PIT universe inputs exist.
 
-Need to prepare or verify:
-
-- market dataset;
-- reviewed/exported PIT universe dataset;
-- trading calendar;
-- snapshot manifest;
-- snapshot-quality status.
-
 ### 5. Current-Candidates Backfill Runner
 
 Only after reviewed healthy plan/manifest and accepted PIT universe input exist.
-
-Scope should remain:
-
-- no forward returns;
-- no execution;
-- no messages;
-- no broker;
-- no cache mutation.
 
 ### 6. Forward Return Label Dataset
 
@@ -351,7 +241,7 @@ Do not yet:
 - treat suggested base-universe hints as authoritative PIT evidence;
 - treat worklist rows as reviewed evidence;
 - treat evidence update ingestion as approval application;
-- treat first-batch completion plans or partial completion impacts as clean review updates or applied approvals;
+- treat first-batch completion plans, partial completion impacts, material gate closure plans, or reviewer fill guidance as clean review updates or applied approvals;
 - treat checklist validator output as approval;
 - treat policy comparison output as approval or strict validator default behavior;
 - treat evidence packet output as approval, date-specific proof, or strict validator default behavior;
@@ -366,3 +256,19 @@ Do not yet:
 - turn `REVIEW_BUY_CANDIDATE` into orders;
 - send real alerts;
 - add broker integration.
+
+## Recent Important Checkpoints
+
+Recent milestone direction:
+
+- v1.20.0: reviewer no-hit acceptance downstream impact.
+- v1.21.0: first-batch reviewer evidence completion planning.
+- v1.22.0: first-batch partial completion impact.
+- v1.23.0: material PIT evidence gate closure plan.
+- v1.24.0: reviewer material evidence fill guidance.
+
+## What to Ask ChatGPT Next
+
+```text
+Give me Codex tasks for Reviewer Fill Fixture Impact Validation v0.1.
+```
