@@ -2,7 +2,7 @@
 
 > Status: working memory document  
 > Last generated: 2026-06-05  
-> Intended use: replace previous Project Source Pack after v1.21.0 First-Batch Reviewer Evidence Completion Planning checkpoint.  
+> Intended use: replace previous Project Source Pack after v1.22.0 First-Batch Partial Completion Impact checkpoint.  
 > Permanence: temporary and replaceable. Refresh only after major checkpoint / stage changes, not after every small audit.
 
 ## Purpose
@@ -17,9 +17,9 @@ This pack is based on:
 
 - the long ChatGPT/Codex collaboration history;
 - repository docs for `dgmpurf/Quant-replay-system`;
-- v1.0.0 through v1.20.0 research, PIT evidence, reviewer no-hit acceptance, and downstream impact checkpoints;
-- v1.21.0 First-Batch Reviewer Evidence Completion Planning checkpoint;
-- diagnostics for SZSE 1815 same-date quotation, exception/no-hit probes, official no-hit policy audit, reviewer acceptance smoke tests, and downstream impact smoke tests;
+- v1.0.0 through v1.21.0 research, PIT evidence, reviewer no-hit acceptance, downstream impact, and first-batch reviewer evidence completion planning checkpoints;
+- v1.22.0 First-Batch Partial Completion Impact checkpoint;
+- diagnostics for SZSE 1815 same-date quotation, exception/no-hit probes, official no-hit policy audit, reviewer acceptance smoke tests, downstream impact smoke tests, and tiny manual reviewer completion smoke;
 - China A-share event-driven and industry-chain factor taxonomy sources.
 
 ## Accuracy Note
@@ -30,7 +30,7 @@ Many local outputs under `outputs/`, `data/raw/`, `data/cache`, and `data/proces
 
 ## Current Project Source Set
 
-Replace these after v1.21.0:
+Replace these after v1.22.0:
 
 ```text
 00_PROJECT_SOURCE_INDEX.md
@@ -54,7 +54,7 @@ FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md
 
 ## Current Project State Summary
 
-The project has reached a First-Batch Reviewer Evidence Completion Planning checkpoint:
+The project has reached a First-Batch Partial Completion Impact checkpoint:
 
 ```text
 local market data / reviewed exports / quality gates
@@ -91,13 +91,14 @@ local market data / reviewed exports / quality gates
 → reviewer-no-hit-source-coverage-acceptance
 → reviewer-no-hit-acceptance-downstream-impact
 → first-batch-reviewer-evidence-completion-plan
+→ first-batch-partial-completion-impact
 → index / health / status / research-status context
 ```
 
-Current first-batch reviewer evidence completion planning state:
+Current first-batch partial completion impact state:
 
 ```text
-FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
+FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
 ```
 
 Latest known active / planning artifacts and diagnostics:
@@ -127,6 +128,8 @@ enrichment_id: cb5f323d3c8c
 reviewer_no_hit_acceptance_id: 2e05e4b74794
 reviewer_no_hit_downstream_impact_id: 9e164963455e
 first_batch_reviewer_evidence_completion_plan_id: c630522f235a
+first_batch_partial_completion_impact_id: ea81f81ae764
+diagnostics_partial_completion_impact_id: 93a8341407a1
 ```
 
 Current evidence / validator / planning counts:
@@ -183,28 +186,6 @@ EOD low-budget policy comparison:
   relaxed_blocker_count: 16
   remaining_blocked_count: 16
 
-PIT official status evidence packet:
-  packet_id: 8efabe2ffe62
-  row_count: 16
-  evidence_packet_row_count: 72
-  strong_official_date_specific_count: 0
-  supporting_official_symbol_level_count: 16
-  supporting_local_eod_cache_count: 16
-  missing_count: 40
-  checklist_pass_count: 0
-  blocked_count: 16
-
-SZSE 1815 same-date quotation diagnostics:
-  target_rows: 16
-  http_200_json_parse_count: 16
-  rows_found_for_000001: 8 / 8
-  rows_found_for_159915: 8 / 8
-  strong_official_date_specific_for_quotation_traded_presence: 16 / 16
-
-Exception / no-hit diagnostics:
-  strong_date_specific_exception_evidence_found: 0
-  no_hit_observations: policy-dependent only
-
 Reviewed no-hit support profile:
   comparison_id: c1a75d1091c6
   profile: EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
@@ -258,6 +239,27 @@ First-batch reviewer evidence completion plan:
   remaining_blocked_count: 16
   clean_review_updates_created: false
   approval_applied: false
+
+First-batch partial completion impact:
+  impact_id: ea81f81ae764
+  row_count: 16
+  completed_row_count: 0
+  completed_field_count: 0
+  blocker_reduced_count: 0
+  material_blocker_reduced_count: 0
+  checklist_pass_count: 0
+  remaining_blocked_count: 16
+  clean_review_updates_created: false
+  approval_applied: false
+
+Diagnostics partial completion fixture:
+  impact_id: 93a8341407a1
+  completed_row_count: 1
+  completed_field_count: 5
+  blocker_reduced_count: 1
+  material_blocker_reduced_count: 0
+  checklist_pass_count: 0
+  remaining_blocked_count: 16
 ```
 
 ## Key Conclusions
@@ -269,17 +271,10 @@ They should not be mutated in place.
 ```
 
 ```text
-Replacement worklist planning creates future stock_core and etf_core templates under outputs/reports only.
-Reviewed replacement worklist acceptance acknowledges those templates as planning context only.
-Guarded activation creates separate planning artifacts for stock_core and etf_core evidence work, but still does not approve rows, export universe files, or replace the legacy active worklist.
-Activated replacement worklist evidence update planning creates profile-specific evidence packages and first-batch packages, but does not create clean review_updates.csv or apply approvals.
-```
-
-```text
 Codex diagnostics can create NEEDS_MORE_EVIDENCE draft updates and validate ingestion schema, but no row currently passes the strict PIT evidence checklist.
 The EOD_POST_CLOSE_LOW_BUDGET_PIT profile is opt-in and report-only. It relaxes timing/cache-support context only; it does not change strict defaults or create approvals.
 The EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT profile is opt-in and report-only. It treats no-hit evidence only as reviewer-accepted supporting context; it does not create approvals or checklist-pass rows automatically.
-Reviewer no-hit source coverage acceptance and downstream impact workflows record/support context only; they do not apply PIT approvals or produce usable universe input.
+Reviewer no-hit source coverage acceptance, downstream impact, first-batch reviewer evidence completion planning, and partial completion impact workflows are report-only planning/context workflows.
 ```
 
 ```text
@@ -287,26 +282,34 @@ The SZSE 1815 same-date quotation probe is the strongest current evidence breakt
 The v1.18.0 enrichment milestone incorporated quotation evidence and reviewed no-hit support context into a report-only evidence packet enrichment.
 The v1.19.0 reviewer no-hit source coverage acceptance milestone added a report-only acceptance layer for source coverage, query windows, and survivorship rationale.
 The v1.20.0 downstream impact milestone linked accepted no-hit supporting context back to packet/checklist/policy reporting, while preserving checklist_pass_count=0 and approval_applied=false.
-The v1.21.0 first-batch reviewer evidence completion plan converts all prior evidence context into a concrete reviewer fill plan for 16 rows, while preserving checklist_pass_count=0, remaining_blocked_count=16, clean_review_updates_created=false, and approval_applied=false.
-All rows remain blocked: quotation presence, no-hit support, reviewer acceptance, downstream impact, and reviewer completion planning still do not prove not-delisted, ST/no-ST, suspension status, survivorship-bias resolution, or full PIT metadata by themselves.
+The v1.21.0 first-batch reviewer evidence completion plan converted all prior evidence context into a concrete reviewer fill plan for 16 rows.
+The v1.22.0 first-batch partial completion impact workflow reports blocker deltas from partial reviewer completion; the active plan has no completed rows and the diagnostics fixture only reduces metadata/shape blockers, not material PIT evidence blockers.
+All rows remain blocked: quotation presence, no-hit support, reviewer acceptance, downstream impact, reviewer completion planning, and partial completion impact still do not prove not-delisted, ST/no-ST, suspension status, survivorship-bias resolution, or full PIT metadata by themselves.
 ```
 
 ## Current Recommended Next Branch
 
 ```text
-Tiny Manual Reviewer Completion Smoke v0.1
+Material PIT Evidence Gate Closure Planning v0.1
 ```
 
-This branch should use the generated first-batch reviewer completion template and create a tiny diagnostics-only completed evidence row to verify one manually completed row can flow through planning validation without becoming PIT approval.
+This branch should identify what exact reviewed evidence is needed to close material PIT gates for at least one first-batch row before any clean review-update candidate preview exists.
+
+Focus blockers:
 
 ```text
-first-batch reviewer completion template
-→ one-row manual completion fixture
-→ diagnostics-only validation
-→ no PIT approval / no export / no current-candidates
+as_of_date
+industry
+is_active
+is_active_evidence
+revision_id
+t_plus_rule
+000001 is_st / no-ST evidence
+survivorship_bias_resolution
+reviewer_no_hit_acceptance
 ```
 
-It should remain diagnostics-only first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
+It should remain read-only / diagnostics-first. It must not approve rows, reject rows, mutate active worklists, export usable universe files, write `data/raw` or `data/processed`, run `current-candidates`, build snapshots, compute forward returns, mutate cache, send messages, or connect to brokers.
 
 User preference: if a step looks manual, first try to make Codex perform local/public evidence discovery, draft artifact generation, and validation. The user should only intervene for final evidence acceptance, credentials, CAPTCHA/login/paywall, or subjective judgment.
 
@@ -324,7 +327,8 @@ Add or replace Source when:
 
 Add a new source document when a topic becomes too important to live only in chat, such as:
 
-- official date-specific evidence acquisition, reviewed no-hit support semantics, reviewer no-hit source coverage acceptance semantics, accepted-supporting-context validation semantics, downstream impact semantics, and first-batch reviewer evidence completion planning semantics;
+- material PIT evidence gate closure semantics;
+- official date-specific evidence acquisition, reviewed no-hit support semantics, reviewer no-hit source coverage acceptance semantics, accepted-supporting-context validation semantics, downstream impact semantics, first-batch reviewer evidence completion planning semantics, and partial completion impact semantics;
 - accepted PIT universe export workflow;
 - per-date snapshot preparation;
 - forward-return labels;
@@ -339,18 +343,18 @@ Add a new source document when a topic becomes too important to live only in cha
 
 - justify live trading;
 - treat worklist rows as reviewed evidence;
-- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, policy comparison outputs, official status evidence packets, official status evidence packet enrichment outputs, reviewer no-hit acceptance artifacts, reviewer no-hit downstream impact artifacts, first-batch reviewer evidence completion plans, SZSE 1815 quotation diagnostics, exception no-hit diagnostics, or reviewed no-hit profile outputs as usable universe input;
-- treat evidence packages or reviewer completion templates as clean `review_updates.csv`;
+- treat policy audit, split guidance, replacement worklist plans, replacement acceptance artifacts, activation artifacts, evidence update plans, evidence packages, checklist validator outputs, policy comparison outputs, official status evidence packets, official status evidence packet enrichment outputs, reviewer no-hit acceptance artifacts, reviewer no-hit downstream impact artifacts, first-batch reviewer evidence completion plans, partial completion impact artifacts, SZSE 1815 quotation diagnostics, exception no-hit diagnostics, or reviewed no-hit profile outputs as usable universe input;
+- treat evidence packages, reviewer completion templates, or partial completion impact artifacts as clean `review_updates.csv`;
 - treat checklist pass or policy comparison candidate preview as applied approval;
 - treat supporting official symbol-level evidence as date-specific daily status proof;
 - treat local EOD cache context as official date-specific status proof;
 - treat SZSE 1815 same-date quotation presence as not-delisted, no-ST, no-suspension, or survivorship resolution by itself;
-- treat no-hit observations, reviewed no-hit support context, reviewer no-hit acceptance rows, downstream impact rows, or reviewer completion planning rows as PIT approval, export readiness, or usable universe input;
+- treat no-hit observations, reviewed no-hit support context, reviewer no-hit acceptance rows, downstream impact rows, reviewer completion planning rows, or partial completion impact rows as PIT approval, export readiness, or usable universe input;
 - treat staging preview files as accepted local universe input;
 - treat approved PIT universe rows as exported usable universe files unless a future accepted export workflow says so;
 - treat legacy `etf_core` artifacts as ETF-only;
 - mutate active worklists without an explicit guarded workflow;
 - skip point-in-time checks;
 - skip data/snapshot quality;
-- approve real message delivery or broker automation;
-- commit generated cache/raw/output artifacts.
+- approve real message delivery or broker integration;
+- change non-demo thresholds based on synthetic or incomplete evidence.

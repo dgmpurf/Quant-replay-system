@@ -57,6 +57,7 @@ It is not a live trading system.
 - Reviewer no-hit source coverage acceptance.
 - Reviewer no-hit acceptance downstream impact.
 - First-batch reviewer evidence completion planning.
+- First-batch partial completion impact.
 - Research-status integration for these layers.
 
 ### Signal Semantics and Advisory
@@ -140,6 +141,7 @@ enrichment_id: cb5f323d3c8c
 reviewer_no_hit_acceptance_id: 2e05e4b74794
 reviewer_no_hit_downstream_impact_id: 9e164963455e
 first_batch_reviewer_evidence_completion_plan_id: c630522f235a
+first_batch_partial_completion_impact_id: ea81f81ae764
 ```
 
 Current counts:
@@ -253,27 +255,50 @@ checklist_pass_count: 0
 remaining_blocked_count: 16
 clean_review_updates_created: false
 approval_applied: false
+
+First-batch partial completion impact:
+impact_id: ea81f81ae764
+row_count: 16
+completed_row_count: 0
+completed_field_count: 0
+blocker_reduced_count: 0
+material_blocker_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+clean_review_updates_created: false
+approval_applied: false
+
+diagnostics partial completion fixture:
+impact_id: 93a8341407a1
+completed_row_count: 1
+completed_field_count: 5
+blocker_reduced_count: 1
+material_blocker_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
 ```
 
-Current first-batch reviewer evidence completion planning stage:
+Current first-batch partial completion impact stage:
 
 ```text
-FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
+FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
 ```
 
 Meaning:
 
-The project has moved from “reviewer no-hit downstream impact reporting exists, but active accepted no-hit context is 0” to “the first-batch reviewer evidence completion plan now enumerates what must be manually completed for the 16 first-batch rows.”
+The project has moved from “first-batch reviewer evidence completion planning enumerates missing evidence” to “partial completion impact can report blocker deltas from reviewer-completion fixtures.”
 
-The plan is report-only. It does not make any row approval-ready, does not create clean `review_updates.csv`, and does not apply PIT approval.
+The active partial completion impact has no completed rows and does not reduce blockers. A diagnostics fixture reduced only metadata/row-shape blockers, not material PIT evidence blockers.
 
-The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile remains opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. The first-batch plan can list no-hit acceptance to-dos and survivorship rationale to-dos, but it still does not change strict defaults or create PIT approvals.
+The workflow is report-only. It does not make any row approval-ready, does not create clean `review_updates.csv`, and does not apply PIT approval.
 
-The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment, acceptance, downstream impact, and first-batch planning milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
+The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile remains opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. The first-batch plan and partial completion impact workflows can list no-hit acceptance to-dos and survivorship rationale to-dos, but they still do not change strict defaults or create PIT approvals.
+
+The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment, acceptance, downstream impact, first-batch planning, and partial impact milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
 
 Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
-The next blocker is a tiny manual reviewer-completion smoke against the generated first-batch template.
+The next blocker is material PIT evidence gate closure planning.
 
 ## Current External Data Strategy
 
@@ -293,15 +318,28 @@ Current recommendation:
 ## Recommended Next Branch
 
 ```text
-Tiny Manual Reviewer Completion Smoke v0.1
+Material PIT Evidence Gate Closure Planning v0.1
 ```
 
 Purpose:
 
-- use the generated first-batch reviewer completion template;
-- create a tiny diagnostics-only completed evidence row;
-- verify the completed row can flow through planning validation without becoming approval;
+- identify exact reviewed evidence needed to close material PIT evidence gates for at least one first-batch row;
+- separate material PIT evidence closure from reviewer metadata completion;
 - keep all rows non-approved unless a future explicit PIT review workflow is run.
+
+Focus blockers:
+
+```text
+as_of_date
+industry
+is_active
+is_active_evidence
+revision_id
+t_plus_rule
+000001 is_st / no-ST evidence
+survivorship_bias_resolution
+reviewer_no_hit_acceptance
+```
 
 Do not yet:
 
@@ -345,9 +383,10 @@ Recent milestone direction:
 - v1.19.0: reviewer no-hit source coverage acceptance.
 - v1.20.0: reviewer no-hit acceptance downstream impact.
 - v1.21.0: first-batch reviewer evidence completion planning.
+- v1.22.0: first-batch partial completion impact.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Tiny Manual Reviewer Completion Smoke v0.1.
+Give me Codex tasks for Material PIT Evidence Gate Closure Planning v0.1.
 ```

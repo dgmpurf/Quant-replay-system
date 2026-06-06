@@ -36,16 +36,17 @@ The project is now a broad local research system with:
 - reviewer no-hit source coverage acceptance;
 - reviewer no-hit acceptance downstream impact;
 - first-batch reviewer evidence completion planning;
+- first-batch partial completion impact;
 - unified `research-status`.
 
 The project is preparing for true multi-date evidence collection, but it is not ready to generate multi-date candidates, compute forward returns, change non-demo thresholds, or produce validated buy/sell signals.
 
 ## Immediate Technical State
 
-Current first-batch reviewer evidence completion planning state:
+Current first-batch partial completion impact state:
 
 ```text
-FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
+FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
 ```
 
 Latest known state:
@@ -72,6 +73,8 @@ enrichment_id: cb5f323d3c8c
 reviewer_no_hit_acceptance_id: 2e05e4b74794
 reviewer_no_hit_downstream_impact_id: 9e164963455e
 first_batch_reviewer_evidence_completion_plan_id: c630522f235a
+first_batch_partial_completion_impact_id: ea81f81ae764
+diagnostics_partial_completion_impact_id: 93a8341407a1
 ```
 
 ```text
@@ -170,33 +173,83 @@ checklist_pass_count: 0
 remaining_blocked_count: 16
 clean_review_updates_created: false
 approval_applied: false
+
+First-batch partial completion impact:
+impact_id: ea81f81ae764
+completed_row_count: 0
+completed_field_count: 0
+blocker_reduced_count: 0
+material_blocker_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+clean_review_updates_created: false
+approval_applied: false
 ```
 
 A synthetic diagnostic fixture proved that a complete reviewed row with all required current-candidates universe metadata can become `export_ready=true`, but real active artifacts remain blocked because there are no real approved rows.
 
 ## Recommended Next Branch
 
-### Branch: Tiny Manual Reviewer Completion Smoke
+### Branch: Material PIT Evidence Gate Closure Planning
 
 Suggested sequence:
 
-1. Use the first-batch reviewer evidence completion plan artifact as the base.
-2. Create a tiny diagnostics-only reviewer-completed evidence row from the generated reviewer completion template.
-3. Validate that the row flows through planning validation without becoming PIT approval.
-4. Verify that the row remains non-approved unless a future explicit PIT review workflow is run.
-5. Verify no clean review updates, export readiness, staging, snapshot, forward labels, current-candidates, cache mutation, messages, broker, or orders are triggered.
-6. Report exactly which blockers remain after the smoke.
+1. Use the first-batch partial completion impact artifact as the planning driver.
+2. Join or reference the first-batch reviewer evidence completion plan, PIT checklist validator, policy comparison, official status evidence packet enrichment, reviewer no-hit acceptance, and downstream impact artifacts.
+3. Identify the exact reviewed evidence needed to close material PIT gates for at least one first-batch row.
+4. Separate reviewer metadata completion from material evidence closure.
+5. Keep the workflow read-only / diagnostics-first before implementing any clean review-update candidate preview.
+6. Report what can be closed using existing official/local/supporting context and what still needs external/manual reviewer evidence.
 
-## What Tiny Manual Reviewer Completion Smoke Must Solve
+## What Material PIT Evidence Gate Closure Planning Must Solve
 
 It should answer:
 
-- Can the generated reviewer completion template be filled for a single row without breaking schema or leading-zero symbols?
-- Does a completed row still avoid `APPROVED_FOR_PIT_UNIVERSE` and `include_flag=true`?
-- Does the smoke avoid creating clean `review_updates.csv` unless a future explicit ingestion workflow says so?
-- Does the planning layer keep checklist_pass_count at 0 unless all strict evidence gates are satisfied?
-- Which fields remain missing after a partial/manual completion fixture?
-- Does the workflow preserve all safety boundaries?
+- Which material blockers remain for each of the 16 first-batch rows?
+- Which blockers can be addressed by reusable symbol-level evidence?
+- Which blockers require date-specific evidence?
+- Which blockers require reviewer no-hit acceptance?
+- Which blockers require survivorship rationale?
+- Which blockers require missing PIT metadata?
+- What evidence would be needed before any row could become a checklist-pass candidate preview?
+- Should the next implementation be a report-only material gate closure plan?
+
+Current blocker focus:
+
+```text
+as_of_date
+industry
+is_active
+is_active_evidence
+revision_id
+t_plus_rule
+000001 is_st / no-ST evidence
+survivorship_bias_resolution
+reviewer_no_hit_acceptance
+```
+
+## Current Preference for Manual Steps
+
+The user prefers that Codex automate evidence preparation whenever possible.
+
+Default handling:
+
+```text
+If a step looks manual, first try to make Codex do it as:
+local evidence discovery
+public source discovery
+source checklist generation
+draft artifact generation
+diagnostics-only validation
+```
+
+User intervention should be required only for:
+
+- credentials;
+- CAPTCHA/login/paywall;
+- final acceptance of evidence sufficiency;
+- subjective judgment;
+- explicit approval/export/activation decisions.
 
 ## After Checklist-Pass Evidence Candidates Exist
 
@@ -298,16 +351,11 @@ Do not yet:
 - treat suggested base-universe hints as authoritative PIT evidence;
 - treat worklist rows as reviewed evidence;
 - treat evidence update ingestion as approval application;
-- treat universe profile split guidance as active worklist replacement;
-- treat reviewed replacement worklist plans as accepted active replacement worklists;
-- treat reviewed replacement acceptance as activation;
-- treat reviewed replacement activation as PIT row approval or usable universe input;
-- treat activated evidence update plans or evidence packages as clean review updates;
+- treat first-batch completion plans or partial completion impacts as clean review updates or applied approvals;
 - treat checklist validator output as approval;
 - treat policy comparison output as approval or strict validator default behavior;
 - treat evidence packet output as approval, date-specific proof, or strict validator default behavior;
 - treat reviewer no-hit acceptance or downstream impact as PIT approval, export-readiness, or usable universe input;
-- treat reviewer evidence completion plans or templates as clean review updates or applied approvals;
 - treat SZSE 1815 quotation presence as not-delisted / no-ST / no-suspension / survivorship evidence by itself;
 - treat no-hit observations as approval-grade without reviewer acceptance and source coverage documentation;
 - export PIT universe input without real approved/export-ready rows;

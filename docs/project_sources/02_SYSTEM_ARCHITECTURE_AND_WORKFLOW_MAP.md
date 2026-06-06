@@ -59,7 +59,8 @@ Multi-Date Evidence Preparation
   ├─ pit-official-status-evidence-packet-enrichment
   ├─ reviewer-no-hit-source-coverage-acceptance
   ├─ reviewer-no-hit-acceptance-downstream-impact
-  └─ first-batch-reviewer-evidence-completion-plan
+  ├─ first-batch-reviewer-evidence-completion-plan
+  └─ first-batch-partial-completion-impact
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -151,6 +152,7 @@ market cache coverage
 → reviewer-no-hit-source-coverage-acceptance
 → reviewer-no-hit-acceptance-downstream-impact
 → first-batch-reviewer-evidence-completion-plan
+→ first-batch-partial-completion-impact
 → index / health / status
 → research-status
 ```
@@ -158,7 +160,7 @@ market cache coverage
 Current active preparation state:
 
 ```text
-FIRST_BATCH_REVIEWER_EVIDENCE_COMPLETION_PLAN_NEEDS_REVIEW
+FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
 ```
 
 The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
@@ -258,43 +260,9 @@ STRONG_OFFICIAL_DATE_SPECIFIC for quotation/traded presence: 16/16
 
 This is strong date-specific evidence for quotation/traded presence only. It does not automatically prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution.
 
-### Reviewer No-Hit Acceptance and Downstream Impact
-
-Reviewer no-hit source coverage acceptance records source coverage, query-window acceptance, no-hit inference limits, and survivorship rationale as report-only context.
-
-The downstream impact workflow links accepted no-hit supporting context back to packet, checklist, and policy context while preserving approval boundaries.
-
-Current active downstream impact state:
-
-```text
-impact_id: 9e164963455e
-accepted_no_hit_context_count: 0
-packet_context_gap_reduced_count: 0
-checklist_pass_count: 0
-remaining_blocked_count: 16
-approval_applied: false
-```
-
 ### First-Batch Reviewer Evidence Completion Plan
 
 The first-batch reviewer evidence completion plan converts active evidence context into a concrete reviewer fill plan for the 16 first-batch rows.
-
-It reports:
-
-```text
-plan_id
-row_count
-stock_core_row_count
-etf_core_row_count
-reviewer_completion_required_count
-no_hit_acceptance_required_count
-survivorship_rationale_required_count
-metadata_completion_required_count
-checklist_pass_count
-remaining_blocked_count
-clean_review_updates_created
-approval_applied
-```
 
 Current plan state:
 
@@ -314,23 +282,56 @@ clean_review_updates_created: false
 approval_applied: false
 ```
 
-Plan artifacts may include:
+The reviewer completion template is not a clean `review_updates.csv` artifact and must not be fed directly as applied approval.
+
+### First-Batch Partial Completion Impact
+
+The first-batch partial completion impact workflow compares partial reviewer completion fixtures against the first-batch completion plan and reports blocker deltas.
+
+It reports:
 
 ```text
-first_batch_reviewer_evidence_completion_plan.csv
-row_level_missing_evidence_matrix.csv
-reusable_symbol_level_evidence_plan.csv
-date_specific_evidence_plan.csv
-reviewer_completion_template.csv
-reviewer_no_hit_acceptance_todo.csv
-survivorship_rationale_todo.csv
-metadata_completion_todo.csv
-source_lineage_summary.csv
-report.md
-metadata.json
+impact_id
+row_count
+completed_row_count
+completed_field_count
+blocker_reduced_count
+material_blocker_reduced_count
+checklist_pass_count
+remaining_blocked_count
+clean_review_updates_created
+approval_applied
 ```
 
-These artifacts are reviewer planning context only. They are not clean review updates, applied approvals, accepted universe files, or current-candidates inputs.
+Current active impact state:
+
+```text
+impact_id: ea81f81ae764
+stage: FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
+row_count: 16
+completed_row_count: 0
+completed_field_count: 0
+blocker_reduced_count: 0
+material_blocker_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+clean_review_updates_created: false
+approval_applied: false
+```
+
+A diagnostics fixture showed:
+
+```text
+impact_id: 93a8341407a1
+completed_row_count: 1
+completed_field_count: 5
+blocker_reduced_count: 1
+material_blocker_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+```
+
+Partial completion impact is report-only. Metadata-only reviewer completion does not satisfy material PIT evidence gates and does not produce approval, clean review updates, export readiness, or current-candidates input.
 
 ## Current Multi-Date Planning State
 
@@ -359,18 +360,49 @@ PIT official status evidence packet: 72 evidence packet rows, 0 strong official 
 SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-presence rows found
 Reviewer no-hit downstream impact: 0 accepted active context, 0 packet gaps reduced, 0 checklist pass, 16 blocked, approval_applied=false
 First-batch reviewer evidence completion plan: 16 rows, 16 reviewer-completion required, 16 no-hit acceptance required, 16 survivorship rationale required, 16 metadata completion required, 0 checklist pass, 16 blocked
+First-batch partial completion impact: active plan has 0 completed rows, 0 blockers reduced, 0 material blockers reduced, 0 checklist pass, 16 blocked
 ```
 
 ## Current Next Technical Branch
 
 ```text
-Tiny Manual Reviewer Completion Smoke v0.1
+Material PIT Evidence Gate Closure Planning v0.1
 ```
 
 Purpose:
 
-- use the generated first-batch reviewer completion template;
-- create a one-row diagnostics-only manual completion fixture;
-- verify the fixture can flow through planning validation without becoming PIT approval;
-- confirm checklist_pass_count and remaining blockers behave as expected;
-- confirm no clean review updates, export, snapshot, forward labels, current-candidates, messages, broker, orders, or cache mutation.
+- identify exact reviewed evidence needed to close material PIT evidence gates for at least one first-batch row;
+- separate material PIT evidence closure from reviewer metadata completion;
+- avoid clean review-update candidates until material gates are actually satisfied;
+- keep the branch read-only / diagnostics-first.
+
+Focus blockers:
+
+```text
+as_of_date
+industry
+is_active
+is_active_evidence
+revision_id
+t_plus_rule
+000001 is_st / no-ST evidence
+survivorship_bias_resolution
+reviewer_no_hit_acceptance
+```
+
+Do not yet:
+
+- approve or reject rows;
+- run PIT overlay review;
+- run export-readiness;
+- run staging;
+- create clean review updates;
+- write usable universe files;
+- write `data/raw` or `data/processed`;
+- generate multi-date candidates;
+- build per-date snapshot manifests;
+- compute forward returns;
+- change non-demo thresholds;
+- add news scraping;
+- add broker integration;
+- send real messages.

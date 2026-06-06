@@ -42,7 +42,7 @@ This makes artifacts discoverable and prevents hidden state transitions.
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, reviewer no-hit downstream impact artifacts that do not apply approvals, first-batch reviewer evidence completion plan artifacts that are planning context only, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, reviewer no-hit downstream impact artifacts that do not apply approvals, first-batch reviewer evidence completion plan artifacts that are planning context only, first-batch partial completion impact artifacts that only report blocker deltas, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
 
 ## Diagnostic vs Active Artifacts
 
@@ -63,13 +63,14 @@ Examples:
 - reviewer no-hit source coverage acceptance dry-runs;
 - reviewer no-hit downstream impact dry-runs;
 - first-batch reviewer evidence completion plan dry-runs;
+- first-batch partial completion impact dry-runs;
 - ignored dry-run files.
 
 ## Review-Only and Evidence Workflows
 
 PIT universe overlay review artifacts may create statuses such as `NEEDS_MANUAL_REVIEW`, `APPROVED_FOR_PIT_UNIVERSE`, `REJECTED`, and `NEEDS_MORE_EVIDENCE`, but review-only does not mean exported universe input.
 
-Evidence completion helper artifacts, evidence review worklist artifacts, evidence update ingestion artifacts, reviewer no-hit acceptance artifacts, downstream impact artifacts, and first-batch completion planning artifacts organize, validate, or plan evidence. They must not export universe files, write `data/raw` / `data/processed`, run current-candidates, build snapshots, or compute forward labels.
+Evidence completion helper artifacts, evidence review worklist artifacts, and evidence update ingestion artifacts organize or validate evidence. They must not export universe files, write `data/raw` / `data/processed`, run current-candidates, build snapshots, or compute forward labels.
 
 A clean `review_updates.csv` is not an applied approval; it is a validated input that may be manually passed to the review workflow later.
 
@@ -179,6 +180,63 @@ approval_applied: false
 
 A reviewer completion template is not a clean review update and must not be fed directly as an applied approval.
 
+## First-Batch Partial Completion Impact Workflows
+
+First-batch partial completion impact artifacts are report-only blocker-delta reports.
+
+They may:
+
+- compare partial reviewer completion fixtures against the first-batch completion plan;
+- report completed fields, reduced blockers, material blocker reductions, checklist pass counts, and remaining blockers;
+- expose partial completion impact counts in research-status.
+
+They must not:
+
+- apply approvals;
+- reject rows;
+- set `APPROVED_FOR_PIT_UNIVERSE`;
+- set `include_flag=true`;
+- set `valid_for_signal_date=true`;
+- create clean `review_updates.csv`;
+- run PIT review;
+- run export-readiness;
+- run staging;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- mutate active worklists or market cache;
+- run current-candidates;
+- build snapshots;
+- compute forward labels;
+- treat metadata-only completion as material PIT evidence closure.
+
+Current partial completion impact state:
+
+```text
+impact_id: ea81f81ae764
+stage: FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_NO_COMPLETION
+row_count: 16
+completed_row_count: 0
+completed_field_count: 0
+blocker_reduced_count: 0
+material_blocker_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+clean_review_updates_created: false
+approval_applied: false
+```
+
+A diagnostics fixture reduced one metadata/shape blocker only:
+
+```text
+diagnostics_impact_id: 93a8341407a1
+completed_row_count: 1
+completed_field_count: 5
+blocker_reduced_count: 1
+material_blocker_reduced_count: 0
+checklist_pass_count: 0
+remaining_blocked_count: 16
+```
+
 ## Export-Readiness and Export-Staging Workflows
 
 Export-readiness blocks export when there are no approved rows, evidence is missing, survivorship is unresolved, required universe columns are missing, duplicates exist, or PIT dates are invalid. It must not write `data/raw` or `data/processed`.
@@ -221,6 +279,7 @@ evidence_packet_enrichment_only=true
 reviewer_no_hit_acceptance_only=true
 downstream_impact_only=true
 first_batch_reviewer_completion_plan_only=true
+first_batch_partial_completion_impact_only=true
 ```
 
 ## Survivorship and Point-in-Time Governance
@@ -249,7 +308,7 @@ Rows derived from a future universe must keep survivorship-bias warnings until r
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, reviewer no-hit acceptance blockers, downstream impact blockers, first-batch reviewer completion planning blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, reviewer no-hit acceptance blockers, downstream impact blockers, first-batch reviewer completion planning blockers, partial completion impact blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
 
 ## When to Refresh This Document
 
@@ -259,7 +318,7 @@ Refresh when:
 - index/health/status patterns change;
 - research-status priority changes;
 - diagnostic artifact scoping changes;
-- reviewer completion template semantics change;
+- material PIT evidence gate closure semantics are implemented;
 - accepted PIT universe export semantics are implemented;
 - snapshot preparation semantics are implemented;
-- real alert delivery or broker integration is introduced.
+- real alert delivery or broker integration semantics are implemented.
