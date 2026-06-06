@@ -326,6 +326,16 @@ When the status reports `ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_CONTEXT_DRAFTED`
 
 One-row material evidence fill packages are report-only. Health fails if package artifacts contain `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, `valid_for_signal_date=true`, `survivorship_bias_resolved=true`, clean `review_updates.csv`, approval-applied flags, data writes, PIT review/export/staging/current-candidates outputs, snapshots, or forward labels. Later paper workflow artifacts keep final workflow priority while package fields remain visible for audit.
 
+## One-Row Checklist-Pass Candidate Preview Status
+
+`research-status` includes `one-row-checklist-pass-candidate-preview-status` as one-row PIT checklist-pass preview context when those artifacts exist.
+
+The unified summary records the latest preview id, status/stage, health status, target signal date, target symbol, target universe name, preview row count, reusable-context-field count, strict-requirement-gap count, row-checklist-pass-candidate flag, checklist-pass candidate count, remaining-blocked count, clean-review-updates-created flag, approval-applied flag, report path, and next manual action.
+
+When the status reports `ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_CONTEXT_ONLY` or `ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_BLOCKED`, the target row remains non-approved and blocked by strict PIT evidence gates. This is expected review context and does not imply PIT approval, clean review update readiness, export-readiness, staging, current-candidates generation, snapshot build, forward labels, or trading readiness.
+
+One-row checklist-pass candidate previews are report-only. Health fails if preview artifacts contain `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, `valid_for_signal_date=true`, `survivorship_bias_resolved=true`, clean `review_updates.csv`, approval-applied flags, data writes, PIT review/export/staging/current-candidates outputs, snapshots, or forward labels. Later paper workflow artifacts keep final workflow priority while preview fields remain visible for audit.
+
 ## Universe Profile Policy Audit Status
 
 `research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.

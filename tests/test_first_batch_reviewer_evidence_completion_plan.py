@@ -65,6 +65,18 @@ from quant_replay_system.one_row_material_evidence_fill_package_index import (
 from quant_replay_system.one_row_material_evidence_fill_package_status import (
     run_one_row_material_evidence_fill_package_status,
 )
+from quant_replay_system.one_row_checklist_pass_candidate_preview import (
+    build_one_row_checklist_pass_candidate_preview,
+)
+from quant_replay_system.one_row_checklist_pass_candidate_preview_health import (
+    check_one_row_checklist_pass_candidate_preview_health,
+)
+from quant_replay_system.one_row_checklist_pass_candidate_preview_index import (
+    build_one_row_checklist_pass_candidate_preview_index,
+)
+from quant_replay_system.one_row_checklist_pass_candidate_preview_status import (
+    run_one_row_checklist_pass_candidate_preview_status,
+)
 
 
 DATES = [
@@ -1497,6 +1509,365 @@ def test_one_row_material_evidence_fill_package_index_health_status_and_cli(
     assert "approval_applied: False" in output
 
 
+def test_one_row_checklist_pass_candidate_preview_remains_report_only_blocked(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+    package = build_one_row_material_evidence_fill_package(
+        audit=_write_one_row_material_evidence_fill_package_audit(tmp_path),
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_material_evidence_fill_package",
+    )
+    audit = _write_one_row_checklist_pass_candidate_preview_audit(tmp_path)
+
+    result = build_one_row_checklist_pass_candidate_preview(
+        audit=audit,
+        package=package.artifact_paths["artifact_dir"],
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_checklist_pass_candidate_preview",
+    )
+
+    assert result.preview_row_count == 1
+    assert result.request.signal_date == "2024-04-02"
+    assert result.request.symbol == "000001"
+    assert result.request.universe_name == "stock_core"
+    assert result.one_row_material_evidence_fill_package_id == package.package_id
+    assert result.reviewer_material_evidence_fill_guidance_id == guidance.guidance_id
+    assert result.material_pit_evidence_gate_closure_plan_id == material_plan.plan_id
+    assert result.reusable_context_field_count > 0
+    assert result.strict_requirement_gap_count > 0
+    assert result.checklist_pass_candidate_count == 0
+    assert result.row_checklist_pass_candidate is False
+    assert result.remaining_blocked_count == 16
+    assert result.clean_review_updates_created is False
+    assert result.approval_applied is False
+
+    preview = pd.read_csv(result.artifact_paths["preview_csv"], dtype=str, keep_default_na=False)
+    assert len(preview) == 1
+    row = preview.iloc[0]
+    assert row["signal_date"] == "2024-04-02"
+    assert row["symbol"] == "000001"
+    assert row["universe_name"] == "stock_core"
+    assert row["review_status"] == "NEEDS_MORE_EVIDENCE"
+    assert row["include_flag"] == "False"
+    assert row["valid_for_signal_date"] == "False"
+    assert row["survivorship_bias_resolved"] == "False"
+    assert row["row_checklist_pass_candidate"] == "False"
+    assert row["active_not_delisted_blocked"] == "True"
+    assert row["stock_no_st_blocked"] == "True"
+    assert row["survivorship_blocked"] == "True"
+    assert row["reviewer_no_hit_acceptance_blocked"] == "True"
+    assert row["pit_timing_blocked"] == "True"
+    assert row["approval_applied"] == "False"
+    assert row["clean_review_updates_created"] == "False"
+    assert row["no_current_candidates_generated"] == "True"
+
+    strict = pd.read_csv(result.artifact_paths["strict_requirement_gap_matrix"], dtype=str, keep_default_na=False)
+    assert {"is_active", "is_st", "survivorship_bias_resolved", "reviewer_no_hit_acceptance"}.issubset(
+        set(strict["requirement"])
+    )
+    context = pd.read_csv(result.artifact_paths["context_field_reuse_assessment"], dtype=str, keep_default_na=False)
+    assert "symbol" in set(context["field"])
+    assert "is_active" in set(context["field"])
+    assert context.loc[context["field"] == "is_active", "reuse_assessment"].iloc[0] == "not_safe_now"
+
+    required = pd.read_csv(result.artifact_paths["candidate_preview_required_fields"], dtype=str, keep_default_na=False)
+    assert required["required_field_or_condition"].str.contains("accepted no-hit context", case=False).any()
+    risks = pd.read_csv(result.artifact_paths["overclaim_risk_matrix"], dtype=str, keep_default_na=False)
+    assert "checklist_pass_candidate=true" in set(risks["claim_or_field"])
+    lineage = pd.read_csv(result.artifact_paths["source_lineage_summary"], dtype=str, keep_default_na=False)
+    assert {
+        "one_row_material_evidence_fill_package_id",
+        "reviewer_material_evidence_fill_guidance_id",
+        "material_pit_evidence_gate_closure_plan_id",
+        "first_batch_reviewer_evidence_completion_plan_id",
+        "validator_id",
+        "enrichment_id",
+        "reviewer_no_hit_acceptance_id",
+        "reviewer_no_hit_downstream_impact_id",
+    }.issubset(set(lineage["lineage_field"]))
+
+    safety = json.loads(result.artifact_paths["preview_safety_validation"].read_text(encoding="utf-8"))
+    assert safety["validation_status"] == "PASS"
+    assert safety["approved_for_pit_universe_present"] is False
+    assert safety["include_flag_true_present"] is False
+    assert safety["valid_for_signal_date_true_present"] is False
+    assert safety["survivorship_bias_resolved_true_present"] is False
+    assert safety["clean_review_updates_created"] is False
+    assert safety["approval_applied"] is False
+    assert safety["no_data_raw_write"] is True
+    assert safety["no_data_processed_write"] is True
+    assert safety["no_current_candidates_generated"] is True
+
+    artifact_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for key, path in result.artifact_paths.items()
+        if key != "artifact_dir" and path.suffix in {".csv", ".md", ".json"}
+    )
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in artifact_text
+    assert not (result.artifact_paths["artifact_dir"] / "review_updates.csv").exists()
+    assert not (result.artifact_paths["artifact_dir"] / "clean_review_updates.csv").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_review").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_export_readiness").exists()
+    assert not (tmp_path / "point_in_time_universe_export_staging").exists()
+    assert not (tmp_path / "current_candidates").exists()
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
+
+    assert (
+        cli.main(
+            [
+                "one-row-checklist-pass-candidate-preview",
+                "--audit",
+                str(audit),
+                "--package",
+                str(package.artifact_paths["artifact_dir"]),
+                "--guidance",
+                str(guidance.artifact_paths["artifact_dir"]),
+                "--material-plan",
+                str(material_plan.artifact_paths["artifact_dir"]),
+                "--completion-plan",
+                str(tmp_path / "first_batch_reviewer_evidence_completion_plan"),
+                "--validator",
+                str(inputs["validator"]),
+                "--enrichment",
+                str(inputs["enrichment"]),
+                "--reviewer-no-hit-acceptance",
+                "",
+                "--reviewer-no-hit-downstream-impact",
+                str(inputs["downstream_impact"]),
+                "--output-dir",
+                str(tmp_path / "one_row_checklist_pass_candidate_preview_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "preview_row_count: 1" in output
+    assert "symbol: 000001" in output
+    assert "row_checklist_pass_candidate: False" in output
+    assert "checklist_pass_candidate_count: 0" in output
+    assert "approval_applied: False" in output
+
+
+def test_one_row_checklist_pass_candidate_preview_index_health_status_and_cli(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+    package = build_one_row_material_evidence_fill_package(
+        audit=_write_one_row_material_evidence_fill_package_audit(tmp_path),
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_material_evidence_fill_package",
+    )
+    preview = build_one_row_checklist_pass_candidate_preview(
+        audit=_write_one_row_checklist_pass_candidate_preview_audit(tmp_path),
+        package=package.artifact_paths["artifact_dir"],
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_checklist_pass_candidate_preview",
+    )
+
+    index = build_one_row_checklist_pass_candidate_preview_index(
+        root=tmp_path / "one_row_checklist_pass_candidate_preview",
+        output_dir=tmp_path / "one_row_checklist_pass_candidate_preview" / "index",
+    )
+    assert index.artifact_count == 1
+    assert index.index_frame.iloc[0]["preview_id"] == preview.preview_id
+    assert index.index_frame.iloc[0]["target_symbol"] == "000001"
+
+    health = check_one_row_checklist_pass_candidate_preview_health(
+        root=tmp_path / "one_row_checklist_pass_candidate_preview",
+        output_dir=tmp_path / "one_row_checklist_pass_candidate_preview" / "health",
+    )
+    assert health.status == "PASS"
+    assert health.issue_count == 0
+
+    status = run_one_row_checklist_pass_candidate_preview_status(
+        root=tmp_path / "one_row_checklist_pass_candidate_preview",
+        output_dir=tmp_path / "one_row_checklist_pass_candidate_preview" / "status",
+    )
+    assert status.latest_preview_id == preview.preview_id
+    assert status.status == "WARN"
+    assert status.workflow_stage == "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_CONTEXT_ONLY"
+    assert status.health_status == "PASS"
+    assert status.target_signal_date == "2024-04-02"
+    assert status.target_symbol == "000001"
+    assert status.target_universe_name == "stock_core"
+    assert status.preview_row_count == 1
+    assert status.reusable_context_field_count == preview.reusable_context_field_count
+    assert status.strict_requirement_gap_count == preview.strict_requirement_gap_count
+    assert status.row_checklist_pass_candidate is False
+    assert status.checklist_pass_candidate_count == 0
+    assert status.remaining_blocked_count == 16
+    assert status.clean_review_updates_created is False
+    assert status.approval_applied is False
+
+    assert (
+        cli.main(
+            [
+                "one-row-checklist-pass-candidate-preview-index",
+                "--root",
+                str(tmp_path / "one_row_checklist_pass_candidate_preview"),
+                "--output-dir",
+                str(tmp_path / "one_row_checklist_pass_candidate_preview_cli" / "index"),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli.main(
+            [
+                "one-row-checklist-pass-candidate-preview-health",
+                "--root",
+                str(tmp_path / "one_row_checklist_pass_candidate_preview"),
+                "--output-dir",
+                str(tmp_path / "one_row_checklist_pass_candidate_preview_cli" / "health"),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli.main(
+            [
+                "one-row-checklist-pass-candidate-preview-status",
+                "--root",
+                str(tmp_path / "one_row_checklist_pass_candidate_preview"),
+                "--output-dir",
+                str(tmp_path / "one_row_checklist_pass_candidate_preview_cli" / "status"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"latest_preview_id: {preview.preview_id}" in output
+    assert "workflow_stage: ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_CONTEXT_ONLY" in output
+    assert "target_symbol: 000001" in output
+    assert "row_checklist_pass_candidate: False" in output
+    assert "approval_applied: False" in output
+
+
+def test_one_row_checklist_pass_candidate_preview_health_fails_for_unsafe_artifacts(
+    tmp_path: Path,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+    package = build_one_row_material_evidence_fill_package(
+        audit=_write_one_row_material_evidence_fill_package_audit(tmp_path),
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_material_evidence_fill_package",
+    )
+    preview = build_one_row_checklist_pass_candidate_preview(
+        audit=_write_one_row_checklist_pass_candidate_preview_audit(tmp_path),
+        package=package.artifact_paths["artifact_dir"],
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_checklist_pass_candidate_preview",
+    )
+    metadata_path = preview.artifact_paths["metadata"]
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["approval_applied"] = True
+    metadata["clean_review_updates_created"] = True
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+    frame = pd.read_csv(preview.artifact_paths["preview_csv"], dtype=str, keep_default_na=False)
+    frame.loc[0, "review_status"] = "APPROVED_FOR_PIT_UNIVERSE"
+    frame.loc[0, "include_flag"] = "True"
+    frame.loc[0, "valid_for_signal_date"] = "True"
+    frame.loc[0, "survivorship_bias_resolved"] = "True"
+    frame.to_csv(preview.artifact_paths["preview_csv"], index=False)
+    (preview.artifact_paths["artifact_dir"] / "clean_review_updates.csv").write_text(
+        "signal_date,symbol,universe_name\n2024-04-02,000001,stock_core\n",
+        encoding="utf-8",
+    )
+
+    health = check_one_row_checklist_pass_candidate_preview_health(
+        root=tmp_path / "one_row_checklist_pass_candidate_preview",
+        output_dir=tmp_path / "one_row_checklist_pass_candidate_preview" / "health",
+    )
+    assert health.status == "FAIL"
+    assert {
+        "APPROVED_FOR_PIT_UNIVERSE_DETECTED",
+        "INCLUDE_FLAG_TRUE_DETECTED",
+        "VALID_FOR_SIGNAL_DATE_TRUE_DETECTED",
+        "SURVIVORSHIP_BIAS_RESOLVED_TRUE_DETECTED",
+        "APPROVAL_APPLIED_DETECTED",
+        "CLEAN_REVIEW_UPDATES_FILE_DETECTED",
+    }.issubset(set(health.health_frame["issue_code"]))
+
+
 def test_one_row_material_evidence_fill_package_health_fails_for_unsafe_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -1834,6 +2205,105 @@ def test_research_status_includes_one_row_material_package_and_preserves_paper_p
     assert "one_row_material_evidence_fill_package_approval_applied: False" in output
 
 
+def test_research_status_includes_one_row_checklist_preview_and_preserves_paper_priority(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    reports = tmp_path / "reports"
+    material_plan = _build_material_gate_closure_plan(reports, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=reports / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=reports / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=reports / "reviewer_material_evidence_fill_guidance",
+    )
+    package = build_one_row_material_evidence_fill_package(
+        audit=_write_one_row_material_evidence_fill_package_audit(reports),
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        partial_impact=reports / "first_batch_partial_completion_impact",
+        completion_plan=reports / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=reports / "one_row_material_evidence_fill_package",
+    )
+    preview = build_one_row_checklist_pass_candidate_preview(
+        audit=_write_one_row_checklist_pass_candidate_preview_audit(reports),
+        package=package.artifact_paths["artifact_dir"],
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        completion_plan=reports / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=reports / "one_row_checklist_pass_candidate_preview",
+    )
+    _write_paper_workflow_status(reports)
+
+    dashboard = run_local_research_dashboard(root=reports, output_dir=tmp_path / "dashboard")
+
+    assert dashboard.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert dashboard.latest_one_row_checklist_pass_candidate_preview_id == preview.preview_id
+    assert (
+        dashboard.one_row_checklist_pass_candidate_preview_stage
+        == "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_CONTEXT_ONLY"
+    )
+    assert dashboard.one_row_checklist_pass_candidate_preview_health_status == "PASS"
+    assert dashboard.one_row_checklist_pass_candidate_preview_target_signal_date == "2024-04-02"
+    assert dashboard.one_row_checklist_pass_candidate_preview_target_symbol == "000001"
+    assert dashboard.one_row_checklist_pass_candidate_preview_target_universe_name == "stock_core"
+    assert dashboard.one_row_checklist_pass_candidate_preview_preview_row_count == 1
+    assert dashboard.one_row_checklist_pass_candidate_preview_reusable_context_field_count == (
+        preview.reusable_context_field_count
+    )
+    assert dashboard.one_row_checklist_pass_candidate_preview_strict_requirement_gap_count == (
+        preview.strict_requirement_gap_count
+    )
+    assert dashboard.one_row_checklist_pass_candidate_preview_row_checklist_pass_candidate is False
+    assert dashboard.one_row_checklist_pass_candidate_preview_checklist_pass_candidate_count == 0
+    assert dashboard.one_row_checklist_pass_candidate_preview_remaining_blocked_count == 16
+    assert dashboard.one_row_checklist_pass_candidate_preview_clean_review_updates_created is False
+    assert dashboard.one_row_checklist_pass_candidate_preview_approval_applied is False
+
+    summary = pd.read_csv(dashboard.artifact_paths["local_research_summary"], dtype=str, keep_default_na=False)
+    metadata = json.loads(dashboard.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    assert summary.iloc[0]["latest_one_row_checklist_pass_candidate_preview_id"] == preview.preview_id
+    assert summary.iloc[0]["one_row_checklist_pass_candidate_preview_target_symbol"] == "000001"
+    assert metadata["latest_one_row_checklist_pass_candidate_preview_id"] == preview.preview_id
+    assert metadata["one_row_checklist_pass_candidate_preview_remaining_blocked_count"] == 16
+    assert metadata["one_row_checklist_pass_candidate_preview_approval_applied"] is False
+
+    assert (
+        cli.main(
+            [
+                "research-status",
+                "--root",
+                str(reports),
+                "--output-dir",
+                str(tmp_path / "dashboard_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"latest_one_row_checklist_pass_candidate_preview_id: {preview.preview_id}" in output
+    assert (
+        "one_row_checklist_pass_candidate_preview_stage: "
+        "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_CONTEXT_ONLY"
+    ) in output
+    assert "one_row_checklist_pass_candidate_preview_target_symbol: 000001" in output
+    assert "one_row_checklist_pass_candidate_preview_approval_applied: False" in output
+
+
 def _build_material_gate_closure_plan(
     output_root: Path,
     inputs: dict[str, Path],
@@ -2030,6 +2500,242 @@ def _write_one_row_material_evidence_fill_package_audit(tmp_path: Path) -> Path:
             }
         ]
     ).to_csv(root / "external_evidence_needed.csv", index=False)
+    return root
+
+
+def _write_one_row_checklist_pass_candidate_preview_audit(tmp_path: Path) -> Path:
+    root = tmp_path / "manual_diagnostics" / "one_row_checklist_pass_candidate_preview_audit"
+    root.mkdir(parents=True)
+    target = {"signal_date": "2024-04-02", "symbol": "000001", "universe_name": "stock_core"}
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "requirement": "is_active",
+                "current_status": "missing_or_context_only",
+                "required_evidence": "Accepted active/not-delisted evidence.",
+                "blocks_checklist_pass": "yes",
+            },
+            {
+                **target,
+                "requirement": "is_active_evidence",
+                "current_status": "quotation_context_only",
+                "required_evidence": "Reviewer-accepted source chain for active status.",
+                "blocks_checklist_pass": "yes",
+            },
+            {
+                **target,
+                "requirement": "as_of_date",
+                "current_status": "drafted_context_only",
+                "required_evidence": "PIT timing policy and source timing evidence.",
+                "blocks_checklist_pass": "yes",
+            },
+            {
+                **target,
+                "requirement": "industry",
+                "current_status": "drafted_context_only",
+                "required_evidence": "Reviewer-normalized PIT metadata.",
+                "blocks_checklist_pass": "yes",
+            },
+            {
+                **target,
+                "requirement": "t_plus_rule",
+                "current_status": "rule_context_only",
+                "required_evidence": "Reviewer-accepted trading rule lineage.",
+                "blocks_checklist_pass": "yes",
+            },
+            {
+                **target,
+                "requirement": "revision_id",
+                "current_status": "diagnostic_lineage_only",
+                "required_evidence": "Reviewer-approved revision lineage.",
+                "blocks_checklist_pass": "yes",
+            },
+            {
+                **target,
+                "requirement": "is_st",
+                "current_status": "missing",
+                "required_evidence": "Accepted stock no-ST evidence.",
+                "blocks_checklist_pass": "yes",
+            },
+            {
+                **target,
+                "requirement": "survivorship_bias_resolved",
+                "current_status": "false",
+                "required_evidence": "Reviewer survivorship rationale.",
+                "blocks_checklist_pass": "yes",
+            },
+            {
+                **target,
+                "requirement": "reviewer_no_hit_acceptance",
+                "current_status": "not_active",
+                "required_evidence": "Accepted no-hit support by exception type.",
+                "blocks_checklist_pass": "yes",
+            },
+        ]
+    ).to_csv(root / "strict_requirement_gap_matrix.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "field": "symbol",
+                "candidate_value": "000001",
+                "reuse_assessment": "safe_context",
+                "reason": "Identity key only.",
+            },
+            {
+                **target,
+                "field": "listed_date",
+                "candidate_value": "1991-04-03",
+                "reuse_assessment": "safe_symbol_level_context",
+                "reason": "Official listing context can be reused as identity context.",
+            },
+            {
+                **target,
+                "field": "source_lineage",
+                "candidate_value": "SZSE_1815;NO_HIT_DIAGNOSTICS",
+                "reuse_assessment": "safe_lineage_context",
+                "reason": "Lineage context only.",
+            },
+            {
+                **target,
+                "field": "is_active",
+                "candidate_value": "",
+                "reuse_assessment": "not_safe_now",
+                "reason": "Quotation context is not accepted active evidence by itself.",
+            },
+            {
+                **target,
+                "field": "is_st",
+                "candidate_value": "",
+                "reuse_assessment": "not_safe_now",
+                "reason": "No accepted no-ST evidence.",
+            },
+            {
+                **target,
+                "field": "survivorship_bias_resolved",
+                "candidate_value": "false",
+                "reuse_assessment": "not_safe_now",
+                "reason": "Reviewer rationale is missing.",
+            },
+        ]
+    ).to_csv(root / "context_field_reuse_assessment.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "requirement": "active/not-delisted",
+                "current_status": "blocked",
+                "needed_evidence": "Accepted date-specific active/not-delisted context.",
+            }
+        ]
+    ).to_csv(root / "active_not_delisted_requirement_plan.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "requirement": "stock no-ST",
+                "current_status": "blocked",
+                "needed_evidence": "Accepted ST risk-warning source or no-hit policy.",
+            }
+        ]
+    ).to_csv(root / "stock_no_st_requirement_plan.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "requirement": "survivorship rationale",
+                "current_status": "blocked",
+                "needed_evidence": "Reviewer documents why source chain is not future-derived.",
+            }
+        ]
+    ).to_csv(root / "survivorship_resolution_requirement_plan.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "exception_type": exception_type,
+                "requirement": "accepted no-hit context",
+                "current_status": "needs_reviewer_acceptance",
+                "needed_evidence": "Reviewer accepts source coverage and query window.",
+            }
+            for exception_type in EXCEPTION_TYPES
+        ]
+    ).to_csv(root / "reviewer_no_hit_acceptance_requirement_plan.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "requirement": "PIT decision-time policy",
+                "current_status": "blocked",
+                "needed_evidence": "EOD decision_time and available_time <= decision_time.",
+            }
+        ]
+    ).to_csv(root / "pit_timing_requirement_plan.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "required_field_or_condition": "accepted no-hit context for DELISTING",
+                "current_status": "missing",
+            },
+            {
+                **target,
+                "required_field_or_condition": "accepted no-hit context for ST_RISK_WARNING",
+                "current_status": "missing",
+            },
+            {
+                **target,
+                "required_field_or_condition": "survivorship rationale accepted by reviewer",
+                "current_status": "missing",
+            },
+            {
+                **target,
+                "required_field_or_condition": "PIT timing decision policy accepted",
+                "current_status": "missing",
+            },
+        ]
+    ).to_csv(root / "candidate_preview_required_fields.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "claim_or_field": "checklist_pass_candidate=true",
+                "risk": "Would overclaim unresolved material evidence gates.",
+                "safe_treatment": "Keep false.",
+                "severity": "critical",
+            },
+            {
+                **target,
+                "claim_or_field": "is_active=true",
+                "risk": "Quotation context alone is insufficient.",
+                "safe_treatment": "Keep blocked.",
+                "severity": "high",
+            },
+            {
+                **target,
+                "claim_or_field": "is_st=false",
+                "risk": "No accepted no-ST evidence.",
+                "safe_treatment": "Keep blank or blocked.",
+                "severity": "high",
+            },
+            {
+                **target,
+                "claim_or_field": "survivorship_bias_resolved=true",
+                "risk": "Reviewer rationale is missing.",
+                "safe_treatment": "Keep false.",
+                "severity": "critical",
+            },
+        ]
+    ).to_csv(root / "overclaim_risk_matrix.csv", index=False)
+    (root / "checklist_pass_candidate_preview_audit.md").write_text(
+        "# One-Row Checklist-Pass Candidate Preview Audit\n\nTarget row remains blocked.\n",
+        encoding="utf-8",
+    )
+    (root / "recommended_next_task.md").write_text(
+        "# Recommended Next Task\n\nImplement report-only preview workflow.\n",
+        encoding="utf-8",
+    )
     return root
 
 

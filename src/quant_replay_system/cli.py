@@ -242,6 +242,18 @@ from quant_replay_system.one_row_material_evidence_fill_package_health import (
 from quant_replay_system.one_row_material_evidence_fill_package_status import (
     run_one_row_material_evidence_fill_package_status,
 )
+from quant_replay_system.one_row_checklist_pass_candidate_preview import (
+    build_one_row_checklist_pass_candidate_preview,
+)
+from quant_replay_system.one_row_checklist_pass_candidate_preview_health import (
+    check_one_row_checklist_pass_candidate_preview_health,
+)
+from quant_replay_system.one_row_checklist_pass_candidate_preview_index import (
+    build_one_row_checklist_pass_candidate_preview_index,
+)
+from quant_replay_system.one_row_checklist_pass_candidate_preview_status import (
+    run_one_row_checklist_pass_candidate_preview_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -1910,6 +1922,105 @@ def build_parser() -> argparse.ArgumentParser:
     )
     one_row_material_evidence_fill_package_status.set_defaults(
         handler=_handle_one_row_material_evidence_fill_package_status
+    )
+
+    one_row_checklist_pass_candidate_preview = subparsers.add_parser(
+        "one-row-checklist-pass-candidate-preview",
+        help="Create a report-only one-row checklist-pass candidate preview",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--audit",
+        default="outputs/reports/manual_diagnostics/one_row_checklist_pass_candidate_preview_audit_v0_1",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--package",
+        default="outputs/reports/one_row_material_evidence_fill_package/136cbd739ca1",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--guidance",
+        default="outputs/reports/reviewer_material_evidence_fill_guidance/94f5ff204662",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--material-plan",
+        default="outputs/reports/material_pit_evidence_gate_closure_plan/2d6ab8e7f9f8",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--completion-plan",
+        default="outputs/reports/first_batch_reviewer_evidence_completion_plan/c630522f235a",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--validator",
+        default="outputs/reports/pit_evidence_checklist_validator/62e9eb747197",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--enrichment",
+        default="outputs/reports/pit_official_status_evidence_packet_enrichment/cb5f323d3c8c",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--reviewer-no-hit-acceptance",
+        default="outputs/reports/reviewer_no_hit_source_coverage_acceptance/2e05e4b74794",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--reviewer-no-hit-downstream-impact",
+        default="outputs/reports/reviewer_no_hit_acceptance_downstream_impact/9e164963455e",
+    )
+    one_row_checklist_pass_candidate_preview.add_argument("--signal-date", default="2024-04-02")
+    one_row_checklist_pass_candidate_preview.add_argument("--symbol", default="000001")
+    one_row_checklist_pass_candidate_preview.add_argument("--universe-name", default="stock_core")
+    one_row_checklist_pass_candidate_preview.add_argument(
+        "--output-dir",
+        default="outputs/reports/one_row_checklist_pass_candidate_preview",
+    )
+    one_row_checklist_pass_candidate_preview.set_defaults(
+        handler=_handle_one_row_checklist_pass_candidate_preview
+    )
+
+    one_row_checklist_pass_candidate_preview_index = subparsers.add_parser(
+        "one-row-checklist-pass-candidate-preview-index",
+        help="Build a local index of one-row checklist-pass candidate preview artifacts",
+    )
+    one_row_checklist_pass_candidate_preview_index.add_argument(
+        "--root",
+        default="outputs/reports/one_row_checklist_pass_candidate_preview",
+    )
+    one_row_checklist_pass_candidate_preview_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/one_row_checklist_pass_candidate_preview/index",
+    )
+    one_row_checklist_pass_candidate_preview_index.set_defaults(
+        handler=_handle_one_row_checklist_pass_candidate_preview_index
+    )
+
+    one_row_checklist_pass_candidate_preview_health = subparsers.add_parser(
+        "one-row-checklist-pass-candidate-preview-health",
+        help="Check one-row checklist-pass candidate preview artifact health",
+    )
+    one_row_checklist_pass_candidate_preview_health.add_argument(
+        "--root",
+        default="outputs/reports/one_row_checklist_pass_candidate_preview",
+    )
+    one_row_checklist_pass_candidate_preview_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/one_row_checklist_pass_candidate_preview/health",
+    )
+    one_row_checklist_pass_candidate_preview_health.set_defaults(
+        handler=_handle_one_row_checklist_pass_candidate_preview_health
+    )
+
+    one_row_checklist_pass_candidate_preview_status = subparsers.add_parser(
+        "one-row-checklist-pass-candidate-preview-status",
+        help="Summarize latest one-row checklist-pass candidate preview status",
+    )
+    one_row_checklist_pass_candidate_preview_status.add_argument(
+        "--root",
+        default="outputs/reports/one_row_checklist_pass_candidate_preview",
+    )
+    one_row_checklist_pass_candidate_preview_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/one_row_checklist_pass_candidate_preview/status",
+    )
+    one_row_checklist_pass_candidate_preview_status.set_defaults(
+        handler=_handle_one_row_checklist_pass_candidate_preview_status
     )
 
     universe_profile_policy_audit = subparsers.add_parser(
@@ -5590,6 +5701,100 @@ def _handle_one_row_material_evidence_fill_package_status(args: argparse.Namespa
     return 1 if result.status == "FAIL" else 0
 
 
+def _handle_one_row_checklist_pass_candidate_preview(args: argparse.Namespace) -> int:
+    result = build_one_row_checklist_pass_candidate_preview(
+        audit=args.audit,
+        package=args.package,
+        guidance=args.guidance,
+        material_plan=args.material_plan,
+        completion_plan=args.completion_plan,
+        validator=args.validator,
+        enrichment=args.enrichment,
+        reviewer_no_hit_acceptance=args.reviewer_no_hit_acceptance,
+        reviewer_no_hit_downstream_impact=args.reviewer_no_hit_downstream_impact,
+        signal_date=args.signal_date,
+        symbol=args.symbol,
+        universe_name=args.universe_name,
+        output_dir=args.output_dir,
+    )
+    print(f"preview_id: {result.preview_id}")
+    print(f"status: {result.status}")
+    print(f"one_row_material_evidence_fill_package_id: {result.one_row_material_evidence_fill_package_id}")
+    print(f"reviewer_material_evidence_fill_guidance_id: {result.reviewer_material_evidence_fill_guidance_id}")
+    print(f"material_pit_evidence_gate_closure_plan_id: {result.material_pit_evidence_gate_closure_plan_id}")
+    print(f"first_batch_reviewer_evidence_completion_plan_id: {result.first_batch_reviewer_evidence_completion_plan_id}")
+    print(f"validator_id: {result.validator_id}")
+    print(f"enrichment_id: {result.enrichment_id}")
+    print(f"reviewer_no_hit_acceptance_id: {result.reviewer_no_hit_acceptance_id}")
+    print(f"reviewer_no_hit_downstream_impact_id: {result.reviewer_no_hit_downstream_impact_id}")
+    print(f"signal_date: {result.request.signal_date}")
+    print(f"symbol: {result.request.symbol}")
+    print(f"universe_name: {result.request.universe_name}")
+    print(f"preview_row_count: {result.preview_row_count}")
+    print(f"reusable_context_field_count: {result.reusable_context_field_count}")
+    print(f"strict_requirement_gap_count: {result.strict_requirement_gap_count}")
+    print(f"row_checklist_pass_candidate: {result.row_checklist_pass_candidate}")
+    print(f"checklist_pass_candidate_count: {result.checklist_pass_candidate_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"preview_csv_path: {result.artifact_paths['preview_csv']}")
+    print(f"strict_requirement_gap_matrix_path: {result.artifact_paths['strict_requirement_gap_matrix']}")
+    print(f"context_field_reuse_assessment_path: {result.artifact_paths['context_field_reuse_assessment']}")
+    print(f"preview_safety_validation_path: {result.artifact_paths['preview_safety_validation']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_one_row_checklist_pass_candidate_preview_index(args: argparse.Namespace) -> int:
+    result = build_one_row_checklist_pass_candidate_preview_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_one_row_checklist_pass_candidate_preview_health(args: argparse.Namespace) -> int:
+    result = check_one_row_checklist_pass_candidate_preview_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_one_row_checklist_pass_candidate_preview_status(args: argparse.Namespace) -> int:
+    result = run_one_row_checklist_pass_candidate_preview_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_preview_id: {result.latest_preview_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"target_signal_date: {result.target_signal_date}")
+    print(f"target_symbol: {result.target_symbol}")
+    print(f"target_universe_name: {result.target_universe_name}")
+    print(f"preview_row_count: {result.preview_row_count}")
+    print(f"reusable_context_field_count: {result.reusable_context_field_count}")
+    print(f"strict_requirement_gap_count: {result.strict_requirement_gap_count}")
+    print(f"row_checklist_pass_candidate: {result.row_checklist_pass_candidate}")
+    print(f"checklist_pass_candidate_count: {result.checklist_pass_candidate_count}")
+    print(f"remaining_blocked_count: {result.remaining_blocked_count}")
+    print(f"clean_review_updates_created: {result.clean_review_updates_created}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print("No approval, clean review updates, PIT review, export-readiness, staging, universe export, current-candidates generation, data writes, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
 def _handle_universe_profile_policy_audit(args: argparse.Namespace) -> int:
     result = build_universe_profile_policy_audit(
         worklist=args.worklist,
@@ -8890,6 +9095,74 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "one_row_material_evidence_fill_package_next_action: "
         f"{result.one_row_material_evidence_fill_package_next_action}"
+    )
+    print(
+        "latest_one_row_checklist_pass_candidate_preview_id: "
+        f"{result.latest_one_row_checklist_pass_candidate_preview_id}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_status: "
+        f"{result.one_row_checklist_pass_candidate_preview_status}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_stage: "
+        f"{result.one_row_checklist_pass_candidate_preview_stage}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_health_status: "
+        f"{result.one_row_checklist_pass_candidate_preview_health_status}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_target_signal_date: "
+        f"{result.one_row_checklist_pass_candidate_preview_target_signal_date}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_target_symbol: "
+        f"{result.one_row_checklist_pass_candidate_preview_target_symbol}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_target_universe_name: "
+        f"{result.one_row_checklist_pass_candidate_preview_target_universe_name}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_preview_row_count: "
+        f"{result.one_row_checklist_pass_candidate_preview_preview_row_count}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_reusable_context_field_count: "
+        f"{result.one_row_checklist_pass_candidate_preview_reusable_context_field_count}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_strict_requirement_gap_count: "
+        f"{result.one_row_checklist_pass_candidate_preview_strict_requirement_gap_count}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_row_checklist_pass_candidate: "
+        f"{result.one_row_checklist_pass_candidate_preview_row_checklist_pass_candidate}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_checklist_pass_candidate_count: "
+        f"{result.one_row_checklist_pass_candidate_preview_checklist_pass_candidate_count}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_remaining_blocked_count: "
+        f"{result.one_row_checklist_pass_candidate_preview_remaining_blocked_count}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_clean_review_updates_created: "
+        f"{result.one_row_checklist_pass_candidate_preview_clean_review_updates_created}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_approval_applied: "
+        f"{result.one_row_checklist_pass_candidate_preview_approval_applied}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_report_path: "
+        f"{result.one_row_checklist_pass_candidate_preview_report_path}"
+    )
+    print(
+        "one_row_checklist_pass_candidate_preview_next_action: "
+        f"{result.one_row_checklist_pass_candidate_preview_next_action}"
     )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
