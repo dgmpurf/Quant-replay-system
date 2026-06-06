@@ -53,6 +53,18 @@ from quant_replay_system.reviewer_material_evidence_fill_guidance_index import (
 from quant_replay_system.reviewer_material_evidence_fill_guidance_status import (
     run_reviewer_material_evidence_fill_guidance_status,
 )
+from quant_replay_system.one_row_material_evidence_fill_package import (
+    build_one_row_material_evidence_fill_package,
+)
+from quant_replay_system.one_row_material_evidence_fill_package_health import (
+    check_one_row_material_evidence_fill_package_health,
+)
+from quant_replay_system.one_row_material_evidence_fill_package_index import (
+    build_one_row_material_evidence_fill_package_index,
+)
+from quant_replay_system.one_row_material_evidence_fill_package_status import (
+    run_one_row_material_evidence_fill_package_status,
+)
 
 
 DATES = [
@@ -1213,6 +1225,336 @@ def test_reviewer_fill_fixture_impact_validation_reduces_only_shape_blocker(
     assert not (tmp_path / "data" / "processed").exists()
 
 
+def test_one_row_material_evidence_fill_package_remains_report_only(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+    audit = _write_one_row_material_evidence_fill_package_audit(tmp_path)
+
+    result = build_one_row_material_evidence_fill_package(
+        audit=audit,
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_material_evidence_fill_package",
+    )
+
+    assert result.package_row_count == 1
+    assert result.request.signal_date == "2024-04-02"
+    assert result.request.symbol == "000001"
+    assert result.request.universe_name == "stock_core"
+    assert result.context_field_drafted_count > 0
+    assert result.material_blocker_closed_count == 0
+    assert result.checklist_pass_candidate_count == 0
+    assert result.remaining_blocked_count == 16
+    assert result.clean_review_updates_created is False
+    assert result.approval_applied is False
+    assert result.reviewer_material_evidence_fill_guidance_id == guidance.guidance_id
+    assert result.material_pit_evidence_gate_closure_plan_id == material_plan.plan_id
+    assert result.first_batch_partial_completion_impact_id == material_plan.lineage[
+        "first_batch_partial_completion_impact_id"
+    ]
+    assert result.first_batch_reviewer_evidence_completion_plan_id == material_plan.lineage[
+        "first_batch_reviewer_evidence_completion_plan_id"
+    ]
+    assert result.validator_id == material_plan.lineage["validator_id"]
+    assert result.enrichment_id == material_plan.lineage["enrichment_id"]
+
+    package = pd.read_csv(result.artifact_paths["package_csv"], dtype=str, keep_default_na=False)
+    assert len(package) == 1
+    row = package.iloc[0]
+    assert row["signal_date"] == "2024-04-02"
+    assert row["symbol"] == "000001"
+    assert row["universe_name"] == "stock_core"
+    assert row["review_status"] == "NEEDS_MORE_EVIDENCE"
+    assert row["include_flag"] == "False"
+    assert row["valid_for_signal_date"] == "False"
+    assert row["survivorship_bias_resolved"] == "False"
+    assert row["active_not_delisted_blocked"] == "True"
+    assert row["stock_st_no_st_blocked"] == "True"
+    assert row["survivorship_blocked"] == "True"
+    assert row["approval_applied"] == "False"
+    assert row["clean_review_updates_created"] == "False"
+    assert row["no_current_candidates_generated"] == "True"
+
+    drafted = pd.read_csv(result.artifact_paths["drafted_context_fields"], dtype=str, keep_default_na=False)
+    assert set(drafted["symbol"]) == {"000001"}
+    assert {"as_of_date", "industry", "t_plus_rule", "revision_id", "source"}.issubset(set(drafted["field"]))
+    assert set(drafted["approval_safe"]) == {"no"}
+    assert set(drafted["can_close_material_blocker"]) == {"False"}
+    assert not _has_truthy_value(drafted, "include_flag")
+    assert not _has_truthy_value(drafted, "valid_for_signal_date")
+    assert not _has_truthy_value(drafted, "survivorship_bias_resolved")
+
+    remaining = pd.read_csv(result.artifact_paths["remaining_blockers_after_fill"], dtype=str, keep_default_na=False)
+    assert "is_active / active-not-delisted evidence" in set(remaining["blocker"])
+    assert "is_st / no-ST evidence" in set(remaining["blocker"])
+    assert "survivorship-bias resolution" in set(remaining["blocker"])
+    assert set(remaining["checklist_pass_candidate"]) == {"False"}
+    assert set(remaining["approval_applied"]) == {"False"}
+
+    risks = pd.read_csv(result.artifact_paths["overclaim_risk_matrix"], dtype=str, keep_default_na=False)
+    assert "is_active=true" in set(risks["claim_or_field"])
+    assert "is_st=false" in set(risks["claim_or_field"])
+    assert "survivorship_bias_resolved=true" in set(risks["claim_or_field"])
+
+    safety = json.loads(result.artifact_paths["package_safety_validation"].read_text(encoding="utf-8"))
+    assert safety["validation_status"] == "PASS"
+    assert safety["approved_for_pit_universe_present"] is False
+    assert safety["include_flag_true_present"] is False
+    assert safety["valid_for_signal_date_true_present"] is False
+    assert safety["survivorship_bias_resolved_true_present"] is False
+    assert safety["clean_review_updates_created"] is False
+    assert safety["approval_applied"] is False
+    assert safety["no_data_raw_write"] is True
+    assert safety["no_data_processed_write"] is True
+    assert safety["no_current_candidates_generated"] is True
+
+    lineage = pd.read_csv(result.artifact_paths["source_lineage_summary"], dtype=str, keep_default_na=False)
+    assert {
+        "reviewer_material_evidence_fill_guidance_id",
+        "material_pit_evidence_gate_closure_plan_id",
+        "first_batch_partial_completion_impact_id",
+        "first_batch_reviewer_evidence_completion_plan_id",
+        "validator_id",
+        "enrichment_id",
+        "reviewer_no_hit_downstream_impact_id",
+    }.issubset(set(lineage["lineage_field"]))
+
+    artifact_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for key, path in result.artifact_paths.items()
+        if key != "artifact_dir" and path.suffix in {".csv", ".md", ".json"}
+    )
+    assert "APPROVED_FOR_PIT_UNIVERSE" not in artifact_text
+    assert not (result.artifact_paths["artifact_dir"] / "review_updates.csv").exists()
+    assert not (result.artifact_paths["artifact_dir"] / "clean_review_updates.csv").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_review").exists()
+    assert not (tmp_path / "point_in_time_universe_overlay_export_readiness").exists()
+    assert not (tmp_path / "point_in_time_universe_export_staging").exists()
+    assert not (tmp_path / "current_candidates").exists()
+    assert not (tmp_path / "data" / "raw").exists()
+    assert not (tmp_path / "data" / "processed").exists()
+
+    assert (
+        cli.main(
+            [
+                "one-row-material-evidence-fill-package",
+                "--audit",
+                str(audit),
+                "--guidance",
+                str(guidance.artifact_paths["artifact_dir"]),
+                "--material-plan",
+                str(material_plan.artifact_paths["artifact_dir"]),
+                "--partial-impact",
+                str(tmp_path / "first_batch_partial_completion_impact"),
+                "--completion-plan",
+                str(tmp_path / "first_batch_reviewer_evidence_completion_plan"),
+                "--validator",
+                str(inputs["validator"]),
+                "--enrichment",
+                str(inputs["enrichment"]),
+                "--reviewer-no-hit-acceptance",
+                "",
+                "--reviewer-no-hit-downstream-impact",
+                str(inputs["downstream_impact"]),
+                "--output-dir",
+                str(tmp_path / "one_row_material_evidence_fill_package_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert "package_row_count: 1" in output
+    assert "symbol: 000001" in output
+    assert "material_blocker_closed_count: 0" in output
+    assert "checklist_pass_candidate_count: 0" in output
+    assert "approval_applied: False" in output
+
+
+def test_one_row_material_evidence_fill_package_index_health_status_and_cli(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+    package = build_one_row_material_evidence_fill_package(
+        audit=_write_one_row_material_evidence_fill_package_audit(tmp_path),
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_material_evidence_fill_package",
+    )
+
+    index = build_one_row_material_evidence_fill_package_index(
+        root=tmp_path / "one_row_material_evidence_fill_package",
+        output_dir=tmp_path / "one_row_material_evidence_fill_package" / "index",
+    )
+    assert index.artifact_count == 1
+    assert index.index_frame.iloc[0]["package_id"] == package.package_id
+    assert index.index_frame.iloc[0]["target_symbol"] == "000001"
+
+    health = check_one_row_material_evidence_fill_package_health(
+        root=tmp_path / "one_row_material_evidence_fill_package",
+        output_dir=tmp_path / "one_row_material_evidence_fill_package" / "health",
+    )
+    assert health.status == "PASS"
+    assert health.issue_count == 0
+
+    status = run_one_row_material_evidence_fill_package_status(
+        root=tmp_path / "one_row_material_evidence_fill_package",
+        output_dir=tmp_path / "one_row_material_evidence_fill_package" / "status",
+    )
+    assert status.latest_package_id == package.package_id
+    assert status.status == "WARN"
+    assert status.workflow_stage == "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_CONTEXT_DRAFTED"
+    assert status.health_status == "PASS"
+    assert status.target_signal_date == "2024-04-02"
+    assert status.target_symbol == "000001"
+    assert status.target_universe_name == "stock_core"
+    assert status.package_row_count == 1
+    assert status.context_field_drafted_count == package.context_field_drafted_count
+    assert status.material_blocker_closed_count == 0
+    assert status.checklist_pass_candidate_count == 0
+    assert status.remaining_blocked_count == 16
+    assert status.clean_review_updates_created is False
+    assert status.approval_applied is False
+
+    assert (
+        cli.main(
+            [
+                "one-row-material-evidence-fill-package-index",
+                "--root",
+                str(tmp_path / "one_row_material_evidence_fill_package"),
+                "--output-dir",
+                str(tmp_path / "one_row_material_evidence_fill_package_cli" / "index"),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli.main(
+            [
+                "one-row-material-evidence-fill-package-health",
+                "--root",
+                str(tmp_path / "one_row_material_evidence_fill_package"),
+                "--output-dir",
+                str(tmp_path / "one_row_material_evidence_fill_package_cli" / "health"),
+            ]
+        )
+        == 0
+    )
+    assert (
+        cli.main(
+            [
+                "one-row-material-evidence-fill-package-status",
+                "--root",
+                str(tmp_path / "one_row_material_evidence_fill_package"),
+                "--output-dir",
+                str(tmp_path / "one_row_material_evidence_fill_package_cli" / "status"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"latest_package_id: {package.package_id}" in output
+    assert "workflow_stage: ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_CONTEXT_DRAFTED" in output
+    assert "target_symbol: 000001" in output
+    assert "approval_applied: False" in output
+
+
+def test_one_row_material_evidence_fill_package_health_fails_for_unsafe_artifacts(
+    tmp_path: Path,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    material_plan = _build_material_gate_closure_plan(tmp_path, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "reviewer_material_evidence_fill_guidance",
+    )
+    package = build_one_row_material_evidence_fill_package(
+        audit=_write_one_row_material_evidence_fill_package_audit(tmp_path),
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        partial_impact=tmp_path / "first_batch_partial_completion_impact",
+        completion_plan=tmp_path / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=tmp_path / "one_row_material_evidence_fill_package",
+    )
+    metadata_path = package.artifact_paths["metadata"]
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["approval_applied"] = True
+    metadata["clean_review_updates_created"] = True
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+    package_frame = pd.read_csv(package.artifact_paths["package_csv"], dtype=str, keep_default_na=False)
+    package_frame.loc[0, "review_status"] = "APPROVED_FOR_PIT_UNIVERSE"
+    package_frame.loc[0, "include_flag"] = "True"
+    package_frame.loc[0, "valid_for_signal_date"] = "True"
+    package_frame.loc[0, "survivorship_bias_resolved"] = "True"
+    package_frame.to_csv(package.artifact_paths["package_csv"], index=False)
+    (package.artifact_paths["artifact_dir"] / "clean_review_updates.csv").write_text(
+        "signal_date,symbol,universe_name\n2024-04-02,000001,stock_core\n",
+        encoding="utf-8",
+    )
+
+    health = check_one_row_material_evidence_fill_package_health(
+        root=tmp_path / "one_row_material_evidence_fill_package",
+        output_dir=tmp_path / "one_row_material_evidence_fill_package" / "health",
+    )
+    issue_codes = set(health.health_frame["issue_code"])
+    assert health.status == "FAIL"
+    assert "APPROVAL_APPLIED_DETECTED" in issue_codes
+    assert "CLEAN_REVIEW_UPDATES_FILE_DETECTED" in issue_codes
+    assert "APPROVED_FOR_PIT_UNIVERSE_DETECTED" in issue_codes
+    assert "INCLUDE_FLAG_TRUE_DETECTED" in issue_codes
+    assert "VALID_FOR_SIGNAL_DATE_TRUE_DETECTED" in issue_codes
+    assert "SURVIVORSHIP_BIAS_RESOLVED_TRUE_DETECTED" in issue_codes
+
+
 def test_reviewer_material_evidence_fill_guidance_index_health_status_and_cli(
     tmp_path: Path,
     capsys,
@@ -1408,6 +1750,90 @@ def test_research_status_includes_reviewer_material_guidance_and_preserves_paper
     assert "reviewer_material_evidence_fill_guidance_approval_applied: False" in output
 
 
+def test_research_status_includes_one_row_material_package_and_preserves_paper_priority(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    inputs = _write_inputs(tmp_path)
+    reports = tmp_path / "reports"
+    material_plan = _build_material_gate_closure_plan(reports, inputs)
+    guidance = build_reviewer_material_evidence_fill_guidance(
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        audit=None,
+        completion_plan=reports / "first_batch_reviewer_evidence_completion_plan",
+        partial_impact=reports / "first_batch_partial_completion_impact",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=reports / "reviewer_material_evidence_fill_guidance",
+    )
+    package = build_one_row_material_evidence_fill_package(
+        audit=_write_one_row_material_evidence_fill_package_audit(reports),
+        guidance=guidance.artifact_paths["artifact_dir"],
+        material_plan=material_plan.artifact_paths["artifact_dir"],
+        partial_impact=reports / "first_batch_partial_completion_impact",
+        completion_plan=reports / "first_batch_reviewer_evidence_completion_plan",
+        validator=inputs["validator"],
+        enrichment=inputs["enrichment"],
+        reviewer_no_hit_acceptance=None,
+        reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
+        output_dir=reports / "one_row_material_evidence_fill_package",
+    )
+    _write_paper_workflow_status(reports)
+
+    dashboard = run_local_research_dashboard(root=reports, output_dir=tmp_path / "dashboard")
+
+    assert dashboard.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert dashboard.latest_one_row_material_evidence_fill_package_id == package.package_id
+    assert (
+        dashboard.one_row_material_evidence_fill_package_stage
+        == "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_CONTEXT_DRAFTED"
+    )
+    assert dashboard.one_row_material_evidence_fill_package_health_status == "PASS"
+    assert dashboard.one_row_material_evidence_fill_package_target_signal_date == "2024-04-02"
+    assert dashboard.one_row_material_evidence_fill_package_target_symbol == "000001"
+    assert dashboard.one_row_material_evidence_fill_package_target_universe_name == "stock_core"
+    assert dashboard.one_row_material_evidence_fill_package_package_row_count == 1
+    assert dashboard.one_row_material_evidence_fill_package_context_field_drafted_count == (
+        package.context_field_drafted_count
+    )
+    assert dashboard.one_row_material_evidence_fill_package_material_blocker_closed_count == 0
+    assert dashboard.one_row_material_evidence_fill_package_checklist_pass_candidate_count == 0
+    assert dashboard.one_row_material_evidence_fill_package_remaining_blocked_count == 16
+    assert dashboard.one_row_material_evidence_fill_package_clean_review_updates_created is False
+    assert dashboard.one_row_material_evidence_fill_package_approval_applied is False
+
+    summary = pd.read_csv(dashboard.artifact_paths["local_research_summary"], dtype=str, keep_default_na=False)
+    metadata = json.loads(dashboard.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    assert summary.iloc[0]["latest_one_row_material_evidence_fill_package_id"] == package.package_id
+    assert summary.iloc[0]["one_row_material_evidence_fill_package_target_symbol"] == "000001"
+    assert metadata["latest_one_row_material_evidence_fill_package_id"] == package.package_id
+    assert metadata["one_row_material_evidence_fill_package_remaining_blocked_count"] == 16
+    assert metadata["one_row_material_evidence_fill_package_approval_applied"] is False
+
+    assert (
+        cli.main(
+            [
+                "research-status",
+                "--root",
+                str(reports),
+                "--output-dir",
+                str(tmp_path / "dashboard_cli"),
+            ]
+        )
+        == 0
+    )
+    output = capsys.readouterr().out
+    assert f"latest_one_row_material_evidence_fill_package_id: {package.package_id}" in output
+    assert (
+        "one_row_material_evidence_fill_package_stage: "
+        "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_CONTEXT_DRAFTED"
+    ) in output
+    assert "one_row_material_evidence_fill_package_target_symbol: 000001" in output
+    assert "one_row_material_evidence_fill_package_approval_applied: False" in output
+
+
 def _build_material_gate_closure_plan(
     output_root: Path,
     inputs: dict[str, Path],
@@ -1435,6 +1861,176 @@ def _build_material_gate_closure_plan(
         reviewer_no_hit_downstream_impact=inputs["downstream_impact"],
         output_dir=output_root / "material_pit_evidence_gate_closure_plan",
     )
+
+
+def _write_one_row_material_evidence_fill_package_audit(tmp_path: Path) -> Path:
+    root = tmp_path / "manual_diagnostics" / "one_row_material_evidence_fill_package_audit"
+    root.mkdir(parents=True)
+    target = {"signal_date": "2024-04-02", "symbol": "000001", "universe_name": "stock_core"}
+    fillable = [
+        {
+            **target,
+            "field": "name",
+            "candidate_value": "Ping An Bank context",
+            "fillable_now": "yes_context",
+            "evidence_basis": "official symbol-level context",
+            "evidence_strength": "SUPPORTING_OFFICIAL_SYMBOL_LEVEL",
+            "approval_safe": "no",
+            "notes": "Identity context only.",
+        },
+        {
+            **target,
+            "field": "exchange",
+            "candidate_value": "SZSE",
+            "fillable_now": "yes_context",
+            "evidence_basis": "SZSE 1815 quote context",
+            "evidence_strength": "STRONG_OFFICIAL_DATE_SPECIFIC_FOR_QUOTATION",
+            "approval_safe": "no",
+            "notes": "Quote context only.",
+        },
+        {
+            **target,
+            "field": "listed_date",
+            "candidate_value": "1991-04-03",
+            "fillable_now": "yes_context",
+            "evidence_basis": "official listing context",
+            "evidence_strength": "SUPPORTING_OFFICIAL_SYMBOL_LEVEL",
+            "approval_safe": "no",
+            "notes": "Listing context only.",
+        },
+        {
+            **target,
+            "field": "industry",
+            "candidate_value": "banking_official_context",
+            "fillable_now": "yes_context",
+            "evidence_basis": "official disclosure context",
+            "evidence_strength": "CONTEXT_OR_SUPPORTING_SYMBOL_LEVEL",
+            "approval_safe": "no",
+            "notes": "Reviewer should normalize taxonomy.",
+        },
+        {
+            **target,
+            "field": "min_lot",
+            "candidate_value": "100",
+            "fillable_now": "yes_rule_context",
+            "evidence_basis": "SZSE round-lot rule context",
+            "evidence_strength": "RULE_CONTEXT",
+            "approval_safe": "no",
+            "notes": "Rule context only.",
+        },
+        {
+            **target,
+            "field": "t_plus_rule",
+            "candidate_value": "T+1_rule_context",
+            "fillable_now": "yes_rule_context",
+            "evidence_basis": "SZSE trading rule context",
+            "evidence_strength": "RULE_CONTEXT",
+            "approval_safe": "no",
+            "notes": "Rule context only.",
+        },
+        {
+            **target,
+            "field": "as_of_date",
+            "candidate_value": "2024-04-02",
+            "fillable_now": "conditional_context",
+            "evidence_basis": "SZSE 1815 same-date quotation",
+            "evidence_strength": "STRONG_OFFICIAL_DATE_SPECIFIC_FOR_QUOTATION_ONLY",
+            "approval_safe": "no",
+            "notes": "Quote-observation date only.",
+        },
+        {
+            **target,
+            "field": "revision_id",
+            "candidate_value": "one_row_material_evidence_fill_package_v0_1_draft",
+            "fillable_now": "yes_diagnostics_only",
+            "evidence_basis": "diagnostic lineage",
+            "evidence_strength": "DIAGNOSTIC_LINEAGE_ONLY",
+            "approval_safe": "no",
+            "notes": "Not evidence.",
+        },
+        {
+            **target,
+            "field": "source",
+            "candidate_value": "SZSE_1815_QUOTATION_DIAGNOSTIC;NO_HIT_NEEDS_REVIEW",
+            "fillable_now": "yes_lineage_context",
+            "evidence_basis": "diagnostic source lineage",
+            "evidence_strength": "LINEAGE_CONTEXT",
+            "approval_safe": "no",
+            "notes": "Not clean review updates.",
+        },
+    ]
+    pd.DataFrame(fillable).to_csv(root / "fillable_field_assessment.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "blocker": "is_active / active-not-delisted evidence",
+                "after_candidate_fill_status": "still_blocked",
+                "reason": "Quote context is not accepted active/not-delisted policy by itself.",
+            },
+            {
+                **target,
+                "blocker": "is_st / no-ST evidence",
+                "after_candidate_fill_status": "still_blocked",
+                "reason": "No accepted historical no-ST evidence.",
+            },
+            {
+                **target,
+                "blocker": "survivorship-bias resolution",
+                "after_candidate_fill_status": "still_blocked",
+                "reason": "Reviewer rationale still required.",
+            },
+        ]
+    ).to_csv(root / "remaining_blockers_after_candidate_fill.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "claim_or_field": "is_active=true",
+                "risk": "Overclaims active/not-delisted status.",
+                "safe_treatment": "Keep as traded context only.",
+                "severity": "high",
+            },
+            {
+                **target,
+                "claim_or_field": "is_st=false",
+                "risk": "No accepted no-ST evidence.",
+                "safe_treatment": "Keep blocked.",
+                "severity": "high",
+            },
+            {
+                **target,
+                "claim_or_field": "survivorship_bias_resolved=true",
+                "risk": "Would create approval semantics.",
+                "safe_treatment": "Keep false.",
+                "severity": "critical",
+            },
+        ]
+    ).to_csv(root / "overclaim_risk_matrix.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "judgment_item": "Accept same-date quote as EOD traded context only",
+                "required_reviewer_action": "Document policy and limits.",
+                "can_be_auto_filled": "no",
+                "supporting_artifacts": "SZSE 1815 diagnostics",
+            }
+        ]
+    ).to_csv(root / "reviewer_judgment_needed.csv", index=False)
+    pd.DataFrame(
+        [
+            {
+                **target,
+                "needed_evidence": "accepted historical no-ST and not-delisted evidence",
+                "why_needed": "stock status and active/not-delisted blockers remain",
+                "candidate_source": "SZSE/CNInfo no-hit or stronger official source",
+                "current_status": "not accepted",
+                "blocks_checklist_pass": "yes",
+            }
+        ]
+    ).to_csv(root / "external_evidence_needed.csv", index=False)
+    return root
 
 
 def _write_inputs(tmp_path: Path) -> dict[str, Path]:

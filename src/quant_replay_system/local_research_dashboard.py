@@ -71,6 +71,9 @@ from quant_replay_system.material_pit_evidence_gate_closure_plan_status import (
 from quant_replay_system.reviewer_material_evidence_fill_guidance_status import (
     run_reviewer_material_evidence_fill_guidance_status,
 )
+from quant_replay_system.one_row_material_evidence_fill_package_status import (
+    run_one_row_material_evidence_fill_package_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -409,6 +412,22 @@ SUMMARY_COLUMNS = [
     "reviewer_material_evidence_fill_guidance_approval_applied",
     "reviewer_material_evidence_fill_guidance_report_path",
     "reviewer_material_evidence_fill_guidance_next_action",
+    "one_row_material_evidence_fill_package_status",
+    "latest_one_row_material_evidence_fill_package_id",
+    "one_row_material_evidence_fill_package_stage",
+    "one_row_material_evidence_fill_package_health_status",
+    "one_row_material_evidence_fill_package_target_signal_date",
+    "one_row_material_evidence_fill_package_target_symbol",
+    "one_row_material_evidence_fill_package_target_universe_name",
+    "one_row_material_evidence_fill_package_package_row_count",
+    "one_row_material_evidence_fill_package_context_field_drafted_count",
+    "one_row_material_evidence_fill_package_material_blocker_closed_count",
+    "one_row_material_evidence_fill_package_checklist_pass_candidate_count",
+    "one_row_material_evidence_fill_package_remaining_blocked_count",
+    "one_row_material_evidence_fill_package_clean_review_updates_created",
+    "one_row_material_evidence_fill_package_approval_applied",
+    "one_row_material_evidence_fill_package_report_path",
+    "one_row_material_evidence_fill_package_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -734,6 +753,7 @@ COMPONENTS = [
     "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS",
     "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS",
     "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS",
+    "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -784,6 +804,7 @@ WORKFLOW_AREAS = {
     "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS": "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT",
     "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS": "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN",
     "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS": "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE",
+    "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS": "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_PLAN",
@@ -1110,6 +1131,22 @@ class LocalResearchDashboardResult:
     reviewer_material_evidence_fill_guidance_approval_applied: bool
     reviewer_material_evidence_fill_guidance_report_path: str
     reviewer_material_evidence_fill_guidance_next_action: str
+    one_row_material_evidence_fill_package_status: str
+    latest_one_row_material_evidence_fill_package_id: str
+    one_row_material_evidence_fill_package_stage: str
+    one_row_material_evidence_fill_package_health_status: str
+    one_row_material_evidence_fill_package_target_signal_date: str
+    one_row_material_evidence_fill_package_target_symbol: str
+    one_row_material_evidence_fill_package_target_universe_name: str
+    one_row_material_evidence_fill_package_package_row_count: int
+    one_row_material_evidence_fill_package_context_field_drafted_count: int
+    one_row_material_evidence_fill_package_material_blocker_closed_count: int
+    one_row_material_evidence_fill_package_checklist_pass_candidate_count: int
+    one_row_material_evidence_fill_package_remaining_blocked_count: int
+    one_row_material_evidence_fill_package_clean_review_updates_created: bool
+    one_row_material_evidence_fill_package_approval_applied: bool
+    one_row_material_evidence_fill_package_report_path: str
+    one_row_material_evidence_fill_package_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1415,6 +1452,7 @@ def run_local_research_dashboard(
     first_batch_partial_completion_impact_root: str | Path | None = None,
     material_pit_evidence_gate_closure_plan_root: str | Path | None = None,
     reviewer_material_evidence_fill_guidance_root: str | Path | None = None,
+    one_row_material_evidence_fill_package_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1561,6 +1599,11 @@ def run_local_research_dashboard(
         Path(reviewer_material_evidence_fill_guidance_root)
         if reviewer_material_evidence_fill_guidance_root is not None
         else effective_root / "reviewer_material_evidence_fill_guidance"
+    )
+    effective_one_row_material_evidence_fill_package_root = (
+        Path(one_row_material_evidence_fill_package_root)
+        if one_row_material_evidence_fill_package_root is not None
+        else effective_root / "one_row_material_evidence_fill_package"
     )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
@@ -1713,6 +1756,10 @@ def run_local_research_dashboard(
             effective_reviewer_material_evidence_fill_guidance_root = (
                 effective_root / "reviewer_material_evidence_fill_guidance"
             )
+        if one_row_material_evidence_fill_package_root is None:
+            effective_one_row_material_evidence_fill_package_root = (
+                effective_root / "one_row_material_evidence_fill_package"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -1784,6 +1831,7 @@ def run_local_research_dashboard(
         first_batch_partial_completion_impact_root=effective_first_batch_partial_completion_impact_root,
         material_pit_evidence_gate_closure_plan_root=effective_material_pit_evidence_gate_closure_plan_root,
         reviewer_material_evidence_fill_guidance_root=effective_reviewer_material_evidence_fill_guidance_root,
+        one_row_material_evidence_fill_package_root=effective_one_row_material_evidence_fill_package_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -2658,6 +2706,54 @@ def run_local_research_dashboard(
         reviewer_material_evidence_fill_guidance_next_action=str(
             summary.get("reviewer_material_evidence_fill_guidance_next_action", "")
         ),
+        one_row_material_evidence_fill_package_status=str(
+            summary.get("one_row_material_evidence_fill_package_status", "MISSING")
+        ),
+        latest_one_row_material_evidence_fill_package_id=str(
+            summary.get("latest_one_row_material_evidence_fill_package_id", "")
+        ),
+        one_row_material_evidence_fill_package_stage=str(
+            summary.get("one_row_material_evidence_fill_package_stage", "")
+        ),
+        one_row_material_evidence_fill_package_health_status=str(
+            summary.get("one_row_material_evidence_fill_package_health_status", "")
+        ),
+        one_row_material_evidence_fill_package_target_signal_date=str(
+            summary.get("one_row_material_evidence_fill_package_target_signal_date", "")
+        ),
+        one_row_material_evidence_fill_package_target_symbol=str(
+            summary.get("one_row_material_evidence_fill_package_target_symbol", "")
+        ),
+        one_row_material_evidence_fill_package_target_universe_name=str(
+            summary.get("one_row_material_evidence_fill_package_target_universe_name", "")
+        ),
+        one_row_material_evidence_fill_package_package_row_count=_int_or_zero(
+            summary.get("one_row_material_evidence_fill_package_package_row_count")
+        ),
+        one_row_material_evidence_fill_package_context_field_drafted_count=_int_or_zero(
+            summary.get("one_row_material_evidence_fill_package_context_field_drafted_count")
+        ),
+        one_row_material_evidence_fill_package_material_blocker_closed_count=_int_or_zero(
+            summary.get("one_row_material_evidence_fill_package_material_blocker_closed_count")
+        ),
+        one_row_material_evidence_fill_package_checklist_pass_candidate_count=_int_or_zero(
+            summary.get("one_row_material_evidence_fill_package_checklist_pass_candidate_count")
+        ),
+        one_row_material_evidence_fill_package_remaining_blocked_count=_int_or_zero(
+            summary.get("one_row_material_evidence_fill_package_remaining_blocked_count")
+        ),
+        one_row_material_evidence_fill_package_clean_review_updates_created=_bool_from_text(
+            summary.get("one_row_material_evidence_fill_package_clean_review_updates_created")
+        ),
+        one_row_material_evidence_fill_package_approval_applied=_bool_from_text(
+            summary.get("one_row_material_evidence_fill_package_approval_applied")
+        ),
+        one_row_material_evidence_fill_package_report_path=str(
+            summary.get("one_row_material_evidence_fill_package_report_path", "")
+        ),
+        one_row_material_evidence_fill_package_next_action=str(
+            summary.get("one_row_material_evidence_fill_package_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -3292,6 +3388,7 @@ def scan_local_research_workflow_artifacts(
     first_batch_partial_completion_impact_root: str | Path,
     material_pit_evidence_gate_closure_plan_root: str | Path,
     reviewer_material_evidence_fill_guidance_root: str | Path,
+    one_row_material_evidence_fill_package_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -3337,6 +3434,7 @@ def scan_local_research_workflow_artifacts(
     first_batch_partial_completion_impact_path = Path(first_batch_partial_completion_impact_root)
     material_pit_evidence_gate_closure_plan_path = Path(material_pit_evidence_gate_closure_plan_root)
     reviewer_material_evidence_fill_guidance_path = Path(reviewer_material_evidence_fill_guidance_root)
+    one_row_material_evidence_fill_package_path = Path(one_row_material_evidence_fill_package_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -3404,6 +3502,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_first_batch_partial_completion_impact_status(first_batch_partial_completion_impact_path))
     records.extend(_scan_material_pit_evidence_gate_closure_plan_status(material_pit_evidence_gate_closure_plan_path))
     records.extend(_scan_reviewer_material_evidence_fill_guidance_status(reviewer_material_evidence_fill_guidance_path))
+    records.extend(_scan_one_row_material_evidence_fill_package_status(one_row_material_evidence_fill_package_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -4531,6 +4630,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS":
         return _reviewer_material_evidence_fill_guidance_warning_actionability(row, context)
+
+    if component == "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS":
+        return _one_row_material_evidence_fill_package_warning_actionability(row, context)
 
     if component == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS":
         return _universe_profile_policy_audit_warning_actionability(row, context)
@@ -5833,6 +5935,47 @@ def _reviewer_material_evidence_fill_guidance_warning_actionability(
     if status == "WARN" and stage in {
         "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL",
         "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_READY_FOR_REVIEWER",
+    }:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
+    }
+
+
+def _one_row_material_evidence_fill_package_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    _ = context
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    stage = _string_or_empty(row.get("stage"))
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" and stage in {
+        "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_REMAINS_BLOCKED",
+        "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_CONTEXT_DRAFTED",
     }:
         expected_count = max(warning_count, 1)
         return {
@@ -7320,6 +7463,7 @@ def summarize_local_research_status(
                     "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_STATUS",
                     "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS",
                     "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS",
+                    "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -8675,6 +8819,78 @@ def summarize_local_research_status(
         ),
         "reviewer_material_evidence_fill_guidance_next_action": _parse_note_value(
             by_component.get("REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "one_row_material_evidence_fill_package_status": _component_status(
+            by_component,
+            "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS",
+        ),
+        "latest_one_row_material_evidence_fill_package_id": _string_or_empty(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "one_row_material_evidence_fill_package_stage": _string_or_empty(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("stage")
+        ),
+        "one_row_material_evidence_fill_package_health_status": _parse_note_value(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "one_row_material_evidence_fill_package_target_signal_date": _parse_note_value(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+            "target_signal_date",
+        ),
+        "one_row_material_evidence_fill_package_target_symbol": _parse_note_value(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+            "target_symbol",
+        ),
+        "one_row_material_evidence_fill_package_target_universe_name": _parse_note_value(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+            "target_universe_name",
+        ),
+        "one_row_material_evidence_fill_package_package_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+                "package_row_count",
+            )
+        ),
+        "one_row_material_evidence_fill_package_context_field_drafted_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+                "context_field_drafted_count",
+            )
+        ),
+        "one_row_material_evidence_fill_package_material_blocker_closed_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+                "material_blocker_closed_count",
+            )
+        ),
+        "one_row_material_evidence_fill_package_checklist_pass_candidate_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+                "checklist_pass_candidate_count",
+            )
+        ),
+        "one_row_material_evidence_fill_package_remaining_blocked_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+                "remaining_blocked_count",
+            )
+        ),
+        "one_row_material_evidence_fill_package_clean_review_updates_created": _parse_note_value(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+            "clean_review_updates_created",
+        ),
+        "one_row_material_evidence_fill_package_approval_applied": _parse_note_value(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+            "approval_applied",
+        ),
+        "one_row_material_evidence_fill_package_report_path": _parse_note_value(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "one_row_material_evidence_fill_package_next_action": _parse_note_value(
+            by_component.get("ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -10870,6 +11086,54 @@ def build_local_research_dashboard_metadata(
         "reviewer_material_evidence_fill_guidance_next_action": (
             result.reviewer_material_evidence_fill_guidance_next_action
         ),
+        "one_row_material_evidence_fill_package_status": (
+            result.one_row_material_evidence_fill_package_status
+        ),
+        "latest_one_row_material_evidence_fill_package_id": (
+            result.latest_one_row_material_evidence_fill_package_id
+        ),
+        "one_row_material_evidence_fill_package_stage": (
+            result.one_row_material_evidence_fill_package_stage
+        ),
+        "one_row_material_evidence_fill_package_health_status": (
+            result.one_row_material_evidence_fill_package_health_status
+        ),
+        "one_row_material_evidence_fill_package_target_signal_date": (
+            result.one_row_material_evidence_fill_package_target_signal_date
+        ),
+        "one_row_material_evidence_fill_package_target_symbol": (
+            result.one_row_material_evidence_fill_package_target_symbol
+        ),
+        "one_row_material_evidence_fill_package_target_universe_name": (
+            result.one_row_material_evidence_fill_package_target_universe_name
+        ),
+        "one_row_material_evidence_fill_package_package_row_count": (
+            result.one_row_material_evidence_fill_package_package_row_count
+        ),
+        "one_row_material_evidence_fill_package_context_field_drafted_count": (
+            result.one_row_material_evidence_fill_package_context_field_drafted_count
+        ),
+        "one_row_material_evidence_fill_package_material_blocker_closed_count": (
+            result.one_row_material_evidence_fill_package_material_blocker_closed_count
+        ),
+        "one_row_material_evidence_fill_package_checklist_pass_candidate_count": (
+            result.one_row_material_evidence_fill_package_checklist_pass_candidate_count
+        ),
+        "one_row_material_evidence_fill_package_remaining_blocked_count": (
+            result.one_row_material_evidence_fill_package_remaining_blocked_count
+        ),
+        "one_row_material_evidence_fill_package_clean_review_updates_created": (
+            result.one_row_material_evidence_fill_package_clean_review_updates_created
+        ),
+        "one_row_material_evidence_fill_package_approval_applied": (
+            result.one_row_material_evidence_fill_package_approval_applied
+        ),
+        "one_row_material_evidence_fill_package_report_path": (
+            result.one_row_material_evidence_fill_package_report_path
+        ),
+        "one_row_material_evidence_fill_package_next_action": (
+            result.one_row_material_evidence_fill_package_next_action
+        ),
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -12983,6 +13247,54 @@ def _reviewer_material_evidence_fill_guidance_notes(summary: dict[str, Any]) -> 
         f"survivorship_rationale_guidance_count="
         f"{_string_or_empty(summary.get('survivorship_rationale_guidance_count'))}; "
         f"metadata_guidance_count={_string_or_empty(summary.get('metadata_guidance_count'))}; "
+        f"checklist_pass_candidate_count={_string_or_empty(summary.get('checklist_pass_candidate_count'))}; "
+        f"remaining_blocked_count={_string_or_empty(summary.get('remaining_blocked_count'))}; "
+        f"clean_review_updates_created={_string_or_empty(summary.get('clean_review_updates_created'))}; "
+        f"approval_applied={_string_or_empty(summary.get('approval_applied'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_one_row_material_evidence_fill_package_status(root: Path) -> list[dict[str, Any]]:
+    package_root = root.parent if root.name == "status" else root
+    if not package_root.exists():
+        return []
+    try:
+        result = run_one_row_material_evidence_fill_package_status(
+            root=package_root,
+            output_dir=package_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_package_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    return [
+        _record(
+            workflow_area="ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE",
+            component="ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_package_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_one_row_material_evidence_fill_package_notes(summary),
+        )
+    ]
+
+
+def _one_row_material_evidence_fill_package_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(summary.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"target_signal_date={_string_or_empty(summary.get('target_signal_date'))}; "
+        f"target_symbol={_string_or_empty(summary.get('target_symbol'))}; "
+        f"target_universe_name={_string_or_empty(summary.get('target_universe_name'))}; "
+        f"package_row_count={_string_or_empty(summary.get('package_row_count'))}; "
+        f"context_field_drafted_count={_string_or_empty(summary.get('context_field_drafted_count'))}; "
+        f"material_blocker_closed_count={_string_or_empty(summary.get('material_blocker_closed_count'))}; "
         f"checklist_pass_candidate_count={_string_or_empty(summary.get('checklist_pass_candidate_count'))}; "
         f"remaining_blocked_count={_string_or_empty(summary.get('remaining_blocked_count'))}; "
         f"clean_review_updates_created={_string_or_empty(summary.get('clean_review_updates_created'))}; "

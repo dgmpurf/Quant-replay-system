@@ -316,6 +316,16 @@ When the status reports `REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL`, r
 
 Reviewer material evidence fill guidance is report-only. Health fails if guidance artifacts contain `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, `valid_for_signal_date=true`, clean `review_updates.csv`, approval-applied flags, data writes, PIT review/export/staging/current-candidates outputs, snapshots, or forward labels. Later paper workflow artifacts keep final workflow priority while reviewer guidance fields remain visible for audit.
 
+## One-Row Material Evidence Fill Package Status
+
+`research-status` includes `one-row-material-evidence-fill-package-status` as one-row PIT evidence fill package context when those artifacts exist.
+
+The unified summary records the latest package id, status/stage, health status, target signal date, target symbol, target universe name, package row count, context-field-drafted count, material-blocker-closed count, checklist-pass candidate count, remaining-blocked count, clean-review-updates-created flag, approval-applied flag, report path, and next manual action.
+
+When the status reports `ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_CONTEXT_DRAFTED`, context fields were drafted for `2024-04-02 / 000001 / stock_core`, but material PIT blockers remain. This is expected review context and does not imply PIT approval, clean review updates, export-readiness, staging, current-candidates generation, snapshot build, forward labels, or trading readiness.
+
+One-row material evidence fill packages are report-only. Health fails if package artifacts contain `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, `valid_for_signal_date=true`, `survivorship_bias_resolved=true`, clean `review_updates.csv`, approval-applied flags, data writes, PIT review/export/staging/current-candidates outputs, snapshots, or forward labels. Later paper workflow artifacts keep final workflow priority while package fields remain visible for audit.
+
 ## Universe Profile Policy Audit Status
 
 `research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.

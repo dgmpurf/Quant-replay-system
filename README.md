@@ -205,6 +205,8 @@ For the v1.23.0 checkpoint covering material PIT evidence gate closure plan arti
 
 For the v1.24.0 checkpoint covering reviewer material evidence fill guidance artifact views and `research-status` integration, see [docs/release_checkpoint_v1.24.0.md](docs/release_checkpoint_v1.24.0.md).
 
+For the v1.25.0 checkpoint covering one-row material evidence fill package artifact views and `research-status` integration, see [docs/release_checkpoint_v1.25.0.md](docs/release_checkpoint_v1.25.0.md).
+
 For the v1.15.0 checkpoint covering EOD post-close low-budget PIT policy profile comparison and `research-status` integration, see [docs/release_checkpoint_v1.15.0.md](docs/release_checkpoint_v1.15.0.md).
 
 For the v1.16.0 checkpoint covering PIT official status evidence packet artifacts and `research-status` integration, see [docs/release_checkpoint_v1.16.0.md](docs/release_checkpoint_v1.16.0.md).
