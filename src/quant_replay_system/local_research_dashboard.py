@@ -77,6 +77,9 @@ from quant_replay_system.one_row_material_evidence_fill_package_status import (
 from quant_replay_system.one_row_checklist_pass_candidate_preview_status import (
     run_one_row_checklist_pass_candidate_preview_status,
 )
+from quant_replay_system.replay_substrate_schema_fixture_status import (
+    run_replay_substrate_schema_fixture_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -448,6 +451,27 @@ SUMMARY_COLUMNS = [
     "one_row_checklist_pass_candidate_preview_approval_applied",
     "one_row_checklist_pass_candidate_preview_report_path",
     "one_row_checklist_pass_candidate_preview_next_action",
+    "replay_substrate_schema_fixture_status",
+    "latest_replay_substrate_schema_fixture_id",
+    "replay_substrate_schema_fixture_stage",
+    "replay_substrate_schema_fixture_health_status",
+    "replay_substrate_schema_fixture_entity_count",
+    "replay_substrate_schema_fixture_validation_issue_count",
+    "replay_substrate_schema_fixture_overclaim_guard_status",
+    "replay_substrate_schema_fixture_overclaim_guard_pass_count",
+    "replay_substrate_schema_fixture_overclaim_guard_total_count",
+    "replay_substrate_schema_fixture_active_replay_input",
+    "replay_substrate_schema_fixture_forward_labels_exist",
+    "replay_substrate_schema_fixture_weights_trained",
+    "replay_substrate_schema_fixture_active_stock_profile_exists",
+    "replay_substrate_schema_fixture_real_buy_review_eligible",
+    "replay_substrate_schema_fixture_report_only",
+    "replay_substrate_schema_fixture_diagnostic_only",
+    "replay_substrate_schema_fixture_no_live_trading",
+    "replay_substrate_schema_fixture_no_broker_api",
+    "replay_substrate_schema_fixture_no_order_placement",
+    "replay_substrate_schema_fixture_report_path",
+    "replay_substrate_schema_fixture_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -775,6 +799,7 @@ COMPONENTS = [
     "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS",
     "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS",
     "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS",
+    "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -1186,6 +1211,27 @@ class LocalResearchDashboardResult:
     one_row_checklist_pass_candidate_preview_approval_applied: bool
     one_row_checklist_pass_candidate_preview_report_path: str
     one_row_checklist_pass_candidate_preview_next_action: str
+    replay_substrate_schema_fixture_status: str
+    latest_replay_substrate_schema_fixture_id: str
+    replay_substrate_schema_fixture_stage: str
+    replay_substrate_schema_fixture_health_status: str
+    replay_substrate_schema_fixture_entity_count: int
+    replay_substrate_schema_fixture_validation_issue_count: int
+    replay_substrate_schema_fixture_overclaim_guard_status: str
+    replay_substrate_schema_fixture_overclaim_guard_pass_count: int
+    replay_substrate_schema_fixture_overclaim_guard_total_count: int
+    replay_substrate_schema_fixture_active_replay_input: bool
+    replay_substrate_schema_fixture_forward_labels_exist: bool
+    replay_substrate_schema_fixture_weights_trained: bool
+    replay_substrate_schema_fixture_active_stock_profile_exists: bool
+    replay_substrate_schema_fixture_real_buy_review_eligible: bool
+    replay_substrate_schema_fixture_report_only: bool
+    replay_substrate_schema_fixture_diagnostic_only: bool
+    replay_substrate_schema_fixture_no_live_trading: bool
+    replay_substrate_schema_fixture_no_broker_api: bool
+    replay_substrate_schema_fixture_no_order_placement: bool
+    replay_substrate_schema_fixture_report_path: str
+    replay_substrate_schema_fixture_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1493,6 +1539,7 @@ def run_local_research_dashboard(
     reviewer_material_evidence_fill_guidance_root: str | Path | None = None,
     one_row_material_evidence_fill_package_root: str | Path | None = None,
     one_row_checklist_pass_candidate_preview_root: str | Path | None = None,
+    replay_substrate_schema_fixture_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1649,6 +1696,11 @@ def run_local_research_dashboard(
         Path(one_row_checklist_pass_candidate_preview_root)
         if one_row_checklist_pass_candidate_preview_root is not None
         else effective_root / "one_row_checklist_pass_candidate_preview"
+    )
+    effective_replay_substrate_schema_fixture_root = (
+        Path(replay_substrate_schema_fixture_root)
+        if replay_substrate_schema_fixture_root is not None
+        else effective_root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
     )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
@@ -1809,6 +1861,10 @@ def run_local_research_dashboard(
             effective_one_row_checklist_pass_candidate_preview_root = (
                 effective_root / "one_row_checklist_pass_candidate_preview"
             )
+        if replay_substrate_schema_fixture_root is None:
+            effective_replay_substrate_schema_fixture_root = (
+                effective_root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -1882,6 +1938,7 @@ def run_local_research_dashboard(
         reviewer_material_evidence_fill_guidance_root=effective_reviewer_material_evidence_fill_guidance_root,
         one_row_material_evidence_fill_package_root=effective_one_row_material_evidence_fill_package_root,
         one_row_checklist_pass_candidate_preview_root=effective_one_row_checklist_pass_candidate_preview_root,
+        replay_substrate_schema_fixture_root=effective_replay_substrate_schema_fixture_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -1960,6 +2017,7 @@ def run_local_research_dashboard(
         "material_pit_evidence_gate_closure_plan_root": (
             effective_material_pit_evidence_gate_closure_plan_root
         ),
+        "replay_substrate_schema_fixture_root": effective_replay_substrate_schema_fixture_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
@@ -2855,6 +2913,69 @@ def run_local_research_dashboard(
         one_row_checklist_pass_candidate_preview_next_action=str(
             summary.get("one_row_checklist_pass_candidate_preview_next_action", "")
         ),
+        replay_substrate_schema_fixture_status=str(
+            summary.get("replay_substrate_schema_fixture_status", "MISSING")
+        ),
+        latest_replay_substrate_schema_fixture_id=str(
+            summary.get("latest_replay_substrate_schema_fixture_id", "")
+        ),
+        replay_substrate_schema_fixture_stage=str(
+            summary.get("replay_substrate_schema_fixture_stage", "")
+        ),
+        replay_substrate_schema_fixture_health_status=str(
+            summary.get("replay_substrate_schema_fixture_health_status", "")
+        ),
+        replay_substrate_schema_fixture_entity_count=_int_or_zero(
+            summary.get("replay_substrate_schema_fixture_entity_count")
+        ),
+        replay_substrate_schema_fixture_validation_issue_count=_int_or_zero(
+            summary.get("replay_substrate_schema_fixture_validation_issue_count")
+        ),
+        replay_substrate_schema_fixture_overclaim_guard_status=str(
+            summary.get("replay_substrate_schema_fixture_overclaim_guard_status", "")
+        ),
+        replay_substrate_schema_fixture_overclaim_guard_pass_count=_int_or_zero(
+            summary.get("replay_substrate_schema_fixture_overclaim_guard_pass_count")
+        ),
+        replay_substrate_schema_fixture_overclaim_guard_total_count=_int_or_zero(
+            summary.get("replay_substrate_schema_fixture_overclaim_guard_total_count")
+        ),
+        replay_substrate_schema_fixture_active_replay_input=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_active_replay_input")
+        ),
+        replay_substrate_schema_fixture_forward_labels_exist=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_forward_labels_exist")
+        ),
+        replay_substrate_schema_fixture_weights_trained=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_weights_trained")
+        ),
+        replay_substrate_schema_fixture_active_stock_profile_exists=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_active_stock_profile_exists")
+        ),
+        replay_substrate_schema_fixture_real_buy_review_eligible=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_real_buy_review_eligible")
+        ),
+        replay_substrate_schema_fixture_report_only=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_report_only")
+        ),
+        replay_substrate_schema_fixture_diagnostic_only=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_diagnostic_only")
+        ),
+        replay_substrate_schema_fixture_no_live_trading=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_no_live_trading")
+        ),
+        replay_substrate_schema_fixture_no_broker_api=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_no_broker_api")
+        ),
+        replay_substrate_schema_fixture_no_order_placement=_bool_from_text(
+            summary.get("replay_substrate_schema_fixture_no_order_placement")
+        ),
+        replay_substrate_schema_fixture_report_path=str(
+            summary.get("replay_substrate_schema_fixture_report_path", "")
+        ),
+        replay_substrate_schema_fixture_next_action=str(
+            summary.get("replay_substrate_schema_fixture_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -3491,6 +3612,7 @@ def scan_local_research_workflow_artifacts(
     reviewer_material_evidence_fill_guidance_root: str | Path,
     one_row_material_evidence_fill_package_root: str | Path,
     one_row_checklist_pass_candidate_preview_root: str | Path,
+    replay_substrate_schema_fixture_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -3538,6 +3660,7 @@ def scan_local_research_workflow_artifacts(
     reviewer_material_evidence_fill_guidance_path = Path(reviewer_material_evidence_fill_guidance_root)
     one_row_material_evidence_fill_package_path = Path(one_row_material_evidence_fill_package_root)
     one_row_checklist_pass_candidate_preview_path = Path(one_row_checklist_pass_candidate_preview_root)
+    replay_substrate_schema_fixture_path = Path(replay_substrate_schema_fixture_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -3607,6 +3730,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_reviewer_material_evidence_fill_guidance_status(reviewer_material_evidence_fill_guidance_path))
     records.extend(_scan_one_row_material_evidence_fill_package_status(one_row_material_evidence_fill_package_path))
     records.extend(_scan_one_row_checklist_pass_candidate_preview_status(one_row_checklist_pass_candidate_preview_path))
+    records.extend(_scan_replay_substrate_schema_fixture_status(replay_substrate_schema_fixture_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -4740,6 +4864,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS":
         return _one_row_checklist_pass_candidate_preview_warning_actionability(row, context)
+
+    if component == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS":
+        return _replay_substrate_schema_fixture_warning_actionability(row, context)
 
     if component == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS":
         return _universe_profile_policy_audit_warning_actionability(row, context)
@@ -6144,6 +6271,43 @@ def _one_row_checklist_pass_candidate_preview_warning_actionability(
     }
 
 
+def _replay_substrate_schema_fixture_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    _ = context
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    if status == "WARN" or warning_count:
+        expected_count = max(warning_count, 1)
+        return {
+            "total_warning_count": expected_count,
+            "expected_reviewable_warning_count": expected_count,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    return {
+        "total_warning_count": 0,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": 0,
+        "blocking_error_count": 0,
+    }
+
+
 def _material_pit_evidence_gate_closure_plan_warning_actionability(
     row: dict[str, Any],
     context: dict[str, Any],
@@ -7108,6 +7272,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             return "FIRST_BATCH_PARTIAL_COMPLETION_IMPACT_FAILED"
         if statuses["MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_STATUS"] == "FAIL":
             return "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_FAILED"
+        if statuses["REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS"] == "FAIL":
+            return "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_FAILED"
         if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
@@ -7300,6 +7466,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _reviewer_material_evidence_fill_guidance_stage_from_frame(dashboard_frame)
     ):
         return _reviewer_material_evidence_fill_guidance_stage_from_frame(dashboard_frame)
+    if (
+        statuses["REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS"] in {"PASS", "WARN", "READY"}
+        and _replay_substrate_schema_fixture_stage_from_frame(dashboard_frame)
+    ):
+        return _replay_substrate_schema_fixture_stage_from_frame(dashboard_frame)
     if (
         not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
         and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
@@ -7613,6 +7784,7 @@ def summarize_local_research_status(
                     "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS",
                     "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS",
                     "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS",
+                    "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -9116,6 +9288,96 @@ def summarize_local_research_status(
         ),
         "one_row_checklist_pass_candidate_preview_next_action": _parse_note_value(
             by_component.get("ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "replay_substrate_schema_fixture_status": _component_status(
+            by_component,
+            "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
+        ),
+        "latest_replay_substrate_schema_fixture_id": _string_or_empty(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "replay_substrate_schema_fixture_stage": _string_or_empty(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("stage")
+        ),
+        "replay_substrate_schema_fixture_health_status": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "replay_substrate_schema_fixture_entity_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "entity_count",
+            )
+        ),
+        "replay_substrate_schema_fixture_validation_issue_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "validation_issue_count",
+            )
+        ),
+        "replay_substrate_schema_fixture_overclaim_guard_status": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "overclaim_guard_status",
+        ),
+        "replay_substrate_schema_fixture_overclaim_guard_pass_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "overclaim_guard_pass_count",
+            )
+        ),
+        "replay_substrate_schema_fixture_overclaim_guard_total_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "overclaim_guard_total_count",
+            )
+        ),
+        "replay_substrate_schema_fixture_active_replay_input": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_replay_input",
+        ),
+        "replay_substrate_schema_fixture_forward_labels_exist": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "replay_substrate_schema_fixture_weights_trained": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "replay_substrate_schema_fixture_active_stock_profile_exists": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "replay_substrate_schema_fixture_real_buy_review_eligible": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "replay_substrate_schema_fixture_report_only": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "replay_substrate_schema_fixture_diagnostic_only": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "replay_substrate_schema_fixture_no_live_trading": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "replay_substrate_schema_fixture_no_broker_api": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "replay_substrate_schema_fixture_no_order_placement": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "replay_substrate_schema_fixture_report_path": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "replay_substrate_schema_fixture_next_action": _parse_note_value(
+            by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -11410,6 +11672,49 @@ def build_local_research_dashboard_metadata(
         "one_row_checklist_pass_candidate_preview_next_action": (
             result.one_row_checklist_pass_candidate_preview_next_action
         ),
+        "replay_substrate_schema_fixture_status": result.replay_substrate_schema_fixture_status,
+        "latest_replay_substrate_schema_fixture_id": result.latest_replay_substrate_schema_fixture_id,
+        "replay_substrate_schema_fixture_stage": result.replay_substrate_schema_fixture_stage,
+        "replay_substrate_schema_fixture_health_status": (
+            result.replay_substrate_schema_fixture_health_status
+        ),
+        "replay_substrate_schema_fixture_entity_count": result.replay_substrate_schema_fixture_entity_count,
+        "replay_substrate_schema_fixture_validation_issue_count": (
+            result.replay_substrate_schema_fixture_validation_issue_count
+        ),
+        "replay_substrate_schema_fixture_overclaim_guard_status": (
+            result.replay_substrate_schema_fixture_overclaim_guard_status
+        ),
+        "replay_substrate_schema_fixture_overclaim_guard_pass_count": (
+            result.replay_substrate_schema_fixture_overclaim_guard_pass_count
+        ),
+        "replay_substrate_schema_fixture_overclaim_guard_total_count": (
+            result.replay_substrate_schema_fixture_overclaim_guard_total_count
+        ),
+        "replay_substrate_schema_fixture_active_replay_input": (
+            result.replay_substrate_schema_fixture_active_replay_input
+        ),
+        "replay_substrate_schema_fixture_forward_labels_exist": (
+            result.replay_substrate_schema_fixture_forward_labels_exist
+        ),
+        "replay_substrate_schema_fixture_weights_trained": (
+            result.replay_substrate_schema_fixture_weights_trained
+        ),
+        "replay_substrate_schema_fixture_active_stock_profile_exists": (
+            result.replay_substrate_schema_fixture_active_stock_profile_exists
+        ),
+        "replay_substrate_schema_fixture_real_buy_review_eligible": (
+            result.replay_substrate_schema_fixture_real_buy_review_eligible
+        ),
+        "replay_substrate_schema_fixture_report_only": result.replay_substrate_schema_fixture_report_only,
+        "replay_substrate_schema_fixture_diagnostic_only": result.replay_substrate_schema_fixture_diagnostic_only,
+        "replay_substrate_schema_fixture_no_live_trading": result.replay_substrate_schema_fixture_no_live_trading,
+        "replay_substrate_schema_fixture_no_broker_api": result.replay_substrate_schema_fixture_no_broker_api,
+        "replay_substrate_schema_fixture_no_order_placement": (
+            result.replay_substrate_schema_fixture_no_order_placement
+        ),
+        "replay_substrate_schema_fixture_report_path": result.replay_substrate_schema_fixture_report_path,
+        "replay_substrate_schema_fixture_next_action": result.replay_substrate_schema_fixture_next_action,
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -13628,6 +13933,59 @@ def _one_row_checklist_pass_candidate_preview_notes(summary: dict[str, Any]) -> 
     )
 
 
+def _scan_replay_substrate_schema_fixture_status(root: Path) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_replay_substrate_schema_fixture_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_fixture_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    return [
+        _record(
+            workflow_area="REPLAY_SUBSTRATE_SCHEMA_FIXTURE",
+            component="REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_fixture_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_replay_substrate_schema_fixture_notes(summary),
+        )
+    ]
+
+
+def _replay_substrate_schema_fixture_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(summary.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"entity_count={_string_or_empty(summary.get('entity_count'))}; "
+        f"validation_issue_count={_string_or_empty(summary.get('validation_issue_count'))}; "
+        f"overclaim_guard_status={_string_or_empty(summary.get('overclaim_guard_status'))}; "
+        f"overclaim_guard_pass_count={_string_or_empty(summary.get('overclaim_guard_pass_count'))}; "
+        f"overclaim_guard_total_count={_string_or_empty(summary.get('overclaim_guard_total_count'))}; "
+        f"active_replay_input={_string_or_empty(summary.get('active_replay_input'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"no_live_trading={_string_or_empty(summary.get('no_live_trading'))}; "
+        f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
+        f"no_order_placement={_string_or_empty(summary.get('no_order_placement'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
 def _scan_universe_profile_policy_audit_status(root: Path) -> list[dict[str, Any]]:
     computed = _computed_universe_profile_policy_audit_status_record(root)
     if computed is not None:
@@ -15659,6 +16017,12 @@ def _component_next_action(component: str, status: str) -> str:
             if status == "MISSING"
             else "Review clean review_updates artifact manually before a separate overlay review run."
         )
+    if component == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS":
+        return (
+            "Run replay-substrate-schema-fixture-status."
+            if status == "MISSING"
+            else "Review report-only replay substrate schema fixture context; do not run real replay or training."
+        )
     if component == "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS":
         return (
             "Run reviewed-replacement-worklist-activation after acceptance planning context is reviewed."
@@ -15911,6 +16275,14 @@ def _material_pit_evidence_gate_closure_plan_stage_from_frame(dashboard_frame: p
 def _reviewer_material_evidence_fill_guidance_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _replay_substrate_schema_fixture_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

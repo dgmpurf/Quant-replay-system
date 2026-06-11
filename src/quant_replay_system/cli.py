@@ -254,6 +254,16 @@ from quant_replay_system.one_row_checklist_pass_candidate_preview_index import (
 from quant_replay_system.one_row_checklist_pass_candidate_preview_status import (
     run_one_row_checklist_pass_candidate_preview_status,
 )
+from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
+from quant_replay_system.replay_substrate_schema_fixture_health import (
+    check_replay_substrate_schema_fixture_health,
+)
+from quant_replay_system.replay_substrate_schema_fixture_index import (
+    build_replay_substrate_schema_fixture_index,
+)
+from quant_replay_system.replay_substrate_schema_fixture_status import (
+    run_replay_substrate_schema_fixture_status,
+)
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from quant_replay_system.universe_profile_policy_audit_health import check_universe_profile_policy_audit_health
 from quant_replay_system.universe_profile_policy_audit_index import build_universe_profile_policy_audit_index
@@ -2022,6 +2032,59 @@ def build_parser() -> argparse.ArgumentParser:
     one_row_checklist_pass_candidate_preview_status.set_defaults(
         handler=_handle_one_row_checklist_pass_candidate_preview_status
     )
+
+    replay_substrate_schema_fixture = subparsers.add_parser(
+        "replay-substrate-schema-fixture",
+        help="Write report-only synthetic replay substrate schema fixture artifacts",
+    )
+    replay_substrate_schema_fixture.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1",
+        help="Directory where replay substrate schema fixture artifacts will be written",
+    )
+    replay_substrate_schema_fixture.set_defaults(handler=_handle_replay_substrate_schema_fixture)
+
+    replay_substrate_schema_fixture_index = subparsers.add_parser(
+        "replay-substrate-schema-fixture-index",
+        help="Build an index for report-only replay substrate schema fixture artifacts",
+    )
+    replay_substrate_schema_fixture_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1",
+    )
+    replay_substrate_schema_fixture_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1/index",
+    )
+    replay_substrate_schema_fixture_index.set_defaults(handler=_handle_replay_substrate_schema_fixture_index)
+
+    replay_substrate_schema_fixture_health = subparsers.add_parser(
+        "replay-substrate-schema-fixture-health",
+        help="Check report-only replay substrate schema fixture artifact health",
+    )
+    replay_substrate_schema_fixture_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1",
+    )
+    replay_substrate_schema_fixture_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1/health",
+    )
+    replay_substrate_schema_fixture_health.set_defaults(handler=_handle_replay_substrate_schema_fixture_health)
+
+    replay_substrate_schema_fixture_status = subparsers.add_parser(
+        "replay-substrate-schema-fixture-status",
+        help="Summarize latest report-only replay substrate schema fixture status",
+    )
+    replay_substrate_schema_fixture_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1",
+    )
+    replay_substrate_schema_fixture_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1/status",
+    )
+    replay_substrate_schema_fixture_status.set_defaults(handler=_handle_replay_substrate_schema_fixture_status)
 
     universe_profile_policy_audit = subparsers.add_parser(
         "universe-profile-policy-audit",
@@ -5795,6 +5858,82 @@ def _handle_one_row_checklist_pass_candidate_preview_status(args: argparse.Names
     return 1 if result.status == "FAIL" else 0
 
 
+def _handle_replay_substrate_schema_fixture(args: argparse.Namespace) -> int:
+    result = build_replay_substrate_schema_fixture(output_dir=args.output_dir)
+    print(f"fixture_id: {result.fixture_id}")
+    print(f"status: {result.status}")
+    print(f"entity_count: {result.entity_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"overclaim_guard_count: {result.overclaim_guard_count}")
+    print(f"overclaim_guard_pass_count: {result.overclaim_guard_pass_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"forward_labels_computed: {result.forward_labels_computed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"entity_status_path: {result.artifact_paths['entity_status']}")
+    print(f"validation_issues_path: {result.artifact_paths['validation_issues']}")
+    print(f"overclaim_guards_path: {result.artifact_paths['overclaim_guards']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_replay_substrate_schema_fixture_index(args: argparse.Namespace) -> int:
+    result = build_replay_substrate_schema_fixture_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_replay_substrate_schema_fixture_health(args: argparse.Namespace) -> int:
+    result = check_replay_substrate_schema_fixture_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"Health status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_replay_substrate_schema_fixture_status(args: argparse.Namespace) -> int:
+    result = run_replay_substrate_schema_fixture_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_fixture_id: {result.latest_fixture_id}")
+    print(f"health_status: {result.health_status}")
+    print(f"entity_count: {result.entity_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"overclaim_guard_status: {result.overclaim_guard_status}")
+    print(f"overclaim_guard_pass_count: {result.overclaim_guard_pass_count}")
+    print(f"overclaim_guard_total_count: {result.overclaim_guard_total_count}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"no_live_trading: {result.no_live_trading}")
+    print(f"no_broker_api: {result.no_broker_api}")
+    print(f"no_order_placement: {result.no_order_placement}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_manual_action: {result.next_manual_action}")
+    print("This is a report-only replay substrate schema fixture. It is not real replay, forward-label computation, training, stock-profile validation, or real buy-review eligibility.")
+    print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
 def _handle_universe_profile_policy_audit(args: argparse.Namespace) -> int:
     result = build_universe_profile_policy_audit(
         worklist=args.worklist,
@@ -9164,6 +9303,66 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "one_row_checklist_pass_candidate_preview_next_action: "
         f"{result.one_row_checklist_pass_candidate_preview_next_action}"
     )
+    print(
+        "latest_replay_substrate_schema_fixture_id: "
+        f"{result.latest_replay_substrate_schema_fixture_id}"
+    )
+    print(f"replay_substrate_schema_fixture_status: {result.replay_substrate_schema_fixture_status}")
+    print(f"replay_substrate_schema_fixture_stage: {result.replay_substrate_schema_fixture_stage}")
+    print(
+        "replay_substrate_schema_fixture_health_status: "
+        f"{result.replay_substrate_schema_fixture_health_status}"
+    )
+    print(
+        "replay_substrate_schema_fixture_entity_count: "
+        f"{result.replay_substrate_schema_fixture_entity_count}"
+    )
+    print(
+        "replay_substrate_schema_fixture_validation_issue_count: "
+        f"{result.replay_substrate_schema_fixture_validation_issue_count}"
+    )
+    print(
+        "replay_substrate_schema_fixture_overclaim_guard_status: "
+        f"{result.replay_substrate_schema_fixture_overclaim_guard_status}"
+    )
+    print(
+        "replay_substrate_schema_fixture_overclaim_guard_pass_count: "
+        f"{result.replay_substrate_schema_fixture_overclaim_guard_pass_count}"
+    )
+    print(
+        "replay_substrate_schema_fixture_overclaim_guard_total_count: "
+        f"{result.replay_substrate_schema_fixture_overclaim_guard_total_count}"
+    )
+    print(
+        "replay_substrate_schema_fixture_active_replay_input: "
+        f"{result.replay_substrate_schema_fixture_active_replay_input}"
+    )
+    print(
+        "replay_substrate_schema_fixture_forward_labels_exist: "
+        f"{result.replay_substrate_schema_fixture_forward_labels_exist}"
+    )
+    print(
+        "replay_substrate_schema_fixture_weights_trained: "
+        f"{result.replay_substrate_schema_fixture_weights_trained}"
+    )
+    print(
+        "replay_substrate_schema_fixture_active_stock_profile_exists: "
+        f"{result.replay_substrate_schema_fixture_active_stock_profile_exists}"
+    )
+    print(
+        "replay_substrate_schema_fixture_real_buy_review_eligible: "
+        f"{result.replay_substrate_schema_fixture_real_buy_review_eligible}"
+    )
+    print(f"replay_substrate_schema_fixture_report_only: {result.replay_substrate_schema_fixture_report_only}")
+    print(f"replay_substrate_schema_fixture_diagnostic_only: {result.replay_substrate_schema_fixture_diagnostic_only}")
+    print(f"replay_substrate_schema_fixture_no_live_trading: {result.replay_substrate_schema_fixture_no_live_trading}")
+    print(f"replay_substrate_schema_fixture_no_broker_api: {result.replay_substrate_schema_fixture_no_broker_api}")
+    print(
+        "replay_substrate_schema_fixture_no_order_placement: "
+        f"{result.replay_substrate_schema_fixture_no_order_placement}"
+    )
+    print(f"replay_substrate_schema_fixture_report_path: {result.replay_substrate_schema_fixture_report_path}")
+    print(f"replay_substrate_schema_fixture_next_action: {result.replay_substrate_schema_fixture_next_action}")
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

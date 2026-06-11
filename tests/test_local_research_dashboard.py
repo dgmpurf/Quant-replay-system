@@ -13,6 +13,7 @@ from quant_replay_system.local_research_dashboard import (
     run_local_research_dashboard,
 )
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
+from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
     build_reviewer_no_hit_source_coverage_acceptance,
 )
@@ -1620,6 +1621,139 @@ def test_cli_research_status_prints_reviewer_no_hit_downstream_impact_fields(
         "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT"
     ) in output.out
     assert "reviewer_no_hit_downstream_impact_approval_applied: False" in output.out
+
+
+def test_research_status_includes_replay_substrate_schema_fixture_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_replay_substrate_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.latest_replay_substrate_schema_fixture_id == fixture.fixture_id
+    assert result.replay_substrate_schema_fixture_status == "PASS"
+    assert result.replay_substrate_schema_fixture_stage == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_READY"
+    assert result.replay_substrate_schema_fixture_health_status == "PASS"
+    assert result.replay_substrate_schema_fixture_entity_count == 14
+    assert result.replay_substrate_schema_fixture_validation_issue_count == 0
+    assert result.replay_substrate_schema_fixture_overclaim_guard_status == "PASS"
+    assert result.replay_substrate_schema_fixture_overclaim_guard_pass_count == 8
+    assert result.replay_substrate_schema_fixture_overclaim_guard_total_count == 8
+    assert result.replay_substrate_schema_fixture_active_replay_input is False
+    assert result.replay_substrate_schema_fixture_forward_labels_exist is False
+    assert result.replay_substrate_schema_fixture_weights_trained is False
+    assert result.replay_substrate_schema_fixture_active_stock_profile_exists is False
+    assert result.replay_substrate_schema_fixture_real_buy_review_eligible is False
+    assert result.replay_substrate_schema_fixture_report_only is True
+    assert result.replay_substrate_schema_fixture_diagnostic_only is True
+    assert result.replay_substrate_schema_fixture_no_live_trading is True
+    assert result.replay_substrate_schema_fixture_no_broker_api is True
+    assert result.replay_substrate_schema_fixture_no_order_placement is True
+    assert result.workflow_stage == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_READY"
+    assert row["status"] == "PASS"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_replay_substrate_schema_fixture_id"] == fixture.fixture_id
+    assert summary.loc[0, "replay_substrate_schema_fixture_overclaim_guard_pass_count"] == "8"
+    assert summary.loc[0, "replay_substrate_schema_fixture_overclaim_guard_total_count"] == "8"
+    assert summary.loc[0, "replay_substrate_schema_fixture_active_replay_input"] == "False"
+    assert metadata["replay_substrate_schema_fixture_status"] == "PASS"
+    assert metadata["replay_substrate_schema_fixture_overclaim_guard_pass_count"] == 8
+    assert metadata["replay_substrate_schema_fixture_overclaim_guard_total_count"] == 8
+    assert metadata["replay_substrate_schema_fixture_active_replay_input"] is False
+    assert metadata["replay_substrate_schema_fixture_forward_labels_exist"] is False
+    assert metadata["replay_substrate_schema_fixture_weights_trained"] is False
+    assert metadata["replay_substrate_schema_fixture_active_stock_profile_exists"] is False
+    assert metadata["replay_substrate_schema_fixture_real_buy_review_eligible"] is False
+    assert metadata["replay_substrate_schema_fixture_report_only"] is True
+    assert metadata["replay_substrate_schema_fixture_diagnostic_only"] is True
+    assert metadata["replay_substrate_schema_fixture_no_live_trading"] is True
+    assert metadata["replay_substrate_schema_fixture_no_broker_api"] is True
+    assert metadata["replay_substrate_schema_fixture_no_order_placement"] is True
+
+
+def test_research_status_preserves_paper_priority_over_replay_substrate_schema_fixture(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    build_replay_substrate_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.replay_substrate_schema_fixture_status == "PASS"
+    assert row["status"] == "PASS"
+
+
+def test_research_status_reports_failed_replay_substrate_fixture_as_context_blocker(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_replay_substrate_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
+    )
+    fixture.artifact_paths["report"].unlink()
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS"
+    ].iloc[0]
+
+    assert result.replay_substrate_schema_fixture_status == "FAIL"
+    assert result.replay_substrate_schema_fixture_stage == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_FAILED"
+    assert result.workflow_stage == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_FAILED"
+    assert row["blocking_error_count"] >= 1
+    assert result.replay_substrate_schema_fixture_active_replay_input is False
+    assert result.replay_substrate_schema_fixture_forward_labels_exist is False
+    assert result.replay_substrate_schema_fixture_weights_trained is False
+    assert result.replay_substrate_schema_fixture_active_stock_profile_exists is False
+    assert result.replay_substrate_schema_fixture_real_buy_review_eligible is False
+
+
+def test_cli_research_status_prints_replay_substrate_schema_fixture_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_replay_substrate_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert f"latest_replay_substrate_schema_fixture_id: {fixture.fixture_id}" in output.out
+    assert "replay_substrate_schema_fixture_status: PASS" in output.out
+    assert "replay_substrate_schema_fixture_stage: REPLAY_SUBSTRATE_SCHEMA_FIXTURE_READY" in output.out
+    assert "replay_substrate_schema_fixture_overclaim_guard_pass_count: 8" in output.out
+    assert "replay_substrate_schema_fixture_overclaim_guard_total_count: 8" in output.out
+    assert "replay_substrate_schema_fixture_active_replay_input: False" in output.out
+    assert "replay_substrate_schema_fixture_forward_labels_exist: False" in output.out
+    assert "replay_substrate_schema_fixture_weights_trained: False" in output.out
+    assert "replay_substrate_schema_fixture_active_stock_profile_exists: False" in output.out
+    assert "replay_substrate_schema_fixture_real_buy_review_eligible: False" in output.out
+    assert "replay_substrate_schema_fixture_report_only: True" in output.out
+    assert "replay_substrate_schema_fixture_diagnostic_only: True" in output.out
+    assert "replay_substrate_schema_fixture_no_live_trading: True" in output.out
+    assert "replay_substrate_schema_fixture_no_broker_api: True" in output.out
+    assert "replay_substrate_schema_fixture_no_order_placement: True" in output.out
 
 
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
