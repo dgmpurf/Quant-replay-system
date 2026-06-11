@@ -254,6 +254,9 @@ from quant_replay_system.one_row_checklist_pass_candidate_preview_index import (
 from quant_replay_system.one_row_checklist_pass_candidate_preview_status import (
     run_one_row_checklist_pass_candidate_preview_status,
 )
+from quant_replay_system.historical_replay_input_gate_validator_fixture import (
+    build_historical_replay_input_gate_validator_fixture,
+)
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.replay_substrate_schema_fixture_health import (
     check_replay_substrate_schema_fixture_health,
@@ -2031,6 +2034,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     one_row_checklist_pass_candidate_preview_status.set_defaults(
         handler=_handle_one_row_checklist_pass_candidate_preview_status
+    )
+
+    historical_replay_input_gate_validator_fixture = subparsers.add_parser(
+        "historical-replay-input-gate-validator-fixture",
+        help="Write report-only fixture cases for a future historical replay input gate validator",
+    )
+    historical_replay_input_gate_validator_fixture.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1",
+        help="Directory where historical replay input gate validator fixture artifacts will be written",
+    )
+    historical_replay_input_gate_validator_fixture.set_defaults(
+        handler=_handle_historical_replay_input_gate_validator_fixture
     )
 
     replay_substrate_schema_fixture = subparsers.add_parser(
@@ -5879,6 +5895,36 @@ def _handle_replay_substrate_schema_fixture(args: argparse.Namespace) -> int:
     print(f"report_path: {result.artifact_paths['report']}")
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_historical_replay_input_gate_validator_fixture(args: argparse.Namespace) -> int:
+    result = build_historical_replay_input_gate_validator_fixture(output_dir=args.output_dir)
+    print(f"fixture_run_id: {result.fixture_run_id}")
+    print(f"status: {result.status}")
+    print(f"case_count: {result.case_count}")
+    print(f"blocked_case_count: {result.blocked_case_count}")
+    print(f"pass_candidate_case_count: {result.pass_candidate_case_count}")
+    print(f"active_ready_case_count: {result.active_ready_case_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"overclaim_guard_pass_count: {result.overclaim_guard_pass_count}")
+    print(f"overclaim_guard_total_count: {result.overclaim_guard_total_count}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"validator_implemented: {result.validator_implemented}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"fixture_cases_path: {result.artifact_paths['fixture_cases']}")
+    print(f"blocked_requirements_path: {result.artifact_paths['blocked_requirements']}")
+    print(f"expected_status_matrix_path: {result.artifact_paths['expected_status_matrix']}")
+    print(f"overclaim_guard_report_path: {result.artifact_paths['overclaim_guard_report']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, real validator, index/health/status, research-status integration, checkpoint docs, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
     return 1 if result.status == "FAIL" else 0
 
 
