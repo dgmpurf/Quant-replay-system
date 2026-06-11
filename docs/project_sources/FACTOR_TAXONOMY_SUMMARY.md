@@ -1,14 +1,14 @@
 # Factor Taxonomy V2 Summary
 
 > Status: working memory document  
-> Last generated: 2026-05-29  
-> Permanence: temporary; replace if the factor taxonomy changes materially.
+> Last generated: 2026-06-11  
+> Permanence: temporary; replace if the factor taxonomy, factor-universe policy, or replay-training use changes materially.
 
 ## Purpose
 
 This document summarizes the China A-share factor taxonomy sources for use in `quant-replay-system` Project Sources.
 
-The full taxonomy should be treated as a design framework for future factor/event/fundamental/news modules, not as executable trading logic.
+The full taxonomy should be treated as a design framework for future factor/event/fundamental/news/replay modules, not as executable trading logic.
 
 ## Canonical Rule
 
@@ -20,6 +20,20 @@ Use this priority when sources overlap:
 4. `factor_definition_seed.csv` is an engineering seed, not a trading model.
 
 If canonical and raw export disagree, prefer canonical unless the user explicitly says otherwise.
+
+## Factor Universe Principle
+
+Do not treat fixed 12 factors as final or exhaustive.
+
+Use:
+
+```text
+8 primary layers = system skeleton / database primary classification / modeling backbone.
+12-factor framework = coverage checklist / explanation aid / reality check.
+Factor universe = expandable set of factors, events, proxies, and observations.
+```
+
+Future factor coverage can include many more than 12 factors. Each factor must be versioned, sourced, testable, and governed.
 
 ## Core Framework
 
@@ -66,8 +80,15 @@ Future factor/event records should preserve:
 - `backtestable`
 - `compliance_flag`
 - `trade_usage`
+- `available_time_policy`
+- `source_id`
+- `source_hash`
+- `revision_id`
+- `quality_status`
+- `training_status`
+- `stock_profile_usage`
 
-These fields align with future tables such as `factor_definition`, `factor_observation`, `event_structured`, `company_exposure`, `source_registry`, `signal_score`, and `compliance_rule`.
+These fields align with future tables such as `factor_definition`, `factor_observation`, `event_structured`, `company_exposure`, `source_registry`, `signal_score`, `compliance_rule`, `replay_decision`, `forward_return_label`, `training_result`, and `stock_profile`.
 
 ## Future Table Mapping
 
@@ -80,6 +101,11 @@ These fields align with future tables such as `factor_definition`, `factor_obser
 | `source_registry` | Source, permission, reliability, and update-frequency governance. |
 | `signal_score` | Scores such as real impact, market confirmation, sentiment, and confidence. |
 | `compliance_rule` | Risk/compliance rules, including restricted or illegal data gates. |
+| `raw_document_store` | Raw or referenced public/reviewed document storage with available_time and hash metadata. |
+| `replay_decision` | Historical decision rows produced without future information. |
+| `forward_return_label` | Future outcome labels joined only after replay decisions exist. |
+| `training_result` | Versioned weights, thresholds, metrics, limitations, and validation status. |
+| `stock_profile` | Stock-level validation profile and real buy-review eligibility gate. |
 
 ## Signal Score Concept
 
@@ -103,6 +129,45 @@ signal_score = 0.40 * real_impact
 
 This is a design reference only. It is not currently validated, and it should not override existing `signal_semantics` safety gates.
 
+## Historical Replay Use
+
+In historical replay, taxonomy rows should be used to generate:
+
+```text
+factor_definition
+→ factor_observation
+→ event_structured
+→ replay evidence bundles
+→ replay decisions
+→ evaluation after forward labels are joined
+```
+
+Taxonomy rows must not be turned directly into BUY/SELL signals.
+
+Every replay observation must satisfy:
+
+```text
+available_time <= replay decision time
+source permitted
+quality gate passed
+revision_id tracked
+future labels excluded from decision
+```
+
+## Stock-Level Profile Use
+
+For each stock or ETF, the taxonomy should help build a `stock_profile`:
+
+- which factor layers matter;
+- which factors are historically useful;
+- which factors are misleading;
+- what horizons work;
+- what market regimes work;
+- what risk vetoes apply;
+- whether the profile has passed replay and paper validation.
+
+A stock profile is not a trading instruction. It only governs whether real buy-review candidates may be shown later.
+
 ## How This Should Enter quant-replay-system
 
 Recommended sequence:
@@ -110,23 +175,33 @@ Recommended sequence:
 1. Factor taxonomy source normalization.
 2. `factor_definition_seed.csv` validation.
 3. `source_registry` schema design.
-4. `company_exposure` schema design.
-5. Fundamental data schema and LOCAL_CSV ingestion.
-6. Event schema and LOCAL_CSV ingestion.
-7. Event/factor quality gates.
-8. Factor observation prototype.
-9. Advisory context integration.
-10. Only later: scoring integration and backtesting.
+4. `raw_document_store` schema design.
+5. `company_exposure` schema design.
+6. Fundamental data schema and LOCAL_CSV ingestion.
+7. Event schema and LOCAL_CSV ingestion.
+8. Event/factor quality gates.
+9. Factor observation prototype.
+10. Replay decision schema.
+11. Forward-return label schema.
+12. Training/evaluation schema.
+13. Stock profile schema.
+14. Advisory context integration.
+15. Only later: scoring integration, replay training, and paper validation.
 
 ## What Not To Do Yet
 
 Do not:
 
 - turn taxonomy rows into live signals;
+- treat 12 factors as final or exhaustive;
 - change `signal_semantics` defaults based on taxonomy alone;
 - use news sentiment as a direct buy/sell driver;
+- use LLM summaries as scoring inputs;
 - bypass point-in-time rules;
 - ignore source permissions or legality;
+- compute forward labels without valid replay/candidate rows;
+- train weights without PIT-valid observations and labels;
+- create real buy-review eligibility without stock profile and paper validation;
 - add broker integration or automated orders;
 - treat `manual_confirm_trade` in the taxonomy as current project behavior.
 
@@ -147,7 +222,10 @@ At the current project stage, this taxonomy should mainly guide:
 - future event/news schema;
 - factor definition registry;
 - company exposure mapping;
+- raw document metadata;
 - risk/compliance fields;
+- historical replay design;
+- stock-profile validation design;
 - advisory context explanations.
 
 It should not yet drive real trading, non-demo buy-review expansion, or automation.

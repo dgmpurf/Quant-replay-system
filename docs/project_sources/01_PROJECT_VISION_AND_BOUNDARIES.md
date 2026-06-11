@@ -1,40 +1,56 @@
 # Project Vision and Boundaries
 
 > Status: working memory document  
-> Last generated: 2026-05-28  
-> Permanence: temporary; refresh after major roadmap or safety-boundary changes.
+> Last generated: 2026-06-11  
+> Permanence: temporary; refresh after major roadmap, product-goal, training-core, or safety-boundary changes.
 
 ## Product North Star
 
-`quant-replay-system` is a quantitative research and signal advisory system first.
+`quant-replay-system` is a personal-first, institution-grade-core quantitative research, historical replay training, and signal advisory system for China A-share stocks and ETFs.
 
-The near-term product is not an automatic trading robot. The default path is:
+The first usable product is not an automatic trading robot. It is a local personal/family advisory workflow:
 
 ```text
-local data
-→ research artifacts
+local/free/public data
+→ reviewed research artifacts
+→ point-in-time valid factor/event observations
+→ historical replay and forward-return evaluation
 → signal semantics
 → advisory signals
 → human confirmation
 → reviewed paper workflow
+→ only later, real buy-review eligibility for validated stocks
 ```
 
-The long-term product may eventually support full automation, but only after the data, signal, review, risk, reconciliation, and audit layers are mature.
+The long-term research core must support institution-grade standards:
+
+- point-in-time data validity;
+- historical document and market replay;
+- expandable factor universe;
+- 8-layer factor taxonomy as the primary skeleton;
+- stock-level profiles and validation status;
+- forward-return labels and outcome datasets;
+- model/weight/threshold calibration with audit trails;
+- paper workflow validation before real buy-review;
+- strict governance over data legality, provenance, survivorship, and overfitting.
 
 ## What the System Should Eventually Do
 
 The system should help answer:
 
-- What should I watch?
+- What should I watch today?
 - What might be a buy-review candidate?
 - What might be a sell-review candidate?
 - Why does the signal exist?
+- Which factor layers support it?
+- Which historical cases look similar?
 - What data supports it?
+- Was the supporting data available at the decision time?
 - What risks oppose it?
-- When is it valid?
 - What invalidates it?
 - Is manual confirmation required?
-- Was the data available at that time?
+- Has this stock profile passed historical replay validation?
+- Has this stock profile passed paper workflow validation?
 
 The system should support both batch advisory workflows and single-symbol questions such as:
 
@@ -43,7 +59,94 @@ The system should support both batch advisory workflows and single-symbol questi
 Should I sell 510300?
 ```
 
-But these question-style workflows are only product-layer entry points. The project’s core remains quantitative data, quality gates, scoring, signal semantics, and auditable advisory artifacts.
+These question-style workflows are product-layer entry points. The core remains data, PIT contracts, factor/event observations, replay, labels, evaluation, signal semantics, risk gates, and auditable advisory artifacts.
+
+## Historical Replay Training Is Core
+
+The core training loop is:
+
+```text
+For each historical decision date T:
+  use only data available at or before T;
+  construct the valid universe for T;
+  compute factor observations for each symbol at T;
+  structure announcements/news/events available by T;
+  generate deterministic review-only advisory labels;
+  record the replay decision and all evidence;
+  compute future return/drawdown labels after T;
+  evaluate accuracy, payoff, drawdown, false positives, false negatives, and benchmark-relative performance;
+  update candidate weights, thresholds, horizons, market-regime rules, and risk vetoes only through versioned training artifacts.
+```
+
+This makes the project a replay training system, not just a technical-indicator backtester.
+
+## Factor Universe Principle
+
+Do not treat fixed 12 factors as final.
+
+Use:
+
+```text
+8-layer taxonomy = primary database/model skeleton.
+12-factor framework = coverage checklist and explanation aid.
+Factor universe = expandable set of validated factors/events/observations.
+```
+
+Future factor coverage can include hundreds or thousands of factors, as long as each factor has source, availability, legality, lag, confidence, impact path, affected entity mapping, backtestability, and trade-usage metadata.
+
+## Stock-Level Validation Principle
+
+A stock should not enter real buy-review eligibility merely because one current signal looks strong.
+
+The target is a validated `stock_profile`:
+
+```text
+base market model
++ industry/sector model
++ stock-specific calibration
++ PIT data coverage
++ historical replay decisions
++ forward-return labels
++ error analysis
++ paper workflow evidence
+→ stock_profile validation status
+```
+
+A stock profile should record:
+
+- symbol and instrument type;
+- industry, sector, product, region, value-chain, and style exposures;
+- factor sensitivities;
+- useful and non-useful factors for that stock;
+- valid/invalid signal regimes;
+- risk veto rules;
+- training window and out-of-sample window;
+- benchmark comparisons;
+- paper workflow history;
+- current eligibility status.
+
+## Real Buy-Review Eligibility Ladder
+
+Use this conceptual ladder. It is not yet fully implemented.
+
+```text
+UNTRAINED_OR_UNVALIDATED:
+  only WATCH / NO_ACTION / BLOCKED allowed.
+
+PIT_REPLAY_READY:
+  historical replay can be run, but no real buy-review eligibility.
+
+HISTORICAL_REPLAY_VALIDATED:
+  can produce paper-only REVIEW_BUY_CANDIDATE under strict semantics.
+
+PAPER_VALIDATED:
+  can produce REAL_BUY_REVIEW_CANDIDATE for human review.
+
+HUMAN_CONFIRMED:
+  user may manually place an order outside the system.
+```
+
+Even at the final stage, the system does not place orders.
 
 ## Stage Map
 
@@ -95,16 +198,38 @@ Completed or in progress:
 - Synthetic fill rejection diagnostics.
 - Diagnostic vs active reconciliation artifact scoping.
 
-### Stage 5: Multi-Date Evidence and Non-Demo Calibration
+### Stage 5: Multi-Date PIT Evidence Foundation
 
-Currently beginning:
+Currently active / in progress:
 
 - Warmup-aware current-candidates backfill planning.
 - Execution readiness manifests.
-- Blocker discovered: point-in-time universe as-of validity.
-- Future: multi-date candidate generation, forward-return labels, signal outcome datasets, backtest/paper evidence.
+- Point-in-time universe validity blocker discovery.
+- PIT universe evidence worklists, policy profiles, evidence packets, material guidance, one-row package, and one-row checklist-pass candidate preview.
 
-### Stage 6: External Data Expansion
+Purpose:
+
+```text
+Prepare the valid historical universe foundation required for replay training.
+```
+
+This stage is necessary but not the final product.
+
+### Stage 6: Historical Replay Training Substrate
+
+Next major direction:
+
+- `factor_definition` schema.
+- `factor_observation` schema.
+- `raw_document_store` and document metadata schema.
+- `event_structured` schema.
+- `company_exposure` schema.
+- `replay_decision` schema.
+- `forward_return_label` schema.
+- `training_result` schema.
+- `stock_profile` schema.
+
+### Stage 7: External Data Expansion
 
 Future:
 
@@ -115,7 +240,18 @@ Future:
 - News/event context.
 - Later, paid data vendor adapters if budget allows.
 
-### Stage 7: Alert Delivery
+### Stage 8: Stock-Level Training and Paper Validation
+
+Future:
+
+- Validated historical replay runs.
+- Forward-return labels.
+- Factor/weight/threshold calibration.
+- Out-of-sample validation.
+- Stock-level profiles.
+- Paper workflow evaluation before any real buy-review eligibility.
+
+### Stage 9: Alert Delivery
 
 Future:
 
@@ -123,7 +259,7 @@ Future:
 - Only later: email/SMS/Telegram/WeChat or webhook delivery.
 - All delivery must have dry-run, logging, safety flags, and manual confirmation controls.
 
-### Stage 8: Semi-Automation and Full Automation
+### Stage 10: Semi-Automation and Full Automation
 
 Much later:
 
@@ -135,7 +271,7 @@ Much later:
 - Operational monitoring.
 - Explicit user approval and separate safety design required.
 
-### Stage 9: International Market Expansion
+### Stage 11: International Market Expansion
 
 Much later:
 
@@ -161,6 +297,8 @@ These are current project defaults:
 - No generated `data/raw`, `data/processed`, `data/cache`, or `outputs` committed to Git.
 - Demo artifacts are workflow validation only, not strategy recommendations.
 - `REVIEW_BUY_CANDIDATE` means human-review candidate, not buy instruction.
+- Historical replay performance is not real-trading validation until it is PIT-valid, out-of-sample-tested, benchmarked, and paper-validated.
+- A trained model or stock profile must not place orders.
 
 ## Full Automation Meaning
 
@@ -168,15 +306,17 @@ Full automation is the complete future version, not the current development base
 
 A fully automated version would require:
 
-- validated non-demo signal profiles,
-- multi-date evidence,
-- forward-return labels,
-- backtest and paper performance evidence,
-- fill reconciliation,
-- risk controls,
-- broker integration,
-- alert/action audit logs,
-- kill switches,
-- user approval for operational mode.
+- validated non-demo signal profiles;
+- multi-date PIT evidence;
+- historical replay evidence;
+- forward-return labels;
+- backtest and paper performance evidence;
+- stock-level profile validation;
+- fill reconciliation;
+- risk controls;
+- broker integration;
+- alert/action audit logs;
+- kill switches;
+- explicit user approval for operational mode.
 
-Until then, automation is allowed for data collection, quality checks, local reports, and advisory artifacts, not for orders.
+Until then, automation is allowed for data collection, quality checks, local reports, replay artifacts, training reports, and advisory artifacts, not for orders.

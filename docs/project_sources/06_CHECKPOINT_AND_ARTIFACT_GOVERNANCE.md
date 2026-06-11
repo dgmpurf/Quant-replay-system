@@ -1,8 +1,8 @@
 # Checkpoint and Artifact Governance
 
 > Status: working memory document  
-> Last generated: 2026-06-06  
-> Permanence: temporary; update after checkpoint policy or artifact-status semantics change.
+> Last generated: 2026-06-11  
+> Permanence: temporary; update after checkpoint policy, artifact-status semantics, replay/training artifacts, or stock-profile governance changes.
 
 ## Checkpoint Philosophy
 
@@ -22,7 +22,7 @@ docs/release_checkpoint_vX.Y.Z.md
 
 They are milestone summaries, not production readiness claims.
 
-Do not refresh Project Source after every small audit. Refresh after accepted milestone/checkpoint/tag or when current stage, next branch, or artifact governance changes.
+Do not refresh Project Source after every small audit. Refresh after accepted milestone/checkpoint/tag or when current stage, next branch, artifact governance, training-core direction, or safety boundary changes.
 
 ## Artifact Governance Pattern
 
@@ -36,13 +36,13 @@ artifact command
 → research-status integration
 ```
 
-This makes artifacts discoverable and prevents hidden state transitions.
+Future replay/training artifacts should follow the same pattern.
 
 ## Active vs Legacy Artifacts
 
 Keep legacy artifacts visible, but do not let them drive active workflow status.
 
-Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, reviewer no-hit downstream impact artifacts that do not apply approvals, first-batch reviewer evidence completion plan artifacts that are planning context only, first-batch partial completion impact artifacts that only report blocker deltas, material PIT evidence gate closure plan artifacts that are closure plans only, reviewer material evidence fill guidance artifacts that are human-fill guidance only, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
+Examples include stale snapshots, old review artifacts, diagnostic reconciliation failures, partial historical backfill rejections, old backfill plans without warmup fields, legacy advisory artifacts missing provenance, stale PIT overlay review artifacts missing newer metadata columns, legacy mixed-demo `etf_core` artifacts, replacement worklist plans that are not accepted active worklists, accepted replacement planning artifacts that are not activated worklists, activated replacement planning artifacts that are not PIT-approved universe inputs, activated evidence update plans that are not clean review updates, checklist validator outputs that are not PIT approvals, policy profile comparison outputs that do not change strict validator defaults, official status evidence packets and enrichment artifacts that are not PIT approvals, reviewer no-hit source coverage acceptance artifacts that are supporting-context only, reviewer no-hit downstream impact artifacts that do not apply approvals, first-batch reviewer evidence completion plan artifacts that are planning context only, first-batch partial completion impact artifacts that only report blocker deltas, material PIT evidence gate closure plan artifacts that are closure plans only, reviewer material evidence fill guidance artifacts that are human-fill guidance only, one-row material evidence fill package artifacts that are context drafts only, one-row checklist-pass candidate preview artifacts that are report-only previews only, and no-hit support context that is not approval-grade evidence without reviewer acceptance.
 
 ## Diagnostic vs Active Artifacts
 
@@ -66,6 +66,12 @@ Examples:
 - first-batch partial completion impact dry-runs;
 - material gate closure planning diagnostics;
 - reviewer material evidence fill guidance dry-runs;
+- one-row material evidence fill package dry-runs;
+- one-row checklist-pass candidate preview dry-runs;
+- historical replay schema dry-runs;
+- factor observation fixture dry-runs;
+- forward-label fixture dry-runs;
+- stock-profile validation fixture dry-runs;
 - ignored dry-run files.
 
 ## PIT Evidence Checklist Validator Workflows
@@ -74,13 +80,11 @@ PIT evidence checklist validator artifacts are evidence-gate reports.
 
 They may evaluate draft or completed update CSV rows against strict stock/ETF evidence checklists, produce missing-evidence matrices, produce approval-candidate previews, and expose checklist pass/block counts in research-status.
 
-They must not apply approvals, set `APPROVED_FOR_PIT_UNIVERSE`, run PIT review, run export-readiness, run staging, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute forward labels.
+They must not apply approvals, set `APPROVED_FOR_PIT_UNIVERSE`, run PIT review, run export-readiness, run staging, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute forward labels, or create replay/training inputs.
 
 A checklist-pass row is only an approval-candidate preview. It still requires explicit PIT review before any approval artifact exists.
 
 ## PIT Evidence Policy Profile Comparison Workflows
-
-PIT evidence policy profile comparison artifacts are report-only policy context.
 
 Known profiles:
 
@@ -90,7 +94,7 @@ EOD_POST_CLOSE_LOW_BUDGET_PIT
 EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
 ```
 
-They must not change strict validator default behavior, apply approvals, set `APPROVED_FOR_PIT_UNIVERSE`, create approval update CSVs, run PIT review/export-readiness/staging, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute forward labels.
+They must not change strict validator default behavior, apply approvals, set `APPROVED_FOR_PIT_UNIVERSE`, create approval update CSVs, run PIT review/export-readiness/staging, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, compute forward labels, or create replay/training inputs.
 
 ## PIT Official Status Evidence Packet and Enrichment Workflows
 
@@ -112,41 +116,13 @@ They must not treat supporting symbol-level evidence, local EOD cache, or no-hit
 
 ## Reviewer No-Hit Acceptance and Downstream Impact Workflows
 
-Reviewer no-hit source coverage acceptance artifacts are report-only supporting-context records.
-
-They may record reviewer acceptance of source coverage, query windows, no-hit inference limits, and survivorship rationale; create reviewer acceptance templates; validate reviewer-completed no-hit acceptance updates; and expose accepted, needs-review, reviewer-required, and survivorship-rationale-required counts in research-status.
-
-They must not apply PIT approvals, set `APPROVED_FOR_PIT_UNIVERSE`, create approval update CSVs, run PIT review, run export-readiness, run staging, export universe files, write `data/raw` or `data/processed`, mutate active worklists or market cache, run current-candidates, build snapshots, or compute forward labels.
+Reviewer no-hit source coverage acceptance artifacts are report-only supporting-context records. They may record reviewer acceptance of source coverage, query windows, no-hit inference limits, and survivorship rationale, but they must not apply PIT approvals or create approval update CSVs.
 
 Reviewer no-hit acceptance downstream impact artifacts are report-only downstream context summaries. They may link accepted no-hit context to packet/checklist/policy impact reports and expose context counts in research-status, but they must not change strict checklist behavior or apply approvals.
 
-## First-Batch Reviewer Evidence Completion Plan Workflows
+## First-Batch, Material Closure, Guidance, and One-Row Package Workflows
 
-First-batch reviewer evidence completion plan artifacts are report-only reviewer planning artifacts.
-
-They may build a 16-row first-batch planning table for `000001` stock_core and `159915` etf_core, preserve lineage, classify missing evidence, create reviewer completion templates, and expose reviewer completion counts in research-status.
-
-They must not apply approvals, reject rows, set `APPROVED_FOR_PIT_UNIVERSE`, set `include_flag=true`, set `valid_for_signal_date=true`, create clean `review_updates.csv`, run PIT review/export-readiness/staging, export universe files, write `data/raw` or `data/processed`, mutate active worklists or market cache, run current-candidates, build snapshots, or compute forward labels.
-
-## First-Batch Partial Completion Impact Workflows
-
-First-batch partial completion impact artifacts are report-only blocker-delta reports.
-
-They may compare partial reviewer completion fixtures against the first-batch completion plan and report completed fields, reduced blockers, material blocker reductions, checklist pass counts, and remaining blockers.
-
-They must not treat metadata-only completion as material PIT evidence closure.
-
-## Material PIT Evidence Gate Closure Plan Workflows
-
-Material PIT evidence gate closure plan artifacts are report-only closure plans.
-
-They may:
-
-- identify material blockers for the 16 first-batch rows;
-- separate reusable symbol-level closure from date-specific closure;
-- identify reviewer no-hit acceptance, survivorship rationale, metadata, and stock-only ST/no-ST closure needs;
-- create fill templates grouped by closure path;
-- expose material gate closure counts in research-status.
+First-batch reviewer evidence completion plan artifacts, first-batch partial completion impact artifacts, material PIT evidence gate closure plan artifacts, reviewer material evidence fill guidance artifacts, and one-row material evidence fill package artifacts are report-only planning/context artifacts.
 
 They must not:
 
@@ -155,51 +131,7 @@ They must not:
 - set `APPROVED_FOR_PIT_UNIVERSE`;
 - set `include_flag=true`;
 - set `valid_for_signal_date=true`;
-- create clean `review_updates.csv`;
-- run PIT review/export-readiness/staging;
-- export universe files;
-- write `data/raw` or `data/processed`;
-- mutate active worklists or market cache;
-- run current-candidates;
-- build snapshots;
-- compute forward labels.
-
-Current material gate closure state:
-
-```text
-plan_id: 2d6ab8e7f9f8
-stage: MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE
-row_count: 16
-checklist_pass_candidate_count: 0
-remaining_blocked_count: 16
-reusable_symbol_level_closure_count: 2
-date_specific_closure_required_count: 16
-reviewer_no_hit_acceptance_required_count: 16
-survivorship_rationale_required_count: 16
-metadata_closure_required_count: 16
-stock_st_no_st_required_count: 8
-clean_review_updates_created: false
-approval_applied: false
-```
-
-## Reviewer Material Evidence Fill Guidance Workflows
-
-Reviewer material evidence fill guidance artifacts are report-only human guidance artifacts.
-
-They may:
-
-- convert material gate closure requirements into reviewer-oriented fill guidance;
-- create symbol-level, date-specific, no-hit acceptance, survivorship rationale, and metadata guidance;
-- create safe reviewer fill templates with non-approved defaults;
-- expose guidance counts in research-status.
-
-They must not:
-
-- apply approvals;
-- reject rows;
-- set `APPROVED_FOR_PIT_UNIVERSE`;
-- set `include_flag=true`;
-- set `valid_for_signal_date=true`;
+- set `survivorship_bias_resolved=true` unless a later explicit approval-grade workflow and review justify it;
 - create clean `review_updates.csv`;
 - run PIT review;
 - run export-readiness;
@@ -210,25 +142,164 @@ They must not:
 - run current-candidates;
 - build snapshots;
 - compute forward labels;
-- treat guidance templates as approved evidence.
+- create replay/training inputs;
+- treat metadata-only or context-only completion as material PIT evidence closure.
 
-Current reviewer material evidence fill guidance state:
+Previous one-row package state:
 
 ```text
-guidance_id: 94f5ff204662
-stage: REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL
-row_count: 16
-reviewer_guidance_row_count: 114
-symbol_level_guidance_count: 2
-date_specific_guidance_count: 16
-no_hit_acceptance_guidance_count: 64
-survivorship_rationale_guidance_count: 16
-metadata_guidance_count: 16
+package_id: 136cbd739ca1
+stage: ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_CONTEXT_DRAFTED
+target: 2024-04-02 / 000001 / stock_core
+package_row_count: 1
+context_field_drafted_count: 17
+material_blocker_closed_count: 0
 checklist_pass_candidate_count: 0
 remaining_blocked_count: 16
 clean_review_updates_created: false
 approval_applied: false
 ```
+
+## One-Row Checklist-Pass Candidate Preview Workflows
+
+One-row checklist-pass candidate preview artifacts are report-only previews for a single target row.
+
+They may:
+
+- assess reusable context fields;
+- report strict requirement gaps;
+- report whether the row is a checklist-pass candidate preview;
+- preserve lineage to one-row material package, reviewer guidance, material gate closure, checklist validator, enrichment, no-hit acceptance, and downstream impact artifacts;
+- expose preview counts and strict gaps in research-status.
+
+They must not:
+
+- apply approvals;
+- reject rows;
+- set `APPROVED_FOR_PIT_UNIVERSE`;
+- set `include_flag=true`;
+- set `valid_for_signal_date=true`;
+- set `survivorship_bias_resolved=true`;
+- create clean `review_updates.csv`;
+- run PIT review;
+- run export-readiness;
+- run staging;
+- export universe files;
+- write `data/raw` or `data/processed`;
+- mutate active worklists or market cache;
+- run current-candidates;
+- build snapshots;
+- compute forward labels;
+- create replay/training inputs;
+- treat context-only preview as approval.
+
+Previous one-row checklist-pass candidate preview state:
+
+```text
+preview_id: 3d3bcc2f95cf
+stage: ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_CONTEXT_ONLY
+target: 2024-04-02 / 000001 / stock_core
+preview_row_count: 1
+reusable_context_field_count: 7
+strict_requirement_gap_count: 10
+row_checklist_pass_candidate: false
+checklist_pass_candidate_count: 0
+remaining_blocked_count: 16
+clean_review_updates_created: false
+approval_applied: false
+```
+
+## Historical Replay and Training Artifact Governance
+
+Future replay/training artifacts are research artifacts, not trading approvals.
+
+### Raw Document Store Artifacts
+
+`raw_document_store` and document metadata artifacts may store public/reviewed source references, hashes, timestamps, parser versions, and compliance flags.
+
+They must not:
+
+- commit copyrighted or generated raw corpora to Git;
+- bypass paywalls or access restrictions;
+- treat raw news as a buy/sell signal;
+- skip source permission and available_time checks.
+
+### Factor Definition Artifacts
+
+`factor_definition` artifacts may define taxonomy metadata and factor contracts.
+
+They must not:
+
+- claim alpha validity;
+- trigger signal semantics changes by themselves;
+- treat fixed 12 factors as exhaustive;
+- bypass source legality or backtestability fields.
+
+### Factor Observation Artifacts
+
+`factor_observation` artifacts may store date/entity factor values.
+
+They must not:
+
+- use observations unavailable at decision time;
+- include future labels;
+- be treated as approved replay input unless PIT-valid and quality-passed;
+- be treated as trading signals by themselves.
+
+### Event Structured Artifacts
+
+`event_structured` artifacts may contain extracted events from public documents/news/announcements.
+
+They must not:
+
+- make LLM output deterministic trading logic;
+- treat rumors or restricted data as tradeable signals;
+- omit source, available_time, parser_version, confidence, and compliance fields;
+- directly output BUY/SELL.
+
+### Replay Decision Artifacts
+
+`replay_decision` artifacts may record what the system would have said on historical date T.
+
+They must not:
+
+- use data unavailable at T;
+- place orders;
+- claim performance before labels/evaluation;
+- create paper or real review entries unless explicitly routed through later workflows.
+
+### Forward Return Label Artifacts
+
+`forward_return_label` artifacts may record future outcomes for evaluation.
+
+They must not:
+
+- leak into replay decision generation;
+- be computed before valid replay/candidate rows exist;
+- be used as proof of live performance;
+- ignore benchmark, corporate action, suspension, ST, and quality policies.
+
+### Training Result Artifacts
+
+`training_result` artifacts may record weights, thresholds, model versions, and metrics.
+
+They must not:
+
+- claim production validation without out-of-sample and paper evidence;
+- change signal semantics defaults automatically;
+- create real buy-review eligibility automatically;
+- hide overfitting or data leakage warnings.
+
+### Stock Profile Artifacts
+
+`stock_profile` artifacts may summarize stock-specific validation, factor sensitivity, risk vetoes, and eligibility status.
+
+They must not:
+
+- set `real_buy_review_eligible=true` without explicit validation gates;
+- place orders;
+- override human confirmation;
+- hide missing data, weak sample size, regime dependence, or benchmark underperformance.
 
 ## Safety Flags
 
@@ -263,11 +334,21 @@ first_batch_reviewer_completion_plan_only=true
 first_batch_partial_completion_impact_only=true
 material_pit_evidence_gate_closure_plan_only=true
 reviewer_material_evidence_fill_guidance_only=true
+one_row_material_evidence_fill_package_only=true
+one_row_checklist_pass_candidate_preview_only=true
+historical_replay_design_only=true
+factor_definition_only=true
+factor_observation_only=true
+event_extraction_only=true
+forward_label_only=true
+training_result_research_only=true
+stock_profile_validation_only=true
+real_buy_review_eligible=false
 ```
 
 ## Survivorship and Point-in-Time Governance
 
-Universe, fundamental, and event data must preserve PIT validity.
+Universe, fundamental, event, news, factor, replay, and label data must preserve PIT validity.
 
 Important fields:
 
@@ -285,10 +366,10 @@ reviewer
 reviewed_at
 ```
 
-Rows derived from a future universe must keep survivorship-bias warnings until reviewed. Rows cannot be exported into usable current-candidates universe input until export-readiness and export/staging gates confirm required metadata.
+Rows derived from a future universe must keep survivorship-bias warnings until reviewed. Rows cannot be exported into usable current-candidates universe input or replay-training input until export-readiness and export/staging gates confirm required metadata.
 
 ## Research-Status Priority Rule
 
 `research-status` should summarize context while preserving later workflow priority.
 
-Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, reviewer no-hit acceptance blockers, downstream impact blockers, first-batch reviewer completion planning blockers, partial completion impact blockers, material gate closure blockers, reviewer guidance blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.
+Safe parse failures, stale warnings, planning blockers, review evidence blockers, ingestion blockers, profile conflicts, replacement planning context, replacement acceptance context, replacement activation context, evidence update planning context, checklist validation blockers, policy profile comparison blockers, official status evidence packet blockers, reviewer no-hit acceptance blockers, downstream impact blockers, first-batch reviewer completion planning blockers, partial completion impact blockers, material gate closure blockers, reviewer guidance blockers, one-row material package blockers, one-row checklist-pass preview blockers, replay schema blockers, factor observation blockers, forward-label blockers, training blockers, stock-profile blockers, export-readiness blockers, staging blockers, and worklist blockers should not override later validated paper workflow unless they represent an active blocking error for the current workflow.

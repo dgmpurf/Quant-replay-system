@@ -1,8 +1,8 @@
 # System Architecture and Workflow Map
 
 > Status: working memory document  
-> Last generated: 2026-06-06  
-> Permanence: temporary; update after major architecture or workflow additions.
+> Last generated: 2026-06-12  
+> Permanence: temporary; update after major architecture, workflow, replay, factor, method-stack, or data-contract additions.
 
 ## High-Level Architecture
 
@@ -12,22 +12,56 @@ Data Sources
   ├─ AKShare optional
   ├─ BaoStock optional
   ├─ future Tushare optional
-  └─ future public announcement/news/fundamental sources
+  ├─ public official announcement metadata
+  ├─ future public news/event sources
+  ├─ future public macro/industry sources
+  └─ paid vendors only as future backups
 
-Raw Artifacts
-  └─ data/raw/<SOURCE>/<dataset>/<run_id>/
+Raw Artifacts and Document Store
+  ├─ data/raw/<SOURCE>/<dataset>/<run_id>/
+  ├─ raw_document_store
+  ├─ source_registry
+  └─ document_metadata with available_time / source_hash / parser_version
 
 Local Caches
   ├─ data/cache/market/daily_bars.csv
-  └─ future fundamental/event caches
+  ├─ future fundamental caches
+  ├─ future announcement/event caches
+  ├─ future macro/industry caches
+  └─ future factor_observation caches
 
-Quality and Policy
+Quality, Policy, and PIT Gates
   ├─ data-source-health
   ├─ market-cache-preflight
   ├─ market-cache-compare
   ├─ market-source-policy
   ├─ data-quality
-  └─ snapshot-quality
+  ├─ snapshot-quality
+  ├─ point-in-time universe gates
+  ├─ source permission gates
+  └─ survivorship / available_time gates
+
+Taxonomy and Factor/Event Layer
+  ├─ factor_definition
+  ├─ factor_observation
+  ├─ event_structured
+  ├─ company_exposure
+  ├─ compliance_rule
+  └─ source_registry
+
+Research Method Stack Layer
+  ├─ statistics / econometrics
+  ├─ financial engineering
+  ├─ factor research
+  ├─ event study
+  ├─ causal inference
+  ├─ knowledge graph / industry-chain modeling
+  ├─ NLP / IR / RAG for public documents
+  ├─ data mining
+  ├─ ML / DL
+  ├─ optimization
+  ├─ risk / portfolio / execution modeling
+  └─ DataOps / MLOps / model governance
 
 Candidate and Signal Layer
   ├─ current-candidates
@@ -37,32 +71,24 @@ Candidate and Signal Layer
   ├─ question-style answer
   └─ advisory-conversation
 
-Multi-Date Evidence Preparation
-  ├─ current-candidates-backfill-plan
-  ├─ current-candidates-backfill-execution-manifest
-  ├─ point-in-time-universe-overlay-plan
-  ├─ point-in-time-universe-overlay-review
-  ├─ point-in-time-universe-overlay-export-readiness
-  ├─ point-in-time-universe-evidence-completion-helper
-  ├─ point-in-time-universe-export-staging
-  ├─ point-in-time-universe-evidence-review-worklist
-  ├─ point-in-time-universe-evidence-update-ingestion
-  ├─ universe-profile-policy-audit
-  ├─ universe-profile-split-worklist-plan
-  ├─ reviewed-replacement-worklist-plan
-  ├─ reviewed-replacement-worklist-acceptance
-  ├─ reviewed-replacement-worklist-activation
-  ├─ activated-replacement-worklist-evidence-update-plan
-  ├─ pit-evidence-checklist-validator
-  ├─ pit-evidence-policy-profile-comparison
-  ├─ pit-official-status-evidence-packet
-  ├─ pit-official-status-evidence-packet-enrichment
-  ├─ reviewer-no-hit-source-coverage-acceptance
-  ├─ reviewer-no-hit-acceptance-downstream-impact
-  ├─ first-batch-reviewer-evidence-completion-plan
-  ├─ first-batch-partial-completion-impact
-  ├─ material-pit-evidence-gate-closure-plan
-  └─ reviewer-material-evidence-fill-guidance
+Historical Replay and Training Layer
+  ├─ replay_universe_input
+  ├─ replay_decision
+  ├─ replay_evidence_bundle
+  ├─ forward_return_label
+  ├─ benchmark_label
+  ├─ training_result
+  ├─ model_version
+  ├─ evaluation_report
+  └─ stock_profile
+
+Paper and Personal Advisory Layer
+  ├─ current-to-paper
+  ├─ current-to-paper-review
+  ├─ paper-daily
+  ├─ paper outcome history
+  ├─ personal/family daily advisory report
+  └─ real buy-review eligibility only after validation
 
 Dashboards and Status
   ├─ index / health / status for most artifacts
@@ -82,7 +108,9 @@ artifact-producing command
 → checkpoint doc
 ```
 
-## Key Completed Workflow Chains
+Replay/training modules should follow the same pattern, but they must remain non-active until explicit gates are satisfied.
+
+## Completed Workflow Chains
 
 ### Market Data to Candidate Snapshot
 
@@ -109,7 +137,7 @@ current-candidates
 → research-status
 ```
 
-### Multi-Date Candidate Planning, PIT Evidence, Policy Comparison, and Reviewer Guidance
+### PIT Evidence Preparation Chain
 
 ```text
 market cache coverage
@@ -130,34 +158,112 @@ market cache coverage
 → reviewed replacement worklist acceptance
 → reviewed replacement worklist activation
 → activated replacement worklist evidence update plan
-→ Codex diagnostics evidence discovery / gap closure
+→ diagnostics evidence discovery / gap closure
 → strict PIT evidence checklist
 → pit-evidence-checklist-validator
-→ EOD_POST_CLOSE_LOW_BUDGET_PIT policy audit
-→ pit-evidence-policy-profile-comparison
+→ PIT evidence policy profile comparison
 → PIT official status evidence packet
-→ SZSE 1815 quotation diagnostics
-→ SZSE/CNInfo exception no-hit diagnostics
-→ official no-hit evidence policy audit
-→ EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT policy profile
-→ PIT official status evidence packet enrichment
-→ reviewer-no-hit-source-coverage-acceptance
-→ reviewer-no-hit-acceptance-downstream-impact
-→ first-batch-reviewer-evidence-completion-plan
-→ first-batch-partial-completion-impact
-→ material-pit-evidence-gate-closure-plan
-→ reviewer-material-evidence-fill-guidance
-→ index / health / status
-→ research-status
+→ official status evidence packet enrichment
+→ reviewer no-hit source coverage acceptance
+→ reviewer no-hit acceptance downstream impact
+→ first-batch reviewer evidence completion plan
+→ first-batch partial completion impact
+→ material PIT evidence gate closure plan
+→ reviewer material evidence fill guidance
+→ one-row material evidence fill package
+→ one-row checklist-pass candidate preview
+→ reviewer-supplied material evidence fixture audit
 ```
 
-Current active preparation state:
+PIT evidence artifacts are not replay-ready input unless later explicit approval/export gates make them usable.
+
+### Replay Substrate Schema Fixture Chain
+
+Completed as of v1.27.0:
 
 ```text
-REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL
+historical replay training substrate architecture audit
+→ replay-substrate-schema-fixture
+→ replay-substrate-schema-fixture-index
+→ replay-substrate-schema-fixture-health
+→ replay-substrate-schema-fixture-status
+→ research-status integration
+→ docs/release_checkpoint_v1.27.0.md
 ```
 
-The system has not generated multi-date current-candidates, per-date snapshots, forward-return labels, accepted universe exports, active accepted PIT universe inputs, clean real approval updates, or live trades.
+Current known replay-substrate fixture state:
+
+```text
+fixture_id: 5f9a393ce90d
+stage: REPLAY_SUBSTRATE_SCHEMA_FIXTURE_READY
+status: PASS
+health_status: PASS
+entity_count: 14
+validation_issue_count: 0
+overclaim_guard_pass_count: 8
+overclaim_guard_total_count: 8
+active_replay_input: false
+forward_labels_exist: false
+weights_trained: false
+active_stock_profile_exists: false
+real_buy_review_eligible: false
+```
+
+Meaning:
+
+```text
+schema/fixture contracts exist
+≠ real replay input exists
+≠ forward labels exist
+≠ weights are trained
+≠ active stock_profile exists
+≠ real buy-review eligibility exists
+```
+
+## Target Historical Replay Training Chain
+
+Future target workflow:
+
+```text
+accepted PIT universe input
+→ per-date replay universe
+→ per-date market/fundamental/event availability cut
+→ factor_observation build
+→ event_structured build
+→ company_exposure linkage
+→ deterministic replay decision
+→ replay evidence bundle
+→ forward_return_label build
+→ benchmark-relative label build
+→ evaluation report
+→ training/calibration run
+→ model_version and parameter set
+→ stock_profile update
+→ paper workflow validation
+→ real buy-review eligibility only after paper validation
+```
+
+This chain must not run until earlier gates are satisfied.
+
+## Stock-Level Validation Chain
+
+Future stock-level validation should follow:
+
+```text
+stock universe eligibility
+→ data coverage audit
+→ factor exposure coverage
+→ replay coverage by date range and regime
+→ forward-label coverage
+→ in-sample training
+→ out-of-sample validation
+→ benchmark comparison
+→ error analysis
+→ paper workflow observation
+→ stock_profile status
+```
+
+A stock profile is not an approval to trade. It only determines whether real buy-review candidates may be shown later.
 
 ## Important Data Contracts
 
@@ -184,9 +290,225 @@ revision_id
 source
 ```
 
-### PIT Evidence and Reviewer Context Contracts
+### Replay Substrate Fixture Entities
 
-PIT checklist validator outputs are gate reports, not approvals. A checklist-pass row would only be an approval-candidate preview until an explicit PIT review workflow is run.
+The v1.27.0 schema fixture covers 14 entities:
+
+```text
+source_registry
+raw_document_store
+factor_definition
+factor_observation
+event_structured
+company_exposure
+replay_decision
+replay_evidence_bundle
+forward_return_label
+benchmark_label
+training_result
+model_version
+evaluation_report
+stock_profile
+```
+
+In v1.27.0, later-stage entities such as `forward_return_label`, `training_result`, `evaluation_report`, and `stock_profile` are schema-only / blocked / non-active. They do not imply readiness.
+
+### Raw Document Store Fields
+
+Future historical document/news/announcement records should include:
+
+```text
+document_id
+source_id
+source_name
+source_type
+permission_class
+url_or_file_ref
+title
+body_or_text_ref
+event_date
+publish_time
+available_time
+fetch_time
+source_hash
+language
+parser_version
+revision_id
+raw_artifact_path
+manual_review_required
+compliance_flag
+```
+
+### Factor Definition Fields
+
+Future `factor_definition` rows should include:
+
+```text
+factor_id
+layer
+second_level
+factor_name
+impact_path
+affected_entities
+direction_rule
+time_horizon
+data_sources
+data_availability
+proxy_variables
+lag_days
+confidence_default
+backtestable
+compliance_flag
+trade_usage
+version
+status
+```
+
+### Factor Observation Fields
+
+Future `factor_observation` rows should include:
+
+```text
+as_of_date
+symbol_or_entity
+factor_id
+value
+normalized_value
+z_score
+change_pct
+window
+available_time
+source_id
+source_hash
+revision_id
+quality_status
+pit_valid
+```
+
+### Structured Event Fields
+
+Future `event_structured` rows should include:
+
+```text
+event_id
+document_id
+event_time_public
+available_time
+source_tier
+source_name
+event_type
+layer
+second_level
+impact_path
+direction
+magnitude_hint
+time_horizon
+company_candidates
+industry_tags
+commodity_tags
+region_tags
+confidence_raw
+legality_flag
+parser_version
+manual_review_required
+```
+
+### Replay Decision Fields
+
+Future `replay_decision` rows should include:
+
+```text
+replay_id
+as_of_date
+symbol
+model_version
+universe_version
+factor_snapshot_id
+event_snapshot_id
+signal_label
+score_components
+risk_flags
+blocked_reasons
+evidence_bundle_id
+manual_review_required
+created_at
+llm_api_called=false
+approval_applied=false
+order_placed=false
+```
+
+### Forward Return Label Fields
+
+Future `forward_return_label` rows should include:
+
+```text
+as_of_date
+symbol
+horizon_days
+entry_price_basis
+exit_price_basis
+forward_return
+benchmark_return
+industry_return
+excess_return
+max_drawdown
+max_runup
+hit_label
+risk_adjusted_label
+corporate_action_adjustment_policy
+quality_status
+```
+
+### Training Result Fields
+
+Future `training_result` rows should include:
+
+```text
+training_run_id
+model_version
+train_start_date
+train_end_date
+test_start_date
+test_end_date
+symbols
+factor_set_version
+label_horizons
+objective
+parameters
+metrics
+benchmark_metrics
+overfit_checks
+known_limitations
+approval_status=research_only
+```
+
+### Stock Profile Fields
+
+Future `stock_profile` rows should include:
+
+```text
+symbol
+profile_version
+instrument_type
+coverage_status
+training_status
+paper_status
+real_buy_review_eligible=false
+validated_signal_types
+validated_horizons
+factor_sensitivities
+risk_vetoes
+best_regimes
+bad_regimes
+benchmark_comparison
+error_summary
+last_reviewed_at
+reviewer
+```
+
+## PIT Evidence and Reviewer Context Contracts
+
+PIT checklist validator outputs are gate reports, not approvals. A checklist-pass row is only an approval-candidate preview until an explicit PIT review workflow is run.
 
 Known policy profiles:
 
@@ -198,74 +520,33 @@ EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT
 
 None of these profiles changes strict defaults, applies approval, runs PIT review, exports universe files, or creates usable current-candidates input.
 
-### SZSE 1815 Quotation Diagnostics
+## Research-Status Integration Rule
 
-Diagnostics have shown:
+Replay-substrate schema fixture context in research-status must remain preparation context only.
 
-```text
-000001: 8/8 official same-date quotation rows found
-159915: 8/8 official same-date quotation rows found
-STRONG_OFFICIAL_DATE_SPECIFIC for quotation/traded presence: 16/16
-```
-
-This is strong date-specific evidence for quotation/traded presence only. It does not automatically prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution.
-
-### Material PIT Evidence Gate Closure Plan
-
-The material gate closure plan identifies exact reviewed evidence needed to close material PIT gates for first-batch rows.
-
-Current plan state:
+Safe wording:
 
 ```text
-plan_id: 2d6ab8e7f9f8
-stage: MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_NEEDS_EVIDENCE
-row_count: 16
-checklist_pass_candidate_count: 0
-remaining_blocked_count: 16
-reusable_symbol_level_closure_count: 2
-date_specific_closure_required_count: 16
-reviewer_no_hit_acceptance_required_count: 16
-survivorship_rationale_required_count: 16
-metadata_closure_required_count: 16
-stock_st_no_st_required_count: 8
-clean_review_updates_created: false
-approval_applied: false
+Replay substrate schema fixture is report-only.
+It proves schema/fixture contracts only.
+It is not real replay.
+It is not forward-label computation.
+It is not model training.
+It is not stock-profile validation.
+It is not real buy-review eligibility.
 ```
 
-### Reviewer Material Evidence Fill Guidance
-
-The fill guidance workflow converts material gate closure requirements into human-readable reviewer guidance.
-
-Current guidance state:
-
-```text
-guidance_id: 94f5ff204662
-stage: REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL
-row_count: 16
-reviewer_guidance_row_count: 114
-symbol_level_guidance_count: 2
-date_specific_guidance_count: 16
-no_hit_acceptance_guidance_count: 64
-survivorship_rationale_guidance_count: 16
-metadata_guidance_count: 16
-checklist_pass_candidate_count: 0
-remaining_blocked_count: 16
-clean_review_updates_created: false
-approval_applied: false
-```
-
-This guidance is not approval, not export-readiness, not staging, and not current-candidates input.
+The replay-substrate schema fixture must not override later validated paper workflow or active workflow states.
 
 ## Current Next Technical Branch
 
 ```text
-Reviewer Fill Fixture Impact Validation v0.1
+Historical Replay Substrate Readiness Plan Report-Only v0.1
 ```
 
 Purpose:
 
-- create a diagnostics-only reviewer fill fixture from the guidance template;
-- validate it against partial-completion/material-gate impact reporting;
-- prove completed fields reduce only intended blockers;
-- keep `checklist_pass_candidate_count=0` unless strict gates are truly satisfied;
-- prevent clean review updates, PIT approval, export, current-candidates, snapshots, forward labels, cache mutation, messages, broker, or orders.
+- consume the schema fixture contracts as context only;
+- define minimum readiness gates for real replay;
+- keep all outputs report-only;
+- do not run replay, labels, training, or stock-profile validation.

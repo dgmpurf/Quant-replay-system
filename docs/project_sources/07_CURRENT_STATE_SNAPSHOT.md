@@ -1,14 +1,36 @@
 # Current State Snapshot
 
 > Status: working memory document  
-> Last generated: 2026-06-06  
+> Last generated: 2026-06-12  
 > Permanence: temporary; refresh after the next major checkpoint or when source state changes.
 
 ## Summary
 
-The project is a local quantitative research, signal semantics, advisory, calibration, paper workflow, and multi-date evidence preparation system for China A-share stocks and ETFs.
+The project is a local quantitative research, signal semantics, advisory, calibration, paper workflow, PIT evidence preparation, and historical replay training preparation system for China A-share stocks and ETFs.
 
 It is not a live trading system.
+
+## Strategic State
+
+The project goal is:
+
+```text
+Personal-first, institution-grade-core.
+```
+
+The first usable version should support personal/family A-share/ETF advisory. The core must still be built for historical replay training, point-in-time validity, factor universe expansion, stock-level profiles, forward-return evaluation, research-method governance, and paper workflow validation before real buy-review eligibility.
+
+This means:
+
+```text
+PIT universe evidence work = validity foundation for replay training.
+Factor taxonomy = expandable factor universe under 8-layer skeleton.
+Research method stack = broader than ML/DL/data mining or formulas/weights.
+Stock profile = required before real buy-review eligibility.
+Historical replay + labels + paper workflow = required before real buy-review eligibility.
+```
+
+The fixed 12-factor structure should not be treated as final. It remains a coverage checklist only.
 
 ## Major Completed Capabilities
 
@@ -60,7 +82,9 @@ It is not a live trading system.
 - First-batch partial completion impact.
 - Material PIT evidence gate closure planning.
 - Reviewer material evidence fill guidance.
-- Research-status integration for these layers.
+- One-row material evidence fill package.
+- One-row checklist-pass candidate preview.
+- Reviewer-supplied material evidence candidate fixture audit.
 
 ### Signal Semantics and Advisory
 
@@ -85,6 +109,62 @@ It is not a live trading system.
 - Research-status integration.
 - Current recommendation: keep defaults, do not expand buy review, collect more evidence.
 
+### Replay Substrate Preparation
+
+Completed as of v1.27.0:
+
+- Historical Replay Training Substrate Read-only Architecture Audit.
+- `replay-substrate-schema-fixture` report-only workflow.
+- `replay-substrate-schema-fixture-index`.
+- `replay-substrate-schema-fixture-health`.
+- `replay-substrate-schema-fixture-status`.
+- Research-status integration for replay-substrate schema fixture context.
+- `docs/release_checkpoint_v1.27.0.md`.
+
+## v1.27.0 Replay Substrate Schema Fixture State
+
+Latest known state:
+
+```text
+fixture_id: 5f9a393ce90d
+fixture_status: PASS
+fixture_stage: REPLAY_SUBSTRATE_SCHEMA_FIXTURE_READY
+health_status: PASS
+entity_count: 14
+validation_issue_count: 0
+overclaim_guard_pass_count: 8
+overclaim_guard_total_count: 8
+active_replay_input: false
+forward_labels_exist: false
+weights_trained: false
+active_stock_profile_exists: false
+real_buy_review_eligible: false
+report_only: true
+diagnostic_only: true
+no_live_trading: true
+no_broker_api: true
+no_order_placement: true
+```
+
+Research-status summary:
+
+```text
+final workflow_stage: PAPER_WORKFLOW_READY
+replay substrate schema fixture appears as preparation context only
+```
+
+Interpretation:
+
+```text
+schema fixture ready
+≠ active replay input
+≠ real replay decision dataset
+≠ forward labels
+≠ weights trained
+≠ active stock profile
+≠ real buy-review eligibility
+```
+
 ## Current Quantitative Evidence Status
 
 Current evidence is not enough to validate non-demo buy signals.
@@ -92,46 +172,26 @@ Current evidence is not enough to validate non-demo buy signals.
 Known gaps:
 
 - too few dates;
-- only 9 symbols in local cache;
+- only limited symbols in local cache in prior evidence context;
 - demo-only current-candidates;
+- no accepted PIT universe export;
+- no active accepted PIT universe input;
+- no generated multi-date current-candidates from accepted PIT universe;
+- no real historical replay decision dataset;
+- no real factor observation dataset;
+- no structured event dataset;
 - no forward-return labels;
 - no multi-date outcome dataset;
-- no accepted PIT universe export;
-- no corporate action adjustment policy validation;
-- no linked paper outcome history for signals.
+- no training/evaluation result dataset;
+- no validated stock-level profiles;
+- no real buy-review eligibility gates active;
+- no linked paper outcome history for replay-trained signals.
 
-## Current Multi-Date Backfill State
+## Current Multi-Date Backfill / PIT Evidence State
 
-Known active / planning artifacts:
+Known active / planning artifacts from the previous source pack remain context only unless later explicit workflows make them active.
 
-```text
-review_id: 7bc8ba08bf5a
-export_readiness_id: 75c6975e93e4
-helper_id: 4cf008a09f04
-staging_id: 41bfd31a9e2c
-legacy_worklist_id: 1c7972988f59
-ingestion_id: 284058e7f1e4
-policy_audit_id: 844794b3aae1
-split_plan_id: db2c09268c14
-replacement_plan_id: 0774d0a1fdb9
-acceptance_id: c723c0c476b1
-activation_id: a8e74161f9bb
-evidence_update_plan_id: 4e268d67bd7d
-latest_diagnostics_ingestion_id: 734f3a722ddf
-validator_id: 62e9eb747197
-policy_comparison_id: 0ef6d2f3bae6
-packet_id: 8efabe2ffe62
-reviewed_no_hit_policy_comparison_id: c1a75d1091c6
-enrichment_id: cb5f323d3c8c
-reviewer_no_hit_acceptance_id: 2e05e4b74794
-reviewer_no_hit_downstream_impact_id: 9e164963455e
-first_batch_reviewer_evidence_completion_plan_id: c630522f235a
-first_batch_partial_completion_impact_id: ea81f81ae764
-material_pit_evidence_gate_closure_plan_id: 2d6ab8e7f9f8
-reviewer_material_evidence_fill_guidance_id: 94f5ff204662
-```
-
-Current counts:
+Important known state:
 
 ```text
 approved rows: 0
@@ -140,18 +200,6 @@ staged rows: 0
 clean ready review updates: 0
 worklist rows: 72
 needs evidence rows: 72
-future-dated hints: 72
-authoritative hints: 0
-STOCK rows: 56
-ETF rows: 16
-legacy mixed-demo rows: 72
-profile conflicts: 56
-stock_core replacement rows: 56
-etf_core replacement rows: 16
-mixed_demo_core replacement rows: 0
-active legacy worklist mutated: false
-accepted replacement planning context: true
-activation planning context created: true
 stock_core first-batch rows: 8
 etf_core first-batch rows: 8
 checklist_pass_count: 0
@@ -160,41 +208,25 @@ clean_review_updates_created: false
 approval_applied: false
 ```
 
-PIT evidence / planning details:
+One-row checklist-pass candidate preview state from the previous source pack:
 
 ```text
-selected signal dates: 8
-symbols: 9
-PIT rows: 72
-stock_core first batch rows: 8
-etf_core first batch rows: 8
-PIT evidence checklist validator: 16 rows blocked, 0 checklist-pass approval candidates
-SZSE 1815 quotation diagnostics: 16/16 same-date official quotation/traded-presence rows found
-Reviewer no-hit acceptance: 64 rows, accepted_count=0, needs_review_count=64
-Reviewer no-hit downstream impact: accepted_no_hit_context_count=0, remaining_blocked_count=16, approval_applied=false
-First-batch reviewer evidence completion plan: 16 rows, all require reviewer completion, no-hit acceptance, survivorship rationale, and metadata completion
-First-batch partial completion impact: active plan has 0 completed rows, 0 blockers reduced, 0 material blockers reduced, 0 checklist pass, 16 blocked
-Material PIT evidence gate closure plan: 16 rows, 0 checklist-pass candidates, 16 blocked
-Reviewer material evidence fill guidance: 16 rows, 114 guidance rows, 0 checklist-pass candidates, 16 blocked
+ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_CONTEXT_ONLY
 ```
 
-Current reviewer material evidence fill guidance stage:
+The preview is context-only and not approval.
+
+Reviewer-supplied material evidence candidate fixture audit result reported by user:
 
 ```text
-REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_NEEDS_FILL
+future reviewer-supplied evidence could reduce some strict gaps only as report-only preview
+target row remains blocked
+row_checklist_pass_candidate=false
+strict_requirement_gap_count=10
+remaining_blocked=true
+clean_review_updates_created=false
+approval_applied=false
 ```
-
-Meaning:
-
-The project has moved from “material gate closure plan enumerates what reviewed evidence is needed” to “reviewer-oriented fill guidance exists for how to fill the remaining material evidence.”
-
-The guidance is report-only. It does not make any row approval-ready, does not create clean `review_updates.csv`, and does not apply PIT approval.
-
-The `EOD_POST_CLOSE_REVIEWED_NO_HIT_SUPPORT_PIT` profile remains opt-in and report-only. It supports no-hit observations only as reviewer-accepted context. The fill guidance can list no-hit acceptance and survivorship rationale steps, but it still does not change strict defaults or create PIT approvals.
-
-The SZSE 1815 probe produced official same-date quotation/traded-presence evidence for all 16 first-batch rows. The enrichment, acceptance, downstream impact, first-batch planning, partial impact, material gate closure, and fill guidance milestones organize this evidence and no-hit context, but they still do not prove not-delisted, no-ST, no-suspension, or survivorship-bias resolution by themselves.
-
-Existing `etf_core` artifacts should remain legacy mixed/demo context, not ETF-only context.
 
 ## Current External Data Strategy
 
@@ -209,21 +241,59 @@ Current recommendation:
 - LOCAL_CSV first;
 - AKShare / BaoStock / Tushare free/low-quota optional later;
 - public announcement metadata later;
-- news as event/risk context first, not score driver.
+- news as event/risk context first, not score driver;
+- raw document store and available_time metadata before historical news replay.
+
+## Current Research Method Strategy
+
+The project should not be framed only as:
+
+```text
+ML / DL / data mining
+```
+
+or only as:
+
+```text
+algorithms / weights / formulas
+```
+
+The future research core should combine:
+
+```text
+statistics
+econometrics
+financial engineering
+factor research
+event study
+causal inference
+knowledge graph / industry-chain modeling
+NLP / IR / RAG
+data mining
+ML / DL
+optimization
+risk management
+portfolio construction
+execution modeling
+replay evaluation
+explainability
+model governance
+```
+
+All research methods remain gated by PIT validity, source provenance, forward-label separation, out-of-sample validation, paper workflow, and human confirmation.
 
 ## Recommended Next Branch
 
 ```text
-Reviewer Fill Fixture Impact Validation v0.1
+Historical Replay Substrate Readiness Plan Report-Only v0.1
 ```
 
 Purpose:
 
-- use the reviewer material evidence fill guidance template;
-- create a tiny diagnostics-only reviewer fill fixture;
-- verify the completed fields reduce only intended blockers;
-- verify the fixture can flow through impact validation without becoming approval;
-- keep all rows non-approved unless a future explicit PIT review workflow is run.
+- connect v1.27.0 schema fixture contracts to the next readiness plan;
+- define what is required before true replay can run;
+- define minimum one-stock / one-ETF replay prerequisites;
+- remain diagnostics/report-only.
 
 Do not yet:
 
@@ -237,8 +307,11 @@ Do not yet:
 - generate multi-date candidates;
 - build per-date snapshot manifests;
 - compute forward returns;
+- train weights;
+- create stock profiles as active eligibility artifacts;
 - change non-demo thresholds;
 - add news scraping;
+- call LLM APIs;
 - add broker integration;
 - send real messages.
 
@@ -251,9 +324,12 @@ Recent milestone direction:
 - v1.22.0: first-batch partial completion impact.
 - v1.23.0: material PIT evidence gate closure plan.
 - v1.24.0: reviewer material evidence fill guidance.
+- v1.25.0: one-row material evidence fill package.
+- v1.26.0: one-row checklist-pass candidate preview.
+- v1.27.0: replay substrate schema fixture, artifact views, research-status integration, and checkpoint docs.
 
 ## What to Ask ChatGPT Next
 
 ```text
-Give me Codex tasks for Reviewer Fill Fixture Impact Validation v0.1.
+Give me the Codex prompt for Historical Replay Substrate Readiness Plan Report-Only v0.1.
 ```
