@@ -257,6 +257,15 @@ from quant_replay_system.one_row_checklist_pass_candidate_preview_status import 
 from quant_replay_system.historical_replay_input_gate_validator_fixture import (
     build_historical_replay_input_gate_validator_fixture,
 )
+from quant_replay_system.historical_replay_input_gate_validator_fixture_health import (
+    check_historical_replay_input_gate_validator_fixture_health,
+)
+from quant_replay_system.historical_replay_input_gate_validator_fixture_index import (
+    build_historical_replay_input_gate_validator_fixture_index,
+)
+from quant_replay_system.historical_replay_input_gate_validator_fixture_status import (
+    run_historical_replay_input_gate_validator_fixture_status,
+)
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.replay_substrate_schema_fixture_health import (
     check_replay_substrate_schema_fixture_health,
@@ -2047,6 +2056,60 @@ def build_parser() -> argparse.ArgumentParser:
     )
     historical_replay_input_gate_validator_fixture.set_defaults(
         handler=_handle_historical_replay_input_gate_validator_fixture
+    )
+
+    historical_replay_input_gate_validator_fixture_index = subparsers.add_parser(
+        "historical-replay-input-gate-validator-fixture-index",
+        help="Index report-only historical replay input gate validator fixture artifacts",
+    )
+    historical_replay_input_gate_validator_fixture_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1",
+        help="Fixture artifact root to index",
+    )
+    historical_replay_input_gate_validator_fixture_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1/index",
+        help="Directory where fixture index artifacts will be written",
+    )
+    historical_replay_input_gate_validator_fixture_index.set_defaults(
+        handler=_handle_historical_replay_input_gate_validator_fixture_index
+    )
+
+    historical_replay_input_gate_validator_fixture_health = subparsers.add_parser(
+        "historical-replay-input-gate-validator-fixture-health",
+        help="Check report-only historical replay input gate validator fixture artifact health",
+    )
+    historical_replay_input_gate_validator_fixture_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1",
+        help="Fixture artifact root to check",
+    )
+    historical_replay_input_gate_validator_fixture_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1/health",
+        help="Directory where fixture health artifacts will be written",
+    )
+    historical_replay_input_gate_validator_fixture_health.set_defaults(
+        handler=_handle_historical_replay_input_gate_validator_fixture_health
+    )
+
+    historical_replay_input_gate_validator_fixture_status = subparsers.add_parser(
+        "historical-replay-input-gate-validator-fixture-status",
+        help="Summarize latest report-only historical replay input gate validator fixture status",
+    )
+    historical_replay_input_gate_validator_fixture_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1",
+        help="Fixture artifact root to summarize",
+    )
+    historical_replay_input_gate_validator_fixture_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1/status",
+        help="Directory where fixture status artifacts will be written",
+    )
+    historical_replay_input_gate_validator_fixture_status.set_defaults(
+        handler=_handle_historical_replay_input_gate_validator_fixture_status
     )
 
     replay_substrate_schema_fixture = subparsers.add_parser(
@@ -5925,6 +5988,70 @@ def _handle_historical_replay_input_gate_validator_fixture(args: argparse.Namesp
     print(f"report_path: {result.artifact_paths['report']}")
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, real validator, index/health/status, research-status integration, checkpoint docs, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_historical_replay_input_gate_validator_fixture_index(args: argparse.Namespace) -> int:
+    result = build_historical_replay_input_gate_validator_fixture_index(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"index_report: {result.artifact_paths['index_report']}")
+    print(f"metadata: {result.artifact_paths['metadata']}")
+    if result.warnings:
+        print("warnings:")
+        for warning in result.warnings:
+            print(f"- {warning}")
+    print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, real validator, research-status integration, checkpoint docs, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 0
+
+
+def _handle_historical_replay_input_gate_validator_fixture_health(args: argparse.Namespace) -> int:
+    result = check_historical_replay_input_gate_validator_fixture_health(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_report: {result.artifact_paths['health_report']}")
+    print(f"metadata: {result.artifact_paths['metadata']}")
+    print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, real validator, research-status integration, checkpoint docs, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_historical_replay_input_gate_validator_fixture_status(args: argparse.Namespace) -> int:
+    result = run_historical_replay_input_gate_validator_fixture_status(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"latest_fixture_run_id: {result.latest_fixture_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"case_count: {result.case_count}")
+    print(f"blocked_case_count: {result.blocked_case_count}")
+    print(f"pass_candidate_case_count: {result.pass_candidate_case_count}")
+    print(f"active_ready_case_count: {result.active_ready_case_count}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"validator_implemented: {result.validator_implemented}")
+    print(f"safety_statement: {result.safety_statement}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"status_report: {result.artifact_paths['status_report']}")
+    print(f"metadata: {result.artifact_paths['metadata']}")
+    print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, real validator, research-status integration, checkpoint docs, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
     return 1 if result.status == "FAIL" else 0
 
 

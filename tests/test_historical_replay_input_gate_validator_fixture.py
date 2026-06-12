@@ -12,6 +12,16 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture import (
     EXPECTED_FIXTURE_CASE_GROUP_COUNTS,
     build_historical_replay_input_gate_validator_fixture,
 )
+from quant_replay_system.historical_replay_input_gate_validator_fixture_health import (
+    check_historical_replay_input_gate_validator_fixture_health,
+)
+from quant_replay_system.historical_replay_input_gate_validator_fixture_index import (
+    build_historical_replay_input_gate_validator_fixture_index,
+)
+from quant_replay_system.historical_replay_input_gate_validator_fixture_status import (
+    INPUT_GATE_VALIDATOR_FIXTURE_READY,
+    run_historical_replay_input_gate_validator_fixture_status,
+)
 
 
 def test_fixture_workflow_writes_required_report_only_artifacts(tmp_path: Path) -> None:
@@ -146,3 +156,168 @@ def test_fixture_cli_runs_and_prints_summary(tmp_path: Path) -> None:
     assert "validator_implemented: False" in completed.stdout
     assert "No replay, current-candidates" in completed.stdout
     assert len([path for path in output_dir.iterdir() if path.is_dir()]) == 1
+
+
+def test_fixture_index_discovers_latest_run_and_metadata_fields(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    fixture = build_historical_replay_input_gate_validator_fixture(output_dir=root)
+
+    result = build_historical_replay_input_gate_validator_fixture_index(root=root, output_dir=root / "index")
+
+    assert result.artifact_count == 1
+    row = result.index_frame.iloc[0]
+    assert row["fixture_run_id"] == fixture.fixture_run_id
+    assert row["case_count"] == 68
+    assert row["blocked_case_count"] == 67
+    assert row["pass_candidate_case_count"] == 1
+    assert row["active_ready_case_count"] == 0
+    assert row["validation_issue_count"] == 0
+    assert row["overclaim_guard_pass_count"] == 14
+    assert row["overclaim_guard_total_count"] == 14
+    assert row["active_replay_input"] is False
+    assert row["forward_labels_exist"] is False
+    assert row["weights_trained"] is False
+    assert row["active_stock_profile_exists"] is False
+    assert row["real_buy_review_eligible"] is False
+    assert row["report_only"] is True
+    assert row["diagnostic_only"] is True
+    assert row["no_live_trading"] is True
+    assert row["no_broker_api"] is True
+    assert row["no_order_placement"] is True
+    assert row["no_message_sent"] is True
+    assert row["llm_api_called"] is False
+    assert row["external_api_called"] is False
+    assert row["cache_mutated"] is False
+    assert row["current_candidates_run"] is False
+    assert row["snapshot_built"] is False
+    assert row["signal_semantics_changed"] is False
+    assert row["validator_implemented"] is False
+    assert row["active_ready_status_allowed"] is False
+    assert (root / "index" / "historical_replay_input_gate_validator_fixture_index.csv").exists()
+
+
+def test_fixture_health_passes_for_valid_fixture(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    build_historical_replay_input_gate_validator_fixture(output_dir=root)
+
+    result = check_historical_replay_input_gate_validator_fixture_health(root=root, output_dir=root / "health")
+
+    assert result.status == "PASS"
+    assert result.checked_artifact_count == 1
+    assert result.error_count == 0
+    assert result.issue_count == 0
+    assert (root / "health" / "historical_replay_input_gate_validator_fixture_health.csv").exists()
+
+
+def test_fixture_health_fails_when_no_fixture_exists(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+
+    result = check_historical_replay_input_gate_validator_fixture_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    assert "NO_FIXTURE_FOUND" in set(result.health_frame["issue_code"])
+
+
+def test_fixture_health_fails_for_count_and_actionability_regressions(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    fixture = build_historical_replay_input_gate_validator_fixture(output_dir=root)
+    metadata_path = fixture.artifact_paths["metadata"]
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["active_ready_case_count"] = 1
+    metadata["pass_candidate_case_count"] = 2
+    metadata["case_count"] = 67
+    metadata["active_replay_input"] = True
+    metadata["forward_labels_exist"] = True
+    metadata["weights_trained"] = True
+    metadata["active_stock_profile_exists"] = True
+    metadata["real_buy_review_eligible"] = True
+    metadata["validator_implemented"] = True
+    metadata["active_ready_status_allowed"] = True
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    result = check_historical_replay_input_gate_validator_fixture_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    issue_codes = set(result.health_frame["issue_code"])
+    assert {
+        "CASE_COUNT_MISMATCH",
+        "PASS_CANDIDATE_COUNT_MISMATCH",
+        "ACTIVE_READY_CASE_PRESENT",
+        "ACTIVE_REPLAY_INPUT_UNEXPECTED",
+        "FORWARD_LABELS_EXIST_UNEXPECTED",
+        "WEIGHTS_TRAINED_UNEXPECTED",
+        "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED",
+        "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED",
+        "VALIDATOR_IMPLEMENTED_UNEXPECTED",
+        "ACTIVE_READY_STATUS_ALLOWED_UNEXPECTED",
+    } <= issue_codes
+
+
+def test_fixture_health_fails_when_active_ready_status_appears_in_cases(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    fixture = build_historical_replay_input_gate_validator_fixture(output_dir=root)
+    cases = pd.read_csv(fixture.artifact_paths["fixture_cases"], dtype=str)
+    cases.loc[0, "expected_status"] = "ACTIVE_REPLAY_INPUT_READY"
+    cases.to_csv(fixture.artifact_paths["fixture_cases"], index=False)
+
+    result = check_historical_replay_input_gate_validator_fixture_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    assert "ACTIVE_READY_CASE_PRESENT" in set(result.health_frame["issue_code"])
+
+
+def test_fixture_status_reports_ready_and_safety_wording(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    fixture = build_historical_replay_input_gate_validator_fixture(output_dir=root)
+
+    result = run_historical_replay_input_gate_validator_fixture_status(root=root, output_dir=root / "status")
+
+    assert result.latest_fixture_run_id == fixture.fixture_run_id
+    assert result.status == "PASS"
+    assert result.health_status == "PASS"
+    assert result.workflow_stage == INPUT_GATE_VALIDATOR_FIXTURE_READY
+    assert result.active_replay_input is False
+    assert result.forward_labels_exist is False
+    assert result.weights_trained is False
+    assert result.active_stock_profile_exists is False
+    assert result.real_buy_review_eligible is False
+    wording = result.safety_statement
+    assert "report-only" in wording
+    assert "not the real validator" in wording
+    assert "not real replay" in wording
+    assert "not active replay input" in wording
+    assert "does not compute forward labels" in wording
+    assert "does not train weights" in wording
+    assert "does not create active stock profiles" in wording
+    assert "does not create real buy-review eligibility" in wording
+
+
+def test_fixture_view_clis_run(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    build_historical_replay_input_gate_validator_fixture(output_dir=root)
+
+    env = {**os.environ, "PYTHONPATH": "src"}
+    commands = [
+        "historical-replay-input-gate-validator-fixture-index",
+        "historical-replay-input-gate-validator-fixture-health",
+        "historical-replay-input-gate-validator-fixture-status",
+    ]
+    for command in commands:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(root),
+                "--output-dir",
+                str(root / command.rsplit("-", 1)[-1]),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        assert "No replay, current-candidates" in completed.stdout
+        assert "real validator" in completed.stdout
