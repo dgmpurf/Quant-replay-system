@@ -1,8 +1,8 @@
 # Quant Replay System Project Source Pack Index
 
-> Status: working memory document  
-> Last generated: 2026-06-12  
-> Intended use: replace the previous ChatGPT Project Source pack after the v1.27.0 replay substrate schema fixture checkpoint.  
+> Status: working memory document
+> Last generated: 2026-06-12
+> Intended use: replace the previous ChatGPT Project Source pack after the v1.28.0 historical replay input gate validator fixture checkpoint.
 > Permanence: temporary and replaceable. Refresh after a major checkpoint, accepted artifact workflow, source-goal change, model-governance change, or safety-boundary change.
 
 ## Purpose
@@ -87,13 +87,50 @@ no_order_placement: true
 
 This checkpoint proves only schema/fixture contracts. It is not real replay, not forward-label computation, not model training, not stock-profile validation, and not real buy-review eligibility.
 
+## 2026-06-12 v1.28.0 Checkpoint Update
+
+A report-only Historical Replay Input Gate Validator Fixture workflow is now implemented, has artifact views, is integrated into research-status, and has a v1.28.0 checkpoint doc.
+
+Completed chain:
+
+```text
+historical-replay-input-gate-validator-fixture
+→ historical-replay-input-gate-validator-fixture-index
+→ historical-replay-input-gate-validator-fixture-health
+→ historical-replay-input-gate-validator-fixture-status
+→ research-status integration
+→ docs/release_checkpoint_v1.28.0.md
+→ SOURCE_UPDATE_NOTES_v1_28_0.md
+```
+
+Latest known fixture context:
+
+```text
+latest_fixture_run_id: c76d6f0c41d6
+workflow_stage: INPUT_GATE_VALIDATOR_FIXTURE_READY
+health: PASS
+case_count: 68
+blocked_case_count: 67
+pass_candidate_case_count: 1
+active_ready_case_count: 0
+validation_issue_count: 0
+validator_implemented: false
+active_replay_input: false
+forward_labels_exist: false
+weights_trained: false
+active_stock_profile_exists: false
+real_buy_review_eligible: false
+```
+
+This checkpoint proves only that the report-only fixture workflow and its views can produce and report blocked/pass-candidate fixture cases for a future validator. It is not the real validator, not real replay, not active replay input, not forward-label computation, not model training, not stock-profile validation, and not real buy-review eligibility.
+
 ## Source Basis
 
 This pack is based on:
 
 - the long ChatGPT/Codex collaboration history;
 - repository docs for `dgmpurf/Quant-replay-system`;
-- v1.0.0 through v1.27.0 research, PIT evidence, reviewer no-hit, first-batch completion, material gate closure, reviewer fill guidance, one-row material package, one-row checklist-pass preview, replay-substrate schema fixture, artifact views, research-status integration, and checkpoint docs;
+- v1.0.0 through v1.28.0 research, PIT evidence, reviewer no-hit, first-batch completion, material gate closure, reviewer fill guidance, one-row material package, one-row checklist-pass preview, replay-substrate schema fixture, input gate validator fixture, artifact views, research-status integration, and checkpoint docs;
 - diagnostics for SZSE 1815 same-date quotation, exception/no-hit probes, official no-hit policy audits, reviewer acceptance smoke tests, downstream impact smoke tests, material gate closure, fill guidance, one-row material package, checklist-pass preview audits, reviewer-supplied material evidence fixture audit, and replay-substrate architecture audit;
 - China A-share event-driven and industry-chain factor taxonomy sources;
 - the 2026-06-11 clarification that historical replay training, factor-universe expansion, and stock-level validation are central project capabilities;
@@ -119,7 +156,7 @@ Use these as the active ChatGPT Project Sources after this refresh:
 06_CHECKPOINT_AND_ARTIFACT_GOVERNANCE.md
 07_CURRENT_STATE_SNAPSHOT.md
 08_HISTORICAL_REPLAY_TRAINING_STRATEGY.md
-09_SOURCE_CHANGELOG_2026-06-12.md
+SOURCE_UPDATE_NOTES_v1_28_0.md
 10_RESEARCH_METHOD_STACK_AND_MODEL_GOVERNANCE.md
 FACTOR_TAXONOMY_SUMMARY.md
 FACTOR_TAXONOMY_V2_CANONICAL.md
@@ -192,7 +229,7 @@ All methods must be gated by PIT validity, source provenance, forward-label sepa
 
 ## Current Project State Summary
 
-The project has completed a replay-substrate schema fixture checkpoint, but it is still not ready for real replay training or non-demo buy/sell validation.
+The project has completed the replay-substrate schema fixture checkpoint and the historical replay input gate validator fixture checkpoint, but it is still not ready for real replay training or non-demo buy/sell validation.
 
 Current completed / in-progress chains include:
 
@@ -209,14 +246,19 @@ local market data / reviewed exports / quality gates
 → historical replay training substrate architecture audit
 → replay-substrate-schema-fixture
 → replay-substrate-schema-fixture index / health / status
-→ research-status integration
+→ replay-substrate-schema-fixture research-status integration
 → v1.27.0 checkpoint doc
+→ historical-replay-input-gate-validator-fixture
+→ historical-replay-input-gate-validator-fixture index / health / status
+→ input gate validator fixture research-status integration
+→ v1.28.0 checkpoint doc
 ```
 
 Current replay substrate state:
 
 ```text
 REPLAY_SUBSTRATE_SCHEMA_FIXTURE_READY
+INPUT_GATE_VALIDATOR_FIXTURE_READY
 ```
 
 Current final research-status workflow stage remains:
@@ -225,7 +267,7 @@ Current final research-status workflow stage remains:
 PAPER_WORKFLOW_READY
 ```
 
-The replay-substrate schema fixture appears as replay/training preparation context only and must not override paper workflow priority or imply active replay readiness.
+The replay-substrate schema fixture and input gate validator fixture appear as replay/training preparation context only and must not override paper workflow priority or imply active replay readiness.
 
 ## Key Conclusions
 
@@ -238,6 +280,8 @@ PIT evidence is the validity foundation for historical replay training.
 A checklist-pass candidate preview is not approval.
 A PIT-approved universe input is not a trading signal.
 A schema fixture is not real replay.
+An input gate validator fixture is not the real validator.
+An input gate validator fixture pass-candidate is not active replay readiness.
 A replay decision is not performance validation.
 A forward label is not strategy validation by itself.
 A training result is not production readiness.
@@ -277,14 +321,14 @@ free/local/public data sources
 Recommended next source-level branch:
 
 ```text
-Historical Replay Substrate Readiness Plan Report-Only v0.1
+Real Historical Replay Input Gate Validator Design Preview Report-Only v0.1
 ```
 
 Purpose:
 
-- consume the schema fixture contracts as context only;
-- map what must exist before true replay can run;
-- define the minimum one-stock/one-ETF replay readiness gates;
+- consume v1.27/v1.28 fixture contracts as context only;
+- design the real historical replay input gate validator as a report-only preview first;
+- define what real inputs would be checked and how blockers would be reported;
 - remain report-only and non-active;
 - avoid running real replay, computing labels, training weights, creating active stock profiles, changing signal semantics, or creating buy-review eligibility.
 

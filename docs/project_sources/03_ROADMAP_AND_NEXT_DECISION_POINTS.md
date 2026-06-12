@@ -1,7 +1,7 @@
 # Roadmap and Next Decision Points
 
-> Status: working memory document  
-> Last generated: 2026-06-12  
+> Status: working memory document
+> Last generated: 2026-06-12
 > Permanence: temporary; update after each major checkpoint, current-stage change, next-branch change, training-core change, or method-stack change.
 
 ## Current Position
@@ -22,6 +22,10 @@ The project is a broad local research system with:
 - replay-substrate-schema-fixture index / health / status;
 - replay-substrate-schema-fixture research-status integration;
 - v1.27.0 checkpoint doc;
+- historical-replay-input-gate-validator-fixture command;
+- historical-replay-input-gate-validator-fixture index / health / status;
+- historical-replay-input-gate-validator-fixture research-status integration;
+- v1.28.0 checkpoint doc and SOURCE_UPDATE_NOTES_v1_28_0.md;
 - unified `research-status`.
 
 The project is preparing for true historical replay training, but it is not ready to generate real replay decisions, compute forward returns, train weights, create active stock profiles, change non-demo thresholds, or produce validated buy/sell signals.
@@ -93,6 +97,62 @@ active stock profiles do not exist
 real buy-review eligibility does not exist
 ```
 
+## v1.28.0 Completed Checkpoint
+
+Checkpoint:
+
+```text
+docs/release_checkpoint_v1.28.0.md
+SOURCE_UPDATE_NOTES_v1_28_0.md
+```
+
+Completed workflow:
+
+```text
+historical-replay-input-gate-validator-fixture
+→ historical-replay-input-gate-validator-fixture-index
+→ historical-replay-input-gate-validator-fixture-health
+→ historical-replay-input-gate-validator-fixture-status
+→ research-status integration
+→ checkpoint doc
+```
+
+Latest known state:
+
+```text
+latest_fixture_run_id: c76d6f0c41d6
+fixture health: PASS
+fixture stage: INPUT_GATE_VALIDATOR_FIXTURE_READY
+case_count: 68
+blocked_case_count: 67
+pass_candidate_case_count: 1
+active_ready_case_count: 0
+validation_issue_count: 0
+validator_implemented: false
+active_replay_input: false
+forward_labels_exist: false
+weights_trained: false
+active_stock_profile_exists: false
+real_buy_review_eligible: false
+research-status final workflow_stage: PAPER_WORKFLOW_READY
+```
+
+Meaning:
+
+```text
+fixture workflow exists
+artifact views exist
+research-status context exists
+checkpoint doc exists
+real validator does not exist
+active replay input does not exist
+real replay does not exist
+forward labels do not exist
+weights are not trained
+active stock profiles do not exist
+real buy-review eligibility does not exist
+```
+
 ## Current Quantitative Evidence Status
 
 Current evidence is not enough to validate non-demo buy signals.
@@ -117,14 +177,14 @@ Known gaps:
 
 ## Current Recommended Next Branch
 
-### Branch: Historical Replay Substrate Readiness Plan Report-Only v0.1
+### Branch: Real Historical Replay Input Gate Validator Design Preview Report-Only v0.1
 
 Purpose:
 
-1. Use v1.27.0 schema fixture contracts as context only.
-2. Define what is required before true replay can run.
-3. Define the minimum accepted PIT universe gate for replay readiness.
-4. Define the minimum one-stock / one-ETF LOCAL_CSV replay prototype prerequisites.
+1. Use v1.27.0 schema fixture and v1.28.0 input gate validator fixture contracts as context only.
+2. Design the real historical replay input gate validator as a report-only preview first.
+3. Define what real inputs would be checked and how blockers would be surfaced.
+4. Define how pass-candidate differs from active replay readiness.
 5. Map required entities:
    - source_registry
    - raw_document_store
@@ -142,7 +202,7 @@ Purpose:
    - stock_profile
 6. Keep all outputs report-only.
 
-Do not implement real replay in this branch.
+Do not implement real replay in this branch. Do not compute labels, train weights, create stock profiles, or create buy-review eligibility.
 
 ## Historical Replay Training Roadmap
 
@@ -157,6 +217,8 @@ v1.27.0 schema fixture ready, report-only.
 Still needed:
 
 - readiness plan;
+- input gate validator fixture workflow and views completed as v1.28.0;
+- real input gate validator design preview still needed;
 - fixture validators as needed;
 - accepted PIT universe gate definition;
 - real data contracts;
@@ -251,13 +313,14 @@ Recent milestone direction:
 - v1.25.0: one-row material evidence fill package.
 - v1.26.0: one-row checklist-pass candidate preview.
 - v1.27.0: replay substrate schema fixture, artifact views, research-status integration, and checkpoint docs.
+- v1.28.0: historical replay input gate validator fixture, artifact views, research-status integration, checkpoint docs, and SOURCE_UPDATE_NOTES.
 
 ## Source / Commit / Tag Guidance
 
 Source:
 
 ```text
-Update Source after v1.27.0 because the replay-substrate schema fixture workflow now has command, index, health, status, research-status, and checkpoint docs.
+Update Source after v1.28.0 because the input gate validator fixture workflow now has command, index, health, status, research-status, checkpoint docs, and SOURCE_UPDATE_NOTES_v1_28_0.md.
 ```
 
 Commit:

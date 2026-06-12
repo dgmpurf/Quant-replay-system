@@ -1,7 +1,7 @@
 # Historical Replay Training Strategy
 
-> Status: working memory document  
-> Last generated: 2026-06-12  
+> Status: working memory document
+> Last generated: 2026-06-12
 > Permanence: temporary; update when replay schema, training methodology, research-method stack, stock-profile validation, or real buy-review eligibility rules change.
 
 ## Purpose
@@ -114,6 +114,50 @@ Interpretation:
 
 ```text
 schema/fixture contracts exist
+≠ real replay can run
+≠ forward labels exist
+≠ model weights are trained
+≠ stock_profile is active
+≠ real buy-review eligibility exists
+```
+
+## Current Implemented Preparation: v1.28.0 Input Gate Validator Fixture
+
+As of v1.28.0, the project has implemented a report-only fixture workflow for future historical replay input gate validator testing:
+
+```text
+historical-replay-input-gate-validator-fixture
+→ index
+→ health
+→ status
+→ research-status
+→ checkpoint doc
+```
+
+Latest known state:
+
+```text
+latest_fixture_run_id: c76d6f0c41d6
+stage: INPUT_GATE_VALIDATOR_FIXTURE_READY
+health: PASS
+case_count: 68
+blocked_case_count: 67
+pass_candidate_case_count: 1
+active_ready_case_count: 0
+validator_implemented: false
+active_replay_input: false
+forward_labels_exist: false
+weights_trained: false
+active_stock_profile_exists: false
+real_buy_review_eligible: false
+```
+
+Interpretation:
+
+```text
+fixture cases exist for future validator development
+≠ real validator exists
+≠ active replay input exists
 ≠ real replay can run
 ≠ forward labels exist
 ≠ model weights are trained
@@ -624,6 +668,7 @@ one stock or one ETF
 limited date range
 LOCAL_CSV data only
 accepted PIT universe inputs only
+future input gate validator must report pass-candidate or better before any active replay promotion
 small factor subset
 no LLM API calls
 no forward labels until replay decisions exist

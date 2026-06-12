@@ -1,7 +1,7 @@
 # Checkpoint and Artifact Governance
 
-> Status: working memory document  
-> Last generated: 2026-06-11  
+> Status: working memory document
+> Last generated: 2026-06-11
 > Permanence: temporary; update after checkpoint policy, artifact-status semantics, replay/training artifacts, or stock-profile governance changes.
 
 ## Checkpoint Philosophy
@@ -300,6 +300,48 @@ They must not:
 - place orders;
 - override human confirmation;
 - hide missing data, weak sample size, regime dependence, or benchmark underperformance.
+
+## Historical Replay Input Gate Validator Fixture Workflows
+
+The `historical-replay-input-gate-validator-fixture` workflow and its index/health/status/research-status context are report-only fixture artifacts.
+
+They may:
+
+- generate synthetic/manual fixture cases for a future historical replay input gate validator;
+- prove blocked-case coverage;
+- prove exactly one `REPLAY_INPUT_GATE_PASS_CANDIDATE` fixture case;
+- expose fixture counts, safety flags, and overclaim guards;
+- appear in research-status as replay/training preparation context.
+
+They must not:
+
+- implement the real validator;
+- create active replay input;
+- run real replay;
+- compute forward labels;
+- train model weights;
+- create active stock profiles;
+- create real buy-review eligibility;
+- treat `REPLAY_INPUT_GATE_PASS_CANDIDATE` as `ACTIVE_REPLAY_INPUT_READY`;
+- override paper workflow or future validated workflow priority;
+- claim strategy performance validation.
+
+Current v1.28.0 known state:
+
+```text
+latest_fixture_run_id: c76d6f0c41d6
+stage: INPUT_GATE_VALIDATOR_FIXTURE_READY
+case_count: 68
+blocked_case_count: 67
+pass_candidate_case_count: 1
+active_ready_case_count: 0
+validator_implemented: false
+active_replay_input: false
+forward_labels_exist: false
+weights_trained: false
+active_stock_profile_exists: false
+real_buy_review_eligible: false
+```
 
 ## Safety Flags
 

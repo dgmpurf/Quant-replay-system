@@ -2,7 +2,7 @@
 
 Generated: 2026-06-12
 
-Files:
+Files in the active ChatGPT Project Source set:
 
 - `00_PROJECT_SOURCE_INDEX.md`
 - `01_PROJECT_VISION_AND_BOUNDARIES.md`
@@ -13,9 +13,16 @@ Files:
 - `06_CHECKPOINT_AND_ARTIFACT_GOVERNANCE.md`
 - `07_CURRENT_STATE_SNAPSHOT.md`
 - `08_HISTORICAL_REPLAY_TRAINING_STRATEGY.md`
-- `09_SOURCE_CHANGELOG_2026-06-12.md`
+- `SOURCE_UPDATE_NOTES_v1_28_0.md`
 - `10_RESEARCH_METHOD_STACK_AND_MODEL_GOVERNANCE.md`
 - `FACTOR_TAXONOMY_SUMMARY.md`
 - `FACTOR_TAXONOMY_V2_CANONICAL.md`
 - `FACTOR_TAXONOMY_V2_RAW_EXCEL_EXPORT.md`
 - `中国事件驱动与产业链量化系统的因子分层框架研究.md`
+
+Deprecated from active source set after v1.28.0:
+
+- `09_SOURCE_CHANGELOG_2026-06-12.md`
+- `09_SOURCE_CHANGELOG.md`
+
+Use `SOURCE_UPDATE_NOTES_vX_Y_Z.md` for versioned source/update notes going forward.

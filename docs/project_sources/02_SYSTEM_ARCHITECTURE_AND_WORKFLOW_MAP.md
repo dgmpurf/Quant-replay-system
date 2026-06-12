@@ -1,7 +1,7 @@
 # System Architecture and Workflow Map
 
-> Status: working memory document  
-> Last generated: 2026-06-12  
+> Status: working memory document
+> Last generated: 2026-06-12
 > Permanence: temporary; update after major architecture, workflow, replay, factor, method-stack, or data-contract additions.
 
 ## High-Level Architecture
@@ -73,6 +73,8 @@ Candidate and Signal Layer
 
 Historical Replay and Training Layer
   ├─ replay_universe_input
+  ├─ historical_replay_input_gate_validator_fixture
+  ├─ future historical_replay_input_gate_validator
   ├─ replay_decision
   ├─ replay_evidence_bundle
   ├─ forward_return_label
@@ -220,6 +222,52 @@ schema/fixture contracts exist
 ≠ real buy-review eligibility exists
 ```
 
+### Historical Replay Input Gate Validator Fixture Chain
+
+Completed as of v1.28.0:
+
+```text
+historical replay input gate validator readiness/design diagnostics
+→ historical-replay-input-gate-validator-fixture
+→ historical-replay-input-gate-validator-fixture-index
+→ historical-replay-input-gate-validator-fixture-health
+→ historical-replay-input-gate-validator-fixture-status
+→ research-status integration
+→ docs/release_checkpoint_v1.28.0.md
+→ SOURCE_UPDATE_NOTES_v1_28_0.md
+```
+
+Current known input gate validator fixture state:
+
+```text
+latest_fixture_run_id: c76d6f0c41d6
+stage: INPUT_GATE_VALIDATOR_FIXTURE_READY
+health: PASS
+case_count: 68
+blocked_case_count: 67
+pass_candidate_case_count: 1
+active_ready_case_count: 0
+validator_implemented: false
+active_replay_input: false
+forward_labels_exist: false
+weights_trained: false
+active_stock_profile_exists: false
+real_buy_review_eligible: false
+```
+
+Meaning:
+
+```text
+fixture cases exist for future validator testing
+≠ real validator exists
+≠ active replay input exists
+≠ real replay can run
+≠ forward labels exist
+≠ weights are trained
+≠ active stock_profile exists
+≠ real buy-review eligibility exists
+```
+
 ## Target Historical Replay Training Chain
 
 Future target workflow:
@@ -312,6 +360,32 @@ stock_profile
 ```
 
 In v1.27.0, later-stage entities such as `forward_return_label`, `training_result`, `evaluation_report`, and `stock_profile` are schema-only / blocked / non-active. They do not imply readiness.
+
+### Historical Replay Input Gate Validator Fixture Status Fields
+
+The v1.28.0 fixture workflow reports a future-validator test fixture context, not a real replay input. Important fields include:
+
+```text
+fixture_run_id
+workflow_stage
+case_count
+blocked_case_count
+pass_candidate_case_count
+active_ready_case_count
+validation_issue_count
+overclaim_guard_pass_count
+overclaim_guard_total_count
+validator_implemented=false
+active_replay_input=false
+forward_labels_exist=false
+weights_trained=false
+active_stock_profile_exists=false
+real_buy_review_eligible=false
+report_only=true
+diagnostic_only=true
+```
+
+`REPLAY_INPUT_GATE_PASS_CANDIDATE` remains a fixture status only. It must not be treated as `ACTIVE_REPLAY_INPUT_READY`.
 
 ### Raw Document Store Fields
 
@@ -522,7 +596,7 @@ None of these profiles changes strict defaults, applies approval, runs PIT revie
 
 ## Research-Status Integration Rule
 
-Replay-substrate schema fixture context in research-status must remain preparation context only.
+Replay-substrate schema fixture context and input gate validator fixture context in research-status must remain preparation context only.
 
 Safe wording:
 
@@ -536,17 +610,17 @@ It is not stock-profile validation.
 It is not real buy-review eligibility.
 ```
 
-The replay-substrate schema fixture must not override later validated paper workflow or active workflow states.
+The replay-substrate schema fixture and input gate validator fixture must not override later validated paper workflow or active workflow states.
 
 ## Current Next Technical Branch
 
 ```text
-Historical Replay Substrate Readiness Plan Report-Only v0.1
+Real Historical Replay Input Gate Validator Design Preview Report-Only v0.1
 ```
 
 Purpose:
 
-- consume the schema fixture contracts as context only;
-- define minimum readiness gates for real replay;
+- consume v1.27/v1.28 fixture contracts as context only;
+- design the real historical replay input gate validator as a report-only preview first;
 - keep all outputs report-only;
 - do not run replay, labels, training, or stock-profile validation.
