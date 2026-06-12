@@ -141,7 +141,7 @@ def test_smoke_cli_runs_and_prints_concise_summary(tmp_path: Path) -> None:
     assert "real_buy_review_eligible: False" in completed.stdout
 
 
-def test_smoke_remains_manual_diagnostics_only_without_research_status_or_project_sources(tmp_path: Path) -> None:
+def test_smoke_remains_manual_diagnostics_only_without_project_sources(tmp_path: Path) -> None:
     result = run_minimal_replay_input_package_fixture_smoke(
         MinimalReplayInputPackageFixtureSmokeSettings(
             output_dir=_smoke_output_dir(tmp_path),
@@ -156,8 +156,6 @@ def test_smoke_remains_manual_diagnostics_only_without_research_status_or_projec
     assert not (tmp_path / "data" / "processed").exists()
     assert not (tmp_path / "data" / "cache").exists()
 
-    dashboard_source = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
-    assert "minimal_replay_input_package_fixture_smoke" not in dashboard_source
     assert not Path("docs/project_sources").exists()
 
 
@@ -335,7 +333,45 @@ def test_smoke_artifact_view_cli_commands_run(tmp_path: Path) -> None:
         assert expected_text in completed.stdout
 
     dashboard_source = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
-    assert "minimal_replay_input_package_fixture_smoke_status" not in dashboard_source
+    assert "minimal_replay_input_package_fixture_smoke_status" in dashboard_source
+    assert not Path("docs/project_sources").exists()
+
+
+def test_v1_30_docs_checkpoint_and_source_note_describe_smoke_safety() -> None:
+    docs = {
+        "smoke_doc": Path("docs/minimal_replay_input_package_fixture_smoke.md"),
+        "dashboard_doc": Path("docs/local_research_dashboard.md"),
+        "readme": Path("README.md"),
+        "checkpoint": Path("docs/release_checkpoint_v1.30.0.md"),
+        "source_note": Path("SOURCE_UPDATE_NOTES_v1_30_0.md"),
+    }
+    required_phrases = [
+        "minimal-replay-input-package-fixture-smoke",
+        "minimal-replay-input-package-fixture-smoke-index",
+        "minimal-replay-input-package-fixture-smoke-health",
+        "minimal-replay-input-package-fixture-smoke-status",
+        "REPLAY_INPUT_GATE_PASS_CANDIDATE",
+        "SMOKE_PASS_CANDIDATE_READY",
+        "ACTIVE_REPLAY_INPUT_READY",
+        "not active replay input",
+        "does not run replay",
+        "does not compute forward labels",
+        "does not train weights",
+        "does not create active stock profiles",
+        "does not create real buy-review eligibility",
+    ]
+
+    for path in docs.values():
+        assert path.exists(), path
+    for name, path in docs.items():
+        text = path.read_text(encoding="utf-8")
+        for phrase in required_phrases:
+            assert phrase in text, f"{phrase!r} missing from {name}"
+
+    source_note = docs["source_note"].read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_note
+    assert "ChatGPT Project Source is maintained separately" in source_note
+    assert "after tag v1.30.0" in source_note
     assert not Path("docs/project_sources").exists()
 
 

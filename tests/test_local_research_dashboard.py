@@ -18,6 +18,10 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture import (
 from quant_replay_system.historical_replay_input_gate_validator import (
     run_historical_replay_input_gate_validator,
 )
+from quant_replay_system.minimal_replay_input_package_fixture_smoke import (
+    MinimalReplayInputPackageFixtureSmokeSettings,
+    run_minimal_replay_input_package_fixture_smoke,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -2057,6 +2061,92 @@ def test_cli_research_status_prints_historical_replay_input_gate_validator_field
     assert "historical_replay_input_gate_validator_current_candidates_run: False" in output.out
     assert "historical_replay_input_gate_validator_snapshot_built: False" in output.out
     assert "historical_replay_input_gate_validator_signal_semantics_changed: False" in output.out
+
+
+def test_research_status_includes_minimal_replay_input_package_fixture_smoke_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    smoke = run_minimal_replay_input_package_fixture_smoke(
+        MinimalReplayInputPackageFixtureSmokeSettings(
+            output_dir=root / "manual_diagnostics" / "minimal_replay_input_package_fixture_smoke_v0_1",
+            validator_output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1",
+        )
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS"
+    ].iloc[0]
+
+    assert result.minimal_replay_input_package_fixture_smoke_implemented is True
+    assert result.minimal_replay_input_package_fixture_smoke_views_implemented is True
+    assert result.latest_smoke_run_id == smoke.smoke_run_id
+    assert result.latest_smoke_status == "REPLAY_INPUT_GATE_PASS_CANDIDATE"
+    assert result.latest_smoke_health_status == "PASS"
+    assert result.latest_smoke_workflow_stage == "SMOKE_PASS_CANDIDATE_READY"
+    assert result.latest_smoke_validator_run_id == smoke.validator_run_id
+    assert result.latest_smoke_validator_status == "REPLAY_INPUT_GATE_PASS_CANDIDATE"
+    assert result.smoke_pass_candidate is True
+    assert result.smoke_active_replay_input_ready is False
+    assert result.smoke_active_replay_input is False
+    assert result.smoke_forward_labels_exist is False
+    assert result.smoke_weights_trained is False
+    assert result.smoke_active_stock_profile_exists is False
+    assert result.smoke_real_buy_review_eligible is False
+    assert result.smoke_approval_applied is False
+    assert result.smoke_order_placed is False
+    assert result.smoke_llm_api_called is False
+    assert result.smoke_external_api_called is False
+    assert result.smoke_cache_mutated is False
+    assert result.smoke_current_candidates_run is False
+    assert result.smoke_snapshot_built is False
+    assert result.smoke_signal_semantics_changed is False
+    assert result.smoke_report_only is True
+    assert result.smoke_diagnostic_only is True
+    assert result.smoke_no_live_trading is True
+    assert result.smoke_no_broker_api is True
+    assert result.smoke_no_order_placement is True
+    assert result.smoke_no_message_sent is True
+    assert result.workflow_stage == "SMOKE_PASS_CANDIDATE_READY"
+    assert result.workflow_stage != "ACTIVE_REPLAY_INPUT_READY"
+    assert row["status"] == "REPLAY_INPUT_GATE_PASS_CANDIDATE"
+
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str)
+    metadata = json.loads(Path(result.artifact_paths["metadata"]).read_text(encoding="utf-8"))
+    assert summary.loc[0, "latest_smoke_run_id"] == smoke.smoke_run_id
+    assert summary.loc[0, "smoke_active_replay_input_ready"] == "False"
+    assert metadata["latest_smoke_workflow_stage"] == "SMOKE_PASS_CANDIDATE_READY"
+    assert metadata["smoke_active_replay_input_ready"] is False
+    assert metadata["smoke_active_replay_input"] is False
+
+
+def test_research_status_preserves_paper_priority_over_minimal_replay_smoke(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    run_minimal_replay_input_package_fixture_smoke(
+        MinimalReplayInputPackageFixtureSmokeSettings(
+            output_dir=root / "manual_diagnostics" / "minimal_replay_input_package_fixture_smoke_v0_1",
+            validator_output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1",
+        )
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_smoke_workflow_stage == "SMOKE_PASS_CANDIDATE_READY"
+    assert result.smoke_pass_candidate is True
+    assert result.smoke_active_replay_input_ready is False
+    assert result.smoke_active_replay_input is False
 
 
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(

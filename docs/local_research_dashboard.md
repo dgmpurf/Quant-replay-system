@@ -35,6 +35,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a local conversational advisory question been parsed and routed safely?
 - Has a report-only historical replay input gate validator fixture produced validator contract context without becoming real replay input?
 - Has the report-only real historical replay input gate validator checked a candidate package or reported that no input package exists?
+- Has the report-only minimal replay input package fixture smoke exercised the validator contract without becoming active replay input?
 - Has the current-to-paper handoff run?
 - Has the paper review template been created and checked?
 - Have reviewed decisions, daily paper reports, and reconciliation artifacts been produced?
@@ -71,6 +72,7 @@ outputs/reports/reviewer_no_hit_source_coverage_acceptance/status/
 outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1/status/
 outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1/status/
 outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1/status/
+outputs/reports/manual_diagnostics/minimal_replay_input_package_fixture_smoke_v0_1/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -360,6 +362,18 @@ The unified summary records the latest validator run id, validator status/stage,
 When the status reports `INPUT_GATE_VALIDATOR_NO_INPUT`, the dashboard treats it as expected report-only validator context: no candidate replay input package was supplied. If a future run reports `INPUT_GATE_VALIDATOR_PASS_CANDIDATE`, that still remains review context only and must not be interpreted as `ACTIVE_REPLAY_INPUT_READY`.
 
 Historical replay input gate validator context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; validator fields remain visible for audit. The validator does not run replay, compute forward labels, train weights, create active stock profiles, create real buy-review eligibility, or validate strategy performance.
+
+## Minimal Replay Input Package Fixture Smoke Status
+
+`research-status` includes `minimal-replay-input-package-fixture-smoke-status` as report-only smoke context when those artifacts exist.
+
+Use `minimal-replay-input-package-fixture-smoke`, `minimal-replay-input-package-fixture-smoke-index`, `minimal-replay-input-package-fixture-smoke-health`, and `minimal-replay-input-package-fixture-smoke-status` to create, discover, safety-check, and summarize this report-only smoke context before it appears in `research-status`.
+
+The unified summary records the latest smoke run id, smoke status, health status, smoke workflow stage, smoke artifact path, input package path, linked validator run id, linked validator status, pass-candidate flag, active-replay-ready flag, report path, and next action. It also exports safety flags proving `active_replay_input=false`, `forward_labels_exist=false`, `weights_trained=false`, `active_stock_profile_exists=false`, `real_buy_review_eligible=false`, `approval_applied=false`, no live trading, no broker API, no order placement, no messages, no LLM/API calls, no external API calls, no cache mutation, no current-candidates generation, no snapshot build, and no signal semantics change.
+
+When the status reports `SMOKE_PASS_CANDIDATE_READY`, the dashboard treats it as validator-contract smoke context only. The linked validator may report `REPLAY_INPUT_GATE_PASS_CANDIDATE`, but that is not active replay input and not `ACTIVE_REPLAY_INPUT_READY`.
+
+Minimal replay input package fixture smoke context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; smoke fields remain visible for audit. The smoke does not run replay, does not compute forward labels, does not train weights, does not create active stock profiles, does not create real buy-review eligibility, and does not validate strategy performance.
 
 ## Universe Profile Policy Audit Status
 

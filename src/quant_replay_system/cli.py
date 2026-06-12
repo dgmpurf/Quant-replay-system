@@ -10035,6 +10035,45 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "historical_replay_input_gate_validator_next_action: "
         f"{result.historical_replay_input_gate_validator_next_action}"
     )
+    print(
+        "minimal_replay_input_package_fixture_smoke_implemented: "
+        f"{result.minimal_replay_input_package_fixture_smoke_implemented}"
+    )
+    print(
+        "minimal_replay_input_package_fixture_smoke_views_implemented: "
+        f"{result.minimal_replay_input_package_fixture_smoke_views_implemented}"
+    )
+    print(f"latest_smoke_run_id: {result.latest_smoke_run_id}")
+    print(f"latest_smoke_status: {result.latest_smoke_status}")
+    print(f"latest_smoke_health_status: {result.latest_smoke_health_status}")
+    print(f"latest_smoke_workflow_stage: {result.latest_smoke_workflow_stage}")
+    print(f"smoke_artifact_path: {result.smoke_artifact_path}")
+    print(f"input_package_path: {result.input_package_path}")
+    print(f"latest_smoke_validator_run_id: {result.latest_smoke_validator_run_id}")
+    print(f"latest_smoke_validator_status: {result.latest_smoke_validator_status}")
+    print(f"smoke_pass_candidate: {result.smoke_pass_candidate}")
+    print(f"smoke_active_replay_input_ready: {result.smoke_active_replay_input_ready}")
+    print(f"smoke_active_replay_input: {result.smoke_active_replay_input}")
+    print(f"smoke_forward_labels_exist: {result.smoke_forward_labels_exist}")
+    print(f"smoke_weights_trained: {result.smoke_weights_trained}")
+    print(f"smoke_active_stock_profile_exists: {result.smoke_active_stock_profile_exists}")
+    print(f"smoke_real_buy_review_eligible: {result.smoke_real_buy_review_eligible}")
+    print(f"smoke_approval_applied: {result.smoke_approval_applied}")
+    print(f"smoke_order_placed: {result.smoke_order_placed}")
+    print(f"smoke_llm_api_called: {result.smoke_llm_api_called}")
+    print(f"smoke_external_api_called: {result.smoke_external_api_called}")
+    print(f"smoke_cache_mutated: {result.smoke_cache_mutated}")
+    print(f"smoke_current_candidates_run: {result.smoke_current_candidates_run}")
+    print(f"smoke_snapshot_built: {result.smoke_snapshot_built}")
+    print(f"smoke_signal_semantics_changed: {result.smoke_signal_semantics_changed}")
+    print(f"smoke_report_only: {result.smoke_report_only}")
+    print(f"smoke_diagnostic_only: {result.smoke_diagnostic_only}")
+    print(f"smoke_no_live_trading: {result.smoke_no_live_trading}")
+    print(f"smoke_no_broker_api: {result.smoke_no_broker_api}")
+    print(f"smoke_no_order_placement: {result.smoke_no_order_placement}")
+    print(f"smoke_no_message_sent: {result.smoke_no_message_sent}")
+    print(f"smoke_report_path: {result.smoke_report_path}")
+    print(f"smoke_next_action: {result.smoke_next_action}")
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

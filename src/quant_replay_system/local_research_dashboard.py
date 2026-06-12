@@ -86,6 +86,9 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture_status i
 from quant_replay_system.historical_replay_input_gate_validator_status import (
     run_historical_replay_input_gate_validator_status,
 )
+from quant_replay_system.minimal_replay_input_package_fixture_smoke_status import (
+    run_minimal_replay_input_package_fixture_smoke_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -534,6 +537,39 @@ SUMMARY_COLUMNS = [
     "historical_replay_input_gate_validator_signal_semantics_changed",
     "historical_replay_input_gate_validator_report_path",
     "historical_replay_input_gate_validator_next_action",
+    "minimal_replay_input_package_fixture_smoke_implemented",
+    "minimal_replay_input_package_fixture_smoke_views_implemented",
+    "latest_smoke_run_id",
+    "latest_smoke_status",
+    "latest_smoke_health_status",
+    "latest_smoke_workflow_stage",
+    "smoke_artifact_path",
+    "input_package_path",
+    "latest_smoke_validator_run_id",
+    "latest_smoke_validator_status",
+    "smoke_pass_candidate",
+    "smoke_active_replay_input_ready",
+    "smoke_active_replay_input",
+    "smoke_forward_labels_exist",
+    "smoke_weights_trained",
+    "smoke_active_stock_profile_exists",
+    "smoke_real_buy_review_eligible",
+    "smoke_approval_applied",
+    "smoke_order_placed",
+    "smoke_llm_api_called",
+    "smoke_external_api_called",
+    "smoke_cache_mutated",
+    "smoke_current_candidates_run",
+    "smoke_snapshot_built",
+    "smoke_signal_semantics_changed",
+    "smoke_report_only",
+    "smoke_diagnostic_only",
+    "smoke_no_live_trading",
+    "smoke_no_broker_api",
+    "smoke_no_order_placement",
+    "smoke_no_message_sent",
+    "smoke_report_path",
+    "smoke_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -864,6 +900,7 @@ COMPONENTS = [
     "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS",
+    "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -919,6 +956,7 @@ WORKFLOW_AREAS = {
     "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS": "REPLAY_SUBSTRATE_SCHEMA_FIXTURE",
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
+    "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS": "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_PLAN",
@@ -1355,6 +1393,39 @@ class LocalResearchDashboardResult:
     historical_replay_input_gate_validator_signal_semantics_changed: bool
     historical_replay_input_gate_validator_report_path: str
     historical_replay_input_gate_validator_next_action: str
+    minimal_replay_input_package_fixture_smoke_implemented: bool
+    minimal_replay_input_package_fixture_smoke_views_implemented: bool
+    latest_smoke_run_id: str
+    latest_smoke_status: str
+    latest_smoke_health_status: str
+    latest_smoke_workflow_stage: str
+    smoke_artifact_path: str
+    input_package_path: str
+    latest_smoke_validator_run_id: str
+    latest_smoke_validator_status: str
+    smoke_pass_candidate: bool
+    smoke_active_replay_input_ready: bool
+    smoke_active_replay_input: bool
+    smoke_forward_labels_exist: bool
+    smoke_weights_trained: bool
+    smoke_active_stock_profile_exists: bool
+    smoke_real_buy_review_eligible: bool
+    smoke_approval_applied: bool
+    smoke_order_placed: bool
+    smoke_llm_api_called: bool
+    smoke_external_api_called: bool
+    smoke_cache_mutated: bool
+    smoke_current_candidates_run: bool
+    smoke_snapshot_built: bool
+    smoke_signal_semantics_changed: bool
+    smoke_report_only: bool
+    smoke_diagnostic_only: bool
+    smoke_no_live_trading: bool
+    smoke_no_broker_api: bool
+    smoke_no_order_placement: bool
+    smoke_no_message_sent: bool
+    smoke_report_path: str
+    smoke_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1665,6 +1736,7 @@ def run_local_research_dashboard(
     replay_substrate_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
     historical_replay_input_gate_validator_root: str | Path | None = None,
+    minimal_replay_input_package_fixture_smoke_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1837,6 +1909,11 @@ def run_local_research_dashboard(
         if historical_replay_input_gate_validator_root is not None
         else effective_root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1"
     )
+    effective_minimal_replay_input_package_fixture_smoke_root = (
+        Path(minimal_replay_input_package_fixture_smoke_root)
+        if minimal_replay_input_package_fixture_smoke_root is not None
+        else effective_root / "manual_diagnostics" / "minimal_replay_input_package_fixture_smoke_v0_1"
+    )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
         if universe_profile_policy_audit_root is not None
@@ -2008,6 +2085,10 @@ def run_local_research_dashboard(
             effective_historical_replay_input_gate_validator_root = (
                 effective_root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1"
             )
+        if minimal_replay_input_package_fixture_smoke_root is None:
+            effective_minimal_replay_input_package_fixture_smoke_root = (
+                effective_root / "manual_diagnostics" / "minimal_replay_input_package_fixture_smoke_v0_1"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -2084,6 +2165,9 @@ def run_local_research_dashboard(
         replay_substrate_schema_fixture_root=effective_replay_substrate_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
         historical_replay_input_gate_validator_root=effective_historical_replay_input_gate_validator_root,
+        minimal_replay_input_package_fixture_smoke_root=(
+            effective_minimal_replay_input_package_fixture_smoke_root
+        ),
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -2165,6 +2249,9 @@ def run_local_research_dashboard(
         "replay_substrate_schema_fixture_root": effective_replay_substrate_schema_fixture_root,
         "input_gate_validator_fixture_root": effective_input_gate_validator_fixture_root,
         "historical_replay_input_gate_validator_root": effective_historical_replay_input_gate_validator_root,
+        "minimal_replay_input_package_fixture_smoke_root": (
+            effective_minimal_replay_input_package_fixture_smoke_root
+        ),
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
@@ -3291,6 +3378,43 @@ def run_local_research_dashboard(
         historical_replay_input_gate_validator_next_action=str(
             summary.get("historical_replay_input_gate_validator_next_action", "")
         ),
+        minimal_replay_input_package_fixture_smoke_implemented=_bool_from_text(
+            summary.get("minimal_replay_input_package_fixture_smoke_implemented")
+        ),
+        minimal_replay_input_package_fixture_smoke_views_implemented=_bool_from_text(
+            summary.get("minimal_replay_input_package_fixture_smoke_views_implemented")
+        ),
+        latest_smoke_run_id=str(summary.get("latest_smoke_run_id", "")),
+        latest_smoke_status=str(summary.get("latest_smoke_status", "MISSING")),
+        latest_smoke_health_status=str(summary.get("latest_smoke_health_status", "")),
+        latest_smoke_workflow_stage=str(summary.get("latest_smoke_workflow_stage", "")),
+        smoke_artifact_path=str(summary.get("smoke_artifact_path", "")),
+        input_package_path=str(summary.get("input_package_path", "")),
+        latest_smoke_validator_run_id=str(summary.get("latest_smoke_validator_run_id", "")),
+        latest_smoke_validator_status=str(summary.get("latest_smoke_validator_status", "")),
+        smoke_pass_candidate=_bool_from_text(summary.get("smoke_pass_candidate")),
+        smoke_active_replay_input_ready=_bool_from_text(summary.get("smoke_active_replay_input_ready")),
+        smoke_active_replay_input=_bool_from_text(summary.get("smoke_active_replay_input")),
+        smoke_forward_labels_exist=_bool_from_text(summary.get("smoke_forward_labels_exist")),
+        smoke_weights_trained=_bool_from_text(summary.get("smoke_weights_trained")),
+        smoke_active_stock_profile_exists=_bool_from_text(summary.get("smoke_active_stock_profile_exists")),
+        smoke_real_buy_review_eligible=_bool_from_text(summary.get("smoke_real_buy_review_eligible")),
+        smoke_approval_applied=_bool_from_text(summary.get("smoke_approval_applied")),
+        smoke_order_placed=_bool_from_text(summary.get("smoke_order_placed")),
+        smoke_llm_api_called=_bool_from_text(summary.get("smoke_llm_api_called")),
+        smoke_external_api_called=_bool_from_text(summary.get("smoke_external_api_called")),
+        smoke_cache_mutated=_bool_from_text(summary.get("smoke_cache_mutated")),
+        smoke_current_candidates_run=_bool_from_text(summary.get("smoke_current_candidates_run")),
+        smoke_snapshot_built=_bool_from_text(summary.get("smoke_snapshot_built")),
+        smoke_signal_semantics_changed=_bool_from_text(summary.get("smoke_signal_semantics_changed")),
+        smoke_report_only=_bool_from_text(summary.get("smoke_report_only")),
+        smoke_diagnostic_only=_bool_from_text(summary.get("smoke_diagnostic_only")),
+        smoke_no_live_trading=_bool_from_text(summary.get("smoke_no_live_trading")),
+        smoke_no_broker_api=_bool_from_text(summary.get("smoke_no_broker_api")),
+        smoke_no_order_placement=_bool_from_text(summary.get("smoke_no_order_placement")),
+        smoke_no_message_sent=_bool_from_text(summary.get("smoke_no_message_sent")),
+        smoke_report_path=str(summary.get("smoke_report_path", "")),
+        smoke_next_action=str(summary.get("smoke_next_action", "")),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -3930,6 +4054,7 @@ def scan_local_research_workflow_artifacts(
     replay_substrate_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
     historical_replay_input_gate_validator_root: str | Path,
+    minimal_replay_input_package_fixture_smoke_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -3980,6 +4105,7 @@ def scan_local_research_workflow_artifacts(
     replay_substrate_schema_fixture_path = Path(replay_substrate_schema_fixture_root)
     input_gate_validator_fixture_path = Path(input_gate_validator_fixture_root)
     historical_replay_input_gate_validator_path = Path(historical_replay_input_gate_validator_root)
+    minimal_replay_input_package_fixture_smoke_path = Path(minimal_replay_input_package_fixture_smoke_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -4052,6 +4178,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_replay_substrate_schema_fixture_status(replay_substrate_schema_fixture_path))
     records.extend(_scan_input_gate_validator_fixture_status(input_gate_validator_fixture_path))
     records.extend(_scan_historical_replay_input_gate_validator_status(historical_replay_input_gate_validator_path))
+    records.extend(_scan_minimal_replay_input_package_fixture_smoke_status(minimal_replay_input_package_fixture_smoke_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -7609,6 +7736,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             return "INPUT_GATE_VALIDATOR_FIXTURE_BLOCKED"
         if statuses["HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"] == "FAIL":
             return "INPUT_GATE_VALIDATOR_BLOCKED"
+        if statuses["MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS"] == "FAIL":
+            return "SMOKE_HEALTH_FAILED"
         if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
@@ -7811,6 +7940,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
     ):
         return _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
+    if (
+        statuses["MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS"]
+        in {"REPLAY_INPUT_GATE_PASS_CANDIDATE", "PASS", "WARN", "READY"}
+        and _minimal_replay_input_package_fixture_smoke_stage_from_frame(dashboard_frame)
+    ):
+        return _minimal_replay_input_package_fixture_smoke_stage_from_frame(dashboard_frame)
     if (
         statuses["HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"]
         in {"NO_INPUT", "REPLAY_INPUT_GATE_PASS_CANDIDATE", "BLOCKED", "WARN", "READY"}
@@ -8140,6 +8275,7 @@ def summarize_local_research_status(
                     "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
                     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS",
                     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS",
+                    "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -9967,6 +10103,136 @@ def summarize_local_research_status(
         ),
         "historical_replay_input_gate_validator_next_action": _parse_note_value(
             by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "minimal_replay_input_package_fixture_smoke_implemented": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "minimal_replay_input_package_fixture_smoke_views_implemented": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_smoke_run_id": _string_or_empty(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_smoke_status": _component_status(
+            by_component,
+            "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS",
+        ),
+        "latest_smoke_health_status": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_smoke_workflow_stage": _string_or_empty(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("stage")
+        ),
+        "smoke_artifact_path": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "smoke_artifact_path",
+        ),
+        "input_package_path": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "input_package_path",
+        ),
+        "latest_smoke_validator_run_id": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "validator_run_id",
+        ),
+        "latest_smoke_validator_status": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "validator_status",
+        ),
+        "smoke_pass_candidate": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "pass_candidate",
+        ),
+        "smoke_active_replay_input_ready": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "active_replay_input_ready",
+        ),
+        "smoke_active_replay_input": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "active_replay_input",
+        ),
+        "smoke_forward_labels_exist": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "smoke_weights_trained": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "smoke_active_stock_profile_exists": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "smoke_real_buy_review_eligible": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "smoke_approval_applied": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "approval_applied",
+        ),
+        "smoke_order_placed": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "order_placed",
+        ),
+        "smoke_llm_api_called": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "smoke_external_api_called": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "smoke_cache_mutated": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "cache_mutated",
+        ),
+        "smoke_current_candidates_run": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "smoke_snapshot_built": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "smoke_signal_semantics_changed": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "smoke_report_only": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "smoke_diagnostic_only": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "smoke_no_live_trading": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "smoke_no_broker_api": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "smoke_no_order_placement": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "smoke_no_message_sent": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "no_message_sent",
+        ),
+        "smoke_report_path": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "smoke_next_action": _parse_note_value(
+            by_component.get("MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -12422,6 +12688,43 @@ def build_local_research_dashboard_metadata(
         "historical_replay_input_gate_validator_next_action": (
             result.historical_replay_input_gate_validator_next_action
         ),
+        "minimal_replay_input_package_fixture_smoke_implemented": (
+            result.minimal_replay_input_package_fixture_smoke_implemented
+        ),
+        "minimal_replay_input_package_fixture_smoke_views_implemented": (
+            result.minimal_replay_input_package_fixture_smoke_views_implemented
+        ),
+        "latest_smoke_run_id": result.latest_smoke_run_id,
+        "latest_smoke_status": result.latest_smoke_status,
+        "latest_smoke_health_status": result.latest_smoke_health_status,
+        "latest_smoke_workflow_stage": result.latest_smoke_workflow_stage,
+        "smoke_artifact_path": result.smoke_artifact_path,
+        "input_package_path": result.input_package_path,
+        "latest_smoke_validator_run_id": result.latest_smoke_validator_run_id,
+        "latest_smoke_validator_status": result.latest_smoke_validator_status,
+        "smoke_pass_candidate": result.smoke_pass_candidate,
+        "smoke_active_replay_input_ready": result.smoke_active_replay_input_ready,
+        "smoke_active_replay_input": result.smoke_active_replay_input,
+        "smoke_forward_labels_exist": result.smoke_forward_labels_exist,
+        "smoke_weights_trained": result.smoke_weights_trained,
+        "smoke_active_stock_profile_exists": result.smoke_active_stock_profile_exists,
+        "smoke_real_buy_review_eligible": result.smoke_real_buy_review_eligible,
+        "smoke_approval_applied": result.smoke_approval_applied,
+        "smoke_order_placed": result.smoke_order_placed,
+        "smoke_llm_api_called": result.smoke_llm_api_called,
+        "smoke_external_api_called": result.smoke_external_api_called,
+        "smoke_cache_mutated": result.smoke_cache_mutated,
+        "smoke_current_candidates_run": result.smoke_current_candidates_run,
+        "smoke_snapshot_built": result.smoke_snapshot_built,
+        "smoke_signal_semantics_changed": result.smoke_signal_semantics_changed,
+        "smoke_report_only": result.smoke_report_only,
+        "smoke_diagnostic_only": result.smoke_diagnostic_only,
+        "smoke_no_live_trading": result.smoke_no_live_trading,
+        "smoke_no_broker_api": result.smoke_no_broker_api,
+        "smoke_no_order_placement": result.smoke_no_order_placement,
+        "smoke_no_message_sent": result.smoke_no_message_sent,
+        "smoke_report_path": result.smoke_report_path,
+        "smoke_next_action": result.smoke_next_action,
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -14813,6 +15116,75 @@ def _historical_replay_input_gate_validator_notes(summary: dict[str, Any]) -> st
     )
 
 
+def _scan_minimal_replay_input_package_fixture_smoke_status(root: Path) -> list[dict[str, Any]]:
+    smoke_root = root.parent if root.name == "status" else root
+    if not smoke_root.exists():
+        return []
+    try:
+        result = run_minimal_replay_input_package_fixture_smoke_status(
+            root=smoke_root,
+            output_dir=smoke_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_smoke_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    metadata = _load_json_or_none(smoke_root / result.latest_smoke_run_id / "smoke_metadata.json") or {}
+    summary["input_package_path"] = _string_or_empty(metadata.get("package_path"))
+    summary["smoke_artifact_path"] = _string_or_empty(metadata.get("artifact_path"))
+    return [
+        _record(
+            workflow_area="MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE",
+            component="MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS",
+            status=result.validator_status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_smoke_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_minimal_replay_input_package_fixture_smoke_notes(summary),
+        )
+    ]
+
+
+def _minimal_replay_input_package_fixture_smoke_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"smoke_artifact_path={_note_safe_text(summary.get('report_path'))}; "
+        f"input_package_path={_note_safe_text(summary.get('input_package_path'))}; "
+        f"validator_run_id={_string_or_empty(summary.get('latest_validator_run_id'))}; "
+        f"validator_status={_string_or_empty(summary.get('validator_status'))}; "
+        f"pass_candidate={_string_or_empty(summary.get('pass_candidate'))}; "
+        f"active_replay_input_ready={_string_or_empty(summary.get('active_replay_input_ready'))}; "
+        f"active_replay_input={_string_or_empty(summary.get('active_replay_input'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        "approval_applied=False; "
+        "order_placed=False; "
+        "llm_api_called=False; "
+        "external_api_called=False; "
+        "cache_mutated=False; "
+        "current_candidates_run=False; "
+        "snapshot_built=False; "
+        "signal_semantics_changed=False; "
+        "report_only=True; "
+        "diagnostic_only=True; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
 def _scan_universe_profile_policy_audit_status(root: Path) -> list[dict[str, Any]]:
     computed = _computed_universe_profile_policy_audit_status_record(root)
     if computed is not None:
@@ -17127,6 +17499,14 @@ def _input_gate_validator_fixture_stage_from_frame(dashboard_frame: pd.DataFrame
 def _historical_replay_input_gate_validator_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _minimal_replay_input_package_fixture_smoke_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))
