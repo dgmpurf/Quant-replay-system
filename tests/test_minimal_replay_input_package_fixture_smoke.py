@@ -13,6 +13,16 @@ from quant_replay_system.minimal_replay_input_package_fixture_smoke import (
     MinimalReplayInputPackageFixtureSmokeSettings,
     run_minimal_replay_input_package_fixture_smoke,
 )
+from quant_replay_system.minimal_replay_input_package_fixture_smoke_health import (
+    check_minimal_replay_input_package_fixture_smoke_health,
+)
+from quant_replay_system.minimal_replay_input_package_fixture_smoke_index import (
+    build_minimal_replay_input_package_fixture_smoke_index,
+)
+from quant_replay_system.minimal_replay_input_package_fixture_smoke_status import (
+    SMOKE_PASS_CANDIDATE_READY,
+    run_minimal_replay_input_package_fixture_smoke_status,
+)
 
 
 def test_smoke_creates_minimal_package_and_runs_real_validator(tmp_path: Path) -> None:
@@ -151,6 +161,184 @@ def test_smoke_remains_manual_diagnostics_only_without_research_status_or_projec
     assert not Path("docs/project_sources").exists()
 
 
+def test_smoke_index_discovers_artifact_and_validator_metadata(tmp_path: Path) -> None:
+    smoke = run_minimal_replay_input_package_fixture_smoke(
+        MinimalReplayInputPackageFixtureSmokeSettings(
+            output_dir=_smoke_output_dir(tmp_path),
+            validator_output_dir=_validator_output_dir(tmp_path),
+        )
+    )
+
+    result = build_minimal_replay_input_package_fixture_smoke_index(
+        root=_smoke_output_dir(tmp_path),
+        output_dir=_smoke_output_dir(tmp_path) / "index",
+    )
+
+    assert result.artifact_count == 1
+    row = result.index_frame.iloc[0]
+    assert row["smoke_run_id"] == smoke.smoke_run_id
+    assert row["validator_run_id"] == smoke.validator_run_id
+    assert row["validator_status"] == REPLAY_INPUT_GATE_PASS_CANDIDATE
+    assert row["validator_workflow_stage"] == REPLAY_INPUT_GATE_PASS_CANDIDATE
+    assert row["pass_candidate"] is True
+    assert row["active_replay_input_ready"] is False
+    assert row["input_package_path"] == str(smoke.package_path)
+    assert row["validator_artifact_path"] == str(smoke.validator_artifact_path)
+    assert result.artifact_paths["index_csv"].exists()
+
+
+def test_smoke_health_passes_for_valid_pass_candidate_artifact(tmp_path: Path) -> None:
+    run_minimal_replay_input_package_fixture_smoke(
+        MinimalReplayInputPackageFixtureSmokeSettings(
+            output_dir=_smoke_output_dir(tmp_path),
+            validator_output_dir=_validator_output_dir(tmp_path),
+        )
+    )
+
+    result = check_minimal_replay_input_package_fixture_smoke_health(
+        root=_smoke_output_dir(tmp_path),
+        output_dir=_smoke_output_dir(tmp_path) / "health",
+    )
+
+    assert result.status == "PASS"
+    assert result.error_count == 0
+    assert result.issue_count == 0
+    assert result.artifact_paths["health_csv"].exists()
+
+
+def test_smoke_health_fails_if_validator_status_is_not_pass_candidate(tmp_path: Path) -> None:
+    smoke = _write_smoke(tmp_path)
+    _mutate_smoke_metadata(smoke.artifact_paths["smoke_metadata"], {"validator_status": "NO_INPUT"})
+
+    result = check_minimal_replay_input_package_fixture_smoke_health(
+        root=_smoke_output_dir(tmp_path),
+        output_dir=_smoke_output_dir(tmp_path) / "health",
+    )
+
+    assert result.status == "FAIL"
+    assert "VALIDATOR_NOT_PASS_CANDIDATE" in set(result.health_frame["issue_code"])
+
+
+def test_smoke_health_fails_if_pass_candidate_is_false(tmp_path: Path) -> None:
+    smoke = _write_smoke(tmp_path)
+    _mutate_smoke_metadata(smoke.artifact_paths["smoke_metadata"], {"pass_candidate": False})
+
+    result = check_minimal_replay_input_package_fixture_smoke_health(
+        root=_smoke_output_dir(tmp_path),
+        output_dir=_smoke_output_dir(tmp_path) / "health",
+    )
+
+    assert result.status == "FAIL"
+    assert "PASS_CANDIDATE_FALSE" in set(result.health_frame["issue_code"])
+
+
+def test_smoke_health_fails_for_unsafe_active_or_downstream_flags(tmp_path: Path) -> None:
+    expected_codes = {
+        "active_replay_input_ready": "ACTIVE_REPLAY_INPUT_READY_UNEXPECTED",
+        "active_replay_input": "ACTIVE_REPLAY_INPUT_UNEXPECTED",
+        "forward_labels_exist": "FORWARD_LABELS_EXIST_UNEXPECTED",
+        "weights_trained": "WEIGHTS_TRAINED_UNEXPECTED",
+        "active_stock_profile_exists": "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED",
+        "real_buy_review_eligible": "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED",
+        "order_placed": "ORDER_PLACED_UNEXPECTED",
+        "cache_mutated": "CACHE_MUTATED_UNEXPECTED",
+    }
+    for field, code in expected_codes.items():
+        case_root = tmp_path / field
+        smoke = run_minimal_replay_input_package_fixture_smoke(
+            MinimalReplayInputPackageFixtureSmokeSettings(
+                output_dir=_smoke_output_dir(case_root),
+                validator_output_dir=_validator_output_dir(case_root),
+            )
+        )
+        _mutate_smoke_metadata(smoke.artifact_paths["smoke_metadata"], {field: True})
+
+        result = check_minimal_replay_input_package_fixture_smoke_health(
+            root=_smoke_output_dir(case_root),
+            output_dir=_smoke_output_dir(case_root) / "health",
+        )
+
+        assert result.status == "FAIL"
+        assert code in set(result.health_frame["issue_code"])
+
+
+def test_smoke_health_fails_for_unsafe_artifact_path(tmp_path: Path) -> None:
+    smoke = _write_smoke(tmp_path)
+    _mutate_smoke_metadata(smoke.artifact_paths["smoke_metadata"], {"artifact_path": str(tmp_path / "outside")})
+
+    result = check_minimal_replay_input_package_fixture_smoke_health(
+        root=_smoke_output_dir(tmp_path),
+        output_dir=_smoke_output_dir(tmp_path) / "health",
+    )
+
+    assert result.status == "FAIL"
+    assert "UNSAFE_ARTIFACT_PATH" in set(result.health_frame["issue_code"])
+
+
+def test_smoke_status_reports_pass_candidate_ready_with_safety_text(tmp_path: Path) -> None:
+    smoke = _write_smoke(tmp_path)
+
+    result = run_minimal_replay_input_package_fixture_smoke_status(
+        root=_smoke_output_dir(tmp_path),
+        output_dir=_smoke_output_dir(tmp_path) / "status",
+    )
+
+    assert result.latest_smoke_run_id == smoke.smoke_run_id
+    assert result.latest_validator_run_id == smoke.validator_run_id
+    assert result.validator_status == REPLAY_INPUT_GATE_PASS_CANDIDATE
+    assert result.health_status == "PASS"
+    assert result.workflow_stage == SMOKE_PASS_CANDIDATE_READY
+    assert result.pass_candidate is True
+    assert result.active_replay_input_ready is False
+    assert result.active_replay_input is False
+    assert "report-only" in result.safety_statement
+    assert "not active replay input" in result.safety_statement
+    assert "not ACTIVE_REPLAY_INPUT_READY" in result.safety_statement
+    assert "does not run replay" in result.safety_statement
+    assert "does not compute forward labels" in result.safety_statement
+    assert "does not train weights" in result.safety_statement
+    assert "does not create active stock profiles" in result.safety_statement
+    assert "does not create real buy-review eligibility" in result.safety_statement
+    assert "does not authorize trading" in result.safety_statement
+
+
+def test_smoke_artifact_view_cli_commands_run(tmp_path: Path) -> None:
+    run_minimal_replay_input_package_fixture_smoke(
+        MinimalReplayInputPackageFixtureSmokeSettings(
+            output_dir=_smoke_output_dir(tmp_path),
+            validator_output_dir=_validator_output_dir(tmp_path),
+        )
+    )
+
+    commands = [
+        ("minimal-replay-input-package-fixture-smoke-index", "artifact_count: 1"),
+        ("minimal-replay-input-package-fixture-smoke-health", "status: PASS"),
+        ("minimal-replay-input-package-fixture-smoke-status", "workflow_stage: SMOKE_PASS_CANDIDATE_READY"),
+    ]
+    for command, expected_text in commands:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(_smoke_output_dir(tmp_path)),
+                "--output-dir",
+                str(_smoke_output_dir(tmp_path) / command.rsplit("-", 1)[-1]),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env={**os.environ, "PYTHONPATH": "src"},
+        )
+        assert expected_text in completed.stdout
+
+    dashboard_source = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
+    assert "minimal_replay_input_package_fixture_smoke_status" not in dashboard_source
+    assert not Path("docs/project_sources").exists()
+
+
 def _smoke_output_dir(tmp_path: Path) -> Path:
     return tmp_path / "outputs" / "reports" / "manual_diagnostics" / "minimal_replay_input_package_fixture_smoke_v0_1"
 
@@ -161,3 +349,18 @@ def _validator_output_dir(tmp_path: Path) -> Path:
 
 def _is_under_manual_diagnostics(path: Path) -> bool:
     return "outputs/reports/manual_diagnostics" in str(path).replace("\\", "/")
+
+
+def _write_smoke(tmp_path: Path):
+    return run_minimal_replay_input_package_fixture_smoke(
+        MinimalReplayInputPackageFixtureSmokeSettings(
+            output_dir=_smoke_output_dir(tmp_path),
+            validator_output_dir=_validator_output_dir(tmp_path),
+        )
+    )
+
+
+def _mutate_smoke_metadata(metadata_path: Path, updates: dict[str, object]) -> None:
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata.update(updates)
+    metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
