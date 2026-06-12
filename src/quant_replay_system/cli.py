@@ -257,6 +257,10 @@ from quant_replay_system.one_row_checklist_pass_candidate_preview_status import 
 from quant_replay_system.historical_replay_input_gate_validator import (
     run_historical_replay_input_gate_validator,
 )
+from quant_replay_system.minimal_replay_input_package_fixture_smoke import (
+    MinimalReplayInputPackageFixtureSmokeSettings,
+    run_minimal_replay_input_package_fixture_smoke,
+)
 from quant_replay_system.historical_replay_input_gate_validator_health import (
     check_historical_replay_input_gate_validator_health,
 )
@@ -2125,6 +2129,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     historical_replay_input_gate_validator_status.set_defaults(
         handler=_handle_historical_replay_input_gate_validator_status
+    )
+
+    minimal_replay_input_package_fixture_smoke = subparsers.add_parser(
+        "minimal-replay-input-package-fixture-smoke",
+        help="Create a minimal report-only replay input package and run the real input gate validator",
+    )
+    minimal_replay_input_package_fixture_smoke.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/minimal_replay_input_package_fixture_smoke_v0_1",
+        help="Directory where minimal replay input package fixture smoke artifacts will be written",
+    )
+    minimal_replay_input_package_fixture_smoke.add_argument(
+        "--validator-output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1",
+        help="Directory where report-only validator artifacts will be written",
+    )
+    minimal_replay_input_package_fixture_smoke.set_defaults(
+        handler=_handle_minimal_replay_input_package_fixture_smoke
     )
 
     historical_replay_input_gate_validator_fixture = subparsers.add_parser(
@@ -6117,6 +6139,30 @@ def _handle_historical_replay_input_gate_validator_status(args: argparse.Namespa
     print(
         "No replay, current-candidates, snapshots, forward labels, training, active stock profiles, "
         "research-status integration, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_minimal_replay_input_package_fixture_smoke(args: argparse.Namespace) -> int:
+    result = run_minimal_replay_input_package_fixture_smoke(
+        MinimalReplayInputPackageFixtureSmokeSettings(
+            output_dir=Path(args.output_dir),
+            validator_output_dir=Path(args.validator_output_dir),
+        )
+    )
+    print(f"smoke_run_id: {result.smoke_run_id}")
+    print(f"package_path: {result.package_path}")
+    print(f"validator_run_id: {result.validator_run_id}")
+    print(f"validator_status: {result.validator_status}")
+    print(f"pass_candidate: {result.pass_candidate}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(
+        "No replay, current-candidates, snapshots, forward labels, training, active stock profiles, "
+        "real buy-review eligibility, live trading, broker API, order placement, message delivery, "
+        "LLM/API, external API, data/raw write, data/processed write, data/cache write, or cache mutation was invoked."
     )
     return 0
 
