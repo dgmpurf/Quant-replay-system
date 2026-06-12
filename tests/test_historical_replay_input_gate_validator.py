@@ -403,10 +403,13 @@ def test_view_cli_commands_run(tmp_path: Path) -> None:
         assert "No replay" in completed.stdout
 
 
-def test_research_status_not_integrated_for_real_validator_yet() -> None:
+def test_research_status_imports_real_validator_status_without_active_ready_claim() -> None:
     dashboard_source = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
 
-    assert "from quant_replay_system.historical_replay_input_gate_validator_status import" not in dashboard_source
+    assert "from quant_replay_system.historical_replay_input_gate_validator_status import" in dashboard_source
+    assert "ACTIVE_REPLAY_INPUT_READY" not in dashboard_source.split(
+        "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"
+    )[-1][:2000]
 
 
 def _output_dir(tmp_path: Path) -> Path:

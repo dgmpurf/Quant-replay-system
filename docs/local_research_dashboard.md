@@ -34,6 +34,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a question-style single-symbol answer been rendered for the latest requested symbol?
 - Has a local conversational advisory question been parsed and routed safely?
 - Has a report-only historical replay input gate validator fixture produced validator contract context without becoming real replay input?
+- Has the report-only real historical replay input gate validator checked a candidate package or reported that no input package exists?
 - Has the current-to-paper handoff run?
 - Has the paper review template been created and checked?
 - Have reviewed decisions, daily paper reports, and reconciliation artifacts been produced?
@@ -69,6 +70,7 @@ outputs/reports/pit_official_status_evidence_packet_enrichment/status/
 outputs/reports/reviewer_no_hit_source_coverage_acceptance/status/
 outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1/status/
 outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1/status/
+outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -348,6 +350,16 @@ The unified summary records the latest fixture run id, fixture status/stage, hea
 When the status reports `INPUT_GATE_VALIDATOR_FIXTURE_READY`, the dashboard treats it as fixture context only. It is not the real validator, not real replay, and not active replay input. It must not be interpreted as `ACTIVE_REPLAY_INPUT_READY`, `REAL_REPLAY_READY`, `FORWARD_LABEL_READY`, `TRAINING_READY`, `STOCK_PROFILE_READY`, or `REAL_BUY_REVIEW_READY`.
 
 Historical replay input gate validator fixture context is lower priority than later paper workflow, current advisory workflow, and the v1.27 replay substrate schema fixture. If those later or broader artifacts exist, the final `workflow_stage` does not regress to the input-gate fixture; fixture fields remain visible for audit. If fixture health fails, `research-status` surfaces the failure as an artifact repair blocker when this fixture layer is active.
+
+## Historical Replay Input Gate Validator Status
+
+`research-status` includes `historical-replay-input-gate-validator-status` as report-only real validator context when those artifacts exist.
+
+The unified summary records the latest validator run id, validator status/stage, health status, pass-candidate flag, active-replay-ready flag, report path, and next action. It also exports safety flags proving `active_replay_input=false`, `forward_labels_exist=false`, `weights_trained=false`, `active_stock_profile_exists=false`, `real_buy_review_eligible=false`, `report_only=true`, `diagnostic_only=true`, no live trading, no broker API, no order placement, no messages, no LLM/API calls, no external API calls, no cache mutation, no current-candidates generation, no snapshot build, and no signal semantics change.
+
+When the status reports `INPUT_GATE_VALIDATOR_NO_INPUT`, the dashboard treats it as expected report-only validator context: no candidate replay input package was supplied. If a future run reports `INPUT_GATE_VALIDATOR_PASS_CANDIDATE`, that still remains review context only and must not be interpreted as `ACTIVE_REPLAY_INPUT_READY`.
+
+Historical replay input gate validator context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; validator fields remain visible for audit. The validator does not run replay, compute forward labels, train weights, create active stock profiles, create real buy-review eligibility, or validate strategy performance.
 
 ## Universe Profile Policy Audit Status
 

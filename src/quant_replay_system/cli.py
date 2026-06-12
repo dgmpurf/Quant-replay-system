@@ -9781,6 +9781,97 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"input_gate_validator_fixture_report_path: {result.input_gate_validator_fixture_report_path}")
     print(f"input_gate_validator_fixture_next_action: {result.input_gate_validator_fixture_next_action}")
+    print(
+        "latest_historical_replay_input_gate_validator_run_id: "
+        f"{result.latest_historical_replay_input_gate_validator_run_id}"
+    )
+    print(f"historical_replay_input_gate_validator_status: {result.historical_replay_input_gate_validator_status}")
+    print(f"historical_replay_input_gate_validator_stage: {result.historical_replay_input_gate_validator_stage}")
+    print(
+        "historical_replay_input_gate_validator_health_status: "
+        f"{result.historical_replay_input_gate_validator_health_status}"
+    )
+    print(
+        "historical_replay_input_gate_validator_pass_candidate: "
+        f"{result.historical_replay_input_gate_validator_pass_candidate}"
+    )
+    print(
+        "historical_replay_input_gate_validator_active_replay_input_ready: "
+        f"{result.historical_replay_input_gate_validator_active_replay_input_ready}"
+    )
+    print(
+        "historical_replay_input_gate_validator_active_replay_input: "
+        f"{result.historical_replay_input_gate_validator_active_replay_input}"
+    )
+    print(
+        "historical_replay_input_gate_validator_forward_labels_exist: "
+        f"{result.historical_replay_input_gate_validator_forward_labels_exist}"
+    )
+    print(
+        "historical_replay_input_gate_validator_weights_trained: "
+        f"{result.historical_replay_input_gate_validator_weights_trained}"
+    )
+    print(
+        "historical_replay_input_gate_validator_active_stock_profile_exists: "
+        f"{result.historical_replay_input_gate_validator_active_stock_profile_exists}"
+    )
+    print(
+        "historical_replay_input_gate_validator_real_buy_review_eligible: "
+        f"{result.historical_replay_input_gate_validator_real_buy_review_eligible}"
+    )
+    print(f"historical_replay_input_gate_validator_report_only: {result.historical_replay_input_gate_validator_report_only}")
+    print(
+        "historical_replay_input_gate_validator_diagnostic_only: "
+        f"{result.historical_replay_input_gate_validator_diagnostic_only}"
+    )
+    print(
+        "historical_replay_input_gate_validator_no_live_trading: "
+        f"{result.historical_replay_input_gate_validator_no_live_trading}"
+    )
+    print(
+        "historical_replay_input_gate_validator_no_broker_api: "
+        f"{result.historical_replay_input_gate_validator_no_broker_api}"
+    )
+    print(
+        "historical_replay_input_gate_validator_no_order_placement: "
+        f"{result.historical_replay_input_gate_validator_no_order_placement}"
+    )
+    print(
+        "historical_replay_input_gate_validator_no_message_sent: "
+        f"{result.historical_replay_input_gate_validator_no_message_sent}"
+    )
+    print(
+        "historical_replay_input_gate_validator_llm_api_called: "
+        f"{result.historical_replay_input_gate_validator_llm_api_called}"
+    )
+    print(
+        "historical_replay_input_gate_validator_external_api_called: "
+        f"{result.historical_replay_input_gate_validator_external_api_called}"
+    )
+    print(
+        "historical_replay_input_gate_validator_cache_mutated: "
+        f"{result.historical_replay_input_gate_validator_cache_mutated}"
+    )
+    print(
+        "historical_replay_input_gate_validator_current_candidates_run: "
+        f"{result.historical_replay_input_gate_validator_current_candidates_run}"
+    )
+    print(
+        "historical_replay_input_gate_validator_snapshot_built: "
+        f"{result.historical_replay_input_gate_validator_snapshot_built}"
+    )
+    print(
+        "historical_replay_input_gate_validator_signal_semantics_changed: "
+        f"{result.historical_replay_input_gate_validator_signal_semantics_changed}"
+    )
+    print(
+        "historical_replay_input_gate_validator_report_path: "
+        f"{result.historical_replay_input_gate_validator_report_path}"
+    )
+    print(
+        "historical_replay_input_gate_validator_next_action: "
+        f"{result.historical_replay_input_gate_validator_next_action}"
+    )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

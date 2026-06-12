@@ -143,6 +143,8 @@ Use `one-row-checklist-pass-candidate-preview` to inspect whether one target row
 
 Use `historical-replay-input-gate-validator-fixture` to create report-only contract cases for a future historical replay input gate validator; see [docs/historical_replay_input_gate_validator_fixture.md](docs/historical_replay_input_gate_validator_fixture.md). Its index, health, and status commands make the fixture visible in `research-status` without implementing the real validator, running real replay, creating active replay input, computing forward labels, training weights, creating active stock profiles, or creating real buy-review eligibility.
 
+Use `historical-replay-input-gate-validator` to run the report-only real validator against a local replay input package; see [docs/historical_replay_input_gate_validator.md](docs/historical_replay_input_gate_validator.md). Its index, health, and status commands are visible in `research-status` and preserve later paper workflow priority. `NO_INPUT` and future pass-candidate states are not active replay input and do not run replay, compute labels, train weights, create stock profiles, or create real buy-review eligibility.
+
 Use `pit-official-status-evidence-packet-enrichment-index`, `pit-official-status-evidence-packet-enrichment-health`, and `pit-official-status-evidence-packet-enrichment-status` to discover, safety-check, and summarize enrichment artifacts. `research-status` includes the latest enrichment context, including strong same-date quotation counts, reviewed no-hit support counts, reviewer-acceptance-required counts, checklist-pass counts, and remaining blocked counts while preserving later paper workflow priority.
 
 Use `reviewer-no-hit-source-coverage-acceptance` to create report-only reviewer acceptance templates for official no-hit source coverage, query windows, inference limits, and survivorship rationale; see [docs/reviewer_no_hit_source_coverage_acceptance.md](docs/reviewer_no_hit_source_coverage_acceptance.md). Accepted rows remain supporting context only and do not approve PIT rows, create clean review updates, export universe files, write `data/raw` or `data/processed`, run current-candidates, build snapshots, or compute labels.
@@ -212,6 +214,8 @@ For the v1.24.0 checkpoint covering reviewer material evidence fill guidance art
 For the v1.25.0 checkpoint covering one-row material evidence fill package artifact views and `research-status` integration, see [docs/release_checkpoint_v1.25.0.md](docs/release_checkpoint_v1.25.0.md).
 
 For the v1.28.0 checkpoint covering historical replay input gate validator fixture `research-status` integration, see [docs/release_checkpoint_v1.28.0.md](docs/release_checkpoint_v1.28.0.md).
+
+For the v1.29.0 checkpoint covering real historical replay input gate validator `research-status` integration, see [docs/release_checkpoint_v1.29.0.md](docs/release_checkpoint_v1.29.0.md).
 
 For the v1.15.0 checkpoint covering EOD post-close low-budget PIT policy profile comparison and `research-status` integration, see [docs/release_checkpoint_v1.15.0.md](docs/release_checkpoint_v1.15.0.md).
 

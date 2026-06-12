@@ -83,6 +83,9 @@ from quant_replay_system.replay_substrate_schema_fixture_status import (
 from quant_replay_system.historical_replay_input_gate_validator_fixture_status import (
     run_historical_replay_input_gate_validator_fixture_status,
 )
+from quant_replay_system.historical_replay_input_gate_validator_status import (
+    run_historical_replay_input_gate_validator_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -506,6 +509,31 @@ SUMMARY_COLUMNS = [
     "input_gate_validator_fixture_signal_semantics_changed",
     "input_gate_validator_fixture_report_path",
     "input_gate_validator_fixture_next_action",
+    "historical_replay_input_gate_validator_status",
+    "latest_historical_replay_input_gate_validator_run_id",
+    "historical_replay_input_gate_validator_stage",
+    "historical_replay_input_gate_validator_health_status",
+    "historical_replay_input_gate_validator_pass_candidate",
+    "historical_replay_input_gate_validator_active_replay_input_ready",
+    "historical_replay_input_gate_validator_active_replay_input",
+    "historical_replay_input_gate_validator_forward_labels_exist",
+    "historical_replay_input_gate_validator_weights_trained",
+    "historical_replay_input_gate_validator_active_stock_profile_exists",
+    "historical_replay_input_gate_validator_real_buy_review_eligible",
+    "historical_replay_input_gate_validator_report_only",
+    "historical_replay_input_gate_validator_diagnostic_only",
+    "historical_replay_input_gate_validator_no_live_trading",
+    "historical_replay_input_gate_validator_no_broker_api",
+    "historical_replay_input_gate_validator_no_order_placement",
+    "historical_replay_input_gate_validator_no_message_sent",
+    "historical_replay_input_gate_validator_llm_api_called",
+    "historical_replay_input_gate_validator_external_api_called",
+    "historical_replay_input_gate_validator_cache_mutated",
+    "historical_replay_input_gate_validator_current_candidates_run",
+    "historical_replay_input_gate_validator_snapshot_built",
+    "historical_replay_input_gate_validator_signal_semantics_changed",
+    "historical_replay_input_gate_validator_report_path",
+    "historical_replay_input_gate_validator_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -835,6 +863,7 @@ COMPONENTS = [
     "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS",
     "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS",
+    "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -887,6 +916,9 @@ WORKFLOW_AREAS = {
     "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE_STATUS": "REVIEWER_MATERIAL_EVIDENCE_FILL_GUIDANCE",
     "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS": "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE",
     "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS": "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW",
+    "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS": "REPLAY_SUBSTRATE_SCHEMA_FIXTURE",
+    "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
+    "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_PLAN",
@@ -1298,6 +1330,31 @@ class LocalResearchDashboardResult:
     input_gate_validator_fixture_signal_semantics_changed: bool
     input_gate_validator_fixture_report_path: str
     input_gate_validator_fixture_next_action: str
+    historical_replay_input_gate_validator_status: str
+    latest_historical_replay_input_gate_validator_run_id: str
+    historical_replay_input_gate_validator_stage: str
+    historical_replay_input_gate_validator_health_status: str
+    historical_replay_input_gate_validator_pass_candidate: bool
+    historical_replay_input_gate_validator_active_replay_input_ready: bool
+    historical_replay_input_gate_validator_active_replay_input: bool
+    historical_replay_input_gate_validator_forward_labels_exist: bool
+    historical_replay_input_gate_validator_weights_trained: bool
+    historical_replay_input_gate_validator_active_stock_profile_exists: bool
+    historical_replay_input_gate_validator_real_buy_review_eligible: bool
+    historical_replay_input_gate_validator_report_only: bool
+    historical_replay_input_gate_validator_diagnostic_only: bool
+    historical_replay_input_gate_validator_no_live_trading: bool
+    historical_replay_input_gate_validator_no_broker_api: bool
+    historical_replay_input_gate_validator_no_order_placement: bool
+    historical_replay_input_gate_validator_no_message_sent: bool
+    historical_replay_input_gate_validator_llm_api_called: bool
+    historical_replay_input_gate_validator_external_api_called: bool
+    historical_replay_input_gate_validator_cache_mutated: bool
+    historical_replay_input_gate_validator_current_candidates_run: bool
+    historical_replay_input_gate_validator_snapshot_built: bool
+    historical_replay_input_gate_validator_signal_semantics_changed: bool
+    historical_replay_input_gate_validator_report_path: str
+    historical_replay_input_gate_validator_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1607,6 +1664,7 @@ def run_local_research_dashboard(
     one_row_checklist_pass_candidate_preview_root: str | Path | None = None,
     replay_substrate_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
+    historical_replay_input_gate_validator_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1773,6 +1831,11 @@ def run_local_research_dashboard(
         Path(input_gate_validator_fixture_root)
         if input_gate_validator_fixture_root is not None
         else effective_root / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    )
+    effective_historical_replay_input_gate_validator_root = (
+        Path(historical_replay_input_gate_validator_root)
+        if historical_replay_input_gate_validator_root is not None
+        else effective_root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1"
     )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
@@ -1941,6 +2004,10 @@ def run_local_research_dashboard(
             effective_input_gate_validator_fixture_root = (
                 effective_root / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
             )
+        if historical_replay_input_gate_validator_root is None:
+            effective_historical_replay_input_gate_validator_root = (
+                effective_root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -2016,6 +2083,7 @@ def run_local_research_dashboard(
         one_row_checklist_pass_candidate_preview_root=effective_one_row_checklist_pass_candidate_preview_root,
         replay_substrate_schema_fixture_root=effective_replay_substrate_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
+        historical_replay_input_gate_validator_root=effective_historical_replay_input_gate_validator_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -2096,6 +2164,7 @@ def run_local_research_dashboard(
         ),
         "replay_substrate_schema_fixture_root": effective_replay_substrate_schema_fixture_root,
         "input_gate_validator_fixture_root": effective_input_gate_validator_fixture_root,
+        "historical_replay_input_gate_validator_root": effective_historical_replay_input_gate_validator_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
@@ -3147,6 +3216,81 @@ def run_local_research_dashboard(
         input_gate_validator_fixture_next_action=str(
             summary.get("input_gate_validator_fixture_next_action", "")
         ),
+        historical_replay_input_gate_validator_status=str(
+            summary.get("historical_replay_input_gate_validator_status", "MISSING")
+        ),
+        latest_historical_replay_input_gate_validator_run_id=str(
+            summary.get("latest_historical_replay_input_gate_validator_run_id", "")
+        ),
+        historical_replay_input_gate_validator_stage=str(
+            summary.get("historical_replay_input_gate_validator_stage", "")
+        ),
+        historical_replay_input_gate_validator_health_status=str(
+            summary.get("historical_replay_input_gate_validator_health_status", "")
+        ),
+        historical_replay_input_gate_validator_pass_candidate=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_pass_candidate")
+        ),
+        historical_replay_input_gate_validator_active_replay_input_ready=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_active_replay_input_ready")
+        ),
+        historical_replay_input_gate_validator_active_replay_input=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_active_replay_input")
+        ),
+        historical_replay_input_gate_validator_forward_labels_exist=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_forward_labels_exist")
+        ),
+        historical_replay_input_gate_validator_weights_trained=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_weights_trained")
+        ),
+        historical_replay_input_gate_validator_active_stock_profile_exists=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_active_stock_profile_exists")
+        ),
+        historical_replay_input_gate_validator_real_buy_review_eligible=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_real_buy_review_eligible")
+        ),
+        historical_replay_input_gate_validator_report_only=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_report_only")
+        ),
+        historical_replay_input_gate_validator_diagnostic_only=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_diagnostic_only")
+        ),
+        historical_replay_input_gate_validator_no_live_trading=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_no_live_trading")
+        ),
+        historical_replay_input_gate_validator_no_broker_api=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_no_broker_api")
+        ),
+        historical_replay_input_gate_validator_no_order_placement=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_no_order_placement")
+        ),
+        historical_replay_input_gate_validator_no_message_sent=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_no_message_sent")
+        ),
+        historical_replay_input_gate_validator_llm_api_called=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_llm_api_called")
+        ),
+        historical_replay_input_gate_validator_external_api_called=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_external_api_called")
+        ),
+        historical_replay_input_gate_validator_cache_mutated=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_cache_mutated")
+        ),
+        historical_replay_input_gate_validator_current_candidates_run=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_current_candidates_run")
+        ),
+        historical_replay_input_gate_validator_snapshot_built=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_snapshot_built")
+        ),
+        historical_replay_input_gate_validator_signal_semantics_changed=_bool_from_text(
+            summary.get("historical_replay_input_gate_validator_signal_semantics_changed")
+        ),
+        historical_replay_input_gate_validator_report_path=str(
+            summary.get("historical_replay_input_gate_validator_report_path", "")
+        ),
+        historical_replay_input_gate_validator_next_action=str(
+            summary.get("historical_replay_input_gate_validator_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -3785,6 +3929,7 @@ def scan_local_research_workflow_artifacts(
     one_row_checklist_pass_candidate_preview_root: str | Path,
     replay_substrate_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
+    historical_replay_input_gate_validator_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -3834,6 +3979,7 @@ def scan_local_research_workflow_artifacts(
     one_row_checklist_pass_candidate_preview_path = Path(one_row_checklist_pass_candidate_preview_root)
     replay_substrate_schema_fixture_path = Path(replay_substrate_schema_fixture_root)
     input_gate_validator_fixture_path = Path(input_gate_validator_fixture_root)
+    historical_replay_input_gate_validator_path = Path(historical_replay_input_gate_validator_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -3905,6 +4051,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_one_row_checklist_pass_candidate_preview_status(one_row_checklist_pass_candidate_preview_path))
     records.extend(_scan_replay_substrate_schema_fixture_status(replay_substrate_schema_fixture_path))
     records.extend(_scan_input_gate_validator_fixture_status(input_gate_validator_fixture_path))
+    records.extend(_scan_historical_replay_input_gate_validator_status(historical_replay_input_gate_validator_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -7460,6 +7607,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             return "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_FAILED"
         if statuses["INPUT_GATE_VALIDATOR_FIXTURE_STATUS"] == "FAIL":
             return "INPUT_GATE_VALIDATOR_FIXTURE_BLOCKED"
+        if statuses["HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"] == "FAIL":
+            return "INPUT_GATE_VALIDATOR_BLOCKED"
         if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
@@ -7662,6 +7811,12 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
     ):
         return _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
+    if (
+        statuses["HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"]
+        in {"NO_INPUT", "REPLAY_INPUT_GATE_PASS_CANDIDATE", "BLOCKED", "WARN", "READY"}
+        and _historical_replay_input_gate_validator_stage_from_frame(dashboard_frame)
+    ):
+        return _historical_replay_input_gate_validator_stage_from_frame(dashboard_frame)
     if (
         not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
         and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
@@ -7867,6 +8022,9 @@ def infer_local_research_next_action(
         "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_FAILED": "Repair replay substrate schema fixture artifacts before using their schema contracts as context.",
         "INPUT_GATE_VALIDATOR_FIXTURE_READY": "Use the input-gate validator fixture as report-only validator contract context; do not treat it as the real validator or active replay input.",
         "INPUT_GATE_VALIDATOR_FIXTURE_BLOCKED": "Repair input-gate validator fixture artifacts before using their report-only validator contracts as context.",
+        "INPUT_GATE_VALIDATOR_NO_INPUT": "Provide a local replay input package to the report-only validator; do not treat NO_INPUT as active replay readiness.",
+        "INPUT_GATE_VALIDATOR_BLOCKED": "Resolve report-only input gate validator blockers before any replay workflow can review a pass candidate.",
+        "INPUT_GATE_VALIDATOR_PASS_CANDIDATE": "Review the report-only pass candidate; it is not active replay input and does not permit labels, training, stock profiles, or trading.",
         "UNIVERSE_PROFILE_POLICY_AUDIT_READY": "Use universe profile split guidance for future worklists.",
         "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE": "Resolve mixed universe naming before semantic approval decisions, or explicitly accept as legacy mixed demo context.",
         "UNIVERSE_PROFILE_POLICY_AUDIT_HEALTH_WARN": "Review universe profile policy audit health warnings.",
@@ -7981,6 +8139,7 @@ def summarize_local_research_status(
                     "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS",
                     "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
                     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS",
+                    "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -9710,6 +9869,104 @@ def summarize_local_research_status(
         ),
         "input_gate_validator_fixture_next_action": _parse_note_value(
             by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "historical_replay_input_gate_validator_status": _component_status(
+            by_component,
+            "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS",
+        ),
+        "latest_historical_replay_input_gate_validator_run_id": _string_or_empty(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("latest_artifact_id")
+        ),
+        "historical_replay_input_gate_validator_stage": _string_or_empty(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("stage")
+        ),
+        "historical_replay_input_gate_validator_health_status": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "historical_replay_input_gate_validator_pass_candidate": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "pass_candidate",
+        ),
+        "historical_replay_input_gate_validator_active_replay_input_ready": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "active_replay_input_ready",
+        ),
+        "historical_replay_input_gate_validator_active_replay_input": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "active_replay_input",
+        ),
+        "historical_replay_input_gate_validator_forward_labels_exist": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "historical_replay_input_gate_validator_weights_trained": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "historical_replay_input_gate_validator_active_stock_profile_exists": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "historical_replay_input_gate_validator_real_buy_review_eligible": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "historical_replay_input_gate_validator_report_only": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "historical_replay_input_gate_validator_diagnostic_only": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "historical_replay_input_gate_validator_no_live_trading": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "historical_replay_input_gate_validator_no_broker_api": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "historical_replay_input_gate_validator_no_order_placement": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "historical_replay_input_gate_validator_no_message_sent": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "no_message_sent",
+        ),
+        "historical_replay_input_gate_validator_llm_api_called": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "historical_replay_input_gate_validator_external_api_called": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "historical_replay_input_gate_validator_cache_mutated": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "cache_mutated",
+        ),
+        "historical_replay_input_gate_validator_current_candidates_run": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "historical_replay_input_gate_validator_snapshot_built": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "historical_replay_input_gate_validator_signal_semantics_changed": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "historical_replay_input_gate_validator_report_path": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "historical_replay_input_gate_validator_next_action": _parse_note_value(
+            by_component.get("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -12094,6 +12351,77 @@ def build_local_research_dashboard_metadata(
         ),
         "input_gate_validator_fixture_report_path": result.input_gate_validator_fixture_report_path,
         "input_gate_validator_fixture_next_action": result.input_gate_validator_fixture_next_action,
+        "historical_replay_input_gate_validator_status": result.historical_replay_input_gate_validator_status,
+        "latest_historical_replay_input_gate_validator_run_id": (
+            result.latest_historical_replay_input_gate_validator_run_id
+        ),
+        "historical_replay_input_gate_validator_stage": result.historical_replay_input_gate_validator_stage,
+        "historical_replay_input_gate_validator_health_status": (
+            result.historical_replay_input_gate_validator_health_status
+        ),
+        "historical_replay_input_gate_validator_pass_candidate": (
+            result.historical_replay_input_gate_validator_pass_candidate
+        ),
+        "historical_replay_input_gate_validator_active_replay_input_ready": (
+            result.historical_replay_input_gate_validator_active_replay_input_ready
+        ),
+        "historical_replay_input_gate_validator_active_replay_input": (
+            result.historical_replay_input_gate_validator_active_replay_input
+        ),
+        "historical_replay_input_gate_validator_forward_labels_exist": (
+            result.historical_replay_input_gate_validator_forward_labels_exist
+        ),
+        "historical_replay_input_gate_validator_weights_trained": (
+            result.historical_replay_input_gate_validator_weights_trained
+        ),
+        "historical_replay_input_gate_validator_active_stock_profile_exists": (
+            result.historical_replay_input_gate_validator_active_stock_profile_exists
+        ),
+        "historical_replay_input_gate_validator_real_buy_review_eligible": (
+            result.historical_replay_input_gate_validator_real_buy_review_eligible
+        ),
+        "historical_replay_input_gate_validator_report_only": (
+            result.historical_replay_input_gate_validator_report_only
+        ),
+        "historical_replay_input_gate_validator_diagnostic_only": (
+            result.historical_replay_input_gate_validator_diagnostic_only
+        ),
+        "historical_replay_input_gate_validator_no_live_trading": (
+            result.historical_replay_input_gate_validator_no_live_trading
+        ),
+        "historical_replay_input_gate_validator_no_broker_api": (
+            result.historical_replay_input_gate_validator_no_broker_api
+        ),
+        "historical_replay_input_gate_validator_no_order_placement": (
+            result.historical_replay_input_gate_validator_no_order_placement
+        ),
+        "historical_replay_input_gate_validator_no_message_sent": (
+            result.historical_replay_input_gate_validator_no_message_sent
+        ),
+        "historical_replay_input_gate_validator_llm_api_called": (
+            result.historical_replay_input_gate_validator_llm_api_called
+        ),
+        "historical_replay_input_gate_validator_external_api_called": (
+            result.historical_replay_input_gate_validator_external_api_called
+        ),
+        "historical_replay_input_gate_validator_cache_mutated": (
+            result.historical_replay_input_gate_validator_cache_mutated
+        ),
+        "historical_replay_input_gate_validator_current_candidates_run": (
+            result.historical_replay_input_gate_validator_current_candidates_run
+        ),
+        "historical_replay_input_gate_validator_snapshot_built": (
+            result.historical_replay_input_gate_validator_snapshot_built
+        ),
+        "historical_replay_input_gate_validator_signal_semantics_changed": (
+            result.historical_replay_input_gate_validator_signal_semantics_changed
+        ),
+        "historical_replay_input_gate_validator_report_path": (
+            result.historical_replay_input_gate_validator_report_path
+        ),
+        "historical_replay_input_gate_validator_next_action": (
+            result.historical_replay_input_gate_validator_next_action
+        ),
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -14428,6 +14756,63 @@ def _input_gate_validator_fixture_notes(summary: dict[str, Any]) -> str:
     )
 
 
+def _scan_historical_replay_input_gate_validator_status(root: Path) -> list[dict[str, Any]]:
+    validator_root = root.parent if root.name == "status" else root
+    if not validator_root.exists():
+        return []
+    try:
+        result = run_historical_replay_input_gate_validator_status(
+            root=validator_root,
+            output_dir=validator_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_validator_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    return [
+        _record(
+            workflow_area="HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
+            component="HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_validator_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_historical_replay_input_gate_validator_notes(summary),
+        )
+    ]
+
+
+def _historical_replay_input_gate_validator_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"pass_candidate={_string_or_empty(summary.get('pass_candidate'))}; "
+        f"active_replay_input_ready={_string_or_empty(summary.get('active_replay_input_ready'))}; "
+        f"active_replay_input={_string_or_empty(summary.get('active_replay_input'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        "report_only=True; "
+        "diagnostic_only=True; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        "llm_api_called=False; "
+        "external_api_called=False; "
+        "cache_mutated=False; "
+        "current_candidates_run=False; "
+        "snapshot_built=False; "
+        "signal_semantics_changed=False; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
 def _scan_universe_profile_policy_audit_status(root: Path) -> list[dict[str, Any]]:
     computed = _computed_universe_profile_policy_audit_status_record(root)
     if computed is not None:
@@ -16535,6 +16920,7 @@ def _status_by_component(dashboard_frame: pd.DataFrame) -> dict[str, str]:
     values = {row["component"]: row["status"] for row in frame.to_dict("records")}
     for component in COMPONENTS:
         values.setdefault(component, "MISSING")
+    values.setdefault("HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS", "MISSING")
     return values
 
 
@@ -16733,6 +17119,14 @@ def _replay_substrate_schema_fixture_stage_from_frame(dashboard_frame: pd.DataFr
 def _input_gate_validator_fixture_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "INPUT_GATE_VALIDATOR_FIXTURE_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _historical_replay_input_gate_validator_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

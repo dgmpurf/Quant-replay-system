@@ -15,6 +15,9 @@ from quant_replay_system.local_research_dashboard import (
 from quant_replay_system.historical_replay_input_gate_validator_fixture import (
     build_historical_replay_input_gate_validator_fixture,
 )
+from quant_replay_system.historical_replay_input_gate_validator import (
+    run_historical_replay_input_gate_validator,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -1929,6 +1932,131 @@ def test_cli_research_status_prints_input_gate_validator_fixture_fields(
     assert "input_gate_validator_fixture_current_candidates_run: False" in output.out
     assert "input_gate_validator_fixture_snapshot_built: False" in output.out
     assert "input_gate_validator_fixture_signal_semantics_changed: False" in output.out
+
+
+def test_research_status_includes_historical_replay_input_gate_validator_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    validator = run_historical_replay_input_gate_validator(
+        output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.latest_historical_replay_input_gate_validator_run_id == validator.validator_run_id
+    assert result.historical_replay_input_gate_validator_status == "NO_INPUT"
+    assert result.historical_replay_input_gate_validator_stage == "INPUT_GATE_VALIDATOR_NO_INPUT"
+    assert result.historical_replay_input_gate_validator_health_status == "PASS"
+    assert result.historical_replay_input_gate_validator_pass_candidate is False
+    assert result.historical_replay_input_gate_validator_active_replay_input_ready is False
+    assert result.historical_replay_input_gate_validator_active_replay_input is False
+    assert result.historical_replay_input_gate_validator_forward_labels_exist is False
+    assert result.historical_replay_input_gate_validator_weights_trained is False
+    assert result.historical_replay_input_gate_validator_active_stock_profile_exists is False
+    assert result.historical_replay_input_gate_validator_real_buy_review_eligible is False
+    assert result.historical_replay_input_gate_validator_report_only is True
+    assert result.historical_replay_input_gate_validator_diagnostic_only is True
+    assert result.historical_replay_input_gate_validator_no_live_trading is True
+    assert result.historical_replay_input_gate_validator_no_broker_api is True
+    assert result.historical_replay_input_gate_validator_no_order_placement is True
+    assert result.historical_replay_input_gate_validator_no_message_sent is True
+    assert result.historical_replay_input_gate_validator_llm_api_called is False
+    assert result.historical_replay_input_gate_validator_external_api_called is False
+    assert result.historical_replay_input_gate_validator_cache_mutated is False
+    assert result.historical_replay_input_gate_validator_current_candidates_run is False
+    assert result.historical_replay_input_gate_validator_snapshot_built is False
+    assert result.historical_replay_input_gate_validator_signal_semantics_changed is False
+    assert result.workflow_stage == "INPUT_GATE_VALIDATOR_NO_INPUT"
+    assert result.workflow_stage != "ACTIVE_REPLAY_INPUT_READY"
+    assert row["status"] == "NO_INPUT"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_historical_replay_input_gate_validator_run_id"] == validator.validator_run_id
+    assert summary.loc[0, "historical_replay_input_gate_validator_active_replay_input"] == "False"
+    assert metadata["historical_replay_input_gate_validator_status"] == "NO_INPUT"
+    assert metadata["historical_replay_input_gate_validator_active_replay_input_ready"] is False
+    assert metadata["historical_replay_input_gate_validator_active_replay_input"] is False
+    assert metadata["historical_replay_input_gate_validator_forward_labels_exist"] is False
+    assert metadata["historical_replay_input_gate_validator_weights_trained"] is False
+    assert metadata["historical_replay_input_gate_validator_active_stock_profile_exists"] is False
+    assert metadata["historical_replay_input_gate_validator_real_buy_review_eligible"] is False
+
+
+def test_research_status_preserves_paper_priority_over_historical_replay_input_gate_validator(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    run_historical_replay_input_gate_validator(
+        output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.historical_replay_input_gate_validator_status == "NO_INPUT"
+    assert result.historical_replay_input_gate_validator_active_replay_input_ready is False
+    assert result.historical_replay_input_gate_validator_active_replay_input is False
+    assert row["status"] == "NO_INPUT"
+
+
+def test_cli_research_status_prints_historical_replay_input_gate_validator_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    validator = run_historical_replay_input_gate_validator(
+        output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1"
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert (
+        f"latest_historical_replay_input_gate_validator_run_id: {validator.validator_run_id}"
+        in output.out
+    )
+    assert "historical_replay_input_gate_validator_status: NO_INPUT" in output.out
+    assert "historical_replay_input_gate_validator_stage: INPUT_GATE_VALIDATOR_NO_INPUT" in output.out
+    assert "historical_replay_input_gate_validator_health_status: PASS" in output.out
+    assert "historical_replay_input_gate_validator_pass_candidate: False" in output.out
+    assert "historical_replay_input_gate_validator_active_replay_input_ready: False" in output.out
+    assert "historical_replay_input_gate_validator_active_replay_input: False" in output.out
+    assert "historical_replay_input_gate_validator_forward_labels_exist: False" in output.out
+    assert "historical_replay_input_gate_validator_weights_trained: False" in output.out
+    assert "historical_replay_input_gate_validator_active_stock_profile_exists: False" in output.out
+    assert "historical_replay_input_gate_validator_real_buy_review_eligible: False" in output.out
+    assert "historical_replay_input_gate_validator_report_only: True" in output.out
+    assert "historical_replay_input_gate_validator_diagnostic_only: True" in output.out
+    assert "historical_replay_input_gate_validator_no_live_trading: True" in output.out
+    assert "historical_replay_input_gate_validator_no_broker_api: True" in output.out
+    assert "historical_replay_input_gate_validator_no_order_placement: True" in output.out
+    assert "historical_replay_input_gate_validator_no_message_sent: True" in output.out
+    assert "historical_replay_input_gate_validator_llm_api_called: False" in output.out
+    assert "historical_replay_input_gate_validator_external_api_called: False" in output.out
+    assert "historical_replay_input_gate_validator_cache_mutated: False" in output.out
+    assert "historical_replay_input_gate_validator_current_candidates_run: False" in output.out
+    assert "historical_replay_input_gate_validator_snapshot_built: False" in output.out
+    assert "historical_replay_input_gate_validator_signal_semantics_changed: False" in output.out
 
 
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
