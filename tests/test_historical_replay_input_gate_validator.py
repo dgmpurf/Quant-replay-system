@@ -13,6 +13,17 @@ from quant_replay_system.historical_replay_input_gate_validator import (
     REPLAY_INPUT_GATE_PASS_CANDIDATE,
     run_historical_replay_input_gate_validator,
 )
+from quant_replay_system.historical_replay_input_gate_validator_health import (
+    check_historical_replay_input_gate_validator_health,
+)
+from quant_replay_system.historical_replay_input_gate_validator_index import (
+    build_historical_replay_input_gate_validator_index,
+)
+from quant_replay_system.historical_replay_input_gate_validator_status import (
+    INPUT_GATE_VALIDATOR_NO_INPUT,
+    INPUT_GATE_VALIDATOR_PASS_CANDIDATE,
+    run_historical_replay_input_gate_validator_status,
+)
 
 
 def test_no_input_returns_no_input_and_writes_report_only_artifacts(tmp_path: Path) -> None:
@@ -229,6 +240,175 @@ def test_cli_command_runs_and_prints_report_only_summary(tmp_path: Path) -> None
     assert "No replay, current-candidates" in completed.stdout
 
 
+def test_index_discovers_no_input_validator_artifact_and_metadata_fields(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    validator = run_historical_replay_input_gate_validator(output_dir=root)
+
+    result = build_historical_replay_input_gate_validator_index(root=root, output_dir=root / "index")
+
+    assert result.artifact_count == 1
+    row = result.index_frame.iloc[0]
+    assert row["validator_run_id"] == validator.validator_run_id
+    assert row["status"] == "NO_INPUT"
+    assert row["workflow_stage"] == "NO_INPUT"
+    assert row["gate_count"] == 13
+    assert row["blocked_gate_count"] == 1
+    assert row["blocker_count"] == 1
+    assert row["pass_candidate"] is False
+    assert row["active_replay_input_ready"] is False
+    assert row["active_replay_input"] is False
+    assert row["forward_labels_exist"] is False
+    assert row["weights_trained"] is False
+    assert row["active_stock_profile_exists"] is False
+    assert row["real_buy_review_eligible"] is False
+    assert row["approval_applied"] is False
+    assert row["order_placed"] is False
+    assert row["cache_mutated"] is False
+    assert row["report_only"] is True
+    assert row["diagnostic_only"] is True
+    assert row["no_live_trading"] is True
+    assert row["no_broker_api"] is True
+    assert row["no_order_placement"] is True
+    assert row["no_message_sent"] is True
+    assert row["overclaim_guard_pass_count"] == 15
+    assert row["overclaim_guard_total_count"] == 15
+    assert (root / "index" / "historical_replay_input_gate_validator_index.csv").exists()
+
+
+def test_health_passes_for_valid_no_input_artifact(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_historical_replay_input_gate_validator(output_dir=root)
+
+    result = check_historical_replay_input_gate_validator_health(root=root, output_dir=root / "health")
+
+    assert result.status == "PASS"
+    assert result.checked_artifact_count == 1
+    assert result.issue_count == 0
+    assert result.error_count == 0
+    assert (root / "health" / "historical_replay_input_gate_validator_health.csv").exists()
+
+
+def test_health_passes_for_valid_pass_candidate_artifact(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    package = _write_valid_package(tmp_path / "package")
+    run_historical_replay_input_gate_validator(input_package=package, output_dir=root)
+
+    result = check_historical_replay_input_gate_validator_health(root=root, output_dir=root / "health")
+
+    assert result.status == "PASS"
+    assert result.error_count == 0
+
+
+@pytest.mark.parametrize(
+    ("metadata_field", "metadata_value", "issue_code"),
+    [
+        ("status", "ACTIVE_REPLAY_INPUT_READY", "ACTIVE_REPLAY_INPUT_READY_UNEXPECTED"),
+        ("active_replay_input_ready", True, "ACTIVE_REPLAY_INPUT_READY_UNEXPECTED"),
+        ("active_replay_input", True, "ACTIVE_REPLAY_INPUT_UNEXPECTED"),
+        ("forward_labels_exist", True, "FORWARD_LABELS_EXIST_UNEXPECTED"),
+        ("weights_trained", True, "WEIGHTS_TRAINED_UNEXPECTED"),
+        ("active_stock_profile_exists", True, "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED"),
+        ("real_buy_review_eligible", True, "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED"),
+        ("order_placed", True, "ORDER_PLACED_UNEXPECTED"),
+        ("cache_mutated", True, "CACHE_MUTATED_UNEXPECTED"),
+    ],
+)
+def test_health_fails_for_unsafe_metadata_flags(
+    tmp_path: Path, metadata_field: str, metadata_value: object, issue_code: str
+) -> None:
+    root = _output_dir(tmp_path)
+    validator = run_historical_replay_input_gate_validator(output_dir=root)
+    _mutate_metadata(validator.artifact_paths["metadata"], {metadata_field: metadata_value})
+
+    result = check_historical_replay_input_gate_validator_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    assert issue_code in set(result.health_frame["issue_code"])
+
+
+def test_health_fails_when_overclaim_guards_fail(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    validator = run_historical_replay_input_gate_validator(output_dir=root)
+    guards = pd.read_csv(validator.artifact_paths["overclaim_guard_report"], dtype=str)
+    guards.loc[0, "passed"] = "False"
+    guards.to_csv(validator.artifact_paths["overclaim_guard_report"], index=False)
+    _mutate_metadata(validator.artifact_paths["metadata"], {"overclaim_guard_pass_count": 14})
+
+    result = check_historical_replay_input_gate_validator_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    assert "OVERCLAIM_GUARD_FAILED" in set(result.health_frame["issue_code"])
+
+
+def test_status_reports_no_input_stage_and_safety_wording(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    validator = run_historical_replay_input_gate_validator(output_dir=root)
+
+    result = run_historical_replay_input_gate_validator_status(root=root, output_dir=root / "status")
+
+    assert result.latest_validator_run_id == validator.validator_run_id
+    assert result.workflow_stage == INPUT_GATE_VALIDATOR_NO_INPUT
+    assert result.status == "NO_INPUT"
+    assert result.health_status == "PASS"
+    assert result.pass_candidate is False
+    assert result.active_replay_input_ready is False
+    assert "report-only" in result.safety_statement
+    assert "not real replay" in result.safety_statement
+    assert "not active replay input" in result.safety_statement
+    assert "does not compute forward labels" in result.safety_statement
+    assert "does not train weights" in result.safety_statement
+    assert "does not create active stock profiles" in result.safety_statement
+    assert "does not create real buy-review eligibility" in result.safety_statement
+
+
+def test_status_reports_pass_candidate_stage(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    package = _write_valid_package(tmp_path / "package")
+    validator = run_historical_replay_input_gate_validator(input_package=package, output_dir=root)
+
+    result = run_historical_replay_input_gate_validator_status(root=root, output_dir=root / "status")
+
+    assert result.latest_validator_run_id == validator.validator_run_id
+    assert result.workflow_stage == INPUT_GATE_VALIDATOR_PASS_CANDIDATE
+    assert result.status == REPLAY_INPUT_GATE_PASS_CANDIDATE
+    assert result.pass_candidate is True
+    assert result.active_replay_input_ready is False
+
+
+def test_view_cli_commands_run(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_historical_replay_input_gate_validator(output_dir=root)
+
+    for command in [
+        "historical-replay-input-gate-validator-index",
+        "historical-replay-input-gate-validator-health",
+        "historical-replay-input-gate-validator-status",
+    ]:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(root),
+                "--output-dir",
+                str(root / command.rsplit("-", 1)[-1]),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env={**os.environ, "PYTHONPATH": "src"},
+        )
+        assert "No replay" in completed.stdout
+
+
+def test_research_status_not_integrated_for_real_validator_yet() -> None:
+    dashboard_source = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
+
+    assert "from quant_replay_system.historical_replay_input_gate_validator_status import" not in dashboard_source
+
+
 def _output_dir(tmp_path: Path) -> Path:
     return tmp_path / "outputs" / "reports" / "manual_diagnostics" / "historical_replay_input_gate_validator_v0_1"
 
@@ -342,3 +522,9 @@ def _write_valid_package(
             continue
         pd.DataFrame([row], dtype=object).to_csv(package_dir / file_name, index=False)
     return package_dir
+
+
+def _mutate_metadata(metadata_path: Path, updates: dict[str, object]) -> None:
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata.update(updates)
+    metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")

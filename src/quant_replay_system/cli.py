@@ -257,6 +257,15 @@ from quant_replay_system.one_row_checklist_pass_candidate_preview_status import 
 from quant_replay_system.historical_replay_input_gate_validator import (
     run_historical_replay_input_gate_validator,
 )
+from quant_replay_system.historical_replay_input_gate_validator_health import (
+    check_historical_replay_input_gate_validator_health,
+)
+from quant_replay_system.historical_replay_input_gate_validator_index import (
+    build_historical_replay_input_gate_validator_index,
+)
+from quant_replay_system.historical_replay_input_gate_validator_status import (
+    run_historical_replay_input_gate_validator_status,
+)
 from quant_replay_system.historical_replay_input_gate_validator_fixture import (
     build_historical_replay_input_gate_validator_fixture,
 )
@@ -2063,6 +2072,60 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only historical replay input gate validator artifacts will be written",
     )
     historical_replay_input_gate_validator.set_defaults(handler=_handle_historical_replay_input_gate_validator)
+
+    historical_replay_input_gate_validator_index = subparsers.add_parser(
+        "historical-replay-input-gate-validator-index",
+        help="Index report-only historical replay input gate validator artifacts",
+    )
+    historical_replay_input_gate_validator_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1",
+        help="Validator artifact root to index",
+    )
+    historical_replay_input_gate_validator_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1/index",
+        help="Directory where validator index artifacts will be written",
+    )
+    historical_replay_input_gate_validator_index.set_defaults(
+        handler=_handle_historical_replay_input_gate_validator_index
+    )
+
+    historical_replay_input_gate_validator_health = subparsers.add_parser(
+        "historical-replay-input-gate-validator-health",
+        help="Check report-only historical replay input gate validator artifact health",
+    )
+    historical_replay_input_gate_validator_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1",
+        help="Validator artifact root to check",
+    )
+    historical_replay_input_gate_validator_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1/health",
+        help="Directory where validator health artifacts will be written",
+    )
+    historical_replay_input_gate_validator_health.set_defaults(
+        handler=_handle_historical_replay_input_gate_validator_health
+    )
+
+    historical_replay_input_gate_validator_status = subparsers.add_parser(
+        "historical-replay-input-gate-validator-status",
+        help="Summarize latest report-only historical replay input gate validator status",
+    )
+    historical_replay_input_gate_validator_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1",
+        help="Validator artifact root to summarize",
+    )
+    historical_replay_input_gate_validator_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1/status",
+        help="Directory where validator status artifacts will be written",
+    )
+    historical_replay_input_gate_validator_status.set_defaults(
+        handler=_handle_historical_replay_input_gate_validator_status
+    )
 
     historical_replay_input_gate_validator_fixture = subparsers.add_parser(
         "historical-replay-input-gate-validator-fixture",
@@ -6005,6 +6068,55 @@ def _handle_historical_replay_input_gate_validator(args: argparse.Namespace) -> 
         "No replay, current-candidates, snapshots, forward labels, training, active stock profiles, "
         "real buy-review eligibility, live trading, broker API, order placement, message delivery, "
         "LLM/API, external API, data/raw write, data/processed write, data/cache write, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_historical_replay_input_gate_validator_index(args: argparse.Namespace) -> int:
+    result = build_historical_replay_input_gate_validator_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "No replay, current-candidates, snapshots, forward labels, training, active stock profiles, "
+        "research-status integration, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_historical_replay_input_gate_validator_health(args: argparse.Namespace) -> int:
+    result = check_historical_replay_input_gate_validator_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "No replay, current-candidates, snapshots, forward labels, training, active stock profiles, "
+        "research-status integration, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_historical_replay_input_gate_validator_status(args: argparse.Namespace) -> int:
+    result = run_historical_replay_input_gate_validator_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_validator_run_id: {result.latest_validator_run_id}")
+    print(f"pass_candidate: {result.pass_candidate}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
+    print(
+        "No replay, current-candidates, snapshots, forward labels, training, active stock profiles, "
+        "research-status integration, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked."
     )
     return 0
 
