@@ -270,6 +270,10 @@ from quant_replay_system.minimal_replay_input_package_fixture_smoke_index import
 from quant_replay_system.minimal_replay_input_package_fixture_smoke_status import (
     run_minimal_replay_input_package_fixture_smoke_status,
 )
+from quant_replay_system.active_replay_input_promotion import (
+    ActiveReplayInputPromotionSettings,
+    run_active_replay_input_promotion,
+)
 from quant_replay_system.historical_replay_input_gate_validator_health import (
     check_historical_replay_input_gate_validator_health,
 )
@@ -2211,6 +2215,37 @@ def build_parser() -> argparse.ArgumentParser:
     minimal_replay_input_package_fixture_smoke_status.set_defaults(
         handler=_handle_minimal_replay_input_package_fixture_smoke_status
     )
+
+    active_replay_input_promotion = subparsers.add_parser(
+        "active-replay-input-promotion",
+        help="Review active replay input promotion readiness as report-only diagnostic context",
+    )
+    active_replay_input_promotion.add_argument(
+        "--validator-artifact",
+        default=None,
+        help="Optional historical replay input gate validator artifact folder or metadata.json",
+    )
+    active_replay_input_promotion.add_argument(
+        "--smoke-artifact",
+        default=None,
+        help="Optional minimal replay input package fixture smoke artifact folder or smoke_metadata.json",
+    )
+    active_replay_input_promotion.add_argument(
+        "--promotion-request-manifest",
+        default=None,
+        help="Optional local promotion request manifest JSON",
+    )
+    active_replay_input_promotion.add_argument(
+        "--human-review-manifest",
+        default=None,
+        help="Optional local human review manifest JSON",
+    )
+    active_replay_input_promotion.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_promotion_v0_1",
+        help="Directory where report-only active replay input promotion artifacts will be written",
+    )
+    active_replay_input_promotion.set_defaults(handler=_handle_active_replay_input_promotion)
 
     historical_replay_input_gate_validator_fixture = subparsers.add_parser(
         "historical-replay-input-gate-validator-fixture",
@@ -6280,6 +6315,44 @@ def _handle_minimal_replay_input_package_fixture_smoke_status(args: argparse.Nam
         "No replay, active replay input, current-candidates, snapshots, forward labels, training, "
         "active stock profiles, research-status integration, data writes, API calls, messages, "
         "broker integration, orders, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_promotion(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_promotion(
+        ActiveReplayInputPromotionSettings(
+            validator_artifact=Path(args.validator_artifact) if args.validator_artifact else None,
+            smoke_artifact=Path(args.smoke_artifact) if args.smoke_artifact else None,
+            promotion_request_manifest=Path(args.promotion_request_manifest)
+            if args.promotion_request_manifest
+            else None,
+            human_review_manifest=Path(args.human_review_manifest) if args.human_review_manifest else None,
+            output_dir=Path(args.output_dir),
+        )
+    )
+    print(f"promotion_run_id: {result.promotion_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_human_review: {result.ready_for_human_review}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"precondition_count: {result.precondition_count}")
+    print(f"blocked_precondition_count: {result.blocked_precondition_count}")
+    print(f"human_review_gate_count: {result.human_review_gate_count}")
+    print(f"blocked_human_review_gate_count: {result.blocked_human_review_gate_count}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"report_path: {result.artifact_paths['promotion_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No active replay input, replay, current-candidates, snapshots, forward labels, training, "
+        "active stock profiles, real buy-review eligibility, live trading, broker API, order placement, "
+        "message delivery, LLM/API, external API, data/raw write, data/processed write, data/cache write, "
+        "or cache mutation was invoked."
     )
     return 0
 
