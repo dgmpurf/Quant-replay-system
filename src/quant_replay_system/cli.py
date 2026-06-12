@@ -254,6 +254,9 @@ from quant_replay_system.one_row_checklist_pass_candidate_preview_index import (
 from quant_replay_system.one_row_checklist_pass_candidate_preview_status import (
     run_one_row_checklist_pass_candidate_preview_status,
 )
+from quant_replay_system.historical_replay_input_gate_validator import (
+    run_historical_replay_input_gate_validator,
+)
 from quant_replay_system.historical_replay_input_gate_validator_fixture import (
     build_historical_replay_input_gate_validator_fixture,
 )
@@ -2044,6 +2047,22 @@ def build_parser() -> argparse.ArgumentParser:
     one_row_checklist_pass_candidate_preview_status.set_defaults(
         handler=_handle_one_row_checklist_pass_candidate_preview_status
     )
+
+    historical_replay_input_gate_validator = subparsers.add_parser(
+        "historical-replay-input-gate-validator",
+        help="Validate a local historical replay input package as report-only diagnostic context",
+    )
+    historical_replay_input_gate_validator.add_argument(
+        "--input-package",
+        default=None,
+        help="Optional local replay input package folder containing replay_input_manifest.json and CSV components",
+    )
+    historical_replay_input_gate_validator.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1",
+        help="Directory where report-only historical replay input gate validator artifacts will be written",
+    )
+    historical_replay_input_gate_validator.set_defaults(handler=_handle_historical_replay_input_gate_validator)
 
     historical_replay_input_gate_validator_fixture = subparsers.add_parser(
         "historical-replay-input-gate-validator-fixture",
@@ -5959,6 +5978,35 @@ def _handle_replay_substrate_schema_fixture(args: argparse.Namespace) -> int:
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
     return 1 if result.status == "FAIL" else 0
+
+
+def _handle_historical_replay_input_gate_validator(args: argparse.Namespace) -> int:
+    result = run_historical_replay_input_gate_validator(
+        input_package=args.input_package,
+        output_dir=args.output_dir,
+    )
+    print(f"validator_run_id: {result.validator_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"gate_count: {result.gate_count}")
+    print(f"passed_gate_count: {result.passed_gate_count}")
+    print(f"blocked_gate_count: {result.blocked_gate_count}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"pass_candidate: {result.pass_candidate}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"report_path: {result.artifact_paths['input_gate_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No replay, current-candidates, snapshots, forward labels, training, active stock profiles, "
+        "real buy-review eligibility, live trading, broker API, order placement, message delivery, "
+        "LLM/API, external API, data/raw write, data/processed write, data/cache write, or cache mutation was invoked."
+    )
+    return 0
 
 
 def _handle_historical_replay_input_gate_validator_fixture(args: argparse.Namespace) -> int:
