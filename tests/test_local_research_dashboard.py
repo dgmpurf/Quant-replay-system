@@ -12,6 +12,9 @@ from quant_replay_system.local_research_dashboard import (
     infer_local_research_workflow_stage,
     run_local_research_dashboard,
 )
+from quant_replay_system.historical_replay_input_gate_validator_fixture import (
+    build_historical_replay_input_gate_validator_fixture,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -1754,6 +1757,178 @@ def test_cli_research_status_prints_replay_substrate_schema_fixture_fields(
     assert "replay_substrate_schema_fixture_no_live_trading: True" in output.out
     assert "replay_substrate_schema_fixture_no_broker_api: True" in output.out
     assert "replay_substrate_schema_fixture_no_order_placement: True" in output.out
+
+
+def test_research_status_includes_input_gate_validator_fixture_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    fixture = build_historical_replay_input_gate_validator_fixture(
+        output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "INPUT_GATE_VALIDATOR_FIXTURE_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.latest_input_gate_validator_fixture_run_id == fixture.fixture_run_id
+    assert result.input_gate_validator_fixture_status == "PASS"
+    assert result.input_gate_validator_fixture_stage == "INPUT_GATE_VALIDATOR_FIXTURE_READY"
+    assert result.input_gate_validator_fixture_health_status == "PASS"
+    assert result.input_gate_validator_fixture_case_count == 68
+    assert result.input_gate_validator_fixture_blocked_case_count == 67
+    assert result.input_gate_validator_fixture_pass_candidate_case_count == 1
+    assert result.input_gate_validator_fixture_active_ready_case_count == 0
+    assert result.input_gate_validator_fixture_validation_issue_count == 0
+    assert result.input_gate_validator_fixture_overclaim_guard_pass_count == 14
+    assert result.input_gate_validator_fixture_overclaim_guard_total_count == 14
+    assert result.input_gate_validator_fixture_active_replay_input is False
+    assert result.input_gate_validator_fixture_forward_labels_exist is False
+    assert result.input_gate_validator_fixture_weights_trained is False
+    assert result.input_gate_validator_fixture_active_stock_profile_exists is False
+    assert result.input_gate_validator_fixture_real_buy_review_eligible is False
+    assert result.input_gate_validator_fixture_validator_implemented is False
+    assert result.input_gate_validator_fixture_report_only is True
+    assert result.input_gate_validator_fixture_diagnostic_only is True
+    assert result.input_gate_validator_fixture_no_live_trading is True
+    assert result.input_gate_validator_fixture_no_broker_api is True
+    assert result.input_gate_validator_fixture_no_order_placement is True
+    assert result.input_gate_validator_fixture_no_message_sent is True
+    assert result.input_gate_validator_fixture_llm_api_called is False
+    assert result.input_gate_validator_fixture_external_api_called is False
+    assert result.input_gate_validator_fixture_cache_mutated is False
+    assert result.input_gate_validator_fixture_current_candidates_run is False
+    assert result.input_gate_validator_fixture_snapshot_built is False
+    assert result.input_gate_validator_fixture_signal_semantics_changed is False
+    assert result.workflow_stage == "INPUT_GATE_VALIDATOR_FIXTURE_READY"
+    assert result.workflow_stage not in {
+        "ACTIVE_REPLAY_INPUT_READY",
+        "REAL_REPLAY_READY",
+        "FORWARD_LABEL_READY",
+        "TRAINING_READY",
+        "STOCK_PROFILE_READY",
+        "REAL_BUY_REVIEW_READY",
+    }
+    assert row["status"] == "PASS"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_input_gate_validator_fixture_run_id"] == fixture.fixture_run_id
+    assert summary.loc[0, "input_gate_validator_fixture_case_count"] == "68"
+    assert summary.loc[0, "input_gate_validator_fixture_active_replay_input"] == "False"
+    assert metadata["input_gate_validator_fixture_status"] == "PASS"
+    assert metadata["input_gate_validator_fixture_overclaim_guard_pass_count"] == 14
+    assert metadata["input_gate_validator_fixture_active_replay_input"] is False
+    assert metadata["input_gate_validator_fixture_forward_labels_exist"] is False
+    assert metadata["input_gate_validator_fixture_weights_trained"] is False
+    assert metadata["input_gate_validator_fixture_active_stock_profile_exists"] is False
+    assert metadata["input_gate_validator_fixture_real_buy_review_eligible"] is False
+    assert metadata["input_gate_validator_fixture_validator_implemented"] is False
+    assert metadata["input_gate_validator_fixture_report_only"] is True
+    assert metadata["input_gate_validator_fixture_diagnostic_only"] is True
+    assert metadata["input_gate_validator_fixture_no_live_trading"] is True
+    assert metadata["input_gate_validator_fixture_no_broker_api"] is True
+    assert metadata["input_gate_validator_fixture_no_order_placement"] is True
+    assert metadata["input_gate_validator_fixture_no_message_sent"] is True
+    assert metadata["input_gate_validator_fixture_llm_api_called"] is False
+    assert metadata["input_gate_validator_fixture_external_api_called"] is False
+    assert metadata["input_gate_validator_fixture_cache_mutated"] is False
+    assert metadata["input_gate_validator_fixture_current_candidates_run"] is False
+    assert metadata["input_gate_validator_fixture_snapshot_built"] is False
+    assert metadata["input_gate_validator_fixture_signal_semantics_changed"] is False
+
+
+def test_research_status_preserves_paper_priority_over_input_gate_validator_fixture(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    build_historical_replay_input_gate_validator_fixture(
+        output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "INPUT_GATE_VALIDATOR_FIXTURE_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.input_gate_validator_fixture_status == "PASS"
+    assert result.input_gate_validator_fixture_active_replay_input is False
+    assert result.input_gate_validator_fixture_validator_implemented is False
+    assert row["status"] == "PASS"
+
+
+def test_research_status_preserves_replay_substrate_priority_over_input_gate_validator_fixture(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    build_replay_substrate_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
+    )
+    build_historical_replay_input_gate_validator_fixture(
+        output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_READY"
+    assert result.input_gate_validator_fixture_status == "PASS"
+    assert result.input_gate_validator_fixture_active_replay_input is False
+    assert result.replay_substrate_schema_fixture_status == "PASS"
+
+
+def test_cli_research_status_prints_input_gate_validator_fixture_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    fixture = build_historical_replay_input_gate_validator_fixture(
+        output_dir=root / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert f"latest_input_gate_validator_fixture_run_id: {fixture.fixture_run_id}" in output.out
+    assert "input_gate_validator_fixture_status: PASS" in output.out
+    assert "input_gate_validator_fixture_stage: INPUT_GATE_VALIDATOR_FIXTURE_READY" in output.out
+    assert "input_gate_validator_fixture_case_count: 68" in output.out
+    assert "input_gate_validator_fixture_blocked_case_count: 67" in output.out
+    assert "input_gate_validator_fixture_pass_candidate_case_count: 1" in output.out
+    assert "input_gate_validator_fixture_active_ready_case_count: 0" in output.out
+    assert "input_gate_validator_fixture_validation_issue_count: 0" in output.out
+    assert "input_gate_validator_fixture_overclaim_guard_pass_count: 14" in output.out
+    assert "input_gate_validator_fixture_overclaim_guard_total_count: 14" in output.out
+    assert "input_gate_validator_fixture_active_replay_input: False" in output.out
+    assert "input_gate_validator_fixture_forward_labels_exist: False" in output.out
+    assert "input_gate_validator_fixture_weights_trained: False" in output.out
+    assert "input_gate_validator_fixture_active_stock_profile_exists: False" in output.out
+    assert "input_gate_validator_fixture_real_buy_review_eligible: False" in output.out
+    assert "input_gate_validator_fixture_validator_implemented: False" in output.out
+    assert "input_gate_validator_fixture_report_only: True" in output.out
+    assert "input_gate_validator_fixture_diagnostic_only: True" in output.out
+    assert "input_gate_validator_fixture_no_live_trading: True" in output.out
+    assert "input_gate_validator_fixture_no_broker_api: True" in output.out
+    assert "input_gate_validator_fixture_no_order_placement: True" in output.out
+    assert "input_gate_validator_fixture_no_message_sent: True" in output.out
+    assert "input_gate_validator_fixture_llm_api_called: False" in output.out
+    assert "input_gate_validator_fixture_external_api_called: False" in output.out
+    assert "input_gate_validator_fixture_cache_mutated: False" in output.out
+    assert "input_gate_validator_fixture_current_candidates_run: False" in output.out
+    assert "input_gate_validator_fixture_snapshot_built: False" in output.out
+    assert "input_gate_validator_fixture_signal_semantics_changed: False" in output.out
 
 
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(

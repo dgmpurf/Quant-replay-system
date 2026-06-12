@@ -80,6 +80,9 @@ from quant_replay_system.one_row_checklist_pass_candidate_preview_status import 
 from quant_replay_system.replay_substrate_schema_fixture_status import (
     run_replay_substrate_schema_fixture_status,
 )
+from quant_replay_system.historical_replay_input_gate_validator_fixture_status import (
+    run_historical_replay_input_gate_validator_fixture_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -472,6 +475,37 @@ SUMMARY_COLUMNS = [
     "replay_substrate_schema_fixture_no_order_placement",
     "replay_substrate_schema_fixture_report_path",
     "replay_substrate_schema_fixture_next_action",
+    "input_gate_validator_fixture_status",
+    "latest_input_gate_validator_fixture_run_id",
+    "input_gate_validator_fixture_stage",
+    "input_gate_validator_fixture_health_status",
+    "input_gate_validator_fixture_case_count",
+    "input_gate_validator_fixture_blocked_case_count",
+    "input_gate_validator_fixture_pass_candidate_case_count",
+    "input_gate_validator_fixture_active_ready_case_count",
+    "input_gate_validator_fixture_validation_issue_count",
+    "input_gate_validator_fixture_overclaim_guard_pass_count",
+    "input_gate_validator_fixture_overclaim_guard_total_count",
+    "input_gate_validator_fixture_active_replay_input",
+    "input_gate_validator_fixture_forward_labels_exist",
+    "input_gate_validator_fixture_weights_trained",
+    "input_gate_validator_fixture_active_stock_profile_exists",
+    "input_gate_validator_fixture_real_buy_review_eligible",
+    "input_gate_validator_fixture_validator_implemented",
+    "input_gate_validator_fixture_report_only",
+    "input_gate_validator_fixture_diagnostic_only",
+    "input_gate_validator_fixture_no_live_trading",
+    "input_gate_validator_fixture_no_broker_api",
+    "input_gate_validator_fixture_no_order_placement",
+    "input_gate_validator_fixture_no_message_sent",
+    "input_gate_validator_fixture_llm_api_called",
+    "input_gate_validator_fixture_external_api_called",
+    "input_gate_validator_fixture_cache_mutated",
+    "input_gate_validator_fixture_current_candidates_run",
+    "input_gate_validator_fixture_snapshot_built",
+    "input_gate_validator_fixture_signal_semantics_changed",
+    "input_gate_validator_fixture_report_path",
+    "input_gate_validator_fixture_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -800,6 +834,7 @@ COMPONENTS = [
     "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS",
     "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS",
     "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
+    "INPUT_GATE_VALIDATOR_FIXTURE_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -1232,6 +1267,37 @@ class LocalResearchDashboardResult:
     replay_substrate_schema_fixture_no_order_placement: bool
     replay_substrate_schema_fixture_report_path: str
     replay_substrate_schema_fixture_next_action: str
+    input_gate_validator_fixture_status: str
+    latest_input_gate_validator_fixture_run_id: str
+    input_gate_validator_fixture_stage: str
+    input_gate_validator_fixture_health_status: str
+    input_gate_validator_fixture_case_count: int
+    input_gate_validator_fixture_blocked_case_count: int
+    input_gate_validator_fixture_pass_candidate_case_count: int
+    input_gate_validator_fixture_active_ready_case_count: int
+    input_gate_validator_fixture_validation_issue_count: int
+    input_gate_validator_fixture_overclaim_guard_pass_count: int
+    input_gate_validator_fixture_overclaim_guard_total_count: int
+    input_gate_validator_fixture_active_replay_input: bool
+    input_gate_validator_fixture_forward_labels_exist: bool
+    input_gate_validator_fixture_weights_trained: bool
+    input_gate_validator_fixture_active_stock_profile_exists: bool
+    input_gate_validator_fixture_real_buy_review_eligible: bool
+    input_gate_validator_fixture_validator_implemented: bool
+    input_gate_validator_fixture_report_only: bool
+    input_gate_validator_fixture_diagnostic_only: bool
+    input_gate_validator_fixture_no_live_trading: bool
+    input_gate_validator_fixture_no_broker_api: bool
+    input_gate_validator_fixture_no_order_placement: bool
+    input_gate_validator_fixture_no_message_sent: bool
+    input_gate_validator_fixture_llm_api_called: bool
+    input_gate_validator_fixture_external_api_called: bool
+    input_gate_validator_fixture_cache_mutated: bool
+    input_gate_validator_fixture_current_candidates_run: bool
+    input_gate_validator_fixture_snapshot_built: bool
+    input_gate_validator_fixture_signal_semantics_changed: bool
+    input_gate_validator_fixture_report_path: str
+    input_gate_validator_fixture_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1540,6 +1606,7 @@ def run_local_research_dashboard(
     one_row_material_evidence_fill_package_root: str | Path | None = None,
     one_row_checklist_pass_candidate_preview_root: str | Path | None = None,
     replay_substrate_schema_fixture_root: str | Path | None = None,
+    input_gate_validator_fixture_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1701,6 +1768,11 @@ def run_local_research_dashboard(
         Path(replay_substrate_schema_fixture_root)
         if replay_substrate_schema_fixture_root is not None
         else effective_root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
+    )
+    effective_input_gate_validator_fixture_root = (
+        Path(input_gate_validator_fixture_root)
+        if input_gate_validator_fixture_root is not None
+        else effective_root / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
     )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
@@ -1865,6 +1937,10 @@ def run_local_research_dashboard(
             effective_replay_substrate_schema_fixture_root = (
                 effective_root / "manual_diagnostics" / "replay_substrate_schema_fixture_v0_1"
             )
+        if input_gate_validator_fixture_root is None:
+            effective_input_gate_validator_fixture_root = (
+                effective_root / "manual_diagnostics" / "historical_replay_input_gate_validator_fixture_v0_1"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -1939,6 +2015,7 @@ def run_local_research_dashboard(
         one_row_material_evidence_fill_package_root=effective_one_row_material_evidence_fill_package_root,
         one_row_checklist_pass_candidate_preview_root=effective_one_row_checklist_pass_candidate_preview_root,
         replay_substrate_schema_fixture_root=effective_replay_substrate_schema_fixture_root,
+        input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -2018,6 +2095,7 @@ def run_local_research_dashboard(
             effective_material_pit_evidence_gate_closure_plan_root
         ),
         "replay_substrate_schema_fixture_root": effective_replay_substrate_schema_fixture_root,
+        "input_gate_validator_fixture_root": effective_input_gate_validator_fixture_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
@@ -2976,6 +3054,99 @@ def run_local_research_dashboard(
         replay_substrate_schema_fixture_next_action=str(
             summary.get("replay_substrate_schema_fixture_next_action", "")
         ),
+        input_gate_validator_fixture_status=str(
+            summary.get("input_gate_validator_fixture_status", "MISSING")
+        ),
+        latest_input_gate_validator_fixture_run_id=str(
+            summary.get("latest_input_gate_validator_fixture_run_id", "")
+        ),
+        input_gate_validator_fixture_stage=str(
+            summary.get("input_gate_validator_fixture_stage", "")
+        ),
+        input_gate_validator_fixture_health_status=str(
+            summary.get("input_gate_validator_fixture_health_status", "")
+        ),
+        input_gate_validator_fixture_case_count=_int_or_zero(
+            summary.get("input_gate_validator_fixture_case_count")
+        ),
+        input_gate_validator_fixture_blocked_case_count=_int_or_zero(
+            summary.get("input_gate_validator_fixture_blocked_case_count")
+        ),
+        input_gate_validator_fixture_pass_candidate_case_count=_int_or_zero(
+            summary.get("input_gate_validator_fixture_pass_candidate_case_count")
+        ),
+        input_gate_validator_fixture_active_ready_case_count=_int_or_zero(
+            summary.get("input_gate_validator_fixture_active_ready_case_count")
+        ),
+        input_gate_validator_fixture_validation_issue_count=_int_or_zero(
+            summary.get("input_gate_validator_fixture_validation_issue_count")
+        ),
+        input_gate_validator_fixture_overclaim_guard_pass_count=_int_or_zero(
+            summary.get("input_gate_validator_fixture_overclaim_guard_pass_count")
+        ),
+        input_gate_validator_fixture_overclaim_guard_total_count=_int_or_zero(
+            summary.get("input_gate_validator_fixture_overclaim_guard_total_count")
+        ),
+        input_gate_validator_fixture_active_replay_input=_bool_from_text(
+            summary.get("input_gate_validator_fixture_active_replay_input")
+        ),
+        input_gate_validator_fixture_forward_labels_exist=_bool_from_text(
+            summary.get("input_gate_validator_fixture_forward_labels_exist")
+        ),
+        input_gate_validator_fixture_weights_trained=_bool_from_text(
+            summary.get("input_gate_validator_fixture_weights_trained")
+        ),
+        input_gate_validator_fixture_active_stock_profile_exists=_bool_from_text(
+            summary.get("input_gate_validator_fixture_active_stock_profile_exists")
+        ),
+        input_gate_validator_fixture_real_buy_review_eligible=_bool_from_text(
+            summary.get("input_gate_validator_fixture_real_buy_review_eligible")
+        ),
+        input_gate_validator_fixture_validator_implemented=_bool_from_text(
+            summary.get("input_gate_validator_fixture_validator_implemented")
+        ),
+        input_gate_validator_fixture_report_only=_bool_from_text(
+            summary.get("input_gate_validator_fixture_report_only")
+        ),
+        input_gate_validator_fixture_diagnostic_only=_bool_from_text(
+            summary.get("input_gate_validator_fixture_diagnostic_only")
+        ),
+        input_gate_validator_fixture_no_live_trading=_bool_from_text(
+            summary.get("input_gate_validator_fixture_no_live_trading")
+        ),
+        input_gate_validator_fixture_no_broker_api=_bool_from_text(
+            summary.get("input_gate_validator_fixture_no_broker_api")
+        ),
+        input_gate_validator_fixture_no_order_placement=_bool_from_text(
+            summary.get("input_gate_validator_fixture_no_order_placement")
+        ),
+        input_gate_validator_fixture_no_message_sent=_bool_from_text(
+            summary.get("input_gate_validator_fixture_no_message_sent")
+        ),
+        input_gate_validator_fixture_llm_api_called=_bool_from_text(
+            summary.get("input_gate_validator_fixture_llm_api_called")
+        ),
+        input_gate_validator_fixture_external_api_called=_bool_from_text(
+            summary.get("input_gate_validator_fixture_external_api_called")
+        ),
+        input_gate_validator_fixture_cache_mutated=_bool_from_text(
+            summary.get("input_gate_validator_fixture_cache_mutated")
+        ),
+        input_gate_validator_fixture_current_candidates_run=_bool_from_text(
+            summary.get("input_gate_validator_fixture_current_candidates_run")
+        ),
+        input_gate_validator_fixture_snapshot_built=_bool_from_text(
+            summary.get("input_gate_validator_fixture_snapshot_built")
+        ),
+        input_gate_validator_fixture_signal_semantics_changed=_bool_from_text(
+            summary.get("input_gate_validator_fixture_signal_semantics_changed")
+        ),
+        input_gate_validator_fixture_report_path=str(
+            summary.get("input_gate_validator_fixture_report_path", "")
+        ),
+        input_gate_validator_fixture_next_action=str(
+            summary.get("input_gate_validator_fixture_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -3613,6 +3784,7 @@ def scan_local_research_workflow_artifacts(
     one_row_material_evidence_fill_package_root: str | Path,
     one_row_checklist_pass_candidate_preview_root: str | Path,
     replay_substrate_schema_fixture_root: str | Path,
+    input_gate_validator_fixture_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -3661,6 +3833,7 @@ def scan_local_research_workflow_artifacts(
     one_row_material_evidence_fill_package_path = Path(one_row_material_evidence_fill_package_root)
     one_row_checklist_pass_candidate_preview_path = Path(one_row_checklist_pass_candidate_preview_root)
     replay_substrate_schema_fixture_path = Path(replay_substrate_schema_fixture_root)
+    input_gate_validator_fixture_path = Path(input_gate_validator_fixture_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -3731,6 +3904,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_one_row_material_evidence_fill_package_status(one_row_material_evidence_fill_package_path))
     records.extend(_scan_one_row_checklist_pass_candidate_preview_status(one_row_checklist_pass_candidate_preview_path))
     records.extend(_scan_replay_substrate_schema_fixture_status(replay_substrate_schema_fixture_path))
+    records.extend(_scan_input_gate_validator_fixture_status(input_gate_validator_fixture_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -4867,6 +5041,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
 
     if component == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS":
         return _replay_substrate_schema_fixture_warning_actionability(row, context)
+
+    if component == "INPUT_GATE_VALIDATOR_FIXTURE_STATUS":
+        return _input_gate_validator_fixture_warning_actionability(row, context)
 
     if component == "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS":
         return _universe_profile_policy_audit_warning_actionability(row, context)
@@ -6308,6 +6485,13 @@ def _replay_substrate_schema_fixture_warning_actionability(
     }
 
 
+def _input_gate_validator_fixture_warning_actionability(
+    row: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, int]:
+    return _replay_substrate_schema_fixture_warning_actionability(row, context)
+
+
 def _material_pit_evidence_gate_closure_plan_warning_actionability(
     row: dict[str, Any],
     context: dict[str, Any],
@@ -7274,6 +7458,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             return "MATERIAL_PIT_EVIDENCE_GATE_CLOSURE_PLAN_FAILED"
         if statuses["REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS"] == "FAIL":
             return "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_FAILED"
+        if statuses["INPUT_GATE_VALIDATOR_FIXTURE_STATUS"] == "FAIL":
+            return "INPUT_GATE_VALIDATOR_FIXTURE_BLOCKED"
         if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
@@ -7471,6 +7657,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _replay_substrate_schema_fixture_stage_from_frame(dashboard_frame)
     ):
         return _replay_substrate_schema_fixture_stage_from_frame(dashboard_frame)
+    if (
+        statuses["INPUT_GATE_VALIDATOR_FIXTURE_STATUS"] in {"PASS", "WARN", "READY"}
+        and _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
+    ):
+        return _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
     if (
         not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
         and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
@@ -7672,6 +7863,10 @@ def infer_local_research_next_action(
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_READY_FOR_REVIEW_APPLY": "Review clean review_updates artifact manually before a separate PIT universe overlay review run.",
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_HEALTH_WARN": "Review PIT universe evidence update ingestion health warnings before using clean review_updates.",
         "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_FAILED": "Repair PIT universe evidence update ingestion artifacts before using clean review_updates.",
+        "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_READY": "Use the replay substrate schema fixture as context only; do not run real replay, labels, training, stock profiles, or buy-review from it.",
+        "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_FAILED": "Repair replay substrate schema fixture artifacts before using their schema contracts as context.",
+        "INPUT_GATE_VALIDATOR_FIXTURE_READY": "Use the input-gate validator fixture as report-only validator contract context; do not treat it as the real validator or active replay input.",
+        "INPUT_GATE_VALIDATOR_FIXTURE_BLOCKED": "Repair input-gate validator fixture artifacts before using their report-only validator contracts as context.",
         "UNIVERSE_PROFILE_POLICY_AUDIT_READY": "Use universe profile split guidance for future worklists.",
         "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE": "Resolve mixed universe naming before semantic approval decisions, or explicitly accept as legacy mixed demo context.",
         "UNIVERSE_PROFILE_POLICY_AUDIT_HEALTH_WARN": "Review universe profile policy audit health warnings.",
@@ -7785,6 +7980,7 @@ def summarize_local_research_status(
                     "ONE_ROW_MATERIAL_EVIDENCE_FILL_PACKAGE_STATUS",
                     "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS",
                     "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS",
+                    "INPUT_GATE_VALIDATOR_FIXTURE_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -9378,6 +9574,142 @@ def summarize_local_research_status(
         ),
         "replay_substrate_schema_fixture_next_action": _parse_note_value(
             by_component.get("REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "input_gate_validator_fixture_status": _component_status(
+            by_component,
+            "INPUT_GATE_VALIDATOR_FIXTURE_STATUS",
+        ),
+        "latest_input_gate_validator_fixture_run_id": _string_or_empty(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "input_gate_validator_fixture_stage": _string_or_empty(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("stage")
+        ),
+        "input_gate_validator_fixture_health_status": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "input_gate_validator_fixture_case_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+                "case_count",
+            )
+        ),
+        "input_gate_validator_fixture_blocked_case_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+                "blocked_case_count",
+            )
+        ),
+        "input_gate_validator_fixture_pass_candidate_case_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+                "pass_candidate_case_count",
+            )
+        ),
+        "input_gate_validator_fixture_active_ready_case_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+                "active_ready_case_count",
+            )
+        ),
+        "input_gate_validator_fixture_validation_issue_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+                "validation_issue_count",
+            )
+        ),
+        "input_gate_validator_fixture_overclaim_guard_pass_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+                "overclaim_guard_pass_count",
+            )
+        ),
+        "input_gate_validator_fixture_overclaim_guard_total_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+                "overclaim_guard_total_count",
+            )
+        ),
+        "input_gate_validator_fixture_active_replay_input": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "active_replay_input",
+        ),
+        "input_gate_validator_fixture_forward_labels_exist": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "input_gate_validator_fixture_weights_trained": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "input_gate_validator_fixture_active_stock_profile_exists": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "input_gate_validator_fixture_real_buy_review_eligible": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "input_gate_validator_fixture_validator_implemented": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "validator_implemented",
+        ),
+        "input_gate_validator_fixture_report_only": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "input_gate_validator_fixture_diagnostic_only": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "input_gate_validator_fixture_no_live_trading": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "input_gate_validator_fixture_no_broker_api": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "input_gate_validator_fixture_no_order_placement": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "input_gate_validator_fixture_no_message_sent": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "no_message_sent",
+        ),
+        "input_gate_validator_fixture_llm_api_called": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "input_gate_validator_fixture_external_api_called": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "input_gate_validator_fixture_cache_mutated": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "cache_mutated",
+        ),
+        "input_gate_validator_fixture_current_candidates_run": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "input_gate_validator_fixture_snapshot_built": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "input_gate_validator_fixture_signal_semantics_changed": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "input_gate_validator_fixture_report_path": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "input_gate_validator_fixture_next_action": _parse_note_value(
+            by_component.get("INPUT_GATE_VALIDATOR_FIXTURE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -11715,6 +12047,53 @@ def build_local_research_dashboard_metadata(
         ),
         "replay_substrate_schema_fixture_report_path": result.replay_substrate_schema_fixture_report_path,
         "replay_substrate_schema_fixture_next_action": result.replay_substrate_schema_fixture_next_action,
+        "input_gate_validator_fixture_status": result.input_gate_validator_fixture_status,
+        "latest_input_gate_validator_fixture_run_id": result.latest_input_gate_validator_fixture_run_id,
+        "input_gate_validator_fixture_stage": result.input_gate_validator_fixture_stage,
+        "input_gate_validator_fixture_health_status": result.input_gate_validator_fixture_health_status,
+        "input_gate_validator_fixture_case_count": result.input_gate_validator_fixture_case_count,
+        "input_gate_validator_fixture_blocked_case_count": result.input_gate_validator_fixture_blocked_case_count,
+        "input_gate_validator_fixture_pass_candidate_case_count": (
+            result.input_gate_validator_fixture_pass_candidate_case_count
+        ),
+        "input_gate_validator_fixture_active_ready_case_count": (
+            result.input_gate_validator_fixture_active_ready_case_count
+        ),
+        "input_gate_validator_fixture_validation_issue_count": (
+            result.input_gate_validator_fixture_validation_issue_count
+        ),
+        "input_gate_validator_fixture_overclaim_guard_pass_count": (
+            result.input_gate_validator_fixture_overclaim_guard_pass_count
+        ),
+        "input_gate_validator_fixture_overclaim_guard_total_count": (
+            result.input_gate_validator_fixture_overclaim_guard_total_count
+        ),
+        "input_gate_validator_fixture_active_replay_input": result.input_gate_validator_fixture_active_replay_input,
+        "input_gate_validator_fixture_forward_labels_exist": result.input_gate_validator_fixture_forward_labels_exist,
+        "input_gate_validator_fixture_weights_trained": result.input_gate_validator_fixture_weights_trained,
+        "input_gate_validator_fixture_active_stock_profile_exists": (
+            result.input_gate_validator_fixture_active_stock_profile_exists
+        ),
+        "input_gate_validator_fixture_real_buy_review_eligible": (
+            result.input_gate_validator_fixture_real_buy_review_eligible
+        ),
+        "input_gate_validator_fixture_validator_implemented": result.input_gate_validator_fixture_validator_implemented,
+        "input_gate_validator_fixture_report_only": result.input_gate_validator_fixture_report_only,
+        "input_gate_validator_fixture_diagnostic_only": result.input_gate_validator_fixture_diagnostic_only,
+        "input_gate_validator_fixture_no_live_trading": result.input_gate_validator_fixture_no_live_trading,
+        "input_gate_validator_fixture_no_broker_api": result.input_gate_validator_fixture_no_broker_api,
+        "input_gate_validator_fixture_no_order_placement": result.input_gate_validator_fixture_no_order_placement,
+        "input_gate_validator_fixture_no_message_sent": result.input_gate_validator_fixture_no_message_sent,
+        "input_gate_validator_fixture_llm_api_called": result.input_gate_validator_fixture_llm_api_called,
+        "input_gate_validator_fixture_external_api_called": result.input_gate_validator_fixture_external_api_called,
+        "input_gate_validator_fixture_cache_mutated": result.input_gate_validator_fixture_cache_mutated,
+        "input_gate_validator_fixture_current_candidates_run": result.input_gate_validator_fixture_current_candidates_run,
+        "input_gate_validator_fixture_snapshot_built": result.input_gate_validator_fixture_snapshot_built,
+        "input_gate_validator_fixture_signal_semantics_changed": (
+            result.input_gate_validator_fixture_signal_semantics_changed
+        ),
+        "input_gate_validator_fixture_report_path": result.input_gate_validator_fixture_report_path,
+        "input_gate_validator_fixture_next_action": result.input_gate_validator_fixture_next_action,
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -13982,6 +14361,69 @@ def _replay_substrate_schema_fixture_notes(summary: dict[str, Any]) -> str:
         f"no_live_trading={_string_or_empty(summary.get('no_live_trading'))}; "
         f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
         f"no_order_placement={_string_or_empty(summary.get('no_order_placement'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_input_gate_validator_fixture_status(root: Path) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_historical_replay_input_gate_validator_fixture_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_fixture_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    return [
+        _record(
+            workflow_area="INPUT_GATE_VALIDATOR_FIXTURE",
+            component="INPUT_GATE_VALIDATOR_FIXTURE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_fixture_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_input_gate_validator_fixture_notes(summary),
+        )
+    ]
+
+
+def _input_gate_validator_fixture_notes(summary: dict[str, Any]) -> str:
+    return (
+        f"next_manual_action={_note_safe_text(summary.get('next_manual_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"case_count={_string_or_empty(summary.get('case_count'))}; "
+        f"blocked_case_count={_string_or_empty(summary.get('blocked_case_count'))}; "
+        f"pass_candidate_case_count={_string_or_empty(summary.get('pass_candidate_case_count'))}; "
+        f"active_ready_case_count={_string_or_empty(summary.get('active_ready_case_count'))}; "
+        f"validation_issue_count={_string_or_empty(summary.get('validation_issue_count'))}; "
+        f"overclaim_guard_pass_count={_string_or_empty(summary.get('overclaim_guard_pass_count'))}; "
+        f"overclaim_guard_total_count={_string_or_empty(summary.get('overclaim_guard_total_count'))}; "
+        f"active_replay_input={_string_or_empty(summary.get('active_replay_input'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"validator_implemented={_string_or_empty(summary.get('validator_implemented'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"no_live_trading={_string_or_empty(summary.get('no_live_trading'))}; "
+        f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
+        f"no_order_placement={_string_or_empty(summary.get('no_order_placement'))}; "
+        f"no_message_sent={_string_or_empty(summary.get('no_message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
         f"report_path={_note_safe_text(summary.get('report_path'))}"
     )
 
@@ -16283,6 +16725,14 @@ def _reviewer_material_evidence_fill_guidance_stage_from_frame(dashboard_frame: 
 def _replay_substrate_schema_fixture_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _input_gate_validator_fixture_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "INPUT_GATE_VALIDATOR_FIXTURE_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

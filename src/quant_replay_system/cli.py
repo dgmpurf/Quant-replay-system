@@ -9536,6 +9536,91 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     )
     print(f"replay_substrate_schema_fixture_report_path: {result.replay_substrate_schema_fixture_report_path}")
     print(f"replay_substrate_schema_fixture_next_action: {result.replay_substrate_schema_fixture_next_action}")
+    print(
+        "latest_input_gate_validator_fixture_run_id: "
+        f"{result.latest_input_gate_validator_fixture_run_id}"
+    )
+    print(f"input_gate_validator_fixture_status: {result.input_gate_validator_fixture_status}")
+    print(f"input_gate_validator_fixture_stage: {result.input_gate_validator_fixture_stage}")
+    print(
+        "input_gate_validator_fixture_health_status: "
+        f"{result.input_gate_validator_fixture_health_status}"
+    )
+    print(f"input_gate_validator_fixture_case_count: {result.input_gate_validator_fixture_case_count}")
+    print(
+        "input_gate_validator_fixture_blocked_case_count: "
+        f"{result.input_gate_validator_fixture_blocked_case_count}"
+    )
+    print(
+        "input_gate_validator_fixture_pass_candidate_case_count: "
+        f"{result.input_gate_validator_fixture_pass_candidate_case_count}"
+    )
+    print(
+        "input_gate_validator_fixture_active_ready_case_count: "
+        f"{result.input_gate_validator_fixture_active_ready_case_count}"
+    )
+    print(
+        "input_gate_validator_fixture_validation_issue_count: "
+        f"{result.input_gate_validator_fixture_validation_issue_count}"
+    )
+    print(
+        "input_gate_validator_fixture_overclaim_guard_pass_count: "
+        f"{result.input_gate_validator_fixture_overclaim_guard_pass_count}"
+    )
+    print(
+        "input_gate_validator_fixture_overclaim_guard_total_count: "
+        f"{result.input_gate_validator_fixture_overclaim_guard_total_count}"
+    )
+    print(
+        "input_gate_validator_fixture_active_replay_input: "
+        f"{result.input_gate_validator_fixture_active_replay_input}"
+    )
+    print(
+        "input_gate_validator_fixture_forward_labels_exist: "
+        f"{result.input_gate_validator_fixture_forward_labels_exist}"
+    )
+    print(
+        "input_gate_validator_fixture_weights_trained: "
+        f"{result.input_gate_validator_fixture_weights_trained}"
+    )
+    print(
+        "input_gate_validator_fixture_active_stock_profile_exists: "
+        f"{result.input_gate_validator_fixture_active_stock_profile_exists}"
+    )
+    print(
+        "input_gate_validator_fixture_real_buy_review_eligible: "
+        f"{result.input_gate_validator_fixture_real_buy_review_eligible}"
+    )
+    print(
+        "input_gate_validator_fixture_validator_implemented: "
+        f"{result.input_gate_validator_fixture_validator_implemented}"
+    )
+    print(f"input_gate_validator_fixture_report_only: {result.input_gate_validator_fixture_report_only}")
+    print(f"input_gate_validator_fixture_diagnostic_only: {result.input_gate_validator_fixture_diagnostic_only}")
+    print(f"input_gate_validator_fixture_no_live_trading: {result.input_gate_validator_fixture_no_live_trading}")
+    print(f"input_gate_validator_fixture_no_broker_api: {result.input_gate_validator_fixture_no_broker_api}")
+    print(
+        "input_gate_validator_fixture_no_order_placement: "
+        f"{result.input_gate_validator_fixture_no_order_placement}"
+    )
+    print(f"input_gate_validator_fixture_no_message_sent: {result.input_gate_validator_fixture_no_message_sent}")
+    print(f"input_gate_validator_fixture_llm_api_called: {result.input_gate_validator_fixture_llm_api_called}")
+    print(
+        "input_gate_validator_fixture_external_api_called: "
+        f"{result.input_gate_validator_fixture_external_api_called}"
+    )
+    print(f"input_gate_validator_fixture_cache_mutated: {result.input_gate_validator_fixture_cache_mutated}")
+    print(
+        "input_gate_validator_fixture_current_candidates_run: "
+        f"{result.input_gate_validator_fixture_current_candidates_run}"
+    )
+    print(f"input_gate_validator_fixture_snapshot_built: {result.input_gate_validator_fixture_snapshot_built}")
+    print(
+        "input_gate_validator_fixture_signal_semantics_changed: "
+        f"{result.input_gate_validator_fixture_signal_semantics_changed}"
+    )
+    print(f"input_gate_validator_fixture_report_path: {result.input_gate_validator_fixture_report_path}")
+    print(f"input_gate_validator_fixture_next_action: {result.input_gate_validator_fixture_next_action}")
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

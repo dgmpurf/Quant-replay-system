@@ -33,6 +33,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a single-symbol advisory review been produced for the latest requested symbol?
 - Has a question-style single-symbol answer been rendered for the latest requested symbol?
 - Has a local conversational advisory question been parsed and routed safely?
+- Has a report-only historical replay input gate validator fixture produced validator contract context without becoming real replay input?
 - Has the current-to-paper handoff run?
 - Has the paper review template been created and checked?
 - Have reviewed decisions, daily paper reports, and reconciliation artifacts been produced?
@@ -66,6 +67,8 @@ outputs/reports/pit_evidence_policy_profile_comparison/status/
 outputs/reports/pit_official_status_evidence_packet/status/
 outputs/reports/pit_official_status_evidence_packet_enrichment/status/
 outputs/reports/reviewer_no_hit_source_coverage_acceptance/status/
+outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1/status/
+outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -335,6 +338,16 @@ The unified summary records the latest preview id, status/stage, health status, 
 When the status reports `ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_CONTEXT_ONLY` or `ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_BLOCKED`, the target row remains non-approved and blocked by strict PIT evidence gates. This is expected review context and does not imply PIT approval, clean review update readiness, export-readiness, staging, current-candidates generation, snapshot build, forward labels, or trading readiness.
 
 One-row checklist-pass candidate previews are report-only. Health fails if preview artifacts contain `APPROVED_FOR_PIT_UNIVERSE`, `include_flag=true`, `valid_for_signal_date=true`, `survivorship_bias_resolved=true`, clean `review_updates.csv`, approval-applied flags, data writes, PIT review/export/staging/current-candidates outputs, snapshots, or forward labels. Later paper workflow artifacts keep final workflow priority while preview fields remain visible for audit.
+
+## Historical Replay Input Gate Validator Fixture Status
+
+`research-status` includes `historical-replay-input-gate-validator-fixture-status` as report-only validator contract context when those artifacts exist.
+
+The unified summary records the latest fixture run id, fixture status/stage, health status, case count, blocked case count, pass-candidate case count, active-ready case count, validation issue count, overclaim guard counts, report path, and the fixture layer's next action. It also exports safety flags proving `active_replay_input=false`, `forward_labels_exist=false`, `weights_trained=false`, `active_stock_profile_exists=false`, `real_buy_review_eligible=false`, `validator_implemented=false`, `report_only=true`, `diagnostic_only=true`, no live trading, no broker API, no order placement, no messages, no LLM/API calls, no external API calls, no cache mutation, no current-candidates generation, no snapshot build, and no signal semantics change.
+
+When the status reports `INPUT_GATE_VALIDATOR_FIXTURE_READY`, the dashboard treats it as fixture context only. It is not the real validator, not real replay, and not active replay input. It must not be interpreted as `ACTIVE_REPLAY_INPUT_READY`, `REAL_REPLAY_READY`, `FORWARD_LABEL_READY`, `TRAINING_READY`, `STOCK_PROFILE_READY`, or `REAL_BUY_REVIEW_READY`.
+
+Historical replay input gate validator fixture context is lower priority than later paper workflow, current advisory workflow, and the v1.27 replay substrate schema fixture. If those later or broader artifacts exist, the final `workflow_stage` does not regress to the input-gate fixture; fixture fields remain visible for audit. If fixture health fails, `research-status` surfaces the failure as an artifact repair blocker when this fixture layer is active.
 
 ## Universe Profile Policy Audit Status
 

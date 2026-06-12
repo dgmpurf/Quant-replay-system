@@ -321,3 +321,34 @@ def test_fixture_view_clis_run(tmp_path: Path) -> None:
         )
         assert "No replay, current-candidates" in completed.stdout
         assert "real validator" in completed.stdout
+
+
+def test_v1_28_checkpoint_and_source_update_notes_document_report_only_scope() -> None:
+    checkpoint = Path("docs/release_checkpoint_v1.28.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_28_0.md")
+
+    assert checkpoint.exists()
+    assert source_note.exists()
+
+    checkpoint_text = checkpoint.read_text(encoding="utf-8")
+    source_note_text = source_note.read_text(encoding="utf-8")
+    for text in [checkpoint_text, source_note_text]:
+        assert "historical replay input gate validator fixture" in text.lower()
+        assert "report-only" in text.lower()
+        assert "not the real validator" in text.lower()
+        assert "not real replay" in text.lower()
+        assert "active_replay_input: false" in text
+        assert "forward_labels_exist: false" in text
+        assert "weights_trained: false" in text
+        assert "active_stock_profile_exists: false" in text
+        assert "real_buy_review_eligible: false" in text
+        assert "validator_implemented: false" in text
+        assert "no live trading" in text.lower()
+        assert "no broker" in text.lower()
+        assert "no order" in text.lower()
+        assert "no current-candidates" in text.lower()
+        assert "no snapshot" in text.lower()
+        assert "no cache mutation" in text.lower()
+
+    assert "docs/release_checkpoint_v1.28.0.md" in source_note_text
+    assert "SOURCE_UPDATE_NOTES_v1_28_0.md" in source_note_text
