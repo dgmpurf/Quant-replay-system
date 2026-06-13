@@ -282,6 +282,10 @@ from quant_replay_system.active_replay_input_active_ready import (
     ActiveReplayInputActiveReadySettings,
     run_active_replay_input_active_ready,
 )
+from quant_replay_system.active_replay_input_final_review import (
+    ActiveReplayInputFinalReviewSettings,
+    run_active_replay_input_final_review,
+)
 from quant_replay_system.active_replay_input_active_ready_health import (
     check_active_replay_input_active_ready_health,
 )
@@ -2403,6 +2407,72 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only active-ready governance artifacts will be written",
     )
     active_replay_input_active_ready.set_defaults(handler=_handle_active_replay_input_active_ready)
+
+    active_replay_input_final_review = subparsers.add_parser(
+        "active-replay-input-final-review",
+        help="Review active replay input final-review evidence as report-only diagnostic context",
+    )
+    active_replay_input_final_review.add_argument(
+        "--active-ready-artifact",
+        default=None,
+        help="Optional active-ready artifact folder or active_ready_metadata.json",
+    )
+    active_replay_input_final_review.add_argument(
+        "--active-ready-health-artifact",
+        default=None,
+        help="Optional active-ready health artifact JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--active-ready-status-artifact",
+        default=None,
+        help="Optional active-ready status artifact JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--final-review-package-manifest",
+        default=None,
+        help="Optional local final-review package manifest JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--final-review-authority-manifest",
+        default=None,
+        help="Optional local final-review authority manifest JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--final-review-attestation-manifest",
+        default=None,
+        help="Optional local final-review attestation manifest JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--pit-source-evidence-attachment-bundle",
+        default=None,
+        help="Optional local PIT/source/evidence attachment bundle JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--taxonomy-attachment-bundle",
+        default=None,
+        help="Optional local taxonomy attachment bundle JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--leakage-side-effect-evidence-bundle",
+        default=None,
+        help="Optional local leakage/side-effect evidence bundle JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--overclaim-evidence-bundle",
+        default=None,
+        help="Optional local overclaim evidence bundle JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--emission-request-manifest",
+        default=None,
+        help="Optional local emission request manifest JSON",
+    )
+    active_replay_input_final_review.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_final_review_v0_1",
+        help="Directory where report-only final-review artifacts will be written",
+    )
+    active_replay_input_final_review.set_defaults(handler=_handle_active_replay_input_final_review)
 
     active_replay_input_active_ready_index = subparsers.add_parser(
         "active-replay-input-active-ready-index",
@@ -6785,6 +6855,80 @@ def _handle_active_replay_input_active_ready(args: argparse.Namespace) -> int:
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print(
         "No active-ready emission, active replay input, replay, current-candidates, snapshots, "
+        "forward labels, training, active stock profiles, real buy-review eligibility, live trading, broker API, "
+        "order placement, message delivery, LLM/API, external API, data/raw write, data/processed write, "
+        "data/cache write, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_final_review(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_final_review(
+        ActiveReplayInputFinalReviewSettings(
+            active_ready_artifact=Path(args.active_ready_artifact) if args.active_ready_artifact else None,
+            active_ready_health_artifact=Path(args.active_ready_health_artifact)
+            if args.active_ready_health_artifact
+            else None,
+            active_ready_status_artifact=Path(args.active_ready_status_artifact)
+            if args.active_ready_status_artifact
+            else None,
+            final_review_package_manifest=Path(args.final_review_package_manifest)
+            if args.final_review_package_manifest
+            else None,
+            final_review_authority_manifest=Path(args.final_review_authority_manifest)
+            if args.final_review_authority_manifest
+            else None,
+            final_review_attestation_manifest=Path(args.final_review_attestation_manifest)
+            if args.final_review_attestation_manifest
+            else None,
+            pit_source_evidence_attachment_bundle=Path(args.pit_source_evidence_attachment_bundle)
+            if args.pit_source_evidence_attachment_bundle
+            else None,
+            taxonomy_attachment_bundle=Path(args.taxonomy_attachment_bundle)
+            if args.taxonomy_attachment_bundle
+            else None,
+            leakage_side_effect_evidence_bundle=Path(args.leakage_side_effect_evidence_bundle)
+            if args.leakage_side_effect_evidence_bundle
+            else None,
+            overclaim_evidence_bundle=Path(args.overclaim_evidence_bundle)
+            if args.overclaim_evidence_bundle
+            else None,
+            emission_request_manifest=Path(args.emission_request_manifest)
+            if args.emission_request_manifest
+            else None,
+            output_dir=Path(args.output_dir),
+        )
+    )
+    print(f"final_review_run_id: {result.final_review_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_emission_review: {result.ready_for_emission_review}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_ready_emitted: {result.active_ready_emitted}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"package_gate_count: {result.package_gate_count}")
+    print(f"blocked_package_gate_count: {result.blocked_package_gate_count}")
+    print(f"lineage_gate_count: {result.lineage_gate_count}")
+    print(f"blocked_lineage_gate_count: {result.blocked_lineage_gate_count}")
+    print(f"authority_gate_count: {result.authority_gate_count}")
+    print(f"blocked_authority_gate_count: {result.blocked_authority_gate_count}")
+    print(f"attestation_gate_count: {result.attestation_gate_count}")
+    print(f"blocked_attestation_gate_count: {result.blocked_attestation_gate_count}")
+    print(f"pit_source_evidence_gate_count: {result.pit_source_evidence_gate_count}")
+    print(f"blocked_pit_source_evidence_gate_count: {result.blocked_pit_source_evidence_gate_count}")
+    print(f"taxonomy_gate_count: {result.taxonomy_gate_count}")
+    print(f"blocked_taxonomy_gate_count: {result.blocked_taxonomy_gate_count}")
+    print(f"leakage_side_effect_gate_count: {result.leakage_side_effect_gate_count}")
+    print(f"blocked_leakage_side_effect_gate_count: {result.blocked_leakage_side_effect_gate_count}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"report_path: {result.artifact_paths['final_review_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No forbidden active-input-ready emission, active replay input, replay, current-candidates, snapshots, "
         "forward labels, training, active stock profiles, real buy-review eligibility, live trading, broker API, "
         "order placement, message delivery, LLM/API, external API, data/raw write, data/processed write, "
         "data/cache write, or cache mutation was invoked."
