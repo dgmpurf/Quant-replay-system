@@ -14,6 +14,18 @@ from quant_replay_system.active_replay_input_emission import (
     ActiveReplayInputEmissionSettings,
     run_active_replay_input_emission,
 )
+from quant_replay_system.active_replay_input_emission_health import (
+    check_active_replay_input_emission_health,
+)
+from quant_replay_system.active_replay_input_emission_index import (
+    build_active_replay_input_emission_index,
+)
+from quant_replay_system.active_replay_input_emission_status import (
+    EMISSION_BLOCKED,
+    EMISSION_HEALTH_FAILED,
+    EMISSION_NO_INPUT,
+    run_active_replay_input_emission_status,
+)
 
 
 def test_no_input_produces_no_emission_input_and_writes_required_artifacts(tmp_path: Path) -> None:
@@ -273,7 +285,7 @@ def test_cli_active_replay_input_emission_runs_without_active_ready_claim(tmp_pa
     assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
 
 
-def test_no_index_health_status_research_status_checkpoint_or_project_source_added(tmp_path: Path) -> None:
+def test_no_research_status_checkpoint_or_project_source_added(tmp_path: Path) -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -283,9 +295,9 @@ def test_no_index_health_status_research_status_checkpoint_or_project_source_add
     ).stdout
 
     assert "active-replay-input-emission" in help_text
-    assert "active-replay-input-emission-index" not in help_text
-    assert "active-replay-input-emission-health" not in help_text
-    assert "active-replay-input-emission-status" not in help_text
+    assert "active-replay-input-emission-index" in help_text
+    assert "active-replay-input-emission-health" in help_text
+    assert "active-replay-input-emission-status" in help_text
 
     completed = subprocess.run(
         [
@@ -303,6 +315,209 @@ def test_no_index_health_status_research_status_checkpoint_or_project_source_add
         text=True,
         env={**os.environ, "PYTHONPATH": "src"},
     )
+    assert "active_replay_input_emission" not in completed.stdout
+    assert not Path("docs/project_sources").exists()
+    assert not Path("docs/release_checkpoint_v1.35.0.md").exists()
+
+
+def test_index_discovers_no_input_and_review_ready_artifacts(tmp_path: Path) -> None:
+    root = _emission_output_dir(tmp_path)
+    no_input = run_active_replay_input_emission(ActiveReplayInputEmissionSettings(output_dir=root))
+    ready = run_active_replay_input_emission(_happy_settings(tmp_path))
+
+    result = build_active_replay_input_emission_index(root=root, output_dir=root / "index")
+
+    assert result.artifact_count == 2
+    assert set(result.index_frame["emission_run_id"]) == {no_input.emission_run_id, ready.emission_run_id}
+    ready_row = result.index_frame[result.index_frame["emission_run_id"] == ready.emission_run_id].iloc[0]
+    assert ready_row["status"] == EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW
+    assert ready_row["ready_for_active_replay_input_ready_review"] is True
+    assert ready_row["active_replay_input_ready"] is False
+    assert ready_row["active_replay_input"] is False
+    assert ready_row["active_ready_emitted"] is False
+    assert ready_row["replay_execution_allowed"] is False
+    assert ready_row["forward_labels_allowed"] is False
+    assert ready_row["training_allowed"] is False
+    assert ready_row["stock_profile_allowed"] is False
+    assert ready_row["buy_review_allowed"] is False
+    assert ready_row["trading_allowed"] is False
+    assert ready_row["forward_labels_exist"] is False
+    assert ready_row["weights_trained"] is False
+    assert ready_row["active_stock_profile_exists"] is False
+    assert ready_row["real_buy_review_eligible"] is False
+    assert ready_row["report_only"] is True
+    assert ready_row["diagnostic_only"] is True
+    assert ready_row["precondition_gate_count"] == ready.precondition_count
+    assert ready_row["overclaim_guard_pass_count"] == ready_row["overclaim_guard_total_count"]
+    assert result.artifact_paths["index_csv"].exists()
+
+
+def test_health_passes_for_valid_no_input_and_review_ready_artifacts(tmp_path: Path) -> None:
+    root = _emission_output_dir(tmp_path)
+    run_active_replay_input_emission(ActiveReplayInputEmissionSettings(output_dir=root))
+    no_input_health = check_active_replay_input_emission_health(root=root, output_dir=root / "health_no_input")
+    assert no_input_health.status == "PASS"
+    assert no_input_health.error_count == 0
+
+    run_active_replay_input_emission(_happy_settings(tmp_path))
+    ready_health = check_active_replay_input_emission_health(root=root, output_dir=root / "health_ready")
+    assert ready_health.status == "PASS"
+    assert ready_health.error_count == 0
+
+
+@pytest.mark.parametrize(
+    ("metadata_field", "metadata_value", "issue_code"),
+    [
+        ("status", "ACTIVE_REPLAY_INPUT_READY", "ACTIVE_REPLAY_INPUT_READY_UNEXPECTED"),
+        ("ready_for_active_replay_input_ready_review", True, "READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW_INCONSISTENT"),
+        ("active_replay_input_ready", True, "ACTIVE_REPLAY_INPUT_READY_FLAG_UNEXPECTED"),
+        ("active_replay_input", True, "ACTIVE_REPLAY_INPUT_UNEXPECTED"),
+        ("active_ready_emitted", True, "ACTIVE_READY_EMITTED_UNEXPECTED"),
+        ("replay_execution_allowed", True, "REPLAY_EXECUTION_ALLOWED_UNEXPECTED"),
+        ("forward_labels_allowed", True, "FORWARD_LABELS_ALLOWED_UNEXPECTED"),
+        ("training_allowed", True, "TRAINING_ALLOWED_UNEXPECTED"),
+        ("stock_profile_allowed", True, "STOCK_PROFILE_ALLOWED_UNEXPECTED"),
+        ("buy_review_allowed", True, "BUY_REVIEW_ALLOWED_UNEXPECTED"),
+        ("trading_allowed", True, "TRADING_ALLOWED_UNEXPECTED"),
+        ("forward_labels_exist", True, "FORWARD_LABELS_EXIST_UNEXPECTED"),
+        ("weights_trained", True, "WEIGHTS_TRAINED_UNEXPECTED"),
+        ("active_stock_profile_exists", True, "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED"),
+        ("real_buy_review_eligible", True, "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED"),
+        ("approval_applied", True, "APPROVAL_APPLIED_UNEXPECTED"),
+        ("order_placed", True, "ORDER_PLACED_UNEXPECTED"),
+        ("message_sent", True, "MESSAGE_SENT_UNEXPECTED"),
+        ("llm_api_called", True, "LLM_API_CALLED_UNEXPECTED"),
+        ("external_api_called", True, "EXTERNAL_API_CALLED_UNEXPECTED"),
+        ("cache_mutated", True, "CACHE_MUTATED_UNEXPECTED"),
+        ("data_raw_written", True, "DATA_RAW_WRITTEN_UNEXPECTED"),
+        ("data_processed_written", True, "DATA_PROCESSED_WRITTEN_UNEXPECTED"),
+        ("data_cache_written", True, "DATA_CACHE_WRITTEN_UNEXPECTED"),
+        ("current_candidates_run", True, "CURRENT_CANDIDATES_RUN_UNEXPECTED"),
+        ("snapshot_built", True, "SNAPSHOT_BUILT_UNEXPECTED"),
+        ("signal_semantics_changed", True, "SIGNAL_SEMANTICS_CHANGED_UNEXPECTED"),
+        ("report_only", False, "UNSAFE_REPORT_ONLY_FLAGS"),
+        ("no_live_trading", False, "UNSAFE_TRADING_FLAGS"),
+    ],
+)
+def test_health_fails_for_unsafe_emission_metadata(
+    tmp_path: Path, metadata_field: str, metadata_value: object, issue_code: str
+) -> None:
+    root = _emission_output_dir(tmp_path)
+    ready = run_active_replay_input_emission(_happy_settings(tmp_path))
+    updates = {metadata_field: metadata_value}
+    if metadata_field == "ready_for_active_replay_input_ready_review":
+        updates["status"] = "EMISSION_REVIEW_BLOCKED"
+    _mutate_json(ready.artifact_paths["metadata"], updates)
+
+    result = check_active_replay_input_emission_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    assert issue_code in set(result.health_frame["issue_code"])
+
+
+def test_health_fails_when_overclaim_guards_fail(tmp_path: Path) -> None:
+    root = _emission_output_dir(tmp_path)
+    ready = run_active_replay_input_emission(_happy_settings(tmp_path))
+    _mutate_json(ready.artifact_paths["metadata"], {"overclaim_guard_pass_count": 1})
+
+    result = check_active_replay_input_emission_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    assert "OVERCLAIM_GUARD_FAILED" in set(result.health_frame["issue_code"])
+
+
+def test_status_reports_review_ready_without_active_ready_claim(tmp_path: Path) -> None:
+    root = _emission_output_dir(tmp_path)
+    ready = run_active_replay_input_emission(_happy_settings(tmp_path))
+
+    result = run_active_replay_input_emission_status(root=root, output_dir=root / "status")
+
+    assert result.latest_emission_run_id == ready.emission_run_id
+    assert result.status == EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW
+    assert result.health_status == "PASS"
+    assert result.workflow_stage == EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW
+    assert result.ready_for_active_replay_input_ready_review is True
+    assert result.active_replay_input_ready is False
+    assert result.active_replay_input is False
+    assert result.active_ready_emitted is False
+    assert "report-only" in result.safety_statement
+    assert "not ACTIVE_REPLAY_INPUT_READY" in result.safety_statement
+    assert "does not emit ACTIVE_REPLAY_INPUT_READY" in result.safety_statement
+    assert "does not create active replay input" in result.safety_statement
+    assert "does not run replay" in result.safety_statement
+    assert "does not compute forward labels" in result.safety_statement
+    assert "does not train weights" in result.safety_statement
+    assert "does not create active stock profiles" in result.safety_statement
+    assert "does not create real buy-review eligibility" in result.safety_statement
+    assert "does not authorize trading" in result.safety_statement
+
+
+def test_status_reports_no_input_blocked_and_health_failed_stages(tmp_path: Path) -> None:
+    root = _emission_output_dir(tmp_path)
+    no_input = run_active_replay_input_emission(ActiveReplayInputEmissionSettings(output_dir=root))
+    no_input_status = run_active_replay_input_emission_status(root=root, output_dir=root / "status_no_input")
+    assert no_input_status.latest_emission_run_id == no_input.emission_run_id
+    assert no_input_status.workflow_stage == EMISSION_NO_INPUT
+
+    blocked_settings = _replace_setting(_happy_settings(tmp_path), "emission_authority_manifest_path", None)
+    blocked = run_active_replay_input_emission(blocked_settings)
+    blocked_status = run_active_replay_input_emission_status(root=root, output_dir=root / "status_blocked")
+    assert blocked_status.latest_emission_run_id == blocked.emission_run_id
+    assert blocked_status.workflow_stage == EMISSION_BLOCKED
+
+    _mutate_json(blocked.artifact_paths["metadata"], {"active_replay_input": True})
+    failed_status = run_active_replay_input_emission_status(root=root, output_dir=root / "status_failed")
+    assert failed_status.workflow_stage == EMISSION_HEALTH_FAILED
+    assert failed_status.health_status == "FAIL"
+
+
+def test_artifact_view_cli_commands_remain_report_only(tmp_path: Path) -> None:
+    root = _emission_output_dir(tmp_path)
+    ready = run_active_replay_input_emission(_happy_settings(tmp_path))
+
+    commands = [
+        ("active-replay-input-emission-index", "artifact_count: 1"),
+        ("active-replay-input-emission-health", "status: PASS"),
+        ("active-replay-input-emission-status", f"workflow_stage: {EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW}"),
+    ]
+    for command, expected_text in commands:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(root),
+                "--output-dir",
+                str(root / command.rsplit("-", 1)[-1]),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env={**os.environ, "PYTHONPATH": "src"},
+        )
+        assert expected_text in completed.stdout
+        assert "No active input ready emission" in completed.stdout
+        assert "status: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quant_replay_system.cli",
+            "research-status",
+            "--root",
+            str(tmp_path / "outputs" / "reports"),
+            "--output-dir",
+            str(tmp_path / "dashboard"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert ready.emission_run_id not in completed.stdout
     assert "active_replay_input_emission" not in completed.stdout
     assert not Path("docs/project_sources").exists()
     assert not Path("docs/release_checkpoint_v1.35.0.md").exists()
@@ -618,3 +833,9 @@ def _write_json(path: Path, payload: dict[str, object]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def _mutate_json(path: Path, updates: dict[str, object]) -> None:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload.update(updates)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
