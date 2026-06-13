@@ -286,6 +286,10 @@ from quant_replay_system.active_replay_input_final_review import (
     ActiveReplayInputFinalReviewSettings,
     run_active_replay_input_final_review,
 )
+from quant_replay_system.active_replay_input_emission import (
+    ActiveReplayInputEmissionSettings,
+    run_active_replay_input_emission,
+)
 from quant_replay_system.active_replay_input_final_review_health import (
     check_active_replay_input_final_review_health,
 )
@@ -2482,6 +2486,67 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only final-review artifacts will be written",
     )
     active_replay_input_final_review.set_defaults(handler=_handle_active_replay_input_final_review)
+
+    active_replay_input_emission = subparsers.add_parser(
+        "active-replay-input-emission",
+        help="Review active replay input emission preconditions as report-only diagnostic context",
+    )
+    active_replay_input_emission.add_argument(
+        "--final-review-artifact-path",
+        default=None,
+        help="Optional final-review artifact folder or final_review_metadata.json",
+    )
+    active_replay_input_emission.add_argument(
+        "--final-review-health-artifact-path",
+        default=None,
+        help="Optional final-review health artifact JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--final-review-status-artifact-path",
+        default=None,
+        help="Optional final-review status artifact JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--emission-request-manifest-path",
+        default=None,
+        help="Optional local emission request manifest JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--emission-authority-manifest-path",
+        default=None,
+        help="Optional local emission authority manifest JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--emission-attestation-manifest-path",
+        default=None,
+        help="Optional local emission attestation manifest JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--pit-source-evidence-bundle-path",
+        default=None,
+        help="Optional local PIT/source/evidence bundle JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--taxonomy-evidence-bundle-path",
+        default=None,
+        help="Optional local taxonomy evidence bundle JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--leakage-side-effect-evidence-bundle-path",
+        default=None,
+        help="Optional local leakage/side-effect evidence bundle JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--overclaim-evidence-bundle-path",
+        default=None,
+        help="Optional local overclaim evidence bundle JSON",
+    )
+    active_replay_input_emission.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_emission_v0_1",
+        help="Directory where report-only emission artifacts will be written",
+    )
+    active_replay_input_emission.set_defaults(handler=_handle_active_replay_input_emission)
 
     active_replay_input_final_review_index = subparsers.add_parser(
         "active-replay-input-final-review-index",
@@ -6986,6 +7051,67 @@ def _handle_active_replay_input_final_review(args: argparse.Namespace) -> int:
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print(
         "No forbidden active-input-ready emission, active replay input, replay, current-candidates, snapshots, "
+        "forward labels, training, active stock profiles, real buy-review eligibility, live trading, broker API, "
+        "order placement, message delivery, LLM/API, external API, data/raw write, data/processed write, "
+        "data/cache write, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_emission(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_emission(
+        ActiveReplayInputEmissionSettings(
+            final_review_artifact_path=Path(args.final_review_artifact_path)
+            if args.final_review_artifact_path
+            else None,
+            final_review_health_artifact_path=Path(args.final_review_health_artifact_path)
+            if args.final_review_health_artifact_path
+            else None,
+            final_review_status_artifact_path=Path(args.final_review_status_artifact_path)
+            if args.final_review_status_artifact_path
+            else None,
+            emission_request_manifest_path=Path(args.emission_request_manifest_path)
+            if args.emission_request_manifest_path
+            else None,
+            emission_authority_manifest_path=Path(args.emission_authority_manifest_path)
+            if args.emission_authority_manifest_path
+            else None,
+            emission_attestation_manifest_path=Path(args.emission_attestation_manifest_path)
+            if args.emission_attestation_manifest_path
+            else None,
+            pit_source_evidence_bundle_path=Path(args.pit_source_evidence_bundle_path)
+            if args.pit_source_evidence_bundle_path
+            else None,
+            taxonomy_evidence_bundle_path=Path(args.taxonomy_evidence_bundle_path)
+            if args.taxonomy_evidence_bundle_path
+            else None,
+            leakage_side_effect_evidence_bundle_path=Path(args.leakage_side_effect_evidence_bundle_path)
+            if args.leakage_side_effect_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            output_dir=Path(args.output_dir),
+        )
+    )
+    print(f"emission_run_id: {result.emission_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_active_replay_input_ready_review: {result.ready_for_active_replay_input_ready_review}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_ready_emitted: {result.active_ready_emitted}")
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(f"report_path: {result.artifact_paths['emission_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No active input ready emission, active replay input, replay, current-candidates, snapshots, "
         "forward labels, training, active stock profiles, real buy-review eligibility, live trading, broker API, "
         "order placement, message delivery, LLM/API, external API, data/raw write, data/processed write, "
         "data/cache write, or cache mutation was invoked."
