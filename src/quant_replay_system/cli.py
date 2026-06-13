@@ -286,6 +286,15 @@ from quant_replay_system.active_replay_input_final_review import (
     ActiveReplayInputFinalReviewSettings,
     run_active_replay_input_final_review,
 )
+from quant_replay_system.active_replay_input_final_review_health import (
+    check_active_replay_input_final_review_health,
+)
+from quant_replay_system.active_replay_input_final_review_index import (
+    build_active_replay_input_final_review_index,
+)
+from quant_replay_system.active_replay_input_final_review_status import (
+    run_active_replay_input_final_review_status,
+)
 from quant_replay_system.active_replay_input_active_ready_health import (
     check_active_replay_input_active_ready_health,
 )
@@ -2473,6 +2482,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only final-review artifacts will be written",
     )
     active_replay_input_final_review.set_defaults(handler=_handle_active_replay_input_final_review)
+
+    active_replay_input_final_review_index = subparsers.add_parser(
+        "active-replay-input-final-review-index",
+        help="Index report-only active replay input final-review artifacts",
+    )
+    active_replay_input_final_review_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_final_review_v0_1",
+        help="Final-review artifact root to index",
+    )
+    active_replay_input_final_review_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_final_review_v0_1/index",
+        help="Directory where final-review index artifacts will be written",
+    )
+    active_replay_input_final_review_index.set_defaults(handler=_handle_active_replay_input_final_review_index)
+
+    active_replay_input_final_review_health = subparsers.add_parser(
+        "active-replay-input-final-review-health",
+        help="Check report-only active replay input final-review artifact health",
+    )
+    active_replay_input_final_review_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_final_review_v0_1",
+        help="Final-review artifact root to check",
+    )
+    active_replay_input_final_review_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_final_review_v0_1/health",
+        help="Directory where final-review health artifacts will be written",
+    )
+    active_replay_input_final_review_health.set_defaults(handler=_handle_active_replay_input_final_review_health)
+
+    active_replay_input_final_review_status = subparsers.add_parser(
+        "active-replay-input-final-review-status",
+        help="Summarize latest report-only active replay input final-review status",
+    )
+    active_replay_input_final_review_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_final_review_v0_1",
+        help="Final-review artifact root to summarize",
+    )
+    active_replay_input_final_review_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_final_review_v0_1/status",
+        help="Directory where final-review status artifacts will be written",
+    )
+    active_replay_input_final_review_status.set_defaults(handler=_handle_active_replay_input_final_review_status)
 
     active_replay_input_active_ready_index = subparsers.add_parser(
         "active-replay-input-active-ready-index",
@@ -6934,6 +6991,60 @@ def _handle_active_replay_input_final_review(args: argparse.Namespace) -> int:
         "data/cache write, or cache mutation was invoked."
     )
     return 0
+
+
+def _handle_active_replay_input_final_review_index(args: argparse.Namespace) -> int:
+    result = build_active_replay_input_final_review_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "No active replay input, ACTIVE_REPLAY_INPUT_READY emission, replay, current-candidates, "
+        "snapshots, forward labels, training, active stock profiles, research-status integration, "
+        "data writes, API calls, messages, broker integration, orders, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_final_review_health(args: argparse.Namespace) -> int:
+    result = check_active_replay_input_final_review_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "No active replay input, ACTIVE_REPLAY_INPUT_READY emission, replay, current-candidates, "
+        "snapshots, forward labels, training, active stock profiles, research-status integration, "
+        "data writes, API calls, messages, broker integration, orders, or cache mutation was invoked."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_active_replay_input_final_review_status(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_final_review_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"latest_final_review_run_id: {result.latest_final_review_run_id}")
+    print(f"ready_for_emission_review: {result.ready_for_emission_review}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_ready_emitted: {result.active_ready_emitted}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
+    print(
+        "No active replay input, replay, current-candidates, snapshots, forward labels, training, "
+        "active stock profiles, research-status integration, data writes, API calls, messages, "
+        "broker integration, orders, or cache mutation was invoked."
+    )
+    return 1 if result.health_status == "FAIL" else 0
 
 
 def _handle_active_replay_input_active_ready_index(args: argparse.Namespace) -> int:

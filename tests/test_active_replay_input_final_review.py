@@ -14,6 +14,17 @@ from quant_replay_system.active_replay_input_final_review import (
     ActiveReplayInputFinalReviewSettings,
     run_active_replay_input_final_review,
 )
+from quant_replay_system.active_replay_input_final_review_health import (
+    check_active_replay_input_final_review_health,
+)
+from quant_replay_system.active_replay_input_final_review_index import (
+    build_active_replay_input_final_review_index,
+)
+from quant_replay_system.active_replay_input_final_review_status import (
+    FINAL_REVIEW_BLOCKED,
+    FINAL_REVIEW_NO_PACKAGE,
+    run_active_replay_input_final_review_status,
+)
 
 
 def test_no_input_returns_no_final_review_package_and_writes_required_artifacts(tmp_path: Path) -> None:
@@ -243,10 +254,185 @@ def test_cli_command_runs_without_active_replay_input_ready_claim(tmp_path: Path
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "active-replay-input-final-review" in help_text
-    assert "active-replay-input-final-review-index" not in help_text
-    assert "active-replay-input-final-review-health" not in help_text
-    assert "active-replay-input-final-review-status" not in help_text
+    assert "active-replay-input-final-review-index" in help_text
+    assert "active-replay-input-final-review-health" in help_text
+    assert "active-replay-input-final-review-status" in help_text
     assert not Path("docs/project_sources").exists()
+
+
+def test_final_review_index_discovers_no_input_and_ready_artifacts(tmp_path: Path) -> None:
+    no_input = run_active_replay_input_final_review(
+        ActiveReplayInputFinalReviewSettings(output_dir=_final_review_output_dir(tmp_path))
+    )
+    ready = run_active_replay_input_final_review(_happy_settings(tmp_path))
+
+    result = build_active_replay_input_final_review_index(
+        root=_final_review_output_dir(tmp_path),
+        output_dir=_final_review_output_dir(tmp_path) / "index",
+    )
+
+    assert result.artifact_count == 2
+    rows = result.index_frame.set_index("final_review_run_id")
+    assert no_input.final_review_run_id in rows.index
+    assert ready.final_review_run_id in rows.index
+    assert rows.loc[no_input.final_review_run_id, "status"] == NO_FINAL_REVIEW_PACKAGE
+    assert rows.loc[ready.final_review_run_id, "status"] == FINAL_REVIEW_READY_FOR_EMISSION_REVIEW
+    assert bool(rows.loc[ready.final_review_run_id, "ready_for_emission_review"]) is True
+    assert bool(rows.loc[ready.final_review_run_id, "active_replay_input_ready"]) is False
+    assert result.artifact_paths["index_csv"].exists()
+    assert result.artifact_paths["metadata"].exists()
+
+
+def test_final_review_health_passes_for_valid_no_input_and_ready_artifacts(tmp_path: Path) -> None:
+    run_active_replay_input_final_review(
+        ActiveReplayInputFinalReviewSettings(output_dir=_final_review_output_dir(tmp_path))
+    )
+    no_input_health = check_active_replay_input_final_review_health(
+        root=_final_review_output_dir(tmp_path),
+        output_dir=_final_review_output_dir(tmp_path) / "health",
+    )
+    assert no_input_health.status == "PASS"
+    assert no_input_health.error_count == 0
+
+    run_active_replay_input_final_review(_happy_settings(tmp_path))
+    ready_health = check_active_replay_input_final_review_health(
+        root=_final_review_output_dir(tmp_path),
+        output_dir=_final_review_output_dir(tmp_path) / "health-ready",
+    )
+    assert ready_health.status == "PASS"
+    assert ready_health.error_count == 0
+    assert ready_health.artifact_paths["health_csv"].exists()
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected_code"),
+    [
+        ("status", "ACTIVE_REPLAY_INPUT_READY", "ACTIVE_REPLAY_INPUT_READY_UNEXPECTED"),
+        ("active_ready_emitted", True, "ACTIVE_READY_EMITTED_UNEXPECTED"),
+        ("active_replay_input_ready", True, "ACTIVE_REPLAY_INPUT_READY_FLAG_UNEXPECTED"),
+        ("active_replay_input", True, "ACTIVE_REPLAY_INPUT_UNEXPECTED"),
+        ("forward_labels_exist", True, "FORWARD_LABELS_EXIST_UNEXPECTED"),
+        ("weights_trained", True, "WEIGHTS_TRAINED_UNEXPECTED"),
+        ("active_stock_profile_exists", True, "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED"),
+        ("real_buy_review_eligible", True, "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED"),
+        ("order_placed", True, "ORDER_PLACED_UNEXPECTED"),
+        ("message_sent", True, "MESSAGE_SENT_UNEXPECTED"),
+        ("cache_mutated", True, "CACHE_MUTATED_UNEXPECTED"),
+        ("data_raw_written", True, "DATA_RAW_WRITTEN_UNEXPECTED"),
+        ("data_processed_written", True, "DATA_PROCESSED_WRITTEN_UNEXPECTED"),
+        ("data_cache_written", True, "DATA_CACHE_WRITTEN_UNEXPECTED"),
+    ],
+)
+def test_final_review_health_fails_closed_for_unsafe_metadata(
+    tmp_path: Path, field: str, value: object, expected_code: str
+) -> None:
+    result = run_active_replay_input_final_review(_happy_settings(tmp_path))
+    metadata_path = result.artifact_paths["metadata"]
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata[field] = value
+    metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
+
+    health = check_active_replay_input_final_review_health(
+        root=_final_review_output_dir(tmp_path),
+        output_dir=_final_review_output_dir(tmp_path) / f"health-{field}",
+    )
+
+    assert health.status == "FAIL"
+    assert expected_code in set(health.health_frame["issue_code"])
+
+
+def test_final_review_health_fails_if_overclaim_guards_do_not_all_pass(tmp_path: Path) -> None:
+    result = run_active_replay_input_final_review(_happy_settings(tmp_path))
+    metadata_path = result.artifact_paths["metadata"]
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["overclaim_guard_pass_count"] = metadata["overclaim_guard_total_count"] - 1
+    metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
+
+    health = check_active_replay_input_final_review_health(
+        root=_final_review_output_dir(tmp_path),
+        output_dir=_final_review_output_dir(tmp_path) / "health-overclaim",
+    )
+
+    assert health.status == "FAIL"
+    assert "OVERCLAIM_GUARD_FAILED" in set(health.health_frame["issue_code"])
+
+
+def test_final_review_status_summarizes_no_package_and_ready_context(tmp_path: Path) -> None:
+    run_active_replay_input_final_review(
+        ActiveReplayInputFinalReviewSettings(output_dir=_final_review_output_dir(tmp_path))
+    )
+    no_package_status = run_active_replay_input_final_review_status(
+        root=_final_review_output_dir(tmp_path),
+        output_dir=_final_review_output_dir(tmp_path) / "status-no-package",
+    )
+    assert no_package_status.workflow_stage == FINAL_REVIEW_NO_PACKAGE
+    assert no_package_status.active_replay_input_ready is False
+    assert no_package_status.active_replay_input is False
+
+    ready = run_active_replay_input_final_review(_happy_settings(tmp_path))
+    ready_status = run_active_replay_input_final_review_status(
+        root=_final_review_output_dir(tmp_path),
+        output_dir=_final_review_output_dir(tmp_path) / "status-ready",
+    )
+    assert ready_status.latest_final_review_run_id == ready.final_review_run_id
+    assert ready_status.status == FINAL_REVIEW_READY_FOR_EMISSION_REVIEW
+    assert ready_status.workflow_stage == FINAL_REVIEW_READY_FOR_EMISSION_REVIEW
+    assert ready_status.ready_for_emission_review is True
+    assert ready_status.active_replay_input_ready is False
+    assert ready_status.active_ready_emitted is False
+    assert "report-only" in ready_status.safety_statement
+    assert "not ACTIVE_REPLAY_INPUT_READY" in ready_status.safety_statement
+    assert "does not run replay" in ready_status.safety_statement
+    assert "does not compute forward labels" in ready_status.safety_statement
+    assert "does not train weights" in ready_status.safety_statement
+    assert "does not create active stock profiles" in ready_status.safety_statement
+    assert "does not create real buy-review eligibility" in ready_status.safety_statement
+    assert "does not authorize trading" in ready_status.safety_statement
+
+
+def test_final_review_status_reports_blocked_when_latest_artifact_is_blocked(tmp_path: Path) -> None:
+    run_active_replay_input_final_review(_happy_settings(tmp_path))
+    run_active_replay_input_final_review(
+        ActiveReplayInputFinalReviewSettings(output_dir=_final_review_output_dir(tmp_path))
+    )
+
+    status = run_active_replay_input_final_review_status(
+        root=_final_review_output_dir(tmp_path),
+        output_dir=_final_review_output_dir(tmp_path) / "status-blocked",
+    )
+
+    assert status.workflow_stage in {FINAL_REVIEW_NO_PACKAGE, FINAL_REVIEW_BLOCKED}
+    assert status.active_replay_input_ready is False
+
+
+def test_final_review_artifact_view_cli_commands_run(tmp_path: Path) -> None:
+    run_active_replay_input_final_review(_happy_settings(tmp_path))
+
+    commands = [
+        "active-replay-input-final-review-index",
+        "active-replay-input-final-review-health",
+        "active-replay-input-final-review-status",
+    ]
+    for command in commands:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(_final_review_output_dir(tmp_path)),
+                "--output-dir",
+                str(_final_review_output_dir(tmp_path) / command),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env={**os.environ, "PYTHONPATH": "src"},
+        )
+        assert "active replay input" in completed.stdout
+        assert "research-status" in completed.stdout
+        assert not Path("docs/project_sources").exists()
 
 
 def _final_review_output_dir(tmp_path: Path) -> Path:
