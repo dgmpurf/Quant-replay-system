@@ -278,6 +278,15 @@ from quant_replay_system.active_replay_input_acceptance import (
     ActiveReplayInputAcceptanceSettings,
     run_active_replay_input_acceptance,
 )
+from quant_replay_system.active_replay_input_acceptance_health import (
+    check_active_replay_input_acceptance_health,
+)
+from quant_replay_system.active_replay_input_acceptance_index import (
+    build_active_replay_input_acceptance_index,
+)
+from quant_replay_system.active_replay_input_acceptance_status import (
+    run_active_replay_input_acceptance_status,
+)
 from quant_replay_system.active_replay_input_promotion_health import (
     check_active_replay_input_promotion_health,
 )
@@ -2310,6 +2319,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only active replay input acceptance artifacts will be written",
     )
     active_replay_input_acceptance.set_defaults(handler=_handle_active_replay_input_acceptance)
+
+    active_replay_input_acceptance_index = subparsers.add_parser(
+        "active-replay-input-acceptance-index",
+        help="Index report-only active replay input acceptance artifacts",
+    )
+    active_replay_input_acceptance_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_acceptance_v0_1",
+        help="Acceptance artifact root to index",
+    )
+    active_replay_input_acceptance_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_acceptance_v0_1/index",
+        help="Directory where acceptance index artifacts will be written",
+    )
+    active_replay_input_acceptance_index.set_defaults(handler=_handle_active_replay_input_acceptance_index)
+
+    active_replay_input_acceptance_health = subparsers.add_parser(
+        "active-replay-input-acceptance-health",
+        help="Check report-only active replay input acceptance artifact health",
+    )
+    active_replay_input_acceptance_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_acceptance_v0_1",
+        help="Acceptance artifact root to check",
+    )
+    active_replay_input_acceptance_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_acceptance_v0_1/health",
+        help="Directory where acceptance health artifacts will be written",
+    )
+    active_replay_input_acceptance_health.set_defaults(handler=_handle_active_replay_input_acceptance_health)
+
+    active_replay_input_acceptance_status = subparsers.add_parser(
+        "active-replay-input-acceptance-status",
+        help="Summarize latest report-only active replay input acceptance status",
+    )
+    active_replay_input_acceptance_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_acceptance_v0_1",
+        help="Acceptance artifact root to summarize",
+    )
+    active_replay_input_acceptance_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_acceptance_v0_1/status",
+        help="Directory where acceptance status artifacts will be written",
+    )
+    active_replay_input_acceptance_status.set_defaults(handler=_handle_active_replay_input_acceptance_status)
 
     active_replay_input_promotion_index = subparsers.add_parser(
         "active-replay-input-promotion-index",
@@ -6522,6 +6579,64 @@ def _handle_active_replay_input_acceptance(args: argparse.Namespace) -> int:
         "active stock profiles, real buy-review eligibility, live trading, broker API, order placement, "
         "message delivery, LLM/API, external API, data/raw write, data/processed write, data/cache write, "
         "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_acceptance_index(args: argparse.Namespace) -> int:
+    result = build_active_replay_input_acceptance_index(root=args.root, output_dir=args.output_dir)
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No active replay input, replay, current-candidates, snapshots, forward labels, training, "
+        "active stock profiles, research-status integration, data writes, API calls, messages, "
+        "broker integration, orders, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_acceptance_health(args: argparse.Namespace) -> int:
+    result = check_active_replay_input_acceptance_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health report path: {result.artifact_paths['health_report']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(
+        "No active replay input, replay, current-candidates, snapshots, forward labels, training, "
+        "active stock profiles, research-status integration, data writes, API calls, messages, "
+        "broker integration, orders, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_acceptance_status(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_acceptance_status(root=args.root, output_dir=args.output_dir)
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status report path: {result.artifact_paths['status_report']}")
+    print(f"latest_acceptance_run_id: {result.latest_acceptance_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_active_ready_review: {result.ready_for_active_ready_review}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_ready_emitted: {result.active_ready_emitted}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
+    print(
+        "No active replay input, replay, current-candidates, snapshots, forward labels, training, "
+        "active stock profiles, research-status integration, data writes, API calls, messages, "
+        "broker integration, orders, or cache mutation was invoked."
     )
     return 0
 
