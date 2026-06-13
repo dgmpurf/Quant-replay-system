@@ -274,6 +274,10 @@ from quant_replay_system.active_replay_input_promotion import (
     ActiveReplayInputPromotionSettings,
     run_active_replay_input_promotion,
 )
+from quant_replay_system.active_replay_input_acceptance import (
+    ActiveReplayInputAcceptanceSettings,
+    run_active_replay_input_acceptance,
+)
 from quant_replay_system.active_replay_input_promotion_health import (
     check_active_replay_input_promotion_health,
 )
@@ -2255,6 +2259,57 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only active replay input promotion artifacts will be written",
     )
     active_replay_input_promotion.set_defaults(handler=_handle_active_replay_input_promotion)
+
+    active_replay_input_acceptance = subparsers.add_parser(
+        "active-replay-input-acceptance",
+        help="Review active replay input acceptance as report-only diagnostic context",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--promotion-artifact",
+        default=None,
+        help="Optional promotion artifact folder or promotion_metadata.json",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--promotion-health-artifact",
+        default=None,
+        help="Optional promotion health artifact JSON or CSV",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--promotion-status-artifact",
+        default=None,
+        help="Optional promotion status artifact JSON or CSV",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--acceptance-request-manifest",
+        default=None,
+        help="Optional local acceptance request manifest JSON",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--reviewer-authority-manifest",
+        default=None,
+        help="Optional local reviewer authority manifest JSON",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--manual-attestation-manifest",
+        default=None,
+        help="Optional local manual attestation manifest JSON",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--second-review-manifest",
+        default=None,
+        help="Optional local second review manifest JSON",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--red-team-review-manifest",
+        default=None,
+        help="Optional local red-team review manifest JSON",
+    )
+    active_replay_input_acceptance.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_acceptance_v0_1",
+        help="Directory where report-only active replay input acceptance artifacts will be written",
+    )
+    active_replay_input_acceptance.set_defaults(handler=_handle_active_replay_input_acceptance)
 
     active_replay_input_promotion_index = subparsers.add_parser(
         "active-replay-input-promotion-index",
@@ -6404,6 +6459,63 @@ def _handle_active_replay_input_promotion(args: argparse.Namespace) -> int:
     print(f"blocked_human_review_gate_count: {result.blocked_human_review_gate_count}")
     print(f"blocker_count: {result.blocker_count}")
     print(f"report_path: {result.artifact_paths['promotion_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No active replay input, replay, current-candidates, snapshots, forward labels, training, "
+        "active stock profiles, real buy-review eligibility, live trading, broker API, order placement, "
+        "message delivery, LLM/API, external API, data/raw write, data/processed write, data/cache write, "
+        "or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_acceptance(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_acceptance(
+        ActiveReplayInputAcceptanceSettings(
+            promotion_artifact=Path(args.promotion_artifact) if args.promotion_artifact else None,
+            promotion_health_artifact=Path(args.promotion_health_artifact)
+            if args.promotion_health_artifact
+            else None,
+            promotion_status_artifact=Path(args.promotion_status_artifact)
+            if args.promotion_status_artifact
+            else None,
+            acceptance_request_manifest=Path(args.acceptance_request_manifest)
+            if args.acceptance_request_manifest
+            else None,
+            reviewer_authority_manifest=Path(args.reviewer_authority_manifest)
+            if args.reviewer_authority_manifest
+            else None,
+            manual_attestation_manifest=Path(args.manual_attestation_manifest)
+            if args.manual_attestation_manifest
+            else None,
+            second_review_manifest=Path(args.second_review_manifest) if args.second_review_manifest else None,
+            red_team_review_manifest=Path(args.red_team_review_manifest) if args.red_team_review_manifest else None,
+            output_dir=Path(args.output_dir),
+        )
+    )
+    print(f"acceptance_run_id: {result.acceptance_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_active_ready_review: {result.ready_for_active_ready_review}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_ready_emitted: {result.active_ready_emitted}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"precondition_count: {result.precondition_count}")
+    print(f"blocked_precondition_count: {result.blocked_precondition_count}")
+    print(f"reviewer_authority_gate_count: {result.reviewer_authority_gate_count}")
+    print(f"blocked_reviewer_authority_gate_count: {result.blocked_reviewer_authority_gate_count}")
+    print(f"manual_attestation_count: {result.manual_attestation_count}")
+    print(f"blocked_manual_attestation_count: {result.blocked_manual_attestation_count}")
+    print(f"second_review_gate_count: {result.second_review_gate_count}")
+    print(f"blocked_second_review_gate_count: {result.blocked_second_review_gate_count}")
+    print(f"red_team_gate_count: {result.red_team_gate_count}")
+    print(f"blocked_red_team_gate_count: {result.blocked_red_team_gate_count}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"report_path: {result.artifact_paths['acceptance_report']}")
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print(
         "No active replay input, replay, current-candidates, snapshots, forward labels, training, "
