@@ -34,6 +34,10 @@ from quant_replay_system.active_replay_input_active_ready import (
     ActiveReplayInputActiveReadySettings,
     run_active_replay_input_active_ready,
 )
+from quant_replay_system.active_replay_input_final_review import (
+    ActiveReplayInputFinalReviewSettings,
+    run_active_replay_input_final_review,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -2561,6 +2565,163 @@ def test_active_replay_input_active_ready_checkpoint_docs_and_project_source_pol
         text = path.read_text(encoding="utf-8")
         assert "active-replay-input-active-ready" in text
         assert "ACTIVE_READY_READY_FOR_FINAL_REVIEW" in text
+        assert "ACTIVE_REPLAY_INPUT_READY" in text
+        assert "does not create active replay input" in text
+        assert "does not run replay" in text
+        assert "does not compute forward labels" in text
+        assert "does not train weights" in text
+        assert "does not create active stock profiles" in text
+        assert "does not create real buy-review eligibility" in text
+        assert "does not authorize trading" in text
+
+    assert "PAPER_WORKFLOW_READY" in checkpoint.read_text(encoding="utf-8")
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources" in source_text
+    assert "intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_research_status_includes_active_replay_input_final_review_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    final_review = _active_replay_input_final_review_ready(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ACTIVE_REPLAY_INPUT_FINAL_REVIEW_STATUS"
+    ].iloc[0]
+
+    assert result.active_replay_input_final_review_implemented is True
+    assert result.active_replay_input_final_review_views_implemented is True
+    assert result.latest_active_replay_input_final_review_run_id == final_review.final_review_run_id
+    assert result.latest_active_replay_input_final_review_status == "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW"
+    assert result.latest_active_replay_input_final_review_health_status == "PASS"
+    assert result.latest_active_replay_input_final_review_workflow_stage == (
+        "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW"
+    )
+    assert result.ready_for_emission_review is True
+    assert result.active_replay_input_final_review_active_replay_input_ready is False
+    assert result.active_replay_input_final_review_active_replay_input is False
+    assert result.active_replay_input_final_review_active_ready_emitted is False
+    assert result.active_replay_input_final_review_forward_labels_exist is False
+    assert result.active_replay_input_final_review_weights_trained is False
+    assert result.active_replay_input_final_review_active_stock_profile_exists is False
+    assert result.active_replay_input_final_review_real_buy_review_eligible is False
+    assert result.active_replay_input_final_review_approval_applied is False
+    assert result.active_replay_input_final_review_order_placed is False
+    assert result.active_replay_input_final_review_message_sent is False
+    assert result.active_replay_input_final_review_llm_api_called is False
+    assert result.active_replay_input_final_review_external_api_called is False
+    assert result.active_replay_input_final_review_cache_mutated is False
+    assert result.active_replay_input_final_review_data_raw_written is False
+    assert result.active_replay_input_final_review_data_processed_written is False
+    assert result.active_replay_input_final_review_data_cache_written is False
+    assert result.active_replay_input_final_review_current_candidates_run is False
+    assert result.active_replay_input_final_review_snapshot_built is False
+    assert result.active_replay_input_final_review_signal_semantics_changed is False
+    assert result.active_replay_input_final_review_report_only is True
+    assert result.active_replay_input_final_review_diagnostic_only is True
+    assert result.active_replay_input_final_review_no_live_trading is True
+    assert result.active_replay_input_final_review_no_broker_api is True
+    assert result.active_replay_input_final_review_no_order_placement is True
+    assert result.active_replay_input_final_review_no_message_sent is True
+    assert result.workflow_stage == "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW"
+    assert result.workflow_stage != "ACTIVE_REPLAY_INPUT_READY"
+    assert row["status"] == "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW"
+
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str)
+    metadata = json.loads(Path(result.artifact_paths["metadata"]).read_text(encoding="utf-8"))
+    assert summary.loc[0, "latest_active_replay_input_final_review_run_id"] == (
+        final_review.final_review_run_id
+    )
+    assert summary.loc[0, "active_replay_input_final_review_active_replay_input_ready"] == "False"
+    assert metadata["latest_active_replay_input_final_review_workflow_stage"] == (
+        "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW"
+    )
+    assert metadata["ready_for_emission_review"] is True
+    assert metadata["active_replay_input_final_review_active_replay_input_ready"] is False
+    assert metadata["active_replay_input_final_review_active_replay_input"] is False
+    assert metadata["active_replay_input_final_review_active_ready_emitted"] is False
+
+
+def test_research_status_preserves_paper_priority_over_active_replay_input_final_review(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    _active_replay_input_final_review_ready(root)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_active_replay_input_final_review_workflow_stage == (
+        "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW"
+    )
+    assert result.ready_for_emission_review is True
+    assert result.active_replay_input_final_review_active_replay_input_ready is False
+    assert result.active_replay_input_final_review_active_replay_input is False
+    assert result.active_replay_input_final_review_active_ready_emitted is False
+
+
+def test_cli_research_status_prints_active_replay_input_final_review_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    final_review = _active_replay_input_final_review_ready(root)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert f"latest_active_replay_input_final_review_run_id: {final_review.final_review_run_id}" in output.out
+    assert "latest_active_replay_input_final_review_status: FINAL_REVIEW_READY_FOR_EMISSION_REVIEW" in output.out
+    assert "latest_active_replay_input_final_review_health_status: PASS" in output.out
+    assert (
+        "latest_active_replay_input_final_review_workflow_stage: FINAL_REVIEW_READY_FOR_EMISSION_REVIEW"
+        in output.out
+    )
+    assert "ready_for_emission_review: True" in output.out
+    assert "active_replay_input_final_review_active_replay_input_ready: False" in output.out
+    assert "active_replay_input_final_review_active_replay_input: False" in output.out
+    assert "active_replay_input_final_review_active_ready_emitted: False" in output.out
+    assert "active_replay_input_final_review_forward_labels_exist: False" in output.out
+    assert "active_replay_input_final_review_weights_trained: False" in output.out
+    assert "active_replay_input_final_review_active_stock_profile_exists: False" in output.out
+    assert "active_replay_input_final_review_real_buy_review_eligible: False" in output.out
+    assert "active_replay_input_final_review_approval_applied: False" in output.out
+    assert "active_replay_input_final_review_order_placed: False" in output.out
+    assert "active_replay_input_final_review_message_sent: False" in output.out
+    assert "active_replay_input_final_review_llm_api_called: False" in output.out
+    assert "active_replay_input_final_review_external_api_called: False" in output.out
+    assert "active_replay_input_final_review_cache_mutated: False" in output.out
+    assert "active_replay_input_final_review_data_raw_written: False" in output.out
+    assert "active_replay_input_final_review_data_processed_written: False" in output.out
+    assert "active_replay_input_final_review_data_cache_written: False" in output.out
+    assert "active_replay_input_final_review_current_candidates_run: False" in output.out
+    assert "active_replay_input_final_review_snapshot_built: False" in output.out
+    assert "active_replay_input_final_review_signal_semantics_changed: False" in output.out
+
+
+def test_active_replay_input_final_review_checkpoint_docs_and_project_source_policy() -> None:
+    doc = Path("docs/active_replay_input_final_review.md")
+    checkpoint = Path("docs/release_checkpoint_v1.34.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_34_0.md")
+
+    for path in [doc, checkpoint, source_note]:
+        assert path.exists()
+        text = path.read_text(encoding="utf-8")
+        assert "active-replay-input-final-review" in text
+        assert "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW" in text
         assert "ACTIVE_REPLAY_INPUT_READY" in text
         assert "does not create active replay input" in text
         assert "does not run replay" in text
@@ -5299,6 +5460,231 @@ def _active_ready_overclaim_manifest(path: Path) -> Path:
             "active_ready_not_trading": True,
             "active_ready_not_performance_validation": True,
             "overclaim_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _active_replay_input_final_review_ready(root: Path):
+    input_root = root / "manual_diagnostics" / "active_replay_input_final_review_test_inputs"
+    active_ready = _active_replay_input_active_ready_ready(root)
+    active_ready_artifact = active_ready.artifact_path
+    active_ready_health = _write_json(input_root / "active_ready_health.json", {"health_status": "PASS"})
+    active_ready_status = _write_json(
+        input_root / "active_ready_status.json",
+        {
+            "status": "ACTIVE_READY_READY_FOR_FINAL_REVIEW",
+            "health_status": "PASS",
+            "workflow_stage": "ACTIVE_READY_READY_FOR_FINAL_REVIEW",
+            "ready_for_final_review": True,
+            "active_replay_input_ready": False,
+            "active_replay_input": False,
+            "active_ready_emitted": False,
+        },
+    )
+    return run_active_replay_input_final_review(
+        ActiveReplayInputFinalReviewSettings(
+            output_dir=root / "manual_diagnostics" / "active_replay_input_final_review_v0_1",
+            active_ready_artifact=active_ready_artifact,
+            active_ready_health_artifact=active_ready_health,
+            active_ready_status_artifact=active_ready_status,
+            final_review_package_manifest=_final_review_package_manifest(
+                input_root / "final_review_package.json",
+                active_ready_artifact,
+            ),
+            final_review_authority_manifest=_final_review_authority_manifest(input_root / "authority.json"),
+            final_review_attestation_manifest=_final_review_attestation_manifest(input_root / "attestation.json"),
+            pit_source_evidence_attachment_bundle=_final_review_pit_source_bundle(input_root / "pit_source.json"),
+            taxonomy_attachment_bundle=_final_review_taxonomy_bundle(input_root / "taxonomy.json"),
+            leakage_side_effect_evidence_bundle=_final_review_leakage_side_effect_bundle(
+                input_root / "leakage_side_effect.json"
+            ),
+            overclaim_evidence_bundle=_final_review_overclaim_bundle(input_root / "overclaim.json"),
+            emission_request_manifest=_final_review_emission_request_manifest(input_root / "emission.json"),
+        )
+    )
+
+
+def _final_review_package_manifest(path: Path, active_ready_artifact: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "final_review_package_id": "final_review_package_001",
+            "requested_by": "fixture_reviewer",
+            "requested_at": "2024-04-02T19:00:00+08:00",
+            "package_reason": "fixture final review emission-readiness context",
+            "active_ready_artifact_ref": str(active_ready_artifact),
+            "requested_status": "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW",
+            "report_only": True,
+            "diagnostic_only": True,
+            "active_replay_input_ready": False,
+            "active_replay_input": False,
+            "active_ready_emitted": False,
+            "forward_labels_exist": False,
+            "weights_trained": False,
+            "active_stock_profile_exists": False,
+            "real_buy_review_eligible": False,
+            "approval_applied": False,
+            "order_placed": False,
+            "message_sent": False,
+            "llm_api_called": False,
+            "external_api_called": False,
+            "cache_mutated": False,
+            "data_raw_written": False,
+            "data_processed_written": False,
+            "data_cache_written": False,
+            "current_candidates_run": False,
+            "snapshot_built": False,
+            "signal_semantics_changed": False,
+        },
+    )
+
+
+def _final_review_authority_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "final_review_authority_id": "final_authority_001",
+            "primary_reviewer": "primary_fixture_reviewer",
+            "second_reviewer": "second_fixture_reviewer",
+            "pit_source_reviewer": "pit_fixture_reviewer",
+            "evidence_taxonomy_reviewer": "evidence_fixture_reviewer",
+            "risk_compliance_reviewer": "risk_fixture_reviewer",
+            "system_operator": "operator_fixture",
+            "strategy_owner": "strategy_fixture_owner",
+            "authority_scope": "report-only final-review emission-readiness context",
+            "authority_result": "ACCEPTED_FOR_REVIEW_ONLY",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _final_review_attestation_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "primary_reviewer_attested": True,
+            "second_reviewer_attested": True,
+            "pit_source_reviewer_attested": True,
+            "evidence_taxonomy_reviewer_attested": True,
+            "risk_compliance_reviewer_attested": True,
+            "no_trading_authority_attested": True,
+            "no_performance_claim_attested": True,
+            "no_replay_execution_attested": True,
+            "attestation_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _final_review_pit_source_bundle(path: Path) -> Path:
+    payload = {
+        "pit_universe_evidence_attached": True,
+        "available_time_coverage_attached": True,
+        "source_id_coverage_attached": True,
+        "source_hash_coverage_attached": True,
+        "revision_id_coverage_attached": True,
+        "permission_class_coverage_attached": True,
+        "quality_status_coverage_attached": True,
+        "raw_evidence_refs_attached": True,
+        "replay_evidence_bundle_ref_attached": True,
+        "factor_definition_coverage_attached": True,
+        "factor_observation_coverage_attached": True,
+        "event_structured_coverage_attached": True,
+        "company_exposure_coverage_attached": True,
+        "attachment_result": "PASS",
+        "report_only": True,
+        "diagnostic_only": True,
+    }
+    return _write_json(path, payload)
+
+
+def _final_review_taxonomy_bundle(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "uses_8_layer_taxonomy": True,
+            "not_fixed_12_only": True,
+            "factor_layer_metadata_attached": True,
+            "trade_usage_metadata_attached": True,
+            "compliance_metadata_attached": True,
+            "taxonomy_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _final_review_leakage_side_effect_bundle(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "no_future_labels": True,
+            "no_forward_returns": True,
+            "no_training_outputs": True,
+            "no_model_weights": True,
+            "no_stock_profile_artifacts": True,
+            "no_buy_review_eligibility": True,
+            "no_approved_for_paper": True,
+            "no_order_placed": True,
+            "no_message_sent": True,
+            "no_broker_api_called": True,
+            "no_llm_api_called": True,
+            "no_external_api_called": True,
+            "no_cache_mutated": True,
+            "no_data_raw_written": True,
+            "no_data_processed_written": True,
+            "no_data_cache_written": True,
+            "no_current_candidates_run": True,
+            "no_snapshot_built": True,
+            "no_signal_semantics_changed": True,
+            "leakage_side_effect_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _final_review_overclaim_bundle(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "pass_candidate_not_active_ready": True,
+            "smoke_not_active_ready": True,
+            "promotion_not_active_ready": True,
+            "acceptance_not_active_ready": True,
+            "active_ready_final_review_not_active_ready": True,
+            "final_review_ready_not_active_input_ready": True,
+            "active_input_ready_not_replay": True,
+            "active_input_ready_not_labels": True,
+            "active_input_ready_not_training": True,
+            "active_input_ready_not_stock_profile": True,
+            "active_input_ready_not_buy_review": True,
+            "active_input_ready_not_trading": True,
+            "active_input_ready_not_performance_validation": True,
+            "overclaim_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _final_review_emission_request_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "requested_status": "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW",
+            "allow_active_replay_input_ready_emission": False,
+            "allow_active_replay_input_creation": False,
+            "allow_replay_execution": False,
+            "allow_forward_labels": False,
+            "allow_training": False,
+            "allow_stock_profile": False,
+            "allow_buy_review": False,
+            "allow_trading": False,
             "report_only": True,
             "diagnostic_only": True,
         },

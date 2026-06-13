@@ -11236,6 +11236,119 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"no_message_sent: {result.no_message_sent}")
     print(f"active_replay_input_active_ready_report_path: {result.active_replay_input_active_ready_report_path}")
     print(f"active_replay_input_active_ready_next_action: {result.active_replay_input_active_ready_next_action}")
+    print(
+        "active_replay_input_final_review_implemented: "
+        f"{result.active_replay_input_final_review_implemented}"
+    )
+    print(
+        "active_replay_input_final_review_views_implemented: "
+        f"{result.active_replay_input_final_review_views_implemented}"
+    )
+    print(
+        "latest_active_replay_input_final_review_run_id: "
+        f"{result.latest_active_replay_input_final_review_run_id}"
+    )
+    print(
+        "latest_active_replay_input_final_review_status: "
+        f"{result.latest_active_replay_input_final_review_status}"
+    )
+    print(
+        "latest_active_replay_input_final_review_health_status: "
+        f"{result.latest_active_replay_input_final_review_health_status}"
+    )
+    print(
+        "latest_active_replay_input_final_review_workflow_stage: "
+        f"{result.latest_active_replay_input_final_review_workflow_stage}"
+    )
+    print(f"active_replay_input_final_review_artifact_path: {result.active_replay_input_final_review_artifact_path}")
+    print(f"ready_for_emission_review: {result.ready_for_emission_review}")
+    print(
+        "active_replay_input_final_review_active_replay_input_ready: "
+        f"{result.active_replay_input_final_review_active_replay_input_ready}"
+    )
+    print(
+        "active_replay_input_final_review_active_replay_input: "
+        f"{result.active_replay_input_final_review_active_replay_input}"
+    )
+    print(
+        "active_replay_input_final_review_active_ready_emitted: "
+        f"{result.active_replay_input_final_review_active_ready_emitted}"
+    )
+    print(
+        "active_replay_input_final_review_forward_labels_exist: "
+        f"{result.active_replay_input_final_review_forward_labels_exist}"
+    )
+    print(
+        "active_replay_input_final_review_weights_trained: "
+        f"{result.active_replay_input_final_review_weights_trained}"
+    )
+    print(
+        "active_replay_input_final_review_active_stock_profile_exists: "
+        f"{result.active_replay_input_final_review_active_stock_profile_exists}"
+    )
+    print(
+        "active_replay_input_final_review_real_buy_review_eligible: "
+        f"{result.active_replay_input_final_review_real_buy_review_eligible}"
+    )
+    print(
+        "active_replay_input_final_review_approval_applied: "
+        f"{result.active_replay_input_final_review_approval_applied}"
+    )
+    print(
+        "active_replay_input_final_review_order_placed: "
+        f"{result.active_replay_input_final_review_order_placed}"
+    )
+    print(
+        "active_replay_input_final_review_message_sent: "
+        f"{result.active_replay_input_final_review_message_sent}"
+    )
+    print(
+        "active_replay_input_final_review_llm_api_called: "
+        f"{result.active_replay_input_final_review_llm_api_called}"
+    )
+    print(
+        "active_replay_input_final_review_external_api_called: "
+        f"{result.active_replay_input_final_review_external_api_called}"
+    )
+    print(
+        "active_replay_input_final_review_cache_mutated: "
+        f"{result.active_replay_input_final_review_cache_mutated}"
+    )
+    print(
+        "active_replay_input_final_review_data_raw_written: "
+        f"{result.active_replay_input_final_review_data_raw_written}"
+    )
+    print(
+        "active_replay_input_final_review_data_processed_written: "
+        f"{result.active_replay_input_final_review_data_processed_written}"
+    )
+    print(
+        "active_replay_input_final_review_data_cache_written: "
+        f"{result.active_replay_input_final_review_data_cache_written}"
+    )
+    print(
+        "active_replay_input_final_review_current_candidates_run: "
+        f"{result.active_replay_input_final_review_current_candidates_run}"
+    )
+    print(
+        "active_replay_input_final_review_snapshot_built: "
+        f"{result.active_replay_input_final_review_snapshot_built}"
+    )
+    print(
+        "active_replay_input_final_review_signal_semantics_changed: "
+        f"{result.active_replay_input_final_review_signal_semantics_changed}"
+    )
+    print(f"active_replay_input_final_review_report_only: {result.active_replay_input_final_review_report_only}")
+    print(f"active_replay_input_final_review_diagnostic_only: {result.active_replay_input_final_review_diagnostic_only}")
+    print(f"active_replay_input_final_review_no_live_trading: {result.active_replay_input_final_review_no_live_trading}")
+    print(f"active_replay_input_final_review_no_broker_api: {result.active_replay_input_final_review_no_broker_api}")
+    print(
+        "active_replay_input_final_review_no_order_placement: "
+        f"{result.active_replay_input_final_review_no_order_placement}"
+    )
+    print(f"active_replay_input_final_review_no_message_sent: {result.active_replay_input_final_review_no_message_sent}")
+    print(f"active_replay_input_final_review_report_path: {result.active_replay_input_final_review_report_path}")
+    print(f"active_replay_input_final_review_next_action: {result.active_replay_input_final_review_next_action}")
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

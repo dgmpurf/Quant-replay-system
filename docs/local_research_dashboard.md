@@ -401,6 +401,18 @@ When the status reports `ACTIVE_READY_READY_FOR_FINAL_REVIEW`, the dashboard tre
 
 Active replay input active-ready context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; active-ready fields remain visible for audit. The active-ready workflow does not create active replay input, does not run replay, does not compute forward labels, does not train weights, does not create active stock profiles, does not create real buy-review eligibility, does not authorize trading, and does not validate strategy performance.
 
+## Active Replay Input Final-Review Status
+
+`research-status` includes `active-replay-input-final-review-status` as report-only final-review emission-readiness governance context when those artifacts exist.
+
+Use `active-replay-input-final-review`, `active-replay-input-final-review-index`, `active-replay-input-final-review-health`, and `active-replay-input-final-review-status` to create, discover, safety-check, and summarize this report-only final-review context.
+
+The unified summary records the latest final-review run id, final-review status, health status, final-review workflow stage, final-review artifact path, ready-for-emission-review flag, report path, and next action. It also exports safety flags proving `active_replay_input_ready=false`, `active_replay_input=false`, `active_ready_emitted=false`, `forward_labels_exist=false`, `weights_trained=false`, `active_stock_profile_exists=false`, `real_buy_review_eligible=false`, `approval_applied=false`, no live trading, no broker API, no order placement, no messages, no LLM/API calls, no external API calls, no cache mutation, no `data/raw`, no `data/processed`, no `data/cache`, no current-candidates generation, no snapshot build, and no signal semantics change.
+
+When the status reports `FINAL_REVIEW_READY_FOR_EMISSION_REVIEW`, the dashboard treats it as final-review emission-readiness context only. It is not active replay input and not `ACTIVE_REPLAY_INPUT_READY`. It must not be interpreted as replay permission, active-ready emission, paper approval, buy-review eligibility, performance validation, or trading authorization.
+
+Active replay input final-review context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; final-review fields remain visible for audit. The final-review workflow does not create active replay input, does not run replay, does not compute forward labels, does not train weights, does not create active stock profiles, does not create real buy-review eligibility, does not authorize trading, and does not validate strategy performance.
+
 ## Universe Profile Policy Audit Status
 
 `research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.
