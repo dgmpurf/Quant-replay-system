@@ -10928,6 +10928,59 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"active_replay_input_acceptance_no_message_sent: {result.active_replay_input_acceptance_no_message_sent}")
     print(f"active_replay_input_acceptance_report_path: {result.active_replay_input_acceptance_report_path}")
     print(f"active_replay_input_acceptance_next_action: {result.active_replay_input_acceptance_next_action}")
+    print(
+        "active_replay_input_active_ready_implemented: "
+        f"{result.active_replay_input_active_ready_implemented}"
+    )
+    print(
+        "active_replay_input_active_ready_views_implemented: "
+        f"{result.active_replay_input_active_ready_views_implemented}"
+    )
+    print(
+        "latest_active_replay_input_active_ready_run_id: "
+        f"{result.latest_active_replay_input_active_ready_run_id}"
+    )
+    print(
+        "latest_active_replay_input_active_ready_status: "
+        f"{result.latest_active_replay_input_active_ready_status}"
+    )
+    print(
+        "latest_active_replay_input_active_ready_health_status: "
+        f"{result.latest_active_replay_input_active_ready_health_status}"
+    )
+    print(
+        "latest_active_replay_input_active_ready_workflow_stage: "
+        f"{result.latest_active_replay_input_active_ready_workflow_stage}"
+    )
+    print(f"active_replay_input_active_ready_artifact_path: {result.active_replay_input_active_ready_artifact_path}")
+    print(f"ready_for_final_review: {result.ready_for_final_review}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_ready_emitted: {result.active_ready_emitted}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approval_applied: {result.approval_applied}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"llm_api_called: {result.llm_api_called}")
+    print(f"external_api_called: {result.external_api_called}")
+    print(f"cache_mutated: {result.cache_mutated}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"no_live_trading: {result.no_live_trading}")
+    print(f"no_broker_api: {result.no_broker_api}")
+    print(f"no_order_placement: {result.no_order_placement}")
+    print(f"no_message_sent: {result.no_message_sent}")
+    print(f"active_replay_input_active_ready_report_path: {result.active_replay_input_active_ready_report_path}")
+    print(f"active_replay_input_active_ready_next_action: {result.active_replay_input_active_ready_next_action}")
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

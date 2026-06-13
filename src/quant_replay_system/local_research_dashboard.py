@@ -95,6 +95,9 @@ from quant_replay_system.active_replay_input_promotion_status import (
 from quant_replay_system.active_replay_input_acceptance_status import (
     run_active_replay_input_acceptance_status,
 )
+from quant_replay_system.active_replay_input_active_ready_status import (
+    run_active_replay_input_active_ready_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -638,6 +641,41 @@ SUMMARY_COLUMNS = [
     "active_replay_input_acceptance_no_message_sent",
     "active_replay_input_acceptance_report_path",
     "active_replay_input_acceptance_next_action",
+    "active_replay_input_active_ready_implemented",
+    "active_replay_input_active_ready_views_implemented",
+    "latest_active_replay_input_active_ready_run_id",
+    "latest_active_replay_input_active_ready_status",
+    "latest_active_replay_input_active_ready_health_status",
+    "latest_active_replay_input_active_ready_workflow_stage",
+    "active_replay_input_active_ready_artifact_path",
+    "ready_for_final_review",
+    "active_replay_input_ready",
+    "active_replay_input",
+    "active_ready_emitted",
+    "forward_labels_exist",
+    "weights_trained",
+    "active_stock_profile_exists",
+    "real_buy_review_eligible",
+    "approval_applied",
+    "order_placed",
+    "message_sent",
+    "llm_api_called",
+    "external_api_called",
+    "cache_mutated",
+    "data_raw_written",
+    "data_processed_written",
+    "data_cache_written",
+    "current_candidates_run",
+    "snapshot_built",
+    "signal_semantics_changed",
+    "report_only",
+    "diagnostic_only",
+    "no_live_trading",
+    "no_broker_api",
+    "no_order_placement",
+    "no_message_sent",
+    "active_replay_input_active_ready_report_path",
+    "active_replay_input_active_ready_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -971,6 +1009,7 @@ COMPONENTS = [
     "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS",
     "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS",
     "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS",
+    "ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -1029,6 +1068,7 @@ WORKFLOW_AREAS = {
     "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS": "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE",
     "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS": "ACTIVE_REPLAY_INPUT_PROMOTION",
     "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS": "ACTIVE_REPLAY_INPUT_ACCEPTANCE",
+    "ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS": "ACTIVE_REPLAY_INPUT_ACTIVE_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_PLAN",
@@ -1560,6 +1600,41 @@ class LocalResearchDashboardResult:
     active_replay_input_acceptance_no_message_sent: bool
     active_replay_input_acceptance_report_path: str
     active_replay_input_acceptance_next_action: str
+    active_replay_input_active_ready_implemented: bool
+    active_replay_input_active_ready_views_implemented: bool
+    latest_active_replay_input_active_ready_run_id: str
+    latest_active_replay_input_active_ready_status: str
+    latest_active_replay_input_active_ready_health_status: str
+    latest_active_replay_input_active_ready_workflow_stage: str
+    active_replay_input_active_ready_artifact_path: str
+    ready_for_final_review: bool
+    active_replay_input_ready: bool
+    active_replay_input: bool
+    active_ready_emitted: bool
+    forward_labels_exist: bool
+    weights_trained: bool
+    active_stock_profile_exists: bool
+    real_buy_review_eligible: bool
+    approval_applied: bool
+    order_placed: bool
+    message_sent: bool
+    llm_api_called: bool
+    external_api_called: bool
+    cache_mutated: bool
+    data_raw_written: bool
+    data_processed_written: bool
+    data_cache_written: bool
+    current_candidates_run: bool
+    snapshot_built: bool
+    signal_semantics_changed: bool
+    report_only: bool
+    diagnostic_only: bool
+    no_live_trading: bool
+    no_broker_api: bool
+    no_order_placement: bool
+    no_message_sent: bool
+    active_replay_input_active_ready_report_path: str
+    active_replay_input_active_ready_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1873,6 +1948,7 @@ def run_local_research_dashboard(
     minimal_replay_input_package_fixture_smoke_root: str | Path | None = None,
     active_replay_input_promotion_root: str | Path | None = None,
     active_replay_input_acceptance_root: str | Path | None = None,
+    active_replay_input_active_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -2060,6 +2136,11 @@ def run_local_research_dashboard(
         if active_replay_input_acceptance_root is not None
         else effective_root / "manual_diagnostics" / "active_replay_input_acceptance_v0_1"
     )
+    effective_active_replay_input_active_ready_root = (
+        Path(active_replay_input_active_ready_root)
+        if active_replay_input_active_ready_root is not None
+        else effective_root / "manual_diagnostics" / "active_replay_input_active_ready_v0_1"
+    )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
         if universe_profile_policy_audit_root is not None
@@ -2243,6 +2324,10 @@ def run_local_research_dashboard(
             effective_active_replay_input_acceptance_root = (
                 effective_root / "manual_diagnostics" / "active_replay_input_acceptance_v0_1"
             )
+        if active_replay_input_active_ready_root is None:
+            effective_active_replay_input_active_ready_root = (
+                effective_root / "manual_diagnostics" / "active_replay_input_active_ready_v0_1"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -2324,6 +2409,7 @@ def run_local_research_dashboard(
         ),
         active_replay_input_promotion_root=effective_active_replay_input_promotion_root,
         active_replay_input_acceptance_root=effective_active_replay_input_acceptance_root,
+        active_replay_input_active_ready_root=effective_active_replay_input_active_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -2410,6 +2496,7 @@ def run_local_research_dashboard(
         ),
         "active_replay_input_promotion_root": effective_active_replay_input_promotion_root,
         "active_replay_input_acceptance_root": effective_active_replay_input_acceptance_root,
+        "active_replay_input_active_ready_root": effective_active_replay_input_active_ready_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
@@ -3759,6 +3846,59 @@ def run_local_research_dashboard(
         active_replay_input_acceptance_next_action=str(
             summary.get("active_replay_input_acceptance_next_action", "")
         ),
+        active_replay_input_active_ready_implemented=_bool_from_text(
+            summary.get("active_replay_input_active_ready_implemented")
+        ),
+        active_replay_input_active_ready_views_implemented=_bool_from_text(
+            summary.get("active_replay_input_active_ready_views_implemented")
+        ),
+        latest_active_replay_input_active_ready_run_id=str(
+            summary.get("latest_active_replay_input_active_ready_run_id", "")
+        ),
+        latest_active_replay_input_active_ready_status=str(
+            summary.get("latest_active_replay_input_active_ready_status", "MISSING")
+        ),
+        latest_active_replay_input_active_ready_health_status=str(
+            summary.get("latest_active_replay_input_active_ready_health_status", "")
+        ),
+        latest_active_replay_input_active_ready_workflow_stage=str(
+            summary.get("latest_active_replay_input_active_ready_workflow_stage", "")
+        ),
+        active_replay_input_active_ready_artifact_path=str(
+            summary.get("active_replay_input_active_ready_artifact_path", "")
+        ),
+        ready_for_final_review=_bool_from_text(summary.get("ready_for_final_review")),
+        active_replay_input_ready=_bool_from_text(summary.get("active_replay_input_ready")),
+        active_replay_input=_bool_from_text(summary.get("active_replay_input")),
+        active_ready_emitted=_bool_from_text(summary.get("active_ready_emitted")),
+        forward_labels_exist=_bool_from_text(summary.get("forward_labels_exist")),
+        weights_trained=_bool_from_text(summary.get("weights_trained")),
+        active_stock_profile_exists=_bool_from_text(summary.get("active_stock_profile_exists")),
+        real_buy_review_eligible=_bool_from_text(summary.get("real_buy_review_eligible")),
+        approval_applied=_bool_from_text(summary.get("approval_applied")),
+        order_placed=_bool_from_text(summary.get("order_placed")),
+        message_sent=_bool_from_text(summary.get("message_sent")),
+        llm_api_called=_bool_from_text(summary.get("llm_api_called")),
+        external_api_called=_bool_from_text(summary.get("external_api_called")),
+        cache_mutated=_bool_from_text(summary.get("cache_mutated")),
+        data_raw_written=_bool_from_text(summary.get("data_raw_written")),
+        data_processed_written=_bool_from_text(summary.get("data_processed_written")),
+        data_cache_written=_bool_from_text(summary.get("data_cache_written")),
+        current_candidates_run=_bool_from_text(summary.get("current_candidates_run")),
+        snapshot_built=_bool_from_text(summary.get("snapshot_built")),
+        signal_semantics_changed=_bool_from_text(summary.get("signal_semantics_changed")),
+        report_only=_bool_from_text(summary.get("report_only")),
+        diagnostic_only=_bool_from_text(summary.get("diagnostic_only")),
+        no_live_trading=_bool_from_text(summary.get("no_live_trading")),
+        no_broker_api=_bool_from_text(summary.get("no_broker_api")),
+        no_order_placement=_bool_from_text(summary.get("no_order_placement")),
+        no_message_sent=_bool_from_text(summary.get("no_message_sent")),
+        active_replay_input_active_ready_report_path=str(
+            summary.get("active_replay_input_active_ready_report_path", "")
+        ),
+        active_replay_input_active_ready_next_action=str(
+            summary.get("active_replay_input_active_ready_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -4401,6 +4541,7 @@ def scan_local_research_workflow_artifacts(
     minimal_replay_input_package_fixture_smoke_root: str | Path,
     active_replay_input_promotion_root: str | Path,
     active_replay_input_acceptance_root: str | Path,
+    active_replay_input_active_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -4454,6 +4595,7 @@ def scan_local_research_workflow_artifacts(
     minimal_replay_input_package_fixture_smoke_path = Path(minimal_replay_input_package_fixture_smoke_root)
     active_replay_input_promotion_path = Path(active_replay_input_promotion_root)
     active_replay_input_acceptance_path = Path(active_replay_input_acceptance_root)
+    active_replay_input_active_ready_path = Path(active_replay_input_active_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -4529,6 +4671,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_minimal_replay_input_package_fixture_smoke_status(minimal_replay_input_package_fixture_smoke_path))
     records.extend(_scan_active_replay_input_promotion_status(active_replay_input_promotion_path))
     records.extend(_scan_active_replay_input_acceptance_status(active_replay_input_acceptance_path))
+    records.extend(_scan_active_replay_input_active_ready_status(active_replay_input_active_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -8293,6 +8436,18 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
     ):
         return _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
     if (
+        statuses["ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS"]
+        in {
+            "NO_ACTIVE_READY_INPUT",
+            "ACTIVE_READY_NO_INPUT",
+            "ACTIVE_READY_READY_FOR_FINAL_REVIEW",
+            "ACTIVE_READY_BLOCKED",
+            "ACTIVE_READY_HEALTH_FAILED",
+        }
+        and _active_replay_input_active_ready_stage_from_frame(dashboard_frame)
+    ):
+        return _active_replay_input_active_ready_stage_from_frame(dashboard_frame)
+    if (
         statuses["ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS"]
         in {
             "NO_ACCEPTANCE_INPUT",
@@ -8648,6 +8803,7 @@ def summarize_local_research_status(
                     "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS",
                     "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS",
                     "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS",
+                    "ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -10849,6 +11005,144 @@ def summarize_local_research_status(
         ),
         "active_replay_input_acceptance_next_action": _parse_note_value(
             by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "active_replay_input_active_ready_implemented": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "active_replay_input_active_ready_views_implemented": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_active_replay_input_active_ready_run_id": _string_or_empty(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_active_replay_input_active_ready_status": _component_status(
+            by_component,
+            "ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS",
+        ),
+        "latest_active_replay_input_active_ready_health_status": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_active_replay_input_active_ready_workflow_stage": _string_or_empty(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("stage")
+        ),
+        "active_replay_input_active_ready_artifact_path": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "ready_for_final_review": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "ready_for_final_review",
+        ),
+        "active_replay_input_ready": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "active_replay_input_ready",
+        ),
+        "active_replay_input": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "active_replay_input",
+        ),
+        "active_ready_emitted": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "active_ready_emitted",
+        ),
+        "forward_labels_exist": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "weights_trained": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "active_stock_profile_exists": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "real_buy_review_eligible": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "approval_applied": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "approval_applied",
+        ),
+        "order_placed": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "order_placed",
+        ),
+        "message_sent": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "message_sent",
+        ),
+        "llm_api_called": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "external_api_called": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "cache_mutated": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "cache_mutated",
+        ),
+        "data_raw_written": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "data_raw_written",
+        ),
+        "data_processed_written": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "data_processed_written",
+        ),
+        "data_cache_written": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "data_cache_written",
+        ),
+        "current_candidates_run": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "snapshot_built": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "signal_semantics_changed": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "report_only": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "diagnostic_only": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "no_live_trading": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "no_broker_api": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "no_order_placement": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "no_message_sent": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "no_message_sent",
+        ),
+        "active_replay_input_active_ready_report_path": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "active_replay_input_active_ready_next_action": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -13527,6 +13821,59 @@ def build_local_research_dashboard_metadata(
         "active_replay_input_acceptance_next_action": (
             result.active_replay_input_acceptance_next_action
         ),
+        "active_replay_input_active_ready_implemented": (
+            result.active_replay_input_active_ready_implemented
+        ),
+        "active_replay_input_active_ready_views_implemented": (
+            result.active_replay_input_active_ready_views_implemented
+        ),
+        "latest_active_replay_input_active_ready_run_id": (
+            result.latest_active_replay_input_active_ready_run_id
+        ),
+        "latest_active_replay_input_active_ready_status": (
+            result.latest_active_replay_input_active_ready_status
+        ),
+        "latest_active_replay_input_active_ready_health_status": (
+            result.latest_active_replay_input_active_ready_health_status
+        ),
+        "latest_active_replay_input_active_ready_workflow_stage": (
+            result.latest_active_replay_input_active_ready_workflow_stage
+        ),
+        "active_replay_input_active_ready_artifact_path": (
+            result.active_replay_input_active_ready_artifact_path
+        ),
+        "ready_for_final_review": result.ready_for_final_review,
+        "active_replay_input_ready": result.active_replay_input_ready,
+        "active_replay_input": result.active_replay_input,
+        "active_ready_emitted": result.active_ready_emitted,
+        "forward_labels_exist": result.forward_labels_exist,
+        "weights_trained": result.weights_trained,
+        "active_stock_profile_exists": result.active_stock_profile_exists,
+        "real_buy_review_eligible": result.real_buy_review_eligible,
+        "approval_applied": result.approval_applied,
+        "order_placed": result.order_placed,
+        "message_sent": result.message_sent,
+        "llm_api_called": result.llm_api_called,
+        "external_api_called": result.external_api_called,
+        "cache_mutated": result.cache_mutated,
+        "data_raw_written": result.data_raw_written,
+        "data_processed_written": result.data_processed_written,
+        "data_cache_written": result.data_cache_written,
+        "current_candidates_run": result.current_candidates_run,
+        "snapshot_built": result.snapshot_built,
+        "signal_semantics_changed": result.signal_semantics_changed,
+        "report_only": result.report_only,
+        "diagnostic_only": result.diagnostic_only,
+        "no_live_trading": result.no_live_trading,
+        "no_broker_api": result.no_broker_api,
+        "no_order_placement": result.no_order_placement,
+        "no_message_sent": result.no_message_sent,
+        "active_replay_input_active_ready_report_path": (
+            result.active_replay_input_active_ready_report_path
+        ),
+        "active_replay_input_active_ready_next_action": (
+            result.active_replay_input_active_ready_next_action
+        ),
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -16152,6 +16499,98 @@ def _active_replay_input_acceptance_notes(summary: dict[str, Any]) -> str:
     )
 
 
+def _scan_active_replay_input_active_ready_status(root: Path) -> list[dict[str, Any]]:
+    active_ready_root = root.parent if root.name == "status" else root
+    if not active_ready_root.exists():
+        return []
+    try:
+        result = run_active_replay_input_active_ready_status(
+            root=active_ready_root,
+            output_dir=active_ready_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_active_ready_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = active_ready_root / result.latest_active_ready_run_id
+    metadata = (
+        _load_json_or_none(artifact_dir / "active_ready_metadata.json")
+        or _load_json_or_none(artifact_dir / "metadata.json")
+        or {}
+    )
+    summary["artifact_path"] = _string_or_empty(metadata.get("artifact_path"))
+    for field in [
+        "approval_applied",
+        "order_placed",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+    ]:
+        summary[field] = _string_or_empty(metadata.get(field, False))
+    for field in ["report_only", "diagnostic_only", "no_live_trading", "no_broker_api", "no_order_placement", "no_message_sent"]:
+        summary[field] = _string_or_empty(metadata.get(field, True))
+    return [
+        _record(
+            workflow_area="ACTIVE_REPLAY_INPUT_ACTIVE_READY",
+            component="ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_active_ready_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_active_replay_input_active_ready_notes(summary),
+        )
+    ]
+
+
+def _active_replay_input_active_ready_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"ready_for_final_review={_string_or_empty(summary.get('ready_for_final_review'))}; "
+        f"active_replay_input_ready={_string_or_empty(summary.get('active_replay_input_ready'))}; "
+        f"active_replay_input={_string_or_empty(summary.get('active_replay_input'))}; "
+        f"active_ready_emitted={_string_or_empty(summary.get('active_ready_emitted'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"approval_applied={_string_or_empty(summary.get('approval_applied'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"no_live_trading={_string_or_empty(summary.get('no_live_trading'))}; "
+        f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
+        f"no_order_placement={_string_or_empty(summary.get('no_order_placement'))}; "
+        f"no_message_sent={_string_or_empty(summary.get('no_message_sent'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
 def _scan_universe_profile_policy_audit_status(root: Path) -> list[dict[str, Any]]:
     computed = _computed_universe_profile_policy_audit_status_record(root)
     if computed is not None:
@@ -18490,6 +18929,14 @@ def _active_replay_input_promotion_stage_from_frame(dashboard_frame: pd.DataFram
 def _active_replay_input_acceptance_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _active_replay_input_active_ready_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "ACTIVE_REPLAY_INPUT_ACTIVE_READY_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

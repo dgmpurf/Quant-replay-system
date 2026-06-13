@@ -438,7 +438,7 @@ def test_status_reports_no_input_and_health_failed_stages(tmp_path: Path) -> Non
     assert failed_status.health_status == "FAIL"
 
 
-def test_artifact_view_cli_commands_remain_report_only_without_research_status(tmp_path: Path) -> None:
+def test_artifact_view_cli_commands_remain_report_only_with_research_status_context(tmp_path: Path) -> None:
     root = _active_ready_output_dir(tmp_path)
     active_ready = _run_ready_active_ready(tmp_path, root)
 
@@ -484,8 +484,12 @@ def test_artifact_view_cli_commands_remain_report_only_without_research_status(t
         text=True,
         env={**os.environ, "PYTHONPATH": "src"},
     )
-    assert active_ready.active_ready_run_id not in completed.stdout
-    assert "latest_active_replay_input_active_ready_run_id" not in completed.stdout
+    assert active_ready.active_ready_run_id in completed.stdout
+    assert "latest_active_replay_input_active_ready_run_id" in completed.stdout
+    assert f"latest_active_replay_input_active_ready_workflow_stage: {ACTIVE_READY_READY_FOR_FINAL_REVIEW}" in completed.stdout
+    assert "active_replay_input_ready: False" in completed.stdout
+    assert "active_replay_input: False" in completed.stdout
+    assert "active_ready_emitted: False" in completed.stdout
     assert "ACTIVE_REPLAY_INPUT_READY" not in completed.stdout
     assert not Path("docs/project_sources").exists()
 
