@@ -398,7 +398,7 @@ def test_status_reports_no_input_and_health_failed_stages(tmp_path: Path) -> Non
     assert failed_status.health_status == "FAIL"
 
 
-def test_artifact_view_cli_commands_run_without_research_status_integration(tmp_path: Path) -> None:
+def test_artifact_view_cli_commands_run_with_research_status_integration(tmp_path: Path) -> None:
     root = _promotion_output_dir(tmp_path)
     _run_ready_promotion(tmp_path, root)
 
@@ -428,7 +428,33 @@ def test_artifact_view_cli_commands_run_without_research_status_integration(tmp_
         assert "No active replay input" in completed.stdout
 
     dashboard_source = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
-    assert "active_replay_input_promotion_status" not in dashboard_source
+    assert "run_active_replay_input_promotion_status" in dashboard_source
+    assert "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS" in dashboard_source
+    assert not Path("docs/project_sources").exists()
+
+
+def test_docs_and_checkpoint_describe_active_replay_promotion_safety() -> None:
+    docs = {
+        "promotion": Path("docs/active_replay_input_promotion.md"),
+        "dashboard": Path("docs/local_research_dashboard.md"),
+        "readme": Path("README.md"),
+        "checkpoint": Path("docs/release_checkpoint_v1.31.0.md"),
+        "source_notes": Path("SOURCE_UPDATE_NOTES_v1_31_0.md"),
+    }
+
+    for path in docs.values():
+        assert path.exists(), f"Missing documentation file: {path}"
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in docs.values())
+    assert "active-replay-input-promotion" in combined
+    assert "PROMOTION_READY_FOR_HUMAN_REVIEW" in combined
+    assert "ACTIVE_REPLAY_INPUT_READY" in combined
+    assert "not active replay input" in combined
+    assert "does not run replay" in combined
+    assert "does not compute forward labels" in combined
+    assert "does not train weights" in combined
+    assert "does not create active stock profiles" in combined
+    assert "does not create real buy-review eligibility" in combined
+    assert "PAPER_WORKFLOW_READY" in combined
     assert not Path("docs/project_sources").exists()
 
 

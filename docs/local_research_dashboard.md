@@ -36,6 +36,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a report-only historical replay input gate validator fixture produced validator contract context without becoming real replay input?
 - Has the report-only real historical replay input gate validator checked a candidate package or reported that no input package exists?
 - Has the report-only minimal replay input package fixture smoke exercised the validator contract without becoming active replay input?
+- Has the report-only active replay input promotion workflow produced `PROMOTION_READY_FOR_HUMAN_REVIEW` context without becoming active replay input?
 - Has the current-to-paper handoff run?
 - Has the paper review template been created and checked?
 - Have reviewed decisions, daily paper reports, and reconciliation artifacts been produced?
@@ -73,6 +74,7 @@ outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1/status/
 outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1/status/
 outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1/status/
 outputs/reports/manual_diagnostics/minimal_replay_input_package_fixture_smoke_v0_1/status/
+outputs/reports/manual_diagnostics/active_replay_input_promotion_v0_1/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/

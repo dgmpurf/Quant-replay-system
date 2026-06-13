@@ -22,6 +22,10 @@ from quant_replay_system.minimal_replay_input_package_fixture_smoke import (
     MinimalReplayInputPackageFixtureSmokeSettings,
     run_minimal_replay_input_package_fixture_smoke,
 )
+from quant_replay_system.active_replay_input_promotion import (
+    ActiveReplayInputPromotionSettings,
+    run_active_replay_input_promotion,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -2147,6 +2151,122 @@ def test_research_status_preserves_paper_priority_over_minimal_replay_smoke(tmp_
     assert result.smoke_pass_candidate is True
     assert result.smoke_active_replay_input_ready is False
     assert result.smoke_active_replay_input is False
+
+
+def test_research_status_includes_active_replay_input_promotion_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    promotion = _active_replay_input_promotion_ready(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS"
+    ].iloc[0]
+
+    assert result.active_replay_input_promotion_implemented is True
+    assert result.active_replay_input_promotion_views_implemented is True
+    assert result.latest_active_replay_input_promotion_run_id == promotion.promotion_run_id
+    assert result.latest_active_replay_input_promotion_status == "PROMOTION_READY_FOR_HUMAN_REVIEW"
+    assert result.latest_active_replay_input_promotion_health_status == "PASS"
+    assert result.latest_active_replay_input_promotion_workflow_stage == "PROMOTION_READY_FOR_HUMAN_REVIEW"
+    assert result.active_replay_input_promotion_ready_for_human_review is True
+    assert result.active_replay_input_promotion_active_replay_input_ready is False
+    assert result.active_replay_input_promotion_active_replay_input is False
+    assert result.active_replay_input_promotion_active_ready_emitted is False
+    assert result.active_replay_input_promotion_forward_labels_exist is False
+    assert result.active_replay_input_promotion_weights_trained is False
+    assert result.active_replay_input_promotion_active_stock_profile_exists is False
+    assert result.active_replay_input_promotion_real_buy_review_eligible is False
+    assert result.active_replay_input_promotion_approval_applied is False
+    assert result.active_replay_input_promotion_order_placed is False
+    assert result.active_replay_input_promotion_llm_api_called is False
+    assert result.active_replay_input_promotion_external_api_called is False
+    assert result.active_replay_input_promotion_cache_mutated is False
+    assert result.active_replay_input_promotion_current_candidates_run is False
+    assert result.active_replay_input_promotion_snapshot_built is False
+    assert result.active_replay_input_promotion_signal_semantics_changed is False
+    assert result.active_replay_input_promotion_report_only is True
+    assert result.active_replay_input_promotion_diagnostic_only is True
+    assert result.active_replay_input_promotion_no_live_trading is True
+    assert result.active_replay_input_promotion_no_broker_api is True
+    assert result.active_replay_input_promotion_no_order_placement is True
+    assert result.active_replay_input_promotion_no_message_sent is True
+    assert result.workflow_stage == "PROMOTION_READY_FOR_HUMAN_REVIEW"
+    assert result.workflow_stage != "ACTIVE_REPLAY_INPUT_READY"
+    assert row["status"] == "PROMOTION_READY_FOR_HUMAN_REVIEW"
+
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str)
+    metadata = json.loads(Path(result.artifact_paths["metadata"]).read_text(encoding="utf-8"))
+    assert summary.loc[0, "latest_active_replay_input_promotion_run_id"] == promotion.promotion_run_id
+    assert summary.loc[0, "active_replay_input_promotion_active_replay_input_ready"] == "False"
+    assert metadata["latest_active_replay_input_promotion_workflow_stage"] == "PROMOTION_READY_FOR_HUMAN_REVIEW"
+    assert metadata["active_replay_input_promotion_active_replay_input_ready"] is False
+    assert metadata["active_replay_input_promotion_active_replay_input"] is False
+
+
+def test_research_status_preserves_paper_priority_over_active_replay_input_promotion(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    _active_replay_input_promotion_ready(root)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_active_replay_input_promotion_workflow_stage == "PROMOTION_READY_FOR_HUMAN_REVIEW"
+    assert result.active_replay_input_promotion_ready_for_human_review is True
+    assert result.active_replay_input_promotion_active_replay_input_ready is False
+    assert result.active_replay_input_promotion_active_replay_input is False
+
+
+def test_cli_research_status_prints_active_replay_input_promotion_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    promotion = _active_replay_input_promotion_ready(root)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert f"latest_active_replay_input_promotion_run_id: {promotion.promotion_run_id}" in output.out
+    assert "latest_active_replay_input_promotion_status: PROMOTION_READY_FOR_HUMAN_REVIEW" in output.out
+    assert "latest_active_replay_input_promotion_health_status: PASS" in output.out
+    assert "latest_active_replay_input_promotion_workflow_stage: PROMOTION_READY_FOR_HUMAN_REVIEW" in output.out
+    assert "active_replay_input_promotion_ready_for_human_review: True" in output.out
+    assert "active_replay_input_promotion_active_replay_input_ready: False" in output.out
+    assert "active_replay_input_promotion_active_replay_input: False" in output.out
+    assert "active_replay_input_promotion_active_ready_emitted: False" in output.out
+    assert "active_replay_input_promotion_forward_labels_exist: False" in output.out
+    assert "active_replay_input_promotion_weights_trained: False" in output.out
+    assert "active_replay_input_promotion_active_stock_profile_exists: False" in output.out
+    assert "active_replay_input_promotion_real_buy_review_eligible: False" in output.out
+    assert "active_replay_input_promotion_approval_applied: False" in output.out
+    assert "active_replay_input_promotion_order_placed: False" in output.out
+    assert "active_replay_input_promotion_llm_api_called: False" in output.out
+    assert "active_replay_input_promotion_external_api_called: False" in output.out
+    assert "active_replay_input_promotion_cache_mutated: False" in output.out
+    assert "active_replay_input_promotion_current_candidates_run: False" in output.out
+    assert "active_replay_input_promotion_snapshot_built: False" in output.out
+    assert "active_replay_input_promotion_signal_semantics_changed: False" in output.out
+    assert "active_replay_input_promotion_report_only: True" in output.out
+    assert "active_replay_input_promotion_diagnostic_only: True" in output.out
+    assert "active_replay_input_promotion_no_live_trading: True" in output.out
+    assert "active_replay_input_promotion_no_broker_api: True" in output.out
+    assert "active_replay_input_promotion_no_order_placement: True" in output.out
+    assert "active_replay_input_promotion_no_message_sent: True" in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
 
 
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
@@ -4486,6 +4606,137 @@ def _reports_root(tmp_path: Path) -> Path:
     root = tmp_path / "reports"
     root.mkdir(parents=True, exist_ok=True)
     return root
+
+
+def _active_replay_input_promotion_ready(root: Path):
+    input_root = root / "manual_diagnostics" / "active_replay_input_promotion_test_inputs"
+    validator = _active_replay_input_promotion_validator_artifact(input_root / "validator")
+    smoke = _active_replay_input_promotion_smoke_artifact(input_root / "smoke", validator)
+    request = _active_replay_input_promotion_request_manifest(input_root / "promotion_request.json", validator, smoke)
+    review = _active_replay_input_promotion_review_manifest(input_root / "human_review.json")
+    return run_active_replay_input_promotion(
+        ActiveReplayInputPromotionSettings(
+            output_dir=root / "manual_diagnostics" / "active_replay_input_promotion_v0_1",
+            validator_artifact=validator,
+            smoke_artifact=smoke,
+            promotion_request_manifest=request,
+            human_review_manifest=review,
+        )
+    )
+
+
+def _active_replay_input_promotion_validator_artifact(path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    metadata = {
+        "validator_run_id": "validator_001",
+        "status": "REPLAY_INPUT_GATE_PASS_CANDIDATE",
+        "workflow_stage": "REPLAY_INPUT_GATE_PASS_CANDIDATE",
+        "input_package_path": str(path.parent / "input_package"),
+        "pass_candidate": True,
+        "active_replay_input_ready": False,
+        "active_replay_input": False,
+        "forward_labels_exist": False,
+        "weights_trained": False,
+        "active_stock_profile_exists": False,
+        "real_buy_review_eligible": False,
+        "approval_applied": False,
+        "order_placed": False,
+        "llm_api_called": False,
+        "external_api_called": False,
+        "cache_mutated": False,
+        "current_candidates_run": False,
+        "snapshot_built": False,
+        "signal_semantics_changed": False,
+        "report_only": True,
+        "diagnostic_only": True,
+        "artifact_path": str(path),
+    }
+    (path / "metadata.json").write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def _active_replay_input_promotion_smoke_artifact(path: Path, validator_path: Path) -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    validator_metadata = json.loads((validator_path / "metadata.json").read_text(encoding="utf-8"))
+    metadata = {
+        "smoke_run_id": "smoke_001",
+        "validator_run_id": validator_metadata["validator_run_id"],
+        "validator_artifact_path": str(validator_path),
+        "validator_status": "REPLAY_INPUT_GATE_PASS_CANDIDATE",
+        "validation_status": "PASS",
+        "workflow_stage": "SMOKE_PASS_CANDIDATE_READY",
+        "smoke_stage": "SMOKE_PASS_CANDIDATE_READY",
+        "pass_candidate": True,
+        "active_replay_input_ready": False,
+        "active_replay_input": False,
+        "forward_labels_exist": False,
+        "weights_trained": False,
+        "active_stock_profile_exists": False,
+        "real_buy_review_eligible": False,
+        "report_only": True,
+        "diagnostic_only": True,
+        "artifact_path": str(path),
+    }
+    (path / "smoke_metadata.json").write_text(json.dumps(metadata, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def _active_replay_input_promotion_request_manifest(path: Path, validator_artifact: Path, smoke_artifact: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    request = {
+        "promotion_request_id": "promotion_request_001",
+        "requested_by": "fixture_reviewer",
+        "requested_at": "2024-04-02T16:10:00+08:00",
+        "request_reason": "fixture report-only promotion review",
+        "validator_artifact_ref": str(validator_artifact),
+        "smoke_artifact_ref": str(smoke_artifact),
+        "input_package_ref": str(validator_artifact.parent / "input_package"),
+        "requested_status": "PROMOTION_READY_FOR_HUMAN_REVIEW",
+        "report_only": True,
+        "diagnostic_only": True,
+        "active_replay_input_ready": False,
+        "active_replay_input": False,
+        "forward_labels_exist": False,
+        "weights_trained": False,
+        "active_stock_profile_exists": False,
+        "real_buy_review_eligible": False,
+        "approval_applied": False,
+        "order_placed": False,
+        "llm_api_called": False,
+        "external_api_called": False,
+        "cache_mutated": False,
+        "current_candidates_run": False,
+        "snapshot_built": False,
+        "signal_semantics_changed": False,
+    }
+    path.write_text(json.dumps(request, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def _active_replay_input_promotion_review_manifest(path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    review = {
+        "human_review_id": "human_review_001",
+        "reviewer": "fixture_reviewer",
+        "reviewed_at": "2024-04-02T16:20:00+08:00",
+        "review_scope": "report-only active replay input promotion readiness",
+        "pit_universe_reviewed": True,
+        "source_permission_reviewed": True,
+        "raw_evidence_reviewed": True,
+        "factor_definition_reviewed": True,
+        "factor_observation_reviewed": True,
+        "event_structured_reviewed": True,
+        "company_exposure_reviewed": True,
+        "leakage_reviewed": True,
+        "side_effect_reviewed": True,
+        "promotion_decision_reviewed": True,
+        "review_result": "READY_FOR_HUMAN_REVIEW",
+        "report_only": True,
+        "diagnostic_only": True,
+        "notes": "fixture only",
+    }
+    path.write_text(json.dumps(review, indent=2, sort_keys=True), encoding="utf-8")
+    return path
 
 
 def _workflow_to_current_candidates(root: Path) -> Path:
