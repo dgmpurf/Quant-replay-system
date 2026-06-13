@@ -4170,6 +4170,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Active replay input acceptance artifact root directory",
     )
     research_status.add_argument(
+        "--active-replay-input-emission-root",
+        help="Active replay input emission artifact root directory",
+    )
+    research_status.add_argument(
         "--universe-profile-policy-audit-root",
         help="Universe profile policy audit artifact root directory",
     )
@@ -9957,6 +9961,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         material_pit_evidence_gate_closure_plan_root=args.material_pit_evidence_gate_closure_plan_root,
         one_row_material_evidence_fill_package_root=args.one_row_material_evidence_fill_package_root,
         active_replay_input_acceptance_root=args.active_replay_input_acceptance_root,
+        active_replay_input_emission_root=args.active_replay_input_emission_root,
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -11594,6 +11599,31 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"active_replay_input_final_review_no_message_sent: {result.active_replay_input_final_review_no_message_sent}")
     print(f"active_replay_input_final_review_report_path: {result.active_replay_input_final_review_report_path}")
     print(f"active_replay_input_final_review_next_action: {result.active_replay_input_final_review_next_action}")
+    print(f"active_replay_input_emission_implemented: {result.active_replay_input_emission_implemented}")
+    print(f"active_replay_input_emission_views_implemented: {result.active_replay_input_emission_views_implemented}")
+    print(f"latest_active_replay_input_emission_run_id: {result.latest_active_replay_input_emission_run_id}")
+    print(f"latest_active_replay_input_emission_status: {result.latest_active_replay_input_emission_status}")
+    print(
+        "latest_active_replay_input_emission_health_status: "
+        f"{result.latest_active_replay_input_emission_health_status}"
+    )
+    print(
+        "latest_active_replay_input_emission_workflow_stage: "
+        f"{result.latest_active_replay_input_emission_workflow_stage}"
+    )
+    print(f"active_replay_input_emission_artifact_path: {result.active_replay_input_emission_artifact_path}")
+    print(
+        "ready_for_active_replay_input_ready_review: "
+        f"{result.ready_for_active_replay_input_ready_review}"
+    )
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"active_replay_input_emission_report_path: {result.active_replay_input_emission_report_path}")
+    print(f"active_replay_input_emission_next_action: {result.active_replay_input_emission_next_action}")
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

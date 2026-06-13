@@ -285,7 +285,7 @@ def test_cli_active_replay_input_emission_runs_without_active_ready_claim(tmp_pa
     assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
 
 
-def test_no_research_status_checkpoint_or_project_source_added(tmp_path: Path) -> None:
+def test_research_status_checkpoint_and_project_source_policy_added(tmp_path: Path) -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -315,9 +315,12 @@ def test_no_research_status_checkpoint_or_project_source_added(tmp_path: Path) -
         text=True,
         env={**os.environ, "PYTHONPATH": "src"},
     )
-    assert "active_replay_input_emission" not in completed.stdout
+    assert "active_replay_input_emission_implemented: False" in completed.stdout
+    assert "latest_active_replay_input_emission_status: MISSING" in completed.stdout
+    assert "active_replay_input_ready: False" in completed.stdout
+    assert "active_replay_input: False" in completed.stdout
     assert not Path("docs/project_sources").exists()
-    assert not Path("docs/release_checkpoint_v1.35.0.md").exists()
+    assert Path("docs/release_checkpoint_v1.35.0.md").exists()
 
 
 def test_index_discovers_no_input_and_review_ready_artifacts(tmp_path: Path) -> None:
@@ -517,10 +520,14 @@ def test_artifact_view_cli_commands_remain_report_only(tmp_path: Path) -> None:
         text=True,
         env={**os.environ, "PYTHONPATH": "src"},
     )
-    assert ready.emission_run_id not in completed.stdout
-    assert "active_replay_input_emission" not in completed.stdout
+    assert ready.emission_run_id in completed.stdout
+    assert "active_replay_input_emission_implemented: True" in completed.stdout
+    assert "latest_active_replay_input_emission_status: EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW" in completed.stdout
+    assert "active_replay_input_ready: False" in completed.stdout
+    assert "active_replay_input: False" in completed.stdout
+    assert "status: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
     assert not Path("docs/project_sources").exists()
-    assert not Path("docs/release_checkpoint_v1.35.0.md").exists()
+    assert Path("docs/release_checkpoint_v1.35.0.md").exists()
 
 
 def _assert_non_active_flags(result) -> None:

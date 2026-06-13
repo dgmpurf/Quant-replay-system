@@ -38,6 +38,10 @@ from quant_replay_system.active_replay_input_final_review import (
     ActiveReplayInputFinalReviewSettings,
     run_active_replay_input_final_review,
 )
+from quant_replay_system.active_replay_input_emission import (
+    ActiveReplayInputEmissionSettings,
+    run_active_replay_input_emission,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -2735,6 +2739,163 @@ def test_active_replay_input_final_review_checkpoint_docs_and_project_source_pol
     source_text = source_note.read_text(encoding="utf-8")
     assert "docs/project_sources" in source_text
     assert "intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_research_status_includes_active_replay_input_emission_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    emission = _active_replay_input_emission_ready(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ACTIVE_REPLAY_INPUT_EMISSION_STATUS"
+    ].iloc[0]
+
+    assert result.active_replay_input_emission_implemented is True
+    assert result.active_replay_input_emission_views_implemented is True
+    assert result.latest_active_replay_input_emission_run_id == emission.emission_run_id
+    assert result.latest_active_replay_input_emission_status == "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW"
+    assert result.latest_active_replay_input_emission_health_status == "PASS"
+    assert result.latest_active_replay_input_emission_workflow_stage == (
+        "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW"
+    )
+    assert result.ready_for_active_replay_input_ready_review is True
+    assert result.active_replay_input_ready is False
+    assert result.active_replay_input is False
+    assert result.active_ready_emitted is False
+    assert result.replay_execution_allowed is False
+    assert result.forward_labels_allowed is False
+    assert result.training_allowed is False
+    assert result.stock_profile_allowed is False
+    assert result.buy_review_allowed is False
+    assert result.trading_allowed is False
+    assert result.forward_labels_exist is False
+    assert result.weights_trained is False
+    assert result.active_stock_profile_exists is False
+    assert result.real_buy_review_eligible is False
+    assert result.approval_applied is False
+    assert result.order_placed is False
+    assert result.message_sent is False
+    assert result.llm_api_called is False
+    assert result.external_api_called is False
+    assert result.cache_mutated is False
+    assert result.data_raw_written is False
+    assert result.data_processed_written is False
+    assert result.data_cache_written is False
+    assert result.current_candidates_run is False
+    assert result.snapshot_built is False
+    assert result.signal_semantics_changed is False
+    assert result.report_only is True
+    assert result.diagnostic_only is True
+    assert result.no_live_trading is True
+    assert result.no_broker_api is True
+    assert result.no_order_placement is True
+    assert result.no_message_sent is True
+    assert result.workflow_stage == "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW"
+    assert result.workflow_stage != "ACTIVE_REPLAY_INPUT_READY"
+    assert row["status"] == "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW"
+
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str)
+    metadata = json.loads(Path(result.artifact_paths["metadata"]).read_text(encoding="utf-8"))
+    assert summary.loc[0, "latest_active_replay_input_emission_run_id"] == emission.emission_run_id
+    assert summary.loc[0, "active_replay_input_ready"] == "False"
+    assert summary.loc[0, "active_replay_input"] == "False"
+    assert summary.loc[0, "active_ready_emitted"] == "False"
+    assert metadata["latest_active_replay_input_emission_workflow_stage"] == (
+        "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW"
+    )
+    assert metadata["ready_for_active_replay_input_ready_review"] is True
+    assert metadata["active_replay_input_ready"] is False
+    assert metadata["active_replay_input"] is False
+    assert metadata["active_ready_emitted"] is False
+
+
+def test_research_status_preserves_paper_priority_over_active_replay_input_emission(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    _active_replay_input_emission_ready(root)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_active_replay_input_emission_workflow_stage == (
+        "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW"
+    )
+    assert result.ready_for_active_replay_input_ready_review is True
+    assert result.active_replay_input_ready is False
+    assert result.active_replay_input is False
+    assert result.active_ready_emitted is False
+
+
+def test_cli_research_status_prints_active_replay_input_emission_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    emission = _active_replay_input_emission_ready(root)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert f"latest_active_replay_input_emission_run_id: {emission.emission_run_id}" in output.out
+    assert "latest_active_replay_input_emission_status: EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW" in output.out
+    assert "latest_active_replay_input_emission_health_status: PASS" in output.out
+    assert (
+        "latest_active_replay_input_emission_workflow_stage: "
+        "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW"
+    ) in output.out
+    assert "ready_for_active_replay_input_ready_review: True" in output.out
+    assert "active_replay_input_ready: False" in output.out
+    assert "active_replay_input: False" in output.out
+    assert "active_ready_emitted: False" in output.out
+    assert "replay_execution_allowed: False" in output.out
+    assert "forward_labels_allowed: False" in output.out
+    assert "training_allowed: False" in output.out
+    assert "stock_profile_allowed: False" in output.out
+    assert "buy_review_allowed: False" in output.out
+    assert "trading_allowed: False" in output.out
+
+
+def test_active_replay_input_emission_checkpoint_docs_and_project_source_policy() -> None:
+    doc = Path("docs/active_replay_input_emission.md")
+    checkpoint = Path("docs/release_checkpoint_v1.35.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_35_0.md")
+
+    for path in [doc, checkpoint, source_note]:
+        assert path.exists()
+        text = path.read_text(encoding="utf-8")
+        assert "active-replay-input-emission" in text
+        assert "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW" in text
+        assert "ACTIVE_REPLAY_INPUT_READY" in text
+        assert "does not emit ACTIVE_REPLAY_INPUT_READY" in text
+        assert "does not create active replay input" in text
+        assert "does not run replay" in text
+        assert "does not compute forward labels" in text
+        assert "does not train weights" in text
+        assert "does not create active stock profiles" in text
+        assert "does not create real buy-review eligibility" in text
+        assert "does not authorize trading" in text
+
+    checkpoint_text = checkpoint.read_text(encoding="utf-8")
+    assert "PAPER_WORKFLOW_READY" in checkpoint_text
+    assert "96fae2783877" in checkpoint_text
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources" in source_text
+    assert "intentionally absent from Git" in source_text
+    assert "after tag v1.35.0" in source_text
     assert not Path("docs/project_sources").exists()
 
 
@@ -5503,6 +5664,199 @@ def _active_replay_input_final_review_ready(root: Path):
             overclaim_evidence_bundle=_final_review_overclaim_bundle(input_root / "overclaim.json"),
             emission_request_manifest=_final_review_emission_request_manifest(input_root / "emission.json"),
         )
+    )
+
+
+def _active_replay_input_emission_ready(root: Path):
+    input_root = root / "manual_diagnostics" / "active_replay_input_emission_test_inputs"
+    final_review = _active_replay_input_final_review_ready(root)
+    final_review_artifact = final_review.artifact_path
+    final_review_health = _write_json(input_root / "final_review_health.json", {"health_status": "PASS"})
+    final_review_status = _write_json(
+        input_root / "final_review_status.json",
+        {
+            "status": "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW",
+            "workflow_stage": "FINAL_REVIEW_READY_FOR_EMISSION_REVIEW",
+            "ready_for_emission_review": True,
+            "active_replay_input_ready": False,
+            "active_replay_input": False,
+            "active_ready_emitted": False,
+        },
+    )
+    return run_active_replay_input_emission(
+        ActiveReplayInputEmissionSettings(
+            output_dir=root / "manual_diagnostics" / "active_replay_input_emission_v0_1",
+            final_review_artifact_path=final_review_artifact,
+            final_review_health_artifact_path=final_review_health,
+            final_review_status_artifact_path=final_review_status,
+            emission_request_manifest_path=_emission_request_manifest(input_root / "emission_request.json"),
+            emission_authority_manifest_path=_emission_authority_manifest(input_root / "authority.json"),
+            emission_attestation_manifest_path=_emission_attestation_manifest(input_root / "attestation.json"),
+            pit_source_evidence_bundle_path=_emission_pit_source_evidence(input_root / "pit_source.json"),
+            taxonomy_evidence_bundle_path=_emission_taxonomy_bundle(input_root / "taxonomy.json"),
+            leakage_side_effect_evidence_bundle_path=_emission_leakage_side_effect_bundle(
+                input_root / "leakage_side_effect.json"
+            ),
+            overclaim_evidence_bundle_path=_emission_overclaim_bundle(input_root / "overclaim.json"),
+        )
+    )
+
+
+def _emission_request_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "emission_request_id": "emission_request_001",
+            "requested_status": "EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW",
+            "requested_by": "fixture_reviewer",
+            "requested_at": "2024-04-02T20:00:00+08:00",
+            "request_reason": "fixture report-only active replay input emission review",
+            "allow_active_replay_input_ready_emission": False,
+            "allow_active_replay_input_creation": False,
+            "allow_replay_execution": False,
+            "allow_forward_labels": False,
+            "allow_training": False,
+            "allow_stock_profile": False,
+            "allow_buy_review": False,
+            "allow_trading": False,
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _emission_authority_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "emission_authority_id": "emission_authority_001",
+            "primary_reviewer": "primary_fixture_reviewer",
+            "second_reviewer": "second_fixture_reviewer",
+            "pit_source_reviewer": "pit_fixture_reviewer",
+            "evidence_taxonomy_reviewer": "evidence_fixture_reviewer",
+            "risk_compliance_reviewer": "risk_fixture_reviewer",
+            "system_operator": "operator_fixture",
+            "strategy_owner": "strategy_fixture_owner",
+            "authority_scope": "report-only active replay input emission review",
+            "authority_result": "ACCEPTED_FOR_REVIEW_ONLY",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _emission_attestation_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "attestation_id": "emission_attestation_001",
+            "primary_reviewer_attested": True,
+            "second_reviewer_attested": True,
+            "pit_source_reviewer_attested": True,
+            "evidence_taxonomy_reviewer_attested": True,
+            "risk_compliance_reviewer_attested": True,
+            "no_trading_authority_attested": True,
+            "no_performance_claim_attested": True,
+            "no_replay_execution_attested": True,
+            "attestation_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _emission_pit_source_evidence(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "pit_universe_evidence_attached": True,
+            "available_time_coverage_attached": True,
+            "source_id_coverage_attached": True,
+            "source_hash_coverage_attached": True,
+            "revision_id_coverage_attached": True,
+            "permission_class_coverage_attached": True,
+            "quality_status_coverage_attached": True,
+            "raw_evidence_refs_attached": True,
+            "replay_evidence_bundle_ref_attached": True,
+            "factor_definition_coverage_attached": True,
+            "factor_observation_coverage_attached": True,
+            "event_structured_coverage_attached": True,
+            "company_exposure_coverage_attached": True,
+            "attachment_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _emission_taxonomy_bundle(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "uses_8_layer_taxonomy": True,
+            "not_fixed_12_only": True,
+            "factor_layer_metadata_attached": True,
+            "trade_usage_metadata_attached": True,
+            "compliance_metadata_attached": True,
+            "taxonomy_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _emission_leakage_side_effect_bundle(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "no_future_labels": True,
+            "no_forward_returns": True,
+            "no_training_outputs": True,
+            "no_model_weights": True,
+            "no_stock_profile_artifacts": True,
+            "no_buy_review_eligibility": True,
+            "no_approved_for_paper": True,
+            "no_order_placed": True,
+            "no_message_sent": True,
+            "no_broker_api_called": True,
+            "no_llm_api_called": True,
+            "no_external_api_called": True,
+            "no_cache_mutated": True,
+            "no_data_raw_written": True,
+            "no_data_processed_written": True,
+            "no_data_cache_written": True,
+            "no_current_candidates_run": True,
+            "no_snapshot_built": True,
+            "no_signal_semantics_changed": True,
+            "leakage_side_effect_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _emission_overclaim_bundle(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "pass_candidate_not_active_ready": True,
+            "smoke_not_active_ready": True,
+            "promotion_not_active_ready": True,
+            "acceptance_not_active_ready": True,
+            "active_ready_final_review_not_active_ready": True,
+            "final_review_ready_not_active_input_ready": True,
+            "emission_ready_review_not_active_input_ready": True,
+            "active_input_ready_not_replay": True,
+            "active_input_ready_not_labels": True,
+            "active_input_ready_not_training": True,
+            "active_input_ready_not_stock_profile": True,
+            "active_input_ready_not_buy_review": True,
+            "active_input_ready_not_trading": True,
+            "active_input_ready_not_performance_validation": True,
+            "overclaim_result": "PASS",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
     )
 
 
