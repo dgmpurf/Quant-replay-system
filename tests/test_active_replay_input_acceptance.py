@@ -385,9 +385,9 @@ def test_status_reports_no_input_and_health_failed_stages(tmp_path: Path) -> Non
     assert failed_status.health_status == "FAIL"
 
 
-def test_artifact_view_cli_commands_run_without_research_status_integration(tmp_path: Path) -> None:
+def test_artifact_view_cli_commands_and_research_status_integration_remain_report_only(tmp_path: Path) -> None:
     root = _acceptance_output_dir(tmp_path)
-    _run_ready_acceptance(tmp_path, root)
+    acceptance = _run_ready_acceptance(tmp_path, root)
 
     commands = [
         ("active-replay-input-acceptance-index", "artifact_count: 1"),
@@ -414,9 +414,28 @@ def test_artifact_view_cli_commands_run_without_research_status_integration(tmp_
         assert expected_text in completed.stdout
         assert "No active replay input" in completed.stdout
 
-    dashboard_source = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
-    assert "run_active_replay_input_acceptance_status" not in dashboard_source
-    assert "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS" not in dashboard_source
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quant_replay_system.cli",
+            "research-status",
+            "--root",
+            str(tmp_path / "outputs" / "reports"),
+            "--output-dir",
+            str(tmp_path / "dashboard"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert f"latest_active_replay_input_acceptance_run_id: {acceptance.acceptance_run_id}" in completed.stdout
+    assert "latest_active_replay_input_acceptance_status: ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW" in completed.stdout
+    assert "active_replay_input_acceptance_active_replay_input_ready: False" in completed.stdout
+    assert "active_replay_input_acceptance_active_replay_input: False" in completed.stdout
+    assert "active_replay_input_acceptance_active_ready_emitted: False" in completed.stdout
+    assert "ACTIVE_REPLAY_INPUT_READY" not in completed.stdout
     assert not Path("docs/project_sources").exists()
 
 

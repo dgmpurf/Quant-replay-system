@@ -26,6 +26,10 @@ from quant_replay_system.active_replay_input_promotion import (
     ActiveReplayInputPromotionSettings,
     run_active_replay_input_promotion,
 )
+from quant_replay_system.active_replay_input_acceptance import (
+    ActiveReplayInputAcceptanceSettings,
+    run_active_replay_input_acceptance,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -2267,6 +2271,156 @@ def test_cli_research_status_prints_active_replay_input_promotion_fields(
     assert "active_replay_input_promotion_no_order_placement: True" in output.out
     assert "active_replay_input_promotion_no_message_sent: True" in output.out
     assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+
+
+def test_research_status_includes_active_replay_input_acceptance_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    acceptance = _active_replay_input_acceptance_ready(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS"
+    ].iloc[0]
+
+    assert result.active_replay_input_acceptance_implemented is True
+    assert result.active_replay_input_acceptance_views_implemented is True
+    assert result.latest_active_replay_input_acceptance_run_id == acceptance.acceptance_run_id
+    assert result.latest_active_replay_input_acceptance_status == "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW"
+    assert result.latest_active_replay_input_acceptance_health_status == "PASS"
+    assert result.latest_active_replay_input_acceptance_workflow_stage == "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW"
+    assert result.active_replay_input_acceptance_ready_for_active_ready_review is True
+    assert result.active_replay_input_acceptance_active_replay_input_ready is False
+    assert result.active_replay_input_acceptance_active_replay_input is False
+    assert result.active_replay_input_acceptance_active_ready_emitted is False
+    assert result.active_replay_input_acceptance_forward_labels_exist is False
+    assert result.active_replay_input_acceptance_weights_trained is False
+    assert result.active_replay_input_acceptance_active_stock_profile_exists is False
+    assert result.active_replay_input_acceptance_real_buy_review_eligible is False
+    assert result.active_replay_input_acceptance_approval_applied is False
+    assert result.active_replay_input_acceptance_order_placed is False
+    assert result.active_replay_input_acceptance_llm_api_called is False
+    assert result.active_replay_input_acceptance_external_api_called is False
+    assert result.active_replay_input_acceptance_cache_mutated is False
+    assert result.active_replay_input_acceptance_current_candidates_run is False
+    assert result.active_replay_input_acceptance_snapshot_built is False
+    assert result.active_replay_input_acceptance_signal_semantics_changed is False
+    assert result.active_replay_input_acceptance_report_only is True
+    assert result.active_replay_input_acceptance_diagnostic_only is True
+    assert result.active_replay_input_acceptance_no_live_trading is True
+    assert result.active_replay_input_acceptance_no_broker_api is True
+    assert result.active_replay_input_acceptance_no_order_placement is True
+    assert result.active_replay_input_acceptance_no_message_sent is True
+    assert result.workflow_stage == "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW"
+    assert result.workflow_stage != "ACTIVE_REPLAY_INPUT_READY"
+    assert row["status"] == "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW"
+
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str)
+    metadata = json.loads(Path(result.artifact_paths["metadata"]).read_text(encoding="utf-8"))
+    assert summary.loc[0, "latest_active_replay_input_acceptance_run_id"] == acceptance.acceptance_run_id
+    assert summary.loc[0, "active_replay_input_acceptance_active_replay_input_ready"] == "False"
+    assert metadata["latest_active_replay_input_acceptance_workflow_stage"] == (
+        "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW"
+    )
+    assert metadata["active_replay_input_acceptance_active_replay_input_ready"] is False
+    assert metadata["active_replay_input_acceptance_active_replay_input"] is False
+    assert metadata["active_replay_input_acceptance_active_ready_emitted"] is False
+
+
+def test_research_status_preserves_paper_priority_over_active_replay_input_acceptance(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    _active_replay_input_acceptance_ready(root)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_active_replay_input_acceptance_workflow_stage == (
+        "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW"
+    )
+    assert result.active_replay_input_acceptance_ready_for_active_ready_review is True
+    assert result.active_replay_input_acceptance_active_replay_input_ready is False
+    assert result.active_replay_input_acceptance_active_replay_input is False
+    assert result.active_replay_input_acceptance_active_ready_emitted is False
+
+
+def test_cli_research_status_prints_active_replay_input_acceptance_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    root.mkdir(parents=True, exist_ok=True)
+    acceptance = _active_replay_input_acceptance_ready(root)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert f"latest_active_replay_input_acceptance_run_id: {acceptance.acceptance_run_id}" in output.out
+    assert "latest_active_replay_input_acceptance_status: ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW" in output.out
+    assert "latest_active_replay_input_acceptance_health_status: PASS" in output.out
+    assert (
+        "latest_active_replay_input_acceptance_workflow_stage: ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW"
+        in output.out
+    )
+    assert "active_replay_input_acceptance_ready_for_active_ready_review: True" in output.out
+    assert "active_replay_input_acceptance_active_replay_input_ready: False" in output.out
+    assert "active_replay_input_acceptance_active_replay_input: False" in output.out
+    assert "active_replay_input_acceptance_active_ready_emitted: False" in output.out
+    assert "active_replay_input_acceptance_forward_labels_exist: False" in output.out
+    assert "active_replay_input_acceptance_weights_trained: False" in output.out
+    assert "active_replay_input_acceptance_active_stock_profile_exists: False" in output.out
+    assert "active_replay_input_acceptance_real_buy_review_eligible: False" in output.out
+    assert "active_replay_input_acceptance_approval_applied: False" in output.out
+    assert "active_replay_input_acceptance_order_placed: False" in output.out
+    assert "active_replay_input_acceptance_llm_api_called: False" in output.out
+    assert "active_replay_input_acceptance_external_api_called: False" in output.out
+    assert "active_replay_input_acceptance_cache_mutated: False" in output.out
+    assert "active_replay_input_acceptance_current_candidates_run: False" in output.out
+    assert "active_replay_input_acceptance_snapshot_built: False" in output.out
+    assert "active_replay_input_acceptance_signal_semantics_changed: False" in output.out
+    assert "active_replay_input_acceptance_report_only: True" in output.out
+    assert "active_replay_input_acceptance_diagnostic_only: True" in output.out
+    assert "active_replay_input_acceptance_no_live_trading: True" in output.out
+    assert "active_replay_input_acceptance_no_broker_api: True" in output.out
+    assert "active_replay_input_acceptance_no_order_placement: True" in output.out
+    assert "active_replay_input_acceptance_no_message_sent: True" in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+
+
+def test_active_replay_input_acceptance_checkpoint_docs_and_project_source_policy() -> None:
+    doc = Path("docs/active_replay_input_acceptance.md")
+    checkpoint = Path("docs/release_checkpoint_v1.32.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_32_0.md")
+
+    for path in [doc, checkpoint, source_note]:
+        assert path.exists()
+        text = path.read_text(encoding="utf-8")
+        assert "active-replay-input-acceptance" in text
+        assert "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW" in text
+        assert "ACTIVE_REPLAY_INPUT_READY" in text
+        assert "does not create active replay input" in text
+        assert "does not run replay" in text
+        assert "does not compute forward labels" in text
+        assert "does not train weights" in text
+        assert "does not create active stock profiles" in text
+        assert "does not create real buy-review eligibility" in text
+
+    assert "PAPER_WORKFLOW_READY" in checkpoint.read_text(encoding="utf-8")
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources" in source_text
+    assert "intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
 
 
 def test_dashboard_includes_universe_profile_policy_audit_when_no_later_workflow_exists(
@@ -4737,6 +4891,147 @@ def _active_replay_input_promotion_review_manifest(path: Path) -> Path:
     }
     path.write_text(json.dumps(review, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def _active_replay_input_acceptance_ready(root: Path):
+    input_root = root / "manual_diagnostics" / "active_replay_input_acceptance_test_inputs"
+    promotion = _active_replay_input_promotion_ready(root)
+    promotion_artifact = promotion.artifact_path
+    request = _active_replay_input_acceptance_request_manifest(
+        input_root / "acceptance_request.json",
+        promotion_artifact,
+    )
+    authority = _active_replay_input_acceptance_authority_manifest(input_root / "authority.json")
+    attestation = _active_replay_input_acceptance_attestation_manifest(input_root / "attestation.json")
+    second_review = _active_replay_input_acceptance_second_review_manifest(input_root / "second_review.json")
+    red_team = _active_replay_input_acceptance_red_team_manifest(input_root / "red_team.json")
+    promotion_health = _write_json(input_root / "promotion_health.json", {"health_status": "PASS"})
+    promotion_status = _write_json(
+        input_root / "promotion_status.json",
+        {"status": "PROMOTION_READY_FOR_HUMAN_REVIEW", "ready_for_human_review": True},
+    )
+    return run_active_replay_input_acceptance(
+        ActiveReplayInputAcceptanceSettings(
+            output_dir=root / "manual_diagnostics" / "active_replay_input_acceptance_v0_1",
+            promotion_artifact=promotion_artifact,
+            promotion_health_artifact=promotion_health,
+            promotion_status_artifact=promotion_status,
+            acceptance_request_manifest=request,
+            reviewer_authority_manifest=authority,
+            manual_attestation_manifest=attestation,
+            second_review_manifest=second_review,
+            red_team_review_manifest=red_team,
+        )
+    )
+
+
+def _active_replay_input_acceptance_request_manifest(path: Path, promotion_artifact: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "acceptance_request_id": "acceptance_request_001",
+            "requested_by": "fixture_reviewer",
+            "requested_at": "2024-04-02T17:00:00+08:00",
+            "request_reason": "fixture report-only acceptance",
+            "promotion_artifact_ref": str(promotion_artifact),
+            "requested_status": "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW",
+            "report_only": True,
+            "diagnostic_only": True,
+            "active_replay_input_ready": False,
+            "active_replay_input": False,
+            "active_ready_emitted": False,
+            "forward_labels_exist": False,
+            "weights_trained": False,
+            "active_stock_profile_exists": False,
+            "real_buy_review_eligible": False,
+            "approval_applied": False,
+            "order_placed": False,
+            "llm_api_called": False,
+            "external_api_called": False,
+            "cache_mutated": False,
+            "current_candidates_run": False,
+            "snapshot_built": False,
+            "signal_semantics_changed": False,
+        },
+    )
+
+
+def _active_replay_input_acceptance_authority_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "reviewer_authority_id": "authority_001",
+            "primary_reviewer": "primary_fixture_reviewer",
+            "primary_reviewer_role": "research_governance_reviewer",
+            "second_reviewer": "second_fixture_reviewer",
+            "red_team_reviewer": "red_team_fixture_reviewer",
+            "data_source_reviewer": "source_fixture_reviewer",
+            "strategy_owner": "strategy_fixture_owner",
+            "authority_scope": "review-only acceptance for active-ready review",
+            "authority_result": "ACCEPTED_FOR_REVIEW_ONLY",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _active_replay_input_acceptance_attestation_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "pit_validity_attested": True,
+            "source_permission_attested": True,
+            "source_hash_revision_attested": True,
+            "no_future_labels_attested": True,
+            "no_training_leakage_attested": True,
+            "no_stock_profile_leakage_attested": True,
+            "no_buy_review_eligibility_attested": True,
+            "no_active_ready_attested": True,
+            "no_side_effects_attested": True,
+            "no_trading_authorization_attested": True,
+            "report_only": True,
+            "diagnostic_only": True,
+            "attestation_result": "ACCEPTED_FOR_REVIEW_ONLY",
+        },
+    )
+
+
+def _active_replay_input_acceptance_second_review_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "second_review_id": "second_review_001",
+            "reviewer": "second_fixture_reviewer",
+            "reviewed_at": "2024-04-02T17:10:00+08:00",
+            "pit_reviewed": True,
+            "source_reviewed": True,
+            "evidence_reviewed": True,
+            "leakage_reviewed": True,
+            "side_effect_reviewed": True,
+            "overclaim_wording_reviewed": True,
+            "review_result": "ACCEPTED_FOR_REVIEW_ONLY",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
+
+
+def _active_replay_input_acceptance_red_team_manifest(path: Path) -> Path:
+    return _write_json(
+        path,
+        {
+            "red_team_review_id": "red_team_001",
+            "reviewer": "red_team_fixture_reviewer",
+            "reviewed_at": "2024-04-02T17:20:00+08:00",
+            "attempted_to_find_future_leakage": True,
+            "attempted_to_find_permission_gap": True,
+            "attempted_to_find_overclaim": True,
+            "attempted_to_find_side_effect_risk": True,
+            "red_team_result": "ACCEPTED_FOR_REVIEW_ONLY",
+            "report_only": True,
+            "diagnostic_only": True,
+        },
+    )
 
 
 def _workflow_to_current_candidates(root: Path) -> Path:
@@ -8493,9 +8788,10 @@ def _market_update_handoff_artifact(
     return artifact_dir
 
 
-def _write_json(path: Path, payload: dict) -> None:
+def _write_json(path: Path, payload: dict) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    return path
 
 
 def test_research_status_includes_reviewer_no_hit_acceptance_when_active(tmp_path: Path) -> None:

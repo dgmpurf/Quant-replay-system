@@ -92,6 +92,9 @@ from quant_replay_system.minimal_replay_input_package_fixture_smoke_status impor
 from quant_replay_system.active_replay_input_promotion_status import (
     run_active_replay_input_promotion_status,
 )
+from quant_replay_system.active_replay_input_acceptance_status import (
+    run_active_replay_input_acceptance_status,
+)
 from quant_replay_system.universe_profile_policy_audit_status import run_universe_profile_policy_audit_status
 from quant_replay_system.universe_profile_split_worklist_plan_status import (
     run_universe_profile_split_worklist_plan_status,
@@ -604,6 +607,37 @@ SUMMARY_COLUMNS = [
     "active_replay_input_promotion_no_message_sent",
     "active_replay_input_promotion_report_path",
     "active_replay_input_promotion_next_action",
+    "active_replay_input_acceptance_implemented",
+    "active_replay_input_acceptance_views_implemented",
+    "latest_active_replay_input_acceptance_run_id",
+    "latest_active_replay_input_acceptance_status",
+    "latest_active_replay_input_acceptance_health_status",
+    "latest_active_replay_input_acceptance_workflow_stage",
+    "active_replay_input_acceptance_artifact_path",
+    "active_replay_input_acceptance_ready_for_active_ready_review",
+    "active_replay_input_acceptance_active_replay_input_ready",
+    "active_replay_input_acceptance_active_replay_input",
+    "active_replay_input_acceptance_active_ready_emitted",
+    "active_replay_input_acceptance_forward_labels_exist",
+    "active_replay_input_acceptance_weights_trained",
+    "active_replay_input_acceptance_active_stock_profile_exists",
+    "active_replay_input_acceptance_real_buy_review_eligible",
+    "active_replay_input_acceptance_approval_applied",
+    "active_replay_input_acceptance_order_placed",
+    "active_replay_input_acceptance_llm_api_called",
+    "active_replay_input_acceptance_external_api_called",
+    "active_replay_input_acceptance_cache_mutated",
+    "active_replay_input_acceptance_current_candidates_run",
+    "active_replay_input_acceptance_snapshot_built",
+    "active_replay_input_acceptance_signal_semantics_changed",
+    "active_replay_input_acceptance_report_only",
+    "active_replay_input_acceptance_diagnostic_only",
+    "active_replay_input_acceptance_no_live_trading",
+    "active_replay_input_acceptance_no_broker_api",
+    "active_replay_input_acceptance_no_order_placement",
+    "active_replay_input_acceptance_no_message_sent",
+    "active_replay_input_acceptance_report_path",
+    "active_replay_input_acceptance_next_action",
     "universe_profile_policy_audit_status",
     "latest_universe_profile_policy_audit_id",
     "universe_profile_policy_audit_stage",
@@ -936,6 +970,7 @@ COMPONENTS = [
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS",
     "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS",
     "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS",
+    "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -993,6 +1028,7 @@ WORKFLOW_AREAS = {
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
     "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS": "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE",
     "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS": "ACTIVE_REPLAY_INPUT_PROMOTION",
+    "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS": "ACTIVE_REPLAY_INPUT_ACCEPTANCE",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS": "REVIEWED_REPLACEMENT_WORKLIST_PLAN",
@@ -1493,6 +1529,37 @@ class LocalResearchDashboardResult:
     active_replay_input_promotion_no_message_sent: bool
     active_replay_input_promotion_report_path: str
     active_replay_input_promotion_next_action: str
+    active_replay_input_acceptance_implemented: bool
+    active_replay_input_acceptance_views_implemented: bool
+    latest_active_replay_input_acceptance_run_id: str
+    latest_active_replay_input_acceptance_status: str
+    latest_active_replay_input_acceptance_health_status: str
+    latest_active_replay_input_acceptance_workflow_stage: str
+    active_replay_input_acceptance_artifact_path: str
+    active_replay_input_acceptance_ready_for_active_ready_review: bool
+    active_replay_input_acceptance_active_replay_input_ready: bool
+    active_replay_input_acceptance_active_replay_input: bool
+    active_replay_input_acceptance_active_ready_emitted: bool
+    active_replay_input_acceptance_forward_labels_exist: bool
+    active_replay_input_acceptance_weights_trained: bool
+    active_replay_input_acceptance_active_stock_profile_exists: bool
+    active_replay_input_acceptance_real_buy_review_eligible: bool
+    active_replay_input_acceptance_approval_applied: bool
+    active_replay_input_acceptance_order_placed: bool
+    active_replay_input_acceptance_llm_api_called: bool
+    active_replay_input_acceptance_external_api_called: bool
+    active_replay_input_acceptance_cache_mutated: bool
+    active_replay_input_acceptance_current_candidates_run: bool
+    active_replay_input_acceptance_snapshot_built: bool
+    active_replay_input_acceptance_signal_semantics_changed: bool
+    active_replay_input_acceptance_report_only: bool
+    active_replay_input_acceptance_diagnostic_only: bool
+    active_replay_input_acceptance_no_live_trading: bool
+    active_replay_input_acceptance_no_broker_api: bool
+    active_replay_input_acceptance_no_order_placement: bool
+    active_replay_input_acceptance_no_message_sent: bool
+    active_replay_input_acceptance_report_path: str
+    active_replay_input_acceptance_next_action: str
     universe_profile_policy_audit_status: str
     latest_universe_profile_policy_audit_id: str
     universe_profile_policy_audit_stage: str
@@ -1805,6 +1872,7 @@ def run_local_research_dashboard(
     historical_replay_input_gate_validator_root: str | Path | None = None,
     minimal_replay_input_package_fixture_smoke_root: str | Path | None = None,
     active_replay_input_promotion_root: str | Path | None = None,
+    active_replay_input_acceptance_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
     reviewed_replacement_worklist_plan_root: str | Path | None = None,
@@ -1987,6 +2055,11 @@ def run_local_research_dashboard(
         if active_replay_input_promotion_root is not None
         else effective_root / "manual_diagnostics" / "active_replay_input_promotion_v0_1"
     )
+    effective_active_replay_input_acceptance_root = (
+        Path(active_replay_input_acceptance_root)
+        if active_replay_input_acceptance_root is not None
+        else effective_root / "manual_diagnostics" / "active_replay_input_acceptance_v0_1"
+    )
     effective_universe_profile_policy_audit_root = (
         Path(universe_profile_policy_audit_root)
         if universe_profile_policy_audit_root is not None
@@ -2166,6 +2239,10 @@ def run_local_research_dashboard(
             effective_active_replay_input_promotion_root = (
                 effective_root / "manual_diagnostics" / "active_replay_input_promotion_v0_1"
             )
+        if active_replay_input_acceptance_root is None:
+            effective_active_replay_input_acceptance_root = (
+                effective_root / "manual_diagnostics" / "active_replay_input_acceptance_v0_1"
+            )
         if universe_profile_policy_audit_root is None:
             effective_universe_profile_policy_audit_root = effective_root / "universe_profile_policy_audit"
         if universe_profile_split_worklist_plan_root is None:
@@ -2246,6 +2323,7 @@ def run_local_research_dashboard(
             effective_minimal_replay_input_package_fixture_smoke_root
         ),
         active_replay_input_promotion_root=effective_active_replay_input_promotion_root,
+        active_replay_input_acceptance_root=effective_active_replay_input_acceptance_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=effective_reviewed_replacement_worklist_plan_root,
@@ -2331,6 +2409,7 @@ def run_local_research_dashboard(
             effective_minimal_replay_input_package_fixture_smoke_root
         ),
         "active_replay_input_promotion_root": effective_active_replay_input_promotion_root,
+        "active_replay_input_acceptance_root": effective_active_replay_input_acceptance_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
         "reviewed_replacement_worklist_plan_root": effective_reviewed_replacement_worklist_plan_root,
@@ -3587,6 +3666,99 @@ def run_local_research_dashboard(
         active_replay_input_promotion_next_action=str(
             summary.get("active_replay_input_promotion_next_action", "")
         ),
+        active_replay_input_acceptance_implemented=_bool_from_text(
+            summary.get("active_replay_input_acceptance_implemented")
+        ),
+        active_replay_input_acceptance_views_implemented=_bool_from_text(
+            summary.get("active_replay_input_acceptance_views_implemented")
+        ),
+        latest_active_replay_input_acceptance_run_id=str(
+            summary.get("latest_active_replay_input_acceptance_run_id", "")
+        ),
+        latest_active_replay_input_acceptance_status=str(
+            summary.get("latest_active_replay_input_acceptance_status", "MISSING")
+        ),
+        latest_active_replay_input_acceptance_health_status=str(
+            summary.get("latest_active_replay_input_acceptance_health_status", "")
+        ),
+        latest_active_replay_input_acceptance_workflow_stage=str(
+            summary.get("latest_active_replay_input_acceptance_workflow_stage", "")
+        ),
+        active_replay_input_acceptance_artifact_path=str(
+            summary.get("active_replay_input_acceptance_artifact_path", "")
+        ),
+        active_replay_input_acceptance_ready_for_active_ready_review=_bool_from_text(
+            summary.get("active_replay_input_acceptance_ready_for_active_ready_review")
+        ),
+        active_replay_input_acceptance_active_replay_input_ready=_bool_from_text(
+            summary.get("active_replay_input_acceptance_active_replay_input_ready")
+        ),
+        active_replay_input_acceptance_active_replay_input=_bool_from_text(
+            summary.get("active_replay_input_acceptance_active_replay_input")
+        ),
+        active_replay_input_acceptance_active_ready_emitted=_bool_from_text(
+            summary.get("active_replay_input_acceptance_active_ready_emitted")
+        ),
+        active_replay_input_acceptance_forward_labels_exist=_bool_from_text(
+            summary.get("active_replay_input_acceptance_forward_labels_exist")
+        ),
+        active_replay_input_acceptance_weights_trained=_bool_from_text(
+            summary.get("active_replay_input_acceptance_weights_trained")
+        ),
+        active_replay_input_acceptance_active_stock_profile_exists=_bool_from_text(
+            summary.get("active_replay_input_acceptance_active_stock_profile_exists")
+        ),
+        active_replay_input_acceptance_real_buy_review_eligible=_bool_from_text(
+            summary.get("active_replay_input_acceptance_real_buy_review_eligible")
+        ),
+        active_replay_input_acceptance_approval_applied=_bool_from_text(
+            summary.get("active_replay_input_acceptance_approval_applied")
+        ),
+        active_replay_input_acceptance_order_placed=_bool_from_text(
+            summary.get("active_replay_input_acceptance_order_placed")
+        ),
+        active_replay_input_acceptance_llm_api_called=_bool_from_text(
+            summary.get("active_replay_input_acceptance_llm_api_called")
+        ),
+        active_replay_input_acceptance_external_api_called=_bool_from_text(
+            summary.get("active_replay_input_acceptance_external_api_called")
+        ),
+        active_replay_input_acceptance_cache_mutated=_bool_from_text(
+            summary.get("active_replay_input_acceptance_cache_mutated")
+        ),
+        active_replay_input_acceptance_current_candidates_run=_bool_from_text(
+            summary.get("active_replay_input_acceptance_current_candidates_run")
+        ),
+        active_replay_input_acceptance_snapshot_built=_bool_from_text(
+            summary.get("active_replay_input_acceptance_snapshot_built")
+        ),
+        active_replay_input_acceptance_signal_semantics_changed=_bool_from_text(
+            summary.get("active_replay_input_acceptance_signal_semantics_changed")
+        ),
+        active_replay_input_acceptance_report_only=_bool_from_text(
+            summary.get("active_replay_input_acceptance_report_only")
+        ),
+        active_replay_input_acceptance_diagnostic_only=_bool_from_text(
+            summary.get("active_replay_input_acceptance_diagnostic_only")
+        ),
+        active_replay_input_acceptance_no_live_trading=_bool_from_text(
+            summary.get("active_replay_input_acceptance_no_live_trading")
+        ),
+        active_replay_input_acceptance_no_broker_api=_bool_from_text(
+            summary.get("active_replay_input_acceptance_no_broker_api")
+        ),
+        active_replay_input_acceptance_no_order_placement=_bool_from_text(
+            summary.get("active_replay_input_acceptance_no_order_placement")
+        ),
+        active_replay_input_acceptance_no_message_sent=_bool_from_text(
+            summary.get("active_replay_input_acceptance_no_message_sent")
+        ),
+        active_replay_input_acceptance_report_path=str(
+            summary.get("active_replay_input_acceptance_report_path", "")
+        ),
+        active_replay_input_acceptance_next_action=str(
+            summary.get("active_replay_input_acceptance_next_action", "")
+        ),
         universe_profile_policy_audit_status=str(
             summary.get("universe_profile_policy_audit_status", "MISSING")
         ),
@@ -4228,6 +4400,7 @@ def scan_local_research_workflow_artifacts(
     historical_replay_input_gate_validator_root: str | Path,
     minimal_replay_input_package_fixture_smoke_root: str | Path,
     active_replay_input_promotion_root: str | Path,
+    active_replay_input_acceptance_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
     reviewed_replacement_worklist_plan_root: str | Path,
@@ -4280,6 +4453,7 @@ def scan_local_research_workflow_artifacts(
     historical_replay_input_gate_validator_path = Path(historical_replay_input_gate_validator_root)
     minimal_replay_input_package_fixture_smoke_path = Path(minimal_replay_input_package_fixture_smoke_root)
     active_replay_input_promotion_path = Path(active_replay_input_promotion_root)
+    active_replay_input_acceptance_path = Path(active_replay_input_acceptance_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
     reviewed_replacement_worklist_plan_path = Path(reviewed_replacement_worklist_plan_root)
@@ -4354,6 +4528,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_historical_replay_input_gate_validator_status(historical_replay_input_gate_validator_path))
     records.extend(_scan_minimal_replay_input_package_fixture_smoke_status(minimal_replay_input_package_fixture_smoke_path))
     records.extend(_scan_active_replay_input_promotion_status(active_replay_input_promotion_path))
+    records.extend(_scan_active_replay_input_acceptance_status(active_replay_input_acceptance_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
     records.extend(_scan_reviewed_replacement_worklist_plan_status(reviewed_replacement_worklist_plan_path))
@@ -7913,6 +8088,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             return "INPUT_GATE_VALIDATOR_BLOCKED"
         if statuses["MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS"] == "FAIL":
             return "SMOKE_HEALTH_FAILED"
+        if statuses["ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS"] == "FAIL":
+            return "ACCEPTANCE_HEALTH_FAILED"
         if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
@@ -8115,6 +8292,18 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
     ):
         return _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
+    if (
+        statuses["ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS"]
+        in {
+            "NO_ACCEPTANCE_INPUT",
+            "ACCEPTANCE_NO_INPUT",
+            "ACCEPTANCE_READY_FOR_ACTIVE_READY_REVIEW",
+            "ACCEPTANCE_BLOCKED",
+            "ACCEPTANCE_HEALTH_FAILED",
+        }
+        and _active_replay_input_acceptance_stage_from_frame(dashboard_frame)
+    ):
+        return _active_replay_input_acceptance_stage_from_frame(dashboard_frame)
     if (
         statuses["ACTIVE_REPLAY_INPUT_PROMOTION_STATUS"]
         in {"NO_PROMOTION_INPUT", "PROMOTION_READY_FOR_HUMAN_REVIEW", "PROMOTION_BLOCKED", "PROMOTION_HEALTH_FAILED"}
@@ -8458,6 +8647,7 @@ def summarize_local_research_status(
                     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS",
                     "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS",
                     "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS",
+                    "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
                     "REVIEWED_REPLACEMENT_WORKLIST_PLAN_STATUS",
@@ -10537,6 +10727,128 @@ def summarize_local_research_status(
         ),
         "active_replay_input_promotion_next_action": _parse_note_value(
             by_component.get("ACTIVE_REPLAY_INPUT_PROMOTION_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "active_replay_input_acceptance_implemented": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "active_replay_input_acceptance_views_implemented": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_active_replay_input_acceptance_run_id": _string_or_empty(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_active_replay_input_acceptance_status": _component_status(
+            by_component,
+            "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS",
+        ),
+        "latest_active_replay_input_acceptance_health_status": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_active_replay_input_acceptance_workflow_stage": _string_or_empty(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("stage")
+        ),
+        "active_replay_input_acceptance_artifact_path": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "active_replay_input_acceptance_ready_for_active_ready_review": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "ready_for_active_ready_review",
+        ),
+        "active_replay_input_acceptance_active_replay_input_ready": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "active_replay_input_ready",
+        ),
+        "active_replay_input_acceptance_active_replay_input": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "active_replay_input",
+        ),
+        "active_replay_input_acceptance_active_ready_emitted": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "active_ready_emitted",
+        ),
+        "active_replay_input_acceptance_forward_labels_exist": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "active_replay_input_acceptance_weights_trained": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "active_replay_input_acceptance_active_stock_profile_exists": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "active_replay_input_acceptance_real_buy_review_eligible": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "active_replay_input_acceptance_approval_applied": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "approval_applied",
+        ),
+        "active_replay_input_acceptance_order_placed": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "order_placed",
+        ),
+        "active_replay_input_acceptance_llm_api_called": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "active_replay_input_acceptance_external_api_called": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "active_replay_input_acceptance_cache_mutated": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "cache_mutated",
+        ),
+        "active_replay_input_acceptance_current_candidates_run": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "active_replay_input_acceptance_snapshot_built": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "active_replay_input_acceptance_signal_semantics_changed": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "active_replay_input_acceptance_report_only": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "active_replay_input_acceptance_diagnostic_only": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "active_replay_input_acceptance_no_live_trading": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "active_replay_input_acceptance_no_broker_api": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "active_replay_input_acceptance_no_order_placement": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "active_replay_input_acceptance_no_message_sent": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "no_message_sent",
+        ),
+        "active_replay_input_acceptance_report_path": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "active_replay_input_acceptance_next_action": _parse_note_value(
+            by_component.get("ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -13122,6 +13434,99 @@ def build_local_research_dashboard_metadata(
         "active_replay_input_promotion_next_action": (
             result.active_replay_input_promotion_next_action
         ),
+        "active_replay_input_acceptance_implemented": (
+            result.active_replay_input_acceptance_implemented
+        ),
+        "active_replay_input_acceptance_views_implemented": (
+            result.active_replay_input_acceptance_views_implemented
+        ),
+        "latest_active_replay_input_acceptance_run_id": (
+            result.latest_active_replay_input_acceptance_run_id
+        ),
+        "latest_active_replay_input_acceptance_status": (
+            result.latest_active_replay_input_acceptance_status
+        ),
+        "latest_active_replay_input_acceptance_health_status": (
+            result.latest_active_replay_input_acceptance_health_status
+        ),
+        "latest_active_replay_input_acceptance_workflow_stage": (
+            result.latest_active_replay_input_acceptance_workflow_stage
+        ),
+        "active_replay_input_acceptance_artifact_path": (
+            result.active_replay_input_acceptance_artifact_path
+        ),
+        "active_replay_input_acceptance_ready_for_active_ready_review": (
+            result.active_replay_input_acceptance_ready_for_active_ready_review
+        ),
+        "active_replay_input_acceptance_active_replay_input_ready": (
+            result.active_replay_input_acceptance_active_replay_input_ready
+        ),
+        "active_replay_input_acceptance_active_replay_input": (
+            result.active_replay_input_acceptance_active_replay_input
+        ),
+        "active_replay_input_acceptance_active_ready_emitted": (
+            result.active_replay_input_acceptance_active_ready_emitted
+        ),
+        "active_replay_input_acceptance_forward_labels_exist": (
+            result.active_replay_input_acceptance_forward_labels_exist
+        ),
+        "active_replay_input_acceptance_weights_trained": (
+            result.active_replay_input_acceptance_weights_trained
+        ),
+        "active_replay_input_acceptance_active_stock_profile_exists": (
+            result.active_replay_input_acceptance_active_stock_profile_exists
+        ),
+        "active_replay_input_acceptance_real_buy_review_eligible": (
+            result.active_replay_input_acceptance_real_buy_review_eligible
+        ),
+        "active_replay_input_acceptance_approval_applied": (
+            result.active_replay_input_acceptance_approval_applied
+        ),
+        "active_replay_input_acceptance_order_placed": (
+            result.active_replay_input_acceptance_order_placed
+        ),
+        "active_replay_input_acceptance_llm_api_called": (
+            result.active_replay_input_acceptance_llm_api_called
+        ),
+        "active_replay_input_acceptance_external_api_called": (
+            result.active_replay_input_acceptance_external_api_called
+        ),
+        "active_replay_input_acceptance_cache_mutated": (
+            result.active_replay_input_acceptance_cache_mutated
+        ),
+        "active_replay_input_acceptance_current_candidates_run": (
+            result.active_replay_input_acceptance_current_candidates_run
+        ),
+        "active_replay_input_acceptance_snapshot_built": (
+            result.active_replay_input_acceptance_snapshot_built
+        ),
+        "active_replay_input_acceptance_signal_semantics_changed": (
+            result.active_replay_input_acceptance_signal_semantics_changed
+        ),
+        "active_replay_input_acceptance_report_only": (
+            result.active_replay_input_acceptance_report_only
+        ),
+        "active_replay_input_acceptance_diagnostic_only": (
+            result.active_replay_input_acceptance_diagnostic_only
+        ),
+        "active_replay_input_acceptance_no_live_trading": (
+            result.active_replay_input_acceptance_no_live_trading
+        ),
+        "active_replay_input_acceptance_no_broker_api": (
+            result.active_replay_input_acceptance_no_broker_api
+        ),
+        "active_replay_input_acceptance_no_order_placement": (
+            result.active_replay_input_acceptance_no_order_placement
+        ),
+        "active_replay_input_acceptance_no_message_sent": (
+            result.active_replay_input_acceptance_no_message_sent
+        ),
+        "active_replay_input_acceptance_report_path": (
+            result.active_replay_input_acceptance_report_path
+        ),
+        "active_replay_input_acceptance_next_action": (
+            result.active_replay_input_acceptance_next_action
+        ),
         "next_manual_action": result.next_manual_action,
         "total_warning_count": _int_or_zero(summary.get("total_warning_count")),
         "expected_reviewable_warning_count": _int_or_zero(summary.get("expected_reviewable_warning_count")),
@@ -15662,6 +16067,91 @@ def _active_replay_input_promotion_notes(summary: dict[str, Any]) -> str:
     )
 
 
+def _scan_active_replay_input_acceptance_status(root: Path) -> list[dict[str, Any]]:
+    acceptance_root = root.parent if root.name == "status" else root
+    if not acceptance_root.exists():
+        return []
+    try:
+        result = run_active_replay_input_acceptance_status(
+            root=acceptance_root,
+            output_dir=acceptance_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_acceptance_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = acceptance_root / result.latest_acceptance_run_id
+    metadata = (
+        _load_json_or_none(artifact_dir / "metadata.json")
+        or _load_json_or_none(artifact_dir / "acceptance_metadata.json")
+        or {}
+    )
+    summary["artifact_path"] = _string_or_empty(metadata.get("artifact_path"))
+    summary["approval_applied"] = _string_or_empty(metadata.get("approval_applied", False))
+    summary["order_placed"] = _string_or_empty(metadata.get("order_placed", False))
+    summary["llm_api_called"] = _string_or_empty(metadata.get("llm_api_called", False))
+    summary["external_api_called"] = _string_or_empty(metadata.get("external_api_called", False))
+    summary["cache_mutated"] = _string_or_empty(metadata.get("cache_mutated", False))
+    summary["current_candidates_run"] = _string_or_empty(metadata.get("current_candidates_run", False))
+    summary["snapshot_built"] = _string_or_empty(metadata.get("snapshot_built", False))
+    summary["signal_semantics_changed"] = _string_or_empty(metadata.get("signal_semantics_changed", False))
+    summary["report_only"] = _string_or_empty(metadata.get("report_only", True))
+    summary["diagnostic_only"] = _string_or_empty(metadata.get("diagnostic_only", True))
+    summary["no_live_trading"] = _string_or_empty(metadata.get("no_live_trading", True))
+    summary["no_broker_api"] = _string_or_empty(metadata.get("no_broker_api", True))
+    summary["no_order_placement"] = _string_or_empty(metadata.get("no_order_placement", True))
+    summary["no_message_sent"] = _string_or_empty(metadata.get("no_message_sent", True))
+    return [
+        _record(
+            workflow_area="ACTIVE_REPLAY_INPUT_ACCEPTANCE",
+            component="ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_acceptance_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_active_replay_input_acceptance_notes(summary),
+        )
+    ]
+
+
+def _active_replay_input_acceptance_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"ready_for_active_ready_review={_string_or_empty(summary.get('ready_for_active_ready_review'))}; "
+        f"active_replay_input_ready={_string_or_empty(summary.get('active_replay_input_ready'))}; "
+        f"active_replay_input={_string_or_empty(summary.get('active_replay_input'))}; "
+        f"active_ready_emitted={_string_or_empty(summary.get('active_ready_emitted'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"approval_applied={_string_or_empty(summary.get('approval_applied'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"no_live_trading={_string_or_empty(summary.get('no_live_trading'))}; "
+        f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
+        f"no_order_placement={_string_or_empty(summary.get('no_order_placement'))}; "
+        f"no_message_sent={_string_or_empty(summary.get('no_message_sent'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
 def _scan_universe_profile_policy_audit_status(root: Path) -> list[dict[str, Any]]:
     computed = _computed_universe_profile_policy_audit_status_record(root)
     if computed is not None:
@@ -17992,6 +18482,14 @@ def _minimal_replay_input_package_fixture_smoke_stage_from_frame(dashboard_frame
 def _active_replay_input_promotion_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "ACTIVE_REPLAY_INPUT_PROMOTION_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _active_replay_input_acceptance_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "ACTIVE_REPLAY_INPUT_ACCEPTANCE_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))
