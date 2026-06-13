@@ -15,6 +15,17 @@ from quant_replay_system.active_replay_input_active_ready import (
     ActiveReplayInputActiveReadySettings,
     run_active_replay_input_active_ready,
 )
+from quant_replay_system.active_replay_input_active_ready_health import (
+    check_active_replay_input_active_ready_health,
+)
+from quant_replay_system.active_replay_input_active_ready_index import (
+    build_active_replay_input_active_ready_index,
+)
+from quant_replay_system.active_replay_input_active_ready_status import (
+    ACTIVE_READY_HEALTH_FAILED,
+    ACTIVE_READY_NO_INPUT,
+    run_active_replay_input_active_ready_status,
+)
 
 
 def test_no_input_returns_no_active_ready_input_and_writes_required_artifacts(tmp_path: Path) -> None:
@@ -214,7 +225,7 @@ def test_happy_path_returns_final_review_ready_only(tmp_path: Path) -> None:
     assert not (tmp_path / "data" / "cache").exists()
 
 
-def test_cli_command_runs_without_active_ready_claim_and_no_extra_commands(tmp_path: Path) -> None:
+def test_cli_command_runs_without_active_ready_claim(tmp_path: Path) -> None:
     acceptance = _write_acceptance_artifact(tmp_path / "acceptance")
     settings = _happy_settings(tmp_path, acceptance)
 
@@ -273,9 +284,6 @@ def test_cli_command_runs_without_active_ready_claim_and_no_extra_commands(tmp_p
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "active-replay-input-active-ready" in help_text
-    assert "active-replay-input-active-ready-index" not in help_text
-    assert "active-replay-input-active-ready-health" not in help_text
-    assert "active-replay-input-active-ready-status" not in help_text
     assert not Path("docs/project_sources").exists()
 
 
@@ -302,8 +310,209 @@ def test_no_input_cli_writes_artifacts_without_active_ready(tmp_path: Path) -> N
     assert "ACTIVE_REPLAY_INPUT_READY" not in completed.stdout
 
 
+def test_index_discovers_no_input_and_final_review_ready_artifacts(tmp_path: Path) -> None:
+    root = _active_ready_output_dir(tmp_path)
+    no_input = run_active_replay_input_active_ready(ActiveReplayInputActiveReadySettings(output_dir=root))
+    ready = _run_ready_active_ready(tmp_path, root)
+
+    result = build_active_replay_input_active_ready_index(root=root, output_dir=root / "index")
+
+    assert result.artifact_count == 2
+    assert set(result.index_frame["active_ready_run_id"]) == {
+        no_input.active_ready_run_id,
+        ready.active_ready_run_id,
+    }
+    ready_row = result.index_frame[result.index_frame["active_ready_run_id"] == ready.active_ready_run_id].iloc[0]
+    assert ready_row["status"] == ACTIVE_READY_READY_FOR_FINAL_REVIEW
+    assert ready_row["ready_for_final_review"] is True
+    assert ready_row["active_replay_input_ready"] is False
+    assert ready_row["active_replay_input"] is False
+    assert ready_row["active_ready_emitted"] is False
+    assert ready_row["forward_labels_exist"] is False
+    assert ready_row["weights_trained"] is False
+    assert ready_row["active_stock_profile_exists"] is False
+    assert ready_row["real_buy_review_eligible"] is False
+    assert ready_row["data_raw_written"] is False
+    assert ready_row["data_processed_written"] is False
+    assert ready_row["data_cache_written"] is False
+    assert ready_row["report_only"] is True
+    assert ready_row["diagnostic_only"] is True
+    assert ready_row["overclaim_guard_pass_count"] == ready_row["overclaim_guard_total_count"]
+    assert result.artifact_paths["index_csv"].exists()
+
+
+def test_health_passes_for_valid_no_input_and_final_review_ready_artifacts(tmp_path: Path) -> None:
+    root = _active_ready_output_dir(tmp_path)
+    run_active_replay_input_active_ready(ActiveReplayInputActiveReadySettings(output_dir=root))
+    no_input_health = check_active_replay_input_active_ready_health(root=root, output_dir=root / "health_no_input")
+    assert no_input_health.status == "PASS"
+    assert no_input_health.error_count == 0
+
+    _run_ready_active_ready(tmp_path, root)
+    ready_health = check_active_replay_input_active_ready_health(root=root, output_dir=root / "health_ready")
+    assert ready_health.status == "PASS"
+    assert ready_health.error_count == 0
+
+
+@pytest.mark.parametrize(
+    ("metadata_field", "metadata_value", "issue_code"),
+    [
+        ("status", "ACTIVE_REPLAY_INPUT_READY", "ACTIVE_REPLAY_INPUT_READY_UNEXPECTED"),
+        ("active_ready_emitted", True, "ACTIVE_READY_EMITTED_UNEXPECTED"),
+        ("active_replay_input_ready", True, "ACTIVE_REPLAY_INPUT_READY_UNEXPECTED"),
+        ("active_replay_input", True, "ACTIVE_REPLAY_INPUT_UNEXPECTED"),
+        ("forward_labels_exist", True, "FORWARD_LABELS_EXIST_UNEXPECTED"),
+        ("weights_trained", True, "WEIGHTS_TRAINED_UNEXPECTED"),
+        ("active_stock_profile_exists", True, "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED"),
+        ("real_buy_review_eligible", True, "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED"),
+        ("order_placed", True, "ORDER_PLACED_UNEXPECTED"),
+        ("message_sent", True, "MESSAGE_SENT_UNEXPECTED"),
+        ("cache_mutated", True, "CACHE_MUTATED_UNEXPECTED"),
+        ("data_raw_written", True, "DATA_RAW_WRITTEN_UNEXPECTED"),
+        ("data_processed_written", True, "DATA_PROCESSED_WRITTEN_UNEXPECTED"),
+        ("data_cache_written", True, "DATA_CACHE_WRITTEN_UNEXPECTED"),
+    ],
+)
+def test_health_fails_for_unsafe_active_ready_metadata(
+    tmp_path: Path, metadata_field: str, metadata_value: object, issue_code: str
+) -> None:
+    root = _active_ready_output_dir(tmp_path)
+    active_ready = _run_ready_active_ready(tmp_path, root)
+    _mutate_json(active_ready.artifact_paths["metadata"], {metadata_field: metadata_value})
+
+    result = check_active_replay_input_active_ready_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    assert issue_code in set(result.health_frame["issue_code"])
+
+
+def test_health_fails_when_overclaim_guards_fail(tmp_path: Path) -> None:
+    root = _active_ready_output_dir(tmp_path)
+    active_ready = _run_ready_active_ready(tmp_path, root)
+    guards = pd.read_csv(active_ready.artifact_paths["overclaim_guard_report"], dtype=str)
+    guards.loc[0, "passed"] = "False"
+    guards.to_csv(active_ready.artifact_paths["overclaim_guard_report"], index=False)
+    _mutate_json(active_ready.artifact_paths["metadata"], {"overclaim_guard_pass_count": 3})
+
+    result = check_active_replay_input_active_ready_health(root=root, output_dir=root / "health")
+
+    assert result.status == "FAIL"
+    assert "OVERCLAIM_GUARD_FAILED" in set(result.health_frame["issue_code"])
+
+
+def test_status_reports_final_review_ready_without_active_ready_claim(tmp_path: Path) -> None:
+    root = _active_ready_output_dir(tmp_path)
+    active_ready = _run_ready_active_ready(tmp_path, root)
+
+    result = run_active_replay_input_active_ready_status(root=root, output_dir=root / "status")
+
+    assert result.latest_active_ready_run_id == active_ready.active_ready_run_id
+    assert result.status == ACTIVE_READY_READY_FOR_FINAL_REVIEW
+    assert result.health_status == "PASS"
+    assert result.workflow_stage == ACTIVE_READY_READY_FOR_FINAL_REVIEW
+    assert result.ready_for_final_review is True
+    assert result.active_replay_input_ready is False
+    assert result.active_replay_input is False
+    assert result.active_ready_emitted is False
+    assert "report-only" in result.safety_statement
+    assert "not ACTIVE_REPLAY_INPUT_READY" in result.safety_statement
+    assert "does not create active replay input" in result.safety_statement
+    assert "does not run replay" in result.safety_statement
+    assert "does not compute forward labels" in result.safety_statement
+    assert "does not train weights" in result.safety_statement
+    assert "does not create active stock profiles" in result.safety_statement
+    assert "does not create real buy-review eligibility" in result.safety_statement
+    assert "does not authorize trading" in result.safety_statement
+
+
+def test_status_reports_no_input_and_health_failed_stages(tmp_path: Path) -> None:
+    root = _active_ready_output_dir(tmp_path)
+    no_input = run_active_replay_input_active_ready(ActiveReplayInputActiveReadySettings(output_dir=root))
+    no_input_status = run_active_replay_input_active_ready_status(root=root, output_dir=root / "status_no_input")
+    assert no_input_status.latest_active_ready_run_id == no_input.active_ready_run_id
+    assert no_input_status.workflow_stage == ACTIVE_READY_NO_INPUT
+
+    _mutate_json(no_input.artifact_paths["metadata"], {"active_ready_emitted": True})
+    failed_status = run_active_replay_input_active_ready_status(root=root, output_dir=root / "status_failed")
+    assert failed_status.workflow_stage == ACTIVE_READY_HEALTH_FAILED
+    assert failed_status.health_status == "FAIL"
+
+
+def test_artifact_view_cli_commands_remain_report_only_without_research_status(tmp_path: Path) -> None:
+    root = _active_ready_output_dir(tmp_path)
+    active_ready = _run_ready_active_ready(tmp_path, root)
+
+    commands = [
+        ("active-replay-input-active-ready-index", "artifact_count: 1"),
+        ("active-replay-input-active-ready-health", "status: PASS"),
+        ("active-replay-input-active-ready-status", f"workflow_stage: {ACTIVE_READY_READY_FOR_FINAL_REVIEW}"),
+    ]
+    for command, expected_text in commands:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(root),
+                "--output-dir",
+                str(root / command.rsplit("-", 1)[-1]),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env={**os.environ, "PYTHONPATH": "src"},
+        )
+        assert expected_text in completed.stdout
+        assert "No active replay input" in completed.stdout
+        assert "ACTIVE_REPLAY_INPUT_READY" not in completed.stdout
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quant_replay_system.cli",
+            "research-status",
+            "--root",
+            str(tmp_path / "outputs" / "reports"),
+            "--output-dir",
+            str(tmp_path / "dashboard"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+    assert active_ready.active_ready_run_id not in completed.stdout
+    assert "latest_active_replay_input_active_ready_run_id" not in completed.stdout
+    assert "ACTIVE_REPLAY_INPUT_READY" not in completed.stdout
+    assert not Path("docs/project_sources").exists()
+
+
 def _active_ready_output_dir(tmp_path: Path) -> Path:
     return tmp_path / "outputs" / "reports" / "manual_diagnostics" / "active_replay_input_active_ready_v0_1"
+
+
+def _run_ready_active_ready(tmp_path: Path, output_dir: Path):
+    acceptance = _write_acceptance_artifact(tmp_path / "acceptance")
+    settings = _happy_settings(tmp_path, acceptance)
+    settings = ActiveReplayInputActiveReadySettings(
+        output_dir=output_dir,
+        acceptance_artifact=settings.acceptance_artifact,
+        acceptance_health_artifact=settings.acceptance_health_artifact,
+        acceptance_status_artifact=settings.acceptance_status_artifact,
+        active_ready_request_manifest=settings.active_ready_request_manifest,
+        active_ready_authority_manifest=settings.active_ready_authority_manifest,
+        pit_coverage_manifest=settings.pit_coverage_manifest,
+        source_coverage_manifest=settings.source_coverage_manifest,
+        evidence_coverage_manifest=settings.evidence_coverage_manifest,
+        taxonomy_compliance_manifest=settings.taxonomy_compliance_manifest,
+        leakage_review_manifest=settings.leakage_review_manifest,
+        side_effect_review_manifest=settings.side_effect_review_manifest,
+        overclaim_review_manifest=settings.overclaim_review_manifest,
+    )
+    return run_active_replay_input_active_ready(settings)
 
 
 def _required_artifact_keys() -> list[str]:
@@ -638,3 +847,9 @@ def _write_json(path: Path, payload: dict[str, object]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return path
+
+
+def _mutate_json(path: Path, updates: dict[str, object]) -> None:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload.update(updates)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
