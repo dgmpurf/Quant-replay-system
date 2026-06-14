@@ -12206,6 +12206,46 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "active_replay_input_ready_decision_next_action: "
         f"{result.active_replay_input_ready_decision_next_action}"
     )
+    print(
+        "active_replay_input_ready_workflow_implemented: "
+        f"{result.active_replay_input_ready_workflow_implemented}"
+    )
+    print(
+        "active_replay_input_ready_views_implemented: "
+        f"{result.active_replay_input_ready_views_implemented}"
+    )
+    print(
+        "latest_active_replay_input_ready_run_id: "
+        f"{result.latest_active_replay_input_ready_run_id}"
+    )
+    print(
+        "latest_active_replay_input_ready_status: "
+        f"{result.latest_active_replay_input_ready_status}"
+    )
+    print(
+        "latest_active_replay_input_ready_health_status: "
+        f"{result.latest_active_replay_input_ready_health_status}"
+    )
+    print(
+        "latest_active_replay_input_ready_workflow_stage: "
+        f"{result.latest_active_replay_input_ready_workflow_stage}"
+    )
+    print(
+        "active_replay_input_ready_artifact_path: "
+        f"{result.active_replay_input_ready_artifact_path}"
+    )
+    print(
+        "ready_to_emit_active_replay_input_ready: "
+        f"{result.ready_to_emit_active_replay_input_ready}"
+    )
+    print(
+        "active_replay_input_ready_report_path: "
+        f"{result.active_replay_input_ready_report_path}"
+    )
+    print(
+        "active_replay_input_ready_next_action: "
+        f"{result.active_replay_input_ready_next_action}"
+    )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")

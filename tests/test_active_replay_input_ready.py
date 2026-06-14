@@ -334,7 +334,7 @@ def test_cli_active_replay_input_ready_runs_without_active_ready_emission(tmp_pa
     assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
 
 
-def test_artifact_views_are_registered_without_research_status_checkpoint_or_project_source() -> None:
+def test_artifact_views_are_registered_with_research_status_checkpoint_and_project_source_note() -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -347,11 +347,15 @@ def test_artifact_views_are_registered_without_research_status_checkpoint_or_pro
     assert "active-replay-input-ready-index" in help_text
     assert "active-replay-input-ready-health" in help_text
     assert "active-replay-input-ready-status" in help_text
-    assert "latest_active_replay_input_ready_run_id" not in Path(
+    dashboard_source = Path(
         "src/quant_replay_system/local_research_dashboard.py"
     ).read_text(encoding="utf-8")
+    assert "latest_active_replay_input_ready_run_id" in dashboard_source
+    assert "ready_to_emit_active_replay_input_ready" in dashboard_source
+    assert Path("docs/active_replay_input_ready.md").exists()
+    assert Path("docs/release_checkpoint_v1.37.0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_37_0.md").exists()
     assert not Path("docs/project_sources").exists()
-    assert not Path("docs/release_checkpoint_v1.37.0.md").exists()
 
 
 def test_index_discovers_no_input_and_ready_to_emit_artifacts(tmp_path: Path) -> None:
