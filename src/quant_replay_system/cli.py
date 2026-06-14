@@ -12297,6 +12297,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
     print(f"approval_applied: {result.approval_applied}")
     print(f"order_placed: {result.order_placed}")
+    print(f"broker_api_called: {result.broker_api_called}")
     print(f"message_sent: {result.message_sent}")
     print(f"llm_api_called: {result.llm_api_called}")
     print(f"external_api_called: {result.external_api_called}")
@@ -12493,6 +12494,46 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "active_replay_input_ready_decision_next_action: "
         f"{result.active_replay_input_ready_decision_next_action}"
+    )
+    print(
+        "active_replay_input_ready_emission_workflow_implemented: "
+        f"{result.active_replay_input_ready_emission_workflow_implemented}"
+    )
+    print(
+        "active_replay_input_ready_emission_views_implemented: "
+        f"{result.active_replay_input_ready_emission_views_implemented}"
+    )
+    print(
+        "latest_active_replay_input_ready_emission_run_id: "
+        f"{result.latest_active_replay_input_ready_emission_run_id}"
+    )
+    print(
+        "latest_active_replay_input_ready_emission_status: "
+        f"{result.latest_active_replay_input_ready_emission_status}"
+    )
+    print(
+        "latest_active_replay_input_ready_emission_health_status: "
+        f"{result.latest_active_replay_input_ready_emission_health_status}"
+    )
+    print(
+        "latest_active_replay_input_ready_emission_workflow_stage: "
+        f"{result.latest_active_replay_input_ready_emission_workflow_stage}"
+    )
+    print(
+        "active_replay_input_ready_emission_artifact_path: "
+        f"{result.active_replay_input_ready_emission_artifact_path}"
+    )
+    print(
+        "ready_for_active_replay_input_ready_emission_decision: "
+        f"{result.ready_for_active_replay_input_ready_emission_decision}"
+    )
+    print(
+        "active_replay_input_ready_emission_report_path: "
+        f"{result.active_replay_input_ready_emission_report_path}"
+    )
+    print(
+        "active_replay_input_ready_emission_next_action: "
+        f"{result.active_replay_input_ready_emission_next_action}"
     )
     print(
         "active_replay_input_ready_workflow_implemented: "

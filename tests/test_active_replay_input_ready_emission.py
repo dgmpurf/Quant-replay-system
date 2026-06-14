@@ -328,7 +328,132 @@ def test_cli_active_replay_input_ready_emission_runs(tmp_path: Path) -> None:
     assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
 
 
-def test_artifact_view_cli_commands_are_registered_without_research_status_or_checkpoint() -> None:
+def test_research_status_includes_active_ready_emission_decision_fields(tmp_path: Path) -> None:
+    ready = run_active_replay_input_ready_emission(_happy_settings(tmp_path))
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quant_replay_system.cli",
+            "research-status",
+            "--root",
+            str(tmp_path / "outputs" / "reports"),
+            "--output-dir",
+            str(tmp_path / "dashboard"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+
+    assert "active_replay_input_ready_emission_workflow_implemented: True" in completed.stdout
+    assert "active_replay_input_ready_emission_views_implemented: True" in completed.stdout
+    assert f"latest_active_replay_input_ready_emission_run_id: {ready.active_ready_emission_run_id}" in (
+        completed.stdout
+    )
+    assert (
+        f"latest_active_replay_input_ready_emission_status: {READY_FOR_ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION}"
+    ) in completed.stdout
+    assert "latest_active_replay_input_ready_emission_health_status: PASS" in completed.stdout
+    assert (
+        "latest_active_replay_input_ready_emission_workflow_stage: "
+        f"{ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION_READY}"
+    ) in completed.stdout
+    assert "ready_for_active_replay_input_ready_emission_decision: True" in completed.stdout
+    for field in _always_false_fields() + [
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+    ]:
+        assert f"{field}: False" in completed.stdout
+    for field in [
+        "report_only",
+        "diagnostic_only",
+        "no_live_trading",
+        "no_broker_api",
+        "no_order_placement",
+        "no_message_sent",
+    ]:
+        assert f"{field}: True" in completed.stdout
+    assert "status: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
+    assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
+
+
+def test_research_status_preserves_paper_priority_over_active_ready_emission_decision(tmp_path: Path) -> None:
+    run_active_replay_input_ready_emission(_happy_settings(tmp_path))
+    paper_artifact = tmp_path / "outputs" / "reports" / "paper_trading" / "workflow_status" / "paper-ready"
+    paper_artifact.mkdir(parents=True, exist_ok=True)
+    report = paper_artifact / "paper_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    (paper_artifact / "metadata.json").write_text(
+        json.dumps(
+            {
+                "workflow_status_id": "paper-ready",
+                "created_at": "2024-05-20T16:15:00",
+                "status": "WARN",
+                "workflow_stage": "WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+                "latest_decision_date": "2024-05-20",
+                "next_manual_action": "Demo WATCH_ONLY paper workflow validated; no fills were supplied.",
+                "total_warning_count": 1,
+                "expected_demo_warning_count": 1,
+                "stale_warning_count": 0,
+                "actionable_warning_count": 0,
+                "blocking_error_count": 0,
+                "component_statuses": {
+                    "total_warning_count": 1,
+                    "expected_demo_warning_count": 1,
+                    "stale_warning_count": 0,
+                    "actionable_warning_count": 0,
+                    "blocking_error_count": 0,
+                },
+                "output_files": {"paper_workflow_status_report": str(report)},
+                "warnings": [],
+                "live_trading_enabled": False,
+                "broker_api_invoked": False,
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quant_replay_system.cli",
+            "research-status",
+            "--root",
+            str(tmp_path / "outputs" / "reports"),
+            "--output-dir",
+            str(tmp_path / "dashboard"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in completed.stdout
+    assert (
+        f"latest_active_replay_input_ready_emission_status: {READY_FOR_ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION}"
+    ) in completed.stdout
+    assert "ready_for_active_replay_input_ready_emission_decision: True" in completed.stdout
+    assert "active_replay_input_ready: False" in completed.stdout
+    assert "active_replay_input: False" in completed.stdout
+    assert "active_ready_emitted: False" in completed.stdout
+    assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
+
+
+def test_artifact_view_cli_commands_and_v1_38_docs_are_registered() -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -341,12 +466,38 @@ def test_artifact_view_cli_commands_are_registered_without_research_status_or_ch
     assert "active-replay-input-ready-emission-index" in help_text
     assert "active-replay-input-ready-emission-health" in help_text
     assert "active-replay-input-ready-emission-status" in help_text
-    assert "active_replay_input_ready_emission" not in Path(
-        "src/quant_replay_system/local_research_dashboard.py"
-    ).read_text(encoding="utf-8")
-    assert not Path("docs/active_replay_input_ready_emission.md").exists()
-    assert not Path("docs/release_checkpoint_v1.38.0.md").exists()
-    assert not Path("SOURCE_UPDATE_NOTES_v1_38_0.md").exists()
+
+    dashboard_text = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
+    assert "ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS" in dashboard_text
+    assert "active_replay_input_ready_emission_workflow_implemented" in dashboard_text
+
+    doc = Path("docs/active_replay_input_ready_emission.md")
+    checkpoint = Path("docs/release_checkpoint_v1.38.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_38_0.md")
+    for path in [doc, checkpoint, source_note]:
+        assert path.exists()
+        text = path.read_text(encoding="utf-8")
+        assert "active-replay-input-ready-emission" in text
+        assert READY_FOR_ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION in text
+        assert "ACTIVE_REPLAY_INPUT_READY" in text
+        assert "does not emit ACTIVE_REPLAY_INPUT_READY" in text
+        assert "does not create active replay input" in text
+        assert "does not run replay" in text
+        assert "does not create replay decisions" in text
+        assert "does not compute forward labels" in text
+        assert "does not train weights" in text
+        assert "does not create active stock profiles" in text
+        assert "does not create real buy-review eligibility" in text
+        assert "does not authorize trading" in text
+
+    checkpoint_text = checkpoint.read_text(encoding="utf-8")
+    assert "v1.38.0" in checkpoint_text
+    assert "600667038f01" in checkpoint_text
+    assert "PAPER_WORKFLOW_READY" in checkpoint_text
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources" in source_text
+    assert "intentionally absent from Git" in source_text
+    assert "after tag v1.38.0" in source_text
     assert not Path("docs/project_sources").exists()
 
 
