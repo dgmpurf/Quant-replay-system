@@ -290,6 +290,10 @@ from quant_replay_system.active_replay_input_emission import (
     ActiveReplayInputEmissionSettings,
     run_active_replay_input_emission,
 )
+from quant_replay_system.active_replay_input_ready_decision import (
+    ActiveReplayInputReadyDecisionSettings,
+    run_active_replay_input_ready_decision,
+)
 from quant_replay_system.active_replay_input_emission_health import (
     check_active_replay_input_emission_health,
 )
@@ -2556,6 +2560,77 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only emission artifacts will be written",
     )
     active_replay_input_emission.set_defaults(handler=_handle_active_replay_input_emission)
+
+    active_replay_input_ready_decision = subparsers.add_parser(
+        "active-replay-input-ready-decision",
+        help="Review active replay input ready-decision preconditions as report-only diagnostic context",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--emission-artifact-path",
+        default=None,
+        help="Optional emission artifact folder or emission_metadata.json",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--emission-health-artifact-path",
+        default=None,
+        help="Optional emission health artifact JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--emission-status-artifact-path",
+        default=None,
+        help="Optional emission status artifact JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--emission-acceptance-audit-path",
+        default=None,
+        help="Optional emission acceptance audit JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--decision-request-manifest-path",
+        default=None,
+        help="Optional local ready-decision request manifest JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--decision-authority-manifest-path",
+        default=None,
+        help="Optional local ready-decision authority manifest JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--decision-attestation-manifest-path",
+        default=None,
+        help="Optional local ready-decision attestation manifest JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--pit-source-evidence-bundle-path",
+        default=None,
+        help="Optional local PIT/source/evidence bundle JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--taxonomy-evidence-bundle-path",
+        default=None,
+        help="Optional local taxonomy evidence bundle JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--leakage-side-effect-evidence-bundle-path",
+        default=None,
+        help="Optional local leakage/side-effect evidence bundle JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--overclaim-evidence-bundle-path",
+        default=None,
+        help="Optional local overclaim evidence bundle JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--active-replay-input-ready-candidate-manifest-path",
+        default=None,
+        help="Optional local active-ready candidate manifest JSON",
+    )
+    active_replay_input_ready_decision.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_ready_decision_v0_1",
+        help="Directory where report-only ready-decision artifacts will be written",
+    )
+    active_replay_input_ready_decision.set_defaults(handler=_handle_active_replay_input_ready_decision)
 
     active_replay_input_emission_index = subparsers.add_parser(
         "active-replay-input-emission-index",
@@ -7170,6 +7245,76 @@ def _handle_active_replay_input_emission(args: argparse.Namespace) -> int:
     print(f"trading_allowed: {result.trading_allowed}")
     print(f"artifact_path: {result.artifact_path}")
     print(f"report_path: {result.artifact_paths['emission_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No active input ready emission, active replay input, replay, current-candidates, snapshots, "
+        "forward labels, training, active stock profiles, real buy-review eligibility, live trading, broker API, "
+        "order placement, message delivery, LLM/API, external API, data/raw write, data/processed write, "
+        "data/cache write, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_ready_decision(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_ready_decision(
+        ActiveReplayInputReadyDecisionSettings(
+            emission_artifact_path=Path(args.emission_artifact_path) if args.emission_artifact_path else None,
+            emission_health_artifact_path=Path(args.emission_health_artifact_path)
+            if args.emission_health_artifact_path
+            else None,
+            emission_status_artifact_path=Path(args.emission_status_artifact_path)
+            if args.emission_status_artifact_path
+            else None,
+            emission_acceptance_audit_path=Path(args.emission_acceptance_audit_path)
+            if args.emission_acceptance_audit_path
+            else None,
+            decision_request_manifest_path=Path(args.decision_request_manifest_path)
+            if args.decision_request_manifest_path
+            else None,
+            decision_authority_manifest_path=Path(args.decision_authority_manifest_path)
+            if args.decision_authority_manifest_path
+            else None,
+            decision_attestation_manifest_path=Path(args.decision_attestation_manifest_path)
+            if args.decision_attestation_manifest_path
+            else None,
+            pit_source_evidence_bundle_path=Path(args.pit_source_evidence_bundle_path)
+            if args.pit_source_evidence_bundle_path
+            else None,
+            taxonomy_evidence_bundle_path=Path(args.taxonomy_evidence_bundle_path)
+            if args.taxonomy_evidence_bundle_path
+            else None,
+            leakage_side_effect_evidence_bundle_path=Path(args.leakage_side_effect_evidence_bundle_path)
+            if args.leakage_side_effect_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            active_replay_input_ready_candidate_manifest_path=Path(
+                args.active_replay_input_ready_candidate_manifest_path
+            )
+            if args.active_replay_input_ready_candidate_manifest_path
+            else None,
+            output_dir=Path(args.output_dir),
+        )
+    )
+    print(f"decision_run_id: {result.decision_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(
+        "ready_for_active_replay_input_ready_decision: "
+        f"{result.ready_for_active_replay_input_ready_decision}"
+    )
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_ready_emitted: {result.active_ready_emitted}")
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(f"report_path: {result.artifact_paths['decision_report']}")
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print(
         "No active input ready emission, active replay input, replay, current-candidates, snapshots, "
