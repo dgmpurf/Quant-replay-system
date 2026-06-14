@@ -294,6 +294,10 @@ from quant_replay_system.active_replay_input_ready_decision import (
     ActiveReplayInputReadyDecisionSettings,
     run_active_replay_input_ready_decision,
 )
+from quant_replay_system.active_replay_input_ready import (
+    ActiveReplayInputReadySettings,
+    run_active_replay_input_ready,
+)
 from quant_replay_system.active_replay_input_ready_decision_health import (
     check_active_replay_input_ready_decision_health,
 )
@@ -2640,6 +2644,80 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only ready-decision artifacts will be written",
     )
     active_replay_input_ready_decision.set_defaults(handler=_handle_active_replay_input_ready_decision)
+
+    active_replay_input_ready = subparsers.add_parser(
+        "active-replay-input-ready",
+        help=(
+            "Review ACTIVE_REPLAY_INPUT_READY final governance gates as report-only diagnostics; "
+            "stops before ACTIVE_REPLAY_INPUT_READY emission"
+        ),
+    )
+    active_replay_input_ready.add_argument(
+        "--ready-decision-artifact-path",
+        default=None,
+        help="Optional ready-decision artifact folder or decision_metadata.json",
+    )
+    active_replay_input_ready.add_argument(
+        "--ready-decision-health-artifact-path",
+        default=None,
+        help="Optional ready-decision health artifact JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--ready-decision-status-artifact-path",
+        default=None,
+        help="Optional ready-decision status artifact JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--governance-audit-path",
+        default=None,
+        help="Optional governance design audit artifact path",
+    )
+    active_replay_input_ready.add_argument(
+        "--governance-request-manifest-path",
+        default=None,
+        help="Optional local ACTIVE_REPLAY_INPUT_READY governance request manifest JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--final-authority-manifest-path",
+        default=None,
+        help="Optional local final authority manifest JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--final-attestation-manifest-path",
+        default=None,
+        help="Optional local final attestation manifest JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--pit-source-evidence-bundle-path",
+        default=None,
+        help="Optional local PIT/source/evidence bundle JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--taxonomy-evidence-bundle-path",
+        default=None,
+        help="Optional local taxonomy evidence bundle JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--leakage-side-effect-evidence-bundle-path",
+        default=None,
+        help="Optional local leakage/side-effect evidence bundle JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--overclaim-evidence-bundle-path",
+        default=None,
+        help="Optional local overclaim evidence bundle JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--active-replay-input-ready-candidate-manifest-path",
+        default=None,
+        help="Optional local active-ready candidate manifest JSON",
+    )
+    active_replay_input_ready.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_ready_v0_1",
+        help="Directory where report-only active-ready artifacts will be written",
+    )
+    active_replay_input_ready.set_defaults(handler=_handle_active_replay_input_ready)
 
     active_replay_input_ready_decision_index = subparsers.add_parser(
         "active-replay-input-ready-decision-index",
@@ -7384,6 +7462,78 @@ def _handle_active_replay_input_ready_decision(args: argparse.Namespace) -> int:
         "forward labels, training, active stock profiles, real buy-review eligibility, live trading, broker API, "
         "order placement, message delivery, LLM/API, external API, data/raw write, data/processed write, "
         "data/cache write, or cache mutation was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_ready(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_ready(
+        ActiveReplayInputReadySettings(
+            ready_decision_artifact_path=Path(args.ready_decision_artifact_path)
+            if args.ready_decision_artifact_path
+            else None,
+            ready_decision_health_artifact_path=Path(args.ready_decision_health_artifact_path)
+            if args.ready_decision_health_artifact_path
+            else None,
+            ready_decision_status_artifact_path=Path(args.ready_decision_status_artifact_path)
+            if args.ready_decision_status_artifact_path
+            else None,
+            governance_audit_path=Path(args.governance_audit_path) if args.governance_audit_path else None,
+            governance_request_manifest_path=Path(args.governance_request_manifest_path)
+            if args.governance_request_manifest_path
+            else None,
+            final_authority_manifest_path=Path(args.final_authority_manifest_path)
+            if args.final_authority_manifest_path
+            else None,
+            final_attestation_manifest_path=Path(args.final_attestation_manifest_path)
+            if args.final_attestation_manifest_path
+            else None,
+            pit_source_evidence_bundle_path=Path(args.pit_source_evidence_bundle_path)
+            if args.pit_source_evidence_bundle_path
+            else None,
+            taxonomy_evidence_bundle_path=Path(args.taxonomy_evidence_bundle_path)
+            if args.taxonomy_evidence_bundle_path
+            else None,
+            leakage_side_effect_evidence_bundle_path=Path(args.leakage_side_effect_evidence_bundle_path)
+            if args.leakage_side_effect_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            active_replay_input_ready_candidate_manifest_path=Path(
+                args.active_replay_input_ready_candidate_manifest_path
+            )
+            if args.active_replay_input_ready_candidate_manifest_path
+            else None,
+            output_dir=Path(args.output_dir),
+        )
+    )
+    print(f"active_ready_run_id: {result.active_ready_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_to_emit_active_replay_input_ready: {result.ready_to_emit_active_replay_input_ready}")
+    print(f"active_replay_input_ready: {result.active_replay_input_ready}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_ready_emitted: {result.active_ready_emitted}")
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"replay_decisions_exist: {result.replay_decisions_exist}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(f"report_path: {result.artifact_paths['active_ready_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "No ACTIVE_REPLAY_INPUT_READY emission, active replay input, replay, replay decisions, "
+        "current-candidates, snapshots, forward labels, training, active stock profiles, real buy-review "
+        "eligibility, live trading, broker API, order placement, message delivery, LLM/API, external API, "
+        "data/raw write, data/processed write, data/cache write, or cache mutation was invoked."
     )
     return 0
 
