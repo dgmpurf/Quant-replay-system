@@ -425,6 +425,18 @@ When the status reports `EMISSION_READY_FOR_ACTIVE_REPLAY_INPUT_READY_REVIEW`, t
 
 Active replay input emission context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; emission fields remain visible for audit. The emission workflow does not emit `ACTIVE_REPLAY_INPUT_READY`, does not create active replay input, does not run replay, does not compute forward labels, does not train weights, does not create active stock profiles, does not create real buy-review eligibility, does not authorize trading, and does not validate strategy performance.
 
+## Active Replay Input Ready Decision Status
+
+`research-status` includes `active-replay-input-ready-decision-status` as report-only ready-decision governance context when those artifacts exist.
+
+Use `active-replay-input-ready-decision`, `active-replay-input-ready-decision-index`, `active-replay-input-ready-decision-health`, and `active-replay-input-ready-decision-status` to create, discover, safety-check, and summarize this report-only ready-decision context.
+
+The unified summary records the latest ready-decision run id, status, health status, workflow stage, artifact path, ready-for-active-replay-input-ready-decision flag, report path, and next action. It also exports safety flags proving `active_replay_input_ready=false`, `active_replay_input=false`, `active_ready_emitted=false`, `replay_execution_allowed=false`, `forward_labels_allowed=false`, `training_allowed=false`, `stock_profile_allowed=false`, `buy_review_allowed=false`, `trading_allowed=false`, `replay_decisions_exist=false`, `forward_labels_exist=false`, `weights_trained=false`, `active_stock_profile_exists=false`, `real_buy_review_eligible=false`, `approval_applied=false`, no live trading, no broker API, no order placement, no messages, no LLM/API calls, no external API calls, no cache mutation, no `data/raw`, no `data/processed`, no `data/cache`, no current-candidates generation, no snapshot build, and no signal semantics change.
+
+When the status reports `READY_FOR_ACTIVE_REPLAY_INPUT_READY_DECISION`, the dashboard treats it as ready-decision review context only. It is not active replay input and not `ACTIVE_REPLAY_INPUT_READY`. It must not be interpreted as replay permission, active-ready emission, paper approval, buy-review eligibility, performance validation, or trading authorization.
+
+Active replay input ready-decision context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; ready-decision fields remain visible for audit. The ready-decision workflow does not emit `ACTIVE_REPLAY_INPUT_READY`, does not create active replay input, does not run replay, does not compute forward labels, does not train weights, does not create active stock profiles, does not create real buy-review eligibility, does not authorize trading, and does not validate strategy performance.
+
 ## Universe Profile Policy Audit Status
 
 `research-status` includes `universe-profile-policy-audit-status` as universe naming and split-policy context when those artifacts exist.

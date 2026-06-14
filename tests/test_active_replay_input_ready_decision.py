@@ -312,7 +312,7 @@ def test_cli_active_replay_input_ready_decision_runs_without_active_ready_claim(
     assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
 
 
-def test_artifact_view_cli_commands_are_registered_without_research_status_or_checkpoint() -> None:
+def test_artifact_view_cli_commands_are_registered_with_research_status_checkpoint_docs() -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -326,15 +326,9 @@ def test_artifact_view_cli_commands_are_registered_without_research_status_or_ch
     assert "active-replay-input-ready-decision-health" in help_text
     assert "active-replay-input-ready-decision-status" in help_text
 
-    completed = subprocess.run(
-        [sys.executable, "-m", "quant_replay_system.cli", "research-status"],
-        check=True,
-        capture_output=True,
-        text=True,
-        env={**os.environ, "PYTHONPATH": "src"},
-    )
-    assert "active_replay_input_ready_decision" not in completed.stdout
-    assert not Path("docs/release_checkpoint_v1.36.0.md").exists()
+    assert Path("docs/active_replay_input_ready_decision.md").exists()
+    assert Path("docs/release_checkpoint_v1.36.0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_36_0.md").exists()
     assert not Path("docs/project_sources").exists()
 
 
@@ -500,7 +494,7 @@ def test_status_reports_no_input_blocked_and_health_failed_stages(tmp_path: Path
     assert missing_status.workflow_stage == NO_READY_DECISION_ARTIFACT_FOUND
 
 
-def test_artifact_view_cli_commands_remain_report_only(tmp_path: Path) -> None:
+def test_artifact_view_cli_commands_and_research_status_remain_report_only(tmp_path: Path) -> None:
     root = _decision_output_dir(tmp_path)
     ready = run_active_replay_input_ready_decision(_happy_settings(tmp_path))
 
@@ -549,13 +543,129 @@ def test_artifact_view_cli_commands_remain_report_only(tmp_path: Path) -> None:
         text=True,
         env={**os.environ, "PYTHONPATH": "src"},
     )
-    assert ready.decision_run_id not in completed.stdout
-    assert "active_replay_input_ready_decision" not in completed.stdout
+    assert f"latest_active_replay_input_ready_decision_run_id: {ready.decision_run_id}" in completed.stdout
+    assert (
+        f"latest_active_replay_input_ready_decision_status: {READY_FOR_ACTIVE_REPLAY_INPUT_READY_DECISION}"
+    ) in completed.stdout
+    assert "latest_active_replay_input_ready_decision_health_status: PASS" in completed.stdout
+    assert (
+        f"latest_active_replay_input_ready_decision_workflow_stage: {READY_FOR_ACTIVE_REPLAY_INPUT_READY_DECISION}"
+    ) in completed.stdout
+    assert "active_replay_input_ready_decision_implemented: True" in completed.stdout
+    assert "active_replay_input_ready_decision_views_implemented: True" in completed.stdout
+    assert "ready_for_active_replay_input_ready_decision: True" in completed.stdout
     assert "active_replay_input_ready: False" in completed.stdout
     assert "active_replay_input: False" in completed.stdout
+    assert "active_ready_emitted: False" in completed.stdout
+    assert "replay_execution_allowed: False" in completed.stdout
+    assert "forward_labels_allowed: False" in completed.stdout
+    assert "training_allowed: False" in completed.stdout
+    assert "stock_profile_allowed: False" in completed.stdout
+    assert "buy_review_allowed: False" in completed.stdout
+    assert "trading_allowed: False" in completed.stdout
+    assert "replay_decisions_exist: False" in completed.stdout
+    assert "forward_labels_exist: False" in completed.stdout
+    assert "weights_trained: False" in completed.stdout
+    assert "active_stock_profile_exists: False" in completed.stdout
+    assert "real_buy_review_eligible: False" in completed.stdout
     assert "status: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
+    assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
     assert not Path("docs/project_sources").exists()
-    assert not Path("docs/release_checkpoint_v1.36.0.md").exists()
+    assert Path("docs/release_checkpoint_v1.36.0.md").exists()
+
+
+def test_research_status_preserves_paper_priority_over_ready_decision(tmp_path: Path) -> None:
+    run_active_replay_input_ready_decision(_happy_settings(tmp_path))
+    paper_artifact = tmp_path / "outputs" / "reports" / "paper_trading" / "workflow_status" / "paper-ready"
+    paper_artifact.mkdir(parents=True, exist_ok=True)
+    report = paper_artifact / "paper_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    (paper_artifact / "metadata.json").write_text(
+        json.dumps(
+            {
+                "workflow_status_id": "paper-ready",
+                "created_at": "2024-05-20T16:15:00",
+                "status": "WARN",
+                "workflow_stage": "WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+                "latest_decision_date": "2024-05-20",
+                "next_manual_action": "Demo WATCH_ONLY paper workflow validated; no fills were supplied.",
+                "total_warning_count": 1,
+                "expected_demo_warning_count": 1,
+                "stale_warning_count": 0,
+                "actionable_warning_count": 0,
+                "blocking_error_count": 0,
+                "component_statuses": {
+                    "total_warning_count": 1,
+                    "expected_demo_warning_count": 1,
+                    "stale_warning_count": 0,
+                    "actionable_warning_count": 0,
+                    "blocking_error_count": 0,
+                },
+                "output_files": {"paper_workflow_status_report": str(report)},
+                "warnings": [],
+                "live_trading_enabled": False,
+                "broker_api_invoked": False,
+            },
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quant_replay_system.cli",
+            "research-status",
+            "--root",
+            str(tmp_path / "outputs" / "reports"),
+            "--output-dir",
+            str(tmp_path / "dashboard"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in completed.stdout
+    assert f"latest_active_replay_input_ready_decision_status: {READY_FOR_ACTIVE_REPLAY_INPUT_READY_DECISION}" in completed.stdout
+    assert "ready_for_active_replay_input_ready_decision: True" in completed.stdout
+    assert "active_replay_input_ready: False" in completed.stdout
+    assert "active_replay_input: False" in completed.stdout
+    assert "active_ready_emitted: False" in completed.stdout
+    assert "workflow_stage: ACTIVE_REPLAY_INPUT_READY\n" not in completed.stdout
+
+
+def test_ready_decision_docs_checkpoint_and_source_note_state_safety_boundary() -> None:
+    doc = Path("docs/active_replay_input_ready_decision.md")
+    checkpoint = Path("docs/release_checkpoint_v1.36.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_36_0.md")
+
+    for path in [doc, checkpoint, source_note]:
+        assert path.exists()
+        text = path.read_text(encoding="utf-8")
+        assert "active-replay-input-ready-decision" in text
+        assert READY_FOR_ACTIVE_REPLAY_INPUT_READY_DECISION in text
+        assert "ACTIVE_REPLAY_INPUT_READY" in text
+        assert "does not emit ACTIVE_REPLAY_INPUT_READY" in text
+        assert "does not create active replay input" in text
+        assert "does not run replay" in text
+        assert "does not compute forward labels" in text
+        assert "does not train weights" in text
+        assert "does not create active stock profiles" in text
+        assert "does not create real buy-review eligibility" in text
+        assert "does not authorize trading" in text
+
+    checkpoint_text = checkpoint.read_text(encoding="utf-8")
+    assert "v1.36.0" in checkpoint_text
+    assert "PAPER_WORKFLOW_READY" in checkpoint_text
+    assert "0e6af6622f83" in checkpoint_text
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources" in source_text
+    assert "intentionally absent from Git" in source_text
+    assert "after tag v1.36.0" in source_text
+    assert not Path("docs/project_sources").exists()
 
 
 def _assert_never_active(result) -> None:

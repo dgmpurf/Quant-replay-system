@@ -11897,6 +11897,47 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"trading_allowed: {result.trading_allowed}")
     print(f"active_replay_input_emission_report_path: {result.active_replay_input_emission_report_path}")
     print(f"active_replay_input_emission_next_action: {result.active_replay_input_emission_next_action}")
+    print(
+        "active_replay_input_ready_decision_implemented: "
+        f"{result.active_replay_input_ready_decision_implemented}"
+    )
+    print(
+        "active_replay_input_ready_decision_views_implemented: "
+        f"{result.active_replay_input_ready_decision_views_implemented}"
+    )
+    print(
+        "latest_active_replay_input_ready_decision_run_id: "
+        f"{result.latest_active_replay_input_ready_decision_run_id}"
+    )
+    print(
+        "latest_active_replay_input_ready_decision_status: "
+        f"{result.latest_active_replay_input_ready_decision_status}"
+    )
+    print(
+        "latest_active_replay_input_ready_decision_health_status: "
+        f"{result.latest_active_replay_input_ready_decision_health_status}"
+    )
+    print(
+        "latest_active_replay_input_ready_decision_workflow_stage: "
+        f"{result.latest_active_replay_input_ready_decision_workflow_stage}"
+    )
+    print(
+        "active_replay_input_ready_decision_artifact_path: "
+        f"{result.active_replay_input_ready_decision_artifact_path}"
+    )
+    print(
+        "ready_for_active_replay_input_ready_decision: "
+        f"{result.ready_for_active_replay_input_ready_decision}"
+    )
+    print(f"replay_decisions_exist: {result.replay_decisions_exist}")
+    print(
+        "active_replay_input_ready_decision_report_path: "
+        f"{result.active_replay_input_ready_decision_report_path}"
+    )
+    print(
+        "active_replay_input_ready_decision_next_action: "
+        f"{result.active_replay_input_ready_decision_next_action}"
+    )
     print(f"latest_universe_profile_policy_audit_id: {result.latest_universe_profile_policy_audit_id}")
     print(f"universe_profile_policy_audit_status: {result.universe_profile_policy_audit_status}")
     print(f"universe_profile_policy_audit_stage: {result.universe_profile_policy_audit_stage}")
