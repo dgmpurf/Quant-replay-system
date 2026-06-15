@@ -8,7 +8,9 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+import pandas as pd
 
+from quant_replay_system import cli
 from quant_replay_system.active_replay_input_create import (
     ACTIVE_REPLAY_INPUT_CREATED,
     ACTIVE_REPLAY_INPUT_CREATION_ATTESTATION_BLOCKED,
@@ -39,6 +41,7 @@ from quant_replay_system.active_replay_input_create_status import (
     READY_FOR_ACTIVE_REPLAY_INPUT_CREATE_REVIEW,
     run_active_replay_input_create_status,
 )
+from quant_replay_system.local_research_dashboard import run_local_research_dashboard
 
 
 def test_no_input_writes_required_artifacts_with_safe_defaults(tmp_path: Path) -> None:
@@ -376,7 +379,7 @@ def test_cli_happy_path_requires_explicit_allow_to_create_active_input(tmp_path:
         assert f"{field}: False" in allow.stdout
 
 
-def test_cli_view_commands_are_added_without_research_status_or_checkpoint() -> None:
+def test_cli_view_commands_and_docs_are_added_without_project_source_pack() -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -389,9 +392,9 @@ def test_cli_view_commands_are_added_without_research_status_or_checkpoint() -> 
     assert "active-replay-input-create-index" in help_text
     assert "active-replay-input-create-health" in help_text
     assert "active-replay-input-create-status" in help_text
-    assert "latest_active_replay_input_create" not in help_text
-    assert not Path("docs/release_checkpoint_v1.40.0.md").exists()
-    assert not Path("SOURCE_UPDATE_NOTES_v1_40_0.md").exists()
+    assert Path("docs/active_replay_input_create.md").exists()
+    assert Path("docs/release_checkpoint_v1.40.0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_40_0.md").exists()
     assert not Path("docs/project_sources").exists()
 
 
@@ -603,6 +606,150 @@ def test_cli_active_input_create_views_run(tmp_path: Path) -> None:
             env=env,
         )
         assert "active replay input" in completed.stdout.lower() or "status:" in completed.stdout.lower()
+
+
+def test_research_status_includes_active_replay_input_creation_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    created = run_active_replay_input_create(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_creation=True)
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.active_replay_input_creation_workflow_implemented is True
+    assert result.active_replay_input_creation_views_implemented is True
+    assert result.latest_active_replay_input_creation_run_id == created.active_input_creation_run_id
+    assert result.latest_active_replay_input_creation_status == ACTIVE_REPLAY_INPUT_CREATED
+    assert result.latest_active_replay_input_creation_health_status == "PASS"
+    assert result.latest_active_replay_input_creation_workflow_stage == ACTIVE_REPLAY_INPUT_CREATE_CREATED
+    assert result.active_replay_input_creation_artifact_path.endswith(created.active_input_creation_run_id)
+    assert result.active_replay_input_created is True
+    assert result.active_replay_input_file_exists is True
+    assert result.active_replay_input is True
+    assert result.source_marker_run_id == "c5c065f6437a"
+    assert result.marker_status == "ACTIVE_REPLAY_INPUT_READY"
+    assert result.marker_file_exists is True
+    assert result.active_replay_input_ready_marker_emitted is True
+    assert result.marker_only_semantics_confirmed is True
+    assert result.replay_as_of_date == "2024-04-02"
+    assert result.pit_universe_ref.endswith("pit_universe.json")
+    assert result.source_registry_ref.endswith("source_registry.json")
+    assert result.evidence_bundle_ref.endswith("evidence_bundle.json")
+    assert result.source_hash_coverage == "COMPLETE"
+    assert result.revision_id_coverage == "COMPLETE"
+    assert result.available_time_policy == "ALL_AVAILABLE_TIME_LTE_REPLAY_DECISION_TIME"
+    assert result.taxonomy_coverage == "8_LAYER_TAXONOMY_COVERED"
+    _assert_research_status_downstream_flags_false(result)
+    assert result.report_only is True
+    assert result.diagnostic_only is True
+    assert result.no_live_trading is True
+    assert result.no_broker_api is True
+    assert result.no_order_placement is True
+    assert result.no_message_sent is True
+
+
+def test_research_status_preserves_paper_priority_over_active_input_creation(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    created = run_active_replay_input_create(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_creation=True)
+    )
+    _paper_workflow_status(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.latest_active_replay_input_creation_run_id == created.active_input_creation_run_id
+    assert result.latest_active_replay_input_creation_workflow_stage == ACTIVE_REPLAY_INPUT_CREATE_CREATED
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.active_replay_input is True
+    assert result.replay_execution_allowed is False
+    assert result.replay_decisions_exist is False
+    assert result.forward_labels_exist is False
+    assert result.weights_trained is False
+    assert result.active_stock_profile_exists is False
+    assert result.real_buy_review_eligible is False
+    assert result.trading_allowed is False
+
+
+def test_research_status_exports_active_input_creation_fields_to_summary_metadata_and_cli(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = tmp_path / "outputs" / "reports"
+    created = run_active_replay_input_create(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_creation=True)
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], keep_default_na=False)
+    metadata = _read_json(result.artifact_paths["metadata"])
+    row = summary.iloc[0].to_dict()
+
+    assert row["latest_active_replay_input_creation_run_id"] == created.active_input_creation_run_id
+    assert row["latest_active_replay_input_creation_status"] == ACTIVE_REPLAY_INPUT_CREATED
+    assert row["latest_active_replay_input_creation_health_status"] == "PASS"
+    assert row["latest_active_replay_input_creation_workflow_stage"] == ACTIVE_REPLAY_INPUT_CREATE_CREATED
+    assert row["active_replay_input_created"] is True
+    assert row["active_replay_input"] is True
+    assert row["replay_execution_allowed"] is False
+    assert row["replay_decisions_exist"] is False
+    assert row["forward_labels_allowed"] is False
+    assert row["forward_labels_exist"] is False
+    assert row["training_allowed"] is False
+    assert row["weights_trained"] is False
+    assert row["stock_profile_allowed"] is False
+    assert row["active_stock_profile_exists"] is False
+    assert row["buy_review_allowed"] is False
+    assert row["real_buy_review_eligible"] is False
+    assert row["trading_allowed"] is False
+    assert metadata["latest_active_replay_input_creation_run_id"] == created.active_input_creation_run_id
+    assert metadata["latest_active_replay_input_creation_status"] == ACTIVE_REPLAY_INPUT_CREATED
+    assert metadata["active_replay_input_created"] is True
+    assert metadata["active_replay_input"] is True
+    assert metadata["replay_execution_allowed"] is False
+    assert metadata["component_statuses"]["latest_active_replay_input_creation_run_id"] == (
+        created.active_input_creation_run_id
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard_cli")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert f"latest_active_replay_input_creation_run_id: {created.active_input_creation_run_id}" in output.out
+    assert f"latest_active_replay_input_creation_status: {ACTIVE_REPLAY_INPUT_CREATED}" in output.out
+    assert "active_replay_input_created: True" in output.out
+    assert "replay_execution_allowed: False" in output.out
+    assert "replay_decisions_exist: False" in output.out
+    assert "forward_labels_exist: False" in output.out
+    assert "weights_trained: False" in output.out
+    assert "real_buy_review_eligible: False" in output.out
+    assert "trading_allowed: False" in output.out
+
+
+def test_active_input_create_docs_checkpoint_and_source_note_are_report_only() -> None:
+    workflow_doc = Path("docs/active_replay_input_create.md")
+    dashboard_doc = Path("docs/local_research_dashboard.md")
+    readme = Path("README.md")
+    checkpoint = Path("docs/release_checkpoint_v1.40.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_40_0.md")
+
+    for path in [workflow_doc, dashboard_doc, readme, checkpoint, source_note]:
+        text = path.read_text(encoding="utf-8")
+        assert "active replay input creation" in text.lower()
+        assert "does not run replay" in text
+        assert "does not create replay decisions" in text
+        assert "does not compute forward labels" in text
+        assert "does not train weights" in text
+        assert "does not create active stock profiles" in text
+        assert "does not create real buy-review eligibility" in text
+        assert "does not authorize trading" in text
+
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert "ChatGPT Project Source is maintained separately" in source_text
+    assert "Real Replay Execution Planning / Design Report-Only v0.1" in source_text
+    assert not Path("docs/project_sources").exists()
 
 
 def _output_dir(tmp_path: Path) -> Path:
@@ -967,3 +1114,67 @@ def _downstream_false_fields() -> list[str]:
 def _assert_downstream_flags_false(result: object) -> None:
     for field in _downstream_false_fields():
         assert getattr(result, field) is False
+
+
+def _assert_research_status_downstream_flags_false(result: object) -> None:
+    for field in [
+        "replay_execution_allowed",
+        "replay_decisions_exist",
+        "forward_labels_allowed",
+        "forward_labels_exist",
+        "training_allowed",
+        "weights_trained",
+        "stock_profile_allowed",
+        "active_stock_profile_exists",
+        "buy_review_allowed",
+        "real_buy_review_eligible",
+        "trading_allowed",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+    ]:
+        assert getattr(result, field) is False
+
+
+def _paper_workflow_status(root: Path) -> Path:
+    folder = root / "paper_trading" / "workflow_status" / "paper-workflow-status-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "paper_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "workflow_status_id": "paper-workflow-status-a",
+            "created_at": "2024-05-20T16:15:00",
+            "status": "WARN",
+            "workflow_stage": "WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+            "latest_decision_date": "2024-05-20",
+            "next_manual_action": "Demo WATCH_ONLY paper workflow validated; no fills were supplied.",
+            "total_warning_count": 1,
+            "expected_demo_warning_count": 1,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+            "component_statuses": {
+                "total_warning_count": 1,
+                "expected_demo_warning_count": 1,
+                "stale_warning_count": 0,
+                "actionable_warning_count": 0,
+                "blocking_error_count": 0,
+            },
+            "output_files": {"paper_workflow_status_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder

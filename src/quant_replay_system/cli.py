@@ -13153,6 +13153,54 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         f"{result.actual_active_replay_input_ready_emission_next_action}"
     )
     print(
+        "active_replay_input_creation_workflow_implemented: "
+        f"{result.active_replay_input_creation_workflow_implemented}"
+    )
+    print(
+        "active_replay_input_creation_views_implemented: "
+        f"{result.active_replay_input_creation_views_implemented}"
+    )
+    print(
+        "latest_active_replay_input_creation_run_id: "
+        f"{result.latest_active_replay_input_creation_run_id}"
+    )
+    print(
+        "latest_active_replay_input_creation_status: "
+        f"{result.latest_active_replay_input_creation_status}"
+    )
+    print(
+        "latest_active_replay_input_creation_health_status: "
+        f"{result.latest_active_replay_input_creation_health_status}"
+    )
+    print(
+        "latest_active_replay_input_creation_workflow_stage: "
+        f"{result.latest_active_replay_input_creation_workflow_stage}"
+    )
+    print(
+        "active_replay_input_creation_artifact_path: "
+        f"{result.active_replay_input_creation_artifact_path}"
+    )
+    print(f"active_replay_input_created: {result.active_replay_input_created}")
+    print(f"active_replay_input_file_exists: {result.active_replay_input_file_exists}")
+    print(f"source_marker_run_id: {result.source_marker_run_id}")
+    print(f"marker_status: {result.marker_status}")
+    print(f"replay_as_of_date: {result.replay_as_of_date}")
+    print(f"pit_universe_ref: {result.pit_universe_ref}")
+    print(f"source_registry_ref: {result.source_registry_ref}")
+    print(f"evidence_bundle_ref: {result.evidence_bundle_ref}")
+    print(f"source_hash_coverage: {result.source_hash_coverage}")
+    print(f"revision_id_coverage: {result.revision_id_coverage}")
+    print(f"available_time_policy: {result.available_time_policy}")
+    print(f"taxonomy_coverage: {result.taxonomy_coverage}")
+    print(
+        "active_replay_input_creation_report_path: "
+        f"{result.active_replay_input_creation_report_path}"
+    )
+    print(
+        "active_replay_input_creation_next_action: "
+        f"{result.active_replay_input_creation_next_action}"
+    )
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )
