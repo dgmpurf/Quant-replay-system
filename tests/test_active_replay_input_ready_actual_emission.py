@@ -27,6 +27,18 @@ from quant_replay_system.active_replay_input_ready_actual_emission import (
     ActualActiveReplayInputReadyEmissionSettings,
     run_actual_active_replay_input_ready_emission,
 )
+from quant_replay_system.active_replay_input_ready_actual_emission_health import (
+    check_actual_active_replay_input_ready_emission_health,
+)
+from quant_replay_system.active_replay_input_ready_actual_emission_index import (
+    build_actual_active_replay_input_ready_emission_index,
+)
+from quant_replay_system.active_replay_input_ready_actual_emission_status import (
+    ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_MARKER_ONLY,
+    ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_NO_INPUT,
+    READY_FOR_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_REVIEW,
+    run_actual_active_replay_input_ready_emission_status,
+)
 
 
 def test_no_input_writes_required_artifacts_with_safe_defaults(tmp_path: Path) -> None:
@@ -345,7 +357,7 @@ def test_cli_happy_path_requires_explicit_allow_to_emit_marker(tmp_path: Path) -
     assert "trading_allowed: False" in allow.stdout
 
 
-def test_only_core_cli_command_is_added_and_no_docs_or_research_status_integration() -> None:
+def test_cli_view_commands_are_added_without_research_status_or_checkpoint() -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -355,9 +367,9 @@ def test_only_core_cli_command_is_added_and_no_docs_or_research_status_integrati
     ).stdout
 
     assert "active-replay-input-ready-actual-emission" in help_text
-    assert "active-replay-input-ready-actual-emission-index" not in help_text
-    assert "active-replay-input-ready-actual-emission-health" not in help_text
-    assert "active-replay-input-ready-actual-emission-status" not in help_text
+    assert "active-replay-input-ready-actual-emission-index" in help_text
+    assert "active-replay-input-ready-actual-emission-health" in help_text
+    assert "active-replay-input-ready-actual-emission-status" in help_text
 
     dashboard_text = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
     assert "active_replay_input_ready_actual_emission" not in dashboard_text
@@ -365,11 +377,194 @@ def test_only_core_cli_command_is_added_and_no_docs_or_research_status_integrati
     assert not Path("docs/project_sources").exists()
 
 
+def test_index_discovers_no_input_ready_and_marker_only_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_actual_active_replay_input_ready_emission(
+        ActualActiveReplayInputReadyEmissionSettings(output_dir=root)
+    )
+    ready = run_actual_active_replay_input_ready_emission(_happy_settings(tmp_path))
+    marker = run_actual_active_replay_input_ready_emission(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_ready_marker_emission=True)
+    )
+
+    result = build_actual_active_replay_input_ready_emission_index(root=root, output_dir=root / "index")
+
+    assert result.artifact_count == 3
+    rows = {row["actual_emission_run_id"]: row for row in result.index_frame.to_dict("records")}
+    assert rows[no_input.actual_emission_run_id]["status"] == NO_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_INPUT
+    assert rows[ready.actual_emission_run_id]["status"] == READY_FOR_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION
+    assert rows[marker.actual_emission_run_id]["status"] == ACTIVE_REPLAY_INPUT_READY
+    assert rows[no_input.actual_emission_run_id]["marker_file_exists"] is True
+    assert rows[ready.actual_emission_run_id]["marker_file_exists"] is True
+    assert rows[marker.actual_emission_run_id]["marker_file_exists"] is True
+    assert rows[marker.actual_emission_run_id]["marker_only_semantics_confirmed"] is True
+    assert rows[marker.actual_emission_run_id]["active_replay_input_ready_marker_emitted"] is True
+    assert rows[marker.actual_emission_run_id]["active_replay_input_ready"] is True
+    assert rows[marker.actual_emission_run_id]["active_replay_input"] is False
+
+
+@pytest.mark.parametrize(
+    "settings_factory",
+    [
+        lambda tmp_path: ActualActiveReplayInputReadyEmissionSettings(output_dir=_output_dir(tmp_path)),
+        lambda tmp_path: _happy_settings(tmp_path),
+        lambda tmp_path: replace(_happy_settings(tmp_path), allow_active_replay_input_ready_marker_emission=True),
+    ],
+)
+def test_health_passes_for_valid_actual_emission_artifacts(tmp_path: Path, settings_factory) -> None:
+    root = _output_dir(tmp_path)
+    run_actual_active_replay_input_ready_emission(settings_factory(tmp_path))
+
+    result = check_actual_active_replay_input_ready_emission_health(root=root, output_dir=root / "health")
+
+    assert result.status == "PASS"
+    assert result.error_count == 0
+    assert result.checked_artifact_count == 1
+
+
+@pytest.mark.parametrize(
+    ("metadata_override", "remove_marker", "expected_issue"),
+    [
+        ({"status": ACTIVE_REPLAY_INPUT_READY}, True, "MISSING_MARKER_FILE"),
+        (
+            {"status": ACTIVE_REPLAY_INPUT_READY, "active_replay_input_ready_marker_emitted": False},
+            False,
+            "MARKER_STATUS_WITHOUT_MARKER_EMITTED",
+        ),
+        ({"status": ACTIVE_REPLAY_INPUT_READY, "report_only": False}, False, "UNSAFE_REPORT_ONLY_FLAGS"),
+        ({"status": ACTIVE_REPLAY_INPUT_READY, "diagnostic_only": False}, False, "UNSAFE_REPORT_ONLY_FLAGS"),
+        ({"status": READY_FOR_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION, "active_replay_input_ready": True}, False, "ACTIVE_READY_TRUE_OUTSIDE_MARKER"),
+        ({"status": READY_FOR_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION, "active_ready_emitted": True}, False, "ACTIVE_READY_EMITTED_TRUE_OUTSIDE_MARKER"),
+        ({"active_replay_input": True}, False, "ACTIVE_REPLAY_INPUT_UNEXPECTED"),
+        ({"replay_execution_allowed": True}, False, "REPLAY_EXECUTION_ALLOWED_UNEXPECTED"),
+        ({"replay_decisions_exist": True}, False, "REPLAY_DECISIONS_EXIST_UNEXPECTED"),
+        ({"forward_labels_exist": True}, False, "FORWARD_LABELS_EXIST_UNEXPECTED"),
+        ({"weights_trained": True}, False, "WEIGHTS_TRAINED_UNEXPECTED"),
+        ({"active_stock_profile_exists": True}, False, "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED"),
+        ({"real_buy_review_eligible": True}, False, "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED"),
+        ({"order_placed": True}, False, "ORDER_PLACED_UNEXPECTED"),
+        ({"broker_api_called": True}, False, "BROKER_API_CALLED_UNEXPECTED"),
+        ({"cache_mutated": True}, False, "CACHE_MUTATED_UNEXPECTED"),
+        ({"data_raw_written": True}, False, "DATA_RAW_WRITTEN_UNEXPECTED"),
+        ({"data_processed_written": True}, False, "DATA_PROCESSED_WRITTEN_UNEXPECTED"),
+        ({"data_cache_written": True}, False, "DATA_CACHE_WRITTEN_UNEXPECTED"),
+        ({"signal_semantics_changed": True}, False, "SIGNAL_SEMANTICS_CHANGED_UNEXPECTED"),
+    ],
+)
+def test_health_fails_for_unsafe_actual_emission_artifacts(
+    tmp_path: Path,
+    metadata_override: dict[str, object],
+    remove_marker: bool,
+    expected_issue: str,
+) -> None:
+    root = _output_dir(tmp_path)
+    result = run_actual_active_replay_input_ready_emission(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_ready_marker_emission=True)
+    )
+    _patch_json(result.artifact_paths["metadata"], metadata_override)
+    if remove_marker:
+        result.artifact_paths["marker"].unlink()
+
+    health = check_actual_active_replay_input_ready_emission_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert expected_issue in set(health.health_frame["issue_code"])
+
+
+def test_health_fails_when_overclaim_guards_fail(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    result = run_actual_active_replay_input_ready_emission(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_ready_marker_emission=True)
+    )
+    _patch_json(result.artifact_paths["metadata"], {"overclaim_guard_pass_count": 1})
+
+    health = check_actual_active_replay_input_ready_emission_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "OVERCLAIM_GUARD_FAILED" in set(health.health_frame["issue_code"])
+
+
+def test_status_reports_no_input_ready_and_marker_only_states(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_actual_active_replay_input_ready_emission(
+        ActualActiveReplayInputReadyEmissionSettings(output_dir=root)
+    )
+    no_input_status = run_actual_active_replay_input_ready_emission_status(root=root, output_dir=root / "status")
+    assert no_input_status.latest_actual_active_replay_input_ready_emission_run_id == no_input.actual_emission_run_id
+    assert no_input_status.workflow_stage == ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_NO_INPUT
+    assert no_input_status.active_replay_input_ready_marker_emitted is False
+
+    ready_root = tmp_path / "ready" / "outputs" / "reports" / "manual_diagnostics" / "active_replay_input_ready_actual_emission_v0_1"
+    ready = run_actual_active_replay_input_ready_emission(_happy_settings_for_root(tmp_path / "ready", ready_root))
+    ready_status = run_actual_active_replay_input_ready_emission_status(root=ready_root, output_dir=ready_root / "status")
+    assert ready_status.latest_actual_active_replay_input_ready_emission_run_id == ready.actual_emission_run_id
+    assert ready_status.workflow_stage == READY_FOR_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_REVIEW
+    assert ready_status.active_replay_input_ready_marker_emitted is False
+
+    marker_root = tmp_path / "marker" / "outputs" / "reports" / "manual_diagnostics" / "active_replay_input_ready_actual_emission_v0_1"
+    marker = run_actual_active_replay_input_ready_emission(
+        replace(
+            _happy_settings_for_root(tmp_path / "marker", marker_root),
+            allow_active_replay_input_ready_marker_emission=True,
+        )
+    )
+    marker_status = run_actual_active_replay_input_ready_emission_status(
+        root=marker_root, output_dir=marker_root / "status"
+    )
+    assert marker_status.latest_actual_active_replay_input_ready_emission_run_id == marker.actual_emission_run_id
+    assert marker_status.workflow_stage == ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_MARKER_ONLY
+    assert marker_status.active_replay_input_ready_marker_emitted is True
+    assert marker_status.active_replay_input_ready is True
+    assert marker_status.active_replay_input is False
+    assert marker_status.marker_file_exists is True
+    assert "marker-only" in marker_status.safety_statement
+    assert "does not create active replay input" in marker_status.safety_statement
+    assert "does not run replay" in marker_status.safety_statement
+    assert "does not authorize trading" in marker_status.safety_statement
+
+
+def test_cli_actual_emission_views_run(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_actual_active_replay_input_ready_emission(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_ready_marker_emission=True)
+    )
+    env = {**os.environ, "PYTHONPATH": "src"}
+    for command in [
+        "active-replay-input-ready-actual-emission-index",
+        "active-replay-input-ready-actual-emission-health",
+        "active-replay-input-ready-actual-emission-status",
+    ]:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(root),
+                "--output-dir",
+                str(root / command.rsplit("-", 1)[-1]),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        assert "active replay input" in completed.stdout.lower()
+        assert "trading" in completed.stdout.lower()
+
+
 def _output_dir(tmp_path: Path) -> Path:
     return tmp_path / "outputs" / "reports" / "manual_diagnostics" / "active_replay_input_ready_actual_emission_v0_1"
 
 
 def _happy_settings(tmp_path: Path) -> ActualActiveReplayInputReadyEmissionSettings:
+    return _happy_settings_for_root(tmp_path, _output_dir(tmp_path))
+
+
+def _happy_settings_for_root(
+    tmp_path: Path, output_dir: Path
+) -> ActualActiveReplayInputReadyEmissionSettings:
     root = tmp_path / "fixtures"
     root.mkdir(parents=True, exist_ok=True)
     plan = root / "actual_emission_plan.md"
@@ -512,7 +707,7 @@ def _happy_settings(tmp_path: Path) -> ActualActiveReplayInputReadyEmissionSetti
                 "diagnostic_only": True,
             },
         ),
-        output_dir=_output_dir(tmp_path),
+        output_dir=output_dir,
     )
 
 
