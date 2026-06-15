@@ -314,6 +314,9 @@ from quant_replay_system.real_replay_execute import (
     RealReplayExecuteSettings,
     run_real_replay_execute,
 )
+from quant_replay_system.real_replay_execute_health import check_real_replay_execute_health
+from quant_replay_system.real_replay_execute_index import build_real_replay_execute_index
+from quant_replay_system.real_replay_execute_status import run_real_replay_execute_status
 from quant_replay_system.active_replay_input_create_health import check_active_replay_input_create_health
 from quant_replay_system.active_replay_input_create_index import build_active_replay_input_create_index
 from quant_replay_system.active_replay_input_create_status import run_active_replay_input_create_status
@@ -3081,6 +3084,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only real replay execution precheck artifacts will be written",
     )
     real_replay_execute.set_defaults(handler=_handle_real_replay_execute)
+
+    real_replay_execute_index = subparsers.add_parser(
+        "real-replay-execute-index",
+        help="Index report-only real replay execution precheck artifacts",
+    )
+    real_replay_execute_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/real_replay_execute_v0_1",
+        help="Real replay execution precheck artifact root to index",
+    )
+    real_replay_execute_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/real_replay_execute_v0_1/index",
+        help="Directory where real replay execution precheck index artifacts will be written",
+    )
+    real_replay_execute_index.set_defaults(handler=_handle_real_replay_execute_index)
+
+    real_replay_execute_health = subparsers.add_parser(
+        "real-replay-execute-health",
+        help="Health-check report-only real replay execution precheck artifacts",
+    )
+    real_replay_execute_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/real_replay_execute_v0_1",
+        help="Real replay execution precheck artifact root to health-check",
+    )
+    real_replay_execute_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/real_replay_execute_v0_1/health",
+        help="Directory where real replay execution precheck health artifacts will be written",
+    )
+    real_replay_execute_health.set_defaults(handler=_handle_real_replay_execute_health)
+
+    real_replay_execute_status = subparsers.add_parser(
+        "real-replay-execute-status",
+        help="Summarize report-only real replay execution precheck artifact status",
+    )
+    real_replay_execute_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/real_replay_execute_v0_1",
+        help="Real replay execution precheck artifact root to summarize",
+    )
+    real_replay_execute_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/real_replay_execute_v0_1/status",
+        help="Directory where real replay execution precheck status artifacts will be written",
+    )
+    real_replay_execute_status.set_defaults(handler=_handle_real_replay_execute_status)
 
     active_replay_input_create_index = subparsers.add_parser(
         "active-replay-input-create-index",
@@ -8419,6 +8470,60 @@ def _handle_real_replay_execute(args: argparse.Namespace) -> int:
         "call broker/order/message/API systems, mutate cache, write data/raw, data/processed, or "
         "data/cache, or authorize trading."
     )
+    return 0
+
+
+def _handle_real_replay_execute_index(args: argparse.Namespace) -> int:
+    result = build_real_replay_execute_index(root=args.root, output_dir=args.output_dir)
+    print(f"Real replay execution precheck index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"warning: {warning}", file=sys.stderr)
+    return 0
+
+
+def _handle_real_replay_execute_health(args: argparse.Namespace) -> int:
+    result = check_real_replay_execute_health(root=args.root, output_dir=args.output_dir)
+    print(f"Real replay execution precheck health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    return 0
+
+
+def _handle_real_replay_execute_status(args: argparse.Namespace) -> int:
+    result = run_real_replay_execute_status(root=args.root, output_dir=args.output_dir)
+    print(f"Real replay execution precheck status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_real_replay_execution_run_id: {result.latest_real_replay_execution_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_real_replay_execution_review: {result.ready_for_real_replay_execution_review}")
+    print(f"source_active_input_creation_run_id: {result.source_active_input_creation_run_id}")
+    print(f"active_replay_input_created: {result.active_replay_input_created}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"replay_execution_started: {result.replay_execution_started}")
+    print(f"replay_execution_completed: {result.replay_execution_completed}")
+    print(f"real_replay_executed: {result.real_replay_executed}")
+    print(f"replay_decisions_created: {result.replay_decisions_created}")
+    print(f"replay_decisions_exist: {result.replay_decisions_exist}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 
