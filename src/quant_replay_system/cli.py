@@ -5012,6 +5012,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Actual marker-only ACTIVE_REPLAY_INPUT_READY emission artifact root directory",
     )
     research_status.add_argument(
+        "--real-replay-execute-root",
+        help="Report-only real replay execution precheck artifact root directory",
+    )
+    research_status.add_argument(
         "--universe-profile-policy-audit-root",
         help="Universe profile policy audit artifact root directory",
     )
@@ -11589,6 +11593,8 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         updates["market_update_handoff_root"] = Path(args.market_update_handoff_root)
     if args.paper_trading_root:
         updates["paper_trading_root"] = Path(args.paper_trading_root)
+    if args.real_replay_execute_root:
+        updates["real_replay_execute_root"] = Path(args.real_replay_execute_root)
     if args.output_dir:
         updates["output_dir"] = Path(args.output_dir)
     settings = settings.model_copy(
@@ -11637,6 +11643,7 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         active_replay_input_ready_actual_emission_root=(
             args.active_replay_input_ready_actual_emission_root
         ),
+        real_replay_execute_root=args.real_replay_execute_root,
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -13471,6 +13478,50 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "active_replay_input_creation_next_action: "
         f"{result.active_replay_input_creation_next_action}"
     )
+    print(
+        "real_replay_execution_workflow_implemented: "
+        f"{result.real_replay_execution_workflow_implemented}"
+    )
+    print(
+        "real_replay_execution_views_implemented: "
+        f"{result.real_replay_execution_views_implemented}"
+    )
+    print(f"latest_real_replay_execution_run_id: {result.latest_real_replay_execution_run_id}")
+    print(f"latest_real_replay_execution_status: {result.latest_real_replay_execution_status}")
+    print(
+        "latest_real_replay_execution_health_status: "
+        f"{result.latest_real_replay_execution_health_status}"
+    )
+    print(
+        "latest_real_replay_execution_workflow_stage: "
+        f"{result.latest_real_replay_execution_workflow_stage}"
+    )
+    print(f"real_replay_execution_artifact_path: {result.real_replay_execution_artifact_path}")
+    print(
+        "ready_for_real_replay_execution_review: "
+        f"{result.ready_for_real_replay_execution_review}"
+    )
+    print(f"source_active_input_creation_run_id: {result.source_active_input_creation_run_id}")
+    print(
+        "source_active_replay_input_artifact_path: "
+        f"{result.source_active_replay_input_artifact_path}"
+    )
+    print(f"replay_calendar: {result.replay_calendar}")
+    print(f"symbol_universe_ref: {result.symbol_universe_ref}")
+    print(f"raw_document_store_ref: {result.raw_document_store_ref}")
+    print(f"factor_definition_ref: {result.factor_definition_ref}")
+    print(f"factor_observation_ref: {result.factor_observation_ref}")
+    print(f"event_structured_ref: {result.event_structured_ref}")
+    print(f"company_exposure_ref: {result.company_exposure_ref}")
+    print(f"future_labels_excluded: {result.future_labels_excluded}")
+    print(f"deterministic_only: {result.deterministic_only}")
+    print(f"replay_execution_started: {result.replay_execution_started}")
+    print(f"replay_execution_completed: {result.replay_execution_completed}")
+    print(f"real_replay_executed: {result.real_replay_executed}")
+    print(f"replay_decisions_created: {result.replay_decisions_created}")
+    print(f"replay_decision_artifact_path: {result.replay_decision_artifact_path}")
+    print(f"real_replay_execution_report_path: {result.real_replay_execution_report_path}")
+    print(f"real_replay_execution_next_action: {result.real_replay_execution_next_action}")
     print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"

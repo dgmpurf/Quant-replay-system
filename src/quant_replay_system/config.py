@@ -1057,6 +1057,7 @@ class LocalResearchDashboardSettings(BaseModel):
     advisory_conversation_root: Path = Path("outputs/reports/advisory_conversation")
     market_update_handoff_root: Path = Path("outputs/reports/market_update_handoff")
     paper_trading_root: Path = Path("outputs/reports/paper_trading")
+    real_replay_execute_root: Path = Path("outputs/reports/manual_diagnostics/real_replay_execute_v0_1")
     output_dir: Path = Path("outputs/reports/local_research_dashboard")
     strict: bool = False
     config_version: str = "mvp"

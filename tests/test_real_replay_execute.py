@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 from quant_replay_system import cli
+from quant_replay_system.local_research_dashboard import run_local_research_dashboard
 from quant_replay_system.real_replay_execute_health import check_real_replay_execute_health
 from quant_replay_system.real_replay_execute_index import build_real_replay_execute_index
 from quant_replay_system.real_replay_execute_status import run_real_replay_execute_status
@@ -493,9 +494,125 @@ def test_cli_real_replay_execute_artifact_views_run(tmp_path: Path, capsys) -> N
     assert "does not run replay" in status_output
 
 
-def test_no_research_checkpoint_or_project_source_added() -> None:
-    assert not Path("docs/release_checkpoint_v1.41.0.md").exists()
-    assert not Path("SOURCE_UPDATE_NOTES_v1_41_0.md").exists()
+def test_research_status_includes_real_replay_execution_no_input_fields(tmp_path: Path, capsys) -> None:
+    root = tmp_path / "outputs" / "reports"
+    created = run_real_replay_execute(
+        RealReplayExecuteSettings(output_dir=root / "manual_diagnostics" / "real_replay_execute_v0_1")
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], keep_default_na=False)
+    metadata = _read_json(result.artifact_paths["metadata"])
+    row = summary.iloc[0].to_dict()
+
+    assert result.real_replay_execution_workflow_implemented is True
+    assert result.real_replay_execution_views_implemented is True
+    assert result.latest_real_replay_execution_run_id == created.real_replay_execution_run_id
+    assert result.latest_real_replay_execution_status == NO_REAL_REPLAY_EXECUTION_INPUT
+    assert result.latest_real_replay_execution_health_status == "PASS"
+    assert result.latest_real_replay_execution_workflow_stage == "REAL_REPLAY_EXECUTION_NO_INPUT"
+    assert result.ready_for_real_replay_execution_review is False
+    assert result.replay_execution_started is False
+    assert result.real_replay_executed is False
+    assert result.replay_decisions_created is False
+    assert result.forward_labels_allowed is False
+    assert result.weights_trained is False
+    assert result.active_stock_profile_exists is False
+    assert result.real_buy_review_eligible is False
+    assert result.trading_allowed is False
+    assert result.no_live_trading is True
+    assert result.no_broker_api is True
+    assert result.no_order_placement is True
+    assert result.no_message_sent is True
+    assert row["latest_real_replay_execution_run_id"] == created.real_replay_execution_run_id
+    assert row["latest_real_replay_execution_status"] == NO_REAL_REPLAY_EXECUTION_INPUT
+    assert row["ready_for_real_replay_execution_review"] is False
+    assert row["replay_execution_started"] is False
+    assert row["real_replay_executed"] is False
+    assert row["replay_decisions_created"] is False
+    assert metadata["latest_real_replay_execution_run_id"] == created.real_replay_execution_run_id
+    assert metadata["latest_real_replay_execution_status"] == NO_REAL_REPLAY_EXECUTION_INPUT
+    assert metadata["ready_for_real_replay_execution_review"] is False
+    assert metadata["component_statuses"]["latest_real_replay_execution_run_id"] == (
+        created.real_replay_execution_run_id
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard_cli")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert f"latest_real_replay_execution_run_id: {created.real_replay_execution_run_id}" in output.out
+    assert f"latest_real_replay_execution_status: {NO_REAL_REPLAY_EXECUTION_INPUT}" in output.out
+    assert "ready_for_real_replay_execution_review: False" in output.out
+    assert "replay_execution_started: False" in output.out
+    assert "real_replay_executed: False" in output.out
+    assert "replay_decisions_created: False" in output.out
+    assert "trading_allowed: False" in output.out
+
+
+def test_research_status_preserves_paper_priority_over_real_replay_review_ready(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    created = run_real_replay_execute(
+        replace(_happy_settings(tmp_path), output_dir=root / "manual_diagnostics" / "real_replay_execute_v0_1")
+    )
+    _paper_workflow_status(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.latest_real_replay_execution_run_id == created.real_replay_execution_run_id
+    assert result.latest_real_replay_execution_status == READY_FOR_REAL_REPLAY_EXECUTION_REVIEW
+    assert result.latest_real_replay_execution_health_status == "PASS"
+    assert result.latest_real_replay_execution_workflow_stage == READY_FOR_REAL_REPLAY_EXECUTION_REVIEW
+    assert result.ready_for_real_replay_execution_review is True
+    assert result.source_active_input_creation_run_id == "293deb5f459a"
+    assert result.active_replay_input is True
+    assert result.replay_as_of_date == "2024-04-02"
+    assert result.source_active_replay_input_artifact_path.endswith("active_replay_input.json")
+    assert result.symbol_universe_ref.endswith("symbol_universe.json")
+    assert result.raw_document_store_ref.endswith("raw_documents.json")
+    assert result.factor_definition_ref.endswith("factor_definitions.json")
+    assert result.factor_observation_ref.endswith("factor_observations.json")
+    assert result.event_structured_ref.endswith("events.json")
+    assert result.company_exposure_ref.endswith("exposures.json")
+    assert result.evidence_bundle_ref.endswith("evidence_bundle.json")
+    assert result.source_hash_coverage == "COMPLETE"
+    assert result.revision_id_coverage == "COMPLETE"
+    assert result.available_time_policy == "ALL_AVAILABLE_TIME_LTE_REPLAY_DECISION_TIME"
+    assert result.taxonomy_coverage == "8_LAYER_TAXONOMY_COVERED"
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.replay_execution_started is False
+    assert result.real_replay_executed is False
+    assert result.replay_decisions_created is False
+    assert result.forward_labels_allowed is False
+    assert result.weights_trained is False
+    assert result.active_stock_profile_exists is False
+    assert result.real_buy_review_eligible is False
+    assert result.trading_allowed is False
+
+
+def test_real_replay_execute_docs_checkpoint_and_source_note_are_report_only() -> None:
+    workflow_doc = Path("docs/real_replay_execute.md")
+    dashboard_doc = Path("docs/local_research_dashboard.md")
+    readme = Path("README.md")
+    checkpoint = Path("docs/release_checkpoint_v1.41.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_41_0.md")
+
+    for path in [workflow_doc, dashboard_doc, readme, checkpoint, source_note]:
+        text = path.read_text(encoding="utf-8")
+        assert "real replay execution" in text.lower()
+        assert "pre-execution review" in text.lower()
+        assert "does not run replay" in text
+        assert "does not create replay decisions" in text
+        assert "does not compute forward labels" in text
+        assert "does not train weights" in text
+        assert "does not create active stock profiles" in text
+        assert "does not create real buy-review eligibility" in text
+        assert "does not authorize trading" in text
+
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert "ChatGPT Project Source is maintained separately" in source_text
+    assert "Real Replay Execution Artifact Views Report-Only v0.1" in source_text
     assert not Path("docs/project_sources").exists()
 
 
@@ -598,6 +715,41 @@ def _output_dir(tmp_path: Path) -> Path:
 
 def _fixture_root(tmp_path: Path) -> Path:
     return tmp_path / "outputs" / "reports" / "manual_diagnostics" / "real_replay_execute_fixture_v0_1"
+
+
+def _paper_workflow_status(root: Path) -> Path:
+    folder = root / "paper_trading" / "workflow_status" / "paper-workflow-status-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "paper_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "workflow_status_id": "paper-workflow-status-a",
+            "created_at": "2024-05-20T16:15:00",
+            "status": "WARN",
+            "workflow_stage": "WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+            "latest_decision_date": "2024-05-20",
+            "next_manual_action": "Demo WATCH_ONLY paper workflow validated; no fills were supplied.",
+            "total_warning_count": 1,
+            "expected_demo_warning_count": 1,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+            "component_statuses": {
+                "total_warning_count": 1,
+                "expected_demo_warning_count": 1,
+                "stale_warning_count": 0,
+                "actionable_warning_count": 0,
+                "blocking_error_count": 0,
+            },
+            "output_files": {"paper_workflow_status_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
 
 
 def _happy_settings(tmp_path: Path) -> RealReplayExecuteSettings:
