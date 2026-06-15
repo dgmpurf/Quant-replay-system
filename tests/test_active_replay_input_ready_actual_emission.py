@@ -357,7 +357,98 @@ def test_cli_happy_path_requires_explicit_allow_to_emit_marker(tmp_path: Path) -
     assert "trading_allowed: False" in allow.stdout
 
 
-def test_cli_view_commands_are_added_without_research_status_or_checkpoint() -> None:
+def test_research_status_includes_actual_marker_only_emission_fields(tmp_path: Path) -> None:
+    reports_root = tmp_path / "outputs" / "reports"
+    actual_root = reports_root / "manual_diagnostics" / "active_replay_input_ready_actual_emission_v0_1"
+    marker = run_actual_active_replay_input_ready_emission(
+        replace(
+            _happy_settings_for_root(tmp_path, actual_root),
+            allow_active_replay_input_ready_marker_emission=True,
+        )
+    )
+    _paper_workflow_status(
+        reports_root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action="Demo WATCH_ONLY paper workflow validated; no fills were supplied.",
+    )
+
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "quant_replay_system.cli",
+            "research-status",
+            "--root",
+            str(reports_root),
+            "--active-replay-input-ready-actual-emission-root",
+            str(actual_root),
+            "--output-dir",
+            str(tmp_path / "dashboard"),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": "src"},
+    )
+
+    stdout = completed.stdout
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in stdout
+    assert "actual_active_replay_input_ready_emission_workflow_implemented: True" in stdout
+    assert "actual_active_replay_input_ready_emission_views_implemented: True" in stdout
+    assert f"latest_actual_active_replay_input_ready_emission_run_id: {marker.actual_emission_run_id}" in stdout
+    assert f"latest_actual_active_replay_input_ready_emission_status: {ACTIVE_REPLAY_INPUT_READY}" in stdout
+    assert "latest_actual_active_replay_input_ready_emission_health_status: PASS" in stdout
+    assert (
+        "latest_actual_active_replay_input_ready_emission_workflow_stage: "
+        f"{ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_MARKER_ONLY}"
+    ) in stdout
+    assert "active_replay_input_ready_marker_emitted: True" in stdout
+    assert "marker_file_exists: True" in stdout
+    assert "marker_only_semantics_confirmed: True" in stdout
+    assert "active_replay_input_ready: True" in stdout
+    assert "active_replay_input: False" in stdout
+    assert "active_ready_emitted: True" in stdout
+    for field in _always_false_operational_fields():
+        assert f"{field}: False" in stdout
+    assert "report_only: True" in stdout
+    assert "diagnostic_only: True" in stdout
+    assert "no_live_trading: True" in stdout
+    assert "no_broker_api: True" in stdout
+    assert "no_order_placement: True" in stdout
+    assert "no_message_sent: True" in stdout
+
+
+def test_docs_checkpoint_and_source_note_capture_actual_marker_only_safety() -> None:
+    workflow_doc = Path("docs/active_replay_input_ready_actual_emission.md")
+    checkpoint = Path("docs/release_checkpoint_v1.39.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_39_0.md")
+
+    assert workflow_doc.exists()
+    assert checkpoint.exists()
+    assert source_note.exists()
+    assert not Path("docs/project_sources").exists()
+
+    combined = "\n".join(
+        path.read_text(encoding="utf-8") for path in [workflow_doc, checkpoint, source_note]
+    )
+    for phrase in [
+        "marker-only",
+        "does not create active replay input",
+        "does not run replay",
+        "does not create replay decisions",
+        "does not compute forward labels",
+        "does not train weights",
+        "does not create active stock profiles",
+        "does not create real buy-review eligibility",
+        "does not authorize trading",
+        "docs/project_sources/ is intentionally absent from Git",
+    ]:
+        assert phrase in combined
+
+
+def test_cli_view_commands_are_added() -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -370,11 +461,6 @@ def test_cli_view_commands_are_added_without_research_status_or_checkpoint() -> 
     assert "active-replay-input-ready-actual-emission-index" in help_text
     assert "active-replay-input-ready-actual-emission-health" in help_text
     assert "active-replay-input-ready-actual-emission-status" in help_text
-
-    dashboard_text = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
-    assert "active_replay_input_ready_actual_emission" not in dashboard_text
-    assert not Path("docs/release_checkpoint_v1.39.0.md").exists()
-    assert not Path("docs/project_sources").exists()
 
 
 def test_index_discovers_no_input_ready_and_marker_only_artifacts(tmp_path: Path) -> None:
@@ -750,6 +836,48 @@ def _emission_decision_payload() -> dict[str, object]:
         "report_only": True,
         "diagnostic_only": True,
     }
+
+
+def _paper_workflow_status(
+    root: Path,
+    *,
+    status: str,
+    workflow_stage: str,
+    expected_demo_warning_count: int,
+    next_manual_action: str,
+) -> Path:
+    folder = root / "paper_trading" / "workflow_status" / "paper-workflow-status-a"
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "paper_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "workflow_status_id": "paper-workflow-status-a",
+            "created_at": "2024-05-20T16:15:00",
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_decision_date": "2024-05-20",
+            "next_manual_action": next_manual_action,
+            "total_warning_count": expected_demo_warning_count,
+            "expected_demo_warning_count": expected_demo_warning_count,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+            "component_statuses": {
+                "total_warning_count": expected_demo_warning_count,
+                "expected_demo_warning_count": expected_demo_warning_count,
+                "stale_warning_count": 0,
+                "actionable_warning_count": 0,
+                "blocking_error_count": 0,
+            },
+            "output_files": {"paper_workflow_status_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
 
 
 def _assert_operational_flags_false(result: object, marker_allowed: bool = False) -> None:

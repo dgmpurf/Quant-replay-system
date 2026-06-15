@@ -110,6 +110,9 @@ from quant_replay_system.active_replay_input_ready_decision_status import (
 from quant_replay_system.active_replay_input_ready_emission_status import (
     run_active_replay_input_ready_emission_status,
 )
+from quant_replay_system.active_replay_input_ready_actual_emission_status import (
+    run_actual_active_replay_input_ready_emission_status,
+)
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -764,6 +767,18 @@ SUMMARY_COLUMNS = [
     "ready_for_active_replay_input_ready_emission_decision",
     "active_replay_input_ready_emission_report_path",
     "active_replay_input_ready_emission_next_action",
+    "actual_active_replay_input_ready_emission_workflow_implemented",
+    "actual_active_replay_input_ready_emission_views_implemented",
+    "latest_actual_active_replay_input_ready_emission_run_id",
+    "latest_actual_active_replay_input_ready_emission_status",
+    "latest_actual_active_replay_input_ready_emission_health_status",
+    "latest_actual_active_replay_input_ready_emission_workflow_stage",
+    "actual_active_replay_input_ready_emission_artifact_path",
+    "active_replay_input_ready_marker_emitted",
+    "marker_file_exists",
+    "marker_only_semantics_confirmed",
+    "actual_active_replay_input_ready_emission_report_path",
+    "actual_active_replay_input_ready_emission_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1112,6 +1127,7 @@ COMPONENTS = [
     "ACTIVE_REPLAY_INPUT_EMISSION_STATUS",
     "ACTIVE_REPLAY_INPUT_READY_DECISION_STATUS",
     "ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS",
+    "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS",
     "ACTIVE_REPLAY_INPUT_READY_STATUS",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
@@ -1176,6 +1192,7 @@ WORKFLOW_AREAS = {
     "ACTIVE_REPLAY_INPUT_EMISSION_STATUS": "ACTIVE_REPLAY_INPUT_EMISSION",
     "ACTIVE_REPLAY_INPUT_READY_DECISION_STATUS": "ACTIVE_REPLAY_INPUT_READY_DECISION",
     "ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS": "ACTIVE_REPLAY_INPUT_READY_EMISSION",
+    "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS": "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -1816,6 +1833,18 @@ class LocalResearchDashboardResult:
     ready_for_active_replay_input_ready_emission_decision: bool
     active_replay_input_ready_emission_report_path: str
     active_replay_input_ready_emission_next_action: str
+    actual_active_replay_input_ready_emission_workflow_implemented: bool
+    actual_active_replay_input_ready_emission_views_implemented: bool
+    latest_actual_active_replay_input_ready_emission_run_id: str
+    latest_actual_active_replay_input_ready_emission_status: str
+    latest_actual_active_replay_input_ready_emission_health_status: str
+    latest_actual_active_replay_input_ready_emission_workflow_stage: str
+    actual_active_replay_input_ready_emission_artifact_path: str
+    active_replay_input_ready_marker_emitted: bool
+    marker_file_exists: bool
+    marker_only_semantics_confirmed: bool
+    actual_active_replay_input_ready_emission_report_path: str
+    actual_active_replay_input_ready_emission_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -2144,6 +2173,7 @@ def run_local_research_dashboard(
     active_replay_input_emission_root: str | Path | None = None,
     active_replay_input_ready_decision_root: str | Path | None = None,
     active_replay_input_ready_emission_root: str | Path | None = None,
+    active_replay_input_ready_actual_emission_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -2357,6 +2387,11 @@ def run_local_research_dashboard(
         if active_replay_input_ready_emission_root is not None
         else effective_root / "manual_diagnostics" / "active_replay_input_ready_emission_v0_1"
     )
+    effective_active_replay_input_ready_actual_emission_root = (
+        Path(active_replay_input_ready_actual_emission_root)
+        if active_replay_input_ready_actual_emission_root is not None
+        else effective_root / "manual_diagnostics" / "active_replay_input_ready_actual_emission_v0_1"
+    )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
         if active_replay_input_ready_root is not None
@@ -2565,6 +2600,10 @@ def run_local_research_dashboard(
             effective_active_replay_input_ready_emission_root = (
                 effective_root / "manual_diagnostics" / "active_replay_input_ready_emission_v0_1"
             )
+        if active_replay_input_ready_actual_emission_root is None:
+            effective_active_replay_input_ready_actual_emission_root = (
+                effective_root / "manual_diagnostics" / "active_replay_input_ready_actual_emission_v0_1"
+            )
         if active_replay_input_ready_root is None:
             effective_active_replay_input_ready_root = (
                 effective_root / "manual_diagnostics" / "active_replay_input_ready_v0_1"
@@ -2655,6 +2694,9 @@ def run_local_research_dashboard(
         active_replay_input_emission_root=effective_active_replay_input_emission_root,
         active_replay_input_ready_decision_root=effective_active_replay_input_ready_decision_root,
         active_replay_input_ready_emission_root=effective_active_replay_input_ready_emission_root,
+        active_replay_input_ready_actual_emission_root=(
+            effective_active_replay_input_ready_actual_emission_root
+        ),
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -2747,6 +2789,9 @@ def run_local_research_dashboard(
         "active_replay_input_emission_root": effective_active_replay_input_emission_root,
         "active_replay_input_ready_decision_root": effective_active_replay_input_ready_decision_root,
         "active_replay_input_ready_emission_root": effective_active_replay_input_ready_emission_root,
+        "active_replay_input_ready_actual_emission_root": (
+            effective_active_replay_input_ready_actual_emission_root
+        ),
         "active_replay_input_ready_root": effective_active_replay_input_ready_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
@@ -4351,6 +4396,38 @@ def run_local_research_dashboard(
         active_replay_input_ready_emission_next_action=str(
             summary.get("active_replay_input_ready_emission_next_action", "")
         ),
+        actual_active_replay_input_ready_emission_workflow_implemented=_bool_from_text(
+            summary.get("actual_active_replay_input_ready_emission_workflow_implemented")
+        ),
+        actual_active_replay_input_ready_emission_views_implemented=_bool_from_text(
+            summary.get("actual_active_replay_input_ready_emission_views_implemented")
+        ),
+        latest_actual_active_replay_input_ready_emission_run_id=str(
+            summary.get("latest_actual_active_replay_input_ready_emission_run_id", "")
+        ),
+        latest_actual_active_replay_input_ready_emission_status=str(
+            summary.get("latest_actual_active_replay_input_ready_emission_status", "MISSING")
+        ),
+        latest_actual_active_replay_input_ready_emission_health_status=str(
+            summary.get("latest_actual_active_replay_input_ready_emission_health_status", "")
+        ),
+        latest_actual_active_replay_input_ready_emission_workflow_stage=str(
+            summary.get("latest_actual_active_replay_input_ready_emission_workflow_stage", "")
+        ),
+        actual_active_replay_input_ready_emission_artifact_path=str(
+            summary.get("actual_active_replay_input_ready_emission_artifact_path", "")
+        ),
+        active_replay_input_ready_marker_emitted=_bool_from_text(
+            summary.get("active_replay_input_ready_marker_emitted")
+        ),
+        marker_file_exists=_bool_from_text(summary.get("marker_file_exists")),
+        marker_only_semantics_confirmed=_bool_from_text(summary.get("marker_only_semantics_confirmed")),
+        actual_active_replay_input_ready_emission_report_path=str(
+            summary.get("actual_active_replay_input_ready_emission_report_path", "")
+        ),
+        actual_active_replay_input_ready_emission_next_action=str(
+            summary.get("actual_active_replay_input_ready_emission_next_action", "")
+        ),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -5028,6 +5105,7 @@ def scan_local_research_workflow_artifacts(
     active_replay_input_emission_root: str | Path,
     active_replay_input_ready_decision_root: str | Path,
     active_replay_input_ready_emission_root: str | Path,
+    active_replay_input_ready_actual_emission_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -5087,6 +5165,7 @@ def scan_local_research_workflow_artifacts(
     active_replay_input_emission_path = Path(active_replay_input_emission_root)
     active_replay_input_ready_decision_path = Path(active_replay_input_ready_decision_root)
     active_replay_input_ready_emission_path = Path(active_replay_input_ready_emission_root)
+    active_replay_input_ready_actual_emission_path = Path(active_replay_input_ready_actual_emission_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -5168,6 +5247,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_active_replay_input_emission_status(active_replay_input_emission_path))
     records.extend(_scan_active_replay_input_ready_decision_status(active_replay_input_ready_decision_path))
     records.extend(_scan_active_replay_input_ready_emission_status(active_replay_input_ready_emission_path))
+    records.extend(_scan_actual_active_replay_input_ready_emission_status(active_replay_input_ready_actual_emission_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -8736,6 +8816,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             return "EMISSION_HEALTH_FAILED"
         if statuses["ACTIVE_REPLAY_INPUT_READY_DECISION_STATUS"] == "FAIL":
             return "READY_DECISION_HEALTH_FAILED"
+        if statuses["ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS"] == "FAIL":
+            return "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_HEALTH_FAILED"
         if (
             not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
             and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] == "FAIL"
@@ -9014,6 +9096,17 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
     ):
         return _active_replay_input_ready_emission_stage_from_frame(dashboard_frame)
     if (
+        statuses["ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS"]
+        in {
+            "NO_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_INPUT",
+            "READY_FOR_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION",
+            "ACTIVE_REPLAY_INPUT_READY",
+            "MISSING",
+        }
+        and _actual_active_replay_input_ready_emission_stage_from_frame(dashboard_frame)
+    ):
+        return _actual_active_replay_input_ready_emission_stage_from_frame(dashboard_frame)
+    if (
         statuses["ACTIVE_REPLAY_INPUT_FINAL_REVIEW_STATUS"]
         in {
             "NO_FINAL_REVIEW_PACKAGE",
@@ -9283,6 +9376,11 @@ def infer_local_research_next_action(
         "ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION_READY": "Review emission-decision context only; READY_FOR_ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION is not ACTIVE_REPLAY_INPUT_READY.",
         "ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION_BLOCKED": "Resolve emission-decision blockers; do not emit ACTIVE_REPLAY_INPUT_READY.",
         "ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION_HEALTH_FAILED": "Repair emission-decision artifact health before any emission-decision review.",
+        "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_NO_INPUT": "Provide marker-only actual emission governance inputs; do not create active replay input or run replay.",
+        "READY_FOR_ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_REVIEW": "Review actual marker-only emission context; ACTIVE_REPLAY_INPUT_READY may only be emitted as diagnostics with an explicit allow flag.",
+        "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_MARKER_ONLY": "Marker-only ACTIVE_REPLAY_INPUT_READY exists as diagnostics context; it is not active replay input and does not permit replay or trading.",
+        "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_FAILED": "Repair actual marker-only emission artifacts; do not create active replay input.",
+        "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_HEALTH_FAILED": "Repair actual marker-only emission artifact health; do not create active replay input.",
         "UNIVERSE_PROFILE_POLICY_AUDIT_READY": "Use universe profile split guidance for future worklists.",
         "UNIVERSE_PROFILE_POLICY_AMBIGUOUS_MIXED_UNIVERSE": "Resolve mixed universe naming before semantic approval decisions, or explicitly accept as legacy mixed demo context.",
         "UNIVERSE_PROFILE_POLICY_AUDIT_HEALTH_WARN": "Review universe profile policy audit health warnings.",
@@ -9406,6 +9504,7 @@ def summarize_local_research_status(
                     "ACTIVE_REPLAY_INPUT_EMISSION_STATUS",
                     "ACTIVE_REPLAY_INPUT_READY_DECISION_STATUS",
                     "ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS",
+                    "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS",
                     "ACTIVE_REPLAY_INPUT_READY_STATUS",
                     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
                     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS",
@@ -9484,6 +9583,7 @@ def summarize_local_research_status(
         return ""
 
     active_replay_input_ready_safety_components = [
+        "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS",
         "ACTIVE_REPLAY_INPUT_READY_STATUS",
         "ACTIVE_REPLAY_INPUT_READY_DECISION_STATUS",
         "ACTIVE_REPLAY_INPUT_EMISSION_STATUS",
@@ -12343,6 +12443,52 @@ def summarize_local_research_status(
         ),
         "active_replay_input_ready_emission_next_action": _parse_note_value(
             by_component.get("ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "actual_active_replay_input_ready_emission_workflow_implemented": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "actual_active_replay_input_ready_emission_views_implemented": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_actual_active_replay_input_ready_emission_run_id": _string_or_empty(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_actual_active_replay_input_ready_emission_status": _component_status(
+            by_component,
+            "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS",
+        ),
+        "latest_actual_active_replay_input_ready_emission_health_status": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_actual_active_replay_input_ready_emission_workflow_stage": _string_or_empty(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("stage")
+        ),
+        "actual_active_replay_input_ready_emission_artifact_path": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "active_replay_input_ready_marker_emitted": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "active_replay_input_ready_marker_emitted",
+        ),
+        "marker_file_exists": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "marker_file_exists",
+        ),
+        "marker_only_semantics_confirmed": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "marker_only_semantics_confirmed",
+        ),
+        "actual_active_replay_input_ready_emission_report_path": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "actual_active_replay_input_ready_emission_next_action": _parse_note_value(
+            by_component.get("ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -15302,6 +15448,36 @@ def build_local_research_dashboard_metadata(
         ),
         "active_replay_input_ready_emission_next_action": (
             result.active_replay_input_ready_emission_next_action
+        ),
+        "actual_active_replay_input_ready_emission_workflow_implemented": (
+            result.actual_active_replay_input_ready_emission_workflow_implemented
+        ),
+        "actual_active_replay_input_ready_emission_views_implemented": (
+            result.actual_active_replay_input_ready_emission_views_implemented
+        ),
+        "latest_actual_active_replay_input_ready_emission_run_id": (
+            result.latest_actual_active_replay_input_ready_emission_run_id
+        ),
+        "latest_actual_active_replay_input_ready_emission_status": (
+            result.latest_actual_active_replay_input_ready_emission_status
+        ),
+        "latest_actual_active_replay_input_ready_emission_health_status": (
+            result.latest_actual_active_replay_input_ready_emission_health_status
+        ),
+        "latest_actual_active_replay_input_ready_emission_workflow_stage": (
+            result.latest_actual_active_replay_input_ready_emission_workflow_stage
+        ),
+        "actual_active_replay_input_ready_emission_artifact_path": (
+            result.actual_active_replay_input_ready_emission_artifact_path
+        ),
+        "active_replay_input_ready_marker_emitted": result.active_replay_input_ready_marker_emitted,
+        "marker_file_exists": result.marker_file_exists,
+        "marker_only_semantics_confirmed": result.marker_only_semantics_confirmed,
+        "actual_active_replay_input_ready_emission_report_path": (
+            result.actual_active_replay_input_ready_emission_report_path
+        ),
+        "actual_active_replay_input_ready_emission_next_action": (
+            result.actual_active_replay_input_ready_emission_next_action
         ),
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
@@ -18489,6 +18665,151 @@ def _active_replay_input_ready_emission_notes(summary: dict[str, Any]) -> str:
     )
 
 
+def _scan_actual_active_replay_input_ready_emission_status(root: Path) -> list[dict[str, Any]]:
+    actual_root = root.parent if root.name == "status" else root
+    if not actual_root.exists():
+        return []
+    try:
+        result = run_actual_active_replay_input_ready_emission_status(
+            root=actual_root,
+            output_dir=actual_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_actual_active_replay_input_ready_emission_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = actual_root / result.latest_actual_active_replay_input_ready_emission_run_id
+    metadata = (
+        _load_json_or_none(artifact_dir / "actual_emission_metadata.json")
+        or _load_json_or_none(artifact_dir / "metadata.json")
+        or {}
+    )
+    artifact_paths = metadata.get("artifact_paths") if isinstance(metadata.get("artifact_paths"), dict) else {}
+    marker_path = Path(
+        _string_or_empty(artifact_paths.get("marker"))
+        or str(artifact_dir / "active_replay_input_ready_marker.json")
+    )
+    marker_payload = _load_json_or_none(marker_path) or {}
+    summary["artifact_path"] = _string_or_empty(metadata.get("artifact_path")) or str(artifact_dir)
+    summary["marker_only_semantics_confirmed"] = _actual_marker_only_semantics_confirmed(marker_payload)
+    for field in [
+        "active_replay_input_ready_marker_emitted",
+        "active_replay_input_ready",
+        "active_replay_input",
+        "active_ready_emitted",
+        "replay_execution_allowed",
+        "replay_decisions_exist",
+        "forward_labels_allowed",
+        "forward_labels_exist",
+        "training_allowed",
+        "weights_trained",
+        "stock_profile_allowed",
+        "active_stock_profile_exists",
+        "buy_review_allowed",
+        "real_buy_review_eligible",
+        "trading_allowed",
+        "approval_applied",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+    ]:
+        summary[field] = _string_or_empty(metadata.get(field, summary.get(field, False)))
+    for field in [
+        "report_only",
+        "diagnostic_only",
+        "no_live_trading",
+        "no_broker_api",
+        "no_order_placement",
+        "no_message_sent",
+    ]:
+        summary[field] = _string_or_empty(metadata.get(field, summary.get(field, True)))
+    summary["marker_file_exists"] = _string_or_empty(marker_path.exists())
+    return [
+        _record(
+            workflow_area="ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION",
+            component="ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_actual_active_replay_input_ready_emission_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_actual_active_replay_input_ready_emission_notes(summary),
+        )
+    ]
+
+
+def _actual_marker_only_semantics_confirmed(marker_payload: dict[str, Any]) -> bool:
+    statement = _string_or_empty(marker_payload.get("safety_statement")).lower()
+    return (
+        "marker-only" in statement
+        and "not active replay input" in statement
+        and not _bool_from_text(marker_payload.get("active_replay_input"))
+        and not _bool_from_text(marker_payload.get("replay_execution_allowed"))
+        and not _bool_from_text(marker_payload.get("trading_allowed"))
+    )
+
+
+def _actual_active_replay_input_ready_emission_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        "active_replay_input_ready_marker_emitted="
+        f"{_string_or_empty(summary.get('active_replay_input_ready_marker_emitted'))}; "
+        f"marker_file_exists={_string_or_empty(summary.get('marker_file_exists'))}; "
+        f"marker_only_semantics_confirmed={_string_or_empty(summary.get('marker_only_semantics_confirmed'))}; "
+        f"active_replay_input_ready={_string_or_empty(summary.get('active_replay_input_ready'))}; "
+        f"active_replay_input={_string_or_empty(summary.get('active_replay_input'))}; "
+        f"active_ready_emitted={_string_or_empty(summary.get('active_ready_emitted'))}; "
+        f"replay_execution_allowed={_string_or_empty(summary.get('replay_execution_allowed'))}; "
+        f"replay_decisions_exist={_string_or_empty(summary.get('replay_decisions_exist'))}; "
+        f"forward_labels_allowed={_string_or_empty(summary.get('forward_labels_allowed'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"training_allowed={_string_or_empty(summary.get('training_allowed'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"stock_profile_allowed={_string_or_empty(summary.get('stock_profile_allowed'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"approval_applied={_string_or_empty(summary.get('approval_applied'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"no_live_trading={_string_or_empty(summary.get('no_live_trading'))}; "
+        f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
+        f"no_order_placement={_string_or_empty(summary.get('no_order_placement'))}; "
+        f"no_message_sent={_string_or_empty(summary.get('no_message_sent'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
 def _scan_active_replay_input_ready_status(root: Path) -> list[dict[str, Any]]:
     active_ready_root = root.parent if root.name == "status" else root
     if not active_ready_root.exists():
@@ -20991,6 +21312,14 @@ def _active_replay_input_ready_decision_stage_from_frame(dashboard_frame: pd.Dat
 def _active_replay_input_ready_emission_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _actual_active_replay_input_ready_emission_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

@@ -4730,6 +4730,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Active replay input emission artifact root directory",
     )
     research_status.add_argument(
+        "--active-replay-input-ready-actual-emission-root",
+        help="Actual marker-only ACTIVE_REPLAY_INPUT_READY emission artifact root directory",
+    )
+    research_status.add_argument(
         "--universe-profile-policy-audit-root",
         help="Universe profile policy audit artifact root directory",
     )
@@ -11088,6 +11092,9 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         one_row_material_evidence_fill_package_root=args.one_row_material_evidence_fill_package_root,
         active_replay_input_acceptance_root=args.active_replay_input_acceptance_root,
         active_replay_input_emission_root=args.active_replay_input_emission_root,
+        active_replay_input_ready_actual_emission_root=(
+            args.active_replay_input_ready_actual_emission_root
+        ),
         universe_profile_policy_audit_root=args.universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=args.universe_profile_split_worklist_plan_root,
         reviewed_replacement_worklist_plan_root=args.reviewed_replacement_worklist_plan_root,
@@ -12831,6 +12838,48 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(
         "active_replay_input_ready_emission_next_action: "
         f"{result.active_replay_input_ready_emission_next_action}"
+    )
+    print(
+        "actual_active_replay_input_ready_emission_workflow_implemented: "
+        f"{result.actual_active_replay_input_ready_emission_workflow_implemented}"
+    )
+    print(
+        "actual_active_replay_input_ready_emission_views_implemented: "
+        f"{result.actual_active_replay_input_ready_emission_views_implemented}"
+    )
+    print(
+        "latest_actual_active_replay_input_ready_emission_run_id: "
+        f"{result.latest_actual_active_replay_input_ready_emission_run_id}"
+    )
+    print(
+        "latest_actual_active_replay_input_ready_emission_status: "
+        f"{result.latest_actual_active_replay_input_ready_emission_status}"
+    )
+    print(
+        "latest_actual_active_replay_input_ready_emission_health_status: "
+        f"{result.latest_actual_active_replay_input_ready_emission_health_status}"
+    )
+    print(
+        "latest_actual_active_replay_input_ready_emission_workflow_stage: "
+        f"{result.latest_actual_active_replay_input_ready_emission_workflow_stage}"
+    )
+    print(
+        "actual_active_replay_input_ready_emission_artifact_path: "
+        f"{result.actual_active_replay_input_ready_emission_artifact_path}"
+    )
+    print(
+        "active_replay_input_ready_marker_emitted: "
+        f"{result.active_replay_input_ready_marker_emitted}"
+    )
+    print(f"marker_file_exists: {result.marker_file_exists}")
+    print(f"marker_only_semantics_confirmed: {result.marker_only_semantics_confirmed}")
+    print(
+        "actual_active_replay_input_ready_emission_report_path: "
+        f"{result.actual_active_replay_input_ready_emission_report_path}"
+    )
+    print(
+        "actual_active_replay_input_ready_emission_next_action: "
+        f"{result.actual_active_replay_input_ready_emission_next_action}"
     )
     print(
         "active_replay_input_ready_workflow_implemented: "

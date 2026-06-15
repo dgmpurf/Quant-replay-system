@@ -449,6 +449,18 @@ When the status reports `READY_FOR_ACTIVE_REPLAY_INPUT_READY_EMISSION_DECISION`,
 
 Active-ready emission-decision context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; emission-decision fields remain visible for audit. The emission-decision workflow does not emit `ACTIVE_REPLAY_INPUT_READY`, does not create active replay input, does not run replay, does not create replay decisions, does not compute forward labels, does not train weights, does not create active stock profiles, does not create real buy-review eligibility, does not authorize trading, and does not validate strategy performance.
 
+## Actual ACTIVE_REPLAY_INPUT_READY Marker-Only Emission Status
+
+`research-status` includes `active-replay-input-ready-actual-emission-status` as report-only actual marker-only `ACTIVE_REPLAY_INPUT_READY` context when those artifacts exist.
+
+Use `active-replay-input-ready-actual-emission`, `active-replay-input-ready-actual-emission-index`, `active-replay-input-ready-actual-emission-health`, and `active-replay-input-ready-actual-emission-status` to create, discover, safety-check, and summarize this marker-only diagnostics context.
+
+The unified summary records the latest actual marker-only emission run id, status, health status, workflow stage, artifact path, marker-emitted flag, marker-file flag, marker-only-semantics flag, report path, and next action. It also exports safety flags proving `active_replay_input=false`, `replay_execution_allowed=false`, `replay_decisions_exist=false`, `forward_labels_allowed=false`, `forward_labels_exist=false`, `training_allowed=false`, `weights_trained=false`, `stock_profile_allowed=false`, `active_stock_profile_exists=false`, `buy_review_allowed=false`, `real_buy_review_eligible=false`, `trading_allowed=false`, `order_placed=false`, `broker_api_called=false`, no live trading, no broker API, no order placement, no messages, no LLM/API calls, no external API calls, no cache mutation, no `data/raw`, no `data/processed`, no `data/cache`, no current-candidates generation, no snapshot build, and no signal semantics change.
+
+When the status reports marker-only `ACTIVE_REPLAY_INPUT_READY`, the dashboard treats it as diagnostics context only. It is not active replay input. It does not run replay. It does not create replay decisions. It does not compute forward labels. It does not train weights. It does not create active stock profiles. It does not create real buy-review eligibility. It does not authorize trading.
+
+Actual marker-only emission context is lower priority than later paper workflow and advisory artifacts. If later paper workflow artifacts exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; actual-emission fields remain visible for audit. Active replay input creation remains a separate future workflow.
+
 ## ACTIVE_REPLAY_INPUT_READY Workflow Status
 
 `research-status` includes `active-replay-input-ready-status` as report-only final active-ready governance context when those artifacts exist.
