@@ -306,6 +306,10 @@ from quant_replay_system.active_replay_input_ready_actual_emission import (
     ActualActiveReplayInputReadyEmissionSettings,
     run_actual_active_replay_input_ready_emission,
 )
+from quant_replay_system.active_replay_input_create import (
+    ActiveReplayInputCreateSettings,
+    run_active_replay_input_create,
+)
 from quant_replay_system.active_replay_input_ready_actual_emission_health import (
     check_actual_active_replay_input_ready_emission_health,
 )
@@ -2902,6 +2906,90 @@ def build_parser() -> argparse.ArgumentParser:
     active_replay_input_ready_actual_emission.set_defaults(
         handler=_handle_active_replay_input_ready_actual_emission
     )
+
+    active_replay_input_create = subparsers.add_parser(
+        "active-replay-input-create",
+        help=(
+            "Create report-only active replay input artifacts when marker-only ACTIVE_REPLAY_INPUT_READY "
+            "lineage and explicit creation authority pass"
+        ),
+    )
+    active_replay_input_create.add_argument(
+        "--marker-artifact-path",
+        default=None,
+        help="Optional marker-only ACTIVE_REPLAY_INPUT_READY artifact path",
+    )
+    active_replay_input_create.add_argument(
+        "--marker-health-artifact-path",
+        default=None,
+        help="Optional marker-only actual-emission health artifact JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--marker-status-artifact-path",
+        default=None,
+        help="Optional marker-only actual-emission status artifact JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--active-input-creation-plan-path",
+        default=None,
+        help="Optional active input creation plan path",
+    )
+    active_replay_input_create.add_argument(
+        "--active-input-creation-request-manifest-path",
+        default=None,
+        help="Optional local active input creation request manifest JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--active-input-authority-manifest-path",
+        default=None,
+        help="Optional local active input authority manifest JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--second-reviewer-attestation-manifest-path",
+        default=None,
+        help="Optional local second reviewer active input attestation manifest JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--pit-source-evidence-bundle-path",
+        default=None,
+        help="Optional local PIT/source/evidence bundle JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--taxonomy-evidence-bundle-path",
+        default=None,
+        help="Optional local taxonomy evidence bundle JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--source-hash-revision-available-time-evidence-path",
+        default=None,
+        help="Optional local source hash, revision, and available-time evidence JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--leakage-side-effect-evidence-bundle-path",
+        default=None,
+        help="Optional local leakage/side-effect evidence bundle JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--overclaim-evidence-bundle-path",
+        default=None,
+        help="Optional local overclaim evidence bundle JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--active-replay-input-candidate-manifest-path",
+        default=None,
+        help="Optional local active replay input candidate manifest JSON",
+    )
+    active_replay_input_create.add_argument(
+        "--allow-active-replay-input-creation",
+        action="store_true",
+        help="Explicitly allow report-only active replay input creation when all gates pass",
+    )
+    active_replay_input_create.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_create_v0_1",
+        help="Directory where report-only active replay input creation artifacts will be written",
+    )
+    active_replay_input_create.set_defaults(handler=_handle_active_replay_input_create)
 
     active_replay_input_ready_actual_emission_index = subparsers.add_parser(
         "active-replay-input-ready-actual-emission-index",
@@ -8033,6 +8121,86 @@ def _handle_active_replay_input_ready_actual_emission(args: argparse.Namespace) 
         "profiles, real buy-review eligibility, live trading, broker API, order placement, message delivery, "
         "LLM/API, external API, data/raw write, data/processed write, data/cache write, or cache mutation "
         "was invoked."
+    )
+    return 0
+
+
+def _handle_active_replay_input_create(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_create(
+        ActiveReplayInputCreateSettings(
+            marker_artifact_path=Path(args.marker_artifact_path) if args.marker_artifact_path else None,
+            marker_health_artifact_path=Path(args.marker_health_artifact_path)
+            if args.marker_health_artifact_path
+            else None,
+            marker_status_artifact_path=Path(args.marker_status_artifact_path)
+            if args.marker_status_artifact_path
+            else None,
+            active_input_creation_plan_path=Path(args.active_input_creation_plan_path)
+            if args.active_input_creation_plan_path
+            else None,
+            active_input_creation_request_manifest_path=Path(
+                args.active_input_creation_request_manifest_path
+            )
+            if args.active_input_creation_request_manifest_path
+            else None,
+            active_input_authority_manifest_path=Path(args.active_input_authority_manifest_path)
+            if args.active_input_authority_manifest_path
+            else None,
+            second_reviewer_attestation_manifest_path=Path(
+                args.second_reviewer_attestation_manifest_path
+            )
+            if args.second_reviewer_attestation_manifest_path
+            else None,
+            pit_source_evidence_bundle_path=Path(args.pit_source_evidence_bundle_path)
+            if args.pit_source_evidence_bundle_path
+            else None,
+            taxonomy_evidence_bundle_path=Path(args.taxonomy_evidence_bundle_path)
+            if args.taxonomy_evidence_bundle_path
+            else None,
+            source_hash_revision_available_time_evidence_path=Path(
+                args.source_hash_revision_available_time_evidence_path
+            )
+            if args.source_hash_revision_available_time_evidence_path
+            else None,
+            leakage_side_effect_evidence_bundle_path=Path(args.leakage_side_effect_evidence_bundle_path)
+            if args.leakage_side_effect_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            active_replay_input_candidate_manifest_path=Path(
+                args.active_replay_input_candidate_manifest_path
+            )
+            if args.active_replay_input_candidate_manifest_path
+            else None,
+            output_dir=Path(args.output_dir),
+            allow_active_replay_input_creation=args.allow_active_replay_input_creation,
+        )
+    )
+    print(f"active_input_creation_run_id: {result.active_input_creation_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"active_replay_input_created: {result.active_replay_input_created}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"replay_decisions_exist: {result.replay_decisions_exist}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(
+        "Report-only active replay input creation does not run replay, create replay decisions, "
+        "compute forward labels, train weights, create stock_profile, create buy-review eligibility, "
+        "call broker/order/message/API systems, mutate cache, write data/raw, data/processed, or "
+        "data/cache, or authorize trading."
     )
     return 0
 
