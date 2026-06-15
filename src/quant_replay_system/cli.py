@@ -310,6 +310,10 @@ from quant_replay_system.active_replay_input_create import (
     ActiveReplayInputCreateSettings,
     run_active_replay_input_create,
 )
+from quant_replay_system.real_replay_execute import (
+    RealReplayExecuteSettings,
+    run_real_replay_execute,
+)
 from quant_replay_system.active_replay_input_create_health import check_active_replay_input_create_health
 from quant_replay_system.active_replay_input_create_index import build_active_replay_input_create_index
 from quant_replay_system.active_replay_input_create_status import run_active_replay_input_create_status
@@ -2993,6 +2997,90 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only active replay input creation artifacts will be written",
     )
     active_replay_input_create.set_defaults(handler=_handle_active_replay_input_create)
+
+    real_replay_execute = subparsers.add_parser(
+        "real-replay-execute",
+        help=(
+            "Run report-only real replay execution prechecks and stop at pre-execution "
+            "review readiness"
+        ),
+    )
+    real_replay_execute.add_argument(
+        "--active-replay-input-artifact-path",
+        default=None,
+        help="Optional report-only active replay input artifact JSON",
+    )
+    real_replay_execute.add_argument(
+        "--active-input-health-artifact-path",
+        default=None,
+        help="Optional active replay input health artifact JSON",
+    )
+    real_replay_execute.add_argument(
+        "--active-input-status-artifact-path",
+        default=None,
+        help="Optional active replay input status artifact JSON",
+    )
+    real_replay_execute.add_argument(
+        "--real-replay-execution-plan-path",
+        default=None,
+        help="Optional report-only real replay execution precheck plan path",
+    )
+    real_replay_execute.add_argument(
+        "--replay-execution-request-manifest-path",
+        default=None,
+        help="Optional local real replay execution review request manifest JSON",
+    )
+    real_replay_execute.add_argument(
+        "--replay-execution-authority-manifest-path",
+        default=None,
+        help="Optional local real replay execution authority manifest JSON",
+    )
+    real_replay_execute.add_argument(
+        "--second-reviewer-attestation-manifest-path",
+        default=None,
+        help="Optional local second reviewer real replay precheck attestation manifest JSON",
+    )
+    real_replay_execute.add_argument(
+        "--pit-source-evidence-bundle-path",
+        default=None,
+        help="Optional local PIT/source/evidence bundle JSON",
+    )
+    real_replay_execute.add_argument(
+        "--taxonomy-evidence-bundle-path",
+        default=None,
+        help="Optional local taxonomy evidence bundle JSON",
+    )
+    real_replay_execute.add_argument(
+        "--factor-event-company-evidence-bundle-path",
+        default=None,
+        help="Optional local factor/event/company PIT evidence bundle JSON",
+    )
+    real_replay_execute.add_argument(
+        "--source-hash-revision-available-time-evidence-path",
+        default=None,
+        help="Optional local source hash, revision, and available-time evidence JSON",
+    )
+    real_replay_execute.add_argument(
+        "--leakage-side-effect-evidence-bundle-path",
+        default=None,
+        help="Optional local leakage/side-effect evidence bundle JSON",
+    )
+    real_replay_execute.add_argument(
+        "--overclaim-evidence-bundle-path",
+        default=None,
+        help="Optional local overclaim evidence bundle JSON",
+    )
+    real_replay_execute.add_argument(
+        "--replay-execution-candidate-manifest-path",
+        default=None,
+        help="Optional local real replay execution candidate manifest JSON",
+    )
+    real_replay_execute.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/real_replay_execute_v0_1",
+        help="Directory where report-only real replay execution precheck artifacts will be written",
+    )
+    real_replay_execute.set_defaults(handler=_handle_real_replay_execute)
 
     active_replay_input_create_index = subparsers.add_parser(
         "active-replay-input-create-index",
@@ -8249,6 +8337,84 @@ def _handle_active_replay_input_create(args: argparse.Namespace) -> int:
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print(
         "Report-only active replay input creation does not run replay, create replay decisions, "
+        "compute forward labels, train weights, create stock_profile, create buy-review eligibility, "
+        "call broker/order/message/API systems, mutate cache, write data/raw, data/processed, or "
+        "data/cache, or authorize trading."
+    )
+    return 0
+
+
+def _handle_real_replay_execute(args: argparse.Namespace) -> int:
+    result = run_real_replay_execute(
+        RealReplayExecuteSettings(
+            active_replay_input_artifact_path=Path(args.active_replay_input_artifact_path)
+            if args.active_replay_input_artifact_path
+            else None,
+            active_input_health_artifact_path=Path(args.active_input_health_artifact_path)
+            if args.active_input_health_artifact_path
+            else None,
+            active_input_status_artifact_path=Path(args.active_input_status_artifact_path)
+            if args.active_input_status_artifact_path
+            else None,
+            real_replay_execution_plan_path=Path(args.real_replay_execution_plan_path)
+            if args.real_replay_execution_plan_path
+            else None,
+            replay_execution_request_manifest_path=Path(args.replay_execution_request_manifest_path)
+            if args.replay_execution_request_manifest_path
+            else None,
+            replay_execution_authority_manifest_path=Path(args.replay_execution_authority_manifest_path)
+            if args.replay_execution_authority_manifest_path
+            else None,
+            second_reviewer_attestation_manifest_path=Path(args.second_reviewer_attestation_manifest_path)
+            if args.second_reviewer_attestation_manifest_path
+            else None,
+            pit_source_evidence_bundle_path=Path(args.pit_source_evidence_bundle_path)
+            if args.pit_source_evidence_bundle_path
+            else None,
+            taxonomy_evidence_bundle_path=Path(args.taxonomy_evidence_bundle_path)
+            if args.taxonomy_evidence_bundle_path
+            else None,
+            factor_event_company_evidence_bundle_path=Path(args.factor_event_company_evidence_bundle_path)
+            if args.factor_event_company_evidence_bundle_path
+            else None,
+            source_hash_revision_available_time_evidence_path=Path(
+                args.source_hash_revision_available_time_evidence_path
+            )
+            if args.source_hash_revision_available_time_evidence_path
+            else None,
+            leakage_side_effect_evidence_bundle_path=Path(args.leakage_side_effect_evidence_bundle_path)
+            if args.leakage_side_effect_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            replay_execution_candidate_manifest_path=Path(args.replay_execution_candidate_manifest_path)
+            if args.replay_execution_candidate_manifest_path
+            else None,
+            output_dir=Path(args.output_dir),
+        )
+    )
+    print(f"real_replay_execution_run_id: {result.real_replay_execution_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_real_replay_execution_review: {result.ready_for_real_replay_execution_review}")
+    print(f"replay_execution_started: {result.replay_execution_started}")
+    print(f"replay_execution_completed: {result.replay_execution_completed}")
+    print(f"real_replay_executed: {result.real_replay_executed}")
+    print(f"replay_decisions_created: {result.replay_decisions_created}")
+    print(f"replay_decisions_exist: {result.replay_decisions_exist}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(
+        "Report-only real replay execution precheck does not run replay, create replay decisions, "
         "compute forward labels, train weights, create stock_profile, create buy-review eligibility, "
         "call broker/order/message/API systems, mutate cache, write data/raw, data/processed, or "
         "data/cache, or authorize trading."
