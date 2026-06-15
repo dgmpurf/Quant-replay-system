@@ -310,6 +310,9 @@ from quant_replay_system.active_replay_input_create import (
     ActiveReplayInputCreateSettings,
     run_active_replay_input_create,
 )
+from quant_replay_system.active_replay_input_create_health import check_active_replay_input_create_health
+from quant_replay_system.active_replay_input_create_index import build_active_replay_input_create_index
+from quant_replay_system.active_replay_input_create_status import run_active_replay_input_create_status
 from quant_replay_system.active_replay_input_ready_actual_emission_health import (
     check_actual_active_replay_input_ready_emission_health,
 )
@@ -2990,6 +2993,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only active replay input creation artifacts will be written",
     )
     active_replay_input_create.set_defaults(handler=_handle_active_replay_input_create)
+
+    active_replay_input_create_index = subparsers.add_parser(
+        "active-replay-input-create-index",
+        help="Index report-only active replay input creation artifacts",
+    )
+    active_replay_input_create_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_create_v0_1",
+        help="Active replay input creation artifact root to index",
+    )
+    active_replay_input_create_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_create_v0_1/index",
+        help="Directory where active input creation index artifacts will be written",
+    )
+    active_replay_input_create_index.set_defaults(handler=_handle_active_replay_input_create_index)
+
+    active_replay_input_create_health = subparsers.add_parser(
+        "active-replay-input-create-health",
+        help="Health-check report-only active replay input creation artifacts",
+    )
+    active_replay_input_create_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_create_v0_1",
+        help="Active replay input creation artifact root to health-check",
+    )
+    active_replay_input_create_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_create_v0_1/health",
+        help="Directory where active input creation health artifacts will be written",
+    )
+    active_replay_input_create_health.set_defaults(handler=_handle_active_replay_input_create_health)
+
+    active_replay_input_create_status = subparsers.add_parser(
+        "active-replay-input-create-status",
+        help="Summarize report-only active replay input creation artifact status",
+    )
+    active_replay_input_create_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_replay_input_create_v0_1",
+        help="Active replay input creation artifact root to summarize",
+    )
+    active_replay_input_create_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_replay_input_create_v0_1/status",
+        help="Directory where active input creation status artifacts will be written",
+    )
+    active_replay_input_create_status.set_defaults(handler=_handle_active_replay_input_create_status)
 
     active_replay_input_ready_actual_emission_index = subparsers.add_parser(
         "active-replay-input-ready-actual-emission-index",
@@ -8202,6 +8253,58 @@ def _handle_active_replay_input_create(args: argparse.Namespace) -> int:
         "call broker/order/message/API systems, mutate cache, write data/raw, data/processed, or "
         "data/cache, or authorize trading."
     )
+    return 0
+
+
+def _handle_active_replay_input_create_index(args: argparse.Namespace) -> int:
+    result = build_active_replay_input_create_index(root=args.root, output_dir=args.output_dir)
+    print(f"Active replay input creation index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    for warning in result.warnings:
+        print(f"warning: {warning}", file=sys.stderr)
+    return 0
+
+
+def _handle_active_replay_input_create_health(args: argparse.Namespace) -> int:
+    result = check_active_replay_input_create_health(root=args.root, output_dir=args.output_dir)
+    print(f"Active replay input creation health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    return 0
+
+
+def _handle_active_replay_input_create_status(args: argparse.Namespace) -> int:
+    result = run_active_replay_input_create_status(root=args.root, output_dir=args.output_dir)
+    print(f"Active replay input creation status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_active_replay_input_creation_run_id: {result.latest_active_replay_input_creation_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"active_replay_input_created: {result.active_replay_input_created}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_replay_input_file_exists: {result.active_replay_input_file_exists}")
+    print(f"source_marker_run_id: {result.source_marker_run_id}")
+    print(f"marker_status: {result.marker_status}")
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"replay_decisions_exist: {result.replay_decisions_exist}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 

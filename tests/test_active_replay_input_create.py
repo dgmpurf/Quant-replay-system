@@ -27,6 +27,18 @@ from quant_replay_system.active_replay_input_create import (
     ActiveReplayInputCreateSettings,
     run_active_replay_input_create,
 )
+from quant_replay_system.active_replay_input_create_health import (
+    check_active_replay_input_create_health,
+)
+from quant_replay_system.active_replay_input_create_index import (
+    build_active_replay_input_create_index,
+)
+from quant_replay_system.active_replay_input_create_status import (
+    ACTIVE_REPLAY_INPUT_CREATE_CREATED,
+    ACTIVE_REPLAY_INPUT_CREATE_NO_INPUT,
+    READY_FOR_ACTIVE_REPLAY_INPUT_CREATE_REVIEW,
+    run_active_replay_input_create_status,
+)
 
 
 def test_no_input_writes_required_artifacts_with_safe_defaults(tmp_path: Path) -> None:
@@ -364,7 +376,7 @@ def test_cli_happy_path_requires_explicit_allow_to_create_active_input(tmp_path:
         assert f"{field}: False" in allow.stdout
 
 
-def test_only_core_cli_is_added_without_views_research_status_or_checkpoint() -> None:
+def test_cli_view_commands_are_added_without_research_status_or_checkpoint() -> None:
     help_text = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -374,13 +386,223 @@ def test_only_core_cli_is_added_without_views_research_status_or_checkpoint() ->
     ).stdout
 
     assert "active-replay-input-create" in help_text
-    assert "active-replay-input-create-index" not in help_text
-    assert "active-replay-input-create-health" not in help_text
-    assert "active-replay-input-create-status" not in help_text
+    assert "active-replay-input-create-index" in help_text
+    assert "active-replay-input-create-health" in help_text
+    assert "active-replay-input-create-status" in help_text
     assert "latest_active_replay_input_create" not in help_text
     assert not Path("docs/release_checkpoint_v1.40.0.md").exists()
     assert not Path("SOURCE_UPDATE_NOTES_v1_40_0.md").exists()
     assert not Path("docs/project_sources").exists()
+
+
+def test_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_active_replay_input_create(ActiveReplayInputCreateSettings(output_dir=root))
+    ready = run_active_replay_input_create(_happy_settings(tmp_path))
+    created = run_active_replay_input_create(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_creation=True)
+    )
+
+    result = build_active_replay_input_create_index(root=root, output_dir=root / "index")
+
+    assert result.artifact_count == 3
+    rows = {row["active_input_creation_run_id"]: row for row in result.index_frame.to_dict("records")}
+    assert rows[no_input.active_input_creation_run_id]["status"] == NO_ACTIVE_REPLAY_INPUT_CREATION_INPUT
+    assert rows[ready.active_input_creation_run_id]["status"] == READY_FOR_ACTIVE_REPLAY_INPUT_CREATION
+    assert rows[created.active_input_creation_run_id]["status"] == ACTIVE_REPLAY_INPUT_CREATED
+    assert rows[no_input.active_input_creation_run_id]["active_replay_input_file_exists"] is True
+    assert rows[ready.active_input_creation_run_id]["active_replay_input_file_exists"] is True
+    assert rows[created.active_input_creation_run_id]["active_replay_input_file_exists"] is True
+    assert rows[created.active_input_creation_run_id]["source_marker_run_id"] == "c5c065f6437a"
+    assert rows[created.active_input_creation_run_id]["marker_status"] == "ACTIVE_REPLAY_INPUT_READY"
+    assert rows[created.active_input_creation_run_id]["active_replay_input_created"] is True
+    assert rows[created.active_input_creation_run_id]["active_replay_input"] is True
+    for field in _downstream_false_fields():
+        assert rows[created.active_input_creation_run_id][field] is False
+
+
+@pytest.mark.parametrize(
+    "settings_factory",
+    [
+        lambda tmp_path: ActiveReplayInputCreateSettings(output_dir=_output_dir(tmp_path)),
+        lambda tmp_path: _happy_settings(tmp_path),
+        lambda tmp_path: replace(_happy_settings(tmp_path), allow_active_replay_input_creation=True),
+    ],
+)
+def test_health_passes_for_valid_active_input_create_artifacts(tmp_path: Path, settings_factory) -> None:
+    root = _output_dir(tmp_path)
+    run_active_replay_input_create(settings_factory(tmp_path))
+
+    result = check_active_replay_input_create_health(root=root, output_dir=root / "health")
+
+    assert result.status == "PASS"
+    assert result.error_count == 0
+    assert result.checked_artifact_count == 1
+
+
+@pytest.mark.parametrize(
+    ("metadata_override", "remove_active_input", "expected_issue"),
+    [
+        ({"status": ACTIVE_REPLAY_INPUT_CREATED}, True, "MISSING_ACTIVE_REPLAY_INPUT_FILE"),
+        (
+            {"status": ACTIVE_REPLAY_INPUT_CREATED, "active_replay_input_created": False},
+            False,
+            "CREATED_STATUS_WITHOUT_CREATED_FLAG",
+        ),
+        (
+            {"status": ACTIVE_REPLAY_INPUT_CREATED, "active_replay_input": False},
+            False,
+            "CREATED_STATUS_WITHOUT_ACTIVE_INPUT_FLAG",
+        ),
+        ({"status": ACTIVE_REPLAY_INPUT_CREATED, "report_only": False}, False, "UNSAFE_REPORT_ONLY_FLAGS"),
+        ({"status": ACTIVE_REPLAY_INPUT_CREATED, "diagnostic_only": False}, False, "UNSAFE_REPORT_ONLY_FLAGS"),
+        (
+            {"status": READY_FOR_ACTIVE_REPLAY_INPUT_CREATION, "active_replay_input": True},
+            False,
+            "ACTIVE_INPUT_TRUE_OUTSIDE_CREATED_STATUS",
+        ),
+        (
+            {"status": READY_FOR_ACTIVE_REPLAY_INPUT_CREATION, "active_replay_input_created": True},
+            False,
+            "ACTIVE_INPUT_CREATED_TRUE_OUTSIDE_CREATED_STATUS",
+        ),
+        ({"replay_execution_allowed": True}, False, "REPLAY_EXECUTION_ALLOWED_UNEXPECTED"),
+        ({"replay_decisions_exist": True}, False, "REPLAY_DECISIONS_EXIST_UNEXPECTED"),
+        ({"forward_labels_allowed": True}, False, "FORWARD_LABELS_ALLOWED_UNEXPECTED"),
+        ({"forward_labels_exist": True}, False, "FORWARD_LABELS_EXIST_UNEXPECTED"),
+        ({"training_allowed": True}, False, "TRAINING_ALLOWED_UNEXPECTED"),
+        ({"weights_trained": True}, False, "WEIGHTS_TRAINED_UNEXPECTED"),
+        ({"stock_profile_allowed": True}, False, "STOCK_PROFILE_ALLOWED_UNEXPECTED"),
+        ({"active_stock_profile_exists": True}, False, "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED"),
+        ({"buy_review_allowed": True}, False, "BUY_REVIEW_ALLOWED_UNEXPECTED"),
+        ({"real_buy_review_eligible": True}, False, "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED"),
+        ({"trading_allowed": True}, False, "TRADING_ALLOWED_UNEXPECTED"),
+        ({"order_placed": True}, False, "ORDER_PLACED_UNEXPECTED"),
+        ({"broker_api_called": True}, False, "BROKER_API_CALLED_UNEXPECTED"),
+        ({"message_sent": True}, False, "MESSAGE_SENT_UNEXPECTED"),
+        ({"llm_api_called": True}, False, "LLM_API_CALLED_UNEXPECTED"),
+        ({"external_api_called": True}, False, "EXTERNAL_API_CALLED_UNEXPECTED"),
+        ({"cache_mutated": True}, False, "CACHE_MUTATED_UNEXPECTED"),
+        ({"data_raw_written": True}, False, "DATA_RAW_WRITTEN_UNEXPECTED"),
+        ({"data_processed_written": True}, False, "DATA_PROCESSED_WRITTEN_UNEXPECTED"),
+        ({"data_cache_written": True}, False, "DATA_CACHE_WRITTEN_UNEXPECTED"),
+        ({"current_candidates_run": True}, False, "CURRENT_CANDIDATES_RUN_UNEXPECTED"),
+        ({"snapshot_built": True}, False, "SNAPSHOT_BUILT_UNEXPECTED"),
+        ({"signal_semantics_changed": True}, False, "SIGNAL_SEMANTICS_CHANGED_UNEXPECTED"),
+    ],
+)
+def test_health_fails_for_unsafe_active_input_create_artifacts(
+    tmp_path: Path,
+    metadata_override: dict[str, object],
+    remove_active_input: bool,
+    expected_issue: str,
+) -> None:
+    root = _output_dir(tmp_path)
+    result = run_active_replay_input_create(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_creation=True)
+    )
+    _patch_json(result.artifact_paths["metadata"], metadata_override)
+    if remove_active_input:
+        result.artifact_paths["active_replay_input"].unlink()
+
+    health = check_active_replay_input_create_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert expected_issue in set(health.health_frame["issue_code"])
+
+
+def test_health_fails_when_overclaim_guards_fail(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    result = run_active_replay_input_create(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_creation=True)
+    )
+    _patch_json(result.artifact_paths["metadata"], {"overclaim_guard_pass_count": 1})
+
+    health = check_active_replay_input_create_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "OVERCLAIM_GUARD_FAILED" in set(health.health_frame["issue_code"])
+
+
+def test_status_reports_no_input_ready_and_created_states(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_active_replay_input_create(ActiveReplayInputCreateSettings(output_dir=root))
+    no_input_status = run_active_replay_input_create_status(root=root, output_dir=root / "status")
+    assert no_input_status.latest_active_replay_input_creation_run_id == no_input.active_input_creation_run_id
+    assert no_input_status.workflow_stage == ACTIVE_REPLAY_INPUT_CREATE_NO_INPUT
+    assert no_input_status.active_replay_input_created is False
+    assert no_input_status.active_replay_input is False
+
+    ready_root = tmp_path / "ready" / "outputs" / "reports" / "manual_diagnostics" / "active_replay_input_create_v0_1"
+    ready = run_active_replay_input_create(replace(_happy_settings(tmp_path / "ready"), output_dir=ready_root))
+    ready_status = run_active_replay_input_create_status(root=ready_root, output_dir=ready_root / "status")
+    assert ready_status.latest_active_replay_input_creation_run_id == ready.active_input_creation_run_id
+    assert ready_status.workflow_stage == READY_FOR_ACTIVE_REPLAY_INPUT_CREATE_REVIEW
+    assert ready_status.active_replay_input_created is False
+    assert ready_status.active_replay_input is False
+
+    created_root = tmp_path / "created" / "outputs" / "reports" / "manual_diagnostics" / "active_replay_input_create_v0_1"
+    created = run_active_replay_input_create(
+        replace(_happy_settings(tmp_path / "created"), output_dir=created_root, allow_active_replay_input_creation=True)
+    )
+    created_status = run_active_replay_input_create_status(root=created_root, output_dir=created_root / "status")
+    assert created_status.latest_active_replay_input_creation_run_id == created.active_input_creation_run_id
+    assert created_status.workflow_stage == ACTIVE_REPLAY_INPUT_CREATE_CREATED
+    assert created_status.active_replay_input_created is True
+    assert created_status.active_replay_input is True
+    assert created_status.active_replay_input_file_exists is True
+    assert created_status.source_marker_run_id == "c5c065f6437a"
+    assert created_status.marker_status == "ACTIVE_REPLAY_INPUT_READY"
+    assert created_status.replay_execution_allowed is False
+    assert created_status.replay_decisions_exist is False
+    assert created_status.forward_labels_exist is False
+    assert created_status.weights_trained is False
+    assert created_status.active_stock_profile_exists is False
+    assert created_status.real_buy_review_eligible is False
+    assert created_status.trading_allowed is False
+    for phrase in [
+        "report-only",
+        "diagnostic-only",
+        "does not run replay",
+        "does not create replay decisions",
+        "does not compute labels",
+        "does not train weights",
+        "does not create stock_profile",
+        "does not create buy-review eligibility",
+        "does not authorize trading",
+    ]:
+        assert phrase in created_status.safety_statement
+
+
+def test_cli_active_input_create_views_run(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_active_replay_input_create(
+        replace(_happy_settings(tmp_path), allow_active_replay_input_creation=True)
+    )
+    env = {**os.environ, "PYTHONPATH": "src"}
+    commands = [
+        "active-replay-input-create-index",
+        "active-replay-input-create-health",
+        "active-replay-input-create-status",
+    ]
+    for command in commands:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(root),
+                "--output-dir",
+                str(root / command.rsplit("-", 1)[-1]),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+        assert "active replay input" in completed.stdout.lower() or "status:" in completed.stdout.lower()
 
 
 def _output_dir(tmp_path: Path) -> Path:
