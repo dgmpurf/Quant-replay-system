@@ -318,6 +318,10 @@ from quant_replay_system.replay_decision_freeze import (
     ReplayDecisionFreezeSettings,
     run_replay_decision_freeze,
 )
+from quant_replay_system.forward_return_label import (
+    ForwardReturnLabelSettings,
+    run_forward_return_label,
+)
 from quant_replay_system.replay_decision_freeze_health import check_replay_decision_freeze_health
 from quant_replay_system.replay_decision_freeze_index import build_replay_decision_freeze_index
 from quant_replay_system.replay_decision_freeze_status import run_replay_decision_freeze_status
@@ -3211,6 +3215,39 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only replay decision freeze artifacts will be written",
     )
     replay_decision_freeze.set_defaults(handler=_handle_replay_decision_freeze)
+
+    forward_return_label = subparsers.add_parser(
+        "forward-return-label",
+        help="Create report-only forward return label diagnostics after replay decision freeze",
+    )
+    forward_return_label.add_argument("--replay-decision-freeze-artifact-path", default=None)
+    forward_return_label.add_argument("--replay-decision-freeze-status-artifact-path", default=None)
+    forward_return_label.add_argument("--replay-decision-freeze-health-artifact-path", default=None)
+    forward_return_label.add_argument("--replay-decision-metadata-path", default=None)
+    forward_return_label.add_argument("--replay-decision-rows-path", default=None)
+    forward_return_label.add_argument("--replay-decision-evidence-index-path", default=None)
+    forward_return_label.add_argument("--replay-decision-safety-flags-path", default=None)
+    forward_return_label.add_argument("--approval-manifest-path", default=None)
+    forward_return_label.add_argument("--forward-label-request-manifest-path", default=None)
+    forward_return_label.add_argument("--price-input-csv-path", default=None)
+    forward_return_label.add_argument("--benchmark-input-csv-path", default=None)
+    forward_return_label.add_argument("--industry-input-csv-path", default=None)
+    forward_return_label.add_argument("--benchmark-mapping-csv-path", default=None)
+    forward_return_label.add_argument("--industry-mapping-csv-path", default=None)
+    forward_return_label.add_argument("--label-window-rules-csv-path", default=None)
+    forward_return_label.add_argument("--leakage-side-effect-evidence-bundle-path", default=None)
+    forward_return_label.add_argument("--overclaim-evidence-bundle-path", default=None)
+    forward_return_label.add_argument(
+        "--allow-forward-return-label",
+        action="store_true",
+        help="Explicitly allow report-only forward return labels when all gates pass",
+    )
+    forward_return_label.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/forward_return_label_v0_1",
+        help="Directory where report-only forward return label artifacts will be written",
+    )
+    forward_return_label.set_defaults(handler=_handle_forward_return_label)
 
     replay_decision_freeze_index = subparsers.add_parser(
         "replay-decision-freeze-index",
@@ -8839,6 +8876,100 @@ def _handle_replay_decision_freeze(args: argparse.Namespace) -> int:
         "create buy-review eligibility, call broker/order/message/API systems, mutate cache, write data/raw, "
         "data/processed, or data/cache, or authorize trading."
     )
+    return 0
+
+
+def _handle_forward_return_label(args: argparse.Namespace) -> int:
+    result = run_forward_return_label(
+        ForwardReturnLabelSettings(
+            replay_decision_freeze_artifact_path=Path(args.replay_decision_freeze_artifact_path)
+            if args.replay_decision_freeze_artifact_path
+            else None,
+            replay_decision_freeze_status_artifact_path=Path(args.replay_decision_freeze_status_artifact_path)
+            if args.replay_decision_freeze_status_artifact_path
+            else None,
+            replay_decision_freeze_health_artifact_path=Path(args.replay_decision_freeze_health_artifact_path)
+            if args.replay_decision_freeze_health_artifact_path
+            else None,
+            replay_decision_metadata_path=Path(args.replay_decision_metadata_path)
+            if args.replay_decision_metadata_path
+            else None,
+            replay_decision_rows_path=Path(args.replay_decision_rows_path)
+            if args.replay_decision_rows_path
+            else None,
+            replay_decision_evidence_index_path=Path(args.replay_decision_evidence_index_path)
+            if args.replay_decision_evidence_index_path
+            else None,
+            replay_decision_safety_flags_path=Path(args.replay_decision_safety_flags_path)
+            if args.replay_decision_safety_flags_path
+            else None,
+            approval_manifest_path=Path(args.approval_manifest_path) if args.approval_manifest_path else None,
+            forward_label_request_manifest_path=Path(args.forward_label_request_manifest_path)
+            if args.forward_label_request_manifest_path
+            else None,
+            price_input_csv_path=Path(args.price_input_csv_path) if args.price_input_csv_path else None,
+            benchmark_input_csv_path=Path(args.benchmark_input_csv_path)
+            if args.benchmark_input_csv_path
+            else None,
+            industry_input_csv_path=Path(args.industry_input_csv_path) if args.industry_input_csv_path else None,
+            benchmark_mapping_csv_path=Path(args.benchmark_mapping_csv_path)
+            if args.benchmark_mapping_csv_path
+            else None,
+            industry_mapping_csv_path=Path(args.industry_mapping_csv_path)
+            if args.industry_mapping_csv_path
+            else None,
+            label_window_rules_csv_path=Path(args.label_window_rules_csv_path)
+            if args.label_window_rules_csv_path
+            else None,
+            leakage_side_effect_evidence_bundle_path=Path(args.leakage_side_effect_evidence_bundle_path)
+            if args.leakage_side_effect_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            output_dir=Path(args.output_dir),
+            allow_forward_return_label=args.allow_forward_return_label,
+        )
+    )
+    print(f"forward_return_label_run_id: {result.forward_return_label_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_forward_return_label: {result.ready_for_forward_return_label}")
+    print(f"forward_return_label_executed: {result.forward_return_label_executed}")
+    print(f"forward_return_label_artifacts_created: {result.forward_return_label_artifacts_created}")
+    print(f"forward_return_label_artifact_path: {result.forward_return_label_artifact_path}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"forward_return_labels_created: {result.forward_return_labels_created}")
+    print(f"labels_joined_after_freeze: {result.labels_joined_after_freeze}")
+    print(f"labels_excluded_from_decision_rows: {result.labels_excluded_from_decision_rows}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"llm_api_called: {result.llm_api_called}")
+    print(f"external_api_called: {result.external_api_called}")
+    print(f"cache_mutated: {result.cache_mutated}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"label_row_count: {result.label_row_count}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"next_action: {result.next_action}")
+    print(f"Forward return label artifacts: {result.artifact_paths['artifact_dir']}")
     return 0
 
 
