@@ -29,6 +29,13 @@ from quant_replay_system.actual_replay_execute import (
     ActualReplayExecuteSettings,
     run_actual_replay_execute,
 )
+from quant_replay_system.actual_replay_execute_health import check_actual_replay_execute_health
+from quant_replay_system.actual_replay_execute_index import build_actual_replay_execute_index
+from quant_replay_system.actual_replay_execute_status import (
+    ACTUAL_REPLAY_EXECUTION_HEALTH_FAILED,
+    ACTUAL_REPLAY_EXECUTION_NO_INPUT_ARTIFACT,
+    run_actual_replay_execute_status,
+)
 
 
 EXACT_APPROVAL = (
@@ -268,13 +275,217 @@ def test_cli_happy_path_with_allow_executes_report_only(tmp_path: Path) -> None:
     assert "trading_allowed: False" in completed.stdout
 
 
-def test_no_artifact_views_research_status_checkpoint_or_project_source_added() -> None:
+def test_actual_replay_execute_index_discovers_all_report_only_artifact_states(tmp_path: Path) -> None:
+    no_input = run_actual_replay_execute(ActualReplayExecuteSettings(output_dir=_output_dir(tmp_path)))
+    ready = run_actual_replay_execute(_happy_settings(tmp_path))
+    executed = run_actual_replay_execute(
+        replace(_happy_settings(tmp_path), allow_actual_replay_execution=True)
+    )
+
+    index = build_actual_replay_execute_index(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "index")
+
+    assert index.artifact_count == 3
+    rows = {row["status"]: row for row in index.index_frame.to_dict("records")}
+    assert rows[NO_ACTUAL_REPLAY_EXECUTION_INPUT]["actual_replay_execution_run_id"] == no_input.actual_replay_execution_run_id
+    assert rows[READY_FOR_ACTUAL_REPLAY_EXECUTION]["actual_replay_execution_run_id"] == ready.actual_replay_execution_run_id
+    executed_row = rows[ACTUAL_REPLAY_EXECUTED]
+    assert executed_row["actual_replay_execution_run_id"] == executed.actual_replay_execution_run_id
+    assert executed_row["source_active_input_creation_run_id"] == "293deb5f459a"
+    assert executed_row["source_real_replay_precheck_run_id"] == "0657ae658ab8"
+    assert executed_row["actual_replay_executed"] is True
+    assert executed_row["replay_execution_started"] is True
+    assert executed_row["replay_execution_completed"] is True
+    assert executed_row["replay_decisions_created"] is False
+    assert executed_row["replay_decisions_exist"] is False
+    assert executed_row["replay_decision_artifact_path"] == ""
+    assert executed_row["forward_labels_allowed"] is False
+    assert executed_row["weights_trained"] is False
+    assert executed_row["trading_allowed"] is False
+    assert executed_row["report_only"] is True
+    assert executed_row["diagnostic_only"] is True
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [
+        lambda tmp_path: ActualReplayExecuteSettings(output_dir=_output_dir(tmp_path)),
+        lambda tmp_path: _happy_settings(tmp_path),
+        lambda tmp_path: replace(_happy_settings(tmp_path), allow_actual_replay_execution=True),
+    ],
+)
+def test_actual_replay_execute_health_passes_valid_report_only_states(tmp_path: Path, settings) -> None:
+    run_actual_replay_execute(settings(tmp_path))
+
+    health = check_actual_replay_execute_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "PASS"
+    assert health.checked_artifact_count == 1
+    assert health.error_count == 0
+
+
+@pytest.mark.parametrize(
+    "unsafe_field",
+    [
+        "replay_decisions_created",
+        "replay_decisions_exist",
+        "forward_labels_allowed",
+        "forward_labels_exist",
+        "training_allowed",
+        "weights_trained",
+        "stock_profile_allowed",
+        "active_stock_profile_exists",
+        "buy_review_allowed",
+        "real_buy_review_eligible",
+        "trading_allowed",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+    ],
+)
+def test_actual_replay_execute_health_fails_unsafe_flags(tmp_path: Path, unsafe_field: str) -> None:
+    result = run_actual_replay_execute(replace(_happy_settings(tmp_path), allow_actual_replay_execution=True))
+    _patch_json(result.artifact_paths["metadata"], {unsafe_field: True})
+    _patch_json(result.artifact_paths["safety_flags"], {unsafe_field: True})
+
+    health = check_actual_replay_execute_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert health.error_count >= 1
+    assert any(unsafe_field.upper() in str(code) for code in health.health_frame["issue_code"].tolist())
+
+
+def test_actual_replay_execute_health_fails_replay_decision_artifact_path(tmp_path: Path) -> None:
+    result = run_actual_replay_execute(replace(_happy_settings(tmp_path), allow_actual_replay_execution=True))
+    _patch_json(result.artifact_paths["metadata"], {"replay_decision_artifact_path": "replay_decisions.csv"})
+
+    health = check_actual_replay_execute_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert "REPLAY_DECISION_ARTIFACT_PATH_UNEXPECTED" in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize("column_name", ["forward_5d_return", "training_label", "replay_decision"])
+def test_actual_replay_execute_health_fails_observation_label_or_decision_columns(
+    tmp_path: Path, column_name: str
+) -> None:
+    result = run_actual_replay_execute(replace(_happy_settings(tmp_path), allow_actual_replay_execution=True))
+    frame = pd.read_csv(result.artifact_paths["observation_snapshot"])
+    frame[column_name] = 0
+    frame.to_csv(result.artifact_paths["observation_snapshot"], index=False)
+
+    health = check_actual_replay_execute_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert any("OBSERVATION" in code for code in health.health_frame["issue_code"].tolist())
+
+
+@pytest.mark.parametrize("column_name", ["available_time", "source_hash", "revision_id", "taxonomy_coverage", "pit_status"])
+def test_actual_replay_execute_health_fails_missing_evidence_required_columns(
+    tmp_path: Path, column_name: str
+) -> None:
+    result = run_actual_replay_execute(replace(_happy_settings(tmp_path), allow_actual_replay_execution=True))
+    frame = pd.read_csv(result.artifact_paths["evidence_bundle_index"]).drop(columns=[column_name])
+    frame.to_csv(result.artifact_paths["evidence_bundle_index"], index=False)
+
+    health = check_actual_replay_execute_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert "EVIDENCE_INDEX_REQUIRED_COLUMNS_MISSING" in set(health.health_frame["issue_code"])
+
+
+def test_actual_replay_execute_status_reports_no_input_ready_and_executed_states(tmp_path: Path) -> None:
+    no_input_root = _output_dir(tmp_path) / "no_input"
+    ready_root = _output_dir(tmp_path) / "ready"
+    executed_root = _output_dir(tmp_path) / "executed"
+    run_actual_replay_execute(ActualReplayExecuteSettings(output_dir=no_input_root))
+    run_actual_replay_execute(replace(_happy_settings(tmp_path), output_dir=ready_root))
+    run_actual_replay_execute(
+        replace(_happy_settings(tmp_path), output_dir=executed_root, allow_actual_replay_execution=True)
+    )
+
+    no_input_status = run_actual_replay_execute_status(root=no_input_root, output_dir=no_input_root / "status")
+    ready_status = run_actual_replay_execute_status(root=ready_root, output_dir=ready_root / "status")
+    executed_status = run_actual_replay_execute_status(root=executed_root, output_dir=executed_root / "status")
+
+    assert no_input_status.workflow_stage == ACTUAL_REPLAY_EXECUTION_NO_INPUT_ARTIFACT
+    assert ready_status.workflow_stage == READY_FOR_ACTUAL_REPLAY_EXECUTION
+    assert ready_status.ready_for_actual_replay_execution is True
+    assert executed_status.workflow_stage == ACTUAL_REPLAY_EXECUTED
+    assert executed_status.actual_replay_executed is True
+    assert executed_status.replay_decisions_created is False
+    assert executed_status.forward_labels_allowed is False
+    assert executed_status.weights_trained is False
+    assert executed_status.active_stock_profile_exists is False
+    assert executed_status.real_buy_review_eligible is False
+    assert executed_status.trading_allowed is False
+    for phrase in [
+        "report-only",
+        "execution artifacts only",
+        "does not create replay decisions",
+        "does not compute forward labels",
+        "does not train weights",
+        "does not create stock_profile",
+        "does not create buy-review eligibility",
+        "does not authorize trading",
+    ]:
+        assert phrase in executed_status.safety_statement
+
+
+def test_actual_replay_execute_status_reports_health_failure(tmp_path: Path) -> None:
+    result = run_actual_replay_execute(replace(_happy_settings(tmp_path), allow_actual_replay_execution=True))
+    _patch_json(result.artifact_paths["metadata"], {"trading_allowed": True})
+
+    status = run_actual_replay_execute_status(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "status")
+
+    assert status.workflow_stage == ACTUAL_REPLAY_EXECUTION_HEALTH_FAILED
+    assert status.health_status == "FAIL"
+
+
+def test_cli_actual_replay_execute_artifact_views_run(tmp_path: Path, capsys) -> None:
+    run_actual_replay_execute(replace(_happy_settings(tmp_path), allow_actual_replay_execution=True))
+
+    index_code = cli.main(
+        ["actual-replay-execute-index", "--root", str(_output_dir(tmp_path)), "--output-dir", str(_output_dir(tmp_path) / "index")]
+    )
+    index_output = capsys.readouterr().out
+    health_code = cli.main(
+        ["actual-replay-execute-health", "--root", str(_output_dir(tmp_path)), "--output-dir", str(_output_dir(tmp_path) / "health")]
+    )
+    health_output = capsys.readouterr().out
+    status_code = cli.main(
+        ["actual-replay-execute-status", "--root", str(_output_dir(tmp_path)), "--output-dir", str(_output_dir(tmp_path) / "status")]
+    )
+    status_output = capsys.readouterr().out
+
+    assert index_code == 0
+    assert "artifact_count: 1" in index_output
+    assert health_code == 0
+    assert "status: PASS" in health_output
+    assert "checked_artifact_count: 1" in health_output
+    assert status_code == 0
+    assert f"workflow_stage: {ACTUAL_REPLAY_EXECUTED}" in status_output
+    assert "actual_replay_executed: True" in status_output
+    assert "replay_decisions_created: False" in status_output
+    assert "trading_allowed: False" in status_output
+    assert "execution artifacts only" in status_output
+
+
+def test_artifact_views_added_without_research_status_checkpoint_or_project_source() -> None:
     parser = cli.build_parser()
     command_names = {action.dest for action in parser._subparsers._group_actions[0]._choices_actions}
     assert "actual-replay-execute" in command_names
-    assert "actual-replay-execute-index" not in command_names
-    assert "actual-replay-execute-health" not in command_names
-    assert "actual-replay-execute-status" not in command_names
+    assert "actual-replay-execute-index" in command_names
+    assert "actual-replay-execute-health" in command_names
+    assert "actual-replay-execute-status" in command_names
     assert not Path("docs/release_checkpoint_v1.42.0.md").exists()
     assert not Path("docs/project_sources").exists()
 
