@@ -118,6 +118,7 @@ from quant_replay_system.active_replay_input_create_status import (
 )
 from quant_replay_system.real_replay_execute_status import run_real_replay_execute_status
 from quant_replay_system.actual_replay_execute_status import run_actual_replay_execute_status
+from quant_replay_system.replay_decision_freeze_status import run_replay_decision_freeze_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -876,6 +877,62 @@ SUMMARY_COLUMNS = [
     "actual_replay_no_message_sent",
     "actual_replay_execution_report_path",
     "actual_replay_execution_next_action",
+    "replay_decision_freeze_workflow_implemented",
+    "replay_decision_freeze_views_implemented",
+    "latest_replay_decision_freeze_run_id",
+    "latest_replay_decision_freeze_status",
+    "latest_replay_decision_freeze_health_status",
+    "latest_replay_decision_freeze_workflow_stage",
+    "replay_decision_freeze_artifact_path",
+    "source_actual_replay_execution_run_id",
+    "replay_decision_freeze_source_active_input_creation_run_id",
+    "replay_decision_freeze_source_real_replay_precheck_run_id",
+    "replay_decision_freeze_actual_replay_execution_status",
+    "replay_decision_freeze_actual_replay_execution_health_status",
+    "replay_decision_freeze_actual_replay_executed",
+    "ready_for_replay_decision_freeze",
+    "replay_decision_freeze_executed",
+    "replay_decision_frozen",
+    "replay_decision_artifacts_created",
+    "replay_decision_freeze_replay_decisions_created",
+    "replay_decision_freeze_replay_decisions_exist",
+    "replay_decision_freeze_replay_decision_artifact_path",
+    "replay_decision_freeze_decision_row_count",
+    "replay_decision_freeze_decision_label_set",
+    "replay_decision_freeze_forward_labels_allowed",
+    "replay_decision_freeze_forward_labels_exist",
+    "replay_decision_freeze_forward_return_labels_created",
+    "replay_decision_freeze_training_allowed",
+    "replay_decision_freeze_weights_trained",
+    "replay_decision_freeze_training_result_created",
+    "replay_decision_freeze_stock_profile_allowed",
+    "replay_decision_freeze_active_stock_profile_exists",
+    "replay_decision_freeze_stock_profile_created",
+    "replay_decision_freeze_buy_review_allowed",
+    "replay_decision_freeze_real_buy_review_eligible",
+    "replay_decision_freeze_approved_for_paper",
+    "replay_decision_freeze_strategy_performance_validated",
+    "replay_decision_freeze_trading_allowed",
+    "replay_decision_freeze_order_placed",
+    "replay_decision_freeze_broker_api_called",
+    "replay_decision_freeze_message_sent",
+    "replay_decision_freeze_llm_api_called",
+    "replay_decision_freeze_external_api_called",
+    "replay_decision_freeze_cache_mutated",
+    "replay_decision_freeze_data_raw_written",
+    "replay_decision_freeze_data_processed_written",
+    "replay_decision_freeze_data_cache_written",
+    "replay_decision_freeze_current_candidates_run",
+    "replay_decision_freeze_snapshot_built",
+    "replay_decision_freeze_signal_semantics_changed",
+    "replay_decision_freeze_report_only",
+    "replay_decision_freeze_diagnostic_only",
+    "replay_decision_freeze_no_live_trading",
+    "replay_decision_freeze_no_broker_api",
+    "replay_decision_freeze_no_order_placement",
+    "replay_decision_freeze_no_message_sent",
+    "replay_decision_freeze_report_path",
+    "replay_decision_freeze_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1253,6 +1310,7 @@ OPTIONAL_COMPONENTS = {
     "ACTIVE_REPLAY_INPUT_CREATE_STATUS",
     "REAL_REPLAY_EXECUTE_STATUS",
     "ACTUAL_REPLAY_EXECUTE_STATUS",
+    "REPLAY_DECISION_FREEZE_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1299,6 +1357,7 @@ WORKFLOW_AREAS = {
     "ACTIVE_REPLAY_INPUT_CREATE_STATUS": "ACTIVE_REPLAY_INPUT_CREATE",
     "REAL_REPLAY_EXECUTE_STATUS": "REAL_REPLAY_EXECUTE",
     "ACTUAL_REPLAY_EXECUTE_STATUS": "ACTUAL_REPLAY_EXECUTE",
+    "REPLAY_DECISION_FREEZE_STATUS": "REPLAY_DECISION_FREEZE",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -2043,6 +2102,62 @@ class LocalResearchDashboardResult:
     actual_replay_no_message_sent: bool
     actual_replay_execution_report_path: str
     actual_replay_execution_next_action: str
+    replay_decision_freeze_workflow_implemented: bool
+    replay_decision_freeze_views_implemented: bool
+    latest_replay_decision_freeze_run_id: str
+    latest_replay_decision_freeze_status: str
+    latest_replay_decision_freeze_health_status: str
+    latest_replay_decision_freeze_workflow_stage: str
+    replay_decision_freeze_artifact_path: str
+    source_actual_replay_execution_run_id: str
+    replay_decision_freeze_source_active_input_creation_run_id: str
+    replay_decision_freeze_source_real_replay_precheck_run_id: str
+    replay_decision_freeze_actual_replay_execution_status: str
+    replay_decision_freeze_actual_replay_execution_health_status: str
+    replay_decision_freeze_actual_replay_executed: bool
+    ready_for_replay_decision_freeze: bool
+    replay_decision_freeze_executed: bool
+    replay_decision_frozen: bool
+    replay_decision_artifacts_created: bool
+    replay_decision_freeze_replay_decisions_created: bool
+    replay_decision_freeze_replay_decisions_exist: bool
+    replay_decision_freeze_replay_decision_artifact_path: str
+    replay_decision_freeze_decision_row_count: int
+    replay_decision_freeze_decision_label_set: str
+    replay_decision_freeze_forward_labels_allowed: bool
+    replay_decision_freeze_forward_labels_exist: bool
+    replay_decision_freeze_forward_return_labels_created: bool
+    replay_decision_freeze_training_allowed: bool
+    replay_decision_freeze_weights_trained: bool
+    replay_decision_freeze_training_result_created: bool
+    replay_decision_freeze_stock_profile_allowed: bool
+    replay_decision_freeze_active_stock_profile_exists: bool
+    replay_decision_freeze_stock_profile_created: bool
+    replay_decision_freeze_buy_review_allowed: bool
+    replay_decision_freeze_real_buy_review_eligible: bool
+    replay_decision_freeze_approved_for_paper: bool
+    replay_decision_freeze_strategy_performance_validated: bool
+    replay_decision_freeze_trading_allowed: bool
+    replay_decision_freeze_order_placed: bool
+    replay_decision_freeze_broker_api_called: bool
+    replay_decision_freeze_message_sent: bool
+    replay_decision_freeze_llm_api_called: bool
+    replay_decision_freeze_external_api_called: bool
+    replay_decision_freeze_cache_mutated: bool
+    replay_decision_freeze_data_raw_written: bool
+    replay_decision_freeze_data_processed_written: bool
+    replay_decision_freeze_data_cache_written: bool
+    replay_decision_freeze_current_candidates_run: bool
+    replay_decision_freeze_snapshot_built: bool
+    replay_decision_freeze_signal_semantics_changed: bool
+    replay_decision_freeze_report_only: bool
+    replay_decision_freeze_diagnostic_only: bool
+    replay_decision_freeze_no_live_trading: bool
+    replay_decision_freeze_no_broker_api: bool
+    replay_decision_freeze_no_order_placement: bool
+    replay_decision_freeze_no_message_sent: bool
+    replay_decision_freeze_report_path: str
+    replay_decision_freeze_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -2375,6 +2490,7 @@ def run_local_research_dashboard(
     active_replay_input_create_root: str | Path | None = None,
     real_replay_execute_root: str | Path | None = None,
     actual_replay_execute_root: str | Path | None = None,
+    replay_decision_freeze_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -2608,6 +2724,11 @@ def run_local_research_dashboard(
         if actual_replay_execute_root is not None
         else effective_root / "manual_diagnostics" / "actual_replay_execute_v0_1"
     )
+    effective_replay_decision_freeze_root = (
+        Path(replay_decision_freeze_root)
+        if replay_decision_freeze_root is not None
+        else effective_root / "manual_diagnostics" / "replay_decision_freeze_v0_1"
+    )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
         if active_replay_input_ready_root is not None
@@ -2832,6 +2953,10 @@ def run_local_research_dashboard(
             effective_actual_replay_execute_root = (
                 effective_root / "manual_diagnostics" / "actual_replay_execute_v0_1"
             )
+        if replay_decision_freeze_root is None:
+            effective_replay_decision_freeze_root = (
+                effective_root / "manual_diagnostics" / "replay_decision_freeze_v0_1"
+            )
         if active_replay_input_ready_root is None:
             effective_active_replay_input_ready_root = (
                 effective_root / "manual_diagnostics" / "active_replay_input_ready_v0_1"
@@ -2928,6 +3053,7 @@ def run_local_research_dashboard(
         active_replay_input_create_root=effective_active_replay_input_create_root,
         real_replay_execute_root=effective_real_replay_execute_root,
         actual_replay_execute_root=effective_actual_replay_execute_root,
+        replay_decision_freeze_root=effective_replay_decision_freeze_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -3026,6 +3152,7 @@ def run_local_research_dashboard(
         "active_replay_input_create_root": effective_active_replay_input_create_root,
         "real_replay_execute_root": effective_real_replay_execute_root,
         "actual_replay_execute_root": effective_actual_replay_execute_root,
+        "replay_decision_freeze_root": effective_replay_decision_freeze_root,
         "active_replay_input_ready_root": effective_active_replay_input_ready_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
@@ -4824,6 +4951,162 @@ def run_local_research_dashboard(
         actual_replay_no_message_sent=_bool_from_text(summary.get("actual_replay_no_message_sent")),
         actual_replay_execution_report_path=str(summary.get("actual_replay_execution_report_path", "")),
         actual_replay_execution_next_action=str(summary.get("actual_replay_execution_next_action", "")),
+        replay_decision_freeze_workflow_implemented=_bool_from_text(
+            summary.get("replay_decision_freeze_workflow_implemented")
+        ),
+        replay_decision_freeze_views_implemented=_bool_from_text(
+            summary.get("replay_decision_freeze_views_implemented")
+        ),
+        latest_replay_decision_freeze_run_id=str(
+            summary.get("latest_replay_decision_freeze_run_id", "")
+        ),
+        latest_replay_decision_freeze_status=str(
+            summary.get("latest_replay_decision_freeze_status", "MISSING")
+        ),
+        latest_replay_decision_freeze_health_status=str(
+            summary.get("latest_replay_decision_freeze_health_status", "")
+        ),
+        latest_replay_decision_freeze_workflow_stage=str(
+            summary.get("latest_replay_decision_freeze_workflow_stage", "")
+        ),
+        replay_decision_freeze_artifact_path=str(
+            summary.get("replay_decision_freeze_artifact_path", "")
+        ),
+        source_actual_replay_execution_run_id=str(
+            summary.get("source_actual_replay_execution_run_id", "")
+        ),
+        replay_decision_freeze_source_active_input_creation_run_id=str(
+            summary.get("replay_decision_freeze_source_active_input_creation_run_id", "")
+        ),
+        replay_decision_freeze_source_real_replay_precheck_run_id=str(
+            summary.get("replay_decision_freeze_source_real_replay_precheck_run_id", "")
+        ),
+        replay_decision_freeze_actual_replay_execution_status=str(
+            summary.get("replay_decision_freeze_actual_replay_execution_status", "")
+        ),
+        replay_decision_freeze_actual_replay_execution_health_status=str(
+            summary.get("replay_decision_freeze_actual_replay_execution_health_status", "")
+        ),
+        replay_decision_freeze_actual_replay_executed=_bool_from_text(
+            summary.get("replay_decision_freeze_actual_replay_executed")
+        ),
+        ready_for_replay_decision_freeze=_bool_from_text(
+            summary.get("ready_for_replay_decision_freeze")
+        ),
+        replay_decision_freeze_executed=_bool_from_text(summary.get("replay_decision_freeze_executed")),
+        replay_decision_frozen=_bool_from_text(summary.get("replay_decision_frozen")),
+        replay_decision_artifacts_created=_bool_from_text(
+            summary.get("replay_decision_artifacts_created")
+        ),
+        replay_decision_freeze_replay_decisions_created=_bool_from_text(
+            summary.get("replay_decision_freeze_replay_decisions_created")
+        ),
+        replay_decision_freeze_replay_decisions_exist=_bool_from_text(
+            summary.get("replay_decision_freeze_replay_decisions_exist")
+        ),
+        replay_decision_freeze_replay_decision_artifact_path=str(
+            summary.get("replay_decision_freeze_replay_decision_artifact_path", "")
+        ),
+        replay_decision_freeze_decision_row_count=_int_or_zero(
+            summary.get("replay_decision_freeze_decision_row_count")
+        ),
+        replay_decision_freeze_decision_label_set=str(
+            summary.get("replay_decision_freeze_decision_label_set", "")
+        ),
+        replay_decision_freeze_forward_labels_allowed=_bool_from_text(
+            summary.get("replay_decision_freeze_forward_labels_allowed")
+        ),
+        replay_decision_freeze_forward_labels_exist=_bool_from_text(
+            summary.get("replay_decision_freeze_forward_labels_exist")
+        ),
+        replay_decision_freeze_forward_return_labels_created=_bool_from_text(
+            summary.get("replay_decision_freeze_forward_return_labels_created")
+        ),
+        replay_decision_freeze_training_allowed=_bool_from_text(
+            summary.get("replay_decision_freeze_training_allowed")
+        ),
+        replay_decision_freeze_weights_trained=_bool_from_text(
+            summary.get("replay_decision_freeze_weights_trained")
+        ),
+        replay_decision_freeze_training_result_created=_bool_from_text(
+            summary.get("replay_decision_freeze_training_result_created")
+        ),
+        replay_decision_freeze_stock_profile_allowed=_bool_from_text(
+            summary.get("replay_decision_freeze_stock_profile_allowed")
+        ),
+        replay_decision_freeze_active_stock_profile_exists=_bool_from_text(
+            summary.get("replay_decision_freeze_active_stock_profile_exists")
+        ),
+        replay_decision_freeze_stock_profile_created=_bool_from_text(
+            summary.get("replay_decision_freeze_stock_profile_created")
+        ),
+        replay_decision_freeze_buy_review_allowed=_bool_from_text(
+            summary.get("replay_decision_freeze_buy_review_allowed")
+        ),
+        replay_decision_freeze_real_buy_review_eligible=_bool_from_text(
+            summary.get("replay_decision_freeze_real_buy_review_eligible")
+        ),
+        replay_decision_freeze_approved_for_paper=_bool_from_text(
+            summary.get("replay_decision_freeze_approved_for_paper")
+        ),
+        replay_decision_freeze_strategy_performance_validated=_bool_from_text(
+            summary.get("replay_decision_freeze_strategy_performance_validated")
+        ),
+        replay_decision_freeze_trading_allowed=_bool_from_text(
+            summary.get("replay_decision_freeze_trading_allowed")
+        ),
+        replay_decision_freeze_order_placed=_bool_from_text(summary.get("replay_decision_freeze_order_placed")),
+        replay_decision_freeze_broker_api_called=_bool_from_text(
+            summary.get("replay_decision_freeze_broker_api_called")
+        ),
+        replay_decision_freeze_message_sent=_bool_from_text(
+            summary.get("replay_decision_freeze_message_sent")
+        ),
+        replay_decision_freeze_llm_api_called=_bool_from_text(
+            summary.get("replay_decision_freeze_llm_api_called")
+        ),
+        replay_decision_freeze_external_api_called=_bool_from_text(
+            summary.get("replay_decision_freeze_external_api_called")
+        ),
+        replay_decision_freeze_cache_mutated=_bool_from_text(
+            summary.get("replay_decision_freeze_cache_mutated")
+        ),
+        replay_decision_freeze_data_raw_written=_bool_from_text(
+            summary.get("replay_decision_freeze_data_raw_written")
+        ),
+        replay_decision_freeze_data_processed_written=_bool_from_text(
+            summary.get("replay_decision_freeze_data_processed_written")
+        ),
+        replay_decision_freeze_data_cache_written=_bool_from_text(
+            summary.get("replay_decision_freeze_data_cache_written")
+        ),
+        replay_decision_freeze_current_candidates_run=_bool_from_text(
+            summary.get("replay_decision_freeze_current_candidates_run")
+        ),
+        replay_decision_freeze_snapshot_built=_bool_from_text(
+            summary.get("replay_decision_freeze_snapshot_built")
+        ),
+        replay_decision_freeze_signal_semantics_changed=_bool_from_text(
+            summary.get("replay_decision_freeze_signal_semantics_changed")
+        ),
+        replay_decision_freeze_report_only=_bool_from_text(summary.get("replay_decision_freeze_report_only")),
+        replay_decision_freeze_diagnostic_only=_bool_from_text(
+            summary.get("replay_decision_freeze_diagnostic_only")
+        ),
+        replay_decision_freeze_no_live_trading=_bool_from_text(
+            summary.get("replay_decision_freeze_no_live_trading")
+        ),
+        replay_decision_freeze_no_broker_api=_bool_from_text(
+            summary.get("replay_decision_freeze_no_broker_api")
+        ),
+        replay_decision_freeze_no_order_placement=_bool_from_text(
+            summary.get("replay_decision_freeze_no_order_placement")
+        ),
+        replay_decision_freeze_no_message_sent=_bool_from_text(
+            summary.get("replay_decision_freeze_no_message_sent")
+        ),
+        replay_decision_freeze_report_path=str(summary.get("replay_decision_freeze_report_path", "")),
+        replay_decision_freeze_next_action=str(summary.get("replay_decision_freeze_next_action", "")),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -5505,6 +5788,7 @@ def scan_local_research_workflow_artifacts(
     active_replay_input_create_root: str | Path,
     real_replay_execute_root: str | Path,
     actual_replay_execute_root: str | Path,
+    replay_decision_freeze_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -5568,6 +5852,7 @@ def scan_local_research_workflow_artifacts(
     active_replay_input_create_path = Path(active_replay_input_create_root)
     real_replay_execute_path = Path(real_replay_execute_root)
     actual_replay_execute_path = Path(actual_replay_execute_root)
+    replay_decision_freeze_path = Path(replay_decision_freeze_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -5653,6 +5938,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_active_replay_input_create_status(active_replay_input_create_path))
     records.extend(_scan_real_replay_execute_status(real_replay_execute_path))
     records.extend(_scan_actual_replay_execute_status(actual_replay_execute_path))
+    records.extend(_scan_replay_decision_freeze_status(replay_decision_freeze_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -13278,6 +13564,230 @@ def summarize_local_research_status(
             by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
+        "replay_decision_freeze_workflow_implemented": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "replay_decision_freeze_views_implemented": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_replay_decision_freeze_run_id": _string_or_empty(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_replay_decision_freeze_status": _component_status(
+            by_component,
+            "REPLAY_DECISION_FREEZE_STATUS",
+        ),
+        "latest_replay_decision_freeze_health_status": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_replay_decision_freeze_workflow_stage": _string_or_empty(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("stage")
+        ),
+        "replay_decision_freeze_artifact_path": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "source_actual_replay_execution_run_id": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "source_actual_replay_execution_run_id",
+        ),
+        "replay_decision_freeze_source_active_input_creation_run_id": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "source_active_input_creation_run_id",
+        ),
+        "replay_decision_freeze_source_real_replay_precheck_run_id": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "source_real_replay_precheck_run_id",
+        ),
+        "replay_decision_freeze_actual_replay_execution_status": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "actual_replay_execution_status",
+        ),
+        "replay_decision_freeze_actual_replay_execution_health_status": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "actual_replay_execution_health_status",
+        ),
+        "replay_decision_freeze_actual_replay_executed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "actual_replay_executed",
+        ),
+        "ready_for_replay_decision_freeze": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "ready_for_replay_decision_freeze",
+        ),
+        "replay_decision_freeze_executed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "replay_decision_freeze_executed",
+        ),
+        "replay_decision_frozen": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "replay_decision_frozen",
+        ),
+        "replay_decision_artifacts_created": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "replay_decision_artifacts_created",
+        ),
+        "replay_decision_freeze_replay_decisions_created": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "replay_decisions_created",
+        ),
+        "replay_decision_freeze_replay_decisions_exist": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "replay_decisions_exist",
+        ),
+        "replay_decision_freeze_replay_decision_artifact_path": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "replay_decision_artifact_path",
+        ),
+        "replay_decision_freeze_decision_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+                "decision_row_count",
+            )
+        ),
+        "replay_decision_freeze_decision_label_set": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "decision_label_set",
+        ),
+        "replay_decision_freeze_forward_labels_allowed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "forward_labels_allowed",
+        ),
+        "replay_decision_freeze_forward_labels_exist": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "replay_decision_freeze_forward_return_labels_created": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "forward_return_labels_created",
+        ),
+        "replay_decision_freeze_training_allowed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "training_allowed",
+        ),
+        "replay_decision_freeze_weights_trained": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "replay_decision_freeze_training_result_created": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "training_result_created",
+        ),
+        "replay_decision_freeze_stock_profile_allowed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "stock_profile_allowed",
+        ),
+        "replay_decision_freeze_active_stock_profile_exists": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "replay_decision_freeze_stock_profile_created": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "stock_profile_created",
+        ),
+        "replay_decision_freeze_buy_review_allowed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "buy_review_allowed",
+        ),
+        "replay_decision_freeze_real_buy_review_eligible": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "replay_decision_freeze_approved_for_paper": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "approved_for_paper",
+        ),
+        "replay_decision_freeze_strategy_performance_validated": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "strategy_performance_validated",
+        ),
+        "replay_decision_freeze_trading_allowed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "trading_allowed",
+        ),
+        "replay_decision_freeze_order_placed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "order_placed",
+        ),
+        "replay_decision_freeze_broker_api_called": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "broker_api_called",
+        ),
+        "replay_decision_freeze_message_sent": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "message_sent",
+        ),
+        "replay_decision_freeze_llm_api_called": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "replay_decision_freeze_external_api_called": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "replay_decision_freeze_cache_mutated": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "cache_mutated",
+        ),
+        "replay_decision_freeze_data_raw_written": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "data_raw_written",
+        ),
+        "replay_decision_freeze_data_processed_written": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "data_processed_written",
+        ),
+        "replay_decision_freeze_data_cache_written": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "data_cache_written",
+        ),
+        "replay_decision_freeze_current_candidates_run": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "replay_decision_freeze_snapshot_built": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "replay_decision_freeze_signal_semantics_changed": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "replay_decision_freeze_report_only": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "replay_decision_freeze_diagnostic_only": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "replay_decision_freeze_no_live_trading": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "replay_decision_freeze_no_broker_api": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "replay_decision_freeze_no_order_placement": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "replay_decision_freeze_no_message_sent": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "no_message_sent",
+        ),
+        "replay_decision_freeze_report_path": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "replay_decision_freeze_next_action": _parse_note_value(
+            by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
         "universe_profile_policy_audit_status": _component_status(
             by_component,
             "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
@@ -16407,6 +16917,112 @@ def build_local_research_dashboard_metadata(
         "actual_replay_no_message_sent": result.actual_replay_no_message_sent,
         "actual_replay_execution_report_path": result.actual_replay_execution_report_path,
         "actual_replay_execution_next_action": result.actual_replay_execution_next_action,
+        "replay_decision_freeze_workflow_implemented": (
+            result.replay_decision_freeze_workflow_implemented
+        ),
+        "replay_decision_freeze_views_implemented": result.replay_decision_freeze_views_implemented,
+        "latest_replay_decision_freeze_run_id": result.latest_replay_decision_freeze_run_id,
+        "latest_replay_decision_freeze_status": result.latest_replay_decision_freeze_status,
+        "latest_replay_decision_freeze_health_status": (
+            result.latest_replay_decision_freeze_health_status
+        ),
+        "latest_replay_decision_freeze_workflow_stage": (
+            result.latest_replay_decision_freeze_workflow_stage
+        ),
+        "replay_decision_freeze_artifact_path": result.replay_decision_freeze_artifact_path,
+        "source_actual_replay_execution_run_id": result.source_actual_replay_execution_run_id,
+        "replay_decision_freeze_source_active_input_creation_run_id": (
+            result.replay_decision_freeze_source_active_input_creation_run_id
+        ),
+        "replay_decision_freeze_source_real_replay_precheck_run_id": (
+            result.replay_decision_freeze_source_real_replay_precheck_run_id
+        ),
+        "replay_decision_freeze_actual_replay_execution_status": (
+            result.replay_decision_freeze_actual_replay_execution_status
+        ),
+        "replay_decision_freeze_actual_replay_execution_health_status": (
+            result.replay_decision_freeze_actual_replay_execution_health_status
+        ),
+        "replay_decision_freeze_actual_replay_executed": (
+            result.replay_decision_freeze_actual_replay_executed
+        ),
+        "ready_for_replay_decision_freeze": result.ready_for_replay_decision_freeze,
+        "replay_decision_freeze_executed": result.replay_decision_freeze_executed,
+        "replay_decision_frozen": result.replay_decision_frozen,
+        "replay_decision_artifacts_created": result.replay_decision_artifacts_created,
+        "replay_decision_freeze_replay_decisions_created": (
+            result.replay_decision_freeze_replay_decisions_created
+        ),
+        "replay_decision_freeze_replay_decisions_exist": (
+            result.replay_decision_freeze_replay_decisions_exist
+        ),
+        "replay_decision_freeze_replay_decision_artifact_path": (
+            result.replay_decision_freeze_replay_decision_artifact_path
+        ),
+        "replay_decision_freeze_decision_row_count": (
+            result.replay_decision_freeze_decision_row_count
+        ),
+        "replay_decision_freeze_decision_label_set": (
+            result.replay_decision_freeze_decision_label_set
+        ),
+        "replay_decision_freeze_forward_labels_allowed": (
+            result.replay_decision_freeze_forward_labels_allowed
+        ),
+        "replay_decision_freeze_forward_labels_exist": (
+            result.replay_decision_freeze_forward_labels_exist
+        ),
+        "replay_decision_freeze_forward_return_labels_created": (
+            result.replay_decision_freeze_forward_return_labels_created
+        ),
+        "replay_decision_freeze_training_allowed": result.replay_decision_freeze_training_allowed,
+        "replay_decision_freeze_weights_trained": result.replay_decision_freeze_weights_trained,
+        "replay_decision_freeze_training_result_created": (
+            result.replay_decision_freeze_training_result_created
+        ),
+        "replay_decision_freeze_stock_profile_allowed": (
+            result.replay_decision_freeze_stock_profile_allowed
+        ),
+        "replay_decision_freeze_active_stock_profile_exists": (
+            result.replay_decision_freeze_active_stock_profile_exists
+        ),
+        "replay_decision_freeze_stock_profile_created": (
+            result.replay_decision_freeze_stock_profile_created
+        ),
+        "replay_decision_freeze_buy_review_allowed": result.replay_decision_freeze_buy_review_allowed,
+        "replay_decision_freeze_real_buy_review_eligible": (
+            result.replay_decision_freeze_real_buy_review_eligible
+        ),
+        "replay_decision_freeze_approved_for_paper": result.replay_decision_freeze_approved_for_paper,
+        "replay_decision_freeze_strategy_performance_validated": (
+            result.replay_decision_freeze_strategy_performance_validated
+        ),
+        "replay_decision_freeze_trading_allowed": result.replay_decision_freeze_trading_allowed,
+        "replay_decision_freeze_order_placed": result.replay_decision_freeze_order_placed,
+        "replay_decision_freeze_broker_api_called": result.replay_decision_freeze_broker_api_called,
+        "replay_decision_freeze_message_sent": result.replay_decision_freeze_message_sent,
+        "replay_decision_freeze_llm_api_called": result.replay_decision_freeze_llm_api_called,
+        "replay_decision_freeze_external_api_called": result.replay_decision_freeze_external_api_called,
+        "replay_decision_freeze_cache_mutated": result.replay_decision_freeze_cache_mutated,
+        "replay_decision_freeze_data_raw_written": result.replay_decision_freeze_data_raw_written,
+        "replay_decision_freeze_data_processed_written": (
+            result.replay_decision_freeze_data_processed_written
+        ),
+        "replay_decision_freeze_data_cache_written": result.replay_decision_freeze_data_cache_written,
+        "replay_decision_freeze_current_candidates_run": (
+            result.replay_decision_freeze_current_candidates_run
+        ),
+        "replay_decision_freeze_snapshot_built": result.replay_decision_freeze_snapshot_built,
+        "replay_decision_freeze_signal_semantics_changed": (
+            result.replay_decision_freeze_signal_semantics_changed
+        ),
+        "replay_decision_freeze_report_only": result.replay_decision_freeze_report_only,
+        "replay_decision_freeze_diagnostic_only": result.replay_decision_freeze_diagnostic_only,
+        "replay_decision_freeze_no_live_trading": result.replay_decision_freeze_no_live_trading,
+        "replay_decision_freeze_no_broker_api": result.replay_decision_freeze_no_broker_api,
+        "replay_decision_freeze_no_order_placement": result.replay_decision_freeze_no_order_placement,
+        "replay_decision_freeze_no_message_sent": result.replay_decision_freeze_no_message_sent,
+        "replay_decision_freeze_report_path": result.replay_decision_freeze_report_path,
+        "replay_decision_freeze_next_action": result.replay_decision_freeze_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -18687,8 +19303,8 @@ def _replay_substrate_schema_fixture_notes(summary: dict[str, Any]) -> str:
         f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
         f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
         f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
-        f"report_only={_string_or_empty(summary.get('report_only'))}; "
-        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "report_only=True; "
+        "diagnostic_only=True; "
         f"no_live_trading={_string_or_empty(summary.get('no_live_trading'))}; "
         f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
         f"no_order_placement={_string_or_empty(summary.get('no_order_placement'))}; "
@@ -20071,6 +20687,97 @@ def _actual_replay_execute_notes(summary: dict[str, Any]) -> str:
         f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
         f"report_only={_string_or_empty(summary.get('report_only'))}; "
         f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_replay_decision_freeze_status(root: Path) -> list[dict[str, Any]]:
+    freeze_root = root.parent if root.name == "status" else root
+    if not freeze_root.exists():
+        return []
+    try:
+        result = run_replay_decision_freeze_status(
+            root=freeze_root,
+            output_dir=freeze_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_replay_decision_freeze_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = freeze_root / result.latest_replay_decision_freeze_run_id
+    summary["artifact_path"] = str(artifact_dir)
+    return [
+        _record(
+            workflow_area="REPLAY_DECISION_FREEZE",
+            component="REPLAY_DECISION_FREEZE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_replay_decision_freeze_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_replay_decision_freeze_notes(summary),
+        )
+    ]
+
+
+def _replay_decision_freeze_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"source_actual_replay_execution_run_id={_string_or_empty(summary.get('source_actual_replay_execution_run_id'))}; "
+        f"source_active_input_creation_run_id={_string_or_empty(summary.get('source_active_input_creation_run_id'))}; "
+        f"source_real_replay_precheck_run_id={_string_or_empty(summary.get('source_real_replay_precheck_run_id'))}; "
+        f"actual_replay_execution_status={_string_or_empty(summary.get('actual_replay_execution_status'))}; "
+        f"actual_replay_execution_health_status={_string_or_empty(summary.get('actual_replay_execution_health_status'))}; "
+        f"actual_replay_executed={_string_or_empty(summary.get('actual_replay_executed'))}; "
+        f"ready_for_replay_decision_freeze={_string_or_empty(summary.get('ready_for_replay_decision_freeze'))}; "
+        f"replay_decision_freeze_executed={_string_or_empty(summary.get('replay_decision_freeze_executed'))}; "
+        f"replay_decision_frozen={_string_or_empty(summary.get('replay_decision_frozen'))}; "
+        f"replay_decision_artifacts_created={_string_or_empty(summary.get('replay_decision_artifacts_created'))}; "
+        f"replay_decisions_created={_string_or_empty(summary.get('replay_decisions_created'))}; "
+        f"replay_decisions_exist={_string_or_empty(summary.get('replay_decisions_exist'))}; "
+        f"replay_decision_artifact_path={_note_safe_text(summary.get('replay_decision_artifact_path'))}; "
+        f"decision_row_count={_string_or_empty(summary.get('decision_row_count'))}; "
+        f"decision_label_set={_string_or_empty(summary.get('decision_label_set'))}; "
+        f"forward_labels_allowed={_string_or_empty(summary.get('forward_labels_allowed'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"forward_return_labels_created={_string_or_empty(summary.get('forward_return_labels_created'))}; "
+        f"training_allowed={_string_or_empty(summary.get('training_allowed'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"training_result_created={_string_or_empty(summary.get('training_result_created'))}; "
+        f"stock_profile_allowed={_string_or_empty(summary.get('stock_profile_allowed'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"stock_profile_created={_string_or_empty(summary.get('stock_profile_created'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
+        "strategy_performance_validated=False; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        "report_only=True; "
+        "diagnostic_only=True; "
         "no_live_trading=True; "
         "no_broker_api=True; "
         "no_order_placement=True; "

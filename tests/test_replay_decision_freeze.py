@@ -344,16 +344,16 @@ def test_cli_happy_path_with_allow_freezes_report_only_decisions(tmp_path: Path)
     assert "trading_allowed: False" in completed.stdout
 
 
-def test_artifact_view_commands_added_without_research_status_checkpoint_or_project_source() -> None:
+def test_artifact_view_commands_and_checkpoint_docs_exist_without_project_source_pack() -> None:
     parser = cli.build_parser()
     command_names = {action.dest for action in parser._subparsers._group_actions[0]._choices_actions}
     assert "replay-decision-freeze" in command_names
     assert "replay-decision-freeze-index" in command_names
     assert "replay-decision-freeze-health" in command_names
     assert "replay-decision-freeze-status" in command_names
-    assert not Path("docs/replay_decision_freeze.md").exists()
-    assert not Path("docs/release_checkpoint_v1.43.0.md").exists()
-    assert not Path("SOURCE_UPDATE_NOTES_v1_43_0.md").exists()
+    assert Path("docs/replay_decision_freeze.md").exists()
+    assert Path("docs/release_checkpoint_v1.43.0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_43_0.md").exists()
     assert not Path("docs/project_sources").exists()
 
 
@@ -599,6 +599,35 @@ def test_cli_artifact_view_commands_run(tmp_path: Path) -> None:
         )
         assert completed.returncode == 0
         assert "replay decision freeze" in completed.stdout.lower()
+
+
+def test_replay_decision_freeze_docs_checkpoint_and_source_note_exist_with_safety_wording() -> None:
+    doc = Path("docs/replay_decision_freeze.md")
+    checkpoint = Path("docs/release_checkpoint_v1.43.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_43_0.md")
+
+    for path in [doc, checkpoint, source_note]:
+        assert path.exists()
+        text = path.read_text(encoding="utf-8")
+        for phrase in [
+            "report-only",
+            "frozen decision-time review rows",
+            "does not compute forward labels",
+            "does not train weights",
+            "does not create training_result",
+            "does not create active stock_profile",
+            "does not create real buy-review eligibility",
+            "does not apply paper approval",
+            "does not validate strategy performance",
+            "does not authorize trading",
+        ]:
+            assert phrase in text
+
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert "Forward Return Label Planning Report-Only v0.1" in source_text
+    assert "not immediate training" in source_text
+    assert not Path("docs/project_sources").exists()
 
 
 def _required_artifact_keys() -> list[str]:

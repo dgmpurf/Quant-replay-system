@@ -31,6 +31,8 @@ SUMMARY_COLUMNS = [
     "health_status",
     "workflow_stage",
     "source_actual_replay_execution_run_id",
+    "source_active_input_creation_run_id",
+    "source_real_replay_precheck_run_id",
     "actual_replay_execution_status",
     "actual_replay_execution_health_status",
     "actual_replay_executed",
@@ -71,6 +73,8 @@ class ReplayDecisionFreezeStatusResult:
     health_status: str
     workflow_stage: str
     source_actual_replay_execution_run_id: str
+    source_active_input_creation_run_id: str
+    source_real_replay_precheck_run_id: str
     actual_replay_execution_status: str
     actual_replay_execution_health_status: str
     actual_replay_executed: bool
@@ -140,6 +144,8 @@ def _result_from_latest(
         "health_status": health_status,
         "workflow_stage": stage,
         "source_actual_replay_execution_run_id": _text(latest.get("source_actual_replay_execution_run_id")),
+        "source_active_input_creation_run_id": _text(latest.get("source_active_input_creation_run_id")),
+        "source_real_replay_precheck_run_id": _text(latest.get("source_real_replay_precheck_run_id")),
         "actual_replay_execution_status": _text(latest.get("actual_replay_execution_status")),
         "actual_replay_execution_health_status": _text(latest.get("actual_replay_execution_health_status")),
         "actual_replay_executed": _to_bool(latest.get("actual_replay_executed")),
@@ -187,6 +193,8 @@ def _no_artifact_result(
         "health_status": health_status,
         "workflow_stage": NO_REPLAY_DECISION_FREEZE_ARTIFACT_FOUND,
         "source_actual_replay_execution_run_id": "",
+        "source_active_input_creation_run_id": "",
+        "source_real_replay_precheck_run_id": "",
         "actual_replay_execution_status": "",
         "actual_replay_execution_health_status": "",
         "actual_replay_executed": False,
@@ -240,6 +248,8 @@ def _result(
         health_status=str(summary["health_status"]),
         workflow_stage=str(summary["workflow_stage"]),
         source_actual_replay_execution_run_id=str(summary["source_actual_replay_execution_run_id"]),
+        source_active_input_creation_run_id=str(summary["source_active_input_creation_run_id"]),
+        source_real_replay_precheck_run_id=str(summary["source_real_replay_precheck_run_id"]),
         actual_replay_execution_status=str(summary["actual_replay_execution_status"]),
         actual_replay_execution_health_status=str(summary["actual_replay_execution_health_status"]),
         actual_replay_executed=bool(summary["actual_replay_executed"]),

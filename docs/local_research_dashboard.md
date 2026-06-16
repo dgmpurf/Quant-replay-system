@@ -502,6 +502,18 @@ When the status reports `ACTUAL_REPLAY_EXECUTED`, the dashboard treats it as exe
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; actual replay execution fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims replay decisions, labels, training, stock profiles, buy-review eligibility, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
 
+## Replay Decision Freeze Status
+
+`research-status` includes `replay-decision-freeze-status` as report-only replay decision freeze context when those artifacts exist.
+
+Use `replay-decision-freeze`, `replay-decision-freeze-index`, `replay-decision-freeze-health`, and `replay-decision-freeze-status` to create, discover, safety-check, and summarize frozen decision-time review row artifacts.
+
+The unified summary records the latest replay decision freeze run id, status, health status, workflow stage, artifact path, source actual replay execution id, source active input creation id, source real replay precheck id, actual replay execution status, freeze readiness and execution booleans, decision row count, decision label set, report path, and next action. It also exports safety flags proving `forward_labels_allowed=false`, `forward_labels_exist=false`, `forward_return_labels_created=false`, `training_allowed=false`, `weights_trained=false`, `training_result_created=false`, `stock_profile_allowed=false`, `active_stock_profile_exists=false`, `stock_profile_created=false`, `buy_review_allowed=false`, `real_buy_review_eligible=false`, `approved_for_paper=false`, `strategy_performance_validated=false`, `trading_allowed=false`, no live trading, no broker API, no order placement, no messages, no LLM/API calls, no external API calls, no cache mutation, no `data/raw`, no `data/processed`, no `data/cache`, no current-candidates generation, no snapshot build, and no signal semantics change.
+
+When the status reports `READY_FOR_REPLAY_DECISION_FREEZE`, the dashboard treats it as ready-for-review context only because explicit allow has not frozen rows. When the status reports `REPLAY_DECISION_FROZEN`, the dashboard treats it as report-only frozen decision-time review rows only. It does not compute forward labels or future returns. It does not create forward_return_label artifacts. It does not train weights. It does not create training_result. It does not create active stock_profile. It does not create real buy-review eligibility. It does not apply paper approval. It does not validate strategy performance. It does not authorize trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; replay decision freeze fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims forward labels, training, stock profiles, buy-review eligibility, paper approval, performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## ACTIVE_REPLAY_INPUT_READY Workflow Status
 
 `research-status` includes `active-replay-input-ready-status` as report-only final active-ready governance context when those artifacts exist.

@@ -48,6 +48,7 @@ from quant_replay_system.active_replay_input_ready import (
     run_active_replay_input_ready,
 )
 from quant_replay_system.actual_replay_execute import ACTUAL_REPLAY_EXECUTED, run_actual_replay_execute
+from quant_replay_system.replay_decision_freeze import REPLAY_DECISION_FROZEN, run_replay_decision_freeze
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -58,6 +59,7 @@ from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact import (
 )
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from test_actual_replay_execute import _happy_settings as _actual_replay_happy_settings
+from test_replay_decision_freeze import _happy_settings as _replay_decision_freeze_happy_settings
 
 
 DECISION_DATE = "2024-05-20"
@@ -3462,6 +3464,154 @@ def test_cli_research_status_prints_actual_replay_execution_fields(tmp_path: Pat
     assert "actual_replay_stock_profile_allowed: False" in output.out
     assert "actual_replay_buy_review_allowed: False" in output.out
     assert "actual_replay_trading_allowed: False" in output.out
+
+
+def test_research_status_includes_replay_decision_freeze_context_and_safety_fields(
+    tmp_path: Path,
+) -> None:
+    frozen = run_replay_decision_freeze(
+        replace(_replay_decision_freeze_happy_settings(tmp_path), allow_replay_decision_freeze=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "REPLAY_DECISION_FREEZE_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == REPLAY_DECISION_FROZEN
+    assert row["workflow_area"] == "REPLAY_DECISION_FREEZE"
+    assert result.replay_decision_freeze_workflow_implemented is True
+    assert result.replay_decision_freeze_views_implemented is True
+    assert result.latest_replay_decision_freeze_run_id == frozen.replay_decision_freeze_run_id
+    assert result.latest_replay_decision_freeze_status == REPLAY_DECISION_FROZEN
+    assert result.latest_replay_decision_freeze_health_status == "PASS"
+    assert result.latest_replay_decision_freeze_workflow_stage == REPLAY_DECISION_FROZEN
+    assert result.replay_decision_freeze_artifact_path.endswith(frozen.replay_decision_freeze_run_id)
+    assert result.source_actual_replay_execution_run_id == "ad8dfa413ded"
+    assert result.replay_decision_freeze_source_active_input_creation_run_id == "293deb5f459a"
+    assert result.replay_decision_freeze_source_real_replay_precheck_run_id == "0657ae658ab8"
+    assert result.replay_decision_freeze_actual_replay_execution_status == ACTUAL_REPLAY_EXECUTED
+    assert result.replay_decision_freeze_actual_replay_execution_health_status == "PASS"
+    assert result.replay_decision_freeze_actual_replay_executed is True
+    assert result.ready_for_replay_decision_freeze is True
+    assert result.replay_decision_freeze_executed is True
+    assert result.replay_decision_frozen is True
+    assert result.replay_decision_artifacts_created is True
+    assert result.replay_decision_freeze_replay_decisions_created is True
+    assert result.replay_decision_freeze_replay_decisions_exist is True
+    assert result.replay_decision_freeze_replay_decision_artifact_path.endswith("replay_decision_rows.csv")
+    assert result.replay_decision_freeze_decision_row_count == 1
+    assert result.replay_decision_freeze_decision_label_set == "WATCH"
+    assert result.replay_decision_freeze_forward_labels_allowed is False
+    assert result.replay_decision_freeze_forward_labels_exist is False
+    assert result.replay_decision_freeze_forward_return_labels_created is False
+    assert result.replay_decision_freeze_training_allowed is False
+    assert result.replay_decision_freeze_weights_trained is False
+    assert result.replay_decision_freeze_training_result_created is False
+    assert result.replay_decision_freeze_stock_profile_allowed is False
+    assert result.replay_decision_freeze_active_stock_profile_exists is False
+    assert result.replay_decision_freeze_stock_profile_created is False
+    assert result.replay_decision_freeze_buy_review_allowed is False
+    assert result.replay_decision_freeze_real_buy_review_eligible is False
+    assert result.replay_decision_freeze_approved_for_paper is False
+    assert result.replay_decision_freeze_strategy_performance_validated is False
+    assert result.replay_decision_freeze_trading_allowed is False
+    assert result.replay_decision_freeze_order_placed is False
+    assert result.replay_decision_freeze_broker_api_called is False
+    assert result.replay_decision_freeze_message_sent is False
+    assert result.replay_decision_freeze_llm_api_called is False
+    assert result.replay_decision_freeze_external_api_called is False
+    assert result.replay_decision_freeze_cache_mutated is False
+    assert result.replay_decision_freeze_data_raw_written is False
+    assert result.replay_decision_freeze_data_processed_written is False
+    assert result.replay_decision_freeze_data_cache_written is False
+    assert result.replay_decision_freeze_current_candidates_run is False
+    assert result.replay_decision_freeze_snapshot_built is False
+    assert result.replay_decision_freeze_signal_semantics_changed is False
+    assert result.replay_decision_freeze_report_only is True
+    assert result.replay_decision_freeze_diagnostic_only is True
+    assert result.replay_decision_freeze_no_live_trading is True
+    assert result.replay_decision_freeze_no_broker_api is True
+    assert result.replay_decision_freeze_no_order_placement is True
+    assert result.replay_decision_freeze_no_message_sent is True
+    assert str(summary["replay_decision_freeze_forward_labels_allowed"]) == "False"
+    assert metadata["replay_decision_freeze_forward_labels_allowed"] is False
+    assert metadata["replay_decision_freeze_strategy_performance_validated"] is False
+    assert metadata["replay_decision_freeze_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_replay_decision_freeze(
+    tmp_path: Path,
+) -> None:
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    root.mkdir(parents=True, exist_ok=True)
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        stale_warning_count=0,
+        actionable_warning_count=0,
+        blocking_error_count=0,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+    run_replay_decision_freeze(
+        replace(
+            _replay_decision_freeze_happy_settings(tmp_path),
+            output_dir=root / "manual_diagnostics" / "replay_decision_freeze_v0_1",
+            allow_replay_decision_freeze=True,
+        )
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    freeze_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "REPLAY_DECISION_FREEZE_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert freeze_row["warning_classification"] == ""
+    assert result.latest_replay_decision_freeze_status == REPLAY_DECISION_FROZEN
+    assert result.replay_decision_freeze_replay_decisions_created is True
+    assert result.replay_decision_freeze_forward_labels_allowed is False
+    assert result.replay_decision_freeze_forward_labels_exist is False
+    assert result.replay_decision_freeze_forward_return_labels_created is False
+    assert result.replay_decision_freeze_training_allowed is False
+    assert result.replay_decision_freeze_stock_profile_allowed is False
+    assert result.replay_decision_freeze_buy_review_allowed is False
+    assert result.replay_decision_freeze_approved_for_paper is False
+    assert result.replay_decision_freeze_strategy_performance_validated is False
+    assert result.replay_decision_freeze_trading_allowed is False
+
+
+def test_cli_research_status_prints_replay_decision_freeze_fields(tmp_path: Path, capsys) -> None:
+    run_replay_decision_freeze(
+        replace(_replay_decision_freeze_happy_settings(tmp_path), allow_replay_decision_freeze=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "replay_decision_freeze_workflow_implemented: True" in output.out
+    assert f"latest_replay_decision_freeze_status: {REPLAY_DECISION_FROZEN}" in output.out
+    assert "replay_decision_frozen: True" in output.out
+    assert "replay_decision_freeze_replay_decisions_created: True" in output.out
+    assert "replay_decision_freeze_forward_labels_allowed: False" in output.out
+    assert "replay_decision_freeze_forward_return_labels_created: False" in output.out
+    assert "replay_decision_freeze_training_allowed: False" in output.out
+    assert "replay_decision_freeze_stock_profile_allowed: False" in output.out
+    assert "replay_decision_freeze_buy_review_allowed: False" in output.out
+    assert "replay_decision_freeze_approved_for_paper: False" in output.out
+    assert "replay_decision_freeze_strategy_performance_validated: False" in output.out
+    assert "replay_decision_freeze_trading_allowed: False" in output.out
 
 
 def test_cli_research_status_works(tmp_path: Path, capsys) -> None:

@@ -14098,6 +14098,143 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"actual_replay_execution_report_path: {result.actual_replay_execution_report_path}")
     print(f"actual_replay_execution_next_action: {result.actual_replay_execution_next_action}")
     print(
+        "replay_decision_freeze_workflow_implemented: "
+        f"{result.replay_decision_freeze_workflow_implemented}"
+    )
+    print(
+        "replay_decision_freeze_views_implemented: "
+        f"{result.replay_decision_freeze_views_implemented}"
+    )
+    print(f"latest_replay_decision_freeze_run_id: {result.latest_replay_decision_freeze_run_id}")
+    print(f"latest_replay_decision_freeze_status: {result.latest_replay_decision_freeze_status}")
+    print(
+        "latest_replay_decision_freeze_health_status: "
+        f"{result.latest_replay_decision_freeze_health_status}"
+    )
+    print(
+        "latest_replay_decision_freeze_workflow_stage: "
+        f"{result.latest_replay_decision_freeze_workflow_stage}"
+    )
+    print(f"replay_decision_freeze_artifact_path: {result.replay_decision_freeze_artifact_path}")
+    print(f"source_actual_replay_execution_run_id: {result.source_actual_replay_execution_run_id}")
+    print(
+        "replay_decision_freeze_source_active_input_creation_run_id: "
+        f"{result.replay_decision_freeze_source_active_input_creation_run_id}"
+    )
+    print(
+        "replay_decision_freeze_source_real_replay_precheck_run_id: "
+        f"{result.replay_decision_freeze_source_real_replay_precheck_run_id}"
+    )
+    print(
+        "replay_decision_freeze_actual_replay_execution_status: "
+        f"{result.replay_decision_freeze_actual_replay_execution_status}"
+    )
+    print(
+        "replay_decision_freeze_actual_replay_execution_health_status: "
+        f"{result.replay_decision_freeze_actual_replay_execution_health_status}"
+    )
+    print(
+        "replay_decision_freeze_actual_replay_executed: "
+        f"{result.replay_decision_freeze_actual_replay_executed}"
+    )
+    print(f"ready_for_replay_decision_freeze: {result.ready_for_replay_decision_freeze}")
+    print(f"replay_decision_freeze_executed: {result.replay_decision_freeze_executed}")
+    print(f"replay_decision_frozen: {result.replay_decision_frozen}")
+    print(f"replay_decision_artifacts_created: {result.replay_decision_artifacts_created}")
+    print(
+        "replay_decision_freeze_replay_decisions_created: "
+        f"{result.replay_decision_freeze_replay_decisions_created}"
+    )
+    print(
+        "replay_decision_freeze_replay_decisions_exist: "
+        f"{result.replay_decision_freeze_replay_decisions_exist}"
+    )
+    print(
+        "replay_decision_freeze_replay_decision_artifact_path: "
+        f"{result.replay_decision_freeze_replay_decision_artifact_path}"
+    )
+    print(f"replay_decision_freeze_decision_row_count: {result.replay_decision_freeze_decision_row_count}")
+    print(f"replay_decision_freeze_decision_label_set: {result.replay_decision_freeze_decision_label_set}")
+    print(
+        "replay_decision_freeze_forward_labels_allowed: "
+        f"{result.replay_decision_freeze_forward_labels_allowed}"
+    )
+    print(
+        "replay_decision_freeze_forward_labels_exist: "
+        f"{result.replay_decision_freeze_forward_labels_exist}"
+    )
+    print(
+        "replay_decision_freeze_forward_return_labels_created: "
+        f"{result.replay_decision_freeze_forward_return_labels_created}"
+    )
+    print(f"replay_decision_freeze_training_allowed: {result.replay_decision_freeze_training_allowed}")
+    print(f"replay_decision_freeze_weights_trained: {result.replay_decision_freeze_weights_trained}")
+    print(
+        "replay_decision_freeze_training_result_created: "
+        f"{result.replay_decision_freeze_training_result_created}"
+    )
+    print(
+        "replay_decision_freeze_stock_profile_allowed: "
+        f"{result.replay_decision_freeze_stock_profile_allowed}"
+    )
+    print(
+        "replay_decision_freeze_active_stock_profile_exists: "
+        f"{result.replay_decision_freeze_active_stock_profile_exists}"
+    )
+    print(
+        "replay_decision_freeze_stock_profile_created: "
+        f"{result.replay_decision_freeze_stock_profile_created}"
+    )
+    print(f"replay_decision_freeze_buy_review_allowed: {result.replay_decision_freeze_buy_review_allowed}")
+    print(
+        "replay_decision_freeze_real_buy_review_eligible: "
+        f"{result.replay_decision_freeze_real_buy_review_eligible}"
+    )
+    print(f"replay_decision_freeze_approved_for_paper: {result.replay_decision_freeze_approved_for_paper}")
+    print(
+        "replay_decision_freeze_strategy_performance_validated: "
+        f"{result.replay_decision_freeze_strategy_performance_validated}"
+    )
+    print(f"replay_decision_freeze_trading_allowed: {result.replay_decision_freeze_trading_allowed}")
+    print(f"replay_decision_freeze_order_placed: {result.replay_decision_freeze_order_placed}")
+    print(
+        "replay_decision_freeze_broker_api_called: "
+        f"{result.replay_decision_freeze_broker_api_called}"
+    )
+    print(f"replay_decision_freeze_message_sent: {result.replay_decision_freeze_message_sent}")
+    print(f"replay_decision_freeze_llm_api_called: {result.replay_decision_freeze_llm_api_called}")
+    print(
+        "replay_decision_freeze_external_api_called: "
+        f"{result.replay_decision_freeze_external_api_called}"
+    )
+    print(f"replay_decision_freeze_cache_mutated: {result.replay_decision_freeze_cache_mutated}")
+    print(f"replay_decision_freeze_data_raw_written: {result.replay_decision_freeze_data_raw_written}")
+    print(
+        "replay_decision_freeze_data_processed_written: "
+        f"{result.replay_decision_freeze_data_processed_written}"
+    )
+    print(f"replay_decision_freeze_data_cache_written: {result.replay_decision_freeze_data_cache_written}")
+    print(
+        "replay_decision_freeze_current_candidates_run: "
+        f"{result.replay_decision_freeze_current_candidates_run}"
+    )
+    print(f"replay_decision_freeze_snapshot_built: {result.replay_decision_freeze_snapshot_built}")
+    print(
+        "replay_decision_freeze_signal_semantics_changed: "
+        f"{result.replay_decision_freeze_signal_semantics_changed}"
+    )
+    print(f"replay_decision_freeze_report_only: {result.replay_decision_freeze_report_only}")
+    print(f"replay_decision_freeze_diagnostic_only: {result.replay_decision_freeze_diagnostic_only}")
+    print(f"replay_decision_freeze_no_live_trading: {result.replay_decision_freeze_no_live_trading}")
+    print(f"replay_decision_freeze_no_broker_api: {result.replay_decision_freeze_no_broker_api}")
+    print(
+        "replay_decision_freeze_no_order_placement: "
+        f"{result.replay_decision_freeze_no_order_placement}"
+    )
+    print(f"replay_decision_freeze_no_message_sent: {result.replay_decision_freeze_no_message_sent}")
+    print(f"replay_decision_freeze_report_path: {result.replay_decision_freeze_report_path}")
+    print(f"replay_decision_freeze_next_action: {result.replay_decision_freeze_next_action}")
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )
