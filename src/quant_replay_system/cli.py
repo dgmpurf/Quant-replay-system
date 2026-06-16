@@ -318,6 +318,9 @@ from quant_replay_system.replay_decision_freeze import (
     ReplayDecisionFreezeSettings,
     run_replay_decision_freeze,
 )
+from quant_replay_system.replay_decision_freeze_health import check_replay_decision_freeze_health
+from quant_replay_system.replay_decision_freeze_index import build_replay_decision_freeze_index
+from quant_replay_system.replay_decision_freeze_status import run_replay_decision_freeze_status
 from quant_replay_system.actual_replay_execute_health import check_actual_replay_execute_health
 from quant_replay_system.actual_replay_execute_index import build_actual_replay_execute_index
 from quant_replay_system.actual_replay_execute_status import run_actual_replay_execute_status
@@ -3208,6 +3211,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only replay decision freeze artifacts will be written",
     )
     replay_decision_freeze.set_defaults(handler=_handle_replay_decision_freeze)
+
+    replay_decision_freeze_index = subparsers.add_parser(
+        "replay-decision-freeze-index",
+        help="Index report-only replay decision freeze artifacts",
+    )
+    replay_decision_freeze_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_decision_freeze_v0_1",
+        help="Replay decision freeze artifact root to index",
+    )
+    replay_decision_freeze_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_decision_freeze_v0_1/index",
+        help="Directory where replay decision freeze index artifacts will be written",
+    )
+    replay_decision_freeze_index.set_defaults(handler=_handle_replay_decision_freeze_index)
+
+    replay_decision_freeze_health = subparsers.add_parser(
+        "replay-decision-freeze-health",
+        help="Health-check report-only replay decision freeze artifacts",
+    )
+    replay_decision_freeze_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_decision_freeze_v0_1",
+        help="Replay decision freeze artifact root to health-check",
+    )
+    replay_decision_freeze_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_decision_freeze_v0_1/health",
+        help="Directory where replay decision freeze health artifacts will be written",
+    )
+    replay_decision_freeze_health.set_defaults(handler=_handle_replay_decision_freeze_health)
+
+    replay_decision_freeze_status = subparsers.add_parser(
+        "replay-decision-freeze-status",
+        help="Summarize report-only replay decision freeze artifact status",
+    )
+    replay_decision_freeze_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_decision_freeze_v0_1",
+        help="Replay decision freeze artifact root to summarize",
+    )
+    replay_decision_freeze_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_decision_freeze_v0_1/status",
+        help="Directory where replay decision freeze status artifacts will be written",
+    )
+    replay_decision_freeze_status.set_defaults(handler=_handle_replay_decision_freeze_status)
 
     actual_replay_execute_index = subparsers.add_parser(
         "actual-replay-execute-index",
@@ -8788,6 +8839,76 @@ def _handle_replay_decision_freeze(args: argparse.Namespace) -> int:
         "create buy-review eligibility, call broker/order/message/API systems, mutate cache, write data/raw, "
         "data/processed, or data/cache, or authorize trading."
     )
+    return 0
+
+
+def _handle_replay_decision_freeze_index(args: argparse.Namespace) -> int:
+    result = build_replay_decision_freeze_index(root=args.root, output_dir=args.output_dir)
+    print(f"Replay decision freeze index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Replay decision freeze index is report-only. `REPLAY_DECISION_FROZEN` means frozen "
+        "decision-time review rows only, not forward labels, training, stock_profile, buy-review, "
+        "paper approval, or trading."
+    )
+    return 0
+
+
+def _handle_replay_decision_freeze_health(args: argparse.Namespace) -> int:
+    result = check_replay_decision_freeze_health(root=args.root, output_dir=args.output_dir)
+    print(f"Replay decision freeze health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Replay decision freeze health checks keep the workflow report-only and fail if artifacts imply "
+        "forward labels, training, stock_profile, buy-review, paper approval, broker/order/message/API/cache/data "
+        "side effects, or trading."
+    )
+    return 0
+
+
+def _handle_replay_decision_freeze_status(args: argparse.Namespace) -> int:
+    result = run_replay_decision_freeze_status(root=args.root, output_dir=args.output_dir)
+    print(f"Replay decision freeze status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_replay_decision_freeze_run_id: {result.latest_replay_decision_freeze_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"source_actual_replay_execution_run_id: {result.source_actual_replay_execution_run_id}")
+    print(f"actual_replay_execution_status: {result.actual_replay_execution_status}")
+    print(f"actual_replay_execution_health_status: {result.actual_replay_execution_health_status}")
+    print(f"actual_replay_executed: {result.actual_replay_executed}")
+    print(f"ready_for_replay_decision_freeze: {result.ready_for_replay_decision_freeze}")
+    print(f"replay_decision_freeze_executed: {result.replay_decision_freeze_executed}")
+    print(f"replay_decision_frozen: {result.replay_decision_frozen}")
+    print(f"replay_decision_artifacts_created: {result.replay_decision_artifacts_created}")
+    print(f"replay_decisions_created: {result.replay_decisions_created}")
+    print(f"replay_decisions_exist: {result.replay_decisions_exist}")
+    print(f"replay_decision_artifact_path: {result.replay_decision_artifact_path}")
+    print(f"decision_row_count: {result.decision_row_count}")
+    print(f"decision_label_set: {result.decision_label_set}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"forward_return_labels_created: {result.forward_return_labels_created}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 

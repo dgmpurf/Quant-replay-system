@@ -30,6 +30,12 @@ from quant_replay_system.replay_decision_freeze import (
     ReplayDecisionFreezeSettings,
     run_replay_decision_freeze,
 )
+from quant_replay_system.replay_decision_freeze_health import check_replay_decision_freeze_health
+from quant_replay_system.replay_decision_freeze_index import build_replay_decision_freeze_index
+from quant_replay_system.replay_decision_freeze_status import (
+    REPLAY_DECISION_FREEZE_NO_INPUT_ARTIFACT,
+    run_replay_decision_freeze_status,
+)
 
 
 EXACT_APPROVAL = (
@@ -338,17 +344,261 @@ def test_cli_happy_path_with_allow_freezes_report_only_decisions(tmp_path: Path)
     assert "trading_allowed: False" in completed.stdout
 
 
-def test_no_artifact_views_research_status_checkpoint_or_project_source_added() -> None:
+def test_artifact_view_commands_added_without_research_status_checkpoint_or_project_source() -> None:
     parser = cli.build_parser()
     command_names = {action.dest for action in parser._subparsers._group_actions[0]._choices_actions}
     assert "replay-decision-freeze" in command_names
-    assert "replay-decision-freeze-index" not in command_names
-    assert "replay-decision-freeze-health" not in command_names
-    assert "replay-decision-freeze-status" not in command_names
+    assert "replay-decision-freeze-index" in command_names
+    assert "replay-decision-freeze-health" in command_names
+    assert "replay-decision-freeze-status" in command_names
     assert not Path("docs/replay_decision_freeze.md").exists()
     assert not Path("docs/release_checkpoint_v1.43.0.md").exists()
     assert not Path("SOURCE_UPDATE_NOTES_v1_43_0.md").exists()
     assert not Path("docs/project_sources").exists()
+
+
+@pytest.mark.parametrize(
+    ("allow", "expected_status", "expected_rows"),
+    [
+        (False, READY_FOR_REPLAY_DECISION_FREEZE, 0),
+        (True, REPLAY_DECISION_FROZEN, 1),
+    ],
+)
+def test_index_discovers_ready_and_frozen_artifacts(
+    tmp_path: Path,
+    allow: bool,
+    expected_status: str,
+    expected_rows: int,
+) -> None:
+    run_replay_decision_freeze(replace(_happy_settings(tmp_path), allow_replay_decision_freeze=allow))
+
+    result = build_replay_decision_freeze_index(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "index")
+
+    assert result.artifact_count == 1
+    row = result.index_frame.iloc[0].to_dict()
+    assert row["status"] == expected_status
+    assert row["source_actual_replay_execution_run_id"] == "ad8dfa413ded"
+    assert row["source_active_input_creation_run_id"] == "293deb5f459a"
+    assert row["source_real_replay_precheck_run_id"] == "0657ae658ab8"
+    assert row["actual_replay_execution_status"] == ACTUAL_REPLAY_EXECUTED
+    assert row["actual_replay_execution_health_status"] == "PASS"
+    assert row["actual_replay_executed"] is True
+    assert row["ready_for_replay_decision_freeze"] is True
+    assert row["replay_decision_frozen"] is allow
+    assert row["replay_decisions_created"] is allow
+    assert row["replay_decisions_exist"] is allow
+    assert row["decision_row_count"] == expected_rows
+    assert row["decision_label_set"] == ("WATCH" if allow else "")
+    assert row["forward_labels_allowed"] is False
+    assert row["forward_labels_exist"] is False
+    assert row["forward_return_labels_created"] is False
+    assert row["training_allowed"] is False
+    assert row["weights_trained"] is False
+    assert row["training_result_created"] is False
+    assert row["stock_profile_allowed"] is False
+    assert row["active_stock_profile_exists"] is False
+    assert row["stock_profile_created"] is False
+    assert row["buy_review_allowed"] is False
+    assert row["real_buy_review_eligible"] is False
+    assert row["approved_for_paper"] is False
+    assert row["trading_allowed"] is False
+    assert row["order_placed"] is False
+    assert row["broker_api_called"] is False
+    assert row["message_sent"] is False
+    assert row["llm_api_called"] is False
+    assert row["external_api_called"] is False
+    assert row["cache_mutated"] is False
+    assert row["data_raw_written"] is False
+    assert row["data_processed_written"] is False
+    assert row["data_cache_written"] is False
+    assert row["current_candidates_run"] is False
+    assert row["snapshot_built"] is False
+    assert row["signal_semantics_changed"] is False
+    assert row["report_only"] is True
+    assert row["diagnostic_only"] is True
+    assert Path(str(row["metadata_path"])).exists()
+    assert Path(str(row["replay_decision_rows_path"])).exists()
+    assert Path(str(row["replay_decision_evidence_index_path"])).exists()
+    assert Path(str(row["safety_flags_path"])).exists()
+
+
+def test_index_discovers_no_input_artifact(tmp_path: Path) -> None:
+    run_replay_decision_freeze(ReplayDecisionFreezeSettings(output_dir=_output_dir(tmp_path)))
+
+    result = build_replay_decision_freeze_index(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "index")
+
+    assert result.artifact_count == 1
+    row = result.index_frame.iloc[0].to_dict()
+    assert row["status"] == NO_REPLAY_DECISION_FREEZE_INPUT
+    assert row["workflow_stage"] == "REPLAY_DECISION_FREEZE_NO_INPUT"
+    assert row["decision_row_count"] == 0
+    assert row["replay_decision_frozen"] is False
+    assert row["replay_decisions_created"] is False
+    assert row["forward_labels_allowed"] is False
+    assert row["training_allowed"] is False
+    assert row["trading_allowed"] is False
+
+
+@pytest.mark.parametrize(
+    ("settings",),
+    [
+        (ReplayDecisionFreezeSettings,),
+    ],
+)
+def test_health_passes_valid_no_input_artifact(tmp_path: Path, settings) -> None:
+    run_replay_decision_freeze(settings(output_dir=_output_dir(tmp_path)))
+
+    result = check_replay_decision_freeze_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert result.status == "PASS"
+    assert result.error_count == 0
+
+
+@pytest.mark.parametrize("allow", [False, True])
+def test_health_passes_valid_ready_and_frozen_artifacts(tmp_path: Path, allow: bool) -> None:
+    run_replay_decision_freeze(replace(_happy_settings(tmp_path), allow_replay_decision_freeze=allow))
+
+    result = check_replay_decision_freeze_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert result.status == "PASS"
+    assert result.error_count == 0
+
+
+@pytest.mark.parametrize(
+    ("mutator", "issue_code"),
+    [
+        (lambda artifact: (artifact / "replay_decision_rows.csv").unlink(), "FROZEN_STATUS_WITHOUT_ROWS"),
+        (lambda artifact: pd.DataFrame([{"decision_label": "WATCH"}]).to_csv(artifact / "replay_decision_rows.csv", index=False), "ROWS_EXIST_WITHOUT_FROZEN_STATUS"),
+        (lambda artifact: _append_decision_column(artifact, "future_close", 10.0), "REPLAY_DECISION_ROWS_FORBIDDEN_COLUMNS"),
+        (lambda artifact: _append_decision_column(artifact, "forward_return", 0.1), "REPLAY_DECISION_ROWS_FORBIDDEN_COLUMNS"),
+        (lambda artifact: _append_decision_column(artifact, "training_score", 0.8), "REPLAY_DECISION_ROWS_FORBIDDEN_COLUMNS"),
+        (lambda artifact: _append_decision_column(artifact, "stock_profile_status", "active"), "REPLAY_DECISION_ROWS_FORBIDDEN_COLUMNS"),
+        (lambda artifact: _append_decision_column(artifact, "real_buy_review_eligible", True), "REPLAY_DECISION_ROWS_FORBIDDEN_COLUMNS"),
+        (lambda artifact: _append_decision_column(artifact, "approved_for_paper", True), "REPLAY_DECISION_ROWS_FORBIDDEN_COLUMNS"),
+        (lambda artifact: _append_decision_column(artifact, "broker_order_id", "B1"), "REPLAY_DECISION_ROWS_FORBIDDEN_COLUMNS"),
+        (lambda artifact: _set_decision_label(artifact, "BUY_NOW"), "REPLAY_DECISION_LABEL_OUTSIDE_REVIEW_ONLY_SET"),
+        (lambda artifact: _drop_evidence_column(artifact, "available_time"), "EVIDENCE_INDEX_REQUIRED_COLUMNS_MISSING"),
+        (lambda artifact: _drop_evidence_column(artifact, "source_hash"), "EVIDENCE_INDEX_REQUIRED_COLUMNS_MISSING"),
+        (lambda artifact: _drop_evidence_column(artifact, "revision_id"), "EVIDENCE_INDEX_REQUIRED_COLUMNS_MISSING"),
+        (lambda artifact: _drop_evidence_column(artifact, "taxonomy_layer"), "EVIDENCE_INDEX_REQUIRED_COLUMNS_MISSING"),
+        (lambda artifact: _drop_evidence_column(artifact, "pit_valid"), "EVIDENCE_INDEX_REQUIRED_COLUMNS_MISSING"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"forward_labels_allowed": True}), "FORWARD_LABELS_ALLOWED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"forward_labels_exist": True}), "FORWARD_LABELS_EXIST_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"forward_return_labels_created": True}), "FORWARD_RETURN_LABELS_CREATED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"training_allowed": True}), "TRAINING_ALLOWED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"weights_trained": True}), "WEIGHTS_TRAINED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"training_result_created": True}), "TRAINING_RESULT_CREATED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"stock_profile_allowed": True}), "STOCK_PROFILE_ALLOWED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"active_stock_profile_exists": True}), "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"stock_profile_created": True}), "STOCK_PROFILE_CREATED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"buy_review_allowed": True}), "BUY_REVIEW_ALLOWED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"real_buy_review_eligible": True}), "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"approved_for_paper": True}), "APPROVED_FOR_PAPER_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"trading_allowed": True}), "TRADING_ALLOWED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"order_placed": True}), "ORDER_PLACED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"broker_api_called": True}), "BROKER_API_CALLED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"message_sent": True}), "MESSAGE_SENT_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"llm_api_called": True}), "LLM_API_CALLED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"external_api_called": True}), "EXTERNAL_API_CALLED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"cache_mutated": True}), "CACHE_MUTATED_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"data_raw_written": True}), "DATA_RAW_WRITTEN_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"data_processed_written": True}), "DATA_PROCESSED_WRITTEN_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"data_cache_written": True}), "DATA_CACHE_WRITTEN_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"current_candidates_run": True}), "CURRENT_CANDIDATES_RUN_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"snapshot_built": True}), "SNAPSHOT_BUILT_UNEXPECTED"),
+        (lambda artifact: _patch_json(artifact / "replay_decision_safety_flags.json", {"signal_semantics_changed": True}), "SIGNAL_SEMANTICS_CHANGED_UNEXPECTED"),
+    ],
+)
+def test_health_fails_for_unsafe_or_malformed_artifacts(tmp_path: Path, mutator, issue_code: str) -> None:
+    result = run_replay_decision_freeze(replace(_happy_settings(tmp_path), allow_replay_decision_freeze=True))
+    if issue_code == "ROWS_EXIST_WITHOUT_FROZEN_STATUS":
+        result = run_replay_decision_freeze(_happy_settings(tmp_path))
+    mutator(result.artifact_path)
+
+    health = check_replay_decision_freeze_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert issue_code in set(health.health_frame["issue_code"])
+
+
+def test_health_fails_for_artifact_path_outside_manual_diagnostics(tmp_path: Path) -> None:
+    result = run_replay_decision_freeze(
+        replace(_happy_settings(tmp_path), allow_replay_decision_freeze=True, output_dir=_output_dir(tmp_path))
+    )
+    _patch_json(result.artifact_paths["metadata"], {"artifact_path": str(tmp_path / "unsafe")})
+
+    health = check_replay_decision_freeze_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert "ARTIFACT_PATH_OUTSIDE_MANUAL_DIAGNOSTICS" in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("status_builder", "expected_stage"),
+    [
+        (lambda tmp_path: run_replay_decision_freeze(ReplayDecisionFreezeSettings(output_dir=_output_dir(tmp_path))), REPLAY_DECISION_FREEZE_NO_INPUT_ARTIFACT),
+        (lambda tmp_path: run_replay_decision_freeze(_happy_settings(tmp_path)), READY_FOR_REPLAY_DECISION_FREEZE),
+        (lambda tmp_path: run_replay_decision_freeze(replace(_happy_settings(tmp_path), allow_replay_decision_freeze=True)), REPLAY_DECISION_FROZEN),
+    ],
+)
+def test_status_reports_no_input_ready_and_frozen_report_only_states(tmp_path: Path, status_builder, expected_stage: str) -> None:
+    built = status_builder(tmp_path)
+
+    result = run_replay_decision_freeze_status(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "status")
+
+    assert result.latest_replay_decision_freeze_run_id == built.replay_decision_freeze_run_id
+    assert result.health_status == "PASS"
+    assert result.workflow_stage == expected_stage
+    assert result.forward_labels_allowed is False
+    assert result.forward_labels_exist is False
+    assert result.forward_return_labels_created is False
+    assert result.training_allowed is False
+    assert result.weights_trained is False
+    assert result.training_result_created is False
+    assert result.stock_profile_allowed is False
+    assert result.active_stock_profile_exists is False
+    assert result.stock_profile_created is False
+    assert result.buy_review_allowed is False
+    assert result.real_buy_review_eligible is False
+    assert result.approved_for_paper is False
+    assert result.trading_allowed is False
+    text = result.artifact_paths["status_report"].read_text(encoding="utf-8")
+    for phrase in [
+        "report-only",
+        "frozen decision-time review rows only",
+        "does not compute forward labels",
+        "does not train weights",
+        "does not create stock_profile",
+        "does not create buy-review eligibility",
+        "does not apply paper approval",
+        "does not authorize trading",
+    ]:
+        assert phrase in text
+
+
+def test_cli_artifact_view_commands_run(tmp_path: Path) -> None:
+    run_replay_decision_freeze(replace(_happy_settings(tmp_path), allow_replay_decision_freeze=True))
+    root = _output_dir(tmp_path)
+
+    for command in ["replay-decision-freeze-index", "replay-decision-freeze-health", "replay-decision-freeze-status"]:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "quant_replay_system.cli",
+                command,
+                "--root",
+                str(root),
+                "--output-dir",
+                str(root / command),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            env={**os.environ, "PYTHONPATH": "src"},
+        )
+        assert completed.returncode == 0
+        assert "replay decision freeze" in completed.stdout.lower()
 
 
 def _required_artifact_keys() -> list[str]:
@@ -693,3 +943,21 @@ def _patch_json(path: Path | None, patch: dict[str, object]) -> None:
     payload = _read_json(path)
     payload.update(patch)
     _write_json(path, payload)
+
+
+def _append_decision_column(artifact_path: Path, column: str, value: object) -> None:
+    frame = pd.read_csv(artifact_path / "replay_decision_rows.csv")
+    frame[column] = value
+    frame.to_csv(artifact_path / "replay_decision_rows.csv", index=False)
+
+
+def _set_decision_label(artifact_path: Path, label: str) -> None:
+    frame = pd.read_csv(artifact_path / "replay_decision_rows.csv")
+    frame["decision_label"] = label
+    frame.to_csv(artifact_path / "replay_decision_rows.csv", index=False)
+
+
+def _drop_evidence_column(artifact_path: Path, column: str) -> None:
+    frame = pd.read_csv(artifact_path / "replay_decision_evidence_index.csv")
+    frame = frame.drop(columns=[column])
+    frame.to_csv(artifact_path / "replay_decision_evidence_index.csv", index=False)
