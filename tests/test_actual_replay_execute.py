@@ -479,14 +479,35 @@ def test_cli_actual_replay_execute_artifact_views_run(tmp_path: Path, capsys) ->
     assert "execution artifacts only" in status_output
 
 
-def test_artifact_views_added_without_research_status_checkpoint_or_project_source() -> None:
+def test_research_status_checkpoint_docs_added_without_project_source_pack() -> None:
     parser = cli.build_parser()
     command_names = {action.dest for action in parser._subparsers._group_actions[0]._choices_actions}
     assert "actual-replay-execute" in command_names
     assert "actual-replay-execute-index" in command_names
     assert "actual-replay-execute-health" in command_names
     assert "actual-replay-execute-status" in command_names
-    assert not Path("docs/release_checkpoint_v1.42.0.md").exists()
+    doc = Path("docs/actual_replay_execute.md")
+    checkpoint = Path("docs/release_checkpoint_v1.42.0.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_42_0.md")
+    for path in [doc, checkpoint, source_note]:
+        assert path.exists()
+        text = path.read_text(encoding="utf-8")
+        assert "actual-replay-execute" in text
+        assert "ACTUAL_REPLAY_EXECUTED" in text
+        assert "report-only" in text
+        assert "execution artifacts only" in text
+        assert "not replay_decision" in text
+        assert "no forward labels" in text
+        assert "no training" in text
+        assert "no active stock_profile" in text
+        assert "no real buy-review eligibility" in text
+        assert "no trading" in text
+    assert "PAPER_WORKFLOW_READY" in checkpoint.read_text(encoding="utf-8")
+    source_text = source_note.read_text(encoding="utf-8")
+    assert "docs/project_sources" in source_text
+    assert "intentionally absent from Git" in source_text
+    assert "after tag v1.42.0" in source_text
+    assert "Replay Decision Freeze Planning Report-Only v0.1" in source_text
     assert not Path("docs/project_sources").exists()
 
 

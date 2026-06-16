@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
@@ -46,6 +47,7 @@ from quant_replay_system.active_replay_input_ready import (
     ActiveReplayInputReadySettings,
     run_active_replay_input_ready,
 )
+from quant_replay_system.actual_replay_execute import ACTUAL_REPLAY_EXECUTED, run_actual_replay_execute
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -55,6 +57,7 @@ from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact import (
     build_reviewer_no_hit_acceptance_downstream_impact,
 )
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
+from test_actual_replay_execute import _happy_settings as _actual_replay_happy_settings
 
 
 DECISION_DATE = "2024-05-20"
@@ -3330,6 +3333,135 @@ def test_dashboard_metadata_exports_market_update_handoff_fields_and_preserves_p
     assert metadata["market_update_handoff_current_candidate_run_id"] == "candidate-context"
     assert component_statuses["latest_market_update_handoff_id"] == "handoff-context"
     assert component_statuses["market_update_handoff_pipeline_id"] == "pipeline-context"
+
+
+def test_research_status_includes_actual_replay_execution_context_and_safety_fields(
+    tmp_path: Path,
+) -> None:
+    executed = run_actual_replay_execute(
+        replace(_actual_replay_happy_settings(tmp_path), allow_actual_replay_execution=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ACTUAL_REPLAY_EXECUTE_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == ACTUAL_REPLAY_EXECUTED
+    assert row["workflow_area"] == "ACTUAL_REPLAY_EXECUTE"
+    assert result.actual_replay_execution_workflow_implemented is True
+    assert result.actual_replay_execution_views_implemented is True
+    assert result.latest_actual_replay_execution_run_id == executed.actual_replay_execution_run_id
+    assert result.latest_actual_replay_execution_status == ACTUAL_REPLAY_EXECUTED
+    assert result.latest_actual_replay_execution_health_status == "PASS"
+    assert result.latest_actual_replay_execution_workflow_stage == ACTUAL_REPLAY_EXECUTED
+    assert result.actual_replay_execution_artifact_path.endswith(executed.actual_replay_execution_run_id)
+    assert result.actual_replay_source_active_input_creation_run_id == "293deb5f459a"
+    assert result.actual_replay_source_real_replay_precheck_run_id == "0657ae658ab8"
+    assert result.ready_for_actual_replay_execution is True
+    assert result.actual_replay_executed is True
+    assert result.actual_replay_replay_execution_started is True
+    assert result.actual_replay_replay_execution_completed is True
+    assert result.actual_replay_replay_decisions_created is False
+    assert result.actual_replay_replay_decisions_exist is False
+    assert result.actual_replay_replay_decision_artifact_path == ""
+    assert result.actual_replay_forward_labels_allowed is False
+    assert result.actual_replay_forward_labels_exist is False
+    assert result.actual_replay_training_allowed is False
+    assert result.actual_replay_weights_trained is False
+    assert result.actual_replay_stock_profile_allowed is False
+    assert result.actual_replay_active_stock_profile_exists is False
+    assert result.actual_replay_buy_review_allowed is False
+    assert result.actual_replay_real_buy_review_eligible is False
+    assert result.actual_replay_trading_allowed is False
+    assert result.actual_replay_order_placed is False
+    assert result.actual_replay_broker_api_called is False
+    assert result.actual_replay_message_sent is False
+    assert result.actual_replay_llm_api_called is False
+    assert result.actual_replay_external_api_called is False
+    assert result.actual_replay_cache_mutated is False
+    assert result.actual_replay_data_raw_written is False
+    assert result.actual_replay_data_processed_written is False
+    assert result.actual_replay_data_cache_written is False
+    assert result.actual_replay_current_candidates_run is False
+    assert result.actual_replay_snapshot_built is False
+    assert result.actual_replay_signal_semantics_changed is False
+    assert result.actual_replay_report_only is True
+    assert result.actual_replay_diagnostic_only is True
+    assert result.actual_replay_no_live_trading is True
+    assert result.actual_replay_no_broker_api is True
+    assert result.actual_replay_no_order_placement is True
+    assert result.actual_replay_no_message_sent is True
+    assert str(summary["actual_replay_replay_decisions_created"]) == "False"
+    assert metadata["actual_replay_replay_decisions_created"] is False
+    assert metadata["actual_replay_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_actual_replay_execution(
+    tmp_path: Path,
+) -> None:
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    root.mkdir(parents=True, exist_ok=True)
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        stale_warning_count=0,
+        actionable_warning_count=0,
+        blocking_error_count=0,
+        next_manual_action=(
+            "Demo WATCH_ONLY paper workflow validated; no fills were supplied. Proceed to fill reconciliation "
+            "only if testing fills, or return to data-source / strategy research."
+        ),
+    )
+    run_actual_replay_execute(
+        replace(
+            _actual_replay_happy_settings(tmp_path),
+            output_dir=root / "manual_diagnostics" / "actual_replay_execute_v0_1",
+            allow_actual_replay_execution=True,
+        )
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    actual_row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "ACTUAL_REPLAY_EXECUTE_STATUS"
+    ].iloc[0]
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert actual_row["warning_classification"] == ""
+    assert result.latest_actual_replay_execution_status == ACTUAL_REPLAY_EXECUTED
+    assert result.actual_replay_replay_decisions_created is False
+    assert result.actual_replay_forward_labels_allowed is False
+    assert result.actual_replay_training_allowed is False
+    assert result.actual_replay_stock_profile_allowed is False
+    assert result.actual_replay_buy_review_allowed is False
+    assert result.actual_replay_trading_allowed is False
+
+
+def test_cli_research_status_prints_actual_replay_execution_fields(tmp_path: Path, capsys) -> None:
+    run_actual_replay_execute(
+        replace(_actual_replay_happy_settings(tmp_path), allow_actual_replay_execution=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "actual_replay_execution_workflow_implemented: True" in output.out
+    assert f"latest_actual_replay_execution_status: {ACTUAL_REPLAY_EXECUTED}" in output.out
+    assert "actual_replay_executed: True" in output.out
+    assert "actual_replay_replay_decisions_created: False" in output.out
+    assert "actual_replay_forward_labels_allowed: False" in output.out
+    assert "actual_replay_training_allowed: False" in output.out
+    assert "actual_replay_stock_profile_allowed: False" in output.out
+    assert "actual_replay_buy_review_allowed: False" in output.out
+    assert "actual_replay_trading_allowed: False" in output.out
 
 
 def test_cli_research_status_works(tmp_path: Path, capsys) -> None:

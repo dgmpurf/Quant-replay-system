@@ -13765,6 +13765,84 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"real_replay_execution_report_path: {result.real_replay_execution_report_path}")
     print(f"real_replay_execution_next_action: {result.real_replay_execution_next_action}")
     print(
+        "actual_replay_execution_workflow_implemented: "
+        f"{result.actual_replay_execution_workflow_implemented}"
+    )
+    print(
+        "actual_replay_execution_views_implemented: "
+        f"{result.actual_replay_execution_views_implemented}"
+    )
+    print(f"latest_actual_replay_execution_run_id: {result.latest_actual_replay_execution_run_id}")
+    print(f"latest_actual_replay_execution_status: {result.latest_actual_replay_execution_status}")
+    print(
+        "latest_actual_replay_execution_health_status: "
+        f"{result.latest_actual_replay_execution_health_status}"
+    )
+    print(
+        "latest_actual_replay_execution_workflow_stage: "
+        f"{result.latest_actual_replay_execution_workflow_stage}"
+    )
+    print(f"actual_replay_execution_artifact_path: {result.actual_replay_execution_artifact_path}")
+    print(
+        "actual_replay_source_active_input_creation_run_id: "
+        f"{result.actual_replay_source_active_input_creation_run_id}"
+    )
+    print(
+        "actual_replay_source_real_replay_precheck_run_id: "
+        f"{result.actual_replay_source_real_replay_precheck_run_id}"
+    )
+    print(f"ready_for_actual_replay_execution: {result.ready_for_actual_replay_execution}")
+    print(f"actual_replay_executed: {result.actual_replay_executed}")
+    print(
+        "actual_replay_replay_execution_started: "
+        f"{result.actual_replay_replay_execution_started}"
+    )
+    print(
+        "actual_replay_replay_execution_completed: "
+        f"{result.actual_replay_replay_execution_completed}"
+    )
+    print(
+        "actual_replay_replay_decisions_created: "
+        f"{result.actual_replay_replay_decisions_created}"
+    )
+    print(f"actual_replay_replay_decisions_exist: {result.actual_replay_replay_decisions_exist}")
+    print(
+        "actual_replay_replay_decision_artifact_path: "
+        f"{result.actual_replay_replay_decision_artifact_path}"
+    )
+    print(f"actual_replay_forward_labels_allowed: {result.actual_replay_forward_labels_allowed}")
+    print(f"actual_replay_forward_labels_exist: {result.actual_replay_forward_labels_exist}")
+    print(f"actual_replay_training_allowed: {result.actual_replay_training_allowed}")
+    print(f"actual_replay_weights_trained: {result.actual_replay_weights_trained}")
+    print(f"actual_replay_stock_profile_allowed: {result.actual_replay_stock_profile_allowed}")
+    print(
+        "actual_replay_active_stock_profile_exists: "
+        f"{result.actual_replay_active_stock_profile_exists}"
+    )
+    print(f"actual_replay_buy_review_allowed: {result.actual_replay_buy_review_allowed}")
+    print(f"actual_replay_real_buy_review_eligible: {result.actual_replay_real_buy_review_eligible}")
+    print(f"actual_replay_trading_allowed: {result.actual_replay_trading_allowed}")
+    print(f"actual_replay_order_placed: {result.actual_replay_order_placed}")
+    print(f"actual_replay_broker_api_called: {result.actual_replay_broker_api_called}")
+    print(f"actual_replay_message_sent: {result.actual_replay_message_sent}")
+    print(f"actual_replay_llm_api_called: {result.actual_replay_llm_api_called}")
+    print(f"actual_replay_external_api_called: {result.actual_replay_external_api_called}")
+    print(f"actual_replay_cache_mutated: {result.actual_replay_cache_mutated}")
+    print(f"actual_replay_data_raw_written: {result.actual_replay_data_raw_written}")
+    print(f"actual_replay_data_processed_written: {result.actual_replay_data_processed_written}")
+    print(f"actual_replay_data_cache_written: {result.actual_replay_data_cache_written}")
+    print(f"actual_replay_current_candidates_run: {result.actual_replay_current_candidates_run}")
+    print(f"actual_replay_snapshot_built: {result.actual_replay_snapshot_built}")
+    print(f"actual_replay_signal_semantics_changed: {result.actual_replay_signal_semantics_changed}")
+    print(f"actual_replay_report_only: {result.actual_replay_report_only}")
+    print(f"actual_replay_diagnostic_only: {result.actual_replay_diagnostic_only}")
+    print(f"actual_replay_no_live_trading: {result.actual_replay_no_live_trading}")
+    print(f"actual_replay_no_broker_api: {result.actual_replay_no_broker_api}")
+    print(f"actual_replay_no_order_placement: {result.actual_replay_no_order_placement}")
+    print(f"actual_replay_no_message_sent: {result.actual_replay_no_message_sent}")
+    print(f"actual_replay_execution_report_path: {result.actual_replay_execution_report_path}")
+    print(f"actual_replay_execution_next_action: {result.actual_replay_execution_next_action}")
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

@@ -117,6 +117,7 @@ from quant_replay_system.active_replay_input_create_status import (
     run_active_replay_input_create_status,
 )
 from quant_replay_system.real_replay_execute_status import run_real_replay_execute_status
+from quant_replay_system.actual_replay_execute_status import run_actual_replay_execute_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -830,6 +831,51 @@ SUMMARY_COLUMNS = [
     "replay_decision_artifact_path",
     "real_replay_execution_report_path",
     "real_replay_execution_next_action",
+    "actual_replay_execution_workflow_implemented",
+    "actual_replay_execution_views_implemented",
+    "latest_actual_replay_execution_run_id",
+    "latest_actual_replay_execution_status",
+    "latest_actual_replay_execution_health_status",
+    "latest_actual_replay_execution_workflow_stage",
+    "actual_replay_execution_artifact_path",
+    "actual_replay_source_active_input_creation_run_id",
+    "actual_replay_source_real_replay_precheck_run_id",
+    "ready_for_actual_replay_execution",
+    "actual_replay_executed",
+    "actual_replay_replay_execution_started",
+    "actual_replay_replay_execution_completed",
+    "actual_replay_replay_decisions_created",
+    "actual_replay_replay_decisions_exist",
+    "actual_replay_replay_decision_artifact_path",
+    "actual_replay_forward_labels_allowed",
+    "actual_replay_forward_labels_exist",
+    "actual_replay_training_allowed",
+    "actual_replay_weights_trained",
+    "actual_replay_stock_profile_allowed",
+    "actual_replay_active_stock_profile_exists",
+    "actual_replay_buy_review_allowed",
+    "actual_replay_real_buy_review_eligible",
+    "actual_replay_trading_allowed",
+    "actual_replay_order_placed",
+    "actual_replay_broker_api_called",
+    "actual_replay_message_sent",
+    "actual_replay_llm_api_called",
+    "actual_replay_external_api_called",
+    "actual_replay_cache_mutated",
+    "actual_replay_data_raw_written",
+    "actual_replay_data_processed_written",
+    "actual_replay_data_cache_written",
+    "actual_replay_current_candidates_run",
+    "actual_replay_snapshot_built",
+    "actual_replay_signal_semantics_changed",
+    "actual_replay_report_only",
+    "actual_replay_diagnostic_only",
+    "actual_replay_no_live_trading",
+    "actual_replay_no_broker_api",
+    "actual_replay_no_order_placement",
+    "actual_replay_no_message_sent",
+    "actual_replay_execution_report_path",
+    "actual_replay_execution_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1206,6 +1252,7 @@ COMPONENTS = [
 OPTIONAL_COMPONENTS = {
     "ACTIVE_REPLAY_INPUT_CREATE_STATUS",
     "REAL_REPLAY_EXECUTE_STATUS",
+    "ACTUAL_REPLAY_EXECUTE_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1251,6 +1298,7 @@ WORKFLOW_AREAS = {
     "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION_STATUS": "ACTUAL_ACTIVE_REPLAY_INPUT_READY_EMISSION",
     "ACTIVE_REPLAY_INPUT_CREATE_STATUS": "ACTIVE_REPLAY_INPUT_CREATE",
     "REAL_REPLAY_EXECUTE_STATUS": "REAL_REPLAY_EXECUTE",
+    "ACTUAL_REPLAY_EXECUTE_STATUS": "ACTUAL_REPLAY_EXECUTE",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -1950,6 +1998,51 @@ class LocalResearchDashboardResult:
     replay_decision_artifact_path: str
     real_replay_execution_report_path: str
     real_replay_execution_next_action: str
+    actual_replay_execution_workflow_implemented: bool
+    actual_replay_execution_views_implemented: bool
+    latest_actual_replay_execution_run_id: str
+    latest_actual_replay_execution_status: str
+    latest_actual_replay_execution_health_status: str
+    latest_actual_replay_execution_workflow_stage: str
+    actual_replay_execution_artifact_path: str
+    actual_replay_source_active_input_creation_run_id: str
+    actual_replay_source_real_replay_precheck_run_id: str
+    ready_for_actual_replay_execution: bool
+    actual_replay_executed: bool
+    actual_replay_replay_execution_started: bool
+    actual_replay_replay_execution_completed: bool
+    actual_replay_replay_decisions_created: bool
+    actual_replay_replay_decisions_exist: bool
+    actual_replay_replay_decision_artifact_path: str
+    actual_replay_forward_labels_allowed: bool
+    actual_replay_forward_labels_exist: bool
+    actual_replay_training_allowed: bool
+    actual_replay_weights_trained: bool
+    actual_replay_stock_profile_allowed: bool
+    actual_replay_active_stock_profile_exists: bool
+    actual_replay_buy_review_allowed: bool
+    actual_replay_real_buy_review_eligible: bool
+    actual_replay_trading_allowed: bool
+    actual_replay_order_placed: bool
+    actual_replay_broker_api_called: bool
+    actual_replay_message_sent: bool
+    actual_replay_llm_api_called: bool
+    actual_replay_external_api_called: bool
+    actual_replay_cache_mutated: bool
+    actual_replay_data_raw_written: bool
+    actual_replay_data_processed_written: bool
+    actual_replay_data_cache_written: bool
+    actual_replay_current_candidates_run: bool
+    actual_replay_snapshot_built: bool
+    actual_replay_signal_semantics_changed: bool
+    actual_replay_report_only: bool
+    actual_replay_diagnostic_only: bool
+    actual_replay_no_live_trading: bool
+    actual_replay_no_broker_api: bool
+    actual_replay_no_order_placement: bool
+    actual_replay_no_message_sent: bool
+    actual_replay_execution_report_path: str
+    actual_replay_execution_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -2281,6 +2374,7 @@ def run_local_research_dashboard(
     active_replay_input_ready_actual_emission_root: str | Path | None = None,
     active_replay_input_create_root: str | Path | None = None,
     real_replay_execute_root: str | Path | None = None,
+    actual_replay_execute_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -2509,6 +2603,11 @@ def run_local_research_dashboard(
         if real_replay_execute_root is not None
         else effective_root / "manual_diagnostics" / "real_replay_execute_v0_1"
     )
+    effective_actual_replay_execute_root = (
+        Path(actual_replay_execute_root)
+        if actual_replay_execute_root is not None
+        else effective_root / "manual_diagnostics" / "actual_replay_execute_v0_1"
+    )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
         if active_replay_input_ready_root is not None
@@ -2729,6 +2828,10 @@ def run_local_research_dashboard(
             effective_real_replay_execute_root = (
                 effective_root / "manual_diagnostics" / "real_replay_execute_v0_1"
             )
+        if actual_replay_execute_root is None:
+            effective_actual_replay_execute_root = (
+                effective_root / "manual_diagnostics" / "actual_replay_execute_v0_1"
+            )
         if active_replay_input_ready_root is None:
             effective_active_replay_input_ready_root = (
                 effective_root / "manual_diagnostics" / "active_replay_input_ready_v0_1"
@@ -2824,6 +2927,7 @@ def run_local_research_dashboard(
         ),
         active_replay_input_create_root=effective_active_replay_input_create_root,
         real_replay_execute_root=effective_real_replay_execute_root,
+        actual_replay_execute_root=effective_actual_replay_execute_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -2921,6 +3025,7 @@ def run_local_research_dashboard(
         ),
         "active_replay_input_create_root": effective_active_replay_input_create_root,
         "real_replay_execute_root": effective_real_replay_execute_root,
+        "actual_replay_execute_root": effective_actual_replay_execute_root,
         "active_replay_input_ready_root": effective_active_replay_input_ready_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
@@ -4642,6 +4747,83 @@ def run_local_research_dashboard(
         replay_decision_artifact_path=str(summary.get("replay_decision_artifact_path", "")),
         real_replay_execution_report_path=str(summary.get("real_replay_execution_report_path", "")),
         real_replay_execution_next_action=str(summary.get("real_replay_execution_next_action", "")),
+        actual_replay_execution_workflow_implemented=_bool_from_text(
+            summary.get("actual_replay_execution_workflow_implemented")
+        ),
+        actual_replay_execution_views_implemented=_bool_from_text(
+            summary.get("actual_replay_execution_views_implemented")
+        ),
+        latest_actual_replay_execution_run_id=str(
+            summary.get("latest_actual_replay_execution_run_id", "")
+        ),
+        latest_actual_replay_execution_status=str(
+            summary.get("latest_actual_replay_execution_status", "MISSING")
+        ),
+        latest_actual_replay_execution_health_status=str(
+            summary.get("latest_actual_replay_execution_health_status", "")
+        ),
+        latest_actual_replay_execution_workflow_stage=str(
+            summary.get("latest_actual_replay_execution_workflow_stage", "")
+        ),
+        actual_replay_execution_artifact_path=str(
+            summary.get("actual_replay_execution_artifact_path", "")
+        ),
+        actual_replay_source_active_input_creation_run_id=str(
+            summary.get("actual_replay_source_active_input_creation_run_id", "")
+        ),
+        actual_replay_source_real_replay_precheck_run_id=str(
+            summary.get("actual_replay_source_real_replay_precheck_run_id", "")
+        ),
+        ready_for_actual_replay_execution=_bool_from_text(summary.get("ready_for_actual_replay_execution")),
+        actual_replay_executed=_bool_from_text(summary.get("actual_replay_executed")),
+        actual_replay_replay_execution_started=_bool_from_text(
+            summary.get("actual_replay_replay_execution_started")
+        ),
+        actual_replay_replay_execution_completed=_bool_from_text(
+            summary.get("actual_replay_replay_execution_completed")
+        ),
+        actual_replay_replay_decisions_created=_bool_from_text(
+            summary.get("actual_replay_replay_decisions_created")
+        ),
+        actual_replay_replay_decisions_exist=_bool_from_text(
+            summary.get("actual_replay_replay_decisions_exist")
+        ),
+        actual_replay_replay_decision_artifact_path=str(
+            summary.get("actual_replay_replay_decision_artifact_path", "")
+        ),
+        actual_replay_forward_labels_allowed=_bool_from_text(summary.get("actual_replay_forward_labels_allowed")),
+        actual_replay_forward_labels_exist=_bool_from_text(summary.get("actual_replay_forward_labels_exist")),
+        actual_replay_training_allowed=_bool_from_text(summary.get("actual_replay_training_allowed")),
+        actual_replay_weights_trained=_bool_from_text(summary.get("actual_replay_weights_trained")),
+        actual_replay_stock_profile_allowed=_bool_from_text(summary.get("actual_replay_stock_profile_allowed")),
+        actual_replay_active_stock_profile_exists=_bool_from_text(
+            summary.get("actual_replay_active_stock_profile_exists")
+        ),
+        actual_replay_buy_review_allowed=_bool_from_text(summary.get("actual_replay_buy_review_allowed")),
+        actual_replay_real_buy_review_eligible=_bool_from_text(
+            summary.get("actual_replay_real_buy_review_eligible")
+        ),
+        actual_replay_trading_allowed=_bool_from_text(summary.get("actual_replay_trading_allowed")),
+        actual_replay_order_placed=_bool_from_text(summary.get("actual_replay_order_placed")),
+        actual_replay_broker_api_called=_bool_from_text(summary.get("actual_replay_broker_api_called")),
+        actual_replay_message_sent=_bool_from_text(summary.get("actual_replay_message_sent")),
+        actual_replay_llm_api_called=_bool_from_text(summary.get("actual_replay_llm_api_called")),
+        actual_replay_external_api_called=_bool_from_text(summary.get("actual_replay_external_api_called")),
+        actual_replay_cache_mutated=_bool_from_text(summary.get("actual_replay_cache_mutated")),
+        actual_replay_data_raw_written=_bool_from_text(summary.get("actual_replay_data_raw_written")),
+        actual_replay_data_processed_written=_bool_from_text(summary.get("actual_replay_data_processed_written")),
+        actual_replay_data_cache_written=_bool_from_text(summary.get("actual_replay_data_cache_written")),
+        actual_replay_current_candidates_run=_bool_from_text(summary.get("actual_replay_current_candidates_run")),
+        actual_replay_snapshot_built=_bool_from_text(summary.get("actual_replay_snapshot_built")),
+        actual_replay_signal_semantics_changed=_bool_from_text(summary.get("actual_replay_signal_semantics_changed")),
+        actual_replay_report_only=_bool_from_text(summary.get("actual_replay_report_only")),
+        actual_replay_diagnostic_only=_bool_from_text(summary.get("actual_replay_diagnostic_only")),
+        actual_replay_no_live_trading=_bool_from_text(summary.get("actual_replay_no_live_trading")),
+        actual_replay_no_broker_api=_bool_from_text(summary.get("actual_replay_no_broker_api")),
+        actual_replay_no_order_placement=_bool_from_text(summary.get("actual_replay_no_order_placement")),
+        actual_replay_no_message_sent=_bool_from_text(summary.get("actual_replay_no_message_sent")),
+        actual_replay_execution_report_path=str(summary.get("actual_replay_execution_report_path", "")),
+        actual_replay_execution_next_action=str(summary.get("actual_replay_execution_next_action", "")),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -5322,6 +5504,7 @@ def scan_local_research_workflow_artifacts(
     active_replay_input_ready_actual_emission_root: str | Path,
     active_replay_input_create_root: str | Path,
     real_replay_execute_root: str | Path,
+    actual_replay_execute_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -5384,6 +5567,7 @@ def scan_local_research_workflow_artifacts(
     active_replay_input_ready_actual_emission_path = Path(active_replay_input_ready_actual_emission_root)
     active_replay_input_create_path = Path(active_replay_input_create_root)
     real_replay_execute_path = Path(real_replay_execute_root)
+    actual_replay_execute_path = Path(actual_replay_execute_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -5468,6 +5652,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_actual_active_replay_input_ready_emission_status(active_replay_input_ready_actual_emission_path))
     records.extend(_scan_active_replay_input_create_status(active_replay_input_create_path))
     records.extend(_scan_real_replay_execute_status(real_replay_execute_path))
+    records.extend(_scan_actual_replay_execute_status(actual_replay_execute_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -12915,6 +13100,184 @@ def summarize_local_research_status(
             by_component.get("REAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
+        "actual_replay_execution_workflow_implemented": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "actual_replay_execution_views_implemented": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_actual_replay_execution_run_id": _string_or_empty(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_actual_replay_execution_status": _component_status(
+            by_component,
+            "ACTUAL_REPLAY_EXECUTE_STATUS",
+        ),
+        "latest_actual_replay_execution_health_status": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_actual_replay_execution_workflow_stage": _string_or_empty(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("stage")
+        ),
+        "actual_replay_execution_artifact_path": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "actual_replay_source_active_input_creation_run_id": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "source_active_input_creation_run_id",
+        ),
+        "actual_replay_source_real_replay_precheck_run_id": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "source_real_replay_precheck_run_id",
+        ),
+        "ready_for_actual_replay_execution": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "ready_for_actual_replay_execution",
+        ),
+        "actual_replay_executed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "actual_replay_executed",
+        ),
+        "actual_replay_replay_execution_started": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "replay_execution_started",
+        ),
+        "actual_replay_replay_execution_completed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "replay_execution_completed",
+        ),
+        "actual_replay_replay_decisions_created": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "replay_decisions_created",
+        ),
+        "actual_replay_replay_decisions_exist": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "replay_decisions_exist",
+        ),
+        "actual_replay_replay_decision_artifact_path": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "replay_decision_artifact_path",
+        ),
+        "actual_replay_forward_labels_allowed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "forward_labels_allowed",
+        ),
+        "actual_replay_forward_labels_exist": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "actual_replay_training_allowed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "training_allowed",
+        ),
+        "actual_replay_weights_trained": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "actual_replay_stock_profile_allowed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "stock_profile_allowed",
+        ),
+        "actual_replay_active_stock_profile_exists": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "actual_replay_buy_review_allowed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "buy_review_allowed",
+        ),
+        "actual_replay_real_buy_review_eligible": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "actual_replay_trading_allowed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "trading_allowed",
+        ),
+        "actual_replay_order_placed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "order_placed",
+        ),
+        "actual_replay_broker_api_called": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "broker_api_called",
+        ),
+        "actual_replay_message_sent": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "message_sent",
+        ),
+        "actual_replay_llm_api_called": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "actual_replay_external_api_called": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "actual_replay_cache_mutated": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "cache_mutated",
+        ),
+        "actual_replay_data_raw_written": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "data_raw_written",
+        ),
+        "actual_replay_data_processed_written": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "data_processed_written",
+        ),
+        "actual_replay_data_cache_written": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "data_cache_written",
+        ),
+        "actual_replay_current_candidates_run": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "actual_replay_snapshot_built": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "actual_replay_signal_semantics_changed": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "actual_replay_report_only": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "actual_replay_diagnostic_only": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "actual_replay_no_live_trading": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "actual_replay_no_broker_api": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "actual_replay_no_order_placement": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "actual_replay_no_message_sent": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "no_message_sent",
+        ),
+        "actual_replay_execution_report_path": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "actual_replay_execution_next_action": _parse_note_value(
+            by_component.get("ACTUAL_REPLAY_EXECUTE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
         "universe_profile_policy_audit_status": _component_status(
             by_component,
             "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
@@ -15995,6 +16358,55 @@ def build_local_research_dashboard_metadata(
         "replay_decision_artifact_path": result.replay_decision_artifact_path,
         "real_replay_execution_report_path": result.real_replay_execution_report_path,
         "real_replay_execution_next_action": result.real_replay_execution_next_action,
+        "actual_replay_execution_workflow_implemented": result.actual_replay_execution_workflow_implemented,
+        "actual_replay_execution_views_implemented": result.actual_replay_execution_views_implemented,
+        "latest_actual_replay_execution_run_id": result.latest_actual_replay_execution_run_id,
+        "latest_actual_replay_execution_status": result.latest_actual_replay_execution_status,
+        "latest_actual_replay_execution_health_status": result.latest_actual_replay_execution_health_status,
+        "latest_actual_replay_execution_workflow_stage": result.latest_actual_replay_execution_workflow_stage,
+        "actual_replay_execution_artifact_path": result.actual_replay_execution_artifact_path,
+        "actual_replay_source_active_input_creation_run_id": (
+            result.actual_replay_source_active_input_creation_run_id
+        ),
+        "actual_replay_source_real_replay_precheck_run_id": (
+            result.actual_replay_source_real_replay_precheck_run_id
+        ),
+        "ready_for_actual_replay_execution": result.ready_for_actual_replay_execution,
+        "actual_replay_executed": result.actual_replay_executed,
+        "actual_replay_replay_execution_started": result.actual_replay_replay_execution_started,
+        "actual_replay_replay_execution_completed": result.actual_replay_replay_execution_completed,
+        "actual_replay_replay_decisions_created": result.actual_replay_replay_decisions_created,
+        "actual_replay_replay_decisions_exist": result.actual_replay_replay_decisions_exist,
+        "actual_replay_replay_decision_artifact_path": result.actual_replay_replay_decision_artifact_path,
+        "actual_replay_forward_labels_allowed": result.actual_replay_forward_labels_allowed,
+        "actual_replay_forward_labels_exist": result.actual_replay_forward_labels_exist,
+        "actual_replay_training_allowed": result.actual_replay_training_allowed,
+        "actual_replay_weights_trained": result.actual_replay_weights_trained,
+        "actual_replay_stock_profile_allowed": result.actual_replay_stock_profile_allowed,
+        "actual_replay_active_stock_profile_exists": result.actual_replay_active_stock_profile_exists,
+        "actual_replay_buy_review_allowed": result.actual_replay_buy_review_allowed,
+        "actual_replay_real_buy_review_eligible": result.actual_replay_real_buy_review_eligible,
+        "actual_replay_trading_allowed": result.actual_replay_trading_allowed,
+        "actual_replay_order_placed": result.actual_replay_order_placed,
+        "actual_replay_broker_api_called": result.actual_replay_broker_api_called,
+        "actual_replay_message_sent": result.actual_replay_message_sent,
+        "actual_replay_llm_api_called": result.actual_replay_llm_api_called,
+        "actual_replay_external_api_called": result.actual_replay_external_api_called,
+        "actual_replay_cache_mutated": result.actual_replay_cache_mutated,
+        "actual_replay_data_raw_written": result.actual_replay_data_raw_written,
+        "actual_replay_data_processed_written": result.actual_replay_data_processed_written,
+        "actual_replay_data_cache_written": result.actual_replay_data_cache_written,
+        "actual_replay_current_candidates_run": result.actual_replay_current_candidates_run,
+        "actual_replay_snapshot_built": result.actual_replay_snapshot_built,
+        "actual_replay_signal_semantics_changed": result.actual_replay_signal_semantics_changed,
+        "actual_replay_report_only": result.actual_replay_report_only,
+        "actual_replay_diagnostic_only": result.actual_replay_diagnostic_only,
+        "actual_replay_no_live_trading": result.actual_replay_no_live_trading,
+        "actual_replay_no_broker_api": result.actual_replay_no_broker_api,
+        "actual_replay_no_order_placement": result.actual_replay_no_order_placement,
+        "actual_replay_no_message_sent": result.actual_replay_no_message_sent,
+        "actual_replay_execution_report_path": result.actual_replay_execution_report_path,
+        "actual_replay_execution_next_action": result.actual_replay_execution_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -19583,6 +19995,86 @@ def _real_replay_execute_notes(summary: dict[str, Any]) -> str:
         f"no_broker_api={_string_or_empty(summary.get('no_broker_api'))}; "
         f"no_order_placement={_string_or_empty(summary.get('no_order_placement'))}; "
         f"no_message_sent={_string_or_empty(summary.get('no_message_sent'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_actual_replay_execute_status(root: Path) -> list[dict[str, Any]]:
+    replay_root = root.parent if root.name == "status" else root
+    if not replay_root.exists():
+        return []
+    try:
+        result = run_actual_replay_execute_status(
+            root=replay_root,
+            output_dir=replay_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_actual_replay_execution_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = replay_root / result.latest_actual_replay_execution_run_id
+    summary["artifact_path"] = str(artifact_dir)
+    return [
+        _record(
+            workflow_area="ACTUAL_REPLAY_EXECUTE",
+            component="ACTUAL_REPLAY_EXECUTE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_actual_replay_execution_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_actual_replay_execute_notes(summary),
+        )
+    ]
+
+
+def _actual_replay_execute_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"source_active_input_creation_run_id={_string_or_empty(summary.get('source_active_input_creation_run_id'))}; "
+        f"source_real_replay_precheck_run_id={_string_or_empty(summary.get('source_real_replay_precheck_run_id'))}; "
+        f"ready_for_actual_replay_execution={_string_or_empty(summary.get('ready_for_actual_replay_execution'))}; "
+        f"actual_replay_executed={_string_or_empty(summary.get('actual_replay_executed'))}; "
+        f"replay_execution_started={_string_or_empty(summary.get('replay_execution_started'))}; "
+        f"replay_execution_completed={_string_or_empty(summary.get('replay_execution_completed'))}; "
+        f"replay_decisions_created={_string_or_empty(summary.get('replay_decisions_created'))}; "
+        f"replay_decisions_exist={_string_or_empty(summary.get('replay_decisions_exist'))}; "
+        f"replay_decision_artifact_path={_note_safe_text(summary.get('replay_decision_artifact_path'))}; "
+        f"forward_labels_allowed={_string_or_empty(summary.get('forward_labels_allowed'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"training_allowed={_string_or_empty(summary.get('training_allowed'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"stock_profile_allowed={_string_or_empty(summary.get('stock_profile_allowed'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
         f"report_path={_note_safe_text(summary.get('report_path'))}"
     )
 

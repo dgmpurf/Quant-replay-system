@@ -490,6 +490,18 @@ When the status reports `READY_FOR_REAL_REPLAY_EXECUTION_REVIEW`, the dashboard 
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; real replay execution precheck fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims actual replay execution, replay decisions, labels, training, stock profiles, buy-review eligibility, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
 
+## Actual Replay Execution Status
+
+`research-status` includes `actual-replay-execute-status` as report-only actual replay execution context when those artifacts exist.
+
+Use `actual-replay-execute`, `actual-replay-execute-index`, `actual-replay-execute-health`, and `actual-replay-execute-status` to create, discover, safety-check, and summarize actual replay execution artifacts.
+
+The unified summary records the latest actual replay execution run id, status, health status, workflow stage, artifact path, source active input creation id, source real replay precheck id, execution booleans, report path, and next action. It also exports safety flags proving `replay_decisions_created=false`, `replay_decisions_exist=false`, `forward_labels_allowed=false`, `forward_labels_exist=false`, `training_allowed=false`, `weights_trained=false`, `stock_profile_allowed=false`, `active_stock_profile_exists=false`, `buy_review_allowed=false`, `real_buy_review_eligible=false`, `trading_allowed=false`, no live trading, no broker API, no order placement, no messages, no LLM/API calls, no external API calls, no cache mutation, no `data/raw`, no `data/processed`, no `data/cache`, no current-candidates generation, no snapshot build, and no signal semantics change.
+
+When the status reports `ACTUAL_REPLAY_EXECUTED`, the dashboard treats it as execution artifacts only. It is not replay_decision creation. It does not compute forward labels. It does not train weights. It does not create active stock profiles. It does not create real buy-review eligibility. It does not authorize trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; actual replay execution fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims replay decisions, labels, training, stock profiles, buy-review eligibility, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## ACTIVE_REPLAY_INPUT_READY Workflow Status
 
 `research-status` includes `active-replay-input-ready-status` as report-only final active-ready governance context when those artifacts exist.
