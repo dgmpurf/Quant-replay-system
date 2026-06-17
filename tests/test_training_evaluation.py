@@ -29,6 +29,9 @@ from quant_replay_system.training_evaluation import (
     TrainingEvaluationSettings,
     run_training_evaluation,
 )
+from quant_replay_system.training_evaluation_health import check_training_evaluation_health
+from quant_replay_system.training_evaluation_index import build_training_evaluation_index
+from quant_replay_system.training_evaluation_status import run_training_evaluation_status
 
 
 def test_no_input_writes_required_artifacts_with_safe_defaults(tmp_path: Path) -> None:
@@ -308,9 +311,193 @@ def test_cli_happy_paths_with_and_without_allow(tmp_path: Path) -> None:
 
 
 def test_no_artifact_views_research_status_checkpoint_or_project_source_are_added() -> None:
-    assert not hasattr(__import__("quant_replay_system.cli").cli, "_handle_training_evaluation_index")
-    assert not hasattr(__import__("quant_replay_system.cli").cli, "_handle_training_evaluation_health")
-    assert not hasattr(__import__("quant_replay_system.cli").cli, "_handle_training_evaluation_status")
+    assert not Path("docs/release_checkpoint_v1.45.0.md").exists()
+    assert not Path("docs/project_sources").exists()
+
+
+def test_training_evaluation_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_training_evaluation(TrainingEvaluationSettings(output_dir=root))
+    ready = run_training_evaluation(_happy_settings(tmp_path))
+    created = run_training_evaluation(replace(_happy_settings(tmp_path), allow_training_evaluation_dataset=True))
+
+    index = build_training_evaluation_index(root=root, output_dir=root / "index")
+
+    assert index.artifact_count == 3
+    rows = index.index_frame.set_index("training_evaluation_run_id")
+    assert rows.loc[no_input.training_evaluation_run_id, "status"] == NO_TRAINING_EVALUATION_INPUT
+    assert rows.loc[ready.training_evaluation_run_id, "ready_for_training_evaluation_dataset"] is True
+    assert rows.loc[created.training_evaluation_run_id, "training_evaluation_dataset_artifacts_created"] is True
+    assert rows.loc[created.training_evaluation_run_id, "dataset_sample_row_count"] == 1
+    assert rows.loc[created.training_evaluation_run_id, "symbol_count"] == 1
+    assert rows.loc[created.training_evaluation_run_id, "label_name_set"] == "forward_return_5d"
+    assert rows.loc[created.training_evaluation_run_id, "metrics_computed"] is False
+
+
+@pytest.mark.parametrize(
+    "settings_factory",
+    [
+        lambda tmp_path: TrainingEvaluationSettings(output_dir=_output_dir(tmp_path)),
+        lambda tmp_path: _happy_settings(tmp_path),
+        lambda tmp_path: replace(_happy_settings(tmp_path), allow_training_evaluation_dataset=True),
+    ],
+)
+def test_training_evaluation_health_passes_valid_artifacts(tmp_path: Path, settings_factory: object) -> None:
+    settings = settings_factory(tmp_path)
+    run_training_evaluation(settings)
+
+    health = check_training_evaluation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "PASS"
+    assert health.error_count == 0
+
+
+@pytest.mark.parametrize(
+    ("artifact_name", "expected_issue"),
+    [
+        ("training_evaluation_dataset_index.csv", "DATASET_CREATED_WITHOUT_DATASET_INDEX"),
+        ("training_evaluation_sample_rows.csv", "DATASET_CREATED_WITHOUT_SAMPLE_ROWS"),
+        ("training_evaluation_label_coverage_report.csv", "DATASET_CREATED_WITHOUT_LABEL_COVERAGE_REPORT"),
+    ],
+)
+def test_training_evaluation_health_fails_when_created_artifacts_are_missing(
+    tmp_path: Path,
+    artifact_name: str,
+    expected_issue: str,
+) -> None:
+    result = run_training_evaluation(replace(_happy_settings(tmp_path), allow_training_evaluation_dataset=True))
+    (result.artifact_paths["artifact_dir"] / artifact_name).unlink()
+
+    health = check_training_evaluation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert expected_issue in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("mutator", "expected_issue"),
+    [
+        ("drop_lineage", "SAMPLE_ROWS_REQUIRED_COLUMNS_MISSING"),
+        ("drop_split_role", "SAMPLE_ROWS_REQUIRED_COLUMNS_MISSING"),
+        ("metric_column", "SAMPLE_ROWS_FORBIDDEN_COLUMNS"),
+        ("model_column", "SAMPLE_ROWS_FORBIDDEN_COLUMNS"),
+        ("threshold_prediction_probability_importance_column", "SAMPLE_ROWS_FORBIDDEN_COLUMNS"),
+        ("stock_profile_column", "SAMPLE_ROWS_FORBIDDEN_COLUMNS"),
+        ("buy_review_column", "SAMPLE_ROWS_FORBIDDEN_COLUMNS"),
+        ("paper_column", "SAMPLE_ROWS_FORBIDDEN_COLUMNS"),
+        ("performance_column", "SAMPLE_ROWS_FORBIDDEN_COLUMNS"),
+        ("trading_column", "SAMPLE_ROWS_FORBIDDEN_COLUMNS"),
+    ],
+)
+def test_training_evaluation_health_fails_for_bad_sample_rows(
+    tmp_path: Path,
+    mutator: str,
+    expected_issue: str,
+) -> None:
+    result = run_training_evaluation(replace(_happy_settings(tmp_path), allow_training_evaluation_dataset=True))
+    _mutate_training_sample_rows(result.artifact_paths["artifact_dir"], mutator)
+
+    health = check_training_evaluation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert expected_issue in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "metrics_computed",
+        "training_allowed",
+        "weights_trained",
+        "training_result_created",
+        "model_version_created",
+        "thresholds_optimized",
+        "predictions_created",
+        "calibrated_probabilities_created",
+        "feature_importance_created",
+        "stock_profile_allowed",
+        "active_stock_profile_exists",
+        "stock_profile_created",
+        "buy_review_allowed",
+        "real_buy_review_eligible",
+        "approved_for_paper",
+        "strategy_performance_validated",
+        "trading_allowed",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+    ],
+)
+def test_training_evaluation_health_fails_for_unsafe_metadata_or_safety_flags(tmp_path: Path, field: str) -> None:
+    result = run_training_evaluation(replace(_happy_settings(tmp_path), allow_training_evaluation_dataset=True))
+    _patch_json(result.artifact_paths["metadata"], {field: True})
+
+    health = check_training_evaluation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert f"{field.upper()}_UNEXPECTED" in set(health.health_frame["issue_code"])
+
+
+def test_training_evaluation_status_reports_no_input_ready_and_created_states(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_training_evaluation(TrainingEvaluationSettings(output_dir=root))
+    no_input_status = run_training_evaluation_status(root=root, output_dir=root / "status_no_input")
+    assert no_input_status.latest_training_evaluation_run_id == no_input.training_evaluation_run_id
+    assert no_input_status.workflow_stage == "TRAINING_EVALUATION_NO_INPUT"
+
+    ready = run_training_evaluation(_happy_settings(tmp_path))
+    ready_status = run_training_evaluation_status(root=root, output_dir=root / "status_ready")
+    assert ready_status.latest_training_evaluation_run_id == ready.training_evaluation_run_id
+    assert ready_status.workflow_stage == READY_FOR_TRAINING_EVALUATION_DATASET
+    assert ready_status.training_evaluation_dataset_artifacts_created is False
+
+    created = run_training_evaluation(replace(_happy_settings(tmp_path), allow_training_evaluation_dataset=True))
+    created_status = run_training_evaluation_status(root=root, output_dir=root / "status_created")
+    assert created_status.latest_training_evaluation_run_id == created.training_evaluation_run_id
+    assert created_status.workflow_stage == TRAINING_EVALUATION_DATASET_CREATED
+    assert created_status.training_evaluation_dataset_artifacts_created is True
+    assert created_status.metrics_computed is False
+    for phrase in [
+        "report-only dataset/planning-only",
+        "does not compute metrics",
+        "does not create training_result",
+        "does not train weights",
+        "does not create model_version",
+        "does not optimize thresholds",
+        "does not create predictions",
+        "does not create stock_profile",
+        "does not create buy-review eligibility",
+        "does not apply paper approval",
+        "does not claim strategy performance validation",
+        "does not authorize trading",
+    ]:
+        assert phrase in created_status.safety_statement
+
+
+def test_training_evaluation_cli_artifact_view_commands_run(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_training_evaluation(replace(_happy_settings(tmp_path), allow_training_evaluation_dataset=True))
+
+    index = _run_cli(["training-evaluation-index", "--root", str(root), "--output-dir", str(root / "index")])
+    health = _run_cli(["training-evaluation-health", "--root", str(root), "--output-dir", str(root / "health")])
+    status = _run_cli(["training-evaluation-status", "--root", str(root), "--output-dir", str(root / "status")])
+
+    assert "artifact_count: 1" in index.stdout
+    assert "status: PASS" in health.stdout
+    assert "workflow_stage: TRAINING_EVALUATION_DATASET_CREATED" in status.stdout
+    assert "metrics_computed: False" in status.stdout
+
+
+def test_training_evaluation_artifact_views_do_not_add_research_status_checkpoint_or_project_source() -> None:
     assert not Path("docs/release_checkpoint_v1.45.0.md").exists()
     assert not Path("docs/project_sources").exists()
 
@@ -670,6 +857,37 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(path, index=False)
     return path
+
+
+def _mutate_training_sample_rows(artifact_dir: Path, mutator: str) -> None:
+    rows_path = artifact_dir / "training_evaluation_sample_rows.csv"
+    rows = pd.read_csv(rows_path, dtype={"symbol": "string"})
+    if mutator == "drop_lineage":
+        rows = rows.drop(columns=["replay_decision_freeze_run_id"])
+    elif mutator == "drop_split_role":
+        rows = rows.drop(columns=["split_role"])
+    elif mutator == "metric_column":
+        rows["hit_rate"] = 1.0
+    elif mutator == "model_column":
+        rows["model_version"] = "model_v1"
+    elif mutator == "threshold_prediction_probability_importance_column":
+        rows["prediction"] = 0.2
+        rows["calibrated_probability"] = 0.3
+        rows["feature_importance"] = 0.4
+        rows["threshold_optimized"] = 0.5
+    elif mutator == "stock_profile_column":
+        rows["stock_profile_status"] = "ready"
+    elif mutator == "buy_review_column":
+        rows["real_buy_review_eligible"] = True
+    elif mutator == "paper_column":
+        rows["approved_for_paper"] = True
+    elif mutator == "performance_column":
+        rows["strategy_performance_validated"] = True
+    elif mutator == "trading_column":
+        rows["broker_order_id"] = "order"
+    else:  # pragma: no cover
+        raise AssertionError(f"unknown mutator: {mutator}")
+    rows.to_csv(rows_path, index=False)
 
 
 def _output_dir(tmp_path: Path) -> Path:

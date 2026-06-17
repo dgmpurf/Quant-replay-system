@@ -326,6 +326,9 @@ from quant_replay_system.training_evaluation import (
     TrainingEvaluationSettings,
     run_training_evaluation,
 )
+from quant_replay_system.training_evaluation_health import check_training_evaluation_health
+from quant_replay_system.training_evaluation_index import build_training_evaluation_index
+from quant_replay_system.training_evaluation_status import run_training_evaluation_status
 from quant_replay_system.forward_return_label_health import check_forward_return_label_health
 from quant_replay_system.forward_return_label_index import build_forward_return_label_index
 from quant_replay_system.forward_return_label_status import run_forward_return_label_status
@@ -3290,6 +3293,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only training/evaluation artifacts will be written",
     )
     training_evaluation.set_defaults(handler=_handle_training_evaluation)
+
+    training_evaluation_index = subparsers.add_parser(
+        "training-evaluation-index",
+        help="Index report-only training/evaluation phase 1 artifacts",
+    )
+    training_evaluation_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_evaluation_v0_1",
+        help="Training/evaluation artifact root to index",
+    )
+    training_evaluation_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_evaluation_v0_1/index",
+        help="Directory where training/evaluation index artifacts will be written",
+    )
+    training_evaluation_index.set_defaults(handler=_handle_training_evaluation_index)
+
+    training_evaluation_health = subparsers.add_parser(
+        "training-evaluation-health",
+        help="Health-check report-only training/evaluation phase 1 artifacts",
+    )
+    training_evaluation_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_evaluation_v0_1",
+        help="Training/evaluation artifact root to health-check",
+    )
+    training_evaluation_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_evaluation_v0_1/health",
+        help="Directory where training/evaluation health artifacts will be written",
+    )
+    training_evaluation_health.set_defaults(handler=_handle_training_evaluation_health)
+
+    training_evaluation_status = subparsers.add_parser(
+        "training-evaluation-status",
+        help="Summarize latest report-only training/evaluation phase 1 artifact status",
+    )
+    training_evaluation_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_evaluation_v0_1",
+        help="Training/evaluation artifact root to summarize",
+    )
+    training_evaluation_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_evaluation_v0_1/status",
+        help="Directory where training/evaluation status artifacts will be written",
+    )
+    training_evaluation_status.set_defaults(handler=_handle_training_evaluation_status)
 
     forward_return_label_index = subparsers.add_parser(
         "forward-return-label-index",
@@ -9078,6 +9129,81 @@ def _handle_training_evaluation(args: argparse.Namespace) -> int:
         "not weights, not model_version, not stock_profile, not buy-review, not paper approval, "
         "not performance validation, and not trading."
     )
+    return 0
+
+
+def _handle_training_evaluation_index(args: argparse.Namespace) -> int:
+    result = build_training_evaluation_index(root=args.root, output_dir=args.output_dir)
+    print(f"Training/evaluation index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Training/evaluation phase 1 index is report-only dataset/planning-only. "
+        "TRAINING_EVALUATION_DATASET_CREATED is not metrics, not training_result, not weights, "
+        "not model_version, not thresholds, not predictions, not stock_profile, not buy-review, "
+        "not paper approval, not performance validation, and not trading."
+    )
+    return 0
+
+
+def _handle_training_evaluation_health(args: argparse.Namespace) -> int:
+    result = check_training_evaluation_health(root=args.root, output_dir=args.output_dir)
+    print(f"Training/evaluation health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Training/evaluation phase 1 health keeps artifacts report-only dataset/planning-only and fails if they imply "
+        "metrics, training_result, weights, model_version, thresholds, predictions, calibrated probabilities, "
+        "feature importance, stock_profile, buy-review, paper approval, performance validation, "
+        "broker/order/message/API/cache/data side effects, snapshots, current-candidates, signal semantics mutation, or trading."
+    )
+    return 0
+
+
+def _handle_training_evaluation_status(args: argparse.Namespace) -> int:
+    result = run_training_evaluation_status(root=args.root, output_dir=args.output_dir)
+    print(f"Training/evaluation status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_training_evaluation_run_id: {result.latest_training_evaluation_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_training_evaluation_dataset: {result.ready_for_training_evaluation_dataset}")
+    print(f"training_evaluation_executed: {result.training_evaluation_executed}")
+    print(f"training_evaluation_dataset_artifacts_created: {result.training_evaluation_dataset_artifacts_created}")
+    print(f"bounded_sample_rows_created: {result.bounded_sample_rows_created}")
+    print(f"label_coverage_report_created: {result.label_coverage_report_created}")
+    print(f"split_plan_created: {result.split_plan_created}")
+    print(f"feature_plan_created: {result.feature_plan_created}")
+    print(f"label_plan_created: {result.label_plan_created}")
+    print(f"dataset_sample_row_count: {result.dataset_sample_row_count}")
+    print(f"label_row_count: {result.label_row_count}")
+    print(f"symbol_count: {result.symbol_count}")
+    print(f"label_name_set: {result.label_name_set}")
+    print(f"metrics_computed: {result.metrics_computed}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 
