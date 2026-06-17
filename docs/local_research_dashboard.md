@@ -78,6 +78,7 @@ outputs/reports/manual_diagnostics/minimal_replay_input_package_fixture_smoke_v0
 outputs/reports/manual_diagnostics/active_replay_input_promotion_v0_1/status/
 outputs/reports/manual_diagnostics/active_replay_input_create_v0_1/status/
 outputs/reports/manual_diagnostics/real_replay_execute_v0_1/status/
+outputs/reports/manual_diagnostics/forward_return_label_v0_1/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -585,6 +586,18 @@ The unified summary records the latest evidence-update plan id, plan status/stag
 Evidence update plans use activated replacement templates as planning context only. They create profile-specific worklists, update templates, first-batch packages, and an evidence source checklist. They do not create clean review updates, approve or reject PIT rows, export universe files, replace active worklists, generate candidates, build snapshots, compute labels, or validate strategy performance.
 
 Activated replacement evidence update plans are earlier than generated current-candidates, advisory layers, market-update handoff, and paper workflow. If those later artifacts exist, the final `workflow_stage` does not regress to evidence-update planning; evidence package fields remain visible for audit. If health fails because an artifact claims approval, rejection, clean review updates, active worklist mutation, data writes, universe export, current-candidates generation, snapshot build, forward labels, cache mutation, network/API use, unsafe trading flags, broker access, order placement, or message delivery, `research-status` surfaces the failure as actionable when this layer is active.
+
+## Forward Return Label Status
+
+`research-status` includes `forward-return-label-status` as report-only future-outcome context when those artifacts exist.
+
+The unified summary records the latest forward-return label run id, status/stage, health status, source replay-decision-freeze lineage, replay decision count, label row count, label name set, symbol count, report path, next manual action, and safety flags.
+
+Forward-return labels are downstream outcome context only. They do not mutate active replay input, run `current-candidates`, build snapshots, train weights, create `stock_profile` artifacts, create buy-review eligibility, approve paper actions, validate strategy performance, call APIs, send messages, connect to brokers, place orders, or write cache/data files.
+
+When the status reports `FORWARD_RETURN_LABEL_READY`, the dashboard treats labels as reviewable context. The fields `forward_return_label_forward_labels_allowed`, `forward_return_label_forward_labels_exist`, and `forward_return_label_forward_return_labels_created` describe the label artifact layer and do not make labels decision-time replay inputs.
+
+Forward-return label status is later than replay decision freeze but separate from training, stock profiles, paper approval, and trading. If paper workflow artifacts already exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; forward-return label fields remain visible for audit. If health fails because an artifact claims training, `stock_profile` creation, buy-review eligibility, paper approval, performance validation, trading, broker access, order placement, message sending, API calls, cache mutation, data writes, current-candidates generation, snapshot builds, or signal-semantics changes, `research-status` surfaces the failure as actionable when this layer is active.
 
 ## Advisory Profile Calibration Status
 

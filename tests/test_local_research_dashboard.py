@@ -48,6 +48,7 @@ from quant_replay_system.active_replay_input_ready import (
     run_active_replay_input_ready,
 )
 from quant_replay_system.actual_replay_execute import ACTUAL_REPLAY_EXECUTED, run_actual_replay_execute
+from quant_replay_system.forward_return_label import FORWARD_RETURN_LABELS_CREATED, run_forward_return_label
 from quant_replay_system.replay_decision_freeze import REPLAY_DECISION_FROZEN, run_replay_decision_freeze
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
@@ -59,6 +60,7 @@ from quant_replay_system.reviewer_no_hit_acceptance_downstream_impact import (
 )
 from quant_replay_system.universe_profile_policy_audit import build_universe_profile_policy_audit
 from test_actual_replay_execute import _happy_settings as _actual_replay_happy_settings
+from test_forward_return_label import _happy_settings as _forward_return_label_happy_settings
 from test_replay_decision_freeze import _happy_settings as _replay_decision_freeze_happy_settings
 
 
@@ -3612,6 +3614,133 @@ def test_cli_research_status_prints_replay_decision_freeze_fields(tmp_path: Path
     assert "replay_decision_freeze_approved_for_paper: False" in output.out
     assert "replay_decision_freeze_strategy_performance_validated: False" in output.out
     assert "replay_decision_freeze_trading_allowed: False" in output.out
+
+
+def test_research_status_includes_forward_return_label_context_and_safety_fields(
+    tmp_path: Path,
+) -> None:
+    labeled = run_forward_return_label(
+        replace(_forward_return_label_happy_settings(tmp_path), allow_forward_return_label=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "FORWARD_RETURN_LABEL_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == FORWARD_RETURN_LABELS_CREATED
+    assert row["workflow_area"] == "FORWARD_RETURN_LABEL"
+    assert result.forward_return_label_workflow_implemented is True
+    assert result.forward_return_label_views_implemented is True
+    assert result.latest_forward_return_label_run_id == labeled.forward_return_label_run_id
+    assert result.latest_forward_return_label_status == FORWARD_RETURN_LABELS_CREATED
+    assert result.latest_forward_return_label_health_status == "PASS"
+    assert result.latest_forward_return_label_workflow_stage == FORWARD_RETURN_LABELS_CREATED
+    assert result.forward_return_label_artifact_path.endswith(labeled.forward_return_label_run_id)
+    assert result.source_replay_decision_freeze_run_id == "freeze_abc123"
+    assert result.source_replay_decision_freeze_artifact_path.endswith("forward_return_label_fixture_v0_1")
+    assert result.replay_decision_freeze_status == REPLAY_DECISION_FROZEN
+    assert result.replay_decision_freeze_health_status == "PASS"
+    assert result.forward_return_label_replay_decision_frozen is True
+    assert result.forward_return_label_replay_decisions_exist is True
+    assert result.ready_for_forward_return_label is True
+    assert result.forward_return_label_executed is True
+    assert result.forward_return_label_artifacts_created is True
+    assert result.forward_return_label_forward_labels_allowed is True
+    assert result.forward_return_label_forward_labels_exist is True
+    assert result.forward_return_label_forward_return_labels_created is True
+    assert result.forward_return_label_label_row_count == 5
+    assert "forward_return_5d" in result.forward_return_label_label_name_set
+    assert result.forward_return_label_symbol_count == 1
+    assert result.forward_return_label_replay_decision_count == 1
+    assert result.forward_return_label_training_allowed is False
+    assert result.forward_return_label_weights_trained is False
+    assert result.forward_return_label_training_result_created is False
+    assert result.forward_return_label_stock_profile_allowed is False
+    assert result.forward_return_label_active_stock_profile_exists is False
+    assert result.forward_return_label_stock_profile_created is False
+    assert result.forward_return_label_buy_review_allowed is False
+    assert result.forward_return_label_real_buy_review_eligible is False
+    assert result.forward_return_label_approved_for_paper is False
+    assert result.forward_return_label_strategy_performance_validated is False
+    assert result.forward_return_label_trading_allowed is False
+    assert result.forward_return_label_order_placed is False
+    assert result.forward_return_label_broker_api_called is False
+    assert result.forward_return_label_message_sent is False
+    assert result.forward_return_label_llm_api_called is False
+    assert result.forward_return_label_external_api_called is False
+    assert result.forward_return_label_cache_mutated is False
+    assert result.forward_return_label_data_raw_written is False
+    assert result.forward_return_label_data_processed_written is False
+    assert result.forward_return_label_data_cache_written is False
+    assert result.forward_return_label_current_candidates_run is False
+    assert result.forward_return_label_snapshot_built is False
+    assert result.forward_return_label_signal_semantics_changed is False
+    assert result.forward_return_label_report_only is True
+    assert result.forward_return_label_diagnostic_only is True
+    assert result.forward_return_label_no_live_trading is True
+    assert result.forward_return_label_no_broker_api is True
+    assert result.forward_return_label_no_order_placement is True
+    assert result.forward_return_label_no_message_sent is True
+    assert str(summary["forward_return_label_label_row_count"]) == "5"
+    assert metadata["forward_return_label_label_row_count"] == 5
+    assert metadata["forward_return_label_training_allowed"] is False
+    assert metadata["forward_return_label_stock_profile_created"] is False
+    assert metadata["forward_return_label_real_buy_review_eligible"] is False
+    assert metadata["forward_return_label_strategy_performance_validated"] is False
+    assert metadata["forward_return_label_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_forward_return_label(tmp_path: Path) -> None:
+    run_forward_return_label(
+        replace(_forward_return_label_happy_settings(tmp_path), allow_forward_return_label=True)
+    )
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority; forward labels are research context only.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_forward_return_label_status == FORWARD_RETURN_LABELS_CREATED
+    assert result.forward_return_label_forward_return_labels_created is True
+    assert result.forward_return_label_training_allowed is False
+    assert result.forward_return_label_stock_profile_allowed is False
+    assert result.forward_return_label_buy_review_allowed is False
+    assert result.forward_return_label_trading_allowed is False
+
+
+def test_cli_research_status_prints_forward_return_label_fields(tmp_path: Path, capsys) -> None:
+    run_forward_return_label(
+        replace(_forward_return_label_happy_settings(tmp_path), allow_forward_return_label=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "forward_return_label_workflow_implemented: True" in output.out
+    assert f"latest_forward_return_label_status: {FORWARD_RETURN_LABELS_CREATED}" in output.out
+    assert "source_replay_decision_freeze_run_id: freeze_abc123" in output.out
+    assert "ready_for_forward_return_label: True" in output.out
+    assert "forward_return_label_forward_return_labels_created: True" in output.out
+    assert "forward_return_label_label_row_count: 5" in output.out
+    assert "forward_return_label_training_allowed: False" in output.out
+    assert "forward_return_label_stock_profile_allowed: False" in output.out
+    assert "forward_return_label_buy_review_allowed: False" in output.out
+    assert "forward_return_label_approved_for_paper: False" in output.out
+    assert "forward_return_label_strategy_performance_validated: False" in output.out
+    assert "forward_return_label_trading_allowed: False" in output.out
 
 
 def test_cli_research_status_works(tmp_path: Path, capsys) -> None:

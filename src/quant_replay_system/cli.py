@@ -14487,6 +14487,126 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"replay_decision_freeze_report_path: {result.replay_decision_freeze_report_path}")
     print(f"replay_decision_freeze_next_action: {result.replay_decision_freeze_next_action}")
     print(
+        "forward_return_label_workflow_implemented: "
+        f"{result.forward_return_label_workflow_implemented}"
+    )
+    print(
+        "forward_return_label_views_implemented: "
+        f"{result.forward_return_label_views_implemented}"
+    )
+    print(f"latest_forward_return_label_run_id: {result.latest_forward_return_label_run_id}")
+    print(f"latest_forward_return_label_status: {result.latest_forward_return_label_status}")
+    print(
+        "latest_forward_return_label_health_status: "
+        f"{result.latest_forward_return_label_health_status}"
+    )
+    print(
+        "latest_forward_return_label_workflow_stage: "
+        f"{result.latest_forward_return_label_workflow_stage}"
+    )
+    print(f"forward_return_label_artifact_path: {result.forward_return_label_artifact_path}")
+    print(f"source_replay_decision_freeze_run_id: {result.source_replay_decision_freeze_run_id}")
+    print(
+        "source_replay_decision_freeze_artifact_path: "
+        f"{result.source_replay_decision_freeze_artifact_path}"
+    )
+    print(f"replay_decision_freeze_status: {result.replay_decision_freeze_status}")
+    print(f"replay_decision_freeze_health_status: {result.replay_decision_freeze_health_status}")
+    print(
+        "forward_return_label_replay_decision_frozen: "
+        f"{result.forward_return_label_replay_decision_frozen}"
+    )
+    print(
+        "forward_return_label_replay_decisions_exist: "
+        f"{result.forward_return_label_replay_decisions_exist}"
+    )
+    print(f"ready_for_forward_return_label: {result.ready_for_forward_return_label}")
+    print(f"forward_return_label_executed: {result.forward_return_label_executed}")
+    print(
+        "forward_return_label_artifacts_created: "
+        f"{result.forward_return_label_artifacts_created}"
+    )
+    print(
+        "forward_return_label_forward_labels_allowed: "
+        f"{result.forward_return_label_forward_labels_allowed}"
+    )
+    print(
+        "forward_return_label_forward_labels_exist: "
+        f"{result.forward_return_label_forward_labels_exist}"
+    )
+    print(
+        "forward_return_label_forward_return_labels_created: "
+        f"{result.forward_return_label_forward_return_labels_created}"
+    )
+    print(f"forward_return_label_label_row_count: {result.forward_return_label_label_row_count}")
+    print(f"forward_return_label_label_name_set: {result.forward_return_label_label_name_set}")
+    print(f"forward_return_label_symbol_count: {result.forward_return_label_symbol_count}")
+    print(
+        "forward_return_label_replay_decision_count: "
+        f"{result.forward_return_label_replay_decision_count}"
+    )
+    print(f"forward_return_label_training_allowed: {result.forward_return_label_training_allowed}")
+    print(f"forward_return_label_weights_trained: {result.forward_return_label_weights_trained}")
+    print(
+        "forward_return_label_training_result_created: "
+        f"{result.forward_return_label_training_result_created}"
+    )
+    print(
+        "forward_return_label_stock_profile_allowed: "
+        f"{result.forward_return_label_stock_profile_allowed}"
+    )
+    print(
+        "forward_return_label_active_stock_profile_exists: "
+        f"{result.forward_return_label_active_stock_profile_exists}"
+    )
+    print(
+        "forward_return_label_stock_profile_created: "
+        f"{result.forward_return_label_stock_profile_created}"
+    )
+    print(f"forward_return_label_buy_review_allowed: {result.forward_return_label_buy_review_allowed}")
+    print(
+        "forward_return_label_real_buy_review_eligible: "
+        f"{result.forward_return_label_real_buy_review_eligible}"
+    )
+    print(f"forward_return_label_approved_for_paper: {result.forward_return_label_approved_for_paper}")
+    print(
+        "forward_return_label_strategy_performance_validated: "
+        f"{result.forward_return_label_strategy_performance_validated}"
+    )
+    print(f"forward_return_label_trading_allowed: {result.forward_return_label_trading_allowed}")
+    print(f"forward_return_label_order_placed: {result.forward_return_label_order_placed}")
+    print(f"forward_return_label_broker_api_called: {result.forward_return_label_broker_api_called}")
+    print(f"forward_return_label_message_sent: {result.forward_return_label_message_sent}")
+    print(f"forward_return_label_llm_api_called: {result.forward_return_label_llm_api_called}")
+    print(f"forward_return_label_external_api_called: {result.forward_return_label_external_api_called}")
+    print(f"forward_return_label_cache_mutated: {result.forward_return_label_cache_mutated}")
+    print(f"forward_return_label_data_raw_written: {result.forward_return_label_data_raw_written}")
+    print(
+        "forward_return_label_data_processed_written: "
+        f"{result.forward_return_label_data_processed_written}"
+    )
+    print(f"forward_return_label_data_cache_written: {result.forward_return_label_data_cache_written}")
+    print(
+        "forward_return_label_current_candidates_run: "
+        f"{result.forward_return_label_current_candidates_run}"
+    )
+    print(f"forward_return_label_snapshot_built: {result.forward_return_label_snapshot_built}")
+    print(
+        "forward_return_label_signal_semantics_changed: "
+        f"{result.forward_return_label_signal_semantics_changed}"
+    )
+    print(f"forward_return_label_report_only: {result.forward_return_label_report_only}")
+    print(f"forward_return_label_diagnostic_only: {result.forward_return_label_diagnostic_only}")
+    print(f"forward_return_label_no_live_trading: {result.forward_return_label_no_live_trading}")
+    print(f"forward_return_label_no_broker_api: {result.forward_return_label_no_broker_api}")
+    print(
+        "forward_return_label_no_order_placement: "
+        f"{result.forward_return_label_no_order_placement}"
+    )
+    print(f"forward_return_label_no_message_sent: {result.forward_return_label_no_message_sent}")
+    print(f"forward_return_label_report_path: {result.forward_return_label_report_path}")
+    print(f"forward_return_label_next_action: {result.forward_return_label_next_action}")
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

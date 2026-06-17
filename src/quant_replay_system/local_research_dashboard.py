@@ -119,6 +119,7 @@ from quant_replay_system.active_replay_input_create_status import (
 from quant_replay_system.real_replay_execute_status import run_real_replay_execute_status
 from quant_replay_system.actual_replay_execute_status import run_actual_replay_execute_status
 from quant_replay_system.replay_decision_freeze_status import run_replay_decision_freeze_status
+from quant_replay_system.forward_return_label_status import run_forward_return_label_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -933,6 +934,60 @@ SUMMARY_COLUMNS = [
     "replay_decision_freeze_no_message_sent",
     "replay_decision_freeze_report_path",
     "replay_decision_freeze_next_action",
+    "forward_return_label_workflow_implemented",
+    "forward_return_label_views_implemented",
+    "latest_forward_return_label_run_id",
+    "latest_forward_return_label_status",
+    "latest_forward_return_label_health_status",
+    "latest_forward_return_label_workflow_stage",
+    "forward_return_label_artifact_path",
+    "source_replay_decision_freeze_run_id",
+    "source_replay_decision_freeze_artifact_path",
+    "replay_decision_freeze_status",
+    "replay_decision_freeze_health_status",
+    "forward_return_label_replay_decision_frozen",
+    "forward_return_label_replay_decisions_exist",
+    "ready_for_forward_return_label",
+    "forward_return_label_executed",
+    "forward_return_label_artifacts_created",
+    "forward_return_label_forward_labels_allowed",
+    "forward_return_label_forward_labels_exist",
+    "forward_return_label_forward_return_labels_created",
+    "forward_return_label_label_row_count",
+    "forward_return_label_label_name_set",
+    "forward_return_label_symbol_count",
+    "forward_return_label_replay_decision_count",
+    "forward_return_label_training_allowed",
+    "forward_return_label_weights_trained",
+    "forward_return_label_training_result_created",
+    "forward_return_label_stock_profile_allowed",
+    "forward_return_label_active_stock_profile_exists",
+    "forward_return_label_stock_profile_created",
+    "forward_return_label_buy_review_allowed",
+    "forward_return_label_real_buy_review_eligible",
+    "forward_return_label_approved_for_paper",
+    "forward_return_label_strategy_performance_validated",
+    "forward_return_label_trading_allowed",
+    "forward_return_label_order_placed",
+    "forward_return_label_broker_api_called",
+    "forward_return_label_message_sent",
+    "forward_return_label_llm_api_called",
+    "forward_return_label_external_api_called",
+    "forward_return_label_cache_mutated",
+    "forward_return_label_data_raw_written",
+    "forward_return_label_data_processed_written",
+    "forward_return_label_data_cache_written",
+    "forward_return_label_current_candidates_run",
+    "forward_return_label_snapshot_built",
+    "forward_return_label_signal_semantics_changed",
+    "forward_return_label_report_only",
+    "forward_return_label_diagnostic_only",
+    "forward_return_label_no_live_trading",
+    "forward_return_label_no_broker_api",
+    "forward_return_label_no_order_placement",
+    "forward_return_label_no_message_sent",
+    "forward_return_label_report_path",
+    "forward_return_label_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1311,6 +1366,7 @@ OPTIONAL_COMPONENTS = {
     "REAL_REPLAY_EXECUTE_STATUS",
     "ACTUAL_REPLAY_EXECUTE_STATUS",
     "REPLAY_DECISION_FREEZE_STATUS",
+    "FORWARD_RETURN_LABEL_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1358,6 +1414,7 @@ WORKFLOW_AREAS = {
     "REAL_REPLAY_EXECUTE_STATUS": "REAL_REPLAY_EXECUTE",
     "ACTUAL_REPLAY_EXECUTE_STATUS": "ACTUAL_REPLAY_EXECUTE",
     "REPLAY_DECISION_FREEZE_STATUS": "REPLAY_DECISION_FREEZE",
+    "FORWARD_RETURN_LABEL_STATUS": "FORWARD_RETURN_LABEL",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -2158,6 +2215,60 @@ class LocalResearchDashboardResult:
     replay_decision_freeze_no_message_sent: bool
     replay_decision_freeze_report_path: str
     replay_decision_freeze_next_action: str
+    forward_return_label_workflow_implemented: bool
+    forward_return_label_views_implemented: bool
+    latest_forward_return_label_run_id: str
+    latest_forward_return_label_status: str
+    latest_forward_return_label_health_status: str
+    latest_forward_return_label_workflow_stage: str
+    forward_return_label_artifact_path: str
+    source_replay_decision_freeze_run_id: str
+    source_replay_decision_freeze_artifact_path: str
+    replay_decision_freeze_status: str
+    replay_decision_freeze_health_status: str
+    forward_return_label_replay_decision_frozen: bool
+    forward_return_label_replay_decisions_exist: bool
+    ready_for_forward_return_label: bool
+    forward_return_label_executed: bool
+    forward_return_label_artifacts_created: bool
+    forward_return_label_forward_labels_allowed: bool
+    forward_return_label_forward_labels_exist: bool
+    forward_return_label_forward_return_labels_created: bool
+    forward_return_label_label_row_count: int
+    forward_return_label_label_name_set: str
+    forward_return_label_symbol_count: int
+    forward_return_label_replay_decision_count: int
+    forward_return_label_training_allowed: bool
+    forward_return_label_weights_trained: bool
+    forward_return_label_training_result_created: bool
+    forward_return_label_stock_profile_allowed: bool
+    forward_return_label_active_stock_profile_exists: bool
+    forward_return_label_stock_profile_created: bool
+    forward_return_label_buy_review_allowed: bool
+    forward_return_label_real_buy_review_eligible: bool
+    forward_return_label_approved_for_paper: bool
+    forward_return_label_strategy_performance_validated: bool
+    forward_return_label_trading_allowed: bool
+    forward_return_label_order_placed: bool
+    forward_return_label_broker_api_called: bool
+    forward_return_label_message_sent: bool
+    forward_return_label_llm_api_called: bool
+    forward_return_label_external_api_called: bool
+    forward_return_label_cache_mutated: bool
+    forward_return_label_data_raw_written: bool
+    forward_return_label_data_processed_written: bool
+    forward_return_label_data_cache_written: bool
+    forward_return_label_current_candidates_run: bool
+    forward_return_label_snapshot_built: bool
+    forward_return_label_signal_semantics_changed: bool
+    forward_return_label_report_only: bool
+    forward_return_label_diagnostic_only: bool
+    forward_return_label_no_live_trading: bool
+    forward_return_label_no_broker_api: bool
+    forward_return_label_no_order_placement: bool
+    forward_return_label_no_message_sent: bool
+    forward_return_label_report_path: str
+    forward_return_label_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -5107,6 +5218,130 @@ def run_local_research_dashboard(
         ),
         replay_decision_freeze_report_path=str(summary.get("replay_decision_freeze_report_path", "")),
         replay_decision_freeze_next_action=str(summary.get("replay_decision_freeze_next_action", "")),
+        forward_return_label_workflow_implemented=_bool_from_text(
+            summary.get("forward_return_label_workflow_implemented")
+        ),
+        forward_return_label_views_implemented=_bool_from_text(
+            summary.get("forward_return_label_views_implemented")
+        ),
+        latest_forward_return_label_run_id=str(summary.get("latest_forward_return_label_run_id", "")),
+        latest_forward_return_label_status=str(summary.get("latest_forward_return_label_status", "MISSING")),
+        latest_forward_return_label_health_status=str(
+            summary.get("latest_forward_return_label_health_status", "")
+        ),
+        latest_forward_return_label_workflow_stage=str(
+            summary.get("latest_forward_return_label_workflow_stage", "")
+        ),
+        forward_return_label_artifact_path=str(summary.get("forward_return_label_artifact_path", "")),
+        source_replay_decision_freeze_run_id=str(summary.get("source_replay_decision_freeze_run_id", "")),
+        source_replay_decision_freeze_artifact_path=str(
+            summary.get("source_replay_decision_freeze_artifact_path", "")
+        ),
+        replay_decision_freeze_status=str(summary.get("replay_decision_freeze_status", "")),
+        replay_decision_freeze_health_status=str(summary.get("replay_decision_freeze_health_status", "")),
+        forward_return_label_replay_decision_frozen=_bool_from_text(
+            summary.get("forward_return_label_replay_decision_frozen")
+        ),
+        forward_return_label_replay_decisions_exist=_bool_from_text(
+            summary.get("forward_return_label_replay_decisions_exist")
+        ),
+        ready_for_forward_return_label=_bool_from_text(summary.get("ready_for_forward_return_label")),
+        forward_return_label_executed=_bool_from_text(summary.get("forward_return_label_executed")),
+        forward_return_label_artifacts_created=_bool_from_text(
+            summary.get("forward_return_label_artifacts_created")
+        ),
+        forward_return_label_forward_labels_allowed=_bool_from_text(
+            summary.get("forward_return_label_forward_labels_allowed")
+        ),
+        forward_return_label_forward_labels_exist=_bool_from_text(
+            summary.get("forward_return_label_forward_labels_exist")
+        ),
+        forward_return_label_forward_return_labels_created=_bool_from_text(
+            summary.get("forward_return_label_forward_return_labels_created")
+        ),
+        forward_return_label_label_row_count=_int_or_zero(
+            summary.get("forward_return_label_label_row_count")
+        ),
+        forward_return_label_label_name_set=str(summary.get("forward_return_label_label_name_set", "")),
+        forward_return_label_symbol_count=_int_or_zero(summary.get("forward_return_label_symbol_count")),
+        forward_return_label_replay_decision_count=_int_or_zero(
+            summary.get("forward_return_label_replay_decision_count")
+        ),
+        forward_return_label_training_allowed=_bool_from_text(
+            summary.get("forward_return_label_training_allowed")
+        ),
+        forward_return_label_weights_trained=_bool_from_text(summary.get("forward_return_label_weights_trained")),
+        forward_return_label_training_result_created=_bool_from_text(
+            summary.get("forward_return_label_training_result_created")
+        ),
+        forward_return_label_stock_profile_allowed=_bool_from_text(
+            summary.get("forward_return_label_stock_profile_allowed")
+        ),
+        forward_return_label_active_stock_profile_exists=_bool_from_text(
+            summary.get("forward_return_label_active_stock_profile_exists")
+        ),
+        forward_return_label_stock_profile_created=_bool_from_text(
+            summary.get("forward_return_label_stock_profile_created")
+        ),
+        forward_return_label_buy_review_allowed=_bool_from_text(
+            summary.get("forward_return_label_buy_review_allowed")
+        ),
+        forward_return_label_real_buy_review_eligible=_bool_from_text(
+            summary.get("forward_return_label_real_buy_review_eligible")
+        ),
+        forward_return_label_approved_for_paper=_bool_from_text(
+            summary.get("forward_return_label_approved_for_paper")
+        ),
+        forward_return_label_strategy_performance_validated=_bool_from_text(
+            summary.get("forward_return_label_strategy_performance_validated")
+        ),
+        forward_return_label_trading_allowed=_bool_from_text(
+            summary.get("forward_return_label_trading_allowed")
+        ),
+        forward_return_label_order_placed=_bool_from_text(summary.get("forward_return_label_order_placed")),
+        forward_return_label_broker_api_called=_bool_from_text(
+            summary.get("forward_return_label_broker_api_called")
+        ),
+        forward_return_label_message_sent=_bool_from_text(summary.get("forward_return_label_message_sent")),
+        forward_return_label_llm_api_called=_bool_from_text(
+            summary.get("forward_return_label_llm_api_called")
+        ),
+        forward_return_label_external_api_called=_bool_from_text(
+            summary.get("forward_return_label_external_api_called")
+        ),
+        forward_return_label_cache_mutated=_bool_from_text(summary.get("forward_return_label_cache_mutated")),
+        forward_return_label_data_raw_written=_bool_from_text(
+            summary.get("forward_return_label_data_raw_written")
+        ),
+        forward_return_label_data_processed_written=_bool_from_text(
+            summary.get("forward_return_label_data_processed_written")
+        ),
+        forward_return_label_data_cache_written=_bool_from_text(
+            summary.get("forward_return_label_data_cache_written")
+        ),
+        forward_return_label_current_candidates_run=_bool_from_text(
+            summary.get("forward_return_label_current_candidates_run")
+        ),
+        forward_return_label_snapshot_built=_bool_from_text(summary.get("forward_return_label_snapshot_built")),
+        forward_return_label_signal_semantics_changed=_bool_from_text(
+            summary.get("forward_return_label_signal_semantics_changed")
+        ),
+        forward_return_label_report_only=_bool_from_text(summary.get("forward_return_label_report_only")),
+        forward_return_label_diagnostic_only=_bool_from_text(
+            summary.get("forward_return_label_diagnostic_only")
+        ),
+        forward_return_label_no_live_trading=_bool_from_text(
+            summary.get("forward_return_label_no_live_trading")
+        ),
+        forward_return_label_no_broker_api=_bool_from_text(summary.get("forward_return_label_no_broker_api")),
+        forward_return_label_no_order_placement=_bool_from_text(
+            summary.get("forward_return_label_no_order_placement")
+        ),
+        forward_return_label_no_message_sent=_bool_from_text(
+            summary.get("forward_return_label_no_message_sent")
+        ),
+        forward_return_label_report_path=str(summary.get("forward_return_label_report_path", "")),
+        forward_return_label_next_action=str(summary.get("forward_return_label_next_action", "")),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -5853,6 +6088,7 @@ def scan_local_research_workflow_artifacts(
     real_replay_execute_path = Path(real_replay_execute_root)
     actual_replay_execute_path = Path(actual_replay_execute_root)
     replay_decision_freeze_path = Path(replay_decision_freeze_root)
+    forward_return_label_path = replay_decision_freeze_path.parent / "forward_return_label_v0_1"
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -5939,6 +6175,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_real_replay_execute_status(real_replay_execute_path))
     records.extend(_scan_actual_replay_execute_status(actual_replay_execute_path))
     records.extend(_scan_replay_decision_freeze_status(replay_decision_freeze_path))
+    records.extend(_scan_forward_return_label_status(forward_return_label_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -13788,6 +14025,226 @@ def summarize_local_research_status(
             by_component.get("REPLAY_DECISION_FREEZE_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
+        "forward_return_label_workflow_implemented": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "forward_return_label_views_implemented": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_forward_return_label_run_id": _string_or_empty(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_forward_return_label_status": _component_status(
+            by_component,
+            "FORWARD_RETURN_LABEL_STATUS",
+        ),
+        "latest_forward_return_label_health_status": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_forward_return_label_workflow_stage": _string_or_empty(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("stage")
+        ),
+        "forward_return_label_artifact_path": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "source_replay_decision_freeze_run_id": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "source_replay_decision_freeze_run_id",
+        ),
+        "source_replay_decision_freeze_artifact_path": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "source_replay_decision_freeze_artifact_path",
+        ),
+        "replay_decision_freeze_status": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "replay_decision_freeze_status",
+        ),
+        "replay_decision_freeze_health_status": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "replay_decision_freeze_health_status",
+        ),
+        "forward_return_label_replay_decision_frozen": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "replay_decision_frozen",
+        ),
+        "forward_return_label_replay_decisions_exist": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "replay_decisions_exist",
+        ),
+        "ready_for_forward_return_label": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "ready_for_forward_return_label",
+        ),
+        "forward_return_label_executed": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "forward_return_label_executed",
+        ),
+        "forward_return_label_artifacts_created": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "forward_return_label_artifacts_created",
+        ),
+        "forward_return_label_forward_labels_allowed": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "forward_labels_allowed",
+        ),
+        "forward_return_label_forward_labels_exist": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "forward_labels_exist",
+        ),
+        "forward_return_label_forward_return_labels_created": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "forward_return_labels_created",
+        ),
+        "forward_return_label_label_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+                "label_row_count",
+            )
+        ),
+        "forward_return_label_label_name_set": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "label_name_set",
+        ),
+        "forward_return_label_symbol_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+                "symbol_count",
+            )
+        ),
+        "forward_return_label_replay_decision_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+                "replay_decision_count",
+            )
+        ),
+        "forward_return_label_training_allowed": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "training_allowed",
+        ),
+        "forward_return_label_weights_trained": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "weights_trained",
+        ),
+        "forward_return_label_training_result_created": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "training_result_created",
+        ),
+        "forward_return_label_stock_profile_allowed": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "stock_profile_allowed",
+        ),
+        "forward_return_label_active_stock_profile_exists": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "active_stock_profile_exists",
+        ),
+        "forward_return_label_stock_profile_created": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "stock_profile_created",
+        ),
+        "forward_return_label_buy_review_allowed": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "buy_review_allowed",
+        ),
+        "forward_return_label_real_buy_review_eligible": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "forward_return_label_approved_for_paper": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "approved_for_paper",
+        ),
+        "forward_return_label_strategy_performance_validated": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "strategy_performance_validated",
+        ),
+        "forward_return_label_trading_allowed": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "trading_allowed",
+        ),
+        "forward_return_label_order_placed": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "order_placed",
+        ),
+        "forward_return_label_broker_api_called": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "broker_api_called",
+        ),
+        "forward_return_label_message_sent": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "message_sent",
+        ),
+        "forward_return_label_llm_api_called": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "forward_return_label_external_api_called": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "forward_return_label_cache_mutated": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "cache_mutated",
+        ),
+        "forward_return_label_data_raw_written": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "data_raw_written",
+        ),
+        "forward_return_label_data_processed_written": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "data_processed_written",
+        ),
+        "forward_return_label_data_cache_written": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "data_cache_written",
+        ),
+        "forward_return_label_current_candidates_run": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "forward_return_label_snapshot_built": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "forward_return_label_signal_semantics_changed": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "forward_return_label_report_only": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "forward_return_label_diagnostic_only": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "forward_return_label_no_live_trading": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "no_live_trading",
+        ),
+        "forward_return_label_no_broker_api": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "no_broker_api",
+        ),
+        "forward_return_label_no_order_placement": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "no_order_placement",
+        ),
+        "forward_return_label_no_message_sent": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "no_message_sent",
+        ),
+        "forward_return_label_report_path": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "forward_return_label_next_action": _parse_note_value(
+            by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
         "universe_profile_policy_audit_status": _component_status(
             by_component,
             "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
@@ -17023,6 +17480,64 @@ def build_local_research_dashboard_metadata(
         "replay_decision_freeze_no_message_sent": result.replay_decision_freeze_no_message_sent,
         "replay_decision_freeze_report_path": result.replay_decision_freeze_report_path,
         "replay_decision_freeze_next_action": result.replay_decision_freeze_next_action,
+        "forward_return_label_workflow_implemented": result.forward_return_label_workflow_implemented,
+        "forward_return_label_views_implemented": result.forward_return_label_views_implemented,
+        "latest_forward_return_label_run_id": result.latest_forward_return_label_run_id,
+        "latest_forward_return_label_status": result.latest_forward_return_label_status,
+        "latest_forward_return_label_health_status": result.latest_forward_return_label_health_status,
+        "latest_forward_return_label_workflow_stage": result.latest_forward_return_label_workflow_stage,
+        "forward_return_label_artifact_path": result.forward_return_label_artifact_path,
+        "source_replay_decision_freeze_run_id": result.source_replay_decision_freeze_run_id,
+        "source_replay_decision_freeze_artifact_path": result.source_replay_decision_freeze_artifact_path,
+        "replay_decision_freeze_status": result.replay_decision_freeze_status,
+        "replay_decision_freeze_health_status": result.replay_decision_freeze_health_status,
+        "forward_return_label_replay_decision_frozen": result.forward_return_label_replay_decision_frozen,
+        "forward_return_label_replay_decisions_exist": result.forward_return_label_replay_decisions_exist,
+        "ready_for_forward_return_label": result.ready_for_forward_return_label,
+        "forward_return_label_executed": result.forward_return_label_executed,
+        "forward_return_label_artifacts_created": result.forward_return_label_artifacts_created,
+        "forward_return_label_forward_labels_allowed": result.forward_return_label_forward_labels_allowed,
+        "forward_return_label_forward_labels_exist": result.forward_return_label_forward_labels_exist,
+        "forward_return_label_forward_return_labels_created": (
+            result.forward_return_label_forward_return_labels_created
+        ),
+        "forward_return_label_label_row_count": result.forward_return_label_label_row_count,
+        "forward_return_label_label_name_set": result.forward_return_label_label_name_set,
+        "forward_return_label_symbol_count": result.forward_return_label_symbol_count,
+        "forward_return_label_replay_decision_count": result.forward_return_label_replay_decision_count,
+        "forward_return_label_training_allowed": result.forward_return_label_training_allowed,
+        "forward_return_label_weights_trained": result.forward_return_label_weights_trained,
+        "forward_return_label_training_result_created": result.forward_return_label_training_result_created,
+        "forward_return_label_stock_profile_allowed": result.forward_return_label_stock_profile_allowed,
+        "forward_return_label_active_stock_profile_exists": result.forward_return_label_active_stock_profile_exists,
+        "forward_return_label_stock_profile_created": result.forward_return_label_stock_profile_created,
+        "forward_return_label_buy_review_allowed": result.forward_return_label_buy_review_allowed,
+        "forward_return_label_real_buy_review_eligible": result.forward_return_label_real_buy_review_eligible,
+        "forward_return_label_approved_for_paper": result.forward_return_label_approved_for_paper,
+        "forward_return_label_strategy_performance_validated": (
+            result.forward_return_label_strategy_performance_validated
+        ),
+        "forward_return_label_trading_allowed": result.forward_return_label_trading_allowed,
+        "forward_return_label_order_placed": result.forward_return_label_order_placed,
+        "forward_return_label_broker_api_called": result.forward_return_label_broker_api_called,
+        "forward_return_label_message_sent": result.forward_return_label_message_sent,
+        "forward_return_label_llm_api_called": result.forward_return_label_llm_api_called,
+        "forward_return_label_external_api_called": result.forward_return_label_external_api_called,
+        "forward_return_label_cache_mutated": result.forward_return_label_cache_mutated,
+        "forward_return_label_data_raw_written": result.forward_return_label_data_raw_written,
+        "forward_return_label_data_processed_written": result.forward_return_label_data_processed_written,
+        "forward_return_label_data_cache_written": result.forward_return_label_data_cache_written,
+        "forward_return_label_current_candidates_run": result.forward_return_label_current_candidates_run,
+        "forward_return_label_snapshot_built": result.forward_return_label_snapshot_built,
+        "forward_return_label_signal_semantics_changed": result.forward_return_label_signal_semantics_changed,
+        "forward_return_label_report_only": result.forward_return_label_report_only,
+        "forward_return_label_diagnostic_only": result.forward_return_label_diagnostic_only,
+        "forward_return_label_no_live_trading": result.forward_return_label_no_live_trading,
+        "forward_return_label_no_broker_api": result.forward_return_label_no_broker_api,
+        "forward_return_label_no_order_placement": result.forward_return_label_no_order_placement,
+        "forward_return_label_no_message_sent": result.forward_return_label_no_message_sent,
+        "forward_return_label_report_path": result.forward_return_label_report_path,
+        "forward_return_label_next_action": result.forward_return_label_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -20784,6 +21299,153 @@ def _replay_decision_freeze_notes(summary: dict[str, Any]) -> str:
         "no_message_sent=True; "
         f"report_path={_note_safe_text(summary.get('report_path'))}"
     )
+
+
+def _scan_forward_return_label_status(root: Path) -> list[dict[str, Any]]:
+    label_root = root.parent if root.name == "status" else root
+    if not label_root.exists():
+        return []
+    try:
+        result = run_forward_return_label_status(
+            root=label_root,
+            output_dir=label_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_forward_return_label_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = label_root / result.latest_forward_return_label_run_id
+    metadata = _load_json_or_none(artifact_dir / "metadata.json") or {}
+    artifact_paths = metadata.get("artifact_paths") if isinstance(metadata.get("artifact_paths"), dict) else {}
+    rows_path = _string_or_empty(artifact_paths.get("forward_return_label_rows")) or str(
+        artifact_dir / "forward_return_label_rows.csv"
+    )
+    summary["artifact_path"] = str(artifact_dir)
+    summary["source_replay_decision_freeze_artifact_path"] = _string_or_empty(
+        metadata.get("source_replay_decision_freeze_artifact_path")
+    )
+    source_metadata = {}
+    source_path_text = summary["source_replay_decision_freeze_artifact_path"]
+    if source_path_text:
+        source_root = Path(source_path_text)
+        source_metadata = _load_json_or_none(source_root / "replay_decision_metadata.json") or {}
+    if not _string_or_empty(summary.get("replay_decision_freeze_status")):
+        summary["replay_decision_freeze_status"] = (
+            _string_or_empty(source_metadata.get("execution_status"))
+            or _string_or_empty(source_metadata.get("status"))
+        )
+    if not _string_or_empty(summary.get("replay_decision_freeze_health_status")):
+        summary["replay_decision_freeze_health_status"] = _string_or_empty(
+            source_metadata.get("health_status")
+        )
+    summary["label_name_set"] = _string_or_empty(summary.get("label_name_set")).replace(";", ",")
+    summary["replay_decision_count"] = _forward_return_label_replay_decision_count(rows_path)
+    summary["report_path"] = _string_or_empty(artifact_paths.get("report")) or result.report_path
+    for field in [
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+        "report_only",
+        "diagnostic_only",
+    ]:
+        if field not in summary or _string_or_empty(summary.get(field)) == "":
+            summary[field] = metadata.get(field, False)
+    return [
+        _record(
+            workflow_area="FORWARD_RETURN_LABEL",
+            component="FORWARD_RETURN_LABEL_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_forward_return_label_run_id,
+            report_path=summary["report_path"],
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_forward_return_label_notes(summary),
+        )
+    ]
+
+
+def _forward_return_label_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"source_replay_decision_freeze_run_id={_string_or_empty(summary.get('source_replay_decision_freeze_run_id'))}; "
+        f"source_replay_decision_freeze_artifact_path={_note_safe_text(summary.get('source_replay_decision_freeze_artifact_path'))}; "
+        f"replay_decision_freeze_status={_string_or_empty(summary.get('replay_decision_freeze_status'))}; "
+        f"replay_decision_freeze_health_status={_string_or_empty(summary.get('replay_decision_freeze_health_status'))}; "
+        f"replay_decision_frozen={_string_or_empty(summary.get('replay_decision_frozen'))}; "
+        f"replay_decisions_exist={_string_or_empty(summary.get('replay_decisions_exist'))}; "
+        f"ready_for_forward_return_label={_string_or_empty(summary.get('ready_for_forward_return_label'))}; "
+        f"forward_return_label_executed={_string_or_empty(summary.get('forward_return_label_executed'))}; "
+        f"forward_return_label_artifacts_created={_string_or_empty(summary.get('forward_return_label_artifacts_created'))}; "
+        f"forward_labels_allowed={_string_or_empty(summary.get('forward_labels_allowed'))}; "
+        f"forward_labels_exist={_string_or_empty(summary.get('forward_labels_exist'))}; "
+        f"forward_return_labels_created={_string_or_empty(summary.get('forward_return_labels_created'))}; "
+        f"label_row_count={_string_or_empty(summary.get('label_row_count'))}; "
+        f"label_name_set={_string_or_empty(summary.get('label_name_set'))}; "
+        f"symbol_count={_string_or_empty(summary.get('symbol_count'))}; "
+        f"replay_decision_count={_string_or_empty(summary.get('replay_decision_count'))}; "
+        f"training_allowed={_string_or_empty(summary.get('training_allowed'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"training_result_created={_string_or_empty(summary.get('training_result_created'))}; "
+        f"stock_profile_allowed={_string_or_empty(summary.get('stock_profile_allowed'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"stock_profile_created={_string_or_empty(summary.get('stock_profile_created'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
+        f"strategy_performance_validated={_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _forward_return_label_replay_decision_count(rows_path: str) -> int:
+    if not rows_path:
+        return 0
+    path = Path(rows_path)
+    if not path.exists():
+        return 0
+    try:
+        frame = pd.read_csv(path, dtype={"symbol": "string"}, keep_default_na=False)
+    except Exception:
+        return 0
+    if "replay_decision_id" not in frame.columns or frame.empty:
+        return 0
+    return int(frame["replay_decision_id"].nunique())
 
 
 def _scan_active_replay_input_ready_status(root: Path) -> list[dict[str, Any]]:

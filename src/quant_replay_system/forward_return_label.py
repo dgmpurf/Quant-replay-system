@@ -235,6 +235,7 @@ class ForwardReturnLabelResult:
     labels_joined_after_freeze: bool
     labels_excluded_from_decision_rows: bool
     source_replay_decision_freeze_run_id: str
+    source_replay_decision_freeze_artifact_path: str
     source_actual_replay_execution_run_id: str
     source_active_input_creation_run_id: str
     source_real_replay_precheck_run_id: str
@@ -558,6 +559,7 @@ def _build_result(
         labels_joined_after_freeze=labels_created,
         labels_excluded_from_decision_rows=True,
         source_replay_decision_freeze_run_id=freeze_id,
+        source_replay_decision_freeze_artifact_path=str(settings.replay_decision_freeze_artifact_path or ""),
         source_actual_replay_execution_run_id=actual_id,
         source_active_input_creation_run_id=active_id,
         source_real_replay_precheck_run_id=precheck_id,

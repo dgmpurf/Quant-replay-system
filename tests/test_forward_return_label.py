@@ -363,19 +363,31 @@ def test_cli_happy_paths_respect_explicit_allow(tmp_path: Path) -> None:
     assert "trading_allowed: False" in created.stdout
 
 
-def test_core_and_artifact_view_cli_are_added_without_research_status_checkpoint_or_project_source() -> None:
+def test_core_views_research_status_docs_checkpoint_and_source_note_are_present_without_project_source() -> None:
     parser = cli.build_parser()
     command_names = {action.dest for action in parser._subparsers._group_actions[0]._choices_actions}
     assert "forward-return-label" in command_names
     assert "forward-return-label-index" in command_names
     assert "forward-return-label-health" in command_names
     assert "forward-return-label-status" in command_names
-    assert not Path("docs/forward_return_label.md").exists()
-    assert not Path("docs/release_checkpoint_v1.44.0.md").exists()
+    assert "research-status" in command_names
+    assert Path("docs/forward_return_label.md").exists()
+    assert Path("docs/release_checkpoint_v1.44.0.md").exists()
     assert not Path("docs/release_checkpoint_v1.45.0.md").exists()
-    assert not Path("SOURCE_UPDATE_NOTES_v1_44_0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_44_0.md").exists()
     assert not Path("SOURCE_UPDATE_NOTES_v1_45_0.md").exists()
     assert not Path("docs/project_sources").exists()
+    docs_text = Path("docs/forward_return_label.md").read_text(encoding="utf-8")
+    checkpoint_text = Path("docs/release_checkpoint_v1.44.0.md").read_text(encoding="utf-8")
+    source_notes_text = Path("SOURCE_UPDATE_NOTES_v1_44_0.md").read_text(encoding="utf-8")
+    for text in [docs_text, checkpoint_text, source_notes_text]:
+        assert "report-only" in text
+        assert "not training" in text
+        assert "not stock_profile" in text
+        assert "not buy-review eligibility" in text
+        assert "not paper approval" in text
+        assert "not performance validation" in text
+        assert "not trading" in text
 
 
 def test_forward_return_label_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
