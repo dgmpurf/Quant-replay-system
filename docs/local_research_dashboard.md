@@ -613,6 +613,20 @@ The workflow can report `NO_TRAINING_EVALUATION_INPUT`, `READY_FOR_TRAINING_EVAL
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; training/evaluation fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims metrics, training_result, weights, model_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
 
+## Metric / Evaluation Status
+
+`research-status` includes `metric-evaluation-status` as report-only Metric / Evaluation Phase 1 structural planning context when those artifacts exist.
+
+Use `metric-evaluation`, `metric-evaluation-index`, `metric-evaluation-health`, and `metric-evaluation-status` to create, discover, safety-check, and summarize the structural planning artifacts.
+
+The unified summary records the latest metric/evaluation run id, status/stage, health status, artifact path, source Training / Evaluation Phase 1 lineage, source forward-return-label lineage, source replay-decision-freeze lineage, sample row count, label row count, symbol count, label name set, metric definition count, sample scope count, denominator rule count, report path, next action, and safety flags.
+
+The workflow can report `NO_METRIC_EVALUATION_INPUT`, `READY_FOR_METRIC_EVALUATION_PLANNING_ARTIFACTS`, `METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED`, or `METRIC_EVALUATION_HEALTH_FAILED`. `READY_FOR_METRIC_EVALUATION_PLANNING_ARTIFACTS` means the gates are reviewable but explicit allow was not provided. `METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED` means report-only structural planning artifacts were created with explicit allow.
+
+`METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED` does not compute metrics, does not create metric/evaluation result rows, does not execute evaluation, does not create training_result, does not train weights, does not create model_version, does not optimize thresholds, does not create predictions, does not create calibrated probabilities, does not create feature importance, does not create active stock profiles, does not create real buy-review eligibility, does not apply paper approval, does not claim strategy performance validation, and does not authorize trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; metric/evaluation fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims metric results, evaluation execution, training_result, weights, model_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

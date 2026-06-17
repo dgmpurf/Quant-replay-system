@@ -15302,6 +15302,138 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"training_evaluation_report_path: {result.training_evaluation_report_path}")
     print(f"training_evaluation_next_action: {result.training_evaluation_next_action}")
     print(
+        "metric_evaluation_workflow_implemented: "
+        f"{result.metric_evaluation_workflow_implemented}"
+    )
+    print(
+        "metric_evaluation_views_implemented: "
+        f"{result.metric_evaluation_views_implemented}"
+    )
+    print(f"latest_metric_evaluation_run_id: {result.latest_metric_evaluation_run_id}")
+    print(f"latest_metric_evaluation_status: {result.latest_metric_evaluation_status}")
+    print(
+        "latest_metric_evaluation_health_status: "
+        f"{result.latest_metric_evaluation_health_status}"
+    )
+    print(
+        "latest_metric_evaluation_workflow_stage: "
+        f"{result.latest_metric_evaluation_workflow_stage}"
+    )
+    print(f"metric_evaluation_artifact_path: {result.metric_evaluation_artifact_path}")
+    print(f"source_training_evaluation_run_id: {result.source_training_evaluation_run_id}")
+    print(f"source_training_evaluation_status: {result.source_training_evaluation_status}")
+    print(
+        "source_training_evaluation_health_status: "
+        f"{result.source_training_evaluation_health_status}"
+    )
+    print(f"training_evaluation_sample_row_count: {result.training_evaluation_sample_row_count}")
+    print(f"training_evaluation_label_row_count: {result.training_evaluation_label_row_count}")
+    print(f"metric_evaluation_symbol_count: {result.metric_evaluation_symbol_count}")
+    print(f"metric_evaluation_label_name_set: {result.metric_evaluation_label_name_set}")
+    print(
+        "ready_for_metric_evaluation_planning_artifacts: "
+        f"{result.ready_for_metric_evaluation_planning_artifacts}"
+    )
+    print(f"metric_evaluation_executed: {result.metric_evaluation_executed}")
+    print(
+        "metric_evaluation_planning_artifacts_created: "
+        f"{result.metric_evaluation_planning_artifacts_created}"
+    )
+    print(
+        "metric_evaluation_input_index_created: "
+        f"{result.metric_evaluation_input_index_created}"
+    )
+    print(f"metric_definitions_created: {result.metric_definitions_created}")
+    print(f"sample_scope_created: {result.sample_scope_created}")
+    print(f"denominator_rules_created: {result.denominator_rules_created}")
+    print(f"health_status_plan_created: {result.health_status_plan_created}")
+    print(f"research_status_plan_created: {result.research_status_plan_created}")
+    print(f"metric_definition_count: {result.metric_definition_count}")
+    print(f"sample_scope_row_count: {result.sample_scope_row_count}")
+    print(f"denominator_rule_count: {result.denominator_rule_count}")
+    print(f"metrics_computed: {result.metrics_computed}")
+    print(f"metric_result_rows_created: {result.metric_result_rows_created}")
+    print(f"metric_evaluation_results_created: {result.metric_evaluation_results_created}")
+    print(f"evaluation_execution_completed: {result.evaluation_execution_completed}")
+    print(f"metric_evaluation_training_allowed: {result.metric_evaluation_training_allowed}")
+    print(f"metric_evaluation_weights_trained: {result.metric_evaluation_weights_trained}")
+    print(
+        "metric_evaluation_training_result_created: "
+        f"{result.metric_evaluation_training_result_created}"
+    )
+    print(
+        "metric_evaluation_model_version_created: "
+        f"{result.metric_evaluation_model_version_created}"
+    )
+    print(
+        "metric_evaluation_thresholds_optimized: "
+        f"{result.metric_evaluation_thresholds_optimized}"
+    )
+    print(f"metric_evaluation_predictions_created: {result.metric_evaluation_predictions_created}")
+    print(
+        "metric_evaluation_calibrated_probabilities_created: "
+        f"{result.metric_evaluation_calibrated_probabilities_created}"
+    )
+    print(
+        "metric_evaluation_feature_importance_created: "
+        f"{result.metric_evaluation_feature_importance_created}"
+    )
+    print(
+        "metric_evaluation_stock_profile_allowed: "
+        f"{result.metric_evaluation_stock_profile_allowed}"
+    )
+    print(
+        "metric_evaluation_active_stock_profile_exists: "
+        f"{result.metric_evaluation_active_stock_profile_exists}"
+    )
+    print(
+        "metric_evaluation_stock_profile_created: "
+        f"{result.metric_evaluation_stock_profile_created}"
+    )
+    print(f"metric_evaluation_buy_review_allowed: {result.metric_evaluation_buy_review_allowed}")
+    print(
+        "metric_evaluation_real_buy_review_eligible: "
+        f"{result.metric_evaluation_real_buy_review_eligible}"
+    )
+    print(f"metric_evaluation_approved_for_paper: {result.metric_evaluation_approved_for_paper}")
+    print(
+        "metric_evaluation_strategy_performance_validated: "
+        f"{result.metric_evaluation_strategy_performance_validated}"
+    )
+    print(f"metric_evaluation_trading_allowed: {result.metric_evaluation_trading_allowed}")
+    print(f"metric_evaluation_order_placed: {result.metric_evaluation_order_placed}")
+    print(f"metric_evaluation_broker_api_called: {result.metric_evaluation_broker_api_called}")
+    print(f"metric_evaluation_message_sent: {result.metric_evaluation_message_sent}")
+    print(f"metric_evaluation_llm_api_called: {result.metric_evaluation_llm_api_called}")
+    print(f"metric_evaluation_external_api_called: {result.metric_evaluation_external_api_called}")
+    print(f"metric_evaluation_cache_mutated: {result.metric_evaluation_cache_mutated}")
+    print(f"metric_evaluation_data_raw_written: {result.metric_evaluation_data_raw_written}")
+    print(
+        "metric_evaluation_data_processed_written: "
+        f"{result.metric_evaluation_data_processed_written}"
+    )
+    print(f"metric_evaluation_data_cache_written: {result.metric_evaluation_data_cache_written}")
+    print(
+        "metric_evaluation_current_candidates_run: "
+        f"{result.metric_evaluation_current_candidates_run}"
+    )
+    print(f"metric_evaluation_snapshot_built: {result.metric_evaluation_snapshot_built}")
+    print(
+        "metric_evaluation_signal_semantics_changed: "
+        f"{result.metric_evaluation_signal_semantics_changed}"
+    )
+    print(f"metric_evaluation_report_only: {result.metric_evaluation_report_only}")
+    print(f"metric_evaluation_diagnostic_only: {result.metric_evaluation_diagnostic_only}")
+    print(f"metric_evaluation_no_live_trading: {result.metric_evaluation_no_live_trading}")
+    print(f"metric_evaluation_no_broker_api: {result.metric_evaluation_no_broker_api}")
+    print(
+        "metric_evaluation_no_order_placement: "
+        f"{result.metric_evaluation_no_order_placement}"
+    )
+    print(f"metric_evaluation_no_message_sent: {result.metric_evaluation_no_message_sent}")
+    print(f"metric_evaluation_report_path: {result.metric_evaluation_report_path}")
+    print(f"metric_evaluation_next_action: {result.metric_evaluation_next_action}")
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

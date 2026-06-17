@@ -54,6 +54,10 @@ from quant_replay_system.training_evaluation import (
     TRAINING_EVALUATION_DATASET_CREATED,
     run_training_evaluation,
 )
+from quant_replay_system.metric_evaluation import (
+    METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED,
+    run_metric_evaluation,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -67,6 +71,7 @@ from test_actual_replay_execute import _happy_settings as _actual_replay_happy_s
 from test_forward_return_label import _happy_settings as _forward_return_label_happy_settings
 from test_replay_decision_freeze import _happy_settings as _replay_decision_freeze_happy_settings
 from test_training_evaluation import _happy_settings as _training_evaluation_happy_settings
+from test_metric_evaluation import _happy_settings as _metric_evaluation_happy_settings
 
 
 DECISION_DATE = "2024-05-20"
@@ -3891,6 +3896,195 @@ def test_cli_research_status_prints_training_evaluation_fields(tmp_path: Path, c
     assert "training_evaluation_approved_for_paper: False" in output.out
     assert "training_evaluation_strategy_performance_validated: False" in output.out
     assert "training_evaluation_trading_allowed: False" in output.out
+
+
+def test_research_status_includes_metric_evaluation_context_and_safety_fields(
+    tmp_path: Path,
+) -> None:
+    metric = run_metric_evaluation(
+        replace(_metric_evaluation_happy_settings(tmp_path), allow_metric_evaluation_planning_artifacts=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "METRIC_EVALUATION_STATUS"].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED
+    assert row["workflow_area"] == "METRIC_EVALUATION"
+    assert result.metric_evaluation_workflow_implemented is True
+    assert result.metric_evaluation_views_implemented is True
+    assert result.latest_metric_evaluation_run_id == metric.metric_evaluation_run_id
+    assert result.latest_metric_evaluation_status == METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED
+    assert result.latest_metric_evaluation_health_status == "PASS"
+    assert result.latest_metric_evaluation_workflow_stage == METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED
+    assert result.metric_evaluation_artifact_path.endswith(metric.metric_evaluation_run_id)
+    assert result.source_training_evaluation_run_id == "train_eval_abc123"
+    assert result.source_training_evaluation_status == TRAINING_EVALUATION_DATASET_CREATED
+    assert result.source_training_evaluation_health_status == "PASS"
+    assert result.source_forward_return_label_run_id == "label_abc123"
+    assert result.source_replay_decision_freeze_run_id == "freeze_abc123"
+    assert result.training_evaluation_dataset_artifacts_created is True
+    assert result.training_evaluation_sample_row_count == 1
+    assert result.training_evaluation_label_row_count == 1
+    assert result.metric_evaluation_symbol_count == 1
+    assert "forward_return_5d" in result.metric_evaluation_label_name_set
+    assert result.ready_for_metric_evaluation_planning_artifacts is True
+    assert result.metric_evaluation_executed is True
+    assert result.metric_evaluation_planning_artifacts_created is True
+    assert result.metric_evaluation_input_index_created is True
+    assert result.metric_definitions_created is True
+    assert result.sample_scope_created is True
+    assert result.denominator_rules_created is True
+    assert result.health_status_plan_created is True
+    assert result.research_status_plan_created is True
+    assert result.metric_definition_count == metric.metric_definition_count
+    assert result.sample_scope_row_count == metric.sample_scope_row_count
+    assert result.denominator_rule_count == metric.denominator_rule_count
+    assert result.metrics_computed is False
+    assert result.metric_result_rows_created is False
+    assert result.metric_evaluation_results_created is False
+    assert result.evaluation_execution_completed is False
+    assert result.metric_evaluation_training_allowed is False
+    assert result.metric_evaluation_weights_trained is False
+    assert result.metric_evaluation_training_result_created is False
+    assert result.metric_evaluation_model_version_created is False
+    assert result.metric_evaluation_thresholds_optimized is False
+    assert result.metric_evaluation_predictions_created is False
+    assert result.metric_evaluation_calibrated_probabilities_created is False
+    assert result.metric_evaluation_feature_importance_created is False
+    assert result.metric_evaluation_stock_profile_allowed is False
+    assert result.metric_evaluation_active_stock_profile_exists is False
+    assert result.metric_evaluation_stock_profile_created is False
+    assert result.metric_evaluation_buy_review_allowed is False
+    assert result.metric_evaluation_real_buy_review_eligible is False
+    assert result.metric_evaluation_approved_for_paper is False
+    assert result.metric_evaluation_strategy_performance_validated is False
+    assert result.metric_evaluation_trading_allowed is False
+    assert result.metric_evaluation_order_placed is False
+    assert result.metric_evaluation_broker_api_called is False
+    assert result.metric_evaluation_message_sent is False
+    assert result.metric_evaluation_llm_api_called is False
+    assert result.metric_evaluation_external_api_called is False
+    assert result.metric_evaluation_cache_mutated is False
+    assert result.metric_evaluation_data_raw_written is False
+    assert result.metric_evaluation_data_processed_written is False
+    assert result.metric_evaluation_data_cache_written is False
+    assert result.metric_evaluation_current_candidates_run is False
+    assert result.metric_evaluation_snapshot_built is False
+    assert result.metric_evaluation_signal_semantics_changed is False
+    assert result.metric_evaluation_report_only is True
+    assert result.metric_evaluation_diagnostic_only is True
+    assert result.metric_evaluation_no_live_trading is True
+    assert result.metric_evaluation_no_broker_api is True
+    assert result.metric_evaluation_no_order_placement is True
+    assert result.metric_evaluation_no_message_sent is True
+    assert str(summary["metric_definition_count"]) == str(metric.metric_definition_count)
+    assert metadata["metrics_computed"] is False
+    assert metadata["metric_result_rows_created"] is False
+    assert metadata["metric_evaluation_results_created"] is False
+    assert metadata["evaluation_execution_completed"] is False
+    assert metadata["metric_evaluation_training_result_created"] is False
+    assert metadata["metric_evaluation_model_version_created"] is False
+    assert metadata["metric_evaluation_stock_profile_created"] is False
+    assert metadata["metric_evaluation_strategy_performance_validated"] is False
+    assert metadata["metric_evaluation_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_metric_evaluation(tmp_path: Path) -> None:
+    run_metric_evaluation(
+        replace(_metric_evaluation_happy_settings(tmp_path), allow_metric_evaluation_planning_artifacts=True)
+    )
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; metric/evaluation phase 1 "
+            "is report-only structural planning context."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_metric_evaluation_status == METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED
+    assert result.metric_evaluation_planning_artifacts_created is True
+    assert result.metrics_computed is False
+    assert result.metric_result_rows_created is False
+    assert result.metric_evaluation_results_created is False
+    assert result.evaluation_execution_completed is False
+    assert result.metric_evaluation_training_allowed is False
+    assert result.metric_evaluation_training_result_created is False
+    assert result.metric_evaluation_model_version_created is False
+    assert result.metric_evaluation_stock_profile_allowed is False
+    assert result.metric_evaluation_buy_review_allowed is False
+    assert result.metric_evaluation_approved_for_paper is False
+    assert result.metric_evaluation_strategy_performance_validated is False
+    assert result.metric_evaluation_trading_allowed is False
+
+
+def test_cli_research_status_prints_metric_evaluation_fields(tmp_path: Path, capsys) -> None:
+    run_metric_evaluation(
+        replace(_metric_evaluation_happy_settings(tmp_path), allow_metric_evaluation_planning_artifacts=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "metric_evaluation_workflow_implemented: True" in output.out
+    assert f"latest_metric_evaluation_status: {METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED}" in output.out
+    assert "source_training_evaluation_run_id: train_eval_abc123" in output.out
+    assert "ready_for_metric_evaluation_planning_artifacts: True" in output.out
+    assert "metric_evaluation_planning_artifacts_created: True" in output.out
+    assert "metrics_computed: False" in output.out
+    assert "metric_result_rows_created: False" in output.out
+    assert "metric_evaluation_results_created: False" in output.out
+    assert "evaluation_execution_completed: False" in output.out
+    assert "metric_evaluation_training_allowed: False" in output.out
+    assert "metric_evaluation_training_result_created: False" in output.out
+    assert "metric_evaluation_model_version_created: False" in output.out
+    assert "metric_evaluation_stock_profile_allowed: False" in output.out
+    assert "metric_evaluation_buy_review_allowed: False" in output.out
+    assert "metric_evaluation_approved_for_paper: False" in output.out
+    assert "metric_evaluation_strategy_performance_validated: False" in output.out
+    assert "metric_evaluation_trading_allowed: False" in output.out
+
+
+def test_metric_evaluation_docs_checkpoint_and_source_note_are_safety_explicit() -> None:
+    required_paths = [
+        Path("docs/metric_evaluation.md"),
+        Path("docs/release_checkpoint_v1.46.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_46_0.md"),
+    ]
+    for path in required_paths:
+        text = path.read_text(encoding="utf-8").lower()
+        for phrase in [
+            "structural planning",
+            "does not compute metrics",
+            "does not create metric/evaluation result rows",
+            "does not execute evaluation",
+            "does not create training_result",
+            "does not train weights",
+            "does not create model_version",
+            "does not optimize thresholds",
+            "does not create predictions",
+            "does not create calibrated probabilities",
+            "does not create feature importance",
+            "does not create active stock profiles",
+            "does not create real buy-review eligibility",
+            "does not apply paper approval",
+            "does not claim strategy performance validation",
+            "does not authorize trading",
+        ]:
+            assert phrase in text, f"{path}: {phrase}"
+    assert not Path("docs/project_sources").exists()
 
 
 def test_cli_research_status_works(tmp_path: Path, capsys) -> None:

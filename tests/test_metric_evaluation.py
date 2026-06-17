@@ -423,11 +423,17 @@ def test_metric_evaluation_artifact_view_cli_commands_work(tmp_path: Path) -> No
     assert "trading_allowed: False" in status.stdout
 
 
-def test_artifact_views_exist_without_research_status_checkpoint_or_project_source() -> None:
+def test_artifact_views_exist_with_research_status_checkpoint_but_without_project_source() -> None:
     assert _command_exists("metric-evaluation-index")
     assert _command_exists("metric-evaluation-health")
     assert _command_exists("metric-evaluation-status")
-    assert not Path("docs/release_checkpoint_v1.46.0.md").exists()
+    checkpoint = Path("docs/release_checkpoint_v1.46.0.md")
+    assert checkpoint.exists()
+    checkpoint_text = checkpoint.read_text(encoding="utf-8").lower()
+    assert "research-status" in checkpoint_text
+    assert "does not compute metrics" in checkpoint_text
+    assert "does not create metric/evaluation result rows" in checkpoint_text
+    assert "does not authorize trading" in checkpoint_text
     assert not Path("docs/project_sources").exists()
 
 
