@@ -50,6 +50,10 @@ from quant_replay_system.active_replay_input_ready import (
 from quant_replay_system.actual_replay_execute import ACTUAL_REPLAY_EXECUTED, run_actual_replay_execute
 from quant_replay_system.forward_return_label import FORWARD_RETURN_LABELS_CREATED, run_forward_return_label
 from quant_replay_system.replay_decision_freeze import REPLAY_DECISION_FROZEN, run_replay_decision_freeze
+from quant_replay_system.training_evaluation import (
+    TRAINING_EVALUATION_DATASET_CREATED,
+    run_training_evaluation,
+)
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -62,6 +66,7 @@ from quant_replay_system.universe_profile_policy_audit import build_universe_pro
 from test_actual_replay_execute import _happy_settings as _actual_replay_happy_settings
 from test_forward_return_label import _happy_settings as _forward_return_label_happy_settings
 from test_replay_decision_freeze import _happy_settings as _replay_decision_freeze_happy_settings
+from test_training_evaluation import _happy_settings as _training_evaluation_happy_settings
 
 
 DECISION_DATE = "2024-05-20"
@@ -3741,6 +3746,151 @@ def test_cli_research_status_prints_forward_return_label_fields(tmp_path: Path, 
     assert "forward_return_label_approved_for_paper: False" in output.out
     assert "forward_return_label_strategy_performance_validated: False" in output.out
     assert "forward_return_label_trading_allowed: False" in output.out
+
+
+def test_research_status_includes_training_evaluation_context_and_safety_fields(
+    tmp_path: Path,
+) -> None:
+    training = run_training_evaluation(
+        replace(_training_evaluation_happy_settings(tmp_path), allow_training_evaluation_dataset=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "TRAINING_EVALUATION_STATUS"
+    ].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == TRAINING_EVALUATION_DATASET_CREATED
+    assert row["workflow_area"] == "TRAINING_EVALUATION"
+    assert result.training_evaluation_workflow_implemented is True
+    assert result.training_evaluation_views_implemented is True
+    assert result.latest_training_evaluation_run_id == training.training_evaluation_run_id
+    assert result.latest_training_evaluation_status == TRAINING_EVALUATION_DATASET_CREATED
+    assert result.latest_training_evaluation_health_status == "PASS"
+    assert result.latest_training_evaluation_workflow_stage == TRAINING_EVALUATION_DATASET_CREATED
+    assert result.training_evaluation_artifact_path.endswith(training.training_evaluation_run_id)
+    assert result.source_forward_return_label_run_id == "label_abc123"
+    assert result.source_forward_return_label_status == FORWARD_RETURN_LABELS_CREATED
+    assert result.source_forward_return_label_health_status == "PASS"
+    assert result.source_replay_decision_freeze_run_id == "freeze_abc123"
+    assert result.training_evaluation_forward_labels_exist is True
+    assert result.training_evaluation_forward_return_labels_created is True
+    assert result.training_evaluation_label_row_count == 1
+    assert result.training_evaluation_replay_decision_count == 1
+    assert result.training_evaluation_symbol_count == 1
+    assert "forward_return_5d" in result.training_evaluation_label_name_set
+    assert result.ready_for_training_evaluation_dataset is True
+    assert result.training_evaluation_executed is True
+    assert result.training_evaluation_dataset_artifacts_created is True
+    assert result.training_evaluation_bounded_sample_rows_created is True
+    assert result.training_evaluation_label_coverage_report_created is True
+    assert result.training_evaluation_split_plan_created is True
+    assert result.training_evaluation_feature_plan_created is True
+    assert result.training_evaluation_label_plan_created is True
+    assert result.training_evaluation_dataset_sample_row_count == 1
+    assert result.training_evaluation_metrics_computed is False
+    assert result.training_evaluation_training_allowed is False
+    assert result.training_evaluation_weights_trained is False
+    assert result.training_evaluation_training_result_created is False
+    assert result.training_evaluation_model_version_created is False
+    assert result.training_evaluation_thresholds_optimized is False
+    assert result.training_evaluation_predictions_created is False
+    assert result.training_evaluation_calibrated_probabilities_created is False
+    assert result.training_evaluation_feature_importance_created is False
+    assert result.training_evaluation_stock_profile_allowed is False
+    assert result.training_evaluation_active_stock_profile_exists is False
+    assert result.training_evaluation_stock_profile_created is False
+    assert result.training_evaluation_buy_review_allowed is False
+    assert result.training_evaluation_real_buy_review_eligible is False
+    assert result.training_evaluation_approved_for_paper is False
+    assert result.training_evaluation_strategy_performance_validated is False
+    assert result.training_evaluation_trading_allowed is False
+    assert result.training_evaluation_order_placed is False
+    assert result.training_evaluation_broker_api_called is False
+    assert result.training_evaluation_message_sent is False
+    assert result.training_evaluation_llm_api_called is False
+    assert result.training_evaluation_external_api_called is False
+    assert result.training_evaluation_cache_mutated is False
+    assert result.training_evaluation_data_raw_written is False
+    assert result.training_evaluation_data_processed_written is False
+    assert result.training_evaluation_data_cache_written is False
+    assert result.training_evaluation_current_candidates_run is False
+    assert result.training_evaluation_snapshot_built is False
+    assert result.training_evaluation_signal_semantics_changed is False
+    assert result.training_evaluation_report_only is True
+    assert result.training_evaluation_diagnostic_only is True
+    assert result.training_evaluation_no_live_trading is True
+    assert result.training_evaluation_no_broker_api is True
+    assert result.training_evaluation_no_order_placement is True
+    assert result.training_evaluation_no_message_sent is True
+    assert str(summary["training_evaluation_dataset_sample_row_count"]) == "1"
+    assert metadata["training_evaluation_dataset_sample_row_count"] == 1
+    assert metadata["training_evaluation_metrics_computed"] is False
+    assert metadata["training_evaluation_training_result_created"] is False
+    assert metadata["training_evaluation_model_version_created"] is False
+    assert metadata["training_evaluation_stock_profile_created"] is False
+    assert metadata["training_evaluation_strategy_performance_validated"] is False
+    assert metadata["training_evaluation_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_training_evaluation(tmp_path: Path) -> None:
+    run_training_evaluation(
+        replace(_training_evaluation_happy_settings(tmp_path), allow_training_evaluation_dataset=True)
+    )
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; training/evaluation phase 1 "
+            "is report-only dataset/planning context."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_training_evaluation_status == TRAINING_EVALUATION_DATASET_CREATED
+    assert result.training_evaluation_dataset_artifacts_created is True
+    assert result.training_evaluation_metrics_computed is False
+    assert result.training_evaluation_training_allowed is False
+    assert result.training_evaluation_training_result_created is False
+    assert result.training_evaluation_stock_profile_allowed is False
+    assert result.training_evaluation_buy_review_allowed is False
+    assert result.training_evaluation_trading_allowed is False
+
+
+def test_cli_research_status_prints_training_evaluation_fields(tmp_path: Path, capsys) -> None:
+    run_training_evaluation(
+        replace(_training_evaluation_happy_settings(tmp_path), allow_training_evaluation_dataset=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "training_evaluation_workflow_implemented: True" in output.out
+    assert f"latest_training_evaluation_status: {TRAINING_EVALUATION_DATASET_CREATED}" in output.out
+    assert "source_forward_return_label_run_id: label_abc123" in output.out
+    assert "ready_for_training_evaluation_dataset: True" in output.out
+    assert "training_evaluation_dataset_artifacts_created: True" in output.out
+    assert "training_evaluation_label_row_count: 1" in output.out
+    assert "training_evaluation_metrics_computed: False" in output.out
+    assert "training_evaluation_training_allowed: False" in output.out
+    assert "training_evaluation_training_result_created: False" in output.out
+    assert "training_evaluation_model_version_created: False" in output.out
+    assert "training_evaluation_stock_profile_allowed: False" in output.out
+    assert "training_evaluation_buy_review_allowed: False" in output.out
+    assert "training_evaluation_approved_for_paper: False" in output.out
+    assert "training_evaluation_strategy_performance_validated: False" in output.out
+    assert "training_evaluation_trading_allowed: False" in output.out
 
 
 def test_cli_research_status_works(tmp_path: Path, capsys) -> None:

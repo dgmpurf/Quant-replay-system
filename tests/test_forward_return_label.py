@@ -373,9 +373,9 @@ def test_core_views_research_status_docs_checkpoint_and_source_note_are_present_
     assert "research-status" in command_names
     assert Path("docs/forward_return_label.md").exists()
     assert Path("docs/release_checkpoint_v1.44.0.md").exists()
-    assert not Path("docs/release_checkpoint_v1.45.0.md").exists()
     assert Path("SOURCE_UPDATE_NOTES_v1_44_0.md").exists()
-    assert not Path("SOURCE_UPDATE_NOTES_v1_45_0.md").exists()
+    assert Path("docs/release_checkpoint_v1.45.0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_45_0.md").exists()
     assert not Path("docs/project_sources").exists()
     docs_text = Path("docs/forward_return_label.md").read_text(encoding="utf-8")
     checkpoint_text = Path("docs/release_checkpoint_v1.44.0.md").read_text(encoding="utf-8")

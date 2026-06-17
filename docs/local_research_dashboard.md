@@ -599,6 +599,20 @@ When the status reports `FORWARD_RETURN_LABEL_READY`, the dashboard treats label
 
 Forward-return label status is later than replay decision freeze but separate from training, stock profiles, paper approval, and trading. If paper workflow artifacts already exist, the final `workflow_stage` remains `PAPER_WORKFLOW_READY`; forward-return label fields remain visible for audit. If health fails because an artifact claims training, `stock_profile` creation, buy-review eligibility, paper approval, performance validation, trading, broker access, order placement, message sending, API calls, cache mutation, data writes, current-candidates generation, snapshot builds, or signal-semantics changes, `research-status` surfaces the failure as actionable when this layer is active.
 
+## Training / Evaluation Status
+
+`research-status` includes `training-evaluation-status` as report-only Training / Evaluation Phase 1 dataset/planning context when those artifacts exist.
+
+Use `training-evaluation`, `training-evaluation-index`, `training-evaluation-health`, and `training-evaluation-status` to create, discover, safety-check, and summarize the phase 1 artifacts.
+
+The unified summary records the latest training/evaluation run id, status/stage, health status, artifact path, source forward-return-label lineage, source replay-decision-freeze lineage, label row count, replay decision count, symbol count, label name set, dataset sample row count, report path, next action, and safety flags.
+
+The workflow can report `NO_TRAINING_EVALUATION_INPUT`, `READY_FOR_TRAINING_EVALUATION_DATASET`, or `TRAINING_EVALUATION_DATASET_CREATED`. `READY_FOR_TRAINING_EVALUATION_DATASET` means the gates are reviewable but explicit allow was not provided. `TRAINING_EVALUATION_DATASET_CREATED` means report-only dataset/planning artifacts were created with explicit allow.
+
+`TRAINING_EVALUATION_DATASET_CREATED` does not compute metrics, does not create training_result, does not train weights, does not create model_version, does not optimize thresholds, does not create predictions, does not create calibrated probabilities, does not create feature importance, does not create active stock profiles, does not create real buy-review eligibility, does not apply paper approval, does not claim strategy performance validation, and does not authorize trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; training/evaluation fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims metrics, training_result, weights, model_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

@@ -310,8 +310,38 @@ def test_cli_happy_paths_with_and_without_allow(tmp_path: Path) -> None:
     assert "metrics_computed: False" in allow.stdout
 
 
-def test_no_artifact_views_research_status_checkpoint_or_project_source_are_added() -> None:
-    assert not Path("docs/release_checkpoint_v1.45.0.md").exists()
+def test_training_evaluation_research_status_checkpoint_and_docs_are_added() -> None:
+    docs = [
+        Path("docs/training_evaluation.md"),
+        Path("docs/local_research_dashboard.md"),
+        Path("README.md"),
+        Path("docs/release_checkpoint_v1.45.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_45_0.md"),
+    ]
+    for path in docs:
+        assert path.exists(), path
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in docs)
+
+    for phrase in [
+        "TRAINING_EVALUATION_DATASET_CREATED",
+        "report-only dataset/planning",
+        "does not compute metrics",
+        "does not create training_result",
+        "does not train weights",
+        "does not create model_version",
+        "does not optimize thresholds",
+        "does not create predictions",
+        "does not create calibrated probabilities",
+        "does not create feature importance",
+        "does not create active stock profiles",
+        "does not create real buy-review eligibility",
+        "does not apply paper approval",
+        "does not claim strategy performance validation",
+        "does not authorize trading",
+        "PAPER_WORKFLOW_READY",
+        "ChatGPT Project Source is maintained separately",
+    ]:
+        assert phrase in combined
     assert not Path("docs/project_sources").exists()
 
 
@@ -497,8 +527,17 @@ def test_training_evaluation_cli_artifact_view_commands_run(tmp_path: Path) -> N
     assert "metrics_computed: False" in status.stdout
 
 
-def test_training_evaluation_artifact_views_do_not_add_research_status_checkpoint_or_project_source() -> None:
-    assert not Path("docs/release_checkpoint_v1.45.0.md").exists()
+def test_training_evaluation_source_update_note_keeps_project_sources_out_of_git() -> None:
+    note = Path("SOURCE_UPDATE_NOTES_v1_45_0.md")
+    checkpoint = Path("docs/release_checkpoint_v1.45.0.md")
+
+    assert note.exists()
+    assert checkpoint.exists()
+    note_text = note.read_text(encoding="utf-8")
+    checkpoint_text = checkpoint.read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in note_text
+    assert "Training / Evaluation Acceptance / Governance Design Audit Report-Only v0.1" in note_text
+    assert "no broker/order/message/API/cache side effects" in checkpoint_text
     assert not Path("docs/project_sources").exists()
 
 

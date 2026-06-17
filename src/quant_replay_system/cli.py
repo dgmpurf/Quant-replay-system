@@ -14884,6 +14884,149 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"forward_return_label_report_path: {result.forward_return_label_report_path}")
     print(f"forward_return_label_next_action: {result.forward_return_label_next_action}")
     print(
+        "training_evaluation_workflow_implemented: "
+        f"{result.training_evaluation_workflow_implemented}"
+    )
+    print(
+        "training_evaluation_views_implemented: "
+        f"{result.training_evaluation_views_implemented}"
+    )
+    print(f"latest_training_evaluation_run_id: {result.latest_training_evaluation_run_id}")
+    print(f"latest_training_evaluation_status: {result.latest_training_evaluation_status}")
+    print(
+        "latest_training_evaluation_health_status: "
+        f"{result.latest_training_evaluation_health_status}"
+    )
+    print(
+        "latest_training_evaluation_workflow_stage: "
+        f"{result.latest_training_evaluation_workflow_stage}"
+    )
+    print(f"training_evaluation_artifact_path: {result.training_evaluation_artifact_path}")
+    print(f"source_forward_return_label_run_id: {result.source_forward_return_label_run_id}")
+    print(f"source_forward_return_label_status: {result.source_forward_return_label_status}")
+    print(
+        "source_forward_return_label_health_status: "
+        f"{result.source_forward_return_label_health_status}"
+    )
+    print(
+        "training_evaluation_forward_labels_exist: "
+        f"{result.training_evaluation_forward_labels_exist}"
+    )
+    print(
+        "training_evaluation_forward_return_labels_created: "
+        f"{result.training_evaluation_forward_return_labels_created}"
+    )
+    print(f"training_evaluation_label_row_count: {result.training_evaluation_label_row_count}")
+    print(
+        "training_evaluation_replay_decision_count: "
+        f"{result.training_evaluation_replay_decision_count}"
+    )
+    print(f"training_evaluation_symbol_count: {result.training_evaluation_symbol_count}")
+    print(f"training_evaluation_label_name_set: {result.training_evaluation_label_name_set}")
+    print(
+        "ready_for_training_evaluation_dataset: "
+        f"{result.ready_for_training_evaluation_dataset}"
+    )
+    print(f"training_evaluation_executed: {result.training_evaluation_executed}")
+    print(
+        "training_evaluation_dataset_artifacts_created: "
+        f"{result.training_evaluation_dataset_artifacts_created}"
+    )
+    print(
+        "training_evaluation_bounded_sample_rows_created: "
+        f"{result.training_evaluation_bounded_sample_rows_created}"
+    )
+    print(
+        "training_evaluation_label_coverage_report_created: "
+        f"{result.training_evaluation_label_coverage_report_created}"
+    )
+    print(f"training_evaluation_split_plan_created: {result.training_evaluation_split_plan_created}")
+    print(f"training_evaluation_feature_plan_created: {result.training_evaluation_feature_plan_created}")
+    print(f"training_evaluation_label_plan_created: {result.training_evaluation_label_plan_created}")
+    print(
+        "training_evaluation_dataset_sample_row_count: "
+        f"{result.training_evaluation_dataset_sample_row_count}"
+    )
+    print(f"training_evaluation_metrics_computed: {result.training_evaluation_metrics_computed}")
+    print(f"training_evaluation_training_allowed: {result.training_evaluation_training_allowed}")
+    print(f"training_evaluation_weights_trained: {result.training_evaluation_weights_trained}")
+    print(
+        "training_evaluation_training_result_created: "
+        f"{result.training_evaluation_training_result_created}"
+    )
+    print(
+        "training_evaluation_model_version_created: "
+        f"{result.training_evaluation_model_version_created}"
+    )
+    print(
+        "training_evaluation_thresholds_optimized: "
+        f"{result.training_evaluation_thresholds_optimized}"
+    )
+    print(f"training_evaluation_predictions_created: {result.training_evaluation_predictions_created}")
+    print(
+        "training_evaluation_calibrated_probabilities_created: "
+        f"{result.training_evaluation_calibrated_probabilities_created}"
+    )
+    print(
+        "training_evaluation_feature_importance_created: "
+        f"{result.training_evaluation_feature_importance_created}"
+    )
+    print(
+        "training_evaluation_stock_profile_allowed: "
+        f"{result.training_evaluation_stock_profile_allowed}"
+    )
+    print(
+        "training_evaluation_active_stock_profile_exists: "
+        f"{result.training_evaluation_active_stock_profile_exists}"
+    )
+    print(
+        "training_evaluation_stock_profile_created: "
+        f"{result.training_evaluation_stock_profile_created}"
+    )
+    print(f"training_evaluation_buy_review_allowed: {result.training_evaluation_buy_review_allowed}")
+    print(
+        "training_evaluation_real_buy_review_eligible: "
+        f"{result.training_evaluation_real_buy_review_eligible}"
+    )
+    print(f"training_evaluation_approved_for_paper: {result.training_evaluation_approved_for_paper}")
+    print(
+        "training_evaluation_strategy_performance_validated: "
+        f"{result.training_evaluation_strategy_performance_validated}"
+    )
+    print(f"training_evaluation_trading_allowed: {result.training_evaluation_trading_allowed}")
+    print(f"training_evaluation_order_placed: {result.training_evaluation_order_placed}")
+    print(f"training_evaluation_broker_api_called: {result.training_evaluation_broker_api_called}")
+    print(f"training_evaluation_message_sent: {result.training_evaluation_message_sent}")
+    print(f"training_evaluation_llm_api_called: {result.training_evaluation_llm_api_called}")
+    print(f"training_evaluation_external_api_called: {result.training_evaluation_external_api_called}")
+    print(f"training_evaluation_cache_mutated: {result.training_evaluation_cache_mutated}")
+    print(f"training_evaluation_data_raw_written: {result.training_evaluation_data_raw_written}")
+    print(
+        "training_evaluation_data_processed_written: "
+        f"{result.training_evaluation_data_processed_written}"
+    )
+    print(f"training_evaluation_data_cache_written: {result.training_evaluation_data_cache_written}")
+    print(
+        "training_evaluation_current_candidates_run: "
+        f"{result.training_evaluation_current_candidates_run}"
+    )
+    print(f"training_evaluation_snapshot_built: {result.training_evaluation_snapshot_built}")
+    print(
+        "training_evaluation_signal_semantics_changed: "
+        f"{result.training_evaluation_signal_semantics_changed}"
+    )
+    print(f"training_evaluation_report_only: {result.training_evaluation_report_only}")
+    print(f"training_evaluation_diagnostic_only: {result.training_evaluation_diagnostic_only}")
+    print(f"training_evaluation_no_live_trading: {result.training_evaluation_no_live_trading}")
+    print(f"training_evaluation_no_broker_api: {result.training_evaluation_no_broker_api}")
+    print(
+        "training_evaluation_no_order_placement: "
+        f"{result.training_evaluation_no_order_placement}"
+    )
+    print(f"training_evaluation_no_message_sent: {result.training_evaluation_no_message_sent}")
+    print(f"training_evaluation_report_path: {result.training_evaluation_report_path}")
+    print(f"training_evaluation_next_action: {result.training_evaluation_next_action}")
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

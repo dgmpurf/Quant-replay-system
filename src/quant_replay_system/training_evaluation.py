@@ -615,7 +615,12 @@ def _metadata(result: TrainingEvaluationResult) -> dict[str, Any]:
         "symbol_count": result.symbol_count,
         "dataset_sample_row_count": result.dataset_sample_row_count,
         "source_forward_return_label_run_id": result.source_forward_return_label_run_id,
+        "source_forward_return_label_status": result.source_forward_return_label_status,
+        "source_forward_return_label_health_status": result.source_forward_return_label_health_status,
         "source_replay_decision_freeze_run_id": result.source_replay_decision_freeze_run_id,
+        "forward_labels_exist": result.forward_labels_exist,
+        "forward_return_labels_created": result.forward_return_labels_created,
+        "label_name_set": result.label_name_set,
         "report_only": True,
         "diagnostic_only": True,
     }
