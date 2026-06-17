@@ -322,6 +322,9 @@ from quant_replay_system.forward_return_label import (
     ForwardReturnLabelSettings,
     run_forward_return_label,
 )
+from quant_replay_system.forward_return_label_health import check_forward_return_label_health
+from quant_replay_system.forward_return_label_index import build_forward_return_label_index
+from quant_replay_system.forward_return_label_status import run_forward_return_label_status
 from quant_replay_system.replay_decision_freeze_health import check_replay_decision_freeze_health
 from quant_replay_system.replay_decision_freeze_index import build_replay_decision_freeze_index
 from quant_replay_system.replay_decision_freeze_status import run_replay_decision_freeze_status
@@ -3248,6 +3251,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only forward return label artifacts will be written",
     )
     forward_return_label.set_defaults(handler=_handle_forward_return_label)
+
+    forward_return_label_index = subparsers.add_parser(
+        "forward-return-label-index",
+        help="Index report-only forward return label artifacts",
+    )
+    forward_return_label_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/forward_return_label_v0_1",
+        help="Forward return label artifact root to index",
+    )
+    forward_return_label_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/forward_return_label_v0_1/index",
+        help="Directory where forward return label index artifacts will be written",
+    )
+    forward_return_label_index.set_defaults(handler=_handle_forward_return_label_index)
+
+    forward_return_label_health = subparsers.add_parser(
+        "forward-return-label-health",
+        help="Health-check report-only forward return label artifacts",
+    )
+    forward_return_label_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/forward_return_label_v0_1",
+        help="Forward return label artifact root to health-check",
+    )
+    forward_return_label_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/forward_return_label_v0_1/health",
+        help="Directory where forward return label health artifacts will be written",
+    )
+    forward_return_label_health.set_defaults(handler=_handle_forward_return_label_health)
+
+    forward_return_label_status = subparsers.add_parser(
+        "forward-return-label-status",
+        help="Summarize latest report-only forward return label artifact status",
+    )
+    forward_return_label_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/forward_return_label_v0_1",
+        help="Forward return label artifact root to summarize",
+    )
+    forward_return_label_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/forward_return_label_v0_1/status",
+        help="Directory where forward return label status artifacts will be written",
+    )
+    forward_return_label_status.set_defaults(handler=_handle_forward_return_label_status)
 
     replay_decision_freeze_index = subparsers.add_parser(
         "replay-decision-freeze-index",
@@ -8970,6 +9021,76 @@ def _handle_forward_return_label(args: argparse.Namespace) -> int:
     print(f"blocker_count: {result.blocker_count}")
     print(f"next_action: {result.next_action}")
     print(f"Forward return label artifacts: {result.artifact_paths['artifact_dir']}")
+    return 0
+
+
+def _handle_forward_return_label_index(args: argparse.Namespace) -> int:
+    result = build_forward_return_label_index(root=args.root, output_dir=args.output_dir)
+    print(f"Forward return label index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Forward return label index is report-only. FORWARD_RETURN_LABELS_CREATED means future outcome labels only, "
+        "not training, not training_result, not stock_profile, not buy-review, not paper approval, "
+        "not performance validation, and not trading."
+    )
+    return 0
+
+
+def _handle_forward_return_label_health(args: argparse.Namespace) -> int:
+    result = check_forward_return_label_health(root=args.root, output_dir=args.output_dir)
+    print(f"Forward return label health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Forward return label health keeps artifacts report-only and fails if they imply training, "
+        "training_result, stock_profile, buy-review, paper approval, performance validation, "
+        "broker/order/message/API/cache/data side effects, snapshots, current-candidates, signal semantics mutation, or trading."
+    )
+    return 0
+
+
+def _handle_forward_return_label_status(args: argparse.Namespace) -> int:
+    result = run_forward_return_label_status(root=args.root, output_dir=args.output_dir)
+    print(f"Forward return label status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_forward_return_label_run_id: {result.latest_forward_return_label_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"source_replay_decision_freeze_run_id: {result.source_replay_decision_freeze_run_id}")
+    print(f"replay_decision_freeze_status: {result.replay_decision_freeze_status}")
+    print(f"replay_decision_freeze_health_status: {result.replay_decision_freeze_health_status}")
+    print(f"replay_decision_frozen: {result.replay_decision_frozen}")
+    print(f"replay_decisions_exist: {result.replay_decisions_exist}")
+    print(f"ready_for_forward_return_label: {result.ready_for_forward_return_label}")
+    print(f"forward_return_label_executed: {result.forward_return_label_executed}")
+    print(f"forward_return_label_artifacts_created: {result.forward_return_label_artifacts_created}")
+    print(f"forward_labels_allowed: {result.forward_labels_allowed}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"forward_return_labels_created: {result.forward_return_labels_created}")
+    print(f"forward_return_label_artifact_path: {result.forward_return_label_artifact_path}")
+    print(f"label_row_count: {result.label_row_count}")
+    print(f"label_name_set: {result.label_name_set}")
+    print(f"symbol_count: {result.symbol_count}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 
