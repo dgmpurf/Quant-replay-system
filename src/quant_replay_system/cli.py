@@ -326,6 +326,10 @@ from quant_replay_system.training_evaluation import (
     TrainingEvaluationSettings,
     run_training_evaluation,
 )
+from quant_replay_system.metric_evaluation import (
+    MetricEvaluationSettings,
+    run_metric_evaluation,
+)
 from quant_replay_system.training_evaluation_health import check_training_evaluation_health
 from quant_replay_system.training_evaluation_index import build_training_evaluation_index
 from quant_replay_system.training_evaluation_status import run_training_evaluation_status
@@ -3293,6 +3297,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only training/evaluation artifacts will be written",
     )
     training_evaluation.set_defaults(handler=_handle_training_evaluation)
+
+    metric_evaluation = subparsers.add_parser(
+        "metric-evaluation",
+        help="Create report-only metric/evaluation phase 1 structural planning diagnostics",
+    )
+    metric_evaluation.add_argument("--approval-manifest-path", default=None)
+    metric_evaluation.add_argument("--metric-evaluation-request-manifest-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-metadata-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-dataset-index-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-sample-rows-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-label-coverage-report-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-split-plan-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-feature-plan-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-label-plan-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-safety-flags-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-status-artifact-path", default=None)
+    metric_evaluation.add_argument("--training-evaluation-health-artifact-path", default=None)
+    metric_evaluation.add_argument("--metric-definition-request-path", default=None)
+    metric_evaluation.add_argument("--sample-scope-request-path", default=None)
+    metric_evaluation.add_argument("--denominator-rule-request-path", default=None)
+    metric_evaluation.add_argument("--benchmark-industry-request-path", default=None)
+    metric_evaluation.add_argument("--leakage-evidence-bundle-path", default=None)
+    metric_evaluation.add_argument("--overclaim-evidence-bundle-path", default=None)
+    metric_evaluation.add_argument("--side-effect-evidence-bundle-path", default=None)
+    metric_evaluation.add_argument(
+        "--allow-metric-evaluation-planning-artifacts",
+        action="store_true",
+        help="Explicitly allow report-only structural metric/evaluation planning artifacts when all gates pass",
+    )
+    metric_evaluation.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/metric_evaluation_v0_1",
+        help="Directory where report-only metric/evaluation artifacts will be written",
+    )
+    metric_evaluation.set_defaults(handler=_handle_metric_evaluation)
 
     training_evaluation_index = subparsers.add_parser(
         "training-evaluation-index",
@@ -9128,6 +9167,108 @@ def _handle_training_evaluation(args: argparse.Namespace) -> int:
         "Training/evaluation phase 1 is report-only dataset/planning-only: not metrics, not training_result, "
         "not weights, not model_version, not stock_profile, not buy-review, not paper approval, "
         "not performance validation, and not trading."
+    )
+    return 0
+
+
+def _handle_metric_evaluation(args: argparse.Namespace) -> int:
+    result = run_metric_evaluation(
+        MetricEvaluationSettings(
+            approval_manifest_path=Path(args.approval_manifest_path) if args.approval_manifest_path else None,
+            metric_evaluation_request_manifest_path=Path(args.metric_evaluation_request_manifest_path)
+            if args.metric_evaluation_request_manifest_path
+            else None,
+            training_evaluation_metadata_path=Path(args.training_evaluation_metadata_path)
+            if args.training_evaluation_metadata_path
+            else None,
+            training_evaluation_dataset_index_path=Path(args.training_evaluation_dataset_index_path)
+            if args.training_evaluation_dataset_index_path
+            else None,
+            training_evaluation_sample_rows_path=Path(args.training_evaluation_sample_rows_path)
+            if args.training_evaluation_sample_rows_path
+            else None,
+            training_evaluation_label_coverage_report_path=Path(args.training_evaluation_label_coverage_report_path)
+            if args.training_evaluation_label_coverage_report_path
+            else None,
+            training_evaluation_split_plan_path=Path(args.training_evaluation_split_plan_path)
+            if args.training_evaluation_split_plan_path
+            else None,
+            training_evaluation_feature_plan_path=Path(args.training_evaluation_feature_plan_path)
+            if args.training_evaluation_feature_plan_path
+            else None,
+            training_evaluation_label_plan_path=Path(args.training_evaluation_label_plan_path)
+            if args.training_evaluation_label_plan_path
+            else None,
+            training_evaluation_safety_flags_path=Path(args.training_evaluation_safety_flags_path)
+            if args.training_evaluation_safety_flags_path
+            else None,
+            training_evaluation_status_artifact_path=Path(args.training_evaluation_status_artifact_path)
+            if args.training_evaluation_status_artifact_path
+            else None,
+            training_evaluation_health_artifact_path=Path(args.training_evaluation_health_artifact_path)
+            if args.training_evaluation_health_artifact_path
+            else None,
+            metric_definition_request_path=Path(args.metric_definition_request_path)
+            if args.metric_definition_request_path
+            else None,
+            sample_scope_request_path=Path(args.sample_scope_request_path) if args.sample_scope_request_path else None,
+            denominator_rule_request_path=Path(args.denominator_rule_request_path)
+            if args.denominator_rule_request_path
+            else None,
+            benchmark_industry_request_path=Path(args.benchmark_industry_request_path)
+            if args.benchmark_industry_request_path
+            else None,
+            leakage_evidence_bundle_path=Path(args.leakage_evidence_bundle_path)
+            if args.leakage_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            side_effect_evidence_bundle_path=Path(args.side_effect_evidence_bundle_path)
+            if args.side_effect_evidence_bundle_path
+            else None,
+            output_dir=Path(args.output_dir),
+            allow_metric_evaluation_planning_artifacts=args.allow_metric_evaluation_planning_artifacts,
+        )
+    )
+    print(f"metric_evaluation_run_id: {result.metric_evaluation_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_metric_evaluation_planning_artifacts: {result.ready_for_metric_evaluation_planning_artifacts}")
+    print(f"metric_evaluation_executed: {result.metric_evaluation_executed}")
+    print(f"metric_evaluation_planning_artifacts_created: {result.metric_evaluation_planning_artifacts_created}")
+    print(f"metric_evaluation_input_index_created: {result.metric_evaluation_input_index_created}")
+    print(f"metric_definitions_created: {result.metric_definitions_created}")
+    print(f"sample_scope_created: {result.sample_scope_created}")
+    print(f"denominator_rules_created: {result.denominator_rules_created}")
+    print(f"health_status_plan_created: {result.health_status_plan_created}")
+    print(f"research_status_plan_created: {result.research_status_plan_created}")
+    print(f"metrics_computed: {result.metrics_computed}")
+    print(f"metric_result_rows_created: {result.metric_result_rows_created}")
+    print(f"metric_evaluation_results_created: {result.metric_evaluation_results_created}")
+    print(f"evaluation_execution_completed: {result.evaluation_execution_completed}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(
+        "Metric/evaluation phase 1 is report-only structural planning only: not metrics computed, "
+        "not metric result rows, not training_result, not weights, not model_version, not thresholds, "
+        "not predictions/probabilities/feature importance, not stock_profile, not buy-review, "
+        "not paper approval, not performance validation, and not trading."
     )
     return 0
 
