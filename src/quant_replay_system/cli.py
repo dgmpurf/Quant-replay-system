@@ -322,6 +322,10 @@ from quant_replay_system.forward_return_label import (
     ForwardReturnLabelSettings,
     run_forward_return_label,
 )
+from quant_replay_system.training_evaluation import (
+    TrainingEvaluationSettings,
+    run_training_evaluation,
+)
 from quant_replay_system.forward_return_label_health import check_forward_return_label_health
 from quant_replay_system.forward_return_label_index import build_forward_return_label_index
 from quant_replay_system.forward_return_label_status import run_forward_return_label_status
@@ -3251,6 +3255,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only forward return label artifacts will be written",
     )
     forward_return_label.set_defaults(handler=_handle_forward_return_label)
+
+    training_evaluation = subparsers.add_parser(
+        "training-evaluation",
+        help="Create report-only training/evaluation phase 1 dataset and planning diagnostics",
+    )
+    training_evaluation.add_argument("--approval-manifest-path", default=None)
+    training_evaluation.add_argument("--training-evaluation-request-manifest-path", default=None)
+    training_evaluation.add_argument("--forward-return-label-metadata-path", default=None)
+    training_evaluation.add_argument("--forward-return-label-rows-path", default=None)
+    training_evaluation.add_argument("--forward-return-label-status-artifact-path", default=None)
+    training_evaluation.add_argument("--forward-return-label-health-artifact-path", default=None)
+    training_evaluation.add_argument("--forward-return-label-safety-flags-path", default=None)
+    training_evaluation.add_argument("--replay-decision-metadata-path", default=None)
+    training_evaluation.add_argument("--replay-decision-rows-path", default=None)
+    training_evaluation.add_argument("--replay-decision-evidence-index-path", default=None)
+    training_evaluation.add_argument("--factor-observation-index-path", default=None)
+    training_evaluation.add_argument("--event-structured-index-path", default=None)
+    training_evaluation.add_argument("--company-exposure-index-path", default=None)
+    training_evaluation.add_argument("--source-registry-path", default=None)
+    training_evaluation.add_argument("--split-plan-request-path", default=None)
+    training_evaluation.add_argument("--feature-plan-request-path", default=None)
+    training_evaluation.add_argument("--label-plan-request-path", default=None)
+    training_evaluation.add_argument("--leakage-side-effect-evidence-bundle-path", default=None)
+    training_evaluation.add_argument("--overclaim-evidence-bundle-path", default=None)
+    training_evaluation.add_argument(
+        "--allow-training-evaluation-dataset",
+        action="store_true",
+        help="Explicitly allow report-only bounded sample and planning artifacts when all gates pass",
+    )
+    training_evaluation.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_evaluation_v0_1",
+        help="Directory where report-only training/evaluation artifacts will be written",
+    )
+    training_evaluation.set_defaults(handler=_handle_training_evaluation)
 
     forward_return_label_index = subparsers.add_parser(
         "forward-return-label-index",
@@ -8926,6 +8965,118 @@ def _handle_replay_decision_freeze(args: argparse.Namespace) -> int:
         "allowed and all gates pass. It does not compute forward labels, train weights, create stock_profile, "
         "create buy-review eligibility, call broker/order/message/API systems, mutate cache, write data/raw, "
         "data/processed, or data/cache, or authorize trading."
+    )
+    return 0
+
+
+def _handle_training_evaluation(args: argparse.Namespace) -> int:
+    result = run_training_evaluation(
+        TrainingEvaluationSettings(
+            approval_manifest_path=Path(args.approval_manifest_path) if args.approval_manifest_path else None,
+            training_evaluation_request_manifest_path=Path(args.training_evaluation_request_manifest_path)
+            if args.training_evaluation_request_manifest_path
+            else None,
+            forward_return_label_metadata_path=Path(args.forward_return_label_metadata_path)
+            if args.forward_return_label_metadata_path
+            else None,
+            forward_return_label_rows_path=Path(args.forward_return_label_rows_path)
+            if args.forward_return_label_rows_path
+            else None,
+            forward_return_label_status_artifact_path=Path(args.forward_return_label_status_artifact_path)
+            if args.forward_return_label_status_artifact_path
+            else None,
+            forward_return_label_health_artifact_path=Path(args.forward_return_label_health_artifact_path)
+            if args.forward_return_label_health_artifact_path
+            else None,
+            forward_return_label_safety_flags_path=Path(args.forward_return_label_safety_flags_path)
+            if args.forward_return_label_safety_flags_path
+            else None,
+            replay_decision_metadata_path=Path(args.replay_decision_metadata_path)
+            if args.replay_decision_metadata_path
+            else None,
+            replay_decision_rows_path=Path(args.replay_decision_rows_path) if args.replay_decision_rows_path else None,
+            replay_decision_evidence_index_path=Path(args.replay_decision_evidence_index_path)
+            if args.replay_decision_evidence_index_path
+            else None,
+            factor_observation_index_path=Path(args.factor_observation_index_path)
+            if args.factor_observation_index_path
+            else None,
+            event_structured_index_path=Path(args.event_structured_index_path)
+            if args.event_structured_index_path
+            else None,
+            company_exposure_index_path=Path(args.company_exposure_index_path)
+            if args.company_exposure_index_path
+            else None,
+            source_registry_path=Path(args.source_registry_path) if args.source_registry_path else None,
+            split_plan_request_path=Path(args.split_plan_request_path) if args.split_plan_request_path else None,
+            feature_plan_request_path=Path(args.feature_plan_request_path) if args.feature_plan_request_path else None,
+            label_plan_request_path=Path(args.label_plan_request_path) if args.label_plan_request_path else None,
+            leakage_side_effect_evidence_bundle_path=Path(args.leakage_side_effect_evidence_bundle_path)
+            if args.leakage_side_effect_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            output_dir=Path(args.output_dir),
+            allow_training_evaluation_dataset=args.allow_training_evaluation_dataset,
+        )
+    )
+    print(f"training_evaluation_run_id: {result.training_evaluation_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_training_evaluation_dataset: {result.ready_for_training_evaluation_dataset}")
+    print(f"training_evaluation_executed: {result.training_evaluation_executed}")
+    print(f"training_evaluation_dataset_artifacts_created: {result.training_evaluation_dataset_artifacts_created}")
+    print(f"bounded_sample_rows_created: {result.bounded_sample_rows_created}")
+    print(f"label_coverage_report_created: {result.label_coverage_report_created}")
+    print(f"split_plan_created: {result.split_plan_created}")
+    print(f"feature_plan_created: {result.feature_plan_created}")
+    print(f"label_plan_created: {result.label_plan_created}")
+    print(f"training_evaluation_dataset_artifact_path: {result.training_evaluation_dataset_artifact_path}")
+    print(f"source_forward_return_label_run_id: {result.source_forward_return_label_run_id}")
+    print(f"source_replay_decision_freeze_run_id: {result.source_replay_decision_freeze_run_id}")
+    print(f"forward_labels_exist: {result.forward_labels_exist}")
+    print(f"forward_return_labels_created: {result.forward_return_labels_created}")
+    print(f"label_row_count: {result.label_row_count}")
+    print(f"replay_decision_count: {result.replay_decision_count}")
+    print(f"symbol_count: {result.symbol_count}")
+    print(f"dataset_sample_row_count: {result.dataset_sample_row_count}")
+    print(f"metrics_computed: {result.metrics_computed}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"llm_api_called: {result.llm_api_called}")
+    print(f"external_api_called: {result.external_api_called}")
+    print(f"cache_mutated: {result.cache_mutated}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"next_action: {result.next_action}")
+    print(f"Training/evaluation artifacts: {result.artifact_paths['artifact_dir']}")
+    print(
+        "Training/evaluation phase 1 is report-only dataset/planning-only: not metrics, not training_result, "
+        "not weights, not model_version, not stock_profile, not buy-review, not paper approval, "
+        "not performance validation, and not trading."
     )
     return 0
 
