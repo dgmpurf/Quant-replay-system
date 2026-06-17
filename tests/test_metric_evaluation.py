@@ -23,6 +23,9 @@ from quant_replay_system.metric_evaluation import (
     MetricEvaluationSettings,
     run_metric_evaluation,
 )
+from quant_replay_system.metric_evaluation_health import check_metric_evaluation_health
+from quant_replay_system.metric_evaluation_index import build_metric_evaluation_index
+from quant_replay_system.metric_evaluation_status import run_metric_evaluation_status
 
 
 def test_no_input_writes_required_artifacts_with_safe_defaults(tmp_path: Path) -> None:
@@ -267,10 +270,163 @@ def test_cli_no_input_and_happy_paths(tmp_path: Path) -> None:
     assert "trading_allowed: False" in allow.stdout
 
 
-def test_no_artifact_views_research_status_checkpoint_or_project_source_are_added() -> None:
-    assert not _command_exists("metric-evaluation-index")
-    assert not _command_exists("metric-evaluation-health")
-    assert not _command_exists("metric-evaluation-status")
+def test_metric_evaluation_index_discovers_report_only_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_metric_evaluation(MetricEvaluationSettings(output_dir=root))
+    settings = _happy_settings(tmp_path)
+    ready = run_metric_evaluation(settings)
+    created = run_metric_evaluation(replace(settings, allow_metric_evaluation_planning_artifacts=True))
+
+    index = build_metric_evaluation_index(root=root, output_dir=root / "index")
+
+    assert index.artifact_count == 3
+    assert set(index.index_frame["metric_evaluation_run_id"]) == {
+        no_input.metric_evaluation_run_id,
+        ready.metric_evaluation_run_id,
+        created.metric_evaluation_run_id,
+    }
+    created_row = index.index_frame[index.index_frame["metric_evaluation_run_id"] == created.metric_evaluation_run_id].iloc[0]
+    assert created_row["status"] == METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED
+    assert created_row["metric_evaluation_planning_artifacts_created"] is True
+    assert created_row["metric_definition_count"] == created.metric_definition_count
+    assert created_row["sample_scope_row_count"] == created.sample_scope_row_count
+    assert created_row["metrics_computed"] is False
+    assert created_row["metric_result_rows_created"] is False
+    assert created_row["training_result_created"] is False
+    assert created_row["model_version_created"] is False
+    assert created_row["stock_profile_created"] is False
+    assert created_row["trading_allowed"] is False
+    assert index.artifact_paths["index_csv"].exists()
+
+
+def test_metric_evaluation_health_passes_for_valid_report_only_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_metric_evaluation(MetricEvaluationSettings(output_dir=root))
+    settings = _happy_settings(tmp_path)
+    run_metric_evaluation(settings)
+    run_metric_evaluation(replace(settings, allow_metric_evaluation_planning_artifacts=True))
+
+    health = check_metric_evaluation_health(root=root, output_dir=root / "health")
+
+    assert health.status == "PASS"
+    assert health.error_count == 0
+    assert health.warning_count == 0
+    assert health.checked_artifact_count == 3
+    assert health.artifact_paths["health_csv"].exists()
+
+
+@pytest.mark.parametrize(
+    ("patch", "expected_code"),
+    [
+        ({"approval_applied": True}, "APPROVAL_APPLIED_UNEXPECTED"),
+        ({"metrics_computed": True}, "METRICS_COMPUTED_UNEXPECTED"),
+        ({"metric_result_rows_created": True}, "METRIC_RESULT_ROWS_CREATED_UNEXPECTED"),
+        ({"training_result_created": True}, "TRAINING_RESULT_CREATED_UNEXPECTED"),
+        ({"model_version_created": True}, "MODEL_VERSION_CREATED_UNEXPECTED"),
+        ({"stock_profile_created": True}, "STOCK_PROFILE_CREATED_UNEXPECTED"),
+        ({"trading_allowed": True}, "TRADING_ALLOWED_UNEXPECTED"),
+    ],
+)
+def test_metric_evaluation_health_fails_for_unsafe_metadata_flags(
+    tmp_path: Path,
+    patch: dict[str, object],
+    expected_code: str,
+) -> None:
+    root = _output_dir(tmp_path)
+    result = run_metric_evaluation(replace(_happy_settings(tmp_path), allow_metric_evaluation_planning_artifacts=True))
+    _patch_json(result.artifact_paths["metadata"], patch)
+
+    health = check_metric_evaluation_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert expected_code in set(health.health_frame["issue_code"])
+
+
+def test_metric_evaluation_health_fails_if_created_artifact_is_missing(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    result = run_metric_evaluation(replace(_happy_settings(tmp_path), allow_metric_evaluation_planning_artifacts=True))
+    result.artifact_paths["metric_definitions"].unlink()
+
+    health = check_metric_evaluation_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "PLANNING_CREATED_WITHOUT_METRIC_DEFINITIONS" in set(health.health_frame["issue_code"])
+
+
+def test_metric_evaluation_health_fails_for_result_rows_or_computed_columns(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    result = run_metric_evaluation(replace(_happy_settings(tmp_path), allow_metric_evaluation_planning_artifacts=True))
+    pd.DataFrame([{"metric_name": "hit_rate", "metric_value": 0.5}]).to_csv(
+        result.artifact_paths["artifact_dir"] / "metric_evaluation_result_rows.csv",
+        index=False,
+    )
+    definitions = pd.read_csv(result.artifact_paths["metric_definitions"])
+    definitions["computed_value"] = ""
+    definitions.to_csv(result.artifact_paths["metric_definitions"], index=False)
+
+    health = check_metric_evaluation_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "METRIC_RESULT_ROWS_ARTIFACT_UNEXPECTED" in set(health.health_frame["issue_code"])
+    assert "CSV_FORBIDDEN_OUTPUT_COLUMNS" in set(health.health_frame["issue_code"])
+
+
+def test_metric_evaluation_status_summarizes_latest_and_keeps_report_only_semantics(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    result = run_metric_evaluation(replace(_happy_settings(tmp_path), allow_metric_evaluation_planning_artifacts=True))
+
+    status = run_metric_evaluation_status(root=root, output_dir=root / "status")
+
+    assert status.latest_metric_evaluation_run_id == result.metric_evaluation_run_id
+    assert status.status == METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED
+    assert status.health_status == "PASS"
+    assert status.workflow_stage == METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED
+    assert status.metric_evaluation_planning_artifacts_created is True
+    assert status.metrics_computed is False
+    assert status.metric_result_rows_created is False
+    assert status.training_allowed is False
+    assert status.training_result_created is False
+    assert status.model_version_created is False
+    assert status.stock_profile_created is False
+    assert status.trading_allowed is False
+    assert "not metrics computed" in status.safety_statement
+    assert "not trading" in status.safety_statement
+    assert status.artifact_paths["status_csv"].exists()
+
+
+def test_metric_evaluation_status_handles_no_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+
+    status = run_metric_evaluation_status(root=root, output_dir=root / "status")
+
+    assert status.latest_metric_evaluation_run_id == ""
+    assert status.health_status == "FAIL"
+    assert status.workflow_stage == "NO_METRIC_EVALUATION_ARTIFACT_FOUND"
+    assert status.metrics_computed is False
+    assert status.metric_result_rows_created is False
+    assert status.training_allowed is False
+    assert status.trading_allowed is False
+
+
+def test_metric_evaluation_artifact_view_cli_commands_work(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_metric_evaluation(replace(_happy_settings(tmp_path), allow_metric_evaluation_planning_artifacts=True))
+
+    index = _run_cli(["metric-evaluation-index", "--root", str(root), "--output-dir", str(root / "index")])
+    health = _run_cli(["metric-evaluation-health", "--root", str(root), "--output-dir", str(root / "health")])
+    status = _run_cli(["metric-evaluation-status", "--root", str(root), "--output-dir", str(root / "status")])
+
+    assert "artifact_count: 1" in index.stdout
+    assert "status: PASS" in health.stdout
+    assert "workflow_stage: METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED" in status.stdout
+    assert "metrics_computed: False" in status.stdout
+    assert "trading_allowed: False" in status.stdout
+
+
+def test_artifact_views_exist_without_research_status_checkpoint_or_project_source() -> None:
+    assert _command_exists("metric-evaluation-index")
+    assert _command_exists("metric-evaluation-health")
+    assert _command_exists("metric-evaluation-status")
     assert not Path("docs/release_checkpoint_v1.46.0.md").exists()
     assert not Path("docs/project_sources").exists()
 

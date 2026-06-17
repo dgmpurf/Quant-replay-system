@@ -330,6 +330,9 @@ from quant_replay_system.metric_evaluation import (
     MetricEvaluationSettings,
     run_metric_evaluation,
 )
+from quant_replay_system.metric_evaluation_health import check_metric_evaluation_health
+from quant_replay_system.metric_evaluation_index import build_metric_evaluation_index
+from quant_replay_system.metric_evaluation_status import run_metric_evaluation_status
 from quant_replay_system.training_evaluation_health import check_training_evaluation_health
 from quant_replay_system.training_evaluation_index import build_training_evaluation_index
 from quant_replay_system.training_evaluation_status import run_training_evaluation_status
@@ -3332,6 +3335,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only metric/evaluation artifacts will be written",
     )
     metric_evaluation.set_defaults(handler=_handle_metric_evaluation)
+
+    metric_evaluation_index = subparsers.add_parser(
+        "metric-evaluation-index",
+        help="Index report-only metric/evaluation phase 1 structural planning artifacts",
+    )
+    metric_evaluation_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/metric_evaluation_v0_1",
+        help="Metric/evaluation artifact root to index",
+    )
+    metric_evaluation_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/metric_evaluation_v0_1/index",
+        help="Directory where metric/evaluation index artifacts will be written",
+    )
+    metric_evaluation_index.set_defaults(handler=_handle_metric_evaluation_index)
+
+    metric_evaluation_health = subparsers.add_parser(
+        "metric-evaluation-health",
+        help="Health-check report-only metric/evaluation phase 1 structural planning artifacts",
+    )
+    metric_evaluation_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/metric_evaluation_v0_1",
+        help="Metric/evaluation artifact root to health-check",
+    )
+    metric_evaluation_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/metric_evaluation_v0_1/health",
+        help="Directory where metric/evaluation health artifacts will be written",
+    )
+    metric_evaluation_health.set_defaults(handler=_handle_metric_evaluation_health)
+
+    metric_evaluation_status = subparsers.add_parser(
+        "metric-evaluation-status",
+        help="Summarize latest report-only metric/evaluation phase 1 artifact status",
+    )
+    metric_evaluation_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/metric_evaluation_v0_1",
+        help="Metric/evaluation artifact root to summarize",
+    )
+    metric_evaluation_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/metric_evaluation_v0_1/status",
+        help="Directory where metric/evaluation status artifacts will be written",
+    )
+    metric_evaluation_status.set_defaults(handler=_handle_metric_evaluation_status)
 
     training_evaluation_index = subparsers.add_parser(
         "training-evaluation-index",
@@ -9270,6 +9321,89 @@ def _handle_metric_evaluation(args: argparse.Namespace) -> int:
         "not predictions/probabilities/feature importance, not stock_profile, not buy-review, "
         "not paper approval, not performance validation, and not trading."
     )
+    return 0
+
+
+def _handle_metric_evaluation_index(args: argparse.Namespace) -> int:
+    result = build_metric_evaluation_index(root=args.root, output_dir=args.output_dir)
+    print(f"Metric/evaluation index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Metric/evaluation phase 1 index is report-only structural planning only. "
+        "METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED is not metrics computed, not result rows, "
+        "not training_result, not weights, not model_version, not thresholds, not predictions, "
+        "not stock_profile, not buy-review, not paper approval, not performance validation, and not trading."
+    )
+    return 0
+
+
+def _handle_metric_evaluation_health(args: argparse.Namespace) -> int:
+    result = check_metric_evaluation_health(root=args.root, output_dir=args.output_dir)
+    print(f"Metric/evaluation health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Metric/evaluation phase 1 health keeps artifacts report-only structural planning only and fails if they imply "
+        "computed metrics, result rows, training_result, weights, model_version, thresholds, predictions, "
+        "calibrated probabilities, feature importance, stock_profile, buy-review, paper approval, "
+        "performance validation, broker/order/message/API/cache/data side effects, snapshots, current-candidates, "
+        "signal semantics mutation, or trading."
+    )
+    return 0
+
+
+def _handle_metric_evaluation_status(args: argparse.Namespace) -> int:
+    result = run_metric_evaluation_status(root=args.root, output_dir=args.output_dir)
+    print(f"Metric/evaluation status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_metric_evaluation_run_id: {result.latest_metric_evaluation_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_metric_evaluation_planning_artifacts: {result.ready_for_metric_evaluation_planning_artifacts}")
+    print(f"metric_evaluation_executed: {result.metric_evaluation_executed}")
+    print(f"metric_evaluation_planning_artifacts_created: {result.metric_evaluation_planning_artifacts_created}")
+    print(f"metric_evaluation_input_index_created: {result.metric_evaluation_input_index_created}")
+    print(f"metric_definitions_created: {result.metric_definitions_created}")
+    print(f"sample_scope_created: {result.sample_scope_created}")
+    print(f"denominator_rules_created: {result.denominator_rules_created}")
+    print(f"health_status_plan_created: {result.health_status_plan_created}")
+    print(f"research_status_plan_created: {result.research_status_plan_created}")
+    print(f"metric_definition_count: {result.metric_definition_count}")
+    print(f"sample_scope_row_count: {result.sample_scope_row_count}")
+    print(f"denominator_rule_count: {result.denominator_rule_count}")
+    print(f"training_evaluation_sample_row_count: {result.training_evaluation_sample_row_count}")
+    print(f"training_evaluation_label_row_count: {result.training_evaluation_label_row_count}")
+    print(f"symbol_count: {result.symbol_count}")
+    print(f"label_name_set: {result.label_name_set}")
+    print(f"metrics_computed: {result.metrics_computed}")
+    print(f"metric_result_rows_created: {result.metric_result_rows_created}")
+    print(f"metric_evaluation_results_created: {result.metric_evaluation_results_created}")
+    print(f"evaluation_execution_completed: {result.evaluation_execution_completed}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 
