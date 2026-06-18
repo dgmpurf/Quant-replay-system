@@ -338,6 +338,10 @@ from quant_replay_system.metric_extension import (
     MetricExtensionSettings,
     run_metric_extension,
 )
+from quant_replay_system.training_result_planning import (
+    TrainingResultPlanningSettings,
+    run_training_result_planning,
+)
 from quant_replay_system.metric_extension_health import check_metric_extension_health
 from quant_replay_system.metric_extension_index import build_metric_extension_index
 from quant_replay_system.metric_extension_status import run_metric_extension_status
@@ -3435,6 +3439,59 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only metric extension artifacts will be written",
     )
     metric_extension.set_defaults(handler=_handle_metric_extension)
+
+    training_result_planning = subparsers.add_parser(
+        "training-result-planning",
+        help="Create report-only training result planning phase 1 diagnostics",
+    )
+    training_result_planning.add_argument("--approval-manifest-path", default=None)
+    training_result_planning.add_argument("--training-result-planning-request-manifest-path", default=None)
+    training_result_planning.add_argument("--metric-extension-metadata-path", default=None)
+    training_result_planning.add_argument("--metric-extension-result-rows-path", default=None)
+    training_result_planning.add_argument("--metric-extension-summary-path", default=None)
+    training_result_planning.add_argument("--metric-extension-safety-flags-path", default=None)
+    training_result_planning.add_argument("--metric-extension-status-artifact-path", default=None)
+    training_result_planning.add_argument("--metric-extension-health-artifact-path", default=None)
+    training_result_planning.add_argument("--metric-computation-metadata-path", default=None)
+    training_result_planning.add_argument("--metric-computation-result-rows-path", default=None)
+    training_result_planning.add_argument("--metric-computation-summary-path", default=None)
+    training_result_planning.add_argument("--metric-computation-safety-flags-path", default=None)
+    training_result_planning.add_argument("--metric-computation-status-artifact-path", default=None)
+    training_result_planning.add_argument("--metric-computation-health-artifact-path", default=None)
+    training_result_planning.add_argument("--metric-evaluation-metadata-path", default=None)
+    training_result_planning.add_argument("--metric-evaluation-input-index-path", default=None)
+    training_result_planning.add_argument("--metric-evaluation-sample-scope-path", default=None)
+    training_result_planning.add_argument("--metric-evaluation-denominator-rules-path", default=None)
+    training_result_planning.add_argument("--metric-evaluation-safety-flags-path", default=None)
+    training_result_planning.add_argument("--metric-evaluation-status-artifact-path", default=None)
+    training_result_planning.add_argument("--metric-evaluation-health-artifact-path", default=None)
+    training_result_planning.add_argument("--training-evaluation-metadata-path", default=None)
+    training_result_planning.add_argument("--training-evaluation-sample-rows-path", default=None)
+    training_result_planning.add_argument("--training-evaluation-safety-flags-path", default=None)
+    training_result_planning.add_argument("--training-evaluation-status-artifact-path", default=None)
+    training_result_planning.add_argument("--training-evaluation-health-artifact-path", default=None)
+    training_result_planning.add_argument("--forward-return-label-metadata-path", default=None)
+    training_result_planning.add_argument("--forward-return-label-rows-path", default=None)
+    training_result_planning.add_argument("--forward-return-label-status-artifact-path", default=None)
+    training_result_planning.add_argument("--forward-return-label-health-artifact-path", default=None)
+    training_result_planning.add_argument("--replay-decision-freeze-metadata-path", default=None)
+    training_result_planning.add_argument("--replay-decision-freeze-rows-path", default=None)
+    training_result_planning.add_argument("--replay-decision-freeze-status-artifact-path", default=None)
+    training_result_planning.add_argument("--replay-decision-freeze-health-artifact-path", default=None)
+    training_result_planning.add_argument("--leakage-evidence-bundle-path", default=None)
+    training_result_planning.add_argument("--overclaim-evidence-bundle-path", default=None)
+    training_result_planning.add_argument("--side-effect-evidence-bundle-path", default=None)
+    training_result_planning.add_argument(
+        "--allow-training-result-planning",
+        action="store_true",
+        help="Explicitly allow report-only training result planning artifacts when all gates pass",
+    )
+    training_result_planning.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_result_planning_v0_1",
+        help="Directory where report-only training result planning artifacts will be written",
+    )
+    training_result_planning.set_defaults(handler=_handle_training_result_planning)
 
     metric_extension_index = subparsers.add_parser(
         "metric-extension-index",
@@ -9755,6 +9812,63 @@ def _handle_metric_extension(args: argparse.Namespace) -> int:
     print(f"weights_trained: {result.weights_trained}")
     print(f"training_result_created: {result.training_result_created}")
     print(f"model_version_created: {result.model_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(result.safety_statement)
+    return 0
+
+
+def _handle_training_result_planning(args: argparse.Namespace) -> int:
+    path_fields = {
+        field_name: Path(getattr(args, field_name)) if getattr(args, field_name, None) else None
+        for field_name in TrainingResultPlanningSettings.__dataclass_fields__
+        if field_name
+        not in {
+            "output_dir",
+            "allow_training_result_planning",
+            "write_artifacts",
+            "report_only",
+            "diagnostic_only",
+        }
+    }
+    result = run_training_result_planning(
+        TrainingResultPlanningSettings(
+            **path_fields,
+            output_dir=Path(args.output_dir),
+            allow_training_result_planning=args.allow_training_result_planning,
+        )
+    )
+    print(f"training_result_planning_run_id: {result.training_result_planning_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_training_result_planning: {result.ready_for_training_result_planning}")
+    print(f"training_result_planning_executed: {result.training_result_planning_executed}")
+    print(f"training_result_planning_artifacts_created: {result.training_result_planning_artifacts_created}")
+    print(f"metric_evidence_names_present: {result.metric_evidence_names_present}")
+    print(f"metric_evidence_row_count: {result.metric_evidence_row_count}")
+    print(f"planning_input_row_count: {result.planning_input_row_count}")
+    print(f"eligible_planning_input_count: {result.eligible_planning_input_count}")
+    print(f"quarantined_planning_input_count: {result.quarantined_planning_input_count}")
+    print(f"model_scope_rows_created: {result.model_scope_rows_created}")
+    print(f"limitations_created: {result.limitations_created}")
+    print(f"overfit_warnings_created: {result.overfit_warnings_created}")
+    print(f"health_plan_created: {result.health_plan_created}")
+    print(f"status_plan_created: {result.status_plan_created}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"parameter_version_created: {result.parameter_version_created}")
     print(f"thresholds_optimized: {result.thresholds_optimized}")
     print(f"predictions_created: {result.predictions_created}")
     print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
