@@ -39,6 +39,7 @@ from quant_replay_system.metric_extension import (
 from quant_replay_system.metric_extension_health import check_metric_extension_health
 from quant_replay_system.metric_extension_index import build_metric_extension_index
 from quant_replay_system.metric_extension_status import run_metric_extension_status
+from quant_replay_system.local_research_dashboard import run_local_research_dashboard
 
 
 DOWNSTREAM_FALSE_FIELDS = [
@@ -430,7 +431,7 @@ def test_metric_extension_artifact_view_cli_commands_are_added_for_this_phase() 
     assert "metric-extension-health" in help_text
     assert "metric-extension-status" in help_text
     assert not Path("docs/project_sources").exists()
-    assert not Path("docs/release_checkpoint_v1.48.0.md").exists()
+    assert Path("docs/release_checkpoint_v1.48.0.md").exists()
 
 
 def test_metric_extension_index_discovers_no_input_ready_and_report_created_artifacts(tmp_path: Path) -> None:
@@ -597,6 +598,127 @@ def test_metric_extension_artifact_view_cli_commands_work(tmp_path: Path) -> Non
     assert "status: PASS" in health.stdout
     assert "latest_metric_extension_run_id:" in status.stdout
     assert "METRIC_EXTENSION_REPORT_CREATED" in status.stdout
+
+
+def test_research_status_includes_metric_extension_report_only_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    settings = replace(
+        _happy_settings(tmp_path),
+        output_dir=root / "manual_diagnostics" / "metric_extension_v0_1",
+        allow_metric_extension=True,
+    )
+    created = run_metric_extension(settings)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.metric_extension_workflow_implemented is True
+    assert result.metric_extension_views_implemented is True
+    assert result.latest_metric_extension_run_id == created.metric_extension_run_id
+    assert result.latest_metric_extension_status == METRIC_EXTENSION_REPORT_CREATED
+    assert result.latest_metric_extension_health_status == "PASS"
+    assert result.latest_metric_extension_workflow_stage == METRIC_EXTENSION_REPORT_CREATED
+    assert result.metric_extension_report_created is True
+    assert result.extended_metric_result_rows_created is True
+    assert result.extended_metric_summary_created is True
+    assert result.extended_metrics_computed is True
+    assert result.allowed_extension_metric_set == ",".join(ALLOWED_EXTENSION_METRIC_SET)
+    assert set(result.metric_extension_metric_names_present.split(",")) == set(ALLOWED_EXTENSION_METRIC_SET)
+    assert result.metric_extension_result_row_count == 6
+    assert result.metric_extension_summary_row_count == 2
+    assert result.training_allowed is False
+    assert result.weights_trained is False
+    assert result.training_result_created is False
+    assert result.model_version_created is False
+    assert result.thresholds_optimized is False
+    assert result.predictions_created is False
+    assert result.calibrated_probabilities_created is False
+    assert result.feature_importance_created is False
+    assert result.stock_profile_allowed is False
+    assert result.active_stock_profile_exists is False
+    assert result.stock_profile_created is False
+    assert result.buy_review_allowed is False
+    assert result.real_buy_review_eligible is False
+    assert result.approved_for_paper is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert result.order_placed is False
+    assert result.broker_api_called is False
+    assert result.message_sent is False
+    assert result.llm_api_called is False
+    assert result.external_api_called is False
+    assert result.cache_mutated is False
+    assert result.data_raw_written is False
+    assert result.data_processed_written is False
+    assert result.data_cache_written is False
+    assert result.current_candidates_run is False
+    assert result.snapshot_built is False
+    assert result.signal_semantics_changed is False
+    assert result.report_only is True
+    assert result.diagnostic_only is True
+    assert result.no_live_trading is True
+    assert result.no_broker_api is True
+    assert result.no_order_placement is True
+    assert result.no_message_sent is True
+
+
+def test_research_status_preserves_paper_priority_with_metric_extension_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    settings = replace(
+        _happy_settings(tmp_path),
+        output_dir=root / "manual_diagnostics" / "metric_extension_v0_1",
+        allow_metric_extension=True,
+    )
+    run_metric_extension(settings)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action="Demo WATCH_ONLY paper workflow validated; no fills were supplied.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_metric_extension_status == METRIC_EXTENSION_REPORT_CREATED
+    row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "METRIC_EXTENSION_STATUS"].iloc[0]
+    assert row["warning_classification"] == ""
+
+
+def test_metric_extension_research_status_docs_checkpoint_and_source_note_are_report_only() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    required_paths = [
+        repo_root / "README.md",
+        repo_root / "docs" / "local_research_dashboard.md",
+        repo_root / "docs" / "metric_extension.md",
+        repo_root / "docs" / "release_checkpoint_v1.48.0.md",
+        repo_root / "SOURCE_UPDATE_NOTES_v1_48_0.md",
+    ]
+
+    for path in required_paths:
+        assert path.exists(), path
+
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in required_paths)
+    assert "metric-extension" in combined
+    assert "research-status" in combined
+    assert "PAPER_WORKFLOW_READY" in combined
+    assert "report-only" in combined
+    assert "not performance validation" in combined
+    assert "not a training result" in combined
+    assert "does not create weights" in combined
+    assert "does not create model versions" in combined
+    assert "does not create thresholds" in combined
+    assert "does not create predictions or probabilities" in combined
+    assert "does not create feature importance" in combined
+    assert "does not create stock profiles" in combined
+    assert "does not create buy-review eligibility" in combined
+    assert "does not approve paper trading" in combined
+    assert "does not allow live trading" in combined
+    assert "does not call broker APIs" in combined
+    assert "does not place orders" in combined
+    assert "does not send messages" in combined
+    assert "Project Source should be refreshed after commit and tag" in combined
+    assert not (repo_root / "docs" / "project_sources").exists()
 
 
 def _happy_settings(tmp_path: Path) -> MetricExtensionSettings:
@@ -961,6 +1083,49 @@ def _mutate_metric_extension_artifact(ready: object, created: object, mutation: 
         created.artifact_paths["report"].write_text("This report grants trading permission.", encoding="utf-8")
     else:
         raise AssertionError(f"Unknown mutation: {mutation}")
+
+
+def _paper_workflow_status(
+    root: Path,
+    *,
+    workflow_status_id: str = "paper-workflow-status-a",
+    status: str = "PASS",
+    workflow_stage: str = "WORKFLOW_COMPLETE",
+    expected_demo_warning_count: int = 0,
+    next_manual_action: str = "Review completed workflow artifacts.",
+) -> Path:
+    folder = root / "paper_trading" / "workflow_status" / workflow_status_id
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "paper_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "workflow_status_id": workflow_status_id,
+            "created_at": "2024-04-02T16:15:00",
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_decision_date": "2024-04-02",
+            "next_manual_action": next_manual_action,
+            "total_warning_count": expected_demo_warning_count,
+            "expected_demo_warning_count": expected_demo_warning_count,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+            "component_statuses": {
+                "total_warning_count": expected_demo_warning_count,
+                "expected_demo_warning_count": expected_demo_warning_count,
+                "stale_warning_count": 0,
+                "actionable_warning_count": 0,
+                "blocking_error_count": 0,
+            },
+            "output_files": {"paper_workflow_status_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
 
 
 def _required_artifact_keys() -> list[str]:

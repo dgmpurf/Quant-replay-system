@@ -643,6 +643,18 @@ The allowed first metric set is `sample_count`, `label_coverage`, `average_retur
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; metric computation fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims unsupported metrics, training_result, weights, model_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
 
+## Metric Extension Status
+
+`research-status` includes `metric-extension-status` as report-only historical metric extension context when those artifacts exist.
+
+Use `metric-extension`, `metric-extension-index`, `metric-extension-health`, and `metric-extension-status` to create, discover, safety-check, and summarize bounded metric extension artifacts.
+
+The unified summary records the latest metric extension run id, status/stage, health status, source Metric Computation Phase 1 lineage, upstream Metric / Evaluation Phase 1, Training / Evaluation Phase 1, Forward Return Label, and Replay Decision Freeze lineage, requested and allowed extension metric sets, bounded sample counts, mapping counts, denominator counts, result and summary row counts, report path, next action, and safety flags.
+
+`METRIC_EXTENSION_REPORT_CREATED` is report-only context. It is not performance validation, not a training result, does not create weights, does not create model versions, does not create thresholds, does not create predictions or probabilities, does not create feature importance, does not create stock profiles, does not create buy-review eligibility, does not approve paper trading, does not allow live trading, does not call broker APIs, does not place orders, and does not send messages.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; metric extension fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims unsupported metrics, training_result, weights, model_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.
