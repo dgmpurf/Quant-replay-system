@@ -33,6 +33,7 @@ from quant_replay_system.metric_computation import (
 from quant_replay_system.metric_computation_health import check_metric_computation_health
 from quant_replay_system.metric_computation_index import build_metric_computation_index
 from quant_replay_system.metric_computation_status import run_metric_computation_status
+from quant_replay_system.local_research_dashboard import run_local_research_dashboard
 from quant_replay_system.metric_evaluation import run_metric_evaluation
 from test_metric_evaluation import _happy_settings as _metric_evaluation_happy_settings
 
@@ -68,6 +69,8 @@ DOWNSTREAM_FALSE_FIELDS = [
     "snapshot_built",
     "signal_semantics_changed",
 ]
+
+DECISION_DATE = "2024-05-20"
 
 
 def test_no_input_writes_required_artifacts_with_safe_defaults(tmp_path: Path) -> None:
@@ -389,7 +392,7 @@ def test_cli_happy_path_with_allow_creates_report_only_result_rows(tmp_path: Pat
     assert "training_result_created: False" in completed.stdout
 
 
-def test_metric_computation_artifact_view_cli_commands_are_added_without_research_status() -> None:
+def test_metric_computation_artifact_view_cli_commands_are_added() -> None:
     help_text = _run_cli(["--help"]).stdout
     assert "metric-computation" in help_text
     assert "metric-computation-index" in help_text
@@ -398,11 +401,130 @@ def test_metric_computation_artifact_view_cli_commands_are_added_without_researc
     assert "research-status metric-computation" not in help_text
 
 
-def test_no_research_status_checkpoint_or_project_source_integration_is_added() -> None:
-    assert not Path("docs/release_checkpoint_v1.47.0.md").exists()
+def test_research_status_checkpoint_docs_and_source_note_are_added_without_project_source() -> None:
+    checkpoint = Path("docs/release_checkpoint_v1.47.0.md")
+    workflow_doc = Path("docs/metric_computation.md")
+    source_note = Path("SOURCE_UPDATE_NOTES_v1_47_0.md")
+    assert checkpoint.exists()
+    assert workflow_doc.exists()
+    assert source_note.exists()
     assert not Path("docs/project_sources").exists()
-    dashboard_text = Path("docs/local_research_dashboard.md").read_text(encoding="utf-8")
-    assert "metric-computation-status" not in dashboard_text
+    combined = "\n".join(
+        path.read_text(encoding="utf-8").lower()
+        for path in [
+            checkpoint,
+            workflow_doc,
+            source_note,
+            Path("docs/local_research_dashboard.md"),
+            Path("README.md"),
+        ]
+    )
+    for phrase in [
+        "metric-computation-status",
+        "report-only historical metric",
+        "bounded sample",
+        "allowed first metric set",
+        "sample_count",
+        "label_coverage",
+        "average_return",
+        "median_return",
+        "hit_rate",
+        "not strategy performance validation",
+        "not training_result",
+        "not weights",
+        "not model_version",
+        "not threshold",
+        "not predictions",
+        "not stock_profile",
+        "not buy-review",
+        "not paper approval",
+        "not trading",
+    ]:
+        assert phrase in combined
+
+
+def test_research_status_includes_metric_computation_report_only_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    settings = replace(
+        _happy_settings(tmp_path),
+        output_dir=root / "manual_diagnostics" / "metric_computation_v0_1",
+        allow_metric_computation=True,
+    )
+    created = run_metric_computation(settings)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.metric_computation_workflow_implemented is True
+    assert result.metric_computation_views_implemented is True
+    assert result.latest_metric_computation_run_id == created.metric_computation_run_id
+    assert result.latest_metric_computation_status == METRIC_COMPUTATION_REPORT_CREATED
+    assert result.latest_metric_computation_health_status == "PASS"
+    assert result.latest_metric_computation_workflow_stage == METRIC_COMPUTATION_REPORT_CREATED
+    assert result.allowed_metric_set == ",".join(ALLOWED_METRIC_SET)
+    assert result.metric_computation_report_created is True
+    assert result.metric_result_rows_created is True
+    assert result.metric_summary_created is True
+    assert result.metrics_computed is True
+    assert result.result_row_count == len(ALLOWED_METRIC_SET)
+    assert result.summary_row_count == len(ALLOWED_METRIC_SET)
+    assert result.training_allowed is False
+    assert result.weights_trained is False
+    assert result.training_result_created is False
+    assert result.model_version_created is False
+    assert result.thresholds_optimized is False
+    assert result.predictions_created is False
+    assert result.calibrated_probabilities_created is False
+    assert result.feature_importance_created is False
+    assert result.stock_profile_allowed is False
+    assert result.active_stock_profile_exists is False
+    assert result.stock_profile_created is False
+    assert result.buy_review_allowed is False
+    assert result.real_buy_review_eligible is False
+    assert result.approved_for_paper is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert result.order_placed is False
+    assert result.broker_api_called is False
+    assert result.message_sent is False
+    assert result.llm_api_called is False
+    assert result.external_api_called is False
+    assert result.cache_mutated is False
+    assert result.data_raw_written is False
+    assert result.data_processed_written is False
+    assert result.data_cache_written is False
+    assert result.current_candidates_run is False
+    assert result.snapshot_built is False
+    assert result.signal_semantics_changed is False
+    assert result.report_only is True
+    assert result.diagnostic_only is True
+    assert result.no_live_trading is True
+    assert result.no_broker_api is True
+    assert result.no_order_placement is True
+    assert result.no_message_sent is True
+
+
+def test_research_status_preserves_paper_priority_with_metric_computation_context(tmp_path: Path) -> None:
+    root = tmp_path / "outputs" / "reports"
+    settings = replace(
+        _happy_settings(tmp_path),
+        output_dir=root / "manual_diagnostics" / "metric_computation_v0_1",
+        allow_metric_computation=True,
+    )
+    run_metric_computation(settings)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="WATCH_ONLY_DEMO_VALIDATED_NO_FILLS",
+        expected_demo_warning_count=1,
+        next_manual_action="Demo WATCH_ONLY paper workflow validated; no fills were supplied.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_metric_computation_status == METRIC_COMPUTATION_REPORT_CREATED
+    row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "METRIC_COMPUTATION_STATUS"].iloc[0]
+    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
 
 
 def test_metric_computation_index_discovers_no_input_ready_and_report_created_artifacts(tmp_path: Path) -> None:
@@ -843,6 +965,49 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(path, index=False)
     return path
+
+
+def _paper_workflow_status(
+    root: Path,
+    *,
+    workflow_status_id: str = "paper-workflow-status-a",
+    status: str = "PASS",
+    workflow_stage: str = "WORKFLOW_COMPLETE",
+    expected_demo_warning_count: int = 0,
+    next_manual_action: str = "Review completed workflow artifacts.",
+) -> Path:
+    folder = root / "paper_trading" / "workflow_status" / workflow_status_id
+    folder.mkdir(parents=True, exist_ok=True)
+    report = folder / "paper_workflow_status_report.md"
+    report.write_text("No broker or live trading integration was invoked.", encoding="utf-8")
+    _write_json(
+        folder / "metadata.json",
+        {
+            "workflow_status_id": workflow_status_id,
+            "created_at": f"{DECISION_DATE}T16:15:00",
+            "status": status,
+            "workflow_stage": workflow_stage,
+            "latest_decision_date": DECISION_DATE,
+            "next_manual_action": next_manual_action,
+            "total_warning_count": expected_demo_warning_count,
+            "expected_demo_warning_count": expected_demo_warning_count,
+            "stale_warning_count": 0,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+            "component_statuses": {
+                "total_warning_count": expected_demo_warning_count,
+                "expected_demo_warning_count": expected_demo_warning_count,
+                "stale_warning_count": 0,
+                "actionable_warning_count": 0,
+                "blocking_error_count": 0,
+            },
+            "output_files": {"paper_workflow_status_report": str(report)},
+            "warnings": [],
+            "live_trading_enabled": False,
+            "broker_api_invoked": False,
+        },
+    )
+    return folder
 
 
 def _cli_args(settings: MetricComputationSettings) -> list[str]:
