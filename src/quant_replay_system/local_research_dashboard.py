@@ -122,6 +122,7 @@ from quant_replay_system.replay_decision_freeze_status import run_replay_decisio
 from quant_replay_system.forward_return_label_status import run_forward_return_label_status
 from quant_replay_system.training_evaluation_status import run_training_evaluation_status
 from quant_replay_system.metric_evaluation_status import run_metric_evaluation_status
+from quant_replay_system.metric_computation_status import run_metric_computation_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -681,8 +682,17 @@ SUMMARY_COLUMNS = [
     "active_ready_emitted",
     "forward_labels_exist",
     "weights_trained",
+    "training_result_created",
+    "model_version_created",
+    "thresholds_optimized",
+    "predictions_created",
+    "calibrated_probabilities_created",
+    "feature_importance_created",
     "active_stock_profile_exists",
+    "stock_profile_created",
     "real_buy_review_eligible",
+    "approved_for_paper",
+    "strategy_performance_validated",
     "approval_applied",
     "order_placed",
     "broker_api_called",
@@ -1117,6 +1127,33 @@ SUMMARY_COLUMNS = [
     "metric_evaluation_no_message_sent",
     "metric_evaluation_report_path",
     "metric_evaluation_next_action",
+    "metric_computation_workflow_implemented",
+    "metric_computation_views_implemented",
+    "latest_metric_computation_run_id",
+    "latest_metric_computation_status",
+    "latest_metric_computation_health_status",
+    "latest_metric_computation_workflow_stage",
+    "metric_computation_artifact_path",
+    "source_metric_evaluation_planning_run_id",
+    "source_metric_evaluation_status",
+    "source_metric_evaluation_health_status",
+    "allowed_metric_set",
+    "requested_metric_set",
+    "unsupported_metrics_requested",
+    "sample_row_count",
+    "eligible_sample_count",
+    "quarantined_sample_count",
+    "label_coverage_numerator",
+    "label_coverage_denominator",
+    "ready_for_metric_computation",
+    "metric_computation_executed",
+    "metric_computation_report_created",
+    "metric_summary_created",
+    "metric_names_present",
+    "result_row_count",
+    "summary_row_count",
+    "metric_computation_report_path",
+    "metric_computation_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1498,6 +1535,7 @@ OPTIONAL_COMPONENTS = {
     "FORWARD_RETURN_LABEL_STATUS",
     "TRAINING_EVALUATION_STATUS",
     "METRIC_EVALUATION_STATUS",
+    "METRIC_COMPUTATION_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1548,6 +1586,7 @@ WORKFLOW_AREAS = {
     "FORWARD_RETURN_LABEL_STATUS": "FORWARD_RETURN_LABEL",
     "TRAINING_EVALUATION_STATUS": "TRAINING_EVALUATION",
     "METRIC_EVALUATION_STATUS": "METRIC_EVALUATION",
+    "METRIC_COMPUTATION_STATUS": "METRIC_COMPUTATION",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -2093,8 +2132,17 @@ class LocalResearchDashboardResult:
     active_ready_emitted: bool
     forward_labels_exist: bool
     weights_trained: bool
+    training_result_created: bool
+    model_version_created: bool
+    thresholds_optimized: bool
+    predictions_created: bool
+    calibrated_probabilities_created: bool
+    feature_importance_created: bool
     active_stock_profile_exists: bool
+    stock_profile_created: bool
     real_buy_review_eligible: bool
+    approved_for_paper: bool
+    strategy_performance_validated: bool
     approval_applied: bool
     order_placed: bool
     broker_api_called: bool
@@ -2529,6 +2577,33 @@ class LocalResearchDashboardResult:
     metric_evaluation_no_message_sent: bool
     metric_evaluation_report_path: str
     metric_evaluation_next_action: str
+    metric_computation_workflow_implemented: bool
+    metric_computation_views_implemented: bool
+    latest_metric_computation_run_id: str
+    latest_metric_computation_status: str
+    latest_metric_computation_health_status: str
+    latest_metric_computation_workflow_stage: str
+    metric_computation_artifact_path: str
+    source_metric_evaluation_planning_run_id: str
+    source_metric_evaluation_status: str
+    source_metric_evaluation_health_status: str
+    allowed_metric_set: str
+    requested_metric_set: str
+    unsupported_metrics_requested: bool
+    sample_row_count: int
+    eligible_sample_count: int
+    quarantined_sample_count: int
+    label_coverage_numerator: int
+    label_coverage_denominator: int
+    ready_for_metric_computation: bool
+    metric_computation_executed: bool
+    metric_computation_report_created: bool
+    metric_summary_created: bool
+    metric_names_present: str
+    result_row_count: int
+    summary_row_count: int
+    metric_computation_report_path: str
+    metric_computation_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -2864,6 +2939,7 @@ def run_local_research_dashboard(
     replay_decision_freeze_root: str | Path | None = None,
     training_evaluation_root: str | Path | None = None,
     metric_evaluation_root: str | Path | None = None,
+    metric_computation_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -3111,6 +3187,11 @@ def run_local_research_dashboard(
         Path(metric_evaluation_root)
         if metric_evaluation_root is not None
         else effective_root / "manual_diagnostics" / "metric_evaluation_v0_1"
+    )
+    effective_metric_computation_root = (
+        Path(metric_computation_root)
+        if metric_computation_root is not None
+        else effective_root / "manual_diagnostics" / "metric_computation_v0_1"
     )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
@@ -3447,6 +3528,7 @@ def run_local_research_dashboard(
         replay_decision_freeze_root=effective_replay_decision_freeze_root,
         training_evaluation_root=effective_training_evaluation_root,
         metric_evaluation_root=effective_metric_evaluation_root,
+        metric_computation_root=effective_metric_computation_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -4923,8 +5005,21 @@ def run_local_research_dashboard(
         active_ready_emitted=_bool_from_text(summary.get("active_ready_emitted")),
         forward_labels_exist=_bool_from_text(summary.get("forward_labels_exist")),
         weights_trained=_bool_from_text(summary.get("weights_trained")),
+        training_result_created=_bool_from_text(summary.get("training_result_created")),
+        model_version_created=_bool_from_text(summary.get("model_version_created")),
+        thresholds_optimized=_bool_from_text(summary.get("thresholds_optimized")),
+        predictions_created=_bool_from_text(summary.get("predictions_created")),
+        calibrated_probabilities_created=_bool_from_text(
+            summary.get("calibrated_probabilities_created")
+        ),
+        feature_importance_created=_bool_from_text(summary.get("feature_importance_created")),
         active_stock_profile_exists=_bool_from_text(summary.get("active_stock_profile_exists")),
+        stock_profile_created=_bool_from_text(summary.get("stock_profile_created")),
         real_buy_review_eligible=_bool_from_text(summary.get("real_buy_review_eligible")),
+        approved_for_paper=_bool_from_text(summary.get("approved_for_paper")),
+        strategy_performance_validated=_bool_from_text(
+            summary.get("strategy_performance_validated")
+        ),
         approval_applied=_bool_from_text(summary.get("approval_applied")),
         order_placed=_bool_from_text(summary.get("order_placed")),
         broker_api_called=_bool_from_text(summary.get("broker_api_called")),
@@ -5925,6 +6020,47 @@ def run_local_research_dashboard(
         ),
         metric_evaluation_report_path=str(summary.get("metric_evaluation_report_path", "")),
         metric_evaluation_next_action=str(summary.get("metric_evaluation_next_action", "")),
+        metric_computation_workflow_implemented=_bool_from_text(
+            summary.get("metric_computation_workflow_implemented")
+        ),
+        metric_computation_views_implemented=_bool_from_text(
+            summary.get("metric_computation_views_implemented")
+        ),
+        latest_metric_computation_run_id=str(summary.get("latest_metric_computation_run_id", "")),
+        latest_metric_computation_status=str(summary.get("latest_metric_computation_status", "MISSING")),
+        latest_metric_computation_health_status=str(
+            summary.get("latest_metric_computation_health_status", "")
+        ),
+        latest_metric_computation_workflow_stage=str(
+            summary.get("latest_metric_computation_workflow_stage", "")
+        ),
+        metric_computation_artifact_path=str(summary.get("metric_computation_artifact_path", "")),
+        source_metric_evaluation_planning_run_id=str(
+            summary.get("source_metric_evaluation_planning_run_id", "")
+        ),
+        source_metric_evaluation_status=str(summary.get("source_metric_evaluation_status", "")),
+        source_metric_evaluation_health_status=str(
+            summary.get("source_metric_evaluation_health_status", "")
+        ),
+        allowed_metric_set=str(summary.get("allowed_metric_set", "")),
+        requested_metric_set=str(summary.get("requested_metric_set", "")),
+        unsupported_metrics_requested=_bool_from_text(summary.get("unsupported_metrics_requested")),
+        sample_row_count=_int_or_zero(summary.get("sample_row_count")),
+        eligible_sample_count=_int_or_zero(summary.get("eligible_sample_count")),
+        quarantined_sample_count=_int_or_zero(summary.get("quarantined_sample_count")),
+        label_coverage_numerator=_int_or_zero(summary.get("label_coverage_numerator")),
+        label_coverage_denominator=_int_or_zero(summary.get("label_coverage_denominator")),
+        ready_for_metric_computation=_bool_from_text(summary.get("ready_for_metric_computation")),
+        metric_computation_executed=_bool_from_text(summary.get("metric_computation_executed")),
+        metric_computation_report_created=_bool_from_text(
+            summary.get("metric_computation_report_created")
+        ),
+        metric_summary_created=_bool_from_text(summary.get("metric_summary_created")),
+        metric_names_present=str(summary.get("metric_names_present", "")),
+        result_row_count=_int_or_zero(summary.get("result_row_count")),
+        summary_row_count=_int_or_zero(summary.get("summary_row_count")),
+        metric_computation_report_path=str(summary.get("metric_computation_report_path", "")),
+        metric_computation_next_action=str(summary.get("metric_computation_next_action", "")),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -6609,6 +6745,7 @@ def scan_local_research_workflow_artifacts(
     replay_decision_freeze_root: str | Path,
     training_evaluation_root: str | Path,
     metric_evaluation_root: str | Path,
+    metric_computation_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -6676,6 +6813,7 @@ def scan_local_research_workflow_artifacts(
     forward_return_label_path = replay_decision_freeze_path.parent / "forward_return_label_v0_1"
     training_evaluation_path = Path(training_evaluation_root)
     metric_evaluation_path = Path(metric_evaluation_root)
+    metric_computation_path = Path(metric_computation_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -6765,6 +6903,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_forward_return_label_status(forward_return_label_path))
     records.extend(_scan_training_evaluation_status(training_evaluation_path))
     records.extend(_scan_metric_evaluation_status(metric_evaluation_path))
+    records.extend(_scan_metric_computation_status(metric_computation_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -7905,6 +8044,9 @@ def _local_component_warning_actionability(row: dict[str, Any], context: dict[st
     if component == "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS":
         return _one_row_checklist_pass_candidate_preview_warning_actionability(row, context)
 
+    if component == "METRIC_COMPUTATION_STATUS":
+        return _metric_computation_warning_actionability(row, context)
+
     if component == "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS":
         return _replay_substrate_schema_fixture_warning_actionability(row, context)
 
@@ -8082,6 +8224,39 @@ def _snapshot_actionability_counts(
         "stale_snapshot_warning_count": stale_snapshot_warning_count,
         "unrelated_snapshot_warning_count": unrelated_snapshot_warning_count,
         "warning_classification_override": warning_classification,
+    }
+
+
+def _metric_computation_warning_actionability(row: dict[str, Any], context: dict[str, Any]) -> dict[str, int]:
+    warning_count = _int_or_zero(row.get("warning_count"))
+    error_count = _int_or_zero(row.get("error_count"))
+    status = _string_or_empty(row.get("status"))
+    if context.get("paper_workflow_started") and status != "MISSING":
+        stale_count = max(warning_count + error_count, 1)
+        return {
+            "total_warning_count": stale_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": stale_count,
+            "actionable_warning_count": 0,
+            "blocking_error_count": 0,
+        }
+    if status == "FAIL" or error_count:
+        return {
+            "total_warning_count": warning_count,
+            "expected_reviewable_warning_count": 0,
+            "expected_demo_warning_count": 0,
+            "stale_warning_count": 0,
+            "actionable_warning_count": warning_count,
+            "blocking_error_count": max(error_count, 1),
+        }
+    return {
+        "total_warning_count": warning_count,
+        "expected_reviewable_warning_count": 0,
+        "expected_demo_warning_count": 0,
+        "stale_warning_count": 0,
+        "actionable_warning_count": warning_count if status == "WARN" or warning_count else 0,
+        "blocking_error_count": 0,
     }
 
 
@@ -10722,6 +10897,20 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _metric_evaluation_stage_from_frame(dashboard_frame)
     ):
         return _metric_evaluation_stage_from_frame(dashboard_frame)
+    if (
+        statuses["METRIC_COMPUTATION_STATUS"]
+        in {
+            "NO_METRIC_COMPUTATION_INPUT",
+            "READY_FOR_METRIC_COMPUTATION",
+            "METRIC_COMPUTATION_REPORT_CREATED",
+            "METRIC_COMPUTATION_HEALTH_FAILED",
+            "PASS",
+            "WARN",
+            "READY",
+        }
+        and _metric_computation_stage_from_frame(dashboard_frame)
+    ):
+        return _metric_computation_stage_from_frame(dashboard_frame)
     if (
         not _has_post_universe_profile_policy_audit_workflow_component(dashboard_frame)
         and statuses["UNIVERSE_PROFILE_POLICY_AUDIT_STATUS"] in {"PASS", "WARN", "READY"}
@@ -15392,6 +15581,114 @@ def summarize_local_research_status(
             by_component.get("METRIC_EVALUATION_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
+        "metric_computation_workflow_implemented": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "metric_computation_views_implemented": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_metric_computation_run_id": _string_or_empty(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_metric_computation_status": _component_status(
+            by_component,
+            "METRIC_COMPUTATION_STATUS",
+        ),
+        "latest_metric_computation_health_status": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_metric_computation_workflow_stage": _string_or_empty(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("stage")
+        ),
+        "metric_computation_artifact_path": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "source_metric_evaluation_planning_run_id": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "source_metric_evaluation_planning_run_id",
+        ),
+        "source_metric_evaluation_status": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "source_metric_evaluation_status",
+        ),
+        "source_metric_evaluation_health_status": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "source_metric_evaluation_health_status",
+        ),
+        "allowed_metric_set": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "allowed_metric_set",
+        ),
+        "requested_metric_set": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "requested_metric_set",
+        ),
+        "unsupported_metrics_requested": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "unsupported_metrics_requested",
+        ),
+        "sample_row_count": _int_or_zero(
+            _parse_note_value(by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"), "sample_row_count")
+        ),
+        "eligible_sample_count": _int_or_zero(
+            _parse_note_value(by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"), "eligible_sample_count")
+        ),
+        "quarantined_sample_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+                "quarantined_sample_count",
+            )
+        ),
+        "label_coverage_numerator": _int_or_zero(
+            _parse_note_value(
+                by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+                "label_coverage_numerator",
+            )
+        ),
+        "label_coverage_denominator": _int_or_zero(
+            _parse_note_value(
+                by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+                "label_coverage_denominator",
+            )
+        ),
+        "ready_for_metric_computation": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "ready_for_metric_computation",
+        ),
+        "metric_computation_executed": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "metric_computation_executed",
+        ),
+        "metric_computation_report_created": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "metric_computation_report_created",
+        ),
+        "metric_summary_created": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "metric_summary_created",
+        ),
+        "metric_names_present": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "metric_names_present",
+        ),
+        "result_row_count": _int_or_zero(
+            _parse_note_value(by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"), "result_row_count")
+        ),
+        "summary_row_count": _int_or_zero(
+            _parse_note_value(by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"), "summary_row_count")
+        ),
+        "metric_computation_report_path": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "metric_computation_next_action": _parse_note_value(
+            by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
         "universe_profile_policy_audit_status": _component_status(
             by_component,
             "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS",
@@ -16560,6 +16857,66 @@ def summarize_local_research_status(
             value = _parse_note_value(metric_notes, "training_evaluation_dataset_artifacts_created")
             if _string_or_empty(value) != "":
                 row["training_evaluation_dataset_artifacts_created"] = value
+    metric_computation_notes = by_component.get("METRIC_COMPUTATION_STATUS", {}).get("notes")
+    if _string_or_empty(metric_computation_notes):
+        for shared_field in [
+            "source_training_evaluation_run_id",
+            "source_training_evaluation_status",
+            "source_training_evaluation_health_status",
+            "source_forward_return_label_run_id",
+            "source_replay_decision_freeze_run_id",
+            "metrics_computed",
+            "metric_result_rows_created",
+            "training_allowed",
+            "weights_trained",
+            "training_result_created",
+            "model_version_created",
+            "thresholds_optimized",
+            "predictions_created",
+            "calibrated_probabilities_created",
+            "feature_importance_created",
+            "stock_profile_allowed",
+            "active_stock_profile_exists",
+            "stock_profile_created",
+            "buy_review_allowed",
+            "real_buy_review_eligible",
+            "approved_for_paper",
+            "strategy_performance_validated",
+            "trading_allowed",
+            "order_placed",
+            "broker_api_called",
+            "message_sent",
+            "llm_api_called",
+            "external_api_called",
+            "cache_mutated",
+            "data_raw_written",
+            "data_processed_written",
+            "data_cache_written",
+            "current_candidates_run",
+            "snapshot_built",
+            "signal_semantics_changed",
+            "report_only",
+            "diagnostic_only",
+            "no_live_trading",
+            "no_broker_api",
+            "no_order_placement",
+            "no_message_sent",
+        ]:
+            value = _parse_note_value(metric_computation_notes, shared_field)
+            if _string_or_empty(value) != "":
+                row[shared_field] = value
+    for default_false_field in [
+        "training_result_created",
+        "model_version_created",
+        "thresholds_optimized",
+        "predictions_created",
+        "calibrated_probabilities_created",
+        "feature_importance_created",
+        "stock_profile_created",
+        "approved_for_paper",
+        "strategy_performance_validated",
+    ]:
+        row.setdefault(default_false_field, False)
     return pd.DataFrame([row], columns=SUMMARY_COLUMNS)
 
 
@@ -18188,8 +18545,17 @@ def build_local_research_dashboard_metadata(
         "active_ready_emitted": result.active_ready_emitted,
         "forward_labels_exist": result.forward_labels_exist,
         "weights_trained": result.weights_trained,
+        "training_result_created": result.training_result_created,
+        "model_version_created": result.model_version_created,
+        "thresholds_optimized": result.thresholds_optimized,
+        "predictions_created": result.predictions_created,
+        "calibrated_probabilities_created": result.calibrated_probabilities_created,
+        "feature_importance_created": result.feature_importance_created,
         "active_stock_profile_exists": result.active_stock_profile_exists,
+        "stock_profile_created": result.stock_profile_created,
         "real_buy_review_eligible": result.real_buy_review_eligible,
+        "approved_for_paper": result.approved_for_paper,
+        "strategy_performance_validated": result.strategy_performance_validated,
         "approval_applied": result.approval_applied,
         "order_placed": result.order_placed,
         "broker_api_called": result.broker_api_called,
@@ -18863,6 +19229,33 @@ def build_local_research_dashboard_metadata(
         "metric_evaluation_no_message_sent": result.metric_evaluation_no_message_sent,
         "metric_evaluation_report_path": result.metric_evaluation_report_path,
         "metric_evaluation_next_action": result.metric_evaluation_next_action,
+        "metric_computation_workflow_implemented": result.metric_computation_workflow_implemented,
+        "metric_computation_views_implemented": result.metric_computation_views_implemented,
+        "latest_metric_computation_run_id": result.latest_metric_computation_run_id,
+        "latest_metric_computation_status": result.latest_metric_computation_status,
+        "latest_metric_computation_health_status": result.latest_metric_computation_health_status,
+        "latest_metric_computation_workflow_stage": result.latest_metric_computation_workflow_stage,
+        "metric_computation_artifact_path": result.metric_computation_artifact_path,
+        "source_metric_evaluation_planning_run_id": result.source_metric_evaluation_planning_run_id,
+        "source_metric_evaluation_status": result.source_metric_evaluation_status,
+        "source_metric_evaluation_health_status": result.source_metric_evaluation_health_status,
+        "allowed_metric_set": result.allowed_metric_set,
+        "requested_metric_set": result.requested_metric_set,
+        "unsupported_metrics_requested": result.unsupported_metrics_requested,
+        "sample_row_count": result.sample_row_count,
+        "eligible_sample_count": result.eligible_sample_count,
+        "quarantined_sample_count": result.quarantined_sample_count,
+        "label_coverage_numerator": result.label_coverage_numerator,
+        "label_coverage_denominator": result.label_coverage_denominator,
+        "ready_for_metric_computation": result.ready_for_metric_computation,
+        "metric_computation_executed": result.metric_computation_executed,
+        "metric_computation_report_created": result.metric_computation_report_created,
+        "metric_summary_created": result.metric_summary_created,
+        "metric_names_present": result.metric_names_present,
+        "result_row_count": result.result_row_count,
+        "summary_row_count": result.summary_row_count,
+        "metric_computation_report_path": result.metric_computation_report_path,
+        "metric_computation_next_action": result.metric_computation_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -23092,6 +23485,174 @@ def _metric_evaluation_notes(summary: dict[str, Any]) -> str:
     )
 
 
+def _scan_metric_computation_status(root: Path) -> list[dict[str, Any]]:
+    metric_root = root.parent if root.name == "status" else root
+    if not metric_root.exists():
+        return []
+    try:
+        result = run_metric_computation_status(
+            root=metric_root,
+            output_dir=metric_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_metric_computation_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = metric_root / result.latest_metric_computation_run_id
+    metadata = _load_json_or_none(artifact_dir / "metric_computation_metadata.json") or {}
+    safety = _load_json_or_none(artifact_dir / "metric_computation_safety_flags.json") or {}
+    artifact_paths = metadata.get("artifact_paths") if isinstance(metadata.get("artifact_paths"), dict) else {}
+    summary["artifact_path"] = str(artifact_dir)
+    summary["report_path"] = (
+        _string_or_empty(summary.get("report_path"))
+        or _string_or_empty(artifact_paths.get("report"))
+        or str(artifact_dir / "metric_computation_report.md")
+    )
+    merged = {**metadata, **safety}
+    for field in [
+        "source_metric_evaluation_planning_run_id",
+        "source_metric_evaluation_status",
+        "source_metric_evaluation_health_status",
+        "source_training_evaluation_run_id",
+        "source_training_evaluation_status",
+        "source_training_evaluation_health_status",
+        "source_forward_return_label_run_id",
+        "source_replay_decision_freeze_run_id",
+        "allowed_metric_set",
+        "requested_metric_set",
+        "unsupported_metrics_requested",
+        "sample_row_count",
+        "eligible_sample_count",
+        "quarantined_sample_count",
+        "label_coverage_numerator",
+        "label_coverage_denominator",
+        "ready_for_metric_computation",
+        "metric_computation_executed",
+        "metric_computation_report_created",
+        "metric_result_rows_created",
+        "metric_summary_created",
+        "metrics_computed",
+        "training_allowed",
+        "weights_trained",
+        "training_result_created",
+        "model_version_created",
+        "thresholds_optimized",
+        "predictions_created",
+        "calibrated_probabilities_created",
+        "feature_importance_created",
+        "stock_profile_allowed",
+        "active_stock_profile_exists",
+        "stock_profile_created",
+        "buy_review_allowed",
+        "real_buy_review_eligible",
+        "approved_for_paper",
+        "strategy_performance_validated",
+        "trading_allowed",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+        "report_only",
+        "diagnostic_only",
+    ]:
+        if field not in summary or _string_or_empty(summary.get(field)) == "":
+            summary[field] = merged.get(field, False)
+    return [
+        _record(
+            workflow_area="METRIC_COMPUTATION",
+            component="METRIC_COMPUTATION_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_metric_computation_run_id,
+            report_path=summary["report_path"],
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_metric_computation_notes(summary),
+        )
+    ]
+
+
+def _metric_computation_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"source_metric_evaluation_planning_run_id={_string_or_empty(summary.get('source_metric_evaluation_planning_run_id'))}; "
+        f"source_metric_evaluation_status={_string_or_empty(summary.get('source_metric_evaluation_status'))}; "
+        f"source_metric_evaluation_health_status={_string_or_empty(summary.get('source_metric_evaluation_health_status'))}; "
+        f"source_training_evaluation_run_id={_string_or_empty(summary.get('source_training_evaluation_run_id'))}; "
+        f"source_training_evaluation_status={_string_or_empty(summary.get('source_training_evaluation_status'))}; "
+        f"source_training_evaluation_health_status={_string_or_empty(summary.get('source_training_evaluation_health_status'))}; "
+        f"source_forward_return_label_run_id={_string_or_empty(summary.get('source_forward_return_label_run_id'))}; "
+        f"source_replay_decision_freeze_run_id={_string_or_empty(summary.get('source_replay_decision_freeze_run_id'))}; "
+        f"allowed_metric_set={_note_safe_text(summary.get('allowed_metric_set'))}; "
+        f"requested_metric_set={_note_safe_text(summary.get('requested_metric_set'))}; "
+        f"unsupported_metrics_requested={_string_or_empty(summary.get('unsupported_metrics_requested'))}; "
+        f"sample_row_count={_string_or_empty(summary.get('sample_row_count'))}; "
+        f"eligible_sample_count={_string_or_empty(summary.get('eligible_sample_count'))}; "
+        f"quarantined_sample_count={_string_or_empty(summary.get('quarantined_sample_count'))}; "
+        f"label_coverage_numerator={_string_or_empty(summary.get('label_coverage_numerator'))}; "
+        f"label_coverage_denominator={_string_or_empty(summary.get('label_coverage_denominator'))}; "
+        f"ready_for_metric_computation={_string_or_empty(summary.get('ready_for_metric_computation'))}; "
+        f"metric_computation_executed={_string_or_empty(summary.get('metric_computation_executed'))}; "
+        f"metric_computation_report_created={_string_or_empty(summary.get('metric_computation_report_created'))}; "
+        f"metric_result_rows_created={_string_or_empty(summary.get('metric_result_rows_created'))}; "
+        f"metric_summary_created={_string_or_empty(summary.get('metric_summary_created'))}; "
+        f"metrics_computed={_string_or_empty(summary.get('metrics_computed'))}; "
+        f"metric_names_present={_note_safe_text(summary.get('metric_names_present'))}; "
+        f"result_row_count={_string_or_empty(summary.get('result_row_count'))}; "
+        f"summary_row_count={_string_or_empty(summary.get('summary_row_count'))}; "
+        f"training_allowed={_string_or_empty(summary.get('training_allowed'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"training_result_created={_string_or_empty(summary.get('training_result_created'))}; "
+        f"model_version_created={_string_or_empty(summary.get('model_version_created'))}; "
+        f"thresholds_optimized={_string_or_empty(summary.get('thresholds_optimized'))}; "
+        f"predictions_created={_string_or_empty(summary.get('predictions_created'))}; "
+        f"calibrated_probabilities_created={_string_or_empty(summary.get('calibrated_probabilities_created'))}; "
+        f"feature_importance_created={_string_or_empty(summary.get('feature_importance_created'))}; "
+        f"stock_profile_allowed={_string_or_empty(summary.get('stock_profile_allowed'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"stock_profile_created={_string_or_empty(summary.get('stock_profile_created'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
+        f"strategy_performance_validated={_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
 def _scan_active_replay_input_ready_status(root: Path) -> list[dict[str, Any]]:
     active_ready_root = root.parent if root.name == "status" else root
     if not active_ready_root.exists():
@@ -25546,6 +26107,14 @@ def _training_evaluation_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
 def _metric_evaluation_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "METRIC_EVALUATION_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _metric_computation_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "METRIC_COMPUTATION_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

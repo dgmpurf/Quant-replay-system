@@ -627,6 +627,22 @@ The workflow can report `NO_METRIC_EVALUATION_INPUT`, `READY_FOR_METRIC_EVALUATI
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; metric/evaluation fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims metric results, evaluation execution, training_result, weights, model_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
 
+## Metric Computation Status
+
+`research-status` includes `metric-computation-status` as report-only historical metric computation context when those artifacts exist.
+
+Use `metric-computation`, `metric-computation-index`, `metric-computation-health`, and `metric-computation-status` to create, discover, safety-check, and summarize bounded metric computation artifacts.
+
+The unified summary records the latest metric computation run id, status/stage, health status, source Metric / Evaluation Phase 1 lineage, requested and allowed metric sets, bounded sample counts, eligible/quarantined sample counts, label coverage numerator/denominator, result and summary row counts, report path, next action, and safety flags.
+
+The workflow can report `NO_METRIC_COMPUTATION_INPUT`, `READY_FOR_METRIC_COMPUTATION`, `METRIC_COMPUTATION_REPORT_CREATED`, or `METRIC_COMPUTATION_HEALTH_FAILED`. `READY_FOR_METRIC_COMPUTATION` means the gates are reviewable but explicit allow was not provided. `METRIC_COMPUTATION_REPORT_CREATED` means report-only historical metric artifacts were created with explicit allow for a bounded sample and allowed first metric set only.
+
+The allowed first metric set is `sample_count`, `label_coverage`, `average_return`, `median_return`, and `hit_rate`.
+
+`METRIC_COMPUTATION_REPORT_CREATED` is not strategy performance validation, not training_result, not weights, not model_version, not thresholds, not predictions, not calibrated probabilities, not feature importance, not stock_profile, not buy-review, not paper approval, and not trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; metric computation fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims unsupported metrics, training_result, weights, model_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.
