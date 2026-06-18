@@ -12,6 +12,26 @@ v1.47.0 adds Metric Computation Phase 1 research-status integration and checkpoi
 - Later paper workflow priority is preserved; `PAPER_WORKFLOW_READY` is not overridden by metric computation context.
 - Documentation now explains metric computation semantics and safety boundaries.
 
+## Validation State
+
+Known local dry-run status at checkpoint creation:
+
+- `metric-computation`: `NO_METRIC_COMPUTATION_INPUT`
+- latest dry-run id: `f8e1ff64e6aa`
+- `metric-computation-index`: artifact discovery works
+- `metric-computation-health`: `PASS`
+- `metric-computation-status`: `METRIC_COMPUTATION_NO_INPUT`
+- `research-status`: final workflow stage remains `PAPER_WORKFLOW_READY`
+
+The no-input path remains valid and report-only. The no-allow ready path is represented by `READY_FOR_METRIC_COMPUTATION`: required inputs may be reviewable, but no metric computation artifacts are created without explicit allow. The explicit-allow path is represented by `METRIC_COMPUTATION_REPORT_CREATED`: bounded report-only historical metric artifacts may exist in diagnostics.
+
+Validation completed for this checkpoint:
+
+- `tests/test_metric_computation.py`
+- related replay/training/evaluation/dashboard suites
+- `pytest -m "not slow"`
+- full `pytest`
+
 ## Safety Boundary
 
 Metric Computation Phase 1 is limited to the allowed first metric set: `sample_count`, `label_coverage`, `average_return`, `median_return`, and `hit_rate`.
