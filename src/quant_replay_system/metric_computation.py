@@ -583,7 +583,20 @@ def _metric_result_rows(run_id: str, state: dict[str, Any]) -> pd.DataFrame:
         "median_return": float(values.median()),
         "hit_rate": float((values > 0).sum() / numerator) if numerator else 0.0,
     }
-    return pd.DataFrame([{**base, "metric_name": metric, "metric_value": metric_values[metric], "numerator": numerator, "denominator": denominator} for metric in ALLOWED_METRIC_SET])
+    return pd.DataFrame(
+        [
+            {
+                **base,
+                "metric_name": metric,
+                "metric_value": metric_values[metric],
+                "numerator": numerator,
+                "denominator": denominator,
+                "numerator_count": numerator,
+                "denominator_count": denominator,
+            }
+            for metric in ALLOWED_METRIC_SET
+        ]
+    )
 
 
 def _summary_rows(result_rows: pd.DataFrame) -> pd.DataFrame:
@@ -596,6 +609,8 @@ def _summary_rows(result_rows: pd.DataFrame) -> pd.DataFrame:
             "metric_value",
             "numerator",
             "denominator",
+            "numerator_count",
+            "denominator_count",
             "source_metric_evaluation_planning_run_id",
             "source_training_evaluation_run_id",
             "report_only",
@@ -767,6 +782,8 @@ def _empty_artifact_frame(key: str) -> pd.DataFrame:
             "metric_value",
             "numerator",
             "denominator",
+            "numerator_count",
+            "denominator_count",
             "threshold_used",
             "source_metric_evaluation_planning_run_id",
             "source_training_evaluation_run_id",

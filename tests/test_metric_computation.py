@@ -30,8 +30,44 @@ from quant_replay_system.metric_computation import (
     MetricComputationSettings,
     run_metric_computation,
 )
+from quant_replay_system.metric_computation_health import check_metric_computation_health
+from quant_replay_system.metric_computation_index import build_metric_computation_index
+from quant_replay_system.metric_computation_status import run_metric_computation_status
 from quant_replay_system.metric_evaluation import run_metric_evaluation
 from test_metric_evaluation import _happy_settings as _metric_evaluation_happy_settings
+
+
+DOWNSTREAM_FALSE_FIELDS = [
+    "evaluation_execution_completed",
+    "training_allowed",
+    "weights_trained",
+    "training_result_created",
+    "model_version_created",
+    "thresholds_optimized",
+    "predictions_created",
+    "calibrated_probabilities_created",
+    "feature_importance_created",
+    "stock_profile_allowed",
+    "active_stock_profile_exists",
+    "stock_profile_created",
+    "buy_review_allowed",
+    "real_buy_review_eligible",
+    "approved_for_paper",
+    "strategy_performance_validated",
+    "trading_allowed",
+    "order_placed",
+    "broker_api_called",
+    "message_sent",
+    "llm_api_called",
+    "external_api_called",
+    "cache_mutated",
+    "data_raw_written",
+    "data_processed_written",
+    "data_cache_written",
+    "current_candidates_run",
+    "snapshot_built",
+    "signal_semantics_changed",
+]
 
 
 def test_no_input_writes_required_artifacts_with_safe_defaults(tmp_path: Path) -> None:
@@ -353,12 +389,13 @@ def test_cli_happy_path_with_allow_creates_report_only_result_rows(tmp_path: Pat
     assert "training_result_created: False" in completed.stdout
 
 
-def test_only_metric_computation_cli_is_added_for_this_phase() -> None:
+def test_metric_computation_artifact_view_cli_commands_are_added_without_research_status() -> None:
     help_text = _run_cli(["--help"]).stdout
     assert "metric-computation" in help_text
-    assert "metric-computation-index" not in help_text
-    assert "metric-computation-health" not in help_text
-    assert "metric-computation-status" not in help_text
+    assert "metric-computation-index" in help_text
+    assert "metric-computation-health" in help_text
+    assert "metric-computation-status" in help_text
+    assert "research-status metric-computation" not in help_text
 
 
 def test_no_research_status_checkpoint_or_project_source_integration_is_added() -> None:
@@ -366,6 +403,244 @@ def test_no_research_status_checkpoint_or_project_source_integration_is_added() 
     assert not Path("docs/project_sources").exists()
     dashboard_text = Path("docs/local_research_dashboard.md").read_text(encoding="utf-8")
     assert "metric-computation-status" not in dashboard_text
+
+
+def test_metric_computation_index_discovers_no_input_ready_and_report_created_artifacts(tmp_path: Path) -> None:
+    root, no_input, ready, created = _three_metric_computation_runs(tmp_path)
+
+    index = build_metric_computation_index(root=root, output_dir=root / "index")
+
+    assert index.artifact_count == 3
+    assert set(index.index_frame["metric_computation_run_id"]) == {
+        no_input.metric_computation_run_id,
+        ready.metric_computation_run_id,
+        created.metric_computation_run_id,
+    }
+    created_row = index.index_frame[index.index_frame["metric_computation_run_id"] == created.metric_computation_run_id].iloc[0]
+    assert created_row["status"] == METRIC_COMPUTATION_REPORT_CREATED
+    assert created_row["metric_names_present"] == ",".join(ALLOWED_METRIC_SET)
+    assert created_row["result_row_count"] == len(ALLOWED_METRIC_SET)
+    assert created_row["summary_row_count"] == len(ALLOWED_METRIC_SET)
+    assert created_row["metric_result_rows_created"] is True
+    assert created_row["metrics_computed"] is True
+    assert created_row["training_result_created"] is False
+    assert created_row["trading_allowed"] is False
+    assert index.artifact_paths["index_csv"].exists()
+
+
+def test_metric_computation_health_passes_for_valid_artifacts(tmp_path: Path) -> None:
+    root, *_ = _three_metric_computation_runs(tmp_path)
+
+    health = check_metric_computation_health(root=root, output_dir=root / "health")
+
+    assert health.status == "PASS"
+    assert health.error_count == 0
+    assert health.warning_count == 0
+    assert health.checked_artifact_count == 3
+    assert health.artifact_paths["health_csv"].exists()
+
+
+@pytest.mark.parametrize(
+    ("mutator", "expected_code"),
+    [
+        (lambda result: result.artifact_paths["result_rows"].unlink(), "REPORT_CREATED_WITHOUT_RESULT_ROWS"),
+        (lambda result: result.artifact_paths["summary"].unlink(), "REPORT_CREATED_WITHOUT_SUMMARY"),
+        (
+            lambda result: _patch_json(result.artifact_paths["metadata"], {"metrics_computed": False}),
+            "REPORT_CREATED_METRICS_COMPUTED_FALSE",
+        ),
+        (
+            lambda result: _patch_json(result.artifact_paths["metadata"], {"metric_result_rows_created": False}),
+            "REPORT_CREATED_RESULT_ROWS_FLAG_FALSE",
+        ),
+    ],
+)
+def test_metric_computation_health_fails_for_broken_report_created_artifacts(
+    tmp_path: Path,
+    mutator,
+    expected_code: str,
+) -> None:
+    created = run_metric_computation(replace(_happy_settings(tmp_path), allow_metric_computation=True))
+    mutator(created)
+
+    health = check_metric_computation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert expected_code in set(health.health_frame["issue_code"])
+
+
+def test_metric_computation_health_fails_if_result_rows_exist_without_report_created_status(tmp_path: Path) -> None:
+    ready = run_metric_computation(_happy_settings(tmp_path))
+    pd.DataFrame(
+        [
+            {
+                "metric_computation_run_id": ready.metric_computation_run_id,
+                "metric_name": "sample_count",
+                "metric_value": 1,
+                "numerator_count": 1,
+                "denominator_count": 1,
+                "source_metric_evaluation_planning_run_id": "metric_eval",
+                "source_training_evaluation_run_id": "train_eval",
+                "report_only": True,
+                "diagnostic_only": True,
+            }
+        ]
+    ).to_csv(ready.artifact_paths["result_rows"], index=False)
+
+    health = check_metric_computation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert "RESULT_ROWS_WITHOUT_REPORT_CREATED_STATUS" in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("column_patch", "expected_code"),
+    [
+        ({"metric_name": "benchmark_relative_return"}, "UNSUPPORTED_METRIC_NAME"),
+        ({"source_metric_evaluation_planning_run_id": ""}, "RESULT_ROW_LINEAGE_MISSING"),
+        ({"source_training_evaluation_run_id": ""}, "RESULT_ROW_LINEAGE_MISSING"),
+        ({"numerator_count": None}, "RESULT_ROW_NUMERATOR_DENOMINATOR_MISSING"),
+        ({"denominator_count": None}, "RESULT_ROW_NUMERATOR_DENOMINATOR_MISSING"),
+        ({"report_only": False}, "RESULT_ROW_REPORT_FLAGS_MISSING"),
+        ({"diagnostic_only": False}, "RESULT_ROW_REPORT_FLAGS_MISSING"),
+    ],
+)
+def test_metric_computation_health_fails_for_invalid_result_rows(
+    tmp_path: Path,
+    column_patch: dict[str, object],
+    expected_code: str,
+) -> None:
+    created = run_metric_computation(replace(_happy_settings(tmp_path), allow_metric_computation=True))
+    rows = pd.read_csv(created.artifact_paths["result_rows"], dtype={"symbol": "string"})
+    for column, value in column_patch.items():
+        rows.loc[0, column] = value
+    rows.to_csv(created.artifact_paths["result_rows"], index=False)
+
+    health = check_metric_computation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert expected_code in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    "forbidden_column",
+    [
+        "training_result",
+        "model_weight",
+        "model_version",
+        "threshold_optimized",
+        "prediction",
+        "calibrated_probability",
+        "feature_importance",
+        "stock_profile_status",
+        "real_buy_review_eligible",
+        "approved_for_paper",
+        "strategy_performance_validated",
+        "order_id",
+        "broker_order_id",
+        "trade_id",
+    ],
+)
+def test_metric_computation_health_fails_for_forbidden_result_row_columns(tmp_path: Path, forbidden_column: str) -> None:
+    created = run_metric_computation(replace(_happy_settings(tmp_path), allow_metric_computation=True))
+    rows = pd.read_csv(created.artifact_paths["result_rows"], dtype={"symbol": "string"})
+    rows[forbidden_column] = ""
+    rows.to_csv(created.artifact_paths["result_rows"], index=False)
+
+    health = check_metric_computation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert "RESULT_ROW_FORBIDDEN_COLUMNS" in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize("field", DOWNSTREAM_FALSE_FIELDS)
+def test_metric_computation_health_fails_for_unsafe_metadata_flags(tmp_path: Path, field: str) -> None:
+    created = run_metric_computation(replace(_happy_settings(tmp_path), allow_metric_computation=True))
+    _patch_json(created.artifact_paths["metadata"], {field: True})
+
+    health = check_metric_computation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert f"{field.upper()}_UNEXPECTED" in set(health.health_frame["issue_code"])
+
+
+def test_metric_computation_health_fails_for_overclaim_report_wording(tmp_path: Path) -> None:
+    created = run_metric_computation(replace(_happy_settings(tmp_path), allow_metric_computation=True))
+    created.artifact_paths["report"].write_text("This artifact grants trading permission and validates profitability.", encoding="utf-8")
+
+    health = check_metric_computation_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert "REPORT_OVERCLAIM_WORDING" in set(health.health_frame["issue_code"])
+
+
+def test_metric_computation_status_reports_no_input_ready_and_report_created_states(tmp_path: Path) -> None:
+    root, no_input, ready, created = _three_metric_computation_runs(tmp_path)
+
+    latest_status = run_metric_computation_status(root=root, output_dir=root / "status")
+
+    assert latest_status.latest_metric_computation_run_id == created.metric_computation_run_id
+    assert latest_status.status == METRIC_COMPUTATION_REPORT_CREATED
+    assert latest_status.health_status == "PASS"
+    assert latest_status.workflow_stage == METRIC_COMPUTATION_REPORT_CREATED
+    assert latest_status.metric_names_present == ",".join(ALLOWED_METRIC_SET)
+    assert latest_status.result_row_count == len(ALLOWED_METRIC_SET)
+    assert latest_status.metrics_computed is True
+    assert latest_status.training_result_created is False
+    assert latest_status.weights_trained is False
+    assert latest_status.model_version_created is False
+    assert latest_status.stock_profile_created is False
+    assert latest_status.trading_allowed is False
+    assert "report-only historical metric computation only" in latest_status.safety_statement
+    assert "bounded sample" in latest_status.safety_statement
+    assert "not strategy validation" in latest_status.safety_statement
+    assert "not training_result" in latest_status.safety_statement
+    assert "not weights" in latest_status.safety_statement
+    assert "not model_version" in latest_status.safety_statement
+    assert "not thresholds" in latest_status.safety_statement
+    assert "not predictions" in latest_status.safety_statement
+    assert "not stock_profile" in latest_status.safety_statement
+    assert "not buy-review" in latest_status.safety_statement
+    assert "not paper approval" in latest_status.safety_statement
+    assert "not performance validation" in latest_status.safety_statement
+    assert "not trading" in latest_status.safety_statement
+
+    no_input_status = run_metric_computation_status(root=no_input.artifact_paths["artifact_dir"].parent, output_dir=root / "status_no_input")
+    assert no_input_status.latest_metric_computation_run_id in {
+        no_input.metric_computation_run_id,
+        ready.metric_computation_run_id,
+        created.metric_computation_run_id,
+    }
+
+
+def test_metric_computation_status_handles_no_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+
+    status = run_metric_computation_status(root=root, output_dir=root / "status")
+
+    assert status.latest_metric_computation_run_id == ""
+    assert status.health_status == "FAIL"
+    assert status.workflow_stage == "NO_METRIC_COMPUTATION_ARTIFACT_FOUND"
+    assert status.metrics_computed is False
+    assert status.metric_result_rows_created is False
+    assert status.training_allowed is False
+    assert status.trading_allowed is False
+
+
+def test_metric_computation_artifact_view_cli_commands_work(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_metric_computation(replace(_happy_settings(tmp_path), allow_metric_computation=True))
+
+    index = _run_cli(["metric-computation-index", "--root", str(root), "--output-dir", str(root / "index")])
+    health = _run_cli(["metric-computation-health", "--root", str(root), "--output-dir", str(root / "health")])
+    status = _run_cli(["metric-computation-status", "--root", str(root), "--output-dir", str(root / "status")])
+
+    assert "artifact_count: 1" in index.stdout
+    assert "status: PASS" in health.stdout
+    assert "workflow_stage: METRIC_COMPUTATION_REPORT_CREATED" in status.stdout
+    assert "metrics_computed: True" in status.stdout
+    assert "training_result_created: False" in status.stdout
+    assert "trading_allowed: False" in status.stdout
 
 
 def _happy_settings(tmp_path: Path) -> MetricComputationSettings:
@@ -408,6 +683,14 @@ def _happy_settings(tmp_path: Path) -> MetricComputationSettings:
         side_effect_evidence_bundle_path=_write_json(root / "side_effect.json", _safe_flags()),
         output_dir=_output_dir(tmp_path),
     )
+
+
+def _three_metric_computation_runs(tmp_path: Path):
+    root = _output_dir(tmp_path)
+    no_input = run_metric_computation(MetricComputationSettings(output_dir=root))
+    ready = run_metric_computation(replace(_happy_settings(tmp_path / "ready_fixture"), output_dir=root))
+    created = run_metric_computation(replace(_happy_settings(tmp_path / "created_fixture"), output_dir=root, allow_metric_computation=True))
+    return root, no_input, ready, created
 
 
 def _training_metadata(training_dir: Path) -> dict[str, object]:
@@ -497,37 +780,7 @@ def _overclaim_flags() -> dict[str, object]:
 
 
 def _downstream_false_fields() -> list[str]:
-    return [
-        "evaluation_execution_completed",
-        "training_allowed",
-        "weights_trained",
-        "training_result_created",
-        "model_version_created",
-        "thresholds_optimized",
-        "predictions_created",
-        "calibrated_probabilities_created",
-        "feature_importance_created",
-        "stock_profile_allowed",
-        "active_stock_profile_exists",
-        "stock_profile_created",
-        "buy_review_allowed",
-        "real_buy_review_eligible",
-        "approved_for_paper",
-        "strategy_performance_validated",
-        "trading_allowed",
-        "order_placed",
-        "broker_api_called",
-        "message_sent",
-        "llm_api_called",
-        "external_api_called",
-        "cache_mutated",
-        "data_raw_written",
-        "data_processed_written",
-        "data_cache_written",
-        "current_candidates_run",
-        "snapshot_built",
-        "signal_semantics_changed",
-    ]
+    return list(DOWNSTREAM_FALSE_FIELDS)
 
 
 def _required_artifact_keys() -> list[str]:
