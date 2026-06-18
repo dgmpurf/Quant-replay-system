@@ -334,6 +334,13 @@ from quant_replay_system.metric_computation import (
     MetricComputationSettings,
     run_metric_computation,
 )
+from quant_replay_system.metric_extension import (
+    MetricExtensionSettings,
+    run_metric_extension,
+)
+from quant_replay_system.metric_extension_health import check_metric_extension_health
+from quant_replay_system.metric_extension_index import build_metric_extension_index
+from quant_replay_system.metric_extension_status import run_metric_extension_status
 from quant_replay_system.metric_computation_health import check_metric_computation_health
 from quant_replay_system.metric_computation_index import build_metric_computation_index
 from quant_replay_system.metric_computation_status import run_metric_computation_status
@@ -3377,6 +3384,105 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only metric computation artifacts will be written",
     )
     metric_computation.set_defaults(handler=_handle_metric_computation)
+
+    metric_extension = subparsers.add_parser(
+        "metric-extension",
+        help="Create report-only metric extension phase 1 diagnostics",
+    )
+    metric_extension.add_argument("--approval-manifest-path", default=None)
+    metric_extension.add_argument("--metric-extension-request-manifest-path", default=None)
+    metric_extension.add_argument("--metric-computation-metadata-path", default=None)
+    metric_extension.add_argument("--metric-computation-result-rows-path", default=None)
+    metric_extension.add_argument("--metric-computation-summary-path", default=None)
+    metric_extension.add_argument("--metric-computation-safety-flags-path", default=None)
+    metric_extension.add_argument("--metric-computation-status-artifact-path", default=None)
+    metric_extension.add_argument("--metric-computation-health-artifact-path", default=None)
+    metric_extension.add_argument("--metric-evaluation-metadata-path", default=None)
+    metric_extension.add_argument("--metric-evaluation-input-index-path", default=None)
+    metric_extension.add_argument("--metric-evaluation-sample-scope-path", default=None)
+    metric_extension.add_argument("--metric-evaluation-denominator-rules-path", default=None)
+    metric_extension.add_argument("--metric-evaluation-safety-flags-path", default=None)
+    metric_extension.add_argument("--metric-evaluation-status-artifact-path", default=None)
+    metric_extension.add_argument("--metric-evaluation-health-artifact-path", default=None)
+    metric_extension.add_argument("--training-evaluation-metadata-path", default=None)
+    metric_extension.add_argument("--training-evaluation-sample-rows-path", default=None)
+    metric_extension.add_argument("--training-evaluation-safety-flags-path", default=None)
+    metric_extension.add_argument("--training-evaluation-status-artifact-path", default=None)
+    metric_extension.add_argument("--training-evaluation-health-artifact-path", default=None)
+    metric_extension.add_argument("--forward-return-label-metadata-path", default=None)
+    metric_extension.add_argument("--forward-return-label-rows-path", default=None)
+    metric_extension.add_argument("--forward-return-label-status-artifact-path", default=None)
+    metric_extension.add_argument("--forward-return-label-health-artifact-path", default=None)
+    metric_extension.add_argument("--replay-decision-freeze-metadata-path", default=None)
+    metric_extension.add_argument("--replay-decision-freeze-rows-path", default=None)
+    metric_extension.add_argument("--replay-decision-freeze-status-artifact-path", default=None)
+    metric_extension.add_argument("--replay-decision-freeze-health-artifact-path", default=None)
+    metric_extension.add_argument("--benchmark-mapping-path", default=None)
+    metric_extension.add_argument("--industry-mapping-path", default=None)
+    metric_extension.add_argument("--benchmark-return-rows-path", default=None)
+    metric_extension.add_argument("--industry-return-rows-path", default=None)
+    metric_extension.add_argument("--leakage-evidence-bundle-path", default=None)
+    metric_extension.add_argument("--overclaim-evidence-bundle-path", default=None)
+    metric_extension.add_argument("--side-effect-evidence-bundle-path", default=None)
+    metric_extension.add_argument(
+        "--allow-metric-extension",
+        action="store_true",
+        help="Explicitly allow report-only benchmark/industry relative metric extension when all gates pass",
+    )
+    metric_extension.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/metric_extension_v0_1",
+        help="Directory where report-only metric extension artifacts will be written",
+    )
+    metric_extension.set_defaults(handler=_handle_metric_extension)
+
+    metric_extension_index = subparsers.add_parser(
+        "metric-extension-index",
+        help="Index report-only metric extension phase 1 artifacts",
+    )
+    metric_extension_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/metric_extension_v0_1",
+        help="Metric extension artifact root to index",
+    )
+    metric_extension_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/metric_extension_v0_1/index",
+        help="Directory where metric extension index artifacts will be written",
+    )
+    metric_extension_index.set_defaults(handler=_handle_metric_extension_index)
+
+    metric_extension_health = subparsers.add_parser(
+        "metric-extension-health",
+        help="Health-check report-only metric extension phase 1 artifacts",
+    )
+    metric_extension_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/metric_extension_v0_1",
+        help="Metric extension artifact root to health-check",
+    )
+    metric_extension_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/metric_extension_v0_1/health",
+        help="Directory where metric extension health artifacts will be written",
+    )
+    metric_extension_health.set_defaults(handler=_handle_metric_extension_health)
+
+    metric_extension_status = subparsers.add_parser(
+        "metric-extension-status",
+        help="Summarize latest report-only metric extension phase 1 artifact status",
+    )
+    metric_extension_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/metric_extension_v0_1",
+        help="Metric extension artifact root to summarize",
+    )
+    metric_extension_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/metric_extension_v0_1/status",
+        help="Directory where metric extension status artifacts will be written",
+    )
+    metric_extension_status.set_defaults(handler=_handle_metric_extension_status)
 
     metric_computation_index = subparsers.add_parser(
         "metric-computation-index",
@@ -9495,6 +9601,238 @@ def _handle_metric_computation(args: argparse.Namespace) -> int:
     print(f"source_metric_evaluation_planning_run_id: {result.source_metric_evaluation_planning_run_id}")
     print(f"source_training_evaluation_run_id: {result.source_training_evaluation_run_id}")
     print(f"evaluation_execution_completed: {result.evaluation_execution_completed}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
+    return 0
+
+
+def _handle_metric_extension(args: argparse.Namespace) -> int:
+    result = run_metric_extension(
+        MetricExtensionSettings(
+            approval_manifest_path=Path(args.approval_manifest_path) if args.approval_manifest_path else None,
+            metric_extension_request_manifest_path=Path(args.metric_extension_request_manifest_path)
+            if args.metric_extension_request_manifest_path
+            else None,
+            metric_computation_metadata_path=Path(args.metric_computation_metadata_path)
+            if args.metric_computation_metadata_path
+            else None,
+            metric_computation_result_rows_path=Path(args.metric_computation_result_rows_path)
+            if args.metric_computation_result_rows_path
+            else None,
+            metric_computation_summary_path=Path(args.metric_computation_summary_path)
+            if args.metric_computation_summary_path
+            else None,
+            metric_computation_safety_flags_path=Path(args.metric_computation_safety_flags_path)
+            if args.metric_computation_safety_flags_path
+            else None,
+            metric_computation_status_artifact_path=Path(args.metric_computation_status_artifact_path)
+            if args.metric_computation_status_artifact_path
+            else None,
+            metric_computation_health_artifact_path=Path(args.metric_computation_health_artifact_path)
+            if args.metric_computation_health_artifact_path
+            else None,
+            metric_evaluation_metadata_path=Path(args.metric_evaluation_metadata_path)
+            if args.metric_evaluation_metadata_path
+            else None,
+            metric_evaluation_input_index_path=Path(args.metric_evaluation_input_index_path)
+            if args.metric_evaluation_input_index_path
+            else None,
+            metric_evaluation_sample_scope_path=Path(args.metric_evaluation_sample_scope_path)
+            if args.metric_evaluation_sample_scope_path
+            else None,
+            metric_evaluation_denominator_rules_path=Path(args.metric_evaluation_denominator_rules_path)
+            if args.metric_evaluation_denominator_rules_path
+            else None,
+            metric_evaluation_safety_flags_path=Path(args.metric_evaluation_safety_flags_path)
+            if args.metric_evaluation_safety_flags_path
+            else None,
+            metric_evaluation_status_artifact_path=Path(args.metric_evaluation_status_artifact_path)
+            if args.metric_evaluation_status_artifact_path
+            else None,
+            metric_evaluation_health_artifact_path=Path(args.metric_evaluation_health_artifact_path)
+            if args.metric_evaluation_health_artifact_path
+            else None,
+            training_evaluation_metadata_path=Path(args.training_evaluation_metadata_path)
+            if args.training_evaluation_metadata_path
+            else None,
+            training_evaluation_sample_rows_path=Path(args.training_evaluation_sample_rows_path)
+            if args.training_evaluation_sample_rows_path
+            else None,
+            training_evaluation_safety_flags_path=Path(args.training_evaluation_safety_flags_path)
+            if args.training_evaluation_safety_flags_path
+            else None,
+            training_evaluation_status_artifact_path=Path(args.training_evaluation_status_artifact_path)
+            if args.training_evaluation_status_artifact_path
+            else None,
+            training_evaluation_health_artifact_path=Path(args.training_evaluation_health_artifact_path)
+            if args.training_evaluation_health_artifact_path
+            else None,
+            forward_return_label_metadata_path=Path(args.forward_return_label_metadata_path)
+            if args.forward_return_label_metadata_path
+            else None,
+            forward_return_label_rows_path=Path(args.forward_return_label_rows_path)
+            if args.forward_return_label_rows_path
+            else None,
+            forward_return_label_status_artifact_path=Path(args.forward_return_label_status_artifact_path)
+            if args.forward_return_label_status_artifact_path
+            else None,
+            forward_return_label_health_artifact_path=Path(args.forward_return_label_health_artifact_path)
+            if args.forward_return_label_health_artifact_path
+            else None,
+            replay_decision_freeze_metadata_path=Path(args.replay_decision_freeze_metadata_path)
+            if args.replay_decision_freeze_metadata_path
+            else None,
+            replay_decision_freeze_rows_path=Path(args.replay_decision_freeze_rows_path)
+            if args.replay_decision_freeze_rows_path
+            else None,
+            replay_decision_freeze_status_artifact_path=Path(args.replay_decision_freeze_status_artifact_path)
+            if args.replay_decision_freeze_status_artifact_path
+            else None,
+            replay_decision_freeze_health_artifact_path=Path(args.replay_decision_freeze_health_artifact_path)
+            if args.replay_decision_freeze_health_artifact_path
+            else None,
+            benchmark_mapping_path=Path(args.benchmark_mapping_path) if args.benchmark_mapping_path else None,
+            industry_mapping_path=Path(args.industry_mapping_path) if args.industry_mapping_path else None,
+            benchmark_return_rows_path=Path(args.benchmark_return_rows_path)
+            if args.benchmark_return_rows_path
+            else None,
+            industry_return_rows_path=Path(args.industry_return_rows_path)
+            if args.industry_return_rows_path
+            else None,
+            leakage_evidence_bundle_path=Path(args.leakage_evidence_bundle_path)
+            if args.leakage_evidence_bundle_path
+            else None,
+            overclaim_evidence_bundle_path=Path(args.overclaim_evidence_bundle_path)
+            if args.overclaim_evidence_bundle_path
+            else None,
+            side_effect_evidence_bundle_path=Path(args.side_effect_evidence_bundle_path)
+            if args.side_effect_evidence_bundle_path
+            else None,
+            output_dir=Path(args.output_dir),
+            allow_metric_extension=args.allow_metric_extension,
+        )
+    )
+    print(f"metric_extension_run_id: {result.metric_extension_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_metric_extension: {result.ready_for_metric_extension}")
+    print(f"metric_extension_executed: {result.metric_extension_executed}")
+    print(f"metric_extension_report_created: {result.metric_extension_report_created}")
+    print(f"extended_metric_result_rows_created: {result.extended_metric_result_rows_created}")
+    print(f"extended_metric_summary_created: {result.extended_metric_summary_created}")
+    print(f"extended_metrics_computed: {result.extended_metrics_computed}")
+    print(f"allowed_extension_metric_set: {result.allowed_extension_metric_set}")
+    print(f"requested_extension_metric_set: {result.requested_extension_metric_set}")
+    print(f"unsupported_metrics_requested: {result.unsupported_metrics_requested}")
+    print(f"sample_row_count: {result.sample_row_count}")
+    print(f"eligible_sample_count: {result.eligible_sample_count}")
+    print(f"quarantined_sample_count: {result.quarantined_sample_count}")
+    print(f"benchmark_mapping_row_count: {result.benchmark_mapping_row_count}")
+    print(f"industry_mapping_row_count: {result.industry_mapping_row_count}")
+    print(f"benchmark_denominator_count: {result.benchmark_denominator_count}")
+    print(f"industry_denominator_count: {result.industry_denominator_count}")
+    print(f"benchmark_relative_return_created: {result.benchmark_relative_return_created}")
+    print(f"industry_relative_return_created: {result.industry_relative_return_created}")
+    print(f"training_allowed: {result.training_allowed}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(result.safety_statement)
+    return 0
+
+
+def _handle_metric_extension_index(args: argparse.Namespace) -> int:
+    result = build_metric_extension_index(root=args.root, output_dir=args.output_dir)
+    print(f"Metric extension index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Metric extension phase 1 index is report-only benchmark/industry relative metric computation only. "
+        "METRIC_EXTENSION_REPORT_CREATED is not strategy validation, not training_result, not weights, "
+        "not model_version, not thresholds, not predictions, not stock_profile, not buy-review, "
+        "not paper approval, not performance validation, and not trading."
+    )
+    return 0
+
+
+def _handle_metric_extension_health(args: argparse.Namespace) -> int:
+    result = check_metric_extension_health(root=args.root, output_dir=args.output_dir)
+    print(f"Metric extension health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Metric extension phase 1 health keeps artifacts report-only and fails if they imply "
+        "advanced/path/cost metrics, training_result, weights, model_version, thresholds, predictions, "
+        "calibrated probabilities, feature importance, stock_profile, buy-review, paper approval, "
+        "performance validation, broker/order/message/API/cache/data side effects, snapshots, "
+        "current-candidates, signal semantics mutation, or trading."
+    )
+    return 0
+
+
+def _handle_metric_extension_status(args: argparse.Namespace) -> int:
+    result = run_metric_extension_status(root=args.root, output_dir=args.output_dir)
+    print(f"Metric extension status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_metric_extension_run_id: {result.latest_metric_extension_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_metric_extension: {result.ready_for_metric_extension}")
+    print(f"metric_extension_executed: {result.metric_extension_executed}")
+    print(f"metric_extension_report_created: {result.metric_extension_report_created}")
+    print(f"extended_metric_result_rows_created: {result.extended_metric_result_rows_created}")
+    print(f"extended_metric_summary_created: {result.extended_metric_summary_created}")
+    print(f"extended_metrics_computed: {result.extended_metrics_computed}")
+    print(f"allowed_extension_metric_set: {result.allowed_extension_metric_set}")
+    print(f"requested_extension_metric_set: {result.requested_extension_metric_set}")
+    print(f"unsupported_metrics_requested: {result.unsupported_metrics_requested}")
+    print(f"sample_row_count: {result.sample_row_count}")
+    print(f"eligible_sample_count: {result.eligible_sample_count}")
+    print(f"quarantined_sample_count: {result.quarantined_sample_count}")
+    print(f"benchmark_mapping_row_count: {result.benchmark_mapping_row_count}")
+    print(f"industry_mapping_row_count: {result.industry_mapping_row_count}")
+    print(f"benchmark_denominator_count: {result.benchmark_denominator_count}")
+    print(f"industry_denominator_count: {result.industry_denominator_count}")
+    print(f"benchmark_relative_return_created: {result.benchmark_relative_return_created}")
+    print(f"industry_relative_return_created: {result.industry_relative_return_created}")
+    print(f"metric_names_present: {result.metric_names_present}")
+    print(f"result_row_count: {result.result_row_count}")
+    print(f"summary_row_count: {result.summary_row_count}")
     print(f"training_allowed: {result.training_allowed}")
     print(f"weights_trained: {result.weights_trained}")
     print(f"training_result_created: {result.training_result_created}")

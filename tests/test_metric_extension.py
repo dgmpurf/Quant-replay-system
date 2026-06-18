@@ -36,6 +36,9 @@ from quant_replay_system.metric_extension import (
     MetricExtensionSettings,
     run_metric_extension,
 )
+from quant_replay_system.metric_extension_health import check_metric_extension_health
+from quant_replay_system.metric_extension_index import build_metric_extension_index
+from quant_replay_system.metric_extension_status import run_metric_extension_status
 
 
 DOWNSTREAM_FALSE_FIELDS = [
@@ -420,14 +423,180 @@ def test_cli_no_input_and_happy_paths(tmp_path: Path) -> None:
     assert "training_result_created: False" in allow.stdout
 
 
-def test_only_metric_extension_cli_command_is_added_for_this_phase() -> None:
+def test_metric_extension_artifact_view_cli_commands_are_added_for_this_phase() -> None:
     help_text = _run_cli(["--help"]).stdout
     assert "metric-extension" in help_text
-    assert "metric-extension-index" not in help_text
-    assert "metric-extension-health" not in help_text
-    assert "metric-extension-status" not in help_text
+    assert "metric-extension-index" in help_text
+    assert "metric-extension-health" in help_text
+    assert "metric-extension-status" in help_text
     assert not Path("docs/project_sources").exists()
     assert not Path("docs/release_checkpoint_v1.48.0.md").exists()
+
+
+def test_metric_extension_index_discovers_no_input_ready_and_report_created_artifacts(tmp_path: Path) -> None:
+    no_input, ready, created = _three_metric_extension_runs(tmp_path)
+
+    index = build_metric_extension_index(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "index")
+
+    assert index.artifact_count == 3
+    rows = {row["metric_extension_run_id"]: row for row in index.index_frame.to_dict("records")}
+    assert rows[no_input.metric_extension_run_id]["status"] == NO_METRIC_EXTENSION_INPUT
+    assert rows[ready.metric_extension_run_id]["status"] == READY_FOR_METRIC_EXTENSION
+    created_row = rows[created.metric_extension_run_id]
+    assert created_row["status"] == METRIC_EXTENSION_REPORT_CREATED
+    assert created_row["source_metric_computation_run_id"] == "metric_comp_ext"
+    assert created_row["source_metric_evaluation_planning_run_id"] == "metric_eval_ext"
+    assert created_row["source_training_evaluation_run_id"] == "train_eval_ext"
+    assert created_row["source_forward_return_label_run_id"] == "label_ext"
+    assert created_row["source_replay_decision_freeze_run_id"] == "freeze_ext"
+    assert created_row["sample_row_count"] == 3
+    assert created_row["eligible_sample_count"] == 3
+    assert created_row["benchmark_mapping_row_count"] == 3
+    assert created_row["industry_mapping_row_count"] == 3
+    assert created_row["benchmark_denominator_count"] == 3
+    assert created_row["industry_denominator_count"] == 3
+    assert bool(created_row["extended_metric_result_rows_created"]) is True
+    assert bool(created_row["extended_metric_summary_created"]) is True
+    assert bool(created_row["extended_metrics_computed"]) is True
+    assert bool(created_row["benchmark_relative_return_created"]) is True
+    assert bool(created_row["industry_relative_return_created"]) is True
+    assert set(created_row["metric_names_present"].split(",")) == set(ALLOWED_EXTENSION_METRIC_SET)
+    assert created_row["result_row_count"] == 6
+    assert created_row["summary_row_count"] == 2
+    for field in DOWNSTREAM_FALSE_FIELDS:
+        if field in created_row:
+            assert bool(created_row[field]) is False, field
+    for path_field in [
+        "input_index_path",
+        "metric_definitions_used_path",
+        "benchmark_mapping_used_path",
+        "industry_mapping_used_path",
+        "return_fields_used_path",
+        "sample_scope_used_path",
+        "denominator_rules_used_path",
+        "result_rows_path",
+        "summary_path",
+        "safety_flags_path",
+    ]:
+        assert Path(created_row[path_field]).exists(), path_field
+
+
+def test_metric_extension_health_passes_for_valid_no_input_ready_and_report_created_artifacts(tmp_path: Path) -> None:
+    _three_metric_extension_runs(tmp_path)
+
+    health = check_metric_extension_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "PASS"
+    assert health.checked_artifact_count == 3
+    assert health.error_count == 0
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_issue"),
+    [
+        ("clear_report_created_result_rows", "REPORT_CREATED_WITHOUT_RESULT_ROWS"),
+        ("clear_report_created_summary", "REPORT_CREATED_WITHOUT_SUMMARY"),
+        ("ready_with_result_rows", "RESULT_ROWS_WITHOUT_REPORT_CREATED_STATUS"),
+        ("report_created_computed_false", "REPORT_CREATED_EXTENDED_METRICS_COMPUTED_FALSE"),
+        ("allowed_set_unsupported", "ALLOWED_EXTENSION_METRIC_SET_UNSUPPORTED"),
+        ("unsupported_metric", "RESULT_ROW_UNSUPPORTED_METRIC_NAMES"),
+        ("path_metric", "RESULT_ROW_PATH_METRIC_NAMES"),
+        ("ic_metric", "RESULT_ROW_ANALYTIC_METRIC_NAMES"),
+        ("cost_metric", "RESULT_ROW_COST_TRADING_METRIC_NAMES"),
+        ("missing_lineage", "RESULT_ROW_LINEAGE_MISSING"),
+        ("missing_comparator_id", "RESULT_ROW_BENCHMARK_INDUSTRY_ID_MISSING"),
+        ("missing_counts", "RESULT_ROW_NUMERATOR_DENOMINATOR_MISSING"),
+        ("missing_report_flags", "RESULT_ROW_REPORT_FLAGS_MISSING"),
+        ("training_result_column", "RESULT_ROW_FORBIDDEN_COLUMNS"),
+        ("model_column", "RESULT_ROW_FORBIDDEN_COLUMNS"),
+        ("threshold_prediction_column", "RESULT_ROW_FORBIDDEN_COLUMNS"),
+        ("stock_profile_column", "RESULT_ROW_FORBIDDEN_COLUMNS"),
+        ("buy_review_column", "RESULT_ROW_FORBIDDEN_COLUMNS"),
+        ("paper_column", "RESULT_ROW_FORBIDDEN_COLUMNS"),
+        ("performance_column", "RESULT_ROW_FORBIDDEN_COLUMNS"),
+        ("trading_column", "RESULT_ROW_FORBIDDEN_COLUMNS"),
+        ("overclaim_report", "REPORT_OVERCLAIM_WORDING"),
+    ],
+)
+def test_metric_extension_health_fails_for_invalid_artifact_boundaries(
+    tmp_path: Path, mutation: str, expected_issue: str
+) -> None:
+    _, ready, created = _three_metric_extension_runs(tmp_path)
+    _mutate_metric_extension_artifact(ready, created, mutation)
+
+    health = check_metric_extension_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert expected_issue in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize("field", DOWNSTREAM_FALSE_FIELDS)
+def test_metric_extension_health_fails_for_downstream_or_side_effect_flags(tmp_path: Path, field: str) -> None:
+    _, _, created = _three_metric_extension_runs(tmp_path)
+    _patch_json(created.artifact_paths["metadata"], {field: True})
+    _patch_json(created.artifact_paths["safety_flags"], {field: True})
+
+    health = check_metric_extension_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert f"{field.upper()}_UNEXPECTED" in set(health.health_frame["issue_code"])
+
+
+def test_metric_extension_status_reports_no_input_ready_and_report_created_states(tmp_path: Path) -> None:
+    no_input = run_metric_extension(MetricExtensionSettings(output_dir=_output_dir(tmp_path)))
+    no_input_status = run_metric_extension_status(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "status_no_input")
+    assert no_input_status.latest_metric_extension_run_id == no_input.metric_extension_run_id
+    assert no_input_status.status == NO_METRIC_EXTENSION_INPUT
+    assert no_input_status.health_status == "PASS"
+    assert no_input_status.ready_for_metric_extension is False
+
+    ready = run_metric_extension(replace(_happy_settings(tmp_path / "ready_status"), output_dir=_output_dir(tmp_path)))
+    ready_status = run_metric_extension_status(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "status_ready")
+    assert ready_status.latest_metric_extension_run_id == ready.metric_extension_run_id
+    assert ready_status.status == READY_FOR_METRIC_EXTENSION
+    assert ready_status.ready_for_metric_extension is True
+    assert ready_status.extended_metrics_computed is False
+
+    created = run_metric_extension(replace(_happy_settings(tmp_path / "created_status"), output_dir=_output_dir(tmp_path), allow_metric_extension=True))
+    created_status = run_metric_extension_status(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "status_created")
+    assert created_status.latest_metric_extension_run_id == created.metric_extension_run_id
+    assert created_status.status == METRIC_EXTENSION_REPORT_CREATED
+    assert created_status.workflow_stage == METRIC_EXTENSION_REPORT_CREATED
+    assert created_status.health_status == "PASS"
+    assert created_status.metric_extension_report_created is True
+    assert created_status.result_row_count == 6
+    assert set(created_status.metric_names_present.split(",")) == set(ALLOWED_EXTENSION_METRIC_SET)
+    for phrase in [
+        "report-only",
+        "bounded sample",
+        "benchmark/industry relative",
+        "not strategy validation",
+        "not training_result",
+        "not weights",
+        "not model_version",
+        "not thresholds",
+        "not predictions/probabilities/feature importance",
+        "not stock_profile",
+        "not buy-review",
+        "not paper approval",
+        "not performance validation",
+        "not trading",
+    ]:
+        assert phrase in created_status.safety_statement
+
+
+def test_metric_extension_artifact_view_cli_commands_work(tmp_path: Path) -> None:
+    _three_metric_extension_runs(tmp_path)
+    root = _output_dir(tmp_path)
+
+    index = _run_cli(["metric-extension-index", "--root", str(root), "--output-dir", str(root / "index")])
+    health = _run_cli(["metric-extension-health", "--root", str(root), "--output-dir", str(root / "health")])
+    status = _run_cli(["metric-extension-status", "--root", str(root), "--output-dir", str(root / "status")])
+
+    assert "artifact_count: 3" in index.stdout
+    assert "status: PASS" in health.stdout
+    assert "latest_metric_extension_run_id:" in status.stdout
+    assert "METRIC_EXTENSION_REPORT_CREATED" in status.stdout
 
 
 def _happy_settings(tmp_path: Path) -> MetricExtensionSettings:
@@ -715,6 +884,83 @@ def _overclaim_flags() -> dict[str, object]:
         "metric_extension_not_performance_validation": True,
         "metric_extension_not_trading": True,
     }
+
+
+def _three_metric_extension_runs(tmp_path: Path):
+    no_input = run_metric_extension(MetricExtensionSettings(output_dir=_output_dir(tmp_path)))
+    ready = run_metric_extension(replace(_happy_settings(tmp_path / "ready"), output_dir=_output_dir(tmp_path)))
+    created = run_metric_extension(replace(_happy_settings(tmp_path / "created"), output_dir=_output_dir(tmp_path), allow_metric_extension=True))
+    return no_input, ready, created
+
+
+def _mutate_metric_extension_artifact(ready: object, created: object, mutation: str) -> None:
+    created_result_rows_path = created.artifact_paths["result_rows"]
+    created_summary_path = created.artifact_paths["summary"]
+    rows = pd.read_csv(created_result_rows_path, dtype={"symbol": "string"})
+
+    if mutation == "clear_report_created_result_rows":
+        pd.DataFrame(columns=rows.columns).to_csv(created_result_rows_path, index=False)
+    elif mutation == "clear_report_created_summary":
+        pd.DataFrame(columns=pd.read_csv(created_summary_path).columns).to_csv(created_summary_path, index=False)
+    elif mutation == "ready_with_result_rows":
+        rows.to_csv(ready.artifact_paths["result_rows"], index=False)
+    elif mutation == "report_created_computed_false":
+        _patch_json(created.artifact_paths["metadata"], {"extended_metrics_computed": False})
+        _patch_json(created.artifact_paths["safety_flags"], {"extended_metrics_computed": False})
+    elif mutation == "allowed_set_unsupported":
+        _patch_json(created.artifact_paths["metadata"], {"allowed_extension_metric_set": "benchmark_relative_return,max_drawdown"})
+    elif mutation == "unsupported_metric":
+        rows.loc[0, "metric_name"] = "unsupported_metric"
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "path_metric":
+        rows.loc[0, "metric_name"] = "max_drawdown"
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "ic_metric":
+        rows.loc[0, "metric_name"] = "information_coefficient"
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "cost_metric":
+        rows.loc[0, "metric_name"] = "turnover"
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "missing_lineage":
+        rows.loc[0, "source_metric_computation_run_id"] = ""
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "missing_comparator_id":
+        rows.loc[rows["metric_name"] == "benchmark_relative_return", "benchmark_id"] = ""
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "missing_counts":
+        rows.loc[0, "denominator_count"] = ""
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "missing_report_flags":
+        rows.loc[0, "report_only"] = False
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "training_result_column":
+        rows["training_result"] = "blocked"
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "model_column":
+        rows["model_version"] = "blocked"
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "threshold_prediction_column":
+        rows["prediction"] = 0.1
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "stock_profile_column":
+        rows["stock_profile_status"] = "blocked"
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "buy_review_column":
+        rows["real_buy_review_eligible"] = True
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "paper_column":
+        rows["approved_for_paper"] = True
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "performance_column":
+        rows["strategy_performance_validated"] = True
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "trading_column":
+        rows["order_id"] = "blocked"
+        rows.to_csv(created_result_rows_path, index=False)
+    elif mutation == "overclaim_report":
+        created.artifact_paths["report"].write_text("This report grants trading permission.", encoding="utf-8")
+    else:
+        raise AssertionError(f"Unknown mutation: {mutation}")
 
 
 def _required_artifact_keys() -> list[str]:
