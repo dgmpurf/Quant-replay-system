@@ -16293,6 +16293,119 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"metric_evaluation_report_path: {result.metric_evaluation_report_path}")
     print(f"metric_evaluation_next_action: {result.metric_evaluation_next_action}")
     print(
+        "training_result_planning_workflow_implemented: "
+        f"{result.training_result_planning_workflow_implemented}"
+    )
+    print(
+        "training_result_planning_views_implemented: "
+        f"{result.training_result_planning_views_implemented}"
+    )
+    print(
+        "latest_training_result_planning_run_id: "
+        f"{result.latest_training_result_planning_run_id}"
+    )
+    print(
+        "latest_training_result_planning_status: "
+        f"{result.latest_training_result_planning_status}"
+    )
+    print(
+        "latest_training_result_planning_health_status: "
+        f"{result.latest_training_result_planning_health_status}"
+    )
+    print(
+        "latest_training_result_planning_workflow_stage: "
+        f"{result.latest_training_result_planning_workflow_stage}"
+    )
+    print(
+        "training_result_planning_artifact_path: "
+        f"{result.training_result_planning_artifact_path}"
+    )
+    print(f"source_metric_extension_run_id: {result.source_metric_extension_run_id}")
+    print(f"source_metric_extension_status: {result.source_metric_extension_status}")
+    print(
+        "source_metric_extension_health_status: "
+        f"{result.source_metric_extension_health_status}"
+    )
+    print(f"source_metric_computation_run_id: {result.source_metric_computation_run_id}")
+    print(f"source_metric_computation_status: {result.source_metric_computation_status}")
+    print(
+        "source_metric_computation_health_status: "
+        f"{result.source_metric_computation_health_status}"
+    )
+    print(
+        "source_metric_evaluation_planning_run_id: "
+        f"{result.source_metric_evaluation_planning_run_id}"
+    )
+    print(f"source_metric_evaluation_status: {result.source_metric_evaluation_status}")
+    print(
+        "source_metric_evaluation_health_status: "
+        f"{result.source_metric_evaluation_health_status}"
+    )
+    print(f"source_training_evaluation_run_id: {result.source_training_evaluation_run_id}")
+    print(f"source_training_evaluation_status: {result.source_training_evaluation_status}")
+    print(
+        "source_training_evaluation_health_status: "
+        f"{result.source_training_evaluation_health_status}"
+    )
+    print(f"source_forward_return_label_run_id: {result.source_forward_return_label_run_id}")
+    print(f"source_forward_return_label_status: {result.source_forward_return_label_status}")
+    print(
+        "source_forward_return_label_health_status: "
+        f"{result.source_forward_return_label_health_status}"
+    )
+    print(f"source_replay_decision_freeze_run_id: {result.source_replay_decision_freeze_run_id}")
+    print(f"source_replay_decision_freeze_status: {result.source_replay_decision_freeze_status}")
+    print(
+        "source_replay_decision_freeze_health_status: "
+        f"{result.source_replay_decision_freeze_health_status}"
+    )
+    print(f"metric_evidence_names_present: {result.metric_evidence_names_present}")
+    print(f"metric_evidence_row_count: {result.metric_evidence_row_count}")
+    print(f"planning_input_row_count: {result.planning_input_row_count}")
+    print(f"eligible_planning_input_count: {result.eligible_planning_input_count}")
+    print(f"quarantined_planning_input_count: {result.quarantined_planning_input_count}")
+    print(f"model_scope_rows_created: {result.model_scope_rows_created}")
+    print(f"limitations_created: {result.limitations_created}")
+    print(f"overfit_warnings_created: {result.overfit_warnings_created}")
+    print(f"health_plan_created: {result.health_plan_created}")
+    print(f"status_plan_created: {result.status_plan_created}")
+    print(f"ready_for_training_result_planning: {result.ready_for_training_result_planning}")
+    print(f"training_result_planning_executed: {result.training_result_planning_executed}")
+    print(
+        "training_result_planning_artifacts_created: "
+        f"{result.training_result_planning_artifacts_created}"
+    )
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"parameter_version_created: {result.parameter_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"llm_api_called: {result.llm_api_called}")
+    print(f"external_api_called: {result.external_api_called}")
+    print(f"cache_mutated: {result.cache_mutated}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"training_result_planning_report_path: {result.training_result_planning_report_path}")
+    print(f"training_result_planning_next_action: {result.training_result_planning_next_action}")
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

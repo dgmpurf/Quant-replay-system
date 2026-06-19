@@ -655,6 +655,18 @@ The unified summary records the latest metric extension run id, status/stage, he
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; metric extension fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims unsupported metrics, training_result, weights, model_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
 
+## Training Result Planning Status
+
+`research-status` includes `training-result-planning-status` as report-only planning context when those artifacts exist.
+
+Use `training-result-planning`, `training-result-planning-index`, `training-result-planning-health`, and `training-result-planning-status` to create, discover, safety-check, and summarize Training Result Planning Phase 1 artifacts.
+
+The unified summary records the latest training result planning run id, status/stage, health status, source Metric Extension, Metric Computation, Metric / Evaluation Phase 1, Training / Evaluation Phase 1, Forward Return Label, and Replay Decision Freeze lineage, metric evidence names, planning input counts, model scope and limitation flags, report path, next action, and safety flags.
+
+`TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED` is report-only planning. It is not actual training_result, does not train weights, does not create model_version, does not create parameter_version, does not optimize thresholds, does not create predictions, does not create calibrated probabilities, does not create feature importance, does not create active stock profiles, does not create real buy-review eligibility, does not apply paper approval, does not claim strategy performance validation, and does not authorize trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; training result planning fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims training_result, weights, model_version, parameter_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

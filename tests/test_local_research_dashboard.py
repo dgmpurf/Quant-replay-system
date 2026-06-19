@@ -72,6 +72,11 @@ from test_forward_return_label import _happy_settings as _forward_return_label_h
 from test_replay_decision_freeze import _happy_settings as _replay_decision_freeze_happy_settings
 from test_training_evaluation import _happy_settings as _training_evaluation_happy_settings
 from test_metric_evaluation import _happy_settings as _metric_evaluation_happy_settings
+from test_training_result_planning import _happy_settings as _training_result_planning_happy_settings
+from quant_replay_system.training_result_planning import (
+    TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED,
+    run_training_result_planning,
+)
 
 
 DECISION_DATE = "2024-05-20"
@@ -4085,6 +4090,172 @@ def test_metric_evaluation_docs_checkpoint_and_source_note_are_safety_explicit()
         ]:
             assert phrase in text, f"{path}: {phrase}"
     assert not Path("docs/project_sources").exists()
+
+
+def test_research_status_includes_training_result_planning_context_and_safety_fields(
+    tmp_path: Path,
+) -> None:
+    planning = run_training_result_planning(
+        replace(_training_result_planning_happy_settings(tmp_path), allow_training_result_planning=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "TRAINING_RESULT_PLANNING_STATUS"].iloc[0]
+    summary = result.summary_frame.iloc[0].to_dict()
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED
+    assert row["workflow_area"] == "TRAINING_RESULT_PLANNING"
+    assert result.training_result_planning_workflow_implemented is True
+    assert result.training_result_planning_views_implemented is True
+    assert result.latest_training_result_planning_run_id == planning.training_result_planning_run_id
+    assert result.latest_training_result_planning_status == TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED
+    assert result.latest_training_result_planning_health_status == "PASS"
+    assert result.latest_training_result_planning_workflow_stage == TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED
+    assert result.training_result_planning_artifact_path.endswith(planning.training_result_planning_run_id)
+    assert result.source_metric_extension_run_id == "metric_ext_plan"
+    assert result.source_metric_extension_status == "METRIC_EXTENSION_REPORT_CREATED"
+    assert result.source_metric_extension_health_status == "PASS"
+    assert result.source_metric_computation_run_id == "metric_comp_plan"
+    assert result.source_metric_computation_status == "METRIC_COMPUTATION_REPORT_CREATED"
+    assert result.source_metric_computation_health_status == "PASS"
+    assert result.source_metric_evaluation_planning_run_id == "metric_eval_plan"
+    assert result.source_metric_evaluation_status == METRIC_EVALUATION_PLANNING_ARTIFACTS_CREATED
+    assert result.source_metric_evaluation_health_status == "PASS"
+    assert result.source_training_evaluation_run_id == "train_eval_plan"
+    assert result.source_training_evaluation_status == TRAINING_EVALUATION_DATASET_CREATED
+    assert result.source_training_evaluation_health_status == "PASS"
+    assert result.source_forward_return_label_run_id == "label_plan"
+    assert result.source_forward_return_label_status == FORWARD_RETURN_LABELS_CREATED
+    assert result.source_forward_return_label_health_status == "PASS"
+    assert result.source_replay_decision_freeze_run_id == "freeze_plan"
+    assert result.source_replay_decision_freeze_status == REPLAY_DECISION_FROZEN
+    assert result.source_replay_decision_freeze_health_status == "PASS"
+    assert "benchmark_relative_return" in result.metric_evidence_names_present
+    assert result.metric_evidence_row_count == planning.metric_evidence_row_count
+    assert result.planning_input_row_count == planning.planning_input_row_count
+    assert result.eligible_planning_input_count == planning.eligible_planning_input_count
+    assert result.quarantined_planning_input_count == planning.quarantined_planning_input_count
+    assert result.model_scope_rows_created is True
+    assert result.limitations_created is True
+    assert result.overfit_warnings_created is True
+    assert result.health_plan_created is True
+    assert result.status_plan_created is True
+    assert result.ready_for_training_result_planning is True
+    assert result.training_result_planning_executed is True
+    assert result.training_result_planning_artifacts_created is True
+    assert result.training_result_created is False
+    assert result.weights_trained is False
+    assert result.model_version_created is False
+    assert result.parameter_version_created is False
+    assert result.thresholds_optimized is False
+    assert result.predictions_created is False
+    assert result.calibrated_probabilities_created is False
+    assert result.feature_importance_created is False
+    assert result.stock_profile_allowed is False
+    assert result.active_stock_profile_exists is False
+    assert result.stock_profile_created is False
+    assert result.buy_review_allowed is False
+    assert result.real_buy_review_eligible is False
+    assert result.approved_for_paper is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert result.order_placed is False
+    assert result.broker_api_called is False
+    assert result.message_sent is False
+    assert result.llm_api_called is False
+    assert result.external_api_called is False
+    assert result.cache_mutated is False
+    assert result.data_raw_written is False
+    assert result.data_processed_written is False
+    assert result.data_cache_written is False
+    assert result.current_candidates_run is False
+    assert result.snapshot_built is False
+    assert result.signal_semantics_changed is False
+    assert result.report_only is True
+    assert result.diagnostic_only is True
+    assert result.no_live_trading is True
+    assert result.no_broker_api is True
+    assert result.no_order_placement is True
+    assert result.no_message_sent is True
+    assert str(summary["metric_evidence_row_count"]) == str(planning.metric_evidence_row_count)
+    assert metadata["latest_training_result_planning_status"] == TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED
+    assert metadata["training_result_created"] is False
+    assert metadata["weights_trained"] is False
+    assert metadata["model_version_created"] is False
+    assert metadata["parameter_version_created"] is False
+    assert metadata["thresholds_optimized"] is False
+    assert metadata["predictions_created"] is False
+    assert metadata["stock_profile_created"] is False
+    assert metadata["approved_for_paper"] is False
+    assert metadata["strategy_performance_validated"] is False
+    assert metadata["trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_training_result_planning(tmp_path: Path) -> None:
+    run_training_result_planning(
+        replace(_training_result_planning_happy_settings(tmp_path), allow_training_result_planning=True)
+    )
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; training result planning phase 1 "
+            "is report-only planning context."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_training_result_planning_status == TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED
+    assert result.training_result_planning_artifacts_created is True
+    assert result.training_result_created is False
+    assert result.weights_trained is False
+    assert result.model_version_created is False
+    assert result.parameter_version_created is False
+    assert result.thresholds_optimized is False
+    assert result.predictions_created is False
+    assert result.stock_profile_allowed is False
+    assert result.buy_review_allowed is False
+    assert result.approved_for_paper is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+
+
+def test_cli_research_status_prints_training_result_planning_fields(tmp_path: Path, capsys) -> None:
+    run_training_result_planning(
+        replace(_training_result_planning_happy_settings(tmp_path), allow_training_result_planning=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "training_result_planning_workflow_implemented: True" in output.out
+    assert f"latest_training_result_planning_status: {TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED}" in output.out
+    assert "source_metric_extension_run_id: metric_ext_plan" in output.out
+    assert "ready_for_training_result_planning: True" in output.out
+    assert "training_result_planning_artifacts_created: True" in output.out
+    assert "training_result_created: False" in output.out
+    assert "weights_trained: False" in output.out
+    assert "model_version_created: False" in output.out
+    assert "parameter_version_created: False" in output.out
+    assert "thresholds_optimized: False" in output.out
+    assert "predictions_created: False" in output.out
+    assert "calibrated_probabilities_created: False" in output.out
+    assert "feature_importance_created: False" in output.out
+    assert "stock_profile_allowed: False" in output.out
+    assert "buy_review_allowed: False" in output.out
+    assert "approved_for_paper: False" in output.out
+    assert "strategy_performance_validated: False" in output.out
+    assert "trading_allowed: False" in output.out
 
 
 def test_cli_research_status_works(tmp_path: Path, capsys) -> None:

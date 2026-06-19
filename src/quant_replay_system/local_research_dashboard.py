@@ -124,6 +124,7 @@ from quant_replay_system.training_evaluation_status import run_training_evaluati
 from quant_replay_system.metric_evaluation_status import run_metric_evaluation_status
 from quant_replay_system.metric_computation_status import run_metric_computation_status
 from quant_replay_system.metric_extension_status import run_metric_extension_status
+from quant_replay_system.training_result_planning_status import run_training_result_planning_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -955,6 +956,8 @@ SUMMARY_COLUMNS = [
     "latest_forward_return_label_workflow_stage",
     "forward_return_label_artifact_path",
     "source_replay_decision_freeze_run_id",
+    "source_replay_decision_freeze_status",
+    "source_replay_decision_freeze_health_status",
     "source_replay_decision_freeze_artifact_path",
     "replay_decision_freeze_status",
     "replay_decision_freeze_health_status",
@@ -1200,6 +1203,47 @@ SUMMARY_COLUMNS = [
     "metric_extension_summary_row_count",
     "metric_extension_report_path",
     "metric_extension_next_action",
+    "training_result_planning_workflow_implemented",
+    "training_result_planning_views_implemented",
+    "latest_training_result_planning_run_id",
+    "latest_training_result_planning_status",
+    "latest_training_result_planning_health_status",
+    "latest_training_result_planning_workflow_stage",
+    "training_result_planning_artifact_path",
+    "source_metric_extension_run_id",
+    "source_metric_extension_status",
+    "source_metric_extension_health_status",
+    "training_result_planning_source_metric_computation_run_id",
+    "training_result_planning_source_metric_computation_status",
+    "training_result_planning_source_metric_computation_health_status",
+    "training_result_planning_source_metric_evaluation_planning_run_id",
+    "training_result_planning_source_metric_evaluation_status",
+    "training_result_planning_source_metric_evaluation_health_status",
+    "training_result_planning_source_training_evaluation_run_id",
+    "training_result_planning_source_training_evaluation_status",
+    "training_result_planning_source_training_evaluation_health_status",
+    "training_result_planning_source_forward_return_label_run_id",
+    "training_result_planning_source_forward_return_label_status",
+    "training_result_planning_source_forward_return_label_health_status",
+    "training_result_planning_source_replay_decision_freeze_run_id",
+    "training_result_planning_source_replay_decision_freeze_status",
+    "training_result_planning_source_replay_decision_freeze_health_status",
+    "metric_evidence_names_present",
+    "metric_evidence_row_count",
+    "planning_input_row_count",
+    "eligible_planning_input_count",
+    "quarantined_planning_input_count",
+    "model_scope_rows_created",
+    "limitations_created",
+    "overfit_warnings_created",
+    "health_plan_created",
+    "status_plan_created",
+    "ready_for_training_result_planning",
+    "training_result_planning_executed",
+    "training_result_planning_artifacts_created",
+    "parameter_version_created",
+    "training_result_planning_report_path",
+    "training_result_planning_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1583,6 +1627,7 @@ OPTIONAL_COMPONENTS = {
     "METRIC_EVALUATION_STATUS",
     "METRIC_COMPUTATION_STATUS",
     "METRIC_EXTENSION_STATUS",
+    "TRAINING_RESULT_PLANNING_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1635,6 +1680,7 @@ WORKFLOW_AREAS = {
     "METRIC_EVALUATION_STATUS": "METRIC_EVALUATION",
     "METRIC_COMPUTATION_STATUS": "METRIC_COMPUTATION",
     "METRIC_EXTENSION_STATUS": "METRIC_EXTENSION",
+    "TRAINING_RESULT_PLANNING_STATUS": "TRAINING_RESULT_PLANNING",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -2452,6 +2498,8 @@ class LocalResearchDashboardResult:
     latest_forward_return_label_workflow_stage: str
     forward_return_label_artifact_path: str
     source_replay_decision_freeze_run_id: str
+    source_replay_decision_freeze_status: str
+    source_replay_decision_freeze_health_status: str
     source_replay_decision_freeze_artifact_path: str
     replay_decision_freeze_status: str
     replay_decision_freeze_health_status: str
@@ -2697,6 +2745,47 @@ class LocalResearchDashboardResult:
     metric_extension_summary_row_count: int
     metric_extension_report_path: str
     metric_extension_next_action: str
+    training_result_planning_workflow_implemented: bool
+    training_result_planning_views_implemented: bool
+    latest_training_result_planning_run_id: str
+    latest_training_result_planning_status: str
+    latest_training_result_planning_health_status: str
+    latest_training_result_planning_workflow_stage: str
+    training_result_planning_artifact_path: str
+    source_metric_extension_run_id: str
+    source_metric_extension_status: str
+    source_metric_extension_health_status: str
+    training_result_planning_source_metric_computation_run_id: str
+    training_result_planning_source_metric_computation_status: str
+    training_result_planning_source_metric_computation_health_status: str
+    training_result_planning_source_metric_evaluation_planning_run_id: str
+    training_result_planning_source_metric_evaluation_status: str
+    training_result_planning_source_metric_evaluation_health_status: str
+    training_result_planning_source_training_evaluation_run_id: str
+    training_result_planning_source_training_evaluation_status: str
+    training_result_planning_source_training_evaluation_health_status: str
+    training_result_planning_source_forward_return_label_run_id: str
+    training_result_planning_source_forward_return_label_status: str
+    training_result_planning_source_forward_return_label_health_status: str
+    training_result_planning_source_replay_decision_freeze_run_id: str
+    training_result_planning_source_replay_decision_freeze_status: str
+    training_result_planning_source_replay_decision_freeze_health_status: str
+    metric_evidence_names_present: str
+    metric_evidence_row_count: int
+    planning_input_row_count: int
+    eligible_planning_input_count: int
+    quarantined_planning_input_count: int
+    model_scope_rows_created: bool
+    limitations_created: bool
+    overfit_warnings_created: bool
+    health_plan_created: bool
+    status_plan_created: bool
+    ready_for_training_result_planning: bool
+    training_result_planning_executed: bool
+    training_result_planning_artifacts_created: bool
+    parameter_version_created: bool
+    training_result_planning_report_path: str
+    training_result_planning_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -3034,6 +3123,7 @@ def run_local_research_dashboard(
     metric_evaluation_root: str | Path | None = None,
     metric_computation_root: str | Path | None = None,
     metric_extension_root: str | Path | None = None,
+    training_result_planning_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -3291,6 +3381,11 @@ def run_local_research_dashboard(
         Path(metric_extension_root)
         if metric_extension_root is not None
         else effective_root / "manual_diagnostics" / "metric_extension_v0_1"
+    )
+    effective_training_result_planning_root = (
+        Path(training_result_planning_root)
+        if training_result_planning_root is not None
+        else effective_root / "manual_diagnostics" / "training_result_planning_v0_1"
     )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
@@ -3629,6 +3724,7 @@ def run_local_research_dashboard(
         metric_evaluation_root=effective_metric_evaluation_root,
         metric_computation_root=effective_metric_computation_root,
         metric_extension_root=effective_metric_extension_root,
+        training_result_planning_root=effective_training_result_planning_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -5711,6 +5807,10 @@ def run_local_research_dashboard(
         ),
         forward_return_label_artifact_path=str(summary.get("forward_return_label_artifact_path", "")),
         source_replay_decision_freeze_run_id=str(summary.get("source_replay_decision_freeze_run_id", "")),
+        source_replay_decision_freeze_status=str(summary.get("source_replay_decision_freeze_status", "")),
+        source_replay_decision_freeze_health_status=str(
+            summary.get("source_replay_decision_freeze_health_status", "")
+        ),
         source_replay_decision_freeze_artifact_path=str(
             summary.get("source_replay_decision_freeze_artifact_path", "")
         ),
@@ -6260,6 +6360,101 @@ def run_local_research_dashboard(
         metric_extension_summary_row_count=_int_or_zero(summary.get("metric_extension_summary_row_count")),
         metric_extension_report_path=str(summary.get("metric_extension_report_path", "")),
         metric_extension_next_action=str(summary.get("metric_extension_next_action", "")),
+        training_result_planning_workflow_implemented=_bool_from_text(
+            summary.get("training_result_planning_workflow_implemented")
+        ),
+        training_result_planning_views_implemented=_bool_from_text(
+            summary.get("training_result_planning_views_implemented")
+        ),
+        latest_training_result_planning_run_id=str(
+            summary.get("latest_training_result_planning_run_id", "")
+        ),
+        latest_training_result_planning_status=str(
+            summary.get("latest_training_result_planning_status", "MISSING")
+        ),
+        latest_training_result_planning_health_status=str(
+            summary.get("latest_training_result_planning_health_status", "")
+        ),
+        latest_training_result_planning_workflow_stage=str(
+            summary.get("latest_training_result_planning_workflow_stage", "")
+        ),
+        training_result_planning_artifact_path=str(
+            summary.get("training_result_planning_artifact_path", "")
+        ),
+        source_metric_extension_run_id=str(summary.get("source_metric_extension_run_id", "")),
+        source_metric_extension_status=str(summary.get("source_metric_extension_status", "")),
+        source_metric_extension_health_status=str(
+            summary.get("source_metric_extension_health_status", "")
+        ),
+        training_result_planning_source_metric_computation_run_id=str(
+            summary.get("training_result_planning_source_metric_computation_run_id", "")
+        ),
+        training_result_planning_source_metric_computation_status=str(
+            summary.get("training_result_planning_source_metric_computation_status", "")
+        ),
+        training_result_planning_source_metric_computation_health_status=str(
+            summary.get("training_result_planning_source_metric_computation_health_status", "")
+        ),
+        training_result_planning_source_metric_evaluation_planning_run_id=str(
+            summary.get("training_result_planning_source_metric_evaluation_planning_run_id", "")
+        ),
+        training_result_planning_source_metric_evaluation_status=str(
+            summary.get("training_result_planning_source_metric_evaluation_status", "")
+        ),
+        training_result_planning_source_metric_evaluation_health_status=str(
+            summary.get("training_result_planning_source_metric_evaluation_health_status", "")
+        ),
+        training_result_planning_source_training_evaluation_run_id=str(
+            summary.get("training_result_planning_source_training_evaluation_run_id", "")
+        ),
+        training_result_planning_source_training_evaluation_status=str(
+            summary.get("training_result_planning_source_training_evaluation_status", "")
+        ),
+        training_result_planning_source_training_evaluation_health_status=str(
+            summary.get("training_result_planning_source_training_evaluation_health_status", "")
+        ),
+        training_result_planning_source_forward_return_label_run_id=str(
+            summary.get("training_result_planning_source_forward_return_label_run_id", "")
+        ),
+        training_result_planning_source_forward_return_label_status=str(
+            summary.get("training_result_planning_source_forward_return_label_status", "")
+        ),
+        training_result_planning_source_forward_return_label_health_status=str(
+            summary.get("training_result_planning_source_forward_return_label_health_status", "")
+        ),
+        training_result_planning_source_replay_decision_freeze_run_id=str(
+            summary.get("training_result_planning_source_replay_decision_freeze_run_id", "")
+        ),
+        training_result_planning_source_replay_decision_freeze_status=str(
+            summary.get("training_result_planning_source_replay_decision_freeze_status", "")
+        ),
+        training_result_planning_source_replay_decision_freeze_health_status=str(
+            summary.get("training_result_planning_source_replay_decision_freeze_health_status", "")
+        ),
+        metric_evidence_names_present=str(summary.get("metric_evidence_names_present", "")),
+        metric_evidence_row_count=_int_or_zero(summary.get("metric_evidence_row_count")),
+        planning_input_row_count=_int_or_zero(summary.get("planning_input_row_count")),
+        eligible_planning_input_count=_int_or_zero(summary.get("eligible_planning_input_count")),
+        quarantined_planning_input_count=_int_or_zero(
+            summary.get("quarantined_planning_input_count")
+        ),
+        model_scope_rows_created=_bool_from_text(summary.get("model_scope_rows_created")),
+        limitations_created=_bool_from_text(summary.get("limitations_created")),
+        overfit_warnings_created=_bool_from_text(summary.get("overfit_warnings_created")),
+        health_plan_created=_bool_from_text(summary.get("health_plan_created")),
+        status_plan_created=_bool_from_text(summary.get("status_plan_created")),
+        ready_for_training_result_planning=_bool_from_text(
+            summary.get("ready_for_training_result_planning")
+        ),
+        training_result_planning_executed=_bool_from_text(
+            summary.get("training_result_planning_executed")
+        ),
+        training_result_planning_artifacts_created=_bool_from_text(
+            summary.get("training_result_planning_artifacts_created")
+        ),
+        parameter_version_created=_bool_from_text(summary.get("parameter_version_created")),
+        training_result_planning_report_path=str(summary.get("training_result_planning_report_path", "")),
+        training_result_planning_next_action=str(summary.get("training_result_planning_next_action", "")),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -6946,6 +7141,7 @@ def scan_local_research_workflow_artifacts(
     metric_evaluation_root: str | Path,
     metric_computation_root: str | Path,
     metric_extension_root: str | Path,
+    training_result_planning_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -7015,6 +7211,7 @@ def scan_local_research_workflow_artifacts(
     metric_evaluation_path = Path(metric_evaluation_root)
     metric_computation_path = Path(metric_computation_root)
     metric_extension_path = Path(metric_extension_root)
+    training_result_planning_path = Path(training_result_planning_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -7106,6 +7303,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_metric_evaluation_status(metric_evaluation_path))
     records.extend(_scan_metric_computation_status(metric_computation_path))
     records.extend(_scan_metric_extension_status(metric_extension_path))
+    records.extend(_scan_training_result_planning_status(training_result_planning_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -15071,6 +15269,14 @@ def summarize_local_research_status(
             ["FORWARD_RETURN_LABEL_STATUS", "TRAINING_EVALUATION_STATUS"],
             "source_replay_decision_freeze_run_id",
         ),
+        "source_replay_decision_freeze_status": first_note(
+            ["FORWARD_RETURN_LABEL_STATUS", "TRAINING_EVALUATION_STATUS"],
+            "source_replay_decision_freeze_status",
+        ),
+        "source_replay_decision_freeze_health_status": first_note(
+            ["FORWARD_RETURN_LABEL_STATUS", "TRAINING_EVALUATION_STATUS"],
+            "source_replay_decision_freeze_health_status",
+        ),
         "source_replay_decision_freeze_artifact_path": _parse_note_value(
             by_component.get("FORWARD_RETURN_LABEL_STATUS", {}).get("notes"),
             "source_replay_decision_freeze_artifact_path",
@@ -16058,6 +16264,172 @@ def summarize_local_research_status(
         ),
         "metric_extension_next_action": _parse_note_value(
             by_component.get("METRIC_EXTENSION_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "training_result_planning_workflow_implemented": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "training_result_planning_views_implemented": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_training_result_planning_run_id": _string_or_empty(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_training_result_planning_status": _component_status(
+            by_component,
+            "TRAINING_RESULT_PLANNING_STATUS",
+        ),
+        "latest_training_result_planning_health_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_training_result_planning_workflow_stage": _string_or_empty(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("stage")
+        ),
+        "training_result_planning_artifact_path": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "source_metric_extension_run_id": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_extension_run_id",
+        ),
+        "source_metric_extension_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_extension_status",
+        ),
+        "source_metric_extension_health_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_extension_health_status",
+        ),
+        "training_result_planning_source_metric_computation_run_id": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_computation_run_id",
+        ),
+        "training_result_planning_source_metric_computation_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_computation_status",
+        ),
+        "training_result_planning_source_metric_computation_health_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_computation_health_status",
+        ),
+        "training_result_planning_source_metric_evaluation_planning_run_id": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_evaluation_planning_run_id",
+        ),
+        "training_result_planning_source_metric_evaluation_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_evaluation_status",
+        ),
+        "training_result_planning_source_metric_evaluation_health_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_metric_evaluation_health_status",
+        ),
+        "training_result_planning_source_training_evaluation_run_id": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_training_evaluation_run_id",
+        ),
+        "training_result_planning_source_training_evaluation_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_training_evaluation_status",
+        ),
+        "training_result_planning_source_training_evaluation_health_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_training_evaluation_health_status",
+        ),
+        "training_result_planning_source_forward_return_label_run_id": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_forward_return_label_run_id",
+        ),
+        "training_result_planning_source_forward_return_label_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_forward_return_label_status",
+        ),
+        "training_result_planning_source_forward_return_label_health_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_forward_return_label_health_status",
+        ),
+        "training_result_planning_source_replay_decision_freeze_run_id": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_replay_decision_freeze_run_id",
+        ),
+        "training_result_planning_source_replay_decision_freeze_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_replay_decision_freeze_status",
+        ),
+        "training_result_planning_source_replay_decision_freeze_health_status": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "source_replay_decision_freeze_health_status",
+        ),
+        "metric_evidence_names_present": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "metric_evidence_names_present",
+        ),
+        "metric_evidence_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+                "metric_evidence_row_count",
+            )
+        ),
+        "planning_input_row_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+                "planning_input_row_count",
+            )
+        ),
+        "eligible_planning_input_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+                "eligible_planning_input_count",
+            )
+        ),
+        "quarantined_planning_input_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+                "quarantined_planning_input_count",
+            )
+        ),
+        "model_scope_rows_created": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "model_scope_rows_created",
+        ),
+        "limitations_created": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "limitations_created",
+        ),
+        "overfit_warnings_created": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "overfit_warnings_created",
+        ),
+        "health_plan_created": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "health_plan_created",
+        ),
+        "status_plan_created": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "status_plan_created",
+        ),
+        "ready_for_training_result_planning": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "ready_for_training_result_planning",
+        ),
+        "training_result_planning_executed": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "training_result_planning_executed",
+        ),
+        "training_result_planning_artifacts_created": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "training_result_planning_artifacts_created",
+        ),
+        "training_result_planning_report_path": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
+            "report_path",
+        ),
+        "training_result_planning_next_action": _parse_note_value(
+            by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes"),
             "next_manual_action",
         ),
         "universe_profile_policy_audit_status": _component_status(
@@ -17320,9 +17692,82 @@ def summarize_local_research_status(
             value = _parse_note_value(metric_extension_notes, shared_field)
             if _string_or_empty(value) != "":
                 row[shared_field] = value
+    training_result_planning_notes = by_component.get("TRAINING_RESULT_PLANNING_STATUS", {}).get("notes")
+    if _string_or_empty(training_result_planning_notes):
+        for shared_field in [
+            "source_metric_extension_run_id",
+            "source_metric_extension_status",
+            "source_metric_extension_health_status",
+            "source_metric_computation_run_id",
+            "source_metric_computation_status",
+            "source_metric_computation_health_status",
+            "source_metric_evaluation_planning_run_id",
+            "source_metric_evaluation_status",
+            "source_metric_evaluation_health_status",
+            "source_training_evaluation_run_id",
+            "source_training_evaluation_status",
+            "source_training_evaluation_health_status",
+            "source_forward_return_label_run_id",
+            "source_forward_return_label_status",
+            "source_forward_return_label_health_status",
+            "source_replay_decision_freeze_run_id",
+            "source_replay_decision_freeze_status",
+            "source_replay_decision_freeze_health_status",
+            "metric_evidence_names_present",
+            "metric_evidence_row_count",
+            "planning_input_row_count",
+            "eligible_planning_input_count",
+            "quarantined_planning_input_count",
+            "model_scope_rows_created",
+            "limitations_created",
+            "overfit_warnings_created",
+            "health_plan_created",
+            "status_plan_created",
+            "ready_for_training_result_planning",
+            "training_result_planning_executed",
+            "training_result_planning_artifacts_created",
+            "training_result_created",
+            "weights_trained",
+            "model_version_created",
+            "parameter_version_created",
+            "thresholds_optimized",
+            "predictions_created",
+            "calibrated_probabilities_created",
+            "feature_importance_created",
+            "stock_profile_allowed",
+            "active_stock_profile_exists",
+            "stock_profile_created",
+            "buy_review_allowed",
+            "real_buy_review_eligible",
+            "approved_for_paper",
+            "strategy_performance_validated",
+            "trading_allowed",
+            "order_placed",
+            "broker_api_called",
+            "message_sent",
+            "llm_api_called",
+            "external_api_called",
+            "cache_mutated",
+            "data_raw_written",
+            "data_processed_written",
+            "data_cache_written",
+            "current_candidates_run",
+            "snapshot_built",
+            "signal_semantics_changed",
+            "report_only",
+            "diagnostic_only",
+            "no_live_trading",
+            "no_broker_api",
+            "no_order_placement",
+            "no_message_sent",
+        ]:
+            value = _parse_note_value(training_result_planning_notes, shared_field)
+            if _string_or_empty(value) != "":
+                row[shared_field] = value
     for default_false_field in [
         "training_result_created",
         "model_version_created",
+        "parameter_version_created",
         "thresholds_optimized",
         "predictions_created",
         "calibrated_probabilities_created",
@@ -19434,6 +19879,10 @@ def build_local_research_dashboard_metadata(
         "latest_forward_return_label_workflow_stage": result.latest_forward_return_label_workflow_stage,
         "forward_return_label_artifact_path": result.forward_return_label_artifact_path,
         "source_replay_decision_freeze_run_id": result.source_replay_decision_freeze_run_id,
+        "source_replay_decision_freeze_status": result.source_replay_decision_freeze_status,
+        "source_replay_decision_freeze_health_status": (
+            result.source_replay_decision_freeze_health_status
+        ),
         "source_replay_decision_freeze_artifact_path": result.source_replay_decision_freeze_artifact_path,
         "replay_decision_freeze_status": result.replay_decision_freeze_status,
         "replay_decision_freeze_health_status": result.replay_decision_freeze_health_status,
@@ -19750,6 +20199,85 @@ def build_local_research_dashboard_metadata(
         "metric_extension_summary_row_count": result.metric_extension_summary_row_count,
         "metric_extension_report_path": result.metric_extension_report_path,
         "metric_extension_next_action": result.metric_extension_next_action,
+        "training_result_planning_workflow_implemented": (
+            result.training_result_planning_workflow_implemented
+        ),
+        "training_result_planning_views_implemented": result.training_result_planning_views_implemented,
+        "latest_training_result_planning_run_id": result.latest_training_result_planning_run_id,
+        "latest_training_result_planning_status": result.latest_training_result_planning_status,
+        "latest_training_result_planning_health_status": (
+            result.latest_training_result_planning_health_status
+        ),
+        "latest_training_result_planning_workflow_stage": (
+            result.latest_training_result_planning_workflow_stage
+        ),
+        "training_result_planning_artifact_path": result.training_result_planning_artifact_path,
+        "source_metric_extension_run_id": result.source_metric_extension_run_id,
+        "source_metric_extension_status": result.source_metric_extension_status,
+        "source_metric_extension_health_status": result.source_metric_extension_health_status,
+        "training_result_planning_source_metric_computation_run_id": (
+            result.training_result_planning_source_metric_computation_run_id
+        ),
+        "training_result_planning_source_metric_computation_status": (
+            result.training_result_planning_source_metric_computation_status
+        ),
+        "training_result_planning_source_metric_computation_health_status": (
+            result.training_result_planning_source_metric_computation_health_status
+        ),
+        "training_result_planning_source_metric_evaluation_planning_run_id": (
+            result.training_result_planning_source_metric_evaluation_planning_run_id
+        ),
+        "training_result_planning_source_metric_evaluation_status": (
+            result.training_result_planning_source_metric_evaluation_status
+        ),
+        "training_result_planning_source_metric_evaluation_health_status": (
+            result.training_result_planning_source_metric_evaluation_health_status
+        ),
+        "training_result_planning_source_training_evaluation_run_id": (
+            result.training_result_planning_source_training_evaluation_run_id
+        ),
+        "training_result_planning_source_training_evaluation_status": (
+            result.training_result_planning_source_training_evaluation_status
+        ),
+        "training_result_planning_source_training_evaluation_health_status": (
+            result.training_result_planning_source_training_evaluation_health_status
+        ),
+        "training_result_planning_source_forward_return_label_run_id": (
+            result.training_result_planning_source_forward_return_label_run_id
+        ),
+        "training_result_planning_source_forward_return_label_status": (
+            result.training_result_planning_source_forward_return_label_status
+        ),
+        "training_result_planning_source_forward_return_label_health_status": (
+            result.training_result_planning_source_forward_return_label_health_status
+        ),
+        "training_result_planning_source_replay_decision_freeze_run_id": (
+            result.training_result_planning_source_replay_decision_freeze_run_id
+        ),
+        "training_result_planning_source_replay_decision_freeze_status": (
+            result.training_result_planning_source_replay_decision_freeze_status
+        ),
+        "training_result_planning_source_replay_decision_freeze_health_status": (
+            result.training_result_planning_source_replay_decision_freeze_health_status
+        ),
+        "metric_evidence_names_present": result.metric_evidence_names_present,
+        "metric_evidence_row_count": result.metric_evidence_row_count,
+        "planning_input_row_count": result.planning_input_row_count,
+        "eligible_planning_input_count": result.eligible_planning_input_count,
+        "quarantined_planning_input_count": result.quarantined_planning_input_count,
+        "model_scope_rows_created": result.model_scope_rows_created,
+        "limitations_created": result.limitations_created,
+        "overfit_warnings_created": result.overfit_warnings_created,
+        "health_plan_created": result.health_plan_created,
+        "status_plan_created": result.status_plan_created,
+        "ready_for_training_result_planning": result.ready_for_training_result_planning,
+        "training_result_planning_executed": result.training_result_planning_executed,
+        "training_result_planning_artifacts_created": (
+            result.training_result_planning_artifacts_created
+        ),
+        "parameter_version_created": result.parameter_version_created,
+        "training_result_planning_report_path": result.training_result_planning_report_path,
+        "training_result_planning_next_action": result.training_result_planning_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -24303,6 +24831,189 @@ def _metric_extension_notes(summary: dict[str, Any]) -> str:
         f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
         f"training_result_created={_string_or_empty(summary.get('training_result_created'))}; "
         f"model_version_created={_string_or_empty(summary.get('model_version_created'))}; "
+        f"thresholds_optimized={_string_or_empty(summary.get('thresholds_optimized'))}; "
+        f"predictions_created={_string_or_empty(summary.get('predictions_created'))}; "
+        f"calibrated_probabilities_created={_string_or_empty(summary.get('calibrated_probabilities_created'))}; "
+        f"feature_importance_created={_string_or_empty(summary.get('feature_importance_created'))}; "
+        f"stock_profile_allowed={_string_or_empty(summary.get('stock_profile_allowed'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"stock_profile_created={_string_or_empty(summary.get('stock_profile_created'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
+        f"strategy_performance_validated={_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_training_result_planning_status(root: Path) -> list[dict[str, Any]]:
+    training_root = root.parent if root.name == "status" else root
+    if not training_root.exists():
+        return []
+    try:
+        result = run_training_result_planning_status(
+            root=training_root,
+            output_dir=training_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_training_result_planning_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = training_root / result.latest_training_result_planning_run_id
+    metadata = _load_json_or_none(artifact_dir / "training_result_planning_metadata.json") or {}
+    safety = _load_json_or_none(artifact_dir / "training_result_planning_safety_flags.json") or {}
+    artifact_paths = metadata.get("artifact_paths") if isinstance(metadata.get("artifact_paths"), dict) else {}
+    summary["artifact_path"] = str(artifact_dir)
+    summary["report_path"] = (
+        _string_or_empty(summary.get("report_path"))
+        or _string_or_empty(artifact_paths.get("report"))
+        or str(artifact_dir / "training_result_planning_report.md")
+    )
+    merged = {**metadata, **safety}
+    for field in [
+        "source_metric_extension_run_id",
+        "source_metric_extension_status",
+        "source_metric_extension_health_status",
+        "source_metric_computation_run_id",
+        "source_metric_computation_status",
+        "source_metric_computation_health_status",
+        "source_metric_evaluation_planning_run_id",
+        "source_metric_evaluation_status",
+        "source_metric_evaluation_health_status",
+        "source_training_evaluation_run_id",
+        "source_training_evaluation_status",
+        "source_training_evaluation_health_status",
+        "source_forward_return_label_run_id",
+        "source_forward_return_label_status",
+        "source_forward_return_label_health_status",
+        "source_replay_decision_freeze_run_id",
+        "source_replay_decision_freeze_status",
+        "source_replay_decision_freeze_health_status",
+        "metric_evidence_names_present",
+        "metric_evidence_row_count",
+        "planning_input_row_count",
+        "eligible_planning_input_count",
+        "quarantined_planning_input_count",
+        "model_scope_rows_created",
+        "limitations_created",
+        "overfit_warnings_created",
+        "health_plan_created",
+        "status_plan_created",
+        "ready_for_training_result_planning",
+        "training_result_planning_executed",
+        "training_result_planning_artifacts_created",
+        "training_result_created",
+        "weights_trained",
+        "model_version_created",
+        "parameter_version_created",
+        "thresholds_optimized",
+        "predictions_created",
+        "calibrated_probabilities_created",
+        "feature_importance_created",
+        "stock_profile_allowed",
+        "active_stock_profile_exists",
+        "stock_profile_created",
+        "buy_review_allowed",
+        "real_buy_review_eligible",
+        "approved_for_paper",
+        "strategy_performance_validated",
+        "trading_allowed",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+        "report_only",
+        "diagnostic_only",
+    ]:
+        if field not in summary or _string_or_empty(summary.get(field)) == "":
+            summary[field] = merged.get(field, False)
+    return [
+        _record(
+            workflow_area="TRAINING_RESULT_PLANNING",
+            component="TRAINING_RESULT_PLANNING_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_training_result_planning_run_id,
+            report_path=summary["report_path"],
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_training_result_planning_notes(summary),
+        )
+    ]
+
+
+def _training_result_planning_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"source_metric_extension_run_id={_string_or_empty(summary.get('source_metric_extension_run_id'))}; "
+        f"source_metric_extension_status={_string_or_empty(summary.get('source_metric_extension_status'))}; "
+        f"source_metric_extension_health_status={_string_or_empty(summary.get('source_metric_extension_health_status'))}; "
+        f"source_metric_computation_run_id={_string_or_empty(summary.get('source_metric_computation_run_id'))}; "
+        f"source_metric_computation_status={_string_or_empty(summary.get('source_metric_computation_status'))}; "
+        f"source_metric_computation_health_status={_string_or_empty(summary.get('source_metric_computation_health_status'))}; "
+        f"source_metric_evaluation_planning_run_id={_string_or_empty(summary.get('source_metric_evaluation_planning_run_id'))}; "
+        f"source_metric_evaluation_status={_string_or_empty(summary.get('source_metric_evaluation_status'))}; "
+        f"source_metric_evaluation_health_status={_string_or_empty(summary.get('source_metric_evaluation_health_status'))}; "
+        f"source_training_evaluation_run_id={_string_or_empty(summary.get('source_training_evaluation_run_id'))}; "
+        f"source_training_evaluation_status={_string_or_empty(summary.get('source_training_evaluation_status'))}; "
+        f"source_training_evaluation_health_status={_string_or_empty(summary.get('source_training_evaluation_health_status'))}; "
+        f"source_forward_return_label_run_id={_string_or_empty(summary.get('source_forward_return_label_run_id'))}; "
+        f"source_forward_return_label_status={_string_or_empty(summary.get('source_forward_return_label_status'))}; "
+        f"source_forward_return_label_health_status={_string_or_empty(summary.get('source_forward_return_label_health_status'))}; "
+        f"source_replay_decision_freeze_run_id={_string_or_empty(summary.get('source_replay_decision_freeze_run_id'))}; "
+        f"source_replay_decision_freeze_status={_string_or_empty(summary.get('source_replay_decision_freeze_status'))}; "
+        f"source_replay_decision_freeze_health_status={_string_or_empty(summary.get('source_replay_decision_freeze_health_status'))}; "
+        f"metric_evidence_names_present={_note_safe_text(summary.get('metric_evidence_names_present'))}; "
+        f"metric_evidence_row_count={_string_or_empty(summary.get('metric_evidence_row_count'))}; "
+        f"planning_input_row_count={_string_or_empty(summary.get('planning_input_row_count'))}; "
+        f"eligible_planning_input_count={_string_or_empty(summary.get('eligible_planning_input_count'))}; "
+        f"quarantined_planning_input_count={_string_or_empty(summary.get('quarantined_planning_input_count'))}; "
+        f"model_scope_rows_created={_string_or_empty(summary.get('model_scope_rows_created'))}; "
+        f"limitations_created={_string_or_empty(summary.get('limitations_created'))}; "
+        f"overfit_warnings_created={_string_or_empty(summary.get('overfit_warnings_created'))}; "
+        f"health_plan_created={_string_or_empty(summary.get('health_plan_created'))}; "
+        f"status_plan_created={_string_or_empty(summary.get('status_plan_created'))}; "
+        f"ready_for_training_result_planning={_string_or_empty(summary.get('ready_for_training_result_planning'))}; "
+        f"training_result_planning_executed={_string_or_empty(summary.get('training_result_planning_executed'))}; "
+        f"training_result_planning_artifacts_created={_string_or_empty(summary.get('training_result_planning_artifacts_created'))}; "
+        f"training_result_created={_string_or_empty(summary.get('training_result_created'))}; "
+        f"weights_trained={_string_or_empty(summary.get('weights_trained'))}; "
+        f"model_version_created={_string_or_empty(summary.get('model_version_created'))}; "
+        f"parameter_version_created={_string_or_empty(summary.get('parameter_version_created'))}; "
         f"thresholds_optimized={_string_or_empty(summary.get('thresholds_optimized'))}; "
         f"predictions_created={_string_or_empty(summary.get('predictions_created'))}; "
         f"calibrated_probabilities_created={_string_or_empty(summary.get('calibrated_probabilities_created'))}; "

@@ -680,7 +680,37 @@ def test_training_result_planning_view_cli_commands_run(tmp_path: Path) -> None:
     assert "training-result-planning-health" in help_text
     assert "training-result-planning-status" in help_text
     assert not Path("docs/project_sources").exists()
-    assert not list(Path("docs").glob("release_checkpoint_v1.49.0.md"))
+    assert Path("docs/release_checkpoint_v1.49.0.md").exists()
+
+
+def test_training_result_planning_docs_checkpoint_and_source_note_are_safety_explicit() -> None:
+    required_paths = [
+        Path("docs/training_result_planning.md"),
+        Path("docs/release_checkpoint_v1.49.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_49_0.md"),
+    ]
+    for path in required_paths:
+        text = path.read_text(encoding="utf-8").lower()
+        for phrase in [
+            "report-only planning",
+            "not actual training_result",
+            "does not train weights",
+            "does not create model_version",
+            "does not create parameter_version",
+            "does not optimize thresholds",
+            "does not create predictions",
+            "does not create calibrated probabilities",
+            "does not create feature importance",
+            "does not create active stock profiles",
+            "does not create real buy-review eligibility",
+            "does not apply paper approval",
+            "does not claim strategy performance validation",
+            "does not authorize trading",
+        ]:
+            assert phrase in text, f"{path}: {phrase}"
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_49_0.md").read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
 
 
 def _happy_settings(tmp_path: Path) -> TrainingResultPlanningSettings:
