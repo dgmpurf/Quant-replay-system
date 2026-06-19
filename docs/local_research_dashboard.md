@@ -667,6 +667,18 @@ The unified summary records the latest training result planning run id, status/s
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; training result planning fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims training_result, weights, model_version, parameter_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
 
+## Actual Training Result Status
+
+`research-status` includes `training-result-status` as report-only Actual Training Result Phase 1 context when those artifacts exist.
+
+Use `training-result`, `training-result-index`, `training-result-health`, and `training-result-status` to create, discover, safety-check, and summarize Actual Training Result Phase 1 artifacts.
+
+The unified summary records the latest training result run id, status/stage, health status, source Training Result Planning, Metric Extension, Metric Computation, Metric / Evaluation Phase 1, Training / Evaluation Phase 1, Forward Return Label, and Replay Decision Freeze lineage, metric evidence names and counts, row counts, limitation and overfit warning flags, report path, next action, and safety flags.
+
+`TRAINING_RESULT_CREATED` is report-only actual training_result artifact creation. It is not weights, not model_version, not parameter_version, not thresholds, not predictions, not calibrated probabilities, not feature importance, not stock_profile, not buy-review, not paper approval, not performance validation, and not trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; actual training_result fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims weights, model_version, parameter_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

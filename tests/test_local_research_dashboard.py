@@ -73,10 +73,12 @@ from test_replay_decision_freeze import _happy_settings as _replay_decision_free
 from test_training_evaluation import _happy_settings as _training_evaluation_happy_settings
 from test_metric_evaluation import _happy_settings as _metric_evaluation_happy_settings
 from test_training_result_planning import _happy_settings as _training_result_planning_happy_settings
+from test_training_result import _happy_settings as _training_result_happy_settings
 from quant_replay_system.training_result_planning import (
     TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED,
     run_training_result_planning,
 )
+from quant_replay_system.training_result import TRAINING_RESULT_CREATED, run_training_result
 
 
 DECISION_DATE = "2024-05-20"
@@ -4256,6 +4258,154 @@ def test_cli_research_status_prints_training_result_planning_fields(tmp_path: Pa
     assert "approved_for_paper: False" in output.out
     assert "strategy_performance_validated: False" in output.out
     assert "trading_allowed: False" in output.out
+
+
+def test_research_status_includes_actual_training_result_fields(tmp_path: Path) -> None:
+    created = run_training_result(
+        replace(_training_result_happy_settings(tmp_path), allow_training_result=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "TRAINING_RESULT_STATUS"].iloc[0]
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == TRAINING_RESULT_CREATED
+    assert row["workflow_area"] == "TRAINING_RESULT"
+    assert result.training_result_workflow_implemented is True
+    assert result.training_result_views_implemented is True
+    assert result.latest_training_result_run_id == created.training_result_run_id
+    assert result.latest_training_result_status == TRAINING_RESULT_CREATED
+    assert result.latest_training_result_health_status == "PASS"
+    assert result.latest_training_result_workflow_stage == TRAINING_RESULT_CREATED
+    assert result.training_result_artifact_path.endswith(created.training_result_run_id)
+    assert result.training_result_source_training_result_planning_run_id == "trp_plan"
+    assert result.training_result_source_metric_extension_run_id == "metric_ext_plan"
+    assert result.training_result_source_metric_computation_run_id == "metric_comp_plan"
+    assert result.training_result_source_metric_evaluation_planning_run_id == "metric_eval_plan"
+    assert result.training_result_source_training_evaluation_run_id == "train_eval_plan"
+    assert result.training_result_source_forward_return_label_run_id == "label_plan"
+    assert result.training_result_source_replay_decision_freeze_run_id == "freeze_plan"
+    assert "benchmark_relative_return" in result.training_result_metric_evidence_names_present
+    assert result.training_result_metric_evidence_reference_count == 7
+    assert result.training_result_row_count == 1
+    assert result.training_result_eligible_row_count == 1
+    assert result.training_result_quarantined_row_count == 0
+    assert result.training_result_limitations_created is True
+    assert result.training_result_overfit_warnings_created is True
+    assert result.training_result_created is True
+    assert result.training_result_weights_trained is False
+    assert result.training_result_model_version_created is False
+    assert result.training_result_parameter_version_created is False
+    assert result.training_result_thresholds_optimized is False
+    assert result.training_result_predictions_created is False
+    assert result.training_result_calibrated_probabilities_created is False
+    assert result.training_result_feature_importance_created is False
+    assert result.training_result_stock_profile_created is False
+    assert result.training_result_real_buy_review_eligible is False
+    assert result.training_result_approved_for_paper is False
+    assert result.training_result_strategy_performance_validated is False
+    assert result.training_result_trading_allowed is False
+    assert result.training_result_report_only is True
+    assert result.training_result_diagnostic_only is True
+    assert result.training_result_no_live_trading is True
+    assert result.training_result_no_broker_api is True
+    assert result.training_result_no_order_placement is True
+    assert result.training_result_no_message_sent is True
+    assert metadata["latest_training_result_status"] == TRAINING_RESULT_CREATED
+    assert metadata["training_result_created"] is True
+    assert metadata["training_result_weights_trained"] is False
+    assert metadata["training_result_model_version_created"] is False
+    assert metadata["training_result_parameter_version_created"] is False
+    assert metadata["training_result_approved_for_paper"] is False
+    assert metadata["training_result_strategy_performance_validated"] is False
+    assert metadata["training_result_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_actual_training_result(tmp_path: Path) -> None:
+    run_training_result(replace(_training_result_happy_settings(tmp_path), allow_training_result=True))
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; actual training_result phase 1 "
+            "is report-only metric evidence context."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_training_result_status == TRAINING_RESULT_CREATED
+    assert result.training_result_created is True
+    assert result.training_result_weights_trained is False
+    assert result.training_result_model_version_created is False
+    assert result.training_result_parameter_version_created is False
+    assert result.training_result_thresholds_optimized is False
+    assert result.training_result_predictions_created is False
+    assert result.training_result_stock_profile_created is False
+    assert result.training_result_real_buy_review_eligible is False
+    assert result.training_result_approved_for_paper is False
+    assert result.training_result_strategy_performance_validated is False
+    assert result.training_result_trading_allowed is False
+
+
+def test_cli_research_status_prints_actual_training_result_fields(tmp_path: Path, capsys) -> None:
+    run_training_result(replace(_training_result_happy_settings(tmp_path), allow_training_result=True))
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "training_result_workflow_implemented: True" in output.out
+    assert "training_result_views_implemented: True" in output.out
+    assert f"latest_training_result_status: {TRAINING_RESULT_CREATED}" in output.out
+    assert "training_result_source_training_result_planning_run_id: trp_plan" in output.out
+    assert "training_result_metric_evidence_reference_count: 7" in output.out
+    assert "training_result_created: True" in output.out
+    assert "training_result_weights_trained: False" in output.out
+    assert "training_result_model_version_created: False" in output.out
+    assert "training_result_parameter_version_created: False" in output.out
+    assert "training_result_thresholds_optimized: False" in output.out
+    assert "training_result_predictions_created: False" in output.out
+    assert "training_result_stock_profile_created: False" in output.out
+    assert "training_result_approved_for_paper: False" in output.out
+    assert "training_result_strategy_performance_validated: False" in output.out
+    assert "training_result_trading_allowed: False" in output.out
+
+
+def test_training_result_research_status_docs_and_source_notes_are_safe() -> None:
+    docs = [
+        Path("README.md"),
+        Path("docs/local_research_dashboard.md"),
+        Path("docs/training_result.md"),
+        Path("docs/release_checkpoint_v1.50.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_50_0.md"),
+    ]
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "TRAINING_RESULT_CREATED" in text
+        for phrase in [
+            "not weights",
+            "not model_version",
+            "not parameter_version",
+            "not thresholds",
+            "not predictions",
+            "not stock_profile",
+            "not buy-review",
+            "not paper approval",
+            "not performance validation",
+            "not trading",
+        ]:
+            assert phrase in text
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_50_0.md").read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
 
 
 def test_cli_research_status_works(tmp_path: Path, capsys) -> None:

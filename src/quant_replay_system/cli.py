@@ -16650,6 +16650,176 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"signal_semantics_changed: {result.signal_semantics_changed}")
     print(f"training_result_planning_report_path: {result.training_result_planning_report_path}")
     print(f"training_result_planning_next_action: {result.training_result_planning_next_action}")
+    print(f"training_result_workflow_implemented: {result.training_result_workflow_implemented}")
+    print(f"training_result_views_implemented: {result.training_result_views_implemented}")
+    print(f"latest_training_result_run_id: {result.latest_training_result_run_id}")
+    print(f"latest_training_result_status: {result.latest_training_result_status}")
+    print(f"latest_training_result_health_status: {result.latest_training_result_health_status}")
+    print(f"latest_training_result_workflow_stage: {result.latest_training_result_workflow_stage}")
+    print(f"training_result_artifact_path: {result.training_result_artifact_path}")
+    print(
+        "training_result_source_training_result_planning_run_id: "
+        f"{result.training_result_source_training_result_planning_run_id}"
+    )
+    print(
+        "training_result_source_training_result_planning_status: "
+        f"{result.training_result_source_training_result_planning_status}"
+    )
+    print(
+        "training_result_source_training_result_planning_health_status: "
+        f"{result.training_result_source_training_result_planning_health_status}"
+    )
+    print(
+        "training_result_source_metric_extension_run_id: "
+        f"{result.training_result_source_metric_extension_run_id}"
+    )
+    print(
+        "training_result_source_metric_extension_status: "
+        f"{result.training_result_source_metric_extension_status}"
+    )
+    print(
+        "training_result_source_metric_extension_health_status: "
+        f"{result.training_result_source_metric_extension_health_status}"
+    )
+    print(
+        "training_result_source_metric_computation_run_id: "
+        f"{result.training_result_source_metric_computation_run_id}"
+    )
+    print(
+        "training_result_source_metric_computation_status: "
+        f"{result.training_result_source_metric_computation_status}"
+    )
+    print(
+        "training_result_source_metric_computation_health_status: "
+        f"{result.training_result_source_metric_computation_health_status}"
+    )
+    print(
+        "training_result_source_metric_evaluation_planning_run_id: "
+        f"{result.training_result_source_metric_evaluation_planning_run_id}"
+    )
+    print(
+        "training_result_source_metric_evaluation_status: "
+        f"{result.training_result_source_metric_evaluation_status}"
+    )
+    print(
+        "training_result_source_metric_evaluation_health_status: "
+        f"{result.training_result_source_metric_evaluation_health_status}"
+    )
+    print(
+        "training_result_source_training_evaluation_run_id: "
+        f"{result.training_result_source_training_evaluation_run_id}"
+    )
+    print(
+        "training_result_source_training_evaluation_status: "
+        f"{result.training_result_source_training_evaluation_status}"
+    )
+    print(
+        "training_result_source_training_evaluation_health_status: "
+        f"{result.training_result_source_training_evaluation_health_status}"
+    )
+    print(
+        "training_result_source_forward_return_label_run_id: "
+        f"{result.training_result_source_forward_return_label_run_id}"
+    )
+    print(
+        "training_result_source_forward_return_label_status: "
+        f"{result.training_result_source_forward_return_label_status}"
+    )
+    print(
+        "training_result_source_forward_return_label_health_status: "
+        f"{result.training_result_source_forward_return_label_health_status}"
+    )
+    print(
+        "training_result_source_replay_decision_freeze_run_id: "
+        f"{result.training_result_source_replay_decision_freeze_run_id}"
+    )
+    print(
+        "training_result_source_replay_decision_freeze_status: "
+        f"{result.training_result_source_replay_decision_freeze_status}"
+    )
+    print(
+        "training_result_source_replay_decision_freeze_health_status: "
+        f"{result.training_result_source_replay_decision_freeze_health_status}"
+    )
+    print(
+        "training_result_metric_evidence_names_present: "
+        f"{result.training_result_metric_evidence_names_present}"
+    )
+    print(
+        "training_result_metric_evidence_reference_count: "
+        f"{result.training_result_metric_evidence_reference_count}"
+    )
+    print(f"training_result_row_count: {result.training_result_row_count}")
+    print(f"training_result_eligible_row_count: {result.training_result_eligible_row_count}")
+    print(f"training_result_quarantined_row_count: {result.training_result_quarantined_row_count}")
+    print(f"training_result_input_index_row_count: {result.training_result_input_index_row_count}")
+    print(
+        "training_result_metric_evidence_reference_row_count: "
+        f"{result.training_result_metric_evidence_reference_row_count}"
+    )
+    print(f"training_result_lineage_matrix_row_count: {result.training_result_lineage_matrix_row_count}")
+    print(f"training_result_overfit_warning_row_count: {result.training_result_overfit_warning_row_count}")
+    print(f"training_result_limitations_created: {result.training_result_limitations_created}")
+    print(f"training_result_overfit_warnings_created: {result.training_result_overfit_warnings_created}")
+    print(f"training_result_ready_for_training_result: {result.training_result_ready_for_training_result}")
+    print(f"training_result_executed: {result.training_result_executed}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"training_result_weights_trained: {result.training_result_weights_trained}")
+    print(f"training_result_model_version_created: {result.training_result_model_version_created}")
+    print(
+        "training_result_parameter_version_created: "
+        f"{result.training_result_parameter_version_created}"
+    )
+    print(f"training_result_thresholds_optimized: {result.training_result_thresholds_optimized}")
+    print(f"training_result_predictions_created: {result.training_result_predictions_created}")
+    print(
+        "training_result_calibrated_probabilities_created: "
+        f"{result.training_result_calibrated_probabilities_created}"
+    )
+    print(
+        "training_result_feature_importance_created: "
+        f"{result.training_result_feature_importance_created}"
+    )
+    print(f"training_result_stock_profile_allowed: {result.training_result_stock_profile_allowed}")
+    print(
+        "training_result_active_stock_profile_exists: "
+        f"{result.training_result_active_stock_profile_exists}"
+    )
+    print(f"training_result_stock_profile_created: {result.training_result_stock_profile_created}")
+    print(f"training_result_buy_review_allowed: {result.training_result_buy_review_allowed}")
+    print(
+        "training_result_real_buy_review_eligible: "
+        f"{result.training_result_real_buy_review_eligible}"
+    )
+    print(f"training_result_approved_for_paper: {result.training_result_approved_for_paper}")
+    print(
+        "training_result_strategy_performance_validated: "
+        f"{result.training_result_strategy_performance_validated}"
+    )
+    print(f"training_result_trading_allowed: {result.training_result_trading_allowed}")
+    print(f"training_result_order_placed: {result.training_result_order_placed}")
+    print(f"training_result_broker_api_called: {result.training_result_broker_api_called}")
+    print(f"training_result_message_sent: {result.training_result_message_sent}")
+    print(f"training_result_llm_api_called: {result.training_result_llm_api_called}")
+    print(f"training_result_external_api_called: {result.training_result_external_api_called}")
+    print(f"training_result_cache_mutated: {result.training_result_cache_mutated}")
+    print(f"training_result_data_raw_written: {result.training_result_data_raw_written}")
+    print(f"training_result_data_processed_written: {result.training_result_data_processed_written}")
+    print(f"training_result_data_cache_written: {result.training_result_data_cache_written}")
+    print(f"training_result_current_candidates_run: {result.training_result_current_candidates_run}")
+    print(f"training_result_snapshot_built: {result.training_result_snapshot_built}")
+    print(
+        "training_result_signal_semantics_changed: "
+        f"{result.training_result_signal_semantics_changed}"
+    )
+    print(f"training_result_report_only: {result.training_result_report_only}")
+    print(f"training_result_diagnostic_only: {result.training_result_diagnostic_only}")
+    print(f"training_result_no_live_trading: {result.training_result_no_live_trading}")
+    print(f"training_result_no_broker_api: {result.training_result_no_broker_api}")
+    print(f"training_result_no_order_placement: {result.training_result_no_order_placement}")
+    print(f"training_result_no_message_sent: {result.training_result_no_message_sent}")
+    print(f"training_result_report_path: {result.training_result_report_path}")
+    print(f"training_result_next_action: {result.training_result_next_action}")
     print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
