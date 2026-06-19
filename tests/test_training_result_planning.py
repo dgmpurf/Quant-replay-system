@@ -35,6 +35,9 @@ from quant_replay_system.training_result_planning import (
     TrainingResultPlanningSettings,
     run_training_result_planning,
 )
+from quant_replay_system.training_result_planning_health import check_training_result_planning_health
+from quant_replay_system.training_result_planning_index import build_training_result_planning_index
+from quant_replay_system.training_result_planning_status import run_training_result_planning_status
 
 
 DOWNSTREAM_FALSE_FIELDS = [
@@ -408,9 +411,9 @@ def test_cli_no_input_runs_and_no_artifact_view_commands_are_added(tmp_path: Pat
     assert "status: NO_TRAINING_RESULT_PLANNING_INPUT" in no_input.stdout
     help_text = _run_cli(["--help"]).stdout
     assert "training-result-planning" in help_text
-    assert "training-result-planning-index" not in help_text
-    assert "training-result-planning-health" not in help_text
-    assert "training-result-planning-status" not in help_text
+    assert "training-result-planning-index" in help_text
+    assert "training-result-planning-health" in help_text
+    assert "training-result-planning-status" in help_text
     assert not Path("docs/project_sources").exists()
 
 
@@ -427,6 +430,257 @@ def test_cli_happy_paths_without_and_with_allow(tmp_path: Path) -> None:
     assert "training_result_planning_artifacts_created: True" in created.stdout
     assert "training_result_created: False" in created.stdout
     assert "weights_trained: False" in created.stdout
+
+
+def test_training_result_planning_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
+    _create_view_fixture_artifacts(tmp_path)
+
+    index = build_training_result_planning_index(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "index")
+
+    assert index.artifact_count == 3
+    assert index.artifact_paths["index_csv"].exists()
+    frame = index.index_frame
+    assert set(frame["status"]) == {
+        NO_TRAINING_RESULT_PLANNING_INPUT,
+        READY_FOR_TRAINING_RESULT_PLANNING,
+        TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED,
+    }
+    created = frame[frame["status"] == TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED].iloc[0]
+    assert created["training_result_planning_artifacts_created"] is True
+    assert created["input_index_row_count"] == 6
+    assert created["metric_evidence_row_count"] == 7
+    assert created["lineage_matrix_row_count"] >= 1
+    assert created["model_scope_row_count"] >= 10
+    assert created["overfit_warning_row_count"] >= 5
+    assert created["health_plan_row_count"] >= 3
+    assert created["status_plan_row_count"] >= 10
+    assert created["source_metric_extension_run_id"] == "metric_ext_plan"
+    assert created["source_metric_computation_run_id"] == "metric_comp_plan"
+    assert created["source_metric_evaluation_planning_run_id"] == "metric_eval_plan"
+    assert created["source_training_evaluation_run_id"] == "train_eval_plan"
+    assert created["source_forward_return_label_run_id"] == "label_plan"
+    assert created["source_replay_decision_freeze_run_id"] == "freeze_plan"
+    assert created["report_only"] is True
+    assert created["diagnostic_only"] is True
+    assert created["training_result_created"] is False
+    assert created["weights_trained"] is False
+    assert created["model_version_created"] is False
+    assert created["parameter_version_created"] is False
+    assert created["thresholds_optimized"] is False
+    assert created["predictions_created"] is False
+    assert created["calibrated_probabilities_created"] is False
+    assert created["feature_importance_created"] is False
+    assert created["stock_profile_created"] is False
+    assert created["approved_for_paper"] is False
+    assert created["strategy_performance_validated"] is False
+    assert created["trading_allowed"] is False
+
+
+def test_training_result_planning_health_passes_for_valid_artifact_states(tmp_path: Path) -> None:
+    _create_view_fixture_artifacts(tmp_path)
+
+    health = check_training_result_planning_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "PASS"
+    assert health.checked_artifact_count == 3
+    assert health.error_count == 0
+    assert health.health_frame.empty
+    assert health.artifact_paths["health_csv"].exists()
+
+
+@pytest.mark.parametrize(
+    ("mutator", "issue_code"),
+    [
+        (lambda path: (path / "training_result_planning_metadata.json").unlink(), "MISSING_METADATA"),
+        (lambda path: (path / "training_result_planning_input_index.csv").unlink(), "MISSING_INPUT_INDEX"),
+        (lambda path: (path / "training_result_planning_metric_evidence_index.csv").unlink(), "MISSING_METRIC_EVIDENCE_INDEX"),
+        (lambda path: (path / "training_result_planning_lineage_matrix.csv").unlink(), "MISSING_LINEAGE_MATRIX"),
+        (lambda path: (path / "training_result_planning_model_scope.csv").unlink(), "MISSING_MODEL_SCOPE"),
+        (lambda path: (path / "training_result_planning_limitations.md").unlink(), "MISSING_LIMITATIONS"),
+        (lambda path: (path / "training_result_planning_overfit_warnings.csv").unlink(), "MISSING_OVERFIT_WARNINGS"),
+        (lambda path: (path / "training_result_planning_health_plan.csv").unlink(), "MISSING_HEALTH_PLAN"),
+        (lambda path: (path / "training_result_planning_status_plan.csv").unlink(), "MISSING_STATUS_PLAN"),
+        (lambda path: _patch_json(path / "training_result_planning_metadata.json", {"training_result_planning_artifacts_created": False}), "ARTIFACTS_CREATED_FLAG_FALSE"),
+        (lambda path: _patch_json(path / "training_result_planning_metadata.json", {"model_scope_rows_created": False}), "MODEL_SCOPE_FLAG_FALSE"),
+        (lambda path: _patch_json(path / "training_result_planning_metadata.json", {"limitations_created": False}), "LIMITATIONS_FLAG_FALSE"),
+        (lambda path: _patch_json(path / "training_result_planning_metadata.json", {"overfit_warnings_created": False}), "OVERFIT_WARNINGS_FLAG_FALSE"),
+        (lambda path: _patch_json(path / "training_result_planning_metadata.json", {"health_plan_created": False}), "HEALTH_PLAN_FLAG_FALSE"),
+        (lambda path: _patch_json(path / "training_result_planning_metadata.json", {"status_plan_created": False}), "STATUS_PLAN_FLAG_FALSE"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_metric_evidence_index.csv", "metric_name", "sample_count"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_metric_evidence_index.csv", "metric_name", "label_coverage"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_metric_evidence_index.csv", "metric_name", "average_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_metric_evidence_index.csv", "metric_name", "median_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_metric_evidence_index.csv", "metric_name", "hit_rate"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_metric_evidence_index.csv", "metric_name", "benchmark_relative_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_metric_evidence_index.csv", "metric_name", "industry_relative_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda path: _patch_csv_cell(path / "training_result_planning_metric_evidence_index.csv", "forbidden_interpretation", "actual training_result"), "METRIC_EVIDENCE_OVERCLAIM"),
+        (lambda path: _patch_csv_cell(path / "training_result_planning_metric_evidence_index.csv", "forbidden_interpretation", "strategy validation passed"), "METRIC_EVIDENCE_OVERCLAIM"),
+        (lambda path: _drop_csv_column(path / "training_result_planning_input_index.csv", "source_run_id"), "INPUT_INDEX_LINEAGE_MISSING"),
+        (lambda path: _drop_csv_column(path / "training_result_planning_lineage_matrix.csv", "source_hash"), "LINEAGE_COVERAGE_MISSING"),
+        (lambda path: _patch_model_scope(path, "model_weights", True), "MODEL_SCOPE_FORBIDDEN_ALLOWED"),
+        (lambda path: _patch_model_scope(path, "model_version", True), "MODEL_SCOPE_FORBIDDEN_ALLOWED"),
+        (lambda path: _patch_model_scope(path, "parameter_version", True), "MODEL_SCOPE_FORBIDDEN_ALLOWED"),
+        (lambda path: _patch_model_scope(path, "thresholds", True), "MODEL_SCOPE_FORBIDDEN_ALLOWED"),
+        (lambda path: _patch_model_scope(path, "predictions", True), "MODEL_SCOPE_FORBIDDEN_ALLOWED"),
+        (lambda path: _patch_model_scope(path, "calibrated_probabilities", True), "MODEL_SCOPE_FORBIDDEN_ALLOWED"),
+        (lambda path: _patch_model_scope(path, "feature_importance", True), "MODEL_SCOPE_FORBIDDEN_ALLOWED"),
+        (lambda path: (path / "training_result_planning_limitations.md").write_text("report-only planning artifacts\n", encoding="utf-8"), "LIMITATIONS_WORDING_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_overfit_warnings.csv", "risk_item", "small sample"), "OVERFIT_WARNING_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_overfit_warnings.csv", "risk_item", "class imbalance"), "OVERFIT_WARNING_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_overfit_warnings.csv", "risk_item", "single-stock overfit"), "OVERFIT_WARNING_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_overfit_warnings.csv", "risk_item", "metric selection bias"), "OVERFIT_WARNING_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_overfit_warnings.csv", "risk_item", "lookahead leakage"), "OVERFIT_WARNING_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_health_plan.csv", "future_gate", "upstream health PASS"), "HEALTH_PLAN_GATE_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_health_plan.csv", "future_gate", "lineage complete"), "HEALTH_PLAN_GATE_MISSING"),
+        (lambda path: _drop_csv_rows(path / "training_result_planning_health_plan.csv", "future_gate", "report-only flags"), "HEALTH_PLAN_GATE_MISSING"),
+        (lambda path: _patch_status_plan(path, "training_result_created", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "weights_trained", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "model_version_created", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "parameter_version_created", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "thresholds_optimized", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "predictions_created", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "stock_profile_created", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "approved_for_paper", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "strategy_performance_validated", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: _patch_status_plan(path, "trading_allowed", "True"), "STATUS_PLAN_FALSE_FIELD_ALLOWED"),
+        (lambda path: (path / "training_result_metadata.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "model_weights.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "model_version.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "parameter_version.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "thresholds.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "predictions.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "probabilities.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "feature_importance.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "stock_profile.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "buy_review.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "paper_approval.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "performance_validation_report.md").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: (path / "broker_orders.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"training_result_created": True}), "TRAINING_RESULT_CREATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"weights_trained": True}), "WEIGHTS_TRAINED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"model_version_created": True}), "MODEL_VERSION_CREATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"parameter_version_created": True}), "PARAMETER_VERSION_CREATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"thresholds_optimized": True}), "THRESHOLDS_OPTIMIZED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"predictions_created": True}), "PREDICTIONS_CREATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"calibrated_probabilities_created": True}), "CALIBRATED_PROBABILITIES_CREATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"feature_importance_created": True}), "FEATURE_IMPORTANCE_CREATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"stock_profile_allowed": True}), "STOCK_PROFILE_ALLOWED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"active_stock_profile_exists": True}), "ACTIVE_STOCK_PROFILE_EXISTS_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"stock_profile_created": True}), "STOCK_PROFILE_CREATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"buy_review_allowed": True}), "BUY_REVIEW_ALLOWED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"real_buy_review_eligible": True}), "REAL_BUY_REVIEW_ELIGIBLE_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"approved_for_paper": True}), "APPROVED_FOR_PAPER_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"strategy_performance_validated": True}), "STRATEGY_PERFORMANCE_VALIDATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"trading_allowed": True}), "TRADING_ALLOWED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"order_placed": True}), "ORDER_PLACED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"broker_api_called": True}), "BROKER_API_CALLED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"message_sent": True}), "MESSAGE_SENT_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"llm_api_called": True}), "LLM_API_CALLED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"external_api_called": True}), "EXTERNAL_API_CALLED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"cache_mutated": True}), "CACHE_MUTATED_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"data_raw_written": True}), "DATA_RAW_WRITTEN_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"data_processed_written": True}), "DATA_PROCESSED_WRITTEN_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"data_cache_written": True}), "DATA_CACHE_WRITTEN_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"current_candidates_run": True}), "CURRENT_CANDIDATES_RUN_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"snapshot_built": True}), "SNAPSHOT_BUILT_UNEXPECTED"),
+        (lambda path: _patch_json(path / "training_result_planning_safety_flags.json", {"signal_semantics_changed": True}), "SIGNAL_SEMANTICS_CHANGED_UNEXPECTED"),
+    ],
+)
+def test_training_result_planning_health_fails_on_invalid_artifact_boundaries(
+    tmp_path: Path,
+    mutator: object,
+    issue_code: str,
+) -> None:
+    created = run_training_result_planning(replace(_happy_settings(tmp_path), allow_training_result_planning=True))
+    mutator(Path(created.artifact_path))
+
+    health = check_training_result_planning_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert issue_code in set(health.health_frame["issue_code"])
+
+
+def test_training_result_planning_health_fails_if_ready_artifact_has_substantive_planning_outputs(tmp_path: Path) -> None:
+    ready = run_training_result_planning(_happy_settings(tmp_path))
+    artifact_path = Path(ready.artifact_path)
+    _write_csv(artifact_path / "training_result_planning_input_index.csv", [{"source_run_id": "unsafe"}])
+
+    health = check_training_result_planning_health(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "health")
+
+    assert health.status == "FAIL"
+    assert "SUBSTANTIVE_PLANNING_ARTIFACT_WITHOUT_CREATED_STATUS" in set(health.health_frame["issue_code"])
+
+
+def test_training_result_planning_status_summarizes_no_input_ready_and_created_states(tmp_path: Path) -> None:
+    no_input, ready, created = _create_view_fixture_artifacts(tmp_path)
+
+    no_input_status = run_training_result_planning_status(root=_single_artifact_root(tmp_path, no_input), output_dir=_output_dir(tmp_path) / "status_no_input")
+    assert no_input_status.latest_training_result_planning_run_id == no_input.training_result_planning_run_id
+    assert no_input_status.status == NO_TRAINING_RESULT_PLANNING_INPUT
+    assert no_input_status.training_result_planning_artifacts_created is False
+
+    ready_status = run_training_result_planning_status(root=_single_artifact_root(tmp_path, ready), output_dir=_output_dir(tmp_path) / "status_ready")
+    assert ready_status.latest_training_result_planning_run_id == ready.training_result_planning_run_id
+    assert ready_status.status == READY_FOR_TRAINING_RESULT_PLANNING
+    assert ready_status.ready_for_training_result_planning is True
+    assert ready_status.training_result_planning_artifacts_created is False
+
+    created_status = run_training_result_planning_status(root=_output_dir(tmp_path), output_dir=_output_dir(tmp_path) / "status_created")
+    assert created_status.latest_training_result_planning_run_id == created.training_result_planning_run_id
+    assert created_status.status == TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED
+    assert created_status.health_status == "PASS"
+    assert created_status.training_result_planning_artifacts_created is True
+    assert created_status.metric_evidence_row_count == 7
+    assert created_status.input_index_row_count == 6
+    assert created_status.training_result_created is False
+    assert created_status.weights_trained is False
+    assert created_status.model_version_created is False
+    assert created_status.parameter_version_created is False
+    assert created_status.thresholds_optimized is False
+    assert created_status.predictions_created is False
+    assert created_status.stock_profile_created is False
+    assert created_status.approved_for_paper is False
+    assert created_status.strategy_performance_validated is False
+    assert created_status.trading_allowed is False
+    for phrase in [
+        "report-only planning only",
+        "only planning artifacts",
+        "not actual training_result",
+        "not weights",
+        "not model_version",
+        "not parameter_version",
+        "not thresholds",
+        "not predictions/probabilities/feature importance",
+        "not stock_profile",
+        "not buy-review",
+        "not paper approval",
+        "not performance validation",
+        "not trading",
+    ]:
+        assert phrase in created_status.safety_statement
+
+
+def test_training_result_planning_view_cli_commands_run(tmp_path: Path) -> None:
+    _create_view_fixture_artifacts(tmp_path)
+    root = _output_dir(tmp_path)
+
+    index = _run_cli(["training-result-planning-index", "--root", root, "--output-dir", root / "index"])
+    assert "artifact_count: 3" in index.stdout
+
+    health = _run_cli(["training-result-planning-health", "--root", root, "--output-dir", root / "health"])
+    assert "status: PASS" in health.stdout
+
+    status = _run_cli(["training-result-planning-status", "--root", root, "--output-dir", root / "status"])
+    assert "status: TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED" in status.stdout
+    assert "training_result_created: False" in status.stdout
+    assert "weights_trained: False" in status.stdout
+
+    help_text = _run_cli(["--help"]).stdout
+    assert "training-result-planning-index" in help_text
+    assert "training-result-planning-health" in help_text
+    assert "training-result-planning-status" in help_text
+    assert not Path("docs/project_sources").exists()
+    assert not list(Path("docs").glob("release_checkpoint_v1.49.0.md"))
 
 
 def _happy_settings(tmp_path: Path) -> TrainingResultPlanningSettings:
@@ -730,6 +984,56 @@ def _required_created_artifact_keys() -> list[str]:
         "overclaim_guard_results",
         "recommended_next_task",
     ]
+
+
+def _create_view_fixture_artifacts(tmp_path: Path) -> tuple[object, object, object]:
+    no_input = run_training_result_planning(TrainingResultPlanningSettings(output_dir=_output_dir(tmp_path)))
+    settings = _happy_settings(tmp_path)
+    ready = run_training_result_planning(settings)
+    created = run_training_result_planning(replace(settings, allow_training_result_planning=True))
+    return no_input, ready, created
+
+
+def _single_artifact_root(tmp_path: Path, result: object) -> Path:
+    root = tmp_path / "outputs" / "reports" / "manual_diagnostics" / f"single_{result.training_result_planning_run_id}"
+    target = root / result.training_result_planning_run_id
+    target.mkdir(parents=True, exist_ok=True)
+    for item in Path(result.artifact_path).iterdir():
+        if item.is_file():
+            (target / item.name).write_bytes(item.read_bytes())
+    return root
+
+
+def _drop_csv_rows(path: Path, column: str, value: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame = frame[frame[column].astype(str) != value]
+    frame.to_csv(path, index=False)
+
+
+def _drop_csv_column(path: Path, column: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame = frame.drop(columns=[column])
+    frame.to_csv(path, index=False)
+
+
+def _patch_csv_cell(path: Path, column: str, value: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame.loc[0, column] = value
+    frame.to_csv(path, index=False)
+
+
+def _patch_model_scope(artifact_path: Path, scope_item: str, allowed: bool) -> None:
+    path = artifact_path / "training_result_planning_model_scope.csv"
+    frame = pd.read_csv(path, dtype=str)
+    frame.loc[frame["scope_item"].astype(str) == scope_item, "allowed_in_phase_1"] = str(allowed)
+    frame.to_csv(path, index=False)
+
+
+def _patch_status_plan(artifact_path: Path, status_field: str, expected_value: str) -> None:
+    path = artifact_path / "training_result_planning_status_plan.csv"
+    frame = pd.read_csv(path, dtype=str)
+    frame.loc[frame["status_field"].astype(str) == status_field, "expected_value"] = expected_value
+    frame.to_csv(path, index=False)
 
 
 def _write_json(path: Path, payload: dict[str, object]) -> Path:

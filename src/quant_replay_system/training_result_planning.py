@@ -786,7 +786,7 @@ def _limitations() -> str:
     return (
         "# Training Result Planning Limitations\n\n"
         "These are report-only planning artifacts, not actual training_result artifacts.\n\n"
-        "This phase is not weights, not model_version, not thresholds, not predictions/probabilities/feature importance, "
+        "This phase is not weights, not model_version, not parameter_version, not thresholds, not predictions/probabilities/feature importance, "
         "not stock_profile, not buy-review, not paper approval, not performance validation, and not trading.\n"
     )
 

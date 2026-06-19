@@ -342,6 +342,9 @@ from quant_replay_system.training_result_planning import (
     TrainingResultPlanningSettings,
     run_training_result_planning,
 )
+from quant_replay_system.training_result_planning_health import check_training_result_planning_health
+from quant_replay_system.training_result_planning_index import build_training_result_planning_index
+from quant_replay_system.training_result_planning_status import run_training_result_planning_status
 from quant_replay_system.metric_extension_health import check_metric_extension_health
 from quant_replay_system.metric_extension_index import build_metric_extension_index
 from quant_replay_system.metric_extension_status import run_metric_extension_status
@@ -3492,6 +3495,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only training result planning artifacts will be written",
     )
     training_result_planning.set_defaults(handler=_handle_training_result_planning)
+
+    training_result_planning_index = subparsers.add_parser(
+        "training-result-planning-index",
+        help="Index report-only training result planning phase 1 artifacts",
+    )
+    training_result_planning_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_result_planning_v0_1",
+        help="Training result planning artifact root to index",
+    )
+    training_result_planning_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_result_planning_v0_1/index",
+        help="Directory where training result planning index artifacts will be written",
+    )
+    training_result_planning_index.set_defaults(handler=_handle_training_result_planning_index)
+
+    training_result_planning_health = subparsers.add_parser(
+        "training-result-planning-health",
+        help="Health-check report-only training result planning phase 1 artifacts",
+    )
+    training_result_planning_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_result_planning_v0_1",
+        help="Training result planning artifact root to health-check",
+    )
+    training_result_planning_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_result_planning_v0_1/health",
+        help="Directory where training result planning health artifacts will be written",
+    )
+    training_result_planning_health.set_defaults(handler=_handle_training_result_planning_health)
+
+    training_result_planning_status = subparsers.add_parser(
+        "training-result-planning-status",
+        help="Summarize latest report-only training result planning phase 1 artifact status",
+    )
+    training_result_planning_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_result_planning_v0_1",
+        help="Training result planning artifact root to summarize",
+    )
+    training_result_planning_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_result_planning_v0_1/status",
+        help="Directory where training result planning status artifacts will be written",
+    )
+    training_result_planning_status.set_defaults(handler=_handle_training_result_planning_status)
 
     metric_extension_index = subparsers.add_parser(
         "metric-extension-index",
@@ -9882,6 +9933,88 @@ def _handle_training_result_planning(args: argparse.Namespace) -> int:
     print(f"strategy_performance_validated: {result.strategy_performance_validated}")
     print(f"trading_allowed: {result.trading_allowed}")
     print(f"artifact_path: {result.artifact_path}")
+    print(result.safety_statement)
+    return 0
+
+
+def _handle_training_result_planning_index(args: argparse.Namespace) -> int:
+    result = build_training_result_planning_index(root=args.root, output_dir=args.output_dir)
+    print(f"Training result planning index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Training result planning index is report-only planning only. "
+        "TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED is not actual training_result, not weights, "
+        "not model_version, not parameter_version, not thresholds, not predictions/probabilities/feature importance, "
+        "not stock_profile, not buy-review, not paper approval, not performance validation, and not trading."
+    )
+    return 0
+
+
+def _handle_training_result_planning_health(args: argparse.Namespace) -> int:
+    result = check_training_result_planning_health(root=args.root, output_dir=args.output_dir)
+    print(f"Training result planning health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Training result planning health keeps artifacts report-only and fails if planning outputs imply "
+        "actual training_result, weights, model_version, parameter_version, thresholds, predictions, "
+        "calibrated probabilities, feature importance, stock_profile, buy-review, paper approval, "
+        "performance validation, broker/order/message/API/cache/data side effects, current-candidates, "
+        "snapshots, signal semantics mutation, or trading."
+    )
+    return 0
+
+
+def _handle_training_result_planning_status(args: argparse.Namespace) -> int:
+    result = run_training_result_planning_status(root=args.root, output_dir=args.output_dir)
+    print(f"Training result planning status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_training_result_planning_run_id: {result.latest_training_result_planning_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_training_result_planning: {result.ready_for_training_result_planning}")
+    print(f"training_result_planning_executed: {result.training_result_planning_executed}")
+    print(f"training_result_planning_artifacts_created: {result.training_result_planning_artifacts_created}")
+    print(f"metric_evidence_names_present: {result.metric_evidence_names_present}")
+    print(f"metric_evidence_row_count: {result.metric_evidence_row_count}")
+    print(f"planning_input_row_count: {result.planning_input_row_count}")
+    print(f"eligible_planning_input_count: {result.eligible_planning_input_count}")
+    print(f"quarantined_planning_input_count: {result.quarantined_planning_input_count}")
+    print(f"model_scope_rows_created: {result.model_scope_rows_created}")
+    print(f"limitations_created: {result.limitations_created}")
+    print(f"overfit_warnings_created: {result.overfit_warnings_created}")
+    print(f"health_plan_created: {result.health_plan_created}")
+    print(f"status_plan_created: {result.status_plan_created}")
+    print(f"input_index_row_count: {result.input_index_row_count}")
+    print(f"lineage_matrix_row_count: {result.lineage_matrix_row_count}")
+    print(f"model_scope_row_count: {result.model_scope_row_count}")
+    print(f"overfit_warning_row_count: {result.overfit_warning_row_count}")
+    print(f"health_plan_row_count: {result.health_plan_row_count}")
+    print(f"status_plan_row_count: {result.status_plan_row_count}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"parameter_version_created: {result.parameter_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
     print(result.safety_statement)
     return 0
 
