@@ -476,9 +476,9 @@ def test_cli_no_input_ready_and_allow_paths(tmp_path: Path) -> None:
 
 
 def test_training_result_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
-    no_input = run_training_result(TrainingResultSettings(output_dir=_output_dir(tmp_path / "no_input")))
-    ready = run_training_result(_happy_settings(tmp_path / "ready"))
-    created = run_training_result(replace(_happy_settings(tmp_path / "created"), allow_training_result=True))
+    no_input = run_training_result(TrainingResultSettings(output_dir=_artifact_root(tmp_path)))
+    ready = run_training_result(replace(_happy_settings(tmp_path / "ready"), output_dir=_artifact_root(tmp_path)))
+    created = run_training_result(replace(_happy_settings(tmp_path / "created"), output_dir=_artifact_root(tmp_path), allow_training_result=True))
 
     result = build_training_result_index(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "index"))
 
@@ -505,9 +505,9 @@ def test_training_result_index_discovers_no_input_ready_and_created_artifacts(tm
 
 
 def test_training_result_health_passes_valid_artifact_states(tmp_path: Path) -> None:
-    run_training_result(TrainingResultSettings(output_dir=_output_dir(tmp_path / "no_input")))
-    run_training_result(_happy_settings(tmp_path / "ready"))
-    run_training_result(replace(_happy_settings(tmp_path / "created"), allow_training_result=True))
+    run_training_result(TrainingResultSettings(output_dir=_artifact_root(tmp_path)))
+    run_training_result(replace(_happy_settings(tmp_path / "ready"), output_dir=_artifact_root(tmp_path)))
+    run_training_result(replace(_happy_settings(tmp_path / "created"), output_dir=_artifact_root(tmp_path), allow_training_result=True))
 
     result = check_training_result_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "health"))
 
@@ -631,9 +631,9 @@ def test_training_result_health_fails_if_any_forbidden_flag_is_true(tmp_path: Pa
 
 
 def test_training_result_status_reports_latest_created_state_and_safety_wording(tmp_path: Path) -> None:
-    run_training_result(TrainingResultSettings(output_dir=_output_dir(tmp_path / "no_input")))
-    run_training_result(_happy_settings(tmp_path / "ready"))
-    created = run_training_result(replace(_happy_settings(tmp_path / "created"), allow_training_result=True))
+    run_training_result(TrainingResultSettings(output_dir=_artifact_root(tmp_path)))
+    run_training_result(replace(_happy_settings(tmp_path / "ready"), output_dir=_artifact_root(tmp_path)))
+    created = run_training_result(replace(_happy_settings(tmp_path / "created"), output_dir=_artifact_root(tmp_path), allow_training_result=True))
 
     result = run_training_result_status(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "status"))
 

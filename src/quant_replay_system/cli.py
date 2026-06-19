@@ -346,6 +346,9 @@ from quant_replay_system.training_result import (
     TrainingResultSettings,
     run_training_result,
 )
+from quant_replay_system.training_result_health import check_training_result_health
+from quant_replay_system.training_result_index import build_training_result_index
+from quant_replay_system.training_result_status import run_training_result_status
 from quant_replay_system.training_result_planning_health import check_training_result_planning_health
 from quant_replay_system.training_result_planning_index import build_training_result_planning_index
 from quant_replay_system.training_result_planning_status import run_training_result_planning_status
@@ -3560,6 +3563,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only actual training_result artifacts will be written",
     )
     training_result.set_defaults(handler=_handle_training_result)
+
+    training_result_index = subparsers.add_parser(
+        "training-result-index",
+        help="Index report-only actual training_result phase 1 artifacts",
+    )
+    training_result_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_result_v0_1",
+        help="Actual training_result artifact root to index",
+    )
+    training_result_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_result_v0_1/index",
+        help="Directory where actual training_result index artifacts will be written",
+    )
+    training_result_index.set_defaults(handler=_handle_training_result_index)
+
+    training_result_health = subparsers.add_parser(
+        "training-result-health",
+        help="Health-check report-only actual training_result phase 1 artifacts",
+    )
+    training_result_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_result_v0_1",
+        help="Actual training_result artifact root to health-check",
+    )
+    training_result_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_result_v0_1/health",
+        help="Directory where actual training_result health artifacts will be written",
+    )
+    training_result_health.set_defaults(handler=_handle_training_result_health)
+
+    training_result_status = subparsers.add_parser(
+        "training-result-status",
+        help="Summarize latest report-only actual training_result phase 1 artifact status",
+    )
+    training_result_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/training_result_v0_1",
+        help="Actual training_result artifact root to summarize",
+    )
+    training_result_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/training_result_v0_1/status",
+        help="Directory where actual training_result status artifacts will be written",
+    )
+    training_result_status.set_defaults(handler=_handle_training_result_status)
 
     training_result_planning_index = subparsers.add_parser(
         "training-result-planning-index",
@@ -10051,6 +10102,82 @@ def _handle_training_result(args: argparse.Namespace) -> int:
     print(f"strategy_performance_validated: {result.strategy_performance_validated}")
     print(f"trading_allowed: {result.trading_allowed}")
     print(f"artifact_path: {result.artifact_path}")
+    print(result.safety_statement)
+    return 0
+
+
+def _handle_training_result_index(args: argparse.Namespace) -> int:
+    result = build_training_result_index(root=args.root, output_dir=args.output_dir)
+    print(f"Training result index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Actual training_result index is report-only. TRAINING_RESULT_CREATED means report-only actual "
+        "training_result artifacts only: not weights, not model_version, not parameter_version, not "
+        "thresholds, not predictions/probabilities/feature importance, not stock_profile, not buy-review, "
+        "not paper approval, not performance validation, and not trading."
+    )
+    return 0
+
+
+def _handle_training_result_health(args: argparse.Namespace) -> int:
+    result = check_training_result_health(root=args.root, output_dir=args.output_dir)
+    print(f"Training result health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Actual training_result health keeps phase 1 report-only and fails if outputs imply weights, "
+        "model_version, parameter_version, thresholds, predictions, calibrated probabilities, feature "
+        "importance, stock_profile, buy-review, paper approval, performance validation, broker/order/"
+        "message/API/cache/data side effects, current-candidates, snapshots, signal semantics mutation, "
+        "or trading."
+    )
+    return 0
+
+
+def _handle_training_result_status(args: argparse.Namespace) -> int:
+    result = run_training_result_status(root=args.root, output_dir=args.output_dir)
+    print(f"Training result status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_training_result_run_id: {result.latest_training_result_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_training_result: {result.ready_for_training_result}")
+    print(f"training_result_executed: {result.training_result_executed}")
+    print(f"training_result_created: {result.training_result_created}")
+    print(f"training_result_row_count: {result.training_result_row_count}")
+    print(f"eligible_training_result_row_count: {result.eligible_training_result_row_count}")
+    print(f"quarantined_training_result_row_count: {result.quarantined_training_result_row_count}")
+    print(f"metric_evidence_names_present: {result.metric_evidence_names_present}")
+    print(f"metric_evidence_reference_count: {result.metric_evidence_reference_count}")
+    print(f"limitations_created: {result.limitations_created}")
+    print(f"overfit_warnings_created: {result.overfit_warnings_created}")
+    print(f"input_index_row_count: {result.input_index_row_count}")
+    print(f"metric_evidence_reference_row_count: {result.metric_evidence_reference_row_count}")
+    print(f"lineage_matrix_row_count: {result.lineage_matrix_row_count}")
+    print(f"overfit_warning_row_count: {result.overfit_warning_row_count}")
+    print(f"weights_trained: {result.weights_trained}")
+    print(f"model_version_created: {result.model_version_created}")
+    print(f"parameter_version_created: {result.parameter_version_created}")
+    print(f"thresholds_optimized: {result.thresholds_optimized}")
+    print(f"predictions_created: {result.predictions_created}")
+    print(f"calibrated_probabilities_created: {result.calibrated_probabilities_created}")
+    print(f"feature_importance_created: {result.feature_importance_created}")
+    print(f"stock_profile_allowed: {result.stock_profile_allowed}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
     print(result.safety_statement)
     return 0
 
