@@ -36,6 +36,9 @@ from quant_replay_system.training_result import (
     TrainingResultSettings,
     run_training_result,
 )
+from quant_replay_system.training_result_health import check_training_result_health
+from quant_replay_system.training_result_index import build_training_result_index
+from quant_replay_system.training_result_status import run_training_result_status
 
 
 DOWNSTREAM_FALSE_FIELDS = [
@@ -466,9 +469,225 @@ def test_cli_no_input_ready_and_allow_paths(tmp_path: Path) -> None:
 
     help_text = _run_cli(["--help"]).stdout
     assert "training-result" in help_text
-    assert "training-result-index" not in help_text
-    assert "training-result-health" not in help_text
-    assert "training-result-status" not in help_text
+    assert "training-result-index" in help_text
+    assert "training-result-health" in help_text
+    assert "training-result-status" in help_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_training_result_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
+    no_input = run_training_result(TrainingResultSettings(output_dir=_output_dir(tmp_path / "no_input")))
+    ready = run_training_result(_happy_settings(tmp_path / "ready"))
+    created = run_training_result(replace(_happy_settings(tmp_path / "created"), allow_training_result=True))
+
+    result = build_training_result_index(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "index"))
+
+    assert result.artifact_count == 3
+    rows = {row["training_result_run_id"]: row for row in result.index_frame.to_dict("records")}
+    assert rows[no_input.training_result_run_id]["status"] == NO_TRAINING_RESULT_INPUT
+    assert rows[ready.training_result_run_id]["status"] == READY_FOR_TRAINING_RESULT
+    created_row = rows[created.training_result_run_id]
+    assert created_row["status"] == TRAINING_RESULT_CREATED
+    assert created_row["training_result_created"] is True
+    assert created_row["training_result_row_count"] == 1
+    assert created_row["eligible_training_result_row_count"] == 1
+    assert created_row["quarantined_training_result_row_count"] == 0
+    assert set(str(created_row["metric_evidence_names_present"]).split(",")) == REQUIRED_METRICS
+    assert created_row["metric_evidence_reference_count"] == 7
+    assert created_row["input_index_row_count"] == 7
+    assert created_row["metric_evidence_reference_row_count"] == 7
+    assert created_row["lineage_matrix_row_count"] == 7
+    assert created_row["overfit_warning_row_count"] >= 5
+    assert created_row["limitations_created"] is True
+    assert created_row["overfit_warnings_created"] is True
+    for field in DOWNSTREAM_FALSE_FIELDS:
+        assert created_row[field] is False, field
+
+
+def test_training_result_health_passes_valid_artifact_states(tmp_path: Path) -> None:
+    run_training_result(TrainingResultSettings(output_dir=_output_dir(tmp_path / "no_input")))
+    run_training_result(_happy_settings(tmp_path / "ready"))
+    run_training_result(replace(_happy_settings(tmp_path / "created"), allow_training_result=True))
+
+    result = check_training_result_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "health"))
+
+    assert result.status == "PASS"
+    assert result.error_count == 0
+    assert result.checked_artifact_count == 3
+
+
+@pytest.mark.parametrize(
+    ("artifact_key", "expected_issue"),
+    [
+        ("metadata", "MISSING_METADATA"),
+        ("rows", "MISSING_ROWS"),
+        ("status_json", "MISSING_STATUS"),
+        ("input_index", "MISSING_INPUT_INDEX"),
+        ("metric_evidence_reference", "MISSING_METRIC_EVIDENCE_REFERENCE"),
+        ("lineage_matrix", "MISSING_LINEAGE_MATRIX"),
+        ("limitations", "MISSING_LIMITATIONS"),
+        ("overfit_warnings", "MISSING_OVERFIT_WARNINGS"),
+        ("safety_flags", "MISSING_SAFETY_FLAGS"),
+    ],
+)
+def test_training_result_health_fails_if_created_artifact_required_file_missing(
+    tmp_path: Path,
+    artifact_key: str,
+    expected_issue: str,
+) -> None:
+    created = run_training_result(replace(_happy_settings(tmp_path), allow_training_result=True))
+    created.artifact_paths[artifact_key].unlink()
+
+    result = check_training_result_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, f"health_{artifact_key}"))
+
+    assert result.status == "FAIL"
+    assert expected_issue in set(result.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("mutator", "expected_issue"),
+    [
+        (lambda result: _patch_json(result.artifact_paths["metadata"], {"training_result_created": False}), "TRAINING_RESULT_CREATED_FLAG_FALSE"),
+        (lambda result: _patch_json(result.artifact_paths["metadata"], {"limitations_created": False}), "LIMITATIONS_FLAG_FALSE"),
+        (lambda result: _patch_json(result.artifact_paths["metadata"], {"overfit_warnings_created": False}), "OVERFIT_WARNINGS_FLAG_FALSE"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["metric_evidence_reference"], "metric_name", "sample_count"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["metric_evidence_reference"], "metric_name", "label_coverage"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["metric_evidence_reference"], "metric_name", "average_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["metric_evidence_reference"], "metric_name", "median_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["metric_evidence_reference"], "metric_name", "hit_rate"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["metric_evidence_reference"], "metric_name", "benchmark_relative_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["metric_evidence_reference"], "metric_name", "industry_relative_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _drop_column(result.artifact_paths["metric_evidence_reference"], "permitted_interpretation"), "METRIC_EVIDENCE_INTERPRETATION_MISSING"),
+        (lambda result: _set_csv_value(result.artifact_paths["metric_evidence_reference"], "forbidden_interpretation", "strategy performance validated and profitability proof"), "METRIC_EVIDENCE_OVERCLAIM"),
+        (lambda result: _drop_column(result.artifact_paths["input_index"], "source_run_id"), "INPUT_INDEX_LINEAGE_MISSING"),
+        (lambda result: _drop_column(result.artifact_paths["input_index"], "health_status"), "INPUT_INDEX_LINEAGE_MISSING"),
+        (lambda result: _drop_column(result.artifact_paths["lineage_matrix"], "source_run_id"), "LINEAGE_COVERAGE_MISSING"),
+        (lambda result: _drop_column(result.artifact_paths["lineage_matrix"], "available_time_coverage"), "LINEAGE_COVERAGE_MISSING"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "weights", "0.7"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "model_version", "v1"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "parameter_version", "p1"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "threshold", "0.5"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "prediction_probability", "0.8"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "feature_importance", "factor_a"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "stock_profile_id", "sp1"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "buy_review_id", "br1"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "paper_approval", "yes"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "performance_validation", "passed"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: _append_csv_column(result.artifact_paths["rows"], "broker_order_id", "ord1"), "TRAINING_RESULT_ROW_FORBIDDEN_FIELD"),
+        (lambda result: result.artifact_paths["limitations"].write_text("not enough\n", encoding="utf-8"), "LIMITATIONS_WORDING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["overfit_warnings"], "risk_item", "small sample"), "OVERFIT_WARNING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["overfit_warnings"], "risk_item", "class imbalance"), "OVERFIT_WARNING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["overfit_warnings"], "risk_item", "single-stock overfit"), "OVERFIT_WARNING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["overfit_warnings"], "risk_item", "metric selection bias"), "OVERFIT_WARNING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["overfit_warnings"], "risk_item", "lookahead leakage"), "OVERFIT_WARNING_MISSING"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "model_weights.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "model_version.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "parameter_version.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "thresholds.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "predictions.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "stock_profile.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "buy_review.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "paper_approval.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "performance_validation.md").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "broker_order.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+    ],
+)
+def test_training_result_health_fails_closed_for_created_artifact_mutations(tmp_path: Path, mutator, expected_issue: str) -> None:
+    created = run_training_result(replace(_happy_settings(tmp_path), allow_training_result=True))
+    mutator(created)
+
+    result = check_training_result_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, f"health_{expected_issue.lower()}"))
+
+    assert result.status == "FAIL"
+    assert expected_issue in set(result.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("status_factory", "mutator", "expected_issue"),
+    [
+        (lambda path: run_training_result(TrainingResultSettings(output_dir=_output_dir(path))), lambda result: _patch_json(result.artifact_paths["metadata"], {"training_result_created": True}), "TRAINING_RESULT_CREATED_UNEXPECTED"),
+        (lambda path: run_training_result(_happy_settings(path)), lambda result: _patch_json(result.artifact_paths["metadata"], {"training_result_created": True}), "TRAINING_RESULT_CREATED_UNEXPECTED"),
+    ],
+)
+def test_training_result_health_fails_if_non_created_state_claims_created(tmp_path: Path, status_factory, mutator, expected_issue: str) -> None:
+    result_artifact = status_factory(tmp_path)
+    mutator(result_artifact)
+
+    result = check_training_result_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "health_non_created"))
+
+    assert result.status == "FAIL"
+    assert expected_issue in set(result.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize("field", DOWNSTREAM_FALSE_FIELDS)
+def test_training_result_health_fails_if_any_forbidden_flag_is_true(tmp_path: Path, field: str) -> None:
+    created = run_training_result(replace(_happy_settings(tmp_path), allow_training_result=True))
+    _patch_json(created.artifact_paths["safety_flags"], {field: True})
+
+    result = check_training_result_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, f"health_{field}"))
+
+    assert result.status == "FAIL"
+    assert f"{field.upper()}_UNEXPECTED" in set(result.health_frame["issue_code"])
+
+
+def test_training_result_status_reports_latest_created_state_and_safety_wording(tmp_path: Path) -> None:
+    run_training_result(TrainingResultSettings(output_dir=_output_dir(tmp_path / "no_input")))
+    run_training_result(_happy_settings(tmp_path / "ready"))
+    created = run_training_result(replace(_happy_settings(tmp_path / "created"), allow_training_result=True))
+
+    result = run_training_result_status(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "status"))
+
+    assert result.latest_training_result_run_id == created.training_result_run_id
+    assert result.status == TRAINING_RESULT_CREATED
+    assert result.health_status == "PASS"
+    assert result.workflow_stage == TRAINING_RESULT_CREATED
+    assert result.training_result_created is True
+    assert result.training_result_row_count == 1
+    assert result.metric_evidence_reference_count == 7
+    for phrase in [
+        "report-only actual training_result artifacts",
+        "not weights",
+        "not model_version",
+        "not parameter_version",
+        "not thresholds",
+        "not predictions/probabilities/feature importance",
+        "not stock_profile",
+        "not buy-review",
+        "not paper approval",
+        "not performance validation",
+        "not trading",
+    ]:
+        assert phrase in result.safety_statement
+
+
+def test_training_result_status_reports_no_input_and_ready_states(tmp_path: Path) -> None:
+    no_input = run_training_result(TrainingResultSettings(output_dir=_output_dir(tmp_path / "no_input")))
+    no_input_status = run_training_result_status(root=_artifact_root(tmp_path / "no_input"), output_dir=_view_dir(tmp_path, "status_no_input"))
+    assert no_input_status.latest_training_result_run_id == no_input.training_result_run_id
+    assert no_input_status.status == NO_TRAINING_RESULT_INPUT
+    assert no_input_status.training_result_created is False
+
+    ready = run_training_result(_happy_settings(tmp_path / "ready"))
+    ready_status = run_training_result_status(root=_artifact_root(tmp_path / "ready"), output_dir=_view_dir(tmp_path, "status_ready"))
+    assert ready_status.latest_training_result_run_id == ready.training_result_run_id
+    assert ready_status.status == READY_FOR_TRAINING_RESULT
+    assert ready_status.ready_for_training_result is True
+    assert ready_status.training_result_created is False
+
+
+def test_training_result_artifact_view_cli_commands_run(tmp_path: Path) -> None:
+    run_training_result(replace(_happy_settings(tmp_path), allow_training_result=True))
+    root = _artifact_root(tmp_path)
+
+    index = _run_cli(["training-result-index", "--root", root, "--output-dir", _view_dir(tmp_path, "cli_index")])
+    health = _run_cli(["training-result-health", "--root", root, "--output-dir", _view_dir(tmp_path, "cli_health")])
+    status = _run_cli(["training-result-status", "--root", root, "--output-dir", _view_dir(tmp_path, "cli_status")])
+
+    assert "artifact_count: 1" in index.stdout
+    assert "status: PASS" in health.stdout
+    assert "status: TRAINING_RESULT_CREATED" in status.stdout
+    assert "training_result_created: True" in status.stdout
+    assert "not weights" in status.stdout
     assert not Path("docs/project_sources").exists()
 
 
@@ -846,8 +1065,34 @@ def _drop_csv_rows(path: Path, column: str, value: str) -> None:
     frame.to_csv(path, index=False)
 
 
+def _drop_column(path: Path, column: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame = frame.drop(columns=[column])
+    frame.to_csv(path, index=False)
+
+
+def _set_csv_value(path: Path, column: str, value: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame[column] = value
+    frame.to_csv(path, index=False)
+
+
+def _append_csv_column(path: Path, column: str, value: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame[column] = value
+    frame.to_csv(path, index=False)
+
+
 def _output_dir(tmp_path: Path) -> Path:
     return tmp_path / "outputs" / "reports" / "manual_diagnostics" / "training_result_v0_1"
+
+
+def _artifact_root(tmp_path: Path) -> Path:
+    return tmp_path / "outputs" / "reports" / "manual_diagnostics" / "training_result_v0_1"
+
+
+def _view_dir(tmp_path: Path, name: str) -> Path:
+    return _artifact_root(tmp_path) / name
 
 
 def _run_cli(args: list[object]) -> subprocess.CompletedProcess[str]:
