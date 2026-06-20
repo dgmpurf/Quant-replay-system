@@ -41,6 +41,9 @@ from quant_replay_system.model_weight_versioning import (
     ModelWeightVersioningSettings,
     run_model_weight_versioning,
 )
+from quant_replay_system.model_weight_versioning_health import check_model_weight_versioning_health
+from quant_replay_system.model_weight_versioning_index import build_model_weight_versioning_index
+from quant_replay_system.model_weight_versioning_status import run_model_weight_versioning_status
 from quant_replay_system.training_result import run_training_result
 
 
@@ -392,9 +395,233 @@ def test_cli_no_input_ready_and_allow_paths(tmp_path: Path) -> None:
 def test_no_extra_commands_research_status_checkpoint_or_project_source_are_added() -> None:
     help_result = _run_cli(["--help"])
     assert "model-weight-versioning" in help_result.stdout
-    assert "model-weight-versioning-index" not in help_result.stdout
-    assert "model-weight-versioning-health" not in help_result.stdout
-    assert "model-weight-versioning-status" not in help_result.stdout
+    assert "model-weight-versioning-index" in help_result.stdout
+    assert "model-weight-versioning-health" in help_result.stdout
+    assert "model-weight-versioning-status" in help_result.stdout
+    assert not Path("docs/project_sources").exists()
+    assert not list(Path("docs").glob("release_checkpoint_v1.51.0.md"))
+
+
+def test_model_weight_versioning_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
+    no_input = run_model_weight_versioning(ModelWeightVersioningSettings(output_dir=_artifact_root(tmp_path)))
+    ready = run_model_weight_versioning(replace(_happy_settings(tmp_path / "ready"), output_dir=_artifact_root(tmp_path)))
+    created = run_model_weight_versioning(
+        replace(_happy_settings(tmp_path / "created"), output_dir=_artifact_root(tmp_path), allow_model_weight_versioning=True)
+    )
+
+    result = build_model_weight_versioning_index(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "index"))
+
+    assert result.artifact_count == 3
+    rows = {row["model_workflow_run_id"]: row for row in result.index_frame.to_dict("records")}
+    assert rows[no_input.model_workflow_run_id]["status"] == NO_MODEL_WEIGHT_VERSIONING_INPUT
+    assert rows[ready.model_workflow_run_id]["status"] == READY_FOR_MODEL_WEIGHT_VERSIONING
+    created_row = rows[created.model_workflow_run_id]
+    assert created_row["status"] == MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED
+    assert created_row["model_weight_versioning_research_artifacts_created"] is True
+    assert created_row["training_result_row_count"] == 1
+    assert created_row["eligible_training_result_row_count"] == 1
+    assert created_row["quarantined_training_result_row_count"] == 0
+    assert set(str(created_row["metric_evidence_names_present"]).split(",")) == REQUIRED_METRICS
+    assert created_row["metric_evidence_reference_count"] == 7
+    assert created_row["model_weights_reference_created"] is True
+    assert created_row["model_version_metadata_created"] is True
+    assert created_row["parameter_version_metadata_created"] is True
+    assert created_row["threshold_plan_created"] is True
+    assert created_row["prediction_rows_created"] is True
+    assert created_row["probability_calibration_report_created"] is True
+    assert created_row["feature_importance_report_created"] is True
+    assert created_row["model_input_index_row_count"] == 8
+    assert created_row["model_lineage_matrix_row_count"] >= 10
+    assert created_row["threshold_plan_row_count"] == 2
+    assert created_row["prediction_row_count"] == 1
+    assert created_row["feature_importance_row_count"] == 7
+    assert created_row["overfit_warning_row_count"] >= 5
+    for field in DOWNSTREAM_FALSE_FIELDS:
+        assert created_row[field] is False, field
+
+
+def test_model_weight_versioning_health_passes_valid_artifact_states(tmp_path: Path) -> None:
+    run_model_weight_versioning(ModelWeightVersioningSettings(output_dir=_artifact_root(tmp_path)))
+    run_model_weight_versioning(replace(_happy_settings(tmp_path / "ready"), output_dir=_artifact_root(tmp_path)))
+    run_model_weight_versioning(
+        replace(_happy_settings(tmp_path / "created"), output_dir=_artifact_root(tmp_path), allow_model_weight_versioning=True)
+    )
+
+    result = check_model_weight_versioning_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "health"))
+
+    assert result.status == "PASS"
+    assert result.error_count == 0
+    assert result.checked_artifact_count == 3
+
+
+@pytest.mark.parametrize(
+    ("artifact_key", "expected_issue"),
+    [
+        ("model_training_metadata", "MISSING_METADATA"),
+        ("model_weights_reference", "MISSING_MODEL_WEIGHTS_REFERENCE"),
+        ("model_version_metadata", "MISSING_MODEL_VERSION_METADATA"),
+        ("parameter_version_metadata", "MISSING_PARAMETER_VERSION_METADATA"),
+        ("threshold_plan", "MISSING_THRESHOLD_PLAN"),
+        ("prediction_rows", "MISSING_PREDICTION_ROWS"),
+        ("probability_calibration_report", "MISSING_PROBABILITY_CALIBRATION_REPORT"),
+        ("feature_importance_report", "MISSING_FEATURE_IMPORTANCE_REPORT"),
+        ("model_input_index", "MISSING_MODEL_INPUT_INDEX"),
+        ("model_lineage_matrix", "MISSING_MODEL_LINEAGE_MATRIX"),
+        ("model_limitations", "MISSING_MODEL_LIMITATIONS"),
+        ("model_overfit_warnings", "MISSING_MODEL_OVERFIT_WARNINGS"),
+        ("model_safety_flags", "MISSING_MODEL_SAFETY_FLAGS"),
+    ],
+)
+def test_model_weight_versioning_health_fails_if_created_required_file_missing(
+    tmp_path: Path,
+    artifact_key: str,
+    expected_issue: str,
+) -> None:
+    created = run_model_weight_versioning(replace(_happy_settings(tmp_path), allow_model_weight_versioning=True))
+    created.artifact_paths[artifact_key].unlink()
+
+    result = check_model_weight_versioning_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, f"health_{artifact_key}"))
+
+    assert result.status == "FAIL"
+    assert expected_issue in set(result.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("mutator", "expected_issue"),
+    [
+        (lambda result: _patch_json(result.artifact_paths["model_training_metadata"], {"model_weight_versioning_research_artifacts_created": False}), "MODEL_RESEARCH_ARTIFACTS_CREATED_FLAG_FALSE"),
+        (lambda result: _patch_json(result.artifact_paths["model_weights_reference"], {"reference_type": "executable_trading_model"}), "MODEL_WEIGHTS_REFERENCE_EXECUTABLE"),
+        (lambda result: _patch_json(result.artifact_paths["model_weights_reference"], {"forbidden_interpretation": "stock_profile allowed"}), "MODEL_WEIGHTS_REFERENCE_EXECUTABLE"),
+        (lambda result: _patch_json(result.artifact_paths["model_version_metadata"], {"active_model": True}), "MODEL_VERSION_ACTIVE_UNEXPECTED"),
+        (lambda result: _patch_json(result.artifact_paths["model_version_metadata"], {"promoted_model": True}), "MODEL_VERSION_PROMOTED_UNEXPECTED"),
+        (lambda result: _patch_json(result.artifact_paths["model_version_metadata"], {"production_model": True}), "MODEL_VERSION_PRODUCTION_UNEXPECTED"),
+        (lambda result: _patch_json(result.artifact_paths["parameter_version_metadata"], {"active_parameters": True}), "PARAMETER_VERSION_ACTIVE_UNEXPECTED"),
+        (lambda result: _set_csv_value(result.artifact_paths["threshold_plan"], "forbidden_interpretation", "signal_semantics changed; active thresholds"), "THRESHOLD_PLAN_ACTIVE_UNEXPECTED"),
+        (lambda result: _set_csv_value(result.artifact_paths["prediction_rows"], "forbidden_interpretation", "advisory signals"), "PREDICTION_ROWS_ADVISORY_UNEXPECTED"),
+        (lambda result: result.artifact_paths["probability_calibration_report"].write_text("active probabilities are ready\n", encoding="utf-8"), "PROBABILITY_CALIBRATION_ACTIVE_UNEXPECTED"),
+        (lambda result: _set_csv_value(result.artifact_paths["feature_importance_report"], "forbidden_interpretation", "active stock_profile explanation"), "FEATURE_IMPORTANCE_ACTIVE_PROFILE_UNEXPECTED"),
+        (lambda result: _remove_metric_name(result.artifact_paths["model_training_metadata"], "sample_count"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _remove_metric_name(result.artifact_paths["model_training_metadata"], "label_coverage"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _remove_metric_name(result.artifact_paths["model_training_metadata"], "average_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _remove_metric_name(result.artifact_paths["model_training_metadata"], "median_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _remove_metric_name(result.artifact_paths["model_training_metadata"], "hit_rate"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _remove_metric_name(result.artifact_paths["model_training_metadata"], "benchmark_relative_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _remove_metric_name(result.artifact_paths["model_training_metadata"], "industry_relative_return"), "METRIC_EVIDENCE_REQUIRED_METRIC_MISSING"),
+        (lambda result: _patch_json(result.artifact_paths["model_training_metadata"], {"metric_evidence_names_present": "strategy performance validated"}), "METRIC_EVIDENCE_OVERCLAIM"),
+        (lambda result: _drop_column(result.artifact_paths["model_input_index"], "source_run_id"), "MODEL_INPUT_INDEX_LINEAGE_MISSING"),
+        (lambda result: _drop_column(result.artifact_paths["model_input_index"], "health_status"), "MODEL_INPUT_INDEX_LINEAGE_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["model_lineage_matrix"], "lineage_item", "training_result_run_id"), "MODEL_LINEAGE_SOURCE_RUN_ID_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["model_lineage_matrix"], "lineage_item", "source_hash"), "MODEL_LINEAGE_COVERAGE_MISSING"),
+        (lambda result: result.artifact_paths["model_limitations"].write_text("too short\n", encoding="utf-8"), "MODEL_LIMITATIONS_WORDING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["model_overfit_warnings"], "risk_item", "small sample"), "MODEL_OVERFIT_WARNING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["model_overfit_warnings"], "risk_item", "class imbalance"), "MODEL_OVERFIT_WARNING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["model_overfit_warnings"], "risk_item", "single-stock overfit"), "MODEL_OVERFIT_WARNING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["model_overfit_warnings"], "risk_item", "metric selection bias"), "MODEL_OVERFIT_WARNING_MISSING"),
+        (lambda result: _drop_csv_rows(result.artifact_paths["model_overfit_warnings"], "risk_item", "lookahead leakage"), "MODEL_OVERFIT_WARNING_MISSING"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "active_stock_profile.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "buy_review.csv").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "paper_approval.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "performance_validation.md").write_text("", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+        (lambda result: (result.artifact_paths["artifact_dir"] / "broker_order.json").write_text("{}", encoding="utf-8"), "FORBIDDEN_ARTIFACT_PRESENT"),
+    ],
+)
+def test_model_weight_versioning_health_fails_closed_for_created_artifact_mutations(tmp_path: Path, mutator, expected_issue: str) -> None:
+    created = run_model_weight_versioning(replace(_happy_settings(tmp_path), allow_model_weight_versioning=True))
+    mutator(created)
+
+    result = check_model_weight_versioning_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, f"health_{expected_issue.lower()}"))
+
+    assert result.status == "FAIL"
+    assert expected_issue in set(result.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("status_factory", "mutator", "expected_issue"),
+    [
+        (lambda path: run_model_weight_versioning(ModelWeightVersioningSettings(output_dir=_output_dir(path))), lambda result: _patch_json(result.artifact_paths["model_safety_flags"], {"model_weight_versioning_research_artifacts_created": True}), "MODEL_RESEARCH_ARTIFACTS_CREATED_UNEXPECTED"),
+        (lambda path: run_model_weight_versioning(_happy_settings(path)), lambda result: _patch_json(result.artifact_paths["model_safety_flags"], {"model_weight_versioning_research_artifacts_created": True}), "MODEL_RESEARCH_ARTIFACTS_CREATED_UNEXPECTED"),
+    ],
+)
+def test_model_weight_versioning_health_fails_if_non_created_state_claims_research_artifacts(tmp_path: Path, status_factory, mutator, expected_issue: str) -> None:
+    artifact = status_factory(tmp_path)
+    mutator(artifact)
+
+    result = check_model_weight_versioning_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "health_non_created"))
+
+    assert result.status == "FAIL"
+    assert expected_issue in set(result.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize("field", DOWNSTREAM_FALSE_FIELDS)
+def test_model_weight_versioning_health_fails_if_any_forbidden_flag_is_true(tmp_path: Path, field: str) -> None:
+    created = run_model_weight_versioning(replace(_happy_settings(tmp_path), allow_model_weight_versioning=True))
+    _patch_json(created.artifact_paths["model_safety_flags"], {field: True})
+
+    result = check_model_weight_versioning_health(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, f"health_{field}"))
+
+    assert result.status == "FAIL"
+    assert f"{field.upper()}_UNEXPECTED" in set(result.health_frame["issue_code"])
+
+
+def test_model_weight_versioning_status_reports_latest_created_state_and_safety_wording(tmp_path: Path) -> None:
+    run_model_weight_versioning(ModelWeightVersioningSettings(output_dir=_artifact_root(tmp_path)))
+    run_model_weight_versioning(replace(_happy_settings(tmp_path / "ready"), output_dir=_artifact_root(tmp_path)))
+    created = run_model_weight_versioning(
+        replace(_happy_settings(tmp_path / "created"), output_dir=_artifact_root(tmp_path), allow_model_weight_versioning=True)
+    )
+
+    result = run_model_weight_versioning_status(root=_artifact_root(tmp_path), output_dir=_view_dir(tmp_path, "status"))
+
+    assert result.latest_model_workflow_run_id == created.model_workflow_run_id
+    assert result.status == MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED
+    assert result.health_status == "PASS"
+    assert result.workflow_stage == MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED
+    assert result.model_weight_versioning_research_artifacts_created is True
+    assert result.training_result_row_count == 1
+    assert result.metric_evidence_reference_count == 7
+    for phrase in [
+        "report-only research artifact creation only",
+        "not active stock_profile",
+        "not buy-review",
+        "not paper approval",
+        "not performance validation",
+        "not trading",
+        "not executable trading model",
+        "not active/promoted/production model",
+        "not active signal semantics",
+        "not advisory signals",
+    ]:
+        assert phrase in result.safety_statement
+
+
+def test_model_weight_versioning_status_reports_no_input_and_ready_states(tmp_path: Path) -> None:
+    no_input = run_model_weight_versioning(ModelWeightVersioningSettings(output_dir=_output_dir(tmp_path / "no_input")))
+    no_input_status = run_model_weight_versioning_status(root=_artifact_root(tmp_path / "no_input"), output_dir=_view_dir(tmp_path, "status_no_input"))
+    assert no_input_status.latest_model_workflow_run_id == no_input.model_workflow_run_id
+    assert no_input_status.status == NO_MODEL_WEIGHT_VERSIONING_INPUT
+    assert no_input_status.model_weight_versioning_research_artifacts_created is False
+
+    ready = run_model_weight_versioning(_happy_settings(tmp_path / "ready"))
+    ready_status = run_model_weight_versioning_status(root=_artifact_root(tmp_path / "ready"), output_dir=_view_dir(tmp_path, "status_ready"))
+    assert ready_status.latest_model_workflow_run_id == ready.model_workflow_run_id
+    assert ready_status.status == READY_FOR_MODEL_WEIGHT_VERSIONING
+    assert ready_status.ready_for_model_weight_versioning is True
+    assert ready_status.model_weight_versioning_research_artifacts_created is False
+
+
+def test_model_weight_versioning_artifact_view_cli_commands_run(tmp_path: Path) -> None:
+    run_model_weight_versioning(replace(_happy_settings(tmp_path), allow_model_weight_versioning=True))
+    root = _artifact_root(tmp_path)
+
+    index = _run_cli(["model-weight-versioning-index", "--root", root, "--output-dir", _view_dir(tmp_path, "cli_index")])
+    health = _run_cli(["model-weight-versioning-health", "--root", root, "--output-dir", _view_dir(tmp_path, "cli_health")])
+    status = _run_cli(["model-weight-versioning-status", "--root", root, "--output-dir", _view_dir(tmp_path, "cli_status")])
+
+    assert "artifact_count: 1" in index.stdout
+    assert "status: PASS" in health.stdout
+    assert "status: MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED" in status.stdout
+    assert "model_weight_versioning_research_artifacts_created: True" in status.stdout
+    assert "not executable trading model" in status.stdout
     assert not Path("docs/project_sources").exists()
     assert not list(Path("docs").glob("release_checkpoint_v1.51.0.md"))
 
@@ -513,6 +740,14 @@ def _substantive_artifact_keys() -> list[str]:
     ]
 
 
+def _artifact_root(tmp_path: Path) -> Path:
+    return _output_dir(tmp_path)
+
+
+def _view_dir(tmp_path: Path, name: str) -> Path:
+    return _artifact_root(tmp_path) / name
+
+
 def _assert_downstream_false(result: object) -> None:
     for field in DOWNSTREAM_FALSE_FIELDS:
         assert getattr(result, field) is False, field
@@ -538,6 +773,31 @@ def _drop_csv_rows(path: Path, column: str, value: str) -> None:
     frame = pd.read_csv(path, dtype=str)
     frame = frame[frame[column].astype(str) != value]
     frame.to_csv(path, index=False)
+
+
+def _drop_column(path: Path, column: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame = frame.drop(columns=[column])
+    frame.to_csv(path, index=False)
+
+
+def _set_csv_value(path: Path, column: str, value: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame[column] = value
+    frame.to_csv(path, index=False)
+
+
+def _append_csv_column(path: Path, column: str, value: str) -> None:
+    frame = pd.read_csv(path, dtype=str)
+    frame[column] = value
+    frame.to_csv(path, index=False)
+
+
+def _remove_metric_name(path: Path, metric_name: str) -> None:
+    payload = _read_json(path)
+    metrics = [name for name in str(payload.get("metric_evidence_names_present", "")).split(",") if name != metric_name]
+    payload["metric_evidence_names_present"] = ",".join(metrics)
+    _write_json(path, payload)
 
 
 def _output_dir(tmp_path: Path) -> Path:

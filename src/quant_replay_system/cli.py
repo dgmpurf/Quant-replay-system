@@ -350,6 +350,9 @@ from quant_replay_system.model_weight_versioning import (
     ModelWeightVersioningSettings,
     run_model_weight_versioning,
 )
+from quant_replay_system.model_weight_versioning_health import check_model_weight_versioning_health
+from quant_replay_system.model_weight_versioning_index import build_model_weight_versioning_index
+from quant_replay_system.model_weight_versioning_status import run_model_weight_versioning_status
 from quant_replay_system.training_result_health import check_training_result_health
 from quant_replay_system.training_result_index import build_training_result_index
 from quant_replay_system.training_result_status import run_training_result_status
@@ -3617,6 +3620,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only model weight versioning artifacts will be written",
     )
     model_weight_versioning.set_defaults(handler=_handle_model_weight_versioning)
+
+    model_weight_versioning_index = subparsers.add_parser(
+        "model-weight-versioning-index",
+        help="Index report-only model weights/versioning/threshold/prediction phase 1 artifacts",
+    )
+    model_weight_versioning_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/model_weight_versioning_v0_1",
+        help="Model weight versioning artifact root to index",
+    )
+    model_weight_versioning_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/model_weight_versioning_v0_1/index",
+        help="Directory where model weight versioning index artifacts will be written",
+    )
+    model_weight_versioning_index.set_defaults(handler=_handle_model_weight_versioning_index)
+
+    model_weight_versioning_health = subparsers.add_parser(
+        "model-weight-versioning-health",
+        help="Health-check report-only model weights/versioning/threshold/prediction phase 1 artifacts",
+    )
+    model_weight_versioning_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/model_weight_versioning_v0_1",
+        help="Model weight versioning artifact root to health-check",
+    )
+    model_weight_versioning_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/model_weight_versioning_v0_1/health",
+        help="Directory where model weight versioning health artifacts will be written",
+    )
+    model_weight_versioning_health.set_defaults(handler=_handle_model_weight_versioning_health)
+
+    model_weight_versioning_status = subparsers.add_parser(
+        "model-weight-versioning-status",
+        help="Summarize report-only model weights/versioning/threshold/prediction phase 1 artifacts",
+    )
+    model_weight_versioning_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/model_weight_versioning_v0_1",
+        help="Model weight versioning artifact root to summarize",
+    )
+    model_weight_versioning_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/model_weight_versioning_v0_1/status",
+        help="Directory where model weight versioning status artifacts will be written",
+    )
+    model_weight_versioning_status.set_defaults(handler=_handle_model_weight_versioning_status)
 
     training_result_index = subparsers.add_parser(
         "training-result-index",
@@ -10214,6 +10265,77 @@ def _handle_model_weight_versioning(args: argparse.Namespace) -> int:
         "artifacts only: no stock_profile, no buy-review, no paper approval, no performance "
         "validation, and no trading."
     )
+    return 0
+
+
+def _handle_model_weight_versioning_index(args: argparse.Namespace) -> int:
+    result = build_model_weight_versioning_index(root=args.root, output_dir=args.output_dir)
+    print(f"Model weight versioning index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Model weight versioning index is report-only. "
+        "MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED means report-only research artifacts only: "
+        "not active stock_profile, not buy-review, not paper approval, not performance validation, "
+        "not executable trading model, and not trading."
+    )
+    return 0
+
+
+def _handle_model_weight_versioning_health(args: argparse.Namespace) -> int:
+    result = check_model_weight_versioning_health(root=args.root, output_dir=args.output_dir)
+    print(f"Model weight versioning health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Model weight versioning health keeps phase 1 report-only and fails if outputs imply executable "
+        "trading models, active/promoted/production models, active thresholds, advisory predictions, "
+        "stock_profile, buy-review, paper approval, performance validation, broker/order/message/API/cache/"
+        "data side effects, current-candidates, snapshots, signal semantics mutation, or trading."
+    )
+    return 0
+
+
+def _handle_model_weight_versioning_status(args: argparse.Namespace) -> int:
+    result = run_model_weight_versioning_status(root=args.root, output_dir=args.output_dir)
+    print(f"Model weight versioning status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_model_workflow_run_id: {result.latest_model_workflow_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_model_weight_versioning: {result.ready_for_model_weight_versioning}")
+    print(f"model_weight_versioning_executed: {result.model_weight_versioning_executed}")
+    print(
+        "model_weight_versioning_research_artifacts_created: "
+        f"{result.model_weight_versioning_research_artifacts_created}"
+    )
+    print(f"training_result_row_count: {result.training_result_row_count}")
+    print(f"eligible_training_result_row_count: {result.eligible_training_result_row_count}")
+    print(f"quarantined_training_result_row_count: {result.quarantined_training_result_row_count}")
+    print(f"metric_evidence_names_present: {result.metric_evidence_names_present}")
+    print(f"metric_evidence_reference_count: {result.metric_evidence_reference_count}")
+    print(f"model_weights_reference_created: {result.model_weights_reference_created}")
+    print(f"model_version_metadata_created: {result.model_version_metadata_created}")
+    print(f"parameter_version_metadata_created: {result.parameter_version_metadata_created}")
+    print(f"threshold_plan_created: {result.threshold_plan_created}")
+    print(f"prediction_rows_created: {result.prediction_rows_created}")
+    print(f"probability_calibration_report_created: {result.probability_calibration_report_created}")
+    print(f"feature_importance_report_created: {result.feature_importance_report_created}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 
