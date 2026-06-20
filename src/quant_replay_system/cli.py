@@ -346,6 +346,10 @@ from quant_replay_system.training_result import (
     TrainingResultSettings,
     run_training_result,
 )
+from quant_replay_system.model_weight_versioning import (
+    ModelWeightVersioningSettings,
+    run_model_weight_versioning,
+)
 from quant_replay_system.training_result_health import check_training_result_health
 from quant_replay_system.training_result_index import build_training_result_index
 from quant_replay_system.training_result_status import run_training_result_status
@@ -3563,6 +3567,56 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only actual training_result artifacts will be written",
     )
     training_result.set_defaults(handler=_handle_training_result)
+
+    model_weight_versioning = subparsers.add_parser(
+        "model-weight-versioning",
+        help="Create report-only model weights/versioning/threshold/prediction phase 1 diagnostics",
+    )
+    model_weight_versioning.add_argument("--approval-manifest-path", default=None)
+    model_weight_versioning.add_argument("--model-request-manifest-path", default=None)
+    model_weight_versioning.add_argument("--training-result-metadata-path", default=None)
+    model_weight_versioning.add_argument("--training-result-rows-path", default=None)
+    model_weight_versioning.add_argument("--training-result-status-artifact-path", default=None)
+    model_weight_versioning.add_argument("--training-result-health-artifact-path", default=None)
+    model_weight_versioning.add_argument("--training-result-input-index-path", default=None)
+    model_weight_versioning.add_argument("--training-result-metric-evidence-reference-path", default=None)
+    model_weight_versioning.add_argument("--training-result-lineage-matrix-path", default=None)
+    model_weight_versioning.add_argument("--training-result-limitations-path", default=None)
+    model_weight_versioning.add_argument("--training-result-overfit-warnings-path", default=None)
+    model_weight_versioning.add_argument("--training-result-safety-flags-path", default=None)
+    model_weight_versioning.add_argument("--training-result-planning-metadata-path", default=None)
+    model_weight_versioning.add_argument("--training-result-planning-health-artifact-path", default=None)
+    model_weight_versioning.add_argument("--metric-extension-metadata-path", default=None)
+    model_weight_versioning.add_argument("--metric-extension-result-rows-path", default=None)
+    model_weight_versioning.add_argument("--metric-extension-health-artifact-path", default=None)
+    model_weight_versioning.add_argument("--metric-computation-metadata-path", default=None)
+    model_weight_versioning.add_argument("--metric-computation-result-rows-path", default=None)
+    model_weight_versioning.add_argument("--metric-computation-health-artifact-path", default=None)
+    model_weight_versioning.add_argument("--metric-evaluation-metadata-path", default=None)
+    model_weight_versioning.add_argument("--metric-evaluation-health-artifact-path", default=None)
+    model_weight_versioning.add_argument("--training-evaluation-metadata-path", default=None)
+    model_weight_versioning.add_argument("--training-evaluation-sample-rows-path", default=None)
+    model_weight_versioning.add_argument("--training-evaluation-health-artifact-path", default=None)
+    model_weight_versioning.add_argument("--forward-return-label-metadata-path", default=None)
+    model_weight_versioning.add_argument("--forward-return-label-rows-path", default=None)
+    model_weight_versioning.add_argument("--forward-return-label-health-artifact-path", default=None)
+    model_weight_versioning.add_argument("--replay-decision-freeze-metadata-path", default=None)
+    model_weight_versioning.add_argument("--replay-decision-freeze-rows-path", default=None)
+    model_weight_versioning.add_argument("--replay-decision-freeze-health-artifact-path", default=None)
+    model_weight_versioning.add_argument("--leakage-evidence-bundle-path", default=None)
+    model_weight_versioning.add_argument("--overclaim-evidence-bundle-path", default=None)
+    model_weight_versioning.add_argument("--side-effect-evidence-bundle-path", default=None)
+    model_weight_versioning.add_argument(
+        "--allow-model-weight-versioning",
+        action="store_true",
+        help="Explicitly allow report-only model weights/versioning/threshold/prediction artifacts when all gates pass",
+    )
+    model_weight_versioning.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/model_weight_versioning_v0_1",
+        help="Directory where report-only model weight versioning artifacts will be written",
+    )
+    model_weight_versioning.set_defaults(handler=_handle_model_weight_versioning)
 
     training_result_index = subparsers.add_parser(
         "training-result-index",
@@ -10103,6 +10157,63 @@ def _handle_training_result(args: argparse.Namespace) -> int:
     print(f"trading_allowed: {result.trading_allowed}")
     print(f"artifact_path: {result.artifact_path}")
     print(result.safety_statement)
+    return 0
+
+
+def _handle_model_weight_versioning(args: argparse.Namespace) -> int:
+    path_fields = {
+        field_name: Path(getattr(args, field_name)) if getattr(args, field_name, None) else None
+        for field_name in ModelWeightVersioningSettings.__dataclass_fields__
+        if field_name
+        not in {
+            "output_dir",
+            "allow_model_weight_versioning",
+            "write_artifacts",
+            "report_only",
+            "diagnostic_only",
+        }
+    }
+    result = run_model_weight_versioning(
+        ModelWeightVersioningSettings(
+            **path_fields,
+            output_dir=Path(args.output_dir),
+            allow_model_weight_versioning=args.allow_model_weight_versioning,
+        )
+    )
+    print(f"model_workflow_run_id: {result.model_workflow_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_model_weight_versioning: {result.ready_for_model_weight_versioning}")
+    print(f"model_weight_versioning_executed: {result.model_weight_versioning_executed}")
+    print(
+        "model_weight_versioning_research_artifacts_created: "
+        f"{result.model_weight_versioning_research_artifacts_created}"
+    )
+    print(f"training_result_row_count: {result.training_result_row_count}")
+    print(f"eligible_training_result_row_count: {result.eligible_training_result_row_count}")
+    print(f"quarantined_training_result_row_count: {result.quarantined_training_result_row_count}")
+    print(f"metric_evidence_names_present: {result.metric_evidence_names_present}")
+    print(f"metric_evidence_reference_count: {result.metric_evidence_reference_count}")
+    print(f"model_weights_reference_created: {result.model_weights_reference_created}")
+    print(f"model_version_metadata_created: {result.model_version_metadata_created}")
+    print(f"parameter_version_metadata_created: {result.parameter_version_metadata_created}")
+    print(f"threshold_plan_created: {result.threshold_plan_created}")
+    print(f"prediction_rows_created: {result.prediction_rows_created}")
+    print(f"probability_calibration_report_created: {result.probability_calibration_report_created}")
+    print(f"feature_importance_report_created: {result.feature_importance_report_created}")
+    print(f"active_stock_profile_exists: {result.active_stock_profile_exists}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(
+        "MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED means report-only model research "
+        "artifacts only: no stock_profile, no buy-review, no paper approval, no performance "
+        "validation, and no trading."
+    )
     return 0
 
 
