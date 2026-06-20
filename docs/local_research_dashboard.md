@@ -679,6 +679,18 @@ The unified summary records the latest training result run id, status/stage, hea
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; actual training_result fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims weights, model_version, parameter_version, thresholds, predictions, probabilities, feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
 
+## Model Weight Versioning Status
+
+`research-status` includes `model-weight-versioning-status` as report-only Model Weights / Versioning / Threshold / Prediction Phase 1 context when those artifacts exist.
+
+Use `model-weight-versioning`, `model-weight-versioning-index`, `model-weight-versioning-health`, and `model-weight-versioning-status` to create, discover, safety-check, and summarize report-only model research artifacts.
+
+The unified summary records the latest model workflow run id, status/stage, health status, source training result and upstream lineage, training result row counts, metric evidence names and counts, model weights reference, model version metadata, parameter version metadata, threshold plan, prediction row, probability calibration, feature importance flags, report path, next action, and safety fields.
+
+`MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED` is report-only research artifact creation. It is not an active model, not a promoted model, not a production model, not active parameters, not active thresholds, not advisory predictions, not active probabilities, not active feature importance, not stock_profile, not buy-review, not paper approval, not performance validation, and not trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; model weight/versioning fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims active or promoted model state, production model state, active parameters, active thresholds, advisory predictions, active probabilities, active feature importance, stock profiles, buy-review eligibility, paper approval, strategy performance validation, broker/order/message/API/cache side effects, data writes, current-candidates generation, snapshot builds, signal-semantics changes, or trading authorization.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

@@ -17054,6 +17054,78 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"training_result_report_path: {result.training_result_report_path}")
     print(f"training_result_next_action: {result.training_result_next_action}")
     print(
+        "model_weight_versioning_workflow_implemented: "
+        f"{result.model_weight_versioning_workflow_implemented}"
+    )
+    print(f"model_weight_versioning_views_implemented: {result.model_weight_versioning_views_implemented}")
+    print(f"latest_model_workflow_run_id: {result.latest_model_workflow_run_id}")
+    print(f"latest_model_weight_versioning_status: {result.latest_model_weight_versioning_status}")
+    print(
+        "latest_model_weight_versioning_health_status: "
+        f"{result.latest_model_weight_versioning_health_status}"
+    )
+    print(
+        "latest_model_weight_versioning_workflow_stage: "
+        f"{result.latest_model_weight_versioning_workflow_stage}"
+    )
+    print(f"model_weight_versioning_artifact_path: {result.model_weight_versioning_artifact_path}")
+    print(
+        "model_weight_versioning_training_result_row_count: "
+        f"{result.model_weight_versioning_training_result_row_count}"
+    )
+    print(
+        "model_weight_versioning_metric_evidence_reference_count: "
+        f"{result.model_weight_versioning_metric_evidence_reference_count}"
+    )
+    print(f"ready_for_model_weight_versioning: {result.ready_for_model_weight_versioning}")
+    print(f"model_weight_versioning_executed: {result.model_weight_versioning_executed}")
+    print(
+        "model_weight_versioning_research_artifacts_created: "
+        f"{result.model_weight_versioning_research_artifacts_created}"
+    )
+    print(f"model_weights_reference_created: {result.model_weights_reference_created}")
+    print(f"model_version_metadata_created: {result.model_version_metadata_created}")
+    print(f"parameter_version_metadata_created: {result.parameter_version_metadata_created}")
+    print(f"threshold_plan_created: {result.threshold_plan_created}")
+    print(f"prediction_rows_created: {result.prediction_rows_created}")
+    print(
+        "probability_calibration_report_created: "
+        f"{result.probability_calibration_report_created}"
+    )
+    print(f"feature_importance_report_created: {result.feature_importance_report_created}")
+    print(f"active_model: {result.active_model}")
+    print(f"promoted_model: {result.promoted_model}")
+    print(f"production_model: {result.production_model}")
+    print(f"active_parameters: {result.active_parameters}")
+    print(f"active_thresholds: {result.active_thresholds}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"active_feature_importance_created: {result.active_feature_importance_created}")
+    print(
+        "model_weight_versioning_active_stock_profile_exists: "
+        f"{result.model_weight_versioning_active_stock_profile_exists}"
+    )
+    print(
+        "model_weight_versioning_real_buy_review_eligible: "
+        f"{result.model_weight_versioning_real_buy_review_eligible}"
+    )
+    print(f"model_weight_versioning_approved_for_paper: {result.model_weight_versioning_approved_for_paper}")
+    print(
+        "model_weight_versioning_strategy_performance_validated: "
+        f"{result.model_weight_versioning_strategy_performance_validated}"
+    )
+    print(f"model_weight_versioning_trading_allowed: {result.model_weight_versioning_trading_allowed}")
+    print(f"model_weight_versioning_report_only: {result.model_weight_versioning_report_only}")
+    print(f"model_weight_versioning_no_live_trading: {result.model_weight_versioning_no_live_trading}")
+    print(f"model_weight_versioning_no_broker_api: {result.model_weight_versioning_no_broker_api}")
+    print(
+        "model_weight_versioning_no_order_placement: "
+        f"{result.model_weight_versioning_no_order_placement}"
+    )
+    print(f"model_weight_versioning_no_message_sent: {result.model_weight_versioning_no_message_sent}")
+    print(f"model_weight_versioning_report_path: {result.model_weight_versioning_report_path}")
+    print(f"model_weight_versioning_next_action: {result.model_weight_versioning_next_action}")
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

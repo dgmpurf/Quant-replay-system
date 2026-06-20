@@ -126,6 +126,7 @@ from quant_replay_system.metric_computation_status import run_metric_computation
 from quant_replay_system.metric_extension_status import run_metric_extension_status
 from quant_replay_system.training_result_planning_status import run_training_result_planning_status
 from quant_replay_system.training_result_status import run_training_result_status
+from quant_replay_system.model_weight_versioning_status import run_model_weight_versioning_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -1321,6 +1322,87 @@ SUMMARY_COLUMNS = [
     "training_result_no_message_sent",
     "training_result_report_path",
     "training_result_next_action",
+    "model_weight_versioning_workflow_implemented",
+    "model_weight_versioning_views_implemented",
+    "latest_model_workflow_run_id",
+    "latest_model_weight_versioning_status",
+    "latest_model_weight_versioning_health_status",
+    "latest_model_weight_versioning_workflow_stage",
+    "model_weight_versioning_artifact_path",
+    "model_weight_versioning_source_training_result_run_id",
+    "model_weight_versioning_source_training_result_status",
+    "model_weight_versioning_source_training_result_health_status",
+    "model_weight_versioning_source_training_result_planning_run_id",
+    "model_weight_versioning_source_training_result_planning_status",
+    "model_weight_versioning_source_training_result_planning_health_status",
+    "model_weight_versioning_source_metric_extension_run_id",
+    "model_weight_versioning_source_metric_extension_status",
+    "model_weight_versioning_source_metric_extension_health_status",
+    "model_weight_versioning_source_metric_computation_run_id",
+    "model_weight_versioning_source_metric_computation_status",
+    "model_weight_versioning_source_metric_computation_health_status",
+    "model_weight_versioning_source_metric_evaluation_planning_run_id",
+    "model_weight_versioning_source_metric_evaluation_status",
+    "model_weight_versioning_source_metric_evaluation_health_status",
+    "model_weight_versioning_source_training_evaluation_run_id",
+    "model_weight_versioning_source_training_evaluation_status",
+    "model_weight_versioning_source_training_evaluation_health_status",
+    "model_weight_versioning_source_forward_return_label_run_id",
+    "model_weight_versioning_source_forward_return_label_status",
+    "model_weight_versioning_source_forward_return_label_health_status",
+    "model_weight_versioning_source_replay_decision_freeze_run_id",
+    "model_weight_versioning_source_replay_decision_freeze_status",
+    "model_weight_versioning_source_replay_decision_freeze_health_status",
+    "model_weight_versioning_training_result_row_count",
+    "model_weight_versioning_eligible_training_result_row_count",
+    "model_weight_versioning_quarantined_training_result_row_count",
+    "model_weight_versioning_metric_evidence_names_present",
+    "model_weight_versioning_metric_evidence_reference_count",
+    "ready_for_model_weight_versioning",
+    "model_weight_versioning_executed",
+    "model_weight_versioning_research_artifacts_created",
+    "model_weights_reference_created",
+    "model_version_metadata_created",
+    "parameter_version_metadata_created",
+    "threshold_plan_created",
+    "prediction_rows_created",
+    "probability_calibration_report_created",
+    "feature_importance_report_created",
+    "active_model",
+    "promoted_model",
+    "production_model",
+    "active_parameters",
+    "active_thresholds",
+    "advisory_predictions_created",
+    "active_probabilities_created",
+    "active_feature_importance_created",
+    "model_weight_versioning_active_stock_profile_exists",
+    "model_weight_versioning_stock_profile_created",
+    "model_weight_versioning_buy_review_allowed",
+    "model_weight_versioning_real_buy_review_eligible",
+    "model_weight_versioning_approved_for_paper",
+    "model_weight_versioning_strategy_performance_validated",
+    "model_weight_versioning_trading_allowed",
+    "model_weight_versioning_order_placed",
+    "model_weight_versioning_broker_api_called",
+    "model_weight_versioning_message_sent",
+    "model_weight_versioning_llm_api_called",
+    "model_weight_versioning_external_api_called",
+    "model_weight_versioning_cache_mutated",
+    "model_weight_versioning_data_raw_written",
+    "model_weight_versioning_data_processed_written",
+    "model_weight_versioning_data_cache_written",
+    "model_weight_versioning_current_candidates_run",
+    "model_weight_versioning_snapshot_built",
+    "model_weight_versioning_signal_semantics_changed",
+    "model_weight_versioning_report_only",
+    "model_weight_versioning_diagnostic_only",
+    "model_weight_versioning_no_live_trading",
+    "model_weight_versioning_no_broker_api",
+    "model_weight_versioning_no_order_placement",
+    "model_weight_versioning_no_message_sent",
+    "model_weight_versioning_report_path",
+    "model_weight_versioning_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1706,6 +1788,7 @@ OPTIONAL_COMPONENTS = {
     "METRIC_EXTENSION_STATUS",
     "TRAINING_RESULT_PLANNING_STATUS",
     "TRAINING_RESULT_STATUS",
+    "MODEL_WEIGHT_VERSIONING_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1760,6 +1843,7 @@ WORKFLOW_AREAS = {
     "METRIC_EXTENSION_STATUS": "METRIC_EXTENSION",
     "TRAINING_RESULT_PLANNING_STATUS": "TRAINING_RESULT_PLANNING",
     "TRAINING_RESULT_STATUS": "TRAINING_RESULT",
+    "MODEL_WEIGHT_VERSIONING_STATUS": "MODEL_WEIGHT_VERSIONING",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -2941,6 +3025,87 @@ class LocalResearchDashboardResult:
     training_result_no_message_sent: bool
     training_result_report_path: str
     training_result_next_action: str
+    model_weight_versioning_workflow_implemented: bool
+    model_weight_versioning_views_implemented: bool
+    latest_model_workflow_run_id: str
+    latest_model_weight_versioning_status: str
+    latest_model_weight_versioning_health_status: str
+    latest_model_weight_versioning_workflow_stage: str
+    model_weight_versioning_artifact_path: str
+    model_weight_versioning_source_training_result_run_id: str
+    model_weight_versioning_source_training_result_status: str
+    model_weight_versioning_source_training_result_health_status: str
+    model_weight_versioning_source_training_result_planning_run_id: str
+    model_weight_versioning_source_training_result_planning_status: str
+    model_weight_versioning_source_training_result_planning_health_status: str
+    model_weight_versioning_source_metric_extension_run_id: str
+    model_weight_versioning_source_metric_extension_status: str
+    model_weight_versioning_source_metric_extension_health_status: str
+    model_weight_versioning_source_metric_computation_run_id: str
+    model_weight_versioning_source_metric_computation_status: str
+    model_weight_versioning_source_metric_computation_health_status: str
+    model_weight_versioning_source_metric_evaluation_planning_run_id: str
+    model_weight_versioning_source_metric_evaluation_status: str
+    model_weight_versioning_source_metric_evaluation_health_status: str
+    model_weight_versioning_source_training_evaluation_run_id: str
+    model_weight_versioning_source_training_evaluation_status: str
+    model_weight_versioning_source_training_evaluation_health_status: str
+    model_weight_versioning_source_forward_return_label_run_id: str
+    model_weight_versioning_source_forward_return_label_status: str
+    model_weight_versioning_source_forward_return_label_health_status: str
+    model_weight_versioning_source_replay_decision_freeze_run_id: str
+    model_weight_versioning_source_replay_decision_freeze_status: str
+    model_weight_versioning_source_replay_decision_freeze_health_status: str
+    model_weight_versioning_training_result_row_count: int
+    model_weight_versioning_eligible_training_result_row_count: int
+    model_weight_versioning_quarantined_training_result_row_count: int
+    model_weight_versioning_metric_evidence_names_present: str
+    model_weight_versioning_metric_evidence_reference_count: int
+    ready_for_model_weight_versioning: bool
+    model_weight_versioning_executed: bool
+    model_weight_versioning_research_artifacts_created: bool
+    model_weights_reference_created: bool
+    model_version_metadata_created: bool
+    parameter_version_metadata_created: bool
+    threshold_plan_created: bool
+    prediction_rows_created: bool
+    probability_calibration_report_created: bool
+    feature_importance_report_created: bool
+    active_model: bool
+    promoted_model: bool
+    production_model: bool
+    active_parameters: bool
+    active_thresholds: bool
+    advisory_predictions_created: bool
+    active_probabilities_created: bool
+    active_feature_importance_created: bool
+    model_weight_versioning_active_stock_profile_exists: bool
+    model_weight_versioning_stock_profile_created: bool
+    model_weight_versioning_buy_review_allowed: bool
+    model_weight_versioning_real_buy_review_eligible: bool
+    model_weight_versioning_approved_for_paper: bool
+    model_weight_versioning_strategy_performance_validated: bool
+    model_weight_versioning_trading_allowed: bool
+    model_weight_versioning_order_placed: bool
+    model_weight_versioning_broker_api_called: bool
+    model_weight_versioning_message_sent: bool
+    model_weight_versioning_llm_api_called: bool
+    model_weight_versioning_external_api_called: bool
+    model_weight_versioning_cache_mutated: bool
+    model_weight_versioning_data_raw_written: bool
+    model_weight_versioning_data_processed_written: bool
+    model_weight_versioning_data_cache_written: bool
+    model_weight_versioning_current_candidates_run: bool
+    model_weight_versioning_snapshot_built: bool
+    model_weight_versioning_signal_semantics_changed: bool
+    model_weight_versioning_report_only: bool
+    model_weight_versioning_diagnostic_only: bool
+    model_weight_versioning_no_live_trading: bool
+    model_weight_versioning_no_broker_api: bool
+    model_weight_versioning_no_order_placement: bool
+    model_weight_versioning_no_message_sent: bool
+    model_weight_versioning_report_path: str
+    model_weight_versioning_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -3280,6 +3445,7 @@ def run_local_research_dashboard(
     metric_extension_root: str | Path | None = None,
     training_result_planning_root: str | Path | None = None,
     training_result_root: str | Path | None = None,
+    model_weight_versioning_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -3547,6 +3713,11 @@ def run_local_research_dashboard(
         Path(training_result_root)
         if training_result_root is not None
         else effective_root / "manual_diagnostics" / "training_result_v0_1"
+    )
+    effective_model_weight_versioning_root = (
+        Path(model_weight_versioning_root)
+        if model_weight_versioning_root is not None
+        else effective_root / "manual_diagnostics" / "model_weight_versioning_v0_1"
     )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
@@ -3887,6 +4058,7 @@ def run_local_research_dashboard(
         metric_extension_root=effective_metric_extension_root,
         training_result_planning_root=effective_training_result_planning_root,
         training_result_root=effective_training_result_root,
+        model_weight_versioning_root=effective_model_weight_versioning_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -6813,6 +6985,233 @@ def run_local_research_dashboard(
         ),
         training_result_report_path=str(summary.get("training_result_report_path", "")),
         training_result_next_action=str(summary.get("training_result_next_action", "")),
+        model_weight_versioning_workflow_implemented=_bool_from_text(
+            summary.get("model_weight_versioning_workflow_implemented")
+        ),
+        model_weight_versioning_views_implemented=_bool_from_text(
+            summary.get("model_weight_versioning_views_implemented")
+        ),
+        latest_model_workflow_run_id=str(summary.get("latest_model_workflow_run_id", "")),
+        latest_model_weight_versioning_status=str(
+            summary.get("latest_model_weight_versioning_status", "MISSING")
+        ),
+        latest_model_weight_versioning_health_status=str(
+            summary.get("latest_model_weight_versioning_health_status", "")
+        ),
+        latest_model_weight_versioning_workflow_stage=str(
+            summary.get("latest_model_weight_versioning_workflow_stage", "")
+        ),
+        model_weight_versioning_artifact_path=str(
+            summary.get("model_weight_versioning_artifact_path", "")
+        ),
+        model_weight_versioning_source_training_result_run_id=str(
+            summary.get("model_weight_versioning_source_training_result_run_id", "")
+        ),
+        model_weight_versioning_source_training_result_status=str(
+            summary.get("model_weight_versioning_source_training_result_status", "")
+        ),
+        model_weight_versioning_source_training_result_health_status=str(
+            summary.get("model_weight_versioning_source_training_result_health_status", "")
+        ),
+        model_weight_versioning_source_training_result_planning_run_id=str(
+            summary.get("model_weight_versioning_source_training_result_planning_run_id", "")
+        ),
+        model_weight_versioning_source_training_result_planning_status=str(
+            summary.get("model_weight_versioning_source_training_result_planning_status", "")
+        ),
+        model_weight_versioning_source_training_result_planning_health_status=str(
+            summary.get("model_weight_versioning_source_training_result_planning_health_status", "")
+        ),
+        model_weight_versioning_source_metric_extension_run_id=str(
+            summary.get("model_weight_versioning_source_metric_extension_run_id", "")
+        ),
+        model_weight_versioning_source_metric_extension_status=str(
+            summary.get("model_weight_versioning_source_metric_extension_status", "")
+        ),
+        model_weight_versioning_source_metric_extension_health_status=str(
+            summary.get("model_weight_versioning_source_metric_extension_health_status", "")
+        ),
+        model_weight_versioning_source_metric_computation_run_id=str(
+            summary.get("model_weight_versioning_source_metric_computation_run_id", "")
+        ),
+        model_weight_versioning_source_metric_computation_status=str(
+            summary.get("model_weight_versioning_source_metric_computation_status", "")
+        ),
+        model_weight_versioning_source_metric_computation_health_status=str(
+            summary.get("model_weight_versioning_source_metric_computation_health_status", "")
+        ),
+        model_weight_versioning_source_metric_evaluation_planning_run_id=str(
+            summary.get("model_weight_versioning_source_metric_evaluation_planning_run_id", "")
+        ),
+        model_weight_versioning_source_metric_evaluation_status=str(
+            summary.get("model_weight_versioning_source_metric_evaluation_status", "")
+        ),
+        model_weight_versioning_source_metric_evaluation_health_status=str(
+            summary.get("model_weight_versioning_source_metric_evaluation_health_status", "")
+        ),
+        model_weight_versioning_source_training_evaluation_run_id=str(
+            summary.get("model_weight_versioning_source_training_evaluation_run_id", "")
+        ),
+        model_weight_versioning_source_training_evaluation_status=str(
+            summary.get("model_weight_versioning_source_training_evaluation_status", "")
+        ),
+        model_weight_versioning_source_training_evaluation_health_status=str(
+            summary.get("model_weight_versioning_source_training_evaluation_health_status", "")
+        ),
+        model_weight_versioning_source_forward_return_label_run_id=str(
+            summary.get("model_weight_versioning_source_forward_return_label_run_id", "")
+        ),
+        model_weight_versioning_source_forward_return_label_status=str(
+            summary.get("model_weight_versioning_source_forward_return_label_status", "")
+        ),
+        model_weight_versioning_source_forward_return_label_health_status=str(
+            summary.get("model_weight_versioning_source_forward_return_label_health_status", "")
+        ),
+        model_weight_versioning_source_replay_decision_freeze_run_id=str(
+            summary.get("model_weight_versioning_source_replay_decision_freeze_run_id", "")
+        ),
+        model_weight_versioning_source_replay_decision_freeze_status=str(
+            summary.get("model_weight_versioning_source_replay_decision_freeze_status", "")
+        ),
+        model_weight_versioning_source_replay_decision_freeze_health_status=str(
+            summary.get("model_weight_versioning_source_replay_decision_freeze_health_status", "")
+        ),
+        model_weight_versioning_training_result_row_count=_int_or_zero(
+            summary.get("model_weight_versioning_training_result_row_count")
+        ),
+        model_weight_versioning_eligible_training_result_row_count=_int_or_zero(
+            summary.get("model_weight_versioning_eligible_training_result_row_count")
+        ),
+        model_weight_versioning_quarantined_training_result_row_count=_int_or_zero(
+            summary.get("model_weight_versioning_quarantined_training_result_row_count")
+        ),
+        model_weight_versioning_metric_evidence_names_present=str(
+            summary.get("model_weight_versioning_metric_evidence_names_present", "")
+        ),
+        model_weight_versioning_metric_evidence_reference_count=_int_or_zero(
+            summary.get("model_weight_versioning_metric_evidence_reference_count")
+        ),
+        ready_for_model_weight_versioning=_bool_from_text(
+            summary.get("ready_for_model_weight_versioning")
+        ),
+        model_weight_versioning_executed=_bool_from_text(
+            summary.get("model_weight_versioning_executed")
+        ),
+        model_weight_versioning_research_artifacts_created=_bool_from_text(
+            summary.get("model_weight_versioning_research_artifacts_created")
+        ),
+        model_weights_reference_created=_bool_from_text(
+            summary.get("model_weights_reference_created")
+        ),
+        model_version_metadata_created=_bool_from_text(
+            summary.get("model_version_metadata_created")
+        ),
+        parameter_version_metadata_created=_bool_from_text(
+            summary.get("parameter_version_metadata_created")
+        ),
+        threshold_plan_created=_bool_from_text(summary.get("threshold_plan_created")),
+        prediction_rows_created=_bool_from_text(summary.get("prediction_rows_created")),
+        probability_calibration_report_created=_bool_from_text(
+            summary.get("probability_calibration_report_created")
+        ),
+        feature_importance_report_created=_bool_from_text(
+            summary.get("feature_importance_report_created")
+        ),
+        active_model=_bool_from_text(summary.get("active_model")),
+        promoted_model=_bool_from_text(summary.get("promoted_model")),
+        production_model=_bool_from_text(summary.get("production_model")),
+        active_parameters=_bool_from_text(summary.get("active_parameters")),
+        active_thresholds=_bool_from_text(summary.get("active_thresholds")),
+        advisory_predictions_created=_bool_from_text(
+            summary.get("advisory_predictions_created")
+        ),
+        active_probabilities_created=_bool_from_text(
+            summary.get("active_probabilities_created")
+        ),
+        active_feature_importance_created=_bool_from_text(
+            summary.get("active_feature_importance_created")
+        ),
+        model_weight_versioning_active_stock_profile_exists=_bool_from_text(
+            summary.get("model_weight_versioning_active_stock_profile_exists")
+        ),
+        model_weight_versioning_stock_profile_created=_bool_from_text(
+            summary.get("model_weight_versioning_stock_profile_created")
+        ),
+        model_weight_versioning_buy_review_allowed=_bool_from_text(
+            summary.get("model_weight_versioning_buy_review_allowed")
+        ),
+        model_weight_versioning_real_buy_review_eligible=_bool_from_text(
+            summary.get("model_weight_versioning_real_buy_review_eligible")
+        ),
+        model_weight_versioning_approved_for_paper=_bool_from_text(
+            summary.get("model_weight_versioning_approved_for_paper")
+        ),
+        model_weight_versioning_strategy_performance_validated=_bool_from_text(
+            summary.get("model_weight_versioning_strategy_performance_validated")
+        ),
+        model_weight_versioning_trading_allowed=_bool_from_text(
+            summary.get("model_weight_versioning_trading_allowed")
+        ),
+        model_weight_versioning_order_placed=_bool_from_text(
+            summary.get("model_weight_versioning_order_placed")
+        ),
+        model_weight_versioning_broker_api_called=_bool_from_text(
+            summary.get("model_weight_versioning_broker_api_called")
+        ),
+        model_weight_versioning_message_sent=_bool_from_text(
+            summary.get("model_weight_versioning_message_sent")
+        ),
+        model_weight_versioning_llm_api_called=_bool_from_text(
+            summary.get("model_weight_versioning_llm_api_called")
+        ),
+        model_weight_versioning_external_api_called=_bool_from_text(
+            summary.get("model_weight_versioning_external_api_called")
+        ),
+        model_weight_versioning_cache_mutated=_bool_from_text(
+            summary.get("model_weight_versioning_cache_mutated")
+        ),
+        model_weight_versioning_data_raw_written=_bool_from_text(
+            summary.get("model_weight_versioning_data_raw_written")
+        ),
+        model_weight_versioning_data_processed_written=_bool_from_text(
+            summary.get("model_weight_versioning_data_processed_written")
+        ),
+        model_weight_versioning_data_cache_written=_bool_from_text(
+            summary.get("model_weight_versioning_data_cache_written")
+        ),
+        model_weight_versioning_current_candidates_run=_bool_from_text(
+            summary.get("model_weight_versioning_current_candidates_run")
+        ),
+        model_weight_versioning_snapshot_built=_bool_from_text(
+            summary.get("model_weight_versioning_snapshot_built")
+        ),
+        model_weight_versioning_signal_semantics_changed=_bool_from_text(
+            summary.get("model_weight_versioning_signal_semantics_changed")
+        ),
+        model_weight_versioning_report_only=_bool_from_text(
+            summary.get("model_weight_versioning_report_only")
+        ),
+        model_weight_versioning_diagnostic_only=_bool_from_text(
+            summary.get("model_weight_versioning_diagnostic_only")
+        ),
+        model_weight_versioning_no_live_trading=_bool_from_text(
+            summary.get("model_weight_versioning_no_live_trading")
+        ),
+        model_weight_versioning_no_broker_api=_bool_from_text(
+            summary.get("model_weight_versioning_no_broker_api")
+        ),
+        model_weight_versioning_no_order_placement=_bool_from_text(
+            summary.get("model_weight_versioning_no_order_placement")
+        ),
+        model_weight_versioning_no_message_sent=_bool_from_text(
+            summary.get("model_weight_versioning_no_message_sent")
+        ),
+        model_weight_versioning_report_path=str(
+            summary.get("model_weight_versioning_report_path", "")
+        ),
+        model_weight_versioning_next_action=str(
+            summary.get("model_weight_versioning_next_action", "")
+        ),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -7501,6 +7900,7 @@ def scan_local_research_workflow_artifacts(
     metric_extension_root: str | Path,
     training_result_planning_root: str | Path,
     training_result_root: str | Path,
+    model_weight_versioning_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -7572,6 +7972,7 @@ def scan_local_research_workflow_artifacts(
     metric_extension_path = Path(metric_extension_root)
     training_result_planning_path = Path(training_result_planning_root)
     training_result_path = Path(training_result_root)
+    model_weight_versioning_path = Path(model_weight_versioning_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -7665,6 +8066,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_metric_extension_status(metric_extension_path))
     records.extend(_scan_training_result_planning_status(training_result_planning_path))
     records.extend(_scan_training_result_status(training_result_path))
+    records.extend(_scan_model_weight_versioning_status(model_weight_versioning_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -18387,6 +18789,189 @@ def summarize_local_research_status(
         "training_result_no_message_sent",
     ]:
         row.setdefault(default_false_field, False)
+    model_weight_notes = by_component.get("MODEL_WEIGHT_VERSIONING_STATUS", {}).get("notes")
+    if _string_or_empty(model_weight_notes):
+        model_weight_note_fields = {
+            "model_weight_versioning_workflow_implemented": "implemented",
+            "model_weight_versioning_views_implemented": "views_implemented",
+            "latest_model_weight_versioning_health_status": "health_status",
+            "model_weight_versioning_artifact_path": "artifact_path",
+            "model_weight_versioning_source_training_result_run_id": "source_training_result_run_id",
+            "model_weight_versioning_source_training_result_status": "source_training_result_status",
+            "model_weight_versioning_source_training_result_health_status": "source_training_result_health_status",
+            "model_weight_versioning_source_training_result_planning_run_id": "source_training_result_planning_run_id",
+            "model_weight_versioning_source_training_result_planning_status": "source_training_result_planning_status",
+            "model_weight_versioning_source_training_result_planning_health_status": "source_training_result_planning_health_status",
+            "model_weight_versioning_source_metric_extension_run_id": "source_metric_extension_run_id",
+            "model_weight_versioning_source_metric_extension_status": "source_metric_extension_status",
+            "model_weight_versioning_source_metric_extension_health_status": "source_metric_extension_health_status",
+            "model_weight_versioning_source_metric_computation_run_id": "source_metric_computation_run_id",
+            "model_weight_versioning_source_metric_computation_status": "source_metric_computation_status",
+            "model_weight_versioning_source_metric_computation_health_status": "source_metric_computation_health_status",
+            "model_weight_versioning_source_metric_evaluation_planning_run_id": "source_metric_evaluation_planning_run_id",
+            "model_weight_versioning_source_metric_evaluation_status": "source_metric_evaluation_status",
+            "model_weight_versioning_source_metric_evaluation_health_status": "source_metric_evaluation_health_status",
+            "model_weight_versioning_source_training_evaluation_run_id": "source_training_evaluation_run_id",
+            "model_weight_versioning_source_training_evaluation_status": "source_training_evaluation_status",
+            "model_weight_versioning_source_training_evaluation_health_status": "source_training_evaluation_health_status",
+            "model_weight_versioning_source_forward_return_label_run_id": "source_forward_return_label_run_id",
+            "model_weight_versioning_source_forward_return_label_status": "source_forward_return_label_status",
+            "model_weight_versioning_source_forward_return_label_health_status": "source_forward_return_label_health_status",
+            "model_weight_versioning_source_replay_decision_freeze_run_id": "source_replay_decision_freeze_run_id",
+            "model_weight_versioning_source_replay_decision_freeze_status": "source_replay_decision_freeze_status",
+            "model_weight_versioning_source_replay_decision_freeze_health_status": "source_replay_decision_freeze_health_status",
+            "model_weight_versioning_training_result_row_count": "training_result_row_count",
+            "model_weight_versioning_eligible_training_result_row_count": "eligible_training_result_row_count",
+            "model_weight_versioning_quarantined_training_result_row_count": "quarantined_training_result_row_count",
+            "model_weight_versioning_metric_evidence_names_present": "metric_evidence_names_present",
+            "model_weight_versioning_metric_evidence_reference_count": "metric_evidence_reference_count",
+            "ready_for_model_weight_versioning": "ready_for_model_weight_versioning",
+            "model_weight_versioning_executed": "model_weight_versioning_executed",
+            "model_weight_versioning_research_artifacts_created": "model_weight_versioning_research_artifacts_created",
+            "model_weights_reference_created": "model_weights_reference_created",
+            "model_version_metadata_created": "model_version_metadata_created",
+            "parameter_version_metadata_created": "parameter_version_metadata_created",
+            "threshold_plan_created": "threshold_plan_created",
+            "prediction_rows_created": "prediction_rows_created",
+            "probability_calibration_report_created": "probability_calibration_report_created",
+            "feature_importance_report_created": "feature_importance_report_created",
+            "active_model": "active_model",
+            "promoted_model": "promoted_model",
+            "production_model": "production_model",
+            "active_parameters": "active_parameters",
+            "active_thresholds": "active_thresholds",
+            "advisory_predictions_created": "advisory_predictions_created",
+            "active_probabilities_created": "active_probabilities_created",
+            "active_feature_importance_created": "active_feature_importance_created",
+            "model_weight_versioning_active_stock_profile_exists": "active_stock_profile_exists",
+            "model_weight_versioning_stock_profile_created": "stock_profile_created",
+            "model_weight_versioning_buy_review_allowed": "buy_review_allowed",
+            "model_weight_versioning_real_buy_review_eligible": "real_buy_review_eligible",
+            "model_weight_versioning_approved_for_paper": "approved_for_paper",
+            "model_weight_versioning_strategy_performance_validated": "strategy_performance_validated",
+            "model_weight_versioning_trading_allowed": "trading_allowed",
+            "model_weight_versioning_order_placed": "order_placed",
+            "model_weight_versioning_broker_api_called": "broker_api_called",
+            "model_weight_versioning_message_sent": "message_sent",
+            "model_weight_versioning_llm_api_called": "llm_api_called",
+            "model_weight_versioning_external_api_called": "external_api_called",
+            "model_weight_versioning_cache_mutated": "cache_mutated",
+            "model_weight_versioning_data_raw_written": "data_raw_written",
+            "model_weight_versioning_data_processed_written": "data_processed_written",
+            "model_weight_versioning_data_cache_written": "data_cache_written",
+            "model_weight_versioning_current_candidates_run": "current_candidates_run",
+            "model_weight_versioning_snapshot_built": "snapshot_built",
+            "model_weight_versioning_signal_semantics_changed": "signal_semantics_changed",
+            "model_weight_versioning_report_only": "report_only",
+            "model_weight_versioning_diagnostic_only": "diagnostic_only",
+            "model_weight_versioning_no_live_trading": "no_live_trading",
+            "model_weight_versioning_no_broker_api": "no_broker_api",
+            "model_weight_versioning_no_order_placement": "no_order_placement",
+            "model_weight_versioning_no_message_sent": "no_message_sent",
+            "model_weight_versioning_report_path": "report_path",
+            "model_weight_versioning_next_action": "next_manual_action",
+        }
+        for summary_field, note_key in model_weight_note_fields.items():
+            value = _parse_note_value(model_weight_notes, note_key)
+            if _string_or_empty(value) != "":
+                row[summary_field] = value
+    row["latest_model_workflow_run_id"] = _string_or_empty(
+        by_component.get("MODEL_WEIGHT_VERSIONING_STATUS", {}).get("latest_artifact_id")
+    )
+    row["latest_model_weight_versioning_status"] = _component_status(
+        by_component,
+        "MODEL_WEIGHT_VERSIONING_STATUS",
+    )
+    row["latest_model_weight_versioning_workflow_stage"] = _string_or_empty(
+        by_component.get("MODEL_WEIGHT_VERSIONING_STATUS", {}).get("stage")
+    )
+    for default_false_field in [
+        "model_weight_versioning_workflow_implemented",
+        "model_weight_versioning_views_implemented",
+        "ready_for_model_weight_versioning",
+        "model_weight_versioning_executed",
+        "model_weight_versioning_research_artifacts_created",
+        "model_weights_reference_created",
+        "model_version_metadata_created",
+        "parameter_version_metadata_created",
+        "threshold_plan_created",
+        "prediction_rows_created",
+        "probability_calibration_report_created",
+        "feature_importance_report_created",
+        "active_model",
+        "promoted_model",
+        "production_model",
+        "active_parameters",
+        "active_thresholds",
+        "advisory_predictions_created",
+        "active_probabilities_created",
+        "active_feature_importance_created",
+        "model_weight_versioning_active_stock_profile_exists",
+        "model_weight_versioning_stock_profile_created",
+        "model_weight_versioning_buy_review_allowed",
+        "model_weight_versioning_real_buy_review_eligible",
+        "model_weight_versioning_approved_for_paper",
+        "model_weight_versioning_strategy_performance_validated",
+        "model_weight_versioning_trading_allowed",
+        "model_weight_versioning_order_placed",
+        "model_weight_versioning_broker_api_called",
+        "model_weight_versioning_message_sent",
+        "model_weight_versioning_llm_api_called",
+        "model_weight_versioning_external_api_called",
+        "model_weight_versioning_cache_mutated",
+        "model_weight_versioning_data_raw_written",
+        "model_weight_versioning_data_processed_written",
+        "model_weight_versioning_data_cache_written",
+        "model_weight_versioning_current_candidates_run",
+        "model_weight_versioning_snapshot_built",
+        "model_weight_versioning_signal_semantics_changed",
+        "model_weight_versioning_report_only",
+        "model_weight_versioning_diagnostic_only",
+        "model_weight_versioning_no_live_trading",
+        "model_weight_versioning_no_broker_api",
+        "model_weight_versioning_no_order_placement",
+        "model_weight_versioning_no_message_sent",
+    ]:
+        row.setdefault(default_false_field, False)
+    for default_zero_field in [
+        "model_weight_versioning_training_result_row_count",
+        "model_weight_versioning_eligible_training_result_row_count",
+        "model_weight_versioning_quarantined_training_result_row_count",
+        "model_weight_versioning_metric_evidence_reference_count",
+    ]:
+        row.setdefault(default_zero_field, 0)
+    for default_empty_field in [
+        "latest_model_weight_versioning_health_status",
+        "model_weight_versioning_artifact_path",
+        "model_weight_versioning_source_training_result_run_id",
+        "model_weight_versioning_source_training_result_status",
+        "model_weight_versioning_source_training_result_health_status",
+        "model_weight_versioning_source_training_result_planning_run_id",
+        "model_weight_versioning_source_training_result_planning_status",
+        "model_weight_versioning_source_training_result_planning_health_status",
+        "model_weight_versioning_source_metric_extension_run_id",
+        "model_weight_versioning_source_metric_extension_status",
+        "model_weight_versioning_source_metric_extension_health_status",
+        "model_weight_versioning_source_metric_computation_run_id",
+        "model_weight_versioning_source_metric_computation_status",
+        "model_weight_versioning_source_metric_computation_health_status",
+        "model_weight_versioning_source_metric_evaluation_planning_run_id",
+        "model_weight_versioning_source_metric_evaluation_status",
+        "model_weight_versioning_source_metric_evaluation_health_status",
+        "model_weight_versioning_source_training_evaluation_run_id",
+        "model_weight_versioning_source_training_evaluation_status",
+        "model_weight_versioning_source_training_evaluation_health_status",
+        "model_weight_versioning_source_forward_return_label_run_id",
+        "model_weight_versioning_source_forward_return_label_status",
+        "model_weight_versioning_source_forward_return_label_health_status",
+        "model_weight_versioning_source_replay_decision_freeze_run_id",
+        "model_weight_versioning_source_replay_decision_freeze_status",
+        "model_weight_versioning_source_replay_decision_freeze_health_status",
+        "model_weight_versioning_metric_evidence_names_present",
+        "model_weight_versioning_report_path",
+        "model_weight_versioning_next_action",
+    ]:
+        row.setdefault(default_empty_field, "")
     return pd.DataFrame([row], columns=SUMMARY_COLUMNS)
 
 
@@ -21016,6 +21601,93 @@ def build_local_research_dashboard_metadata(
         "training_result_no_message_sent": result.training_result_no_message_sent,
         "training_result_report_path": result.training_result_report_path,
         "training_result_next_action": result.training_result_next_action,
+        "model_weight_versioning_workflow_implemented": (
+            result.model_weight_versioning_workflow_implemented
+        ),
+        "model_weight_versioning_views_implemented": result.model_weight_versioning_views_implemented,
+        "latest_model_workflow_run_id": result.latest_model_workflow_run_id,
+        "latest_model_weight_versioning_status": result.latest_model_weight_versioning_status,
+        "latest_model_weight_versioning_health_status": (
+            result.latest_model_weight_versioning_health_status
+        ),
+        "latest_model_weight_versioning_workflow_stage": (
+            result.latest_model_weight_versioning_workflow_stage
+        ),
+        "model_weight_versioning_artifact_path": result.model_weight_versioning_artifact_path,
+        "model_weight_versioning_training_result_row_count": (
+            result.model_weight_versioning_training_result_row_count
+        ),
+        "model_weight_versioning_eligible_training_result_row_count": (
+            result.model_weight_versioning_eligible_training_result_row_count
+        ),
+        "model_weight_versioning_quarantined_training_result_row_count": (
+            result.model_weight_versioning_quarantined_training_result_row_count
+        ),
+        "model_weight_versioning_metric_evidence_names_present": (
+            result.model_weight_versioning_metric_evidence_names_present
+        ),
+        "model_weight_versioning_metric_evidence_reference_count": (
+            result.model_weight_versioning_metric_evidence_reference_count
+        ),
+        "ready_for_model_weight_versioning": result.ready_for_model_weight_versioning,
+        "model_weight_versioning_executed": result.model_weight_versioning_executed,
+        "model_weight_versioning_research_artifacts_created": (
+            result.model_weight_versioning_research_artifacts_created
+        ),
+        "model_weights_reference_created": result.model_weights_reference_created,
+        "model_version_metadata_created": result.model_version_metadata_created,
+        "parameter_version_metadata_created": result.parameter_version_metadata_created,
+        "threshold_plan_created": result.threshold_plan_created,
+        "prediction_rows_created": result.prediction_rows_created,
+        "probability_calibration_report_created": result.probability_calibration_report_created,
+        "feature_importance_report_created": result.feature_importance_report_created,
+        "active_model": result.active_model,
+        "promoted_model": result.promoted_model,
+        "production_model": result.production_model,
+        "active_parameters": result.active_parameters,
+        "active_thresholds": result.active_thresholds,
+        "advisory_predictions_created": result.advisory_predictions_created,
+        "active_probabilities_created": result.active_probabilities_created,
+        "active_feature_importance_created": result.active_feature_importance_created,
+        "model_weight_versioning_active_stock_profile_exists": (
+            result.model_weight_versioning_active_stock_profile_exists
+        ),
+        "model_weight_versioning_stock_profile_created": (
+            result.model_weight_versioning_stock_profile_created
+        ),
+        "model_weight_versioning_buy_review_allowed": result.model_weight_versioning_buy_review_allowed,
+        "model_weight_versioning_real_buy_review_eligible": (
+            result.model_weight_versioning_real_buy_review_eligible
+        ),
+        "model_weight_versioning_approved_for_paper": result.model_weight_versioning_approved_for_paper,
+        "model_weight_versioning_strategy_performance_validated": (
+            result.model_weight_versioning_strategy_performance_validated
+        ),
+        "model_weight_versioning_trading_allowed": result.model_weight_versioning_trading_allowed,
+        "model_weight_versioning_order_placed": result.model_weight_versioning_order_placed,
+        "model_weight_versioning_broker_api_called": result.model_weight_versioning_broker_api_called,
+        "model_weight_versioning_message_sent": result.model_weight_versioning_message_sent,
+        "model_weight_versioning_llm_api_called": result.model_weight_versioning_llm_api_called,
+        "model_weight_versioning_external_api_called": result.model_weight_versioning_external_api_called,
+        "model_weight_versioning_cache_mutated": result.model_weight_versioning_cache_mutated,
+        "model_weight_versioning_data_raw_written": result.model_weight_versioning_data_raw_written,
+        "model_weight_versioning_data_processed_written": result.model_weight_versioning_data_processed_written,
+        "model_weight_versioning_data_cache_written": result.model_weight_versioning_data_cache_written,
+        "model_weight_versioning_current_candidates_run": (
+            result.model_weight_versioning_current_candidates_run
+        ),
+        "model_weight_versioning_snapshot_built": result.model_weight_versioning_snapshot_built,
+        "model_weight_versioning_signal_semantics_changed": (
+            result.model_weight_versioning_signal_semantics_changed
+        ),
+        "model_weight_versioning_report_only": result.model_weight_versioning_report_only,
+        "model_weight_versioning_diagnostic_only": result.model_weight_versioning_diagnostic_only,
+        "model_weight_versioning_no_live_trading": result.model_weight_versioning_no_live_trading,
+        "model_weight_versioning_no_broker_api": result.model_weight_versioning_no_broker_api,
+        "model_weight_versioning_no_order_placement": result.model_weight_versioning_no_order_placement,
+        "model_weight_versioning_no_message_sent": result.model_weight_versioning_no_message_sent,
+        "model_weight_versioning_report_path": result.model_weight_versioning_report_path,
+        "model_weight_versioning_next_action": result.model_weight_versioning_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -25946,6 +26618,205 @@ def _training_result_notes(summary: dict[str, Any]) -> str:
         f"calibrated_probabilities_created={_string_or_empty(summary.get('calibrated_probabilities_created'))}; "
         f"feature_importance_created={_string_or_empty(summary.get('feature_importance_created'))}; "
         f"stock_profile_allowed={_string_or_empty(summary.get('stock_profile_allowed'))}; "
+        f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
+        f"stock_profile_created={_string_or_empty(summary.get('stock_profile_created'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
+        f"strategy_performance_validated={_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_model_weight_versioning_status(root: Path) -> list[dict[str, Any]]:
+    model_root = root.parent if root.name == "status" else root
+    if not model_root.exists():
+        return []
+    try:
+        result = run_model_weight_versioning_status(
+            root=model_root,
+            output_dir=model_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_model_workflow_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = model_root / result.latest_model_workflow_run_id
+    metadata = _load_json_or_none(artifact_dir / "model_training_metadata.json") or {}
+    model_version = _load_json_or_none(artifact_dir / "model_version_metadata.json") or {}
+    parameter_version = _load_json_or_none(artifact_dir / "parameter_version_metadata.json") or {}
+    safety = _load_json_or_none(artifact_dir / "model_safety_flags.json") or {}
+    artifact_paths = metadata.get("artifact_paths") if isinstance(metadata.get("artifact_paths"), dict) else {}
+    merged = {**metadata, **safety}
+    summary["artifact_path"] = _string_or_empty(metadata.get("artifact_path")) or str(artifact_dir)
+    summary["report_path"] = (
+        _string_or_empty(summary.get("report_path"))
+        or _string_or_empty(artifact_paths.get("report"))
+        or str(artifact_dir / "model_weight_versioning_report.md")
+    )
+    for field in [
+        "source_training_result_run_id",
+        "source_training_result_status",
+        "source_training_result_health_status",
+        "source_training_result_planning_run_id",
+        "source_training_result_planning_status",
+        "source_training_result_planning_health_status",
+        "source_metric_extension_run_id",
+        "source_metric_extension_status",
+        "source_metric_extension_health_status",
+        "source_metric_computation_run_id",
+        "source_metric_computation_status",
+        "source_metric_computation_health_status",
+        "source_metric_evaluation_planning_run_id",
+        "source_metric_evaluation_status",
+        "source_metric_evaluation_health_status",
+        "source_training_evaluation_run_id",
+        "source_training_evaluation_status",
+        "source_training_evaluation_health_status",
+        "source_forward_return_label_run_id",
+        "source_forward_return_label_status",
+        "source_forward_return_label_health_status",
+        "source_replay_decision_freeze_run_id",
+        "source_replay_decision_freeze_status",
+        "source_replay_decision_freeze_health_status",
+        "ready_for_model_weight_versioning",
+        "model_weight_versioning_executed",
+        "model_weight_versioning_research_artifacts_created",
+        "training_result_row_count",
+        "eligible_training_result_row_count",
+        "quarantined_training_result_row_count",
+        "metric_evidence_names_present",
+        "metric_evidence_reference_count",
+        "model_weights_reference_created",
+        "model_version_metadata_created",
+        "parameter_version_metadata_created",
+        "threshold_plan_created",
+        "prediction_rows_created",
+        "probability_calibration_report_created",
+        "feature_importance_report_created",
+        "active_stock_profile_exists",
+        "stock_profile_created",
+        "buy_review_allowed",
+        "real_buy_review_eligible",
+        "approved_for_paper",
+        "strategy_performance_validated",
+        "trading_allowed",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+        "report_only",
+        "diagnostic_only",
+    ]:
+        if field not in summary or _string_or_empty(summary.get(field)) == "":
+            summary[field] = merged.get(field, False)
+    summary["active_model"] = model_version.get("active_model", False)
+    summary["promoted_model"] = model_version.get("promoted_model", False)
+    summary["production_model"] = model_version.get("production_model", False)
+    summary["active_parameters"] = parameter_version.get("active_parameters", False)
+    summary["active_thresholds"] = False
+    summary["advisory_predictions_created"] = False
+    summary["active_probabilities_created"] = False
+    summary["active_feature_importance_created"] = False
+    return [
+        _record(
+            workflow_area="MODEL_WEIGHT_VERSIONING",
+            component="MODEL_WEIGHT_VERSIONING_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_model_workflow_run_id,
+            report_path=summary["report_path"],
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_model_weight_versioning_notes(summary),
+        )
+    ]
+
+
+def _model_weight_versioning_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"source_training_result_run_id={_string_or_empty(summary.get('source_training_result_run_id'))}; "
+        f"source_training_result_status={_string_or_empty(summary.get('source_training_result_status'))}; "
+        f"source_training_result_health_status={_string_or_empty(summary.get('source_training_result_health_status'))}; "
+        f"source_training_result_planning_run_id={_string_or_empty(summary.get('source_training_result_planning_run_id'))}; "
+        f"source_training_result_planning_status={_string_or_empty(summary.get('source_training_result_planning_status'))}; "
+        f"source_training_result_planning_health_status={_string_or_empty(summary.get('source_training_result_planning_health_status'))}; "
+        f"source_metric_extension_run_id={_string_or_empty(summary.get('source_metric_extension_run_id'))}; "
+        f"source_metric_extension_status={_string_or_empty(summary.get('source_metric_extension_status'))}; "
+        f"source_metric_extension_health_status={_string_or_empty(summary.get('source_metric_extension_health_status'))}; "
+        f"source_metric_computation_run_id={_string_or_empty(summary.get('source_metric_computation_run_id'))}; "
+        f"source_metric_computation_status={_string_or_empty(summary.get('source_metric_computation_status'))}; "
+        f"source_metric_computation_health_status={_string_or_empty(summary.get('source_metric_computation_health_status'))}; "
+        f"source_metric_evaluation_planning_run_id={_string_or_empty(summary.get('source_metric_evaluation_planning_run_id'))}; "
+        f"source_metric_evaluation_status={_string_or_empty(summary.get('source_metric_evaluation_status'))}; "
+        f"source_metric_evaluation_health_status={_string_or_empty(summary.get('source_metric_evaluation_health_status'))}; "
+        f"source_training_evaluation_run_id={_string_or_empty(summary.get('source_training_evaluation_run_id'))}; "
+        f"source_training_evaluation_status={_string_or_empty(summary.get('source_training_evaluation_status'))}; "
+        f"source_training_evaluation_health_status={_string_or_empty(summary.get('source_training_evaluation_health_status'))}; "
+        f"source_forward_return_label_run_id={_string_or_empty(summary.get('source_forward_return_label_run_id'))}; "
+        f"source_forward_return_label_status={_string_or_empty(summary.get('source_forward_return_label_status'))}; "
+        f"source_forward_return_label_health_status={_string_or_empty(summary.get('source_forward_return_label_health_status'))}; "
+        f"source_replay_decision_freeze_run_id={_string_or_empty(summary.get('source_replay_decision_freeze_run_id'))}; "
+        f"source_replay_decision_freeze_status={_string_or_empty(summary.get('source_replay_decision_freeze_status'))}; "
+        f"source_replay_decision_freeze_health_status={_string_or_empty(summary.get('source_replay_decision_freeze_health_status'))}; "
+        f"training_result_row_count={_string_or_empty(summary.get('training_result_row_count'))}; "
+        f"eligible_training_result_row_count={_string_or_empty(summary.get('eligible_training_result_row_count'))}; "
+        f"quarantined_training_result_row_count={_string_or_empty(summary.get('quarantined_training_result_row_count'))}; "
+        f"metric_evidence_names_present={_note_safe_text(summary.get('metric_evidence_names_present'))}; "
+        f"metric_evidence_reference_count={_string_or_empty(summary.get('metric_evidence_reference_count'))}; "
+        f"ready_for_model_weight_versioning={_string_or_empty(summary.get('ready_for_model_weight_versioning'))}; "
+        f"model_weight_versioning_executed={_string_or_empty(summary.get('model_weight_versioning_executed'))}; "
+        f"model_weight_versioning_research_artifacts_created={_string_or_empty(summary.get('model_weight_versioning_research_artifacts_created'))}; "
+        f"model_weights_reference_created={_string_or_empty(summary.get('model_weights_reference_created'))}; "
+        f"model_version_metadata_created={_string_or_empty(summary.get('model_version_metadata_created'))}; "
+        f"parameter_version_metadata_created={_string_or_empty(summary.get('parameter_version_metadata_created'))}; "
+        f"threshold_plan_created={_string_or_empty(summary.get('threshold_plan_created'))}; "
+        f"prediction_rows_created={_string_or_empty(summary.get('prediction_rows_created'))}; "
+        f"probability_calibration_report_created={_string_or_empty(summary.get('probability_calibration_report_created'))}; "
+        f"feature_importance_report_created={_string_or_empty(summary.get('feature_importance_report_created'))}; "
+        f"active_model={_string_or_empty(summary.get('active_model'))}; "
+        f"promoted_model={_string_or_empty(summary.get('promoted_model'))}; "
+        f"production_model={_string_or_empty(summary.get('production_model'))}; "
+        f"active_parameters={_string_or_empty(summary.get('active_parameters'))}; "
+        f"active_thresholds={_string_or_empty(summary.get('active_thresholds'))}; "
+        f"advisory_predictions_created={_string_or_empty(summary.get('advisory_predictions_created'))}; "
+        f"active_probabilities_created={_string_or_empty(summary.get('active_probabilities_created'))}; "
+        f"active_feature_importance_created={_string_or_empty(summary.get('active_feature_importance_created'))}; "
         f"active_stock_profile_exists={_string_or_empty(summary.get('active_stock_profile_exists'))}; "
         f"stock_profile_created={_string_or_empty(summary.get('stock_profile_created'))}; "
         f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "

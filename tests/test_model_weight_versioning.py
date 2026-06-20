@@ -392,14 +392,14 @@ def test_cli_no_input_ready_and_allow_paths(tmp_path: Path) -> None:
     assert "model_weights_reference_created: True" in allowed.stdout
 
 
-def test_no_extra_commands_research_status_checkpoint_or_project_source_are_added() -> None:
+def test_model_weight_versioning_commands_and_checkpoint_are_documented_without_project_sources() -> None:
     help_result = _run_cli(["--help"])
     assert "model-weight-versioning" in help_result.stdout
     assert "model-weight-versioning-index" in help_result.stdout
     assert "model-weight-versioning-health" in help_result.stdout
     assert "model-weight-versioning-status" in help_result.stdout
     assert not Path("docs/project_sources").exists()
-    assert not list(Path("docs").glob("release_checkpoint_v1.51.0.md"))
+    assert Path("docs/release_checkpoint_v1.51.0.md").exists()
 
 
 def test_model_weight_versioning_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
@@ -623,7 +623,7 @@ def test_model_weight_versioning_artifact_view_cli_commands_run(tmp_path: Path) 
     assert "model_weight_versioning_research_artifacts_created: True" in status.stdout
     assert "not executable trading model" in status.stdout
     assert not Path("docs/project_sources").exists()
-    assert not list(Path("docs").glob("release_checkpoint_v1.51.0.md"))
+    assert Path("docs/release_checkpoint_v1.51.0.md").exists()
 
 
 def _happy_settings(tmp_path: Path) -> ModelWeightVersioningSettings:

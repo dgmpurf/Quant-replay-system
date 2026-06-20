@@ -74,11 +74,16 @@ from test_training_evaluation import _happy_settings as _training_evaluation_hap
 from test_metric_evaluation import _happy_settings as _metric_evaluation_happy_settings
 from test_training_result_planning import _happy_settings as _training_result_planning_happy_settings
 from test_training_result import _happy_settings as _training_result_happy_settings
+from test_model_weight_versioning import _happy_settings as _model_weight_versioning_happy_settings
 from quant_replay_system.training_result_planning import (
     TRAINING_RESULT_PLANNING_ARTIFACTS_CREATED,
     run_training_result_planning,
 )
 from quant_replay_system.training_result import TRAINING_RESULT_CREATED, run_training_result
+from quant_replay_system.model_weight_versioning import (
+    MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED,
+    run_model_weight_versioning,
+)
 
 
 DECISION_DATE = "2024-05-20"
@@ -4404,6 +4409,176 @@ def test_training_result_research_status_docs_and_source_notes_are_safe() -> Non
         ]:
             assert phrase in text
     source_text = Path("SOURCE_UPDATE_NOTES_v1_50_0.md").read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_research_status_includes_model_weight_versioning_fields(tmp_path: Path) -> None:
+    created = run_model_weight_versioning(
+        replace(_model_weight_versioning_happy_settings(tmp_path), allow_model_weight_versioning=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "MODEL_WEIGHT_VERSIONING_STATUS"
+    ].iloc[0]
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED
+    assert row["workflow_area"] == "MODEL_WEIGHT_VERSIONING"
+    assert result.model_weight_versioning_workflow_implemented is True
+    assert result.model_weight_versioning_views_implemented is True
+    assert result.latest_model_workflow_run_id == created.model_workflow_run_id
+    assert result.latest_model_weight_versioning_status == MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED
+    assert result.latest_model_weight_versioning_health_status == "PASS"
+    assert (
+        result.latest_model_weight_versioning_workflow_stage
+        == MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED
+    )
+    assert result.model_weight_versioning_artifact_path.endswith(created.model_workflow_run_id)
+    assert result.model_weight_versioning_training_result_row_count == 1
+    assert result.model_weight_versioning_eligible_training_result_row_count == 1
+    assert result.model_weight_versioning_quarantined_training_result_row_count == 0
+    assert "benchmark_relative_return" in result.model_weight_versioning_metric_evidence_names_present
+    assert result.model_weight_versioning_metric_evidence_reference_count == 7
+    assert result.model_weights_reference_created is True
+    assert result.model_version_metadata_created is True
+    assert result.parameter_version_metadata_created is True
+    assert result.threshold_plan_created is True
+    assert result.prediction_rows_created is True
+    assert result.probability_calibration_report_created is True
+    assert result.feature_importance_report_created is True
+    assert result.active_model is False
+    assert result.promoted_model is False
+    assert result.production_model is False
+    assert result.active_parameters is False
+    assert result.active_thresholds is False
+    assert result.advisory_predictions_created is False
+    assert result.active_probabilities_created is False
+    assert result.active_feature_importance_created is False
+    assert result.model_weight_versioning_active_stock_profile_exists is False
+    assert result.model_weight_versioning_real_buy_review_eligible is False
+    assert result.model_weight_versioning_approved_for_paper is False
+    assert result.model_weight_versioning_strategy_performance_validated is False
+    assert result.model_weight_versioning_trading_allowed is False
+    assert result.model_weight_versioning_report_only is True
+    assert result.model_weight_versioning_diagnostic_only is True
+    assert result.model_weight_versioning_no_live_trading is True
+    assert result.model_weight_versioning_no_broker_api is True
+    assert result.model_weight_versioning_no_order_placement is True
+    assert result.model_weight_versioning_no_message_sent is True
+    assert metadata["latest_model_weight_versioning_status"] == MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED
+    assert metadata["model_weights_reference_created"] is True
+    assert metadata["model_version_metadata_created"] is True
+    assert metadata["active_model"] is False
+    assert metadata["promoted_model"] is False
+    assert metadata["production_model"] is False
+    assert metadata["active_parameters"] is False
+    assert metadata["active_thresholds"] is False
+    assert metadata["advisory_predictions_created"] is False
+    assert metadata["model_weight_versioning_approved_for_paper"] is False
+    assert metadata["model_weight_versioning_strategy_performance_validated"] is False
+    assert metadata["model_weight_versioning_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_model_weight_versioning(tmp_path: Path) -> None:
+    run_model_weight_versioning(
+        replace(_model_weight_versioning_happy_settings(tmp_path), allow_model_weight_versioning=True)
+    )
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; model-weight-versioning is report-only "
+            "research context, not active model promotion."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_model_weight_versioning_status == MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED
+    assert result.model_weights_reference_created is True
+    assert result.model_version_metadata_created is True
+    assert result.active_model is False
+    assert result.promoted_model is False
+    assert result.production_model is False
+    assert result.active_parameters is False
+    assert result.active_thresholds is False
+    assert result.advisory_predictions_created is False
+    assert result.model_weight_versioning_real_buy_review_eligible is False
+    assert result.model_weight_versioning_approved_for_paper is False
+    assert result.model_weight_versioning_strategy_performance_validated is False
+    assert result.model_weight_versioning_trading_allowed is False
+
+
+def test_cli_research_status_prints_model_weight_versioning_fields(tmp_path: Path, capsys) -> None:
+    run_model_weight_versioning(
+        replace(_model_weight_versioning_happy_settings(tmp_path), allow_model_weight_versioning=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "model_weight_versioning_workflow_implemented: True" in output.out
+    assert "model_weight_versioning_views_implemented: True" in output.out
+    assert (
+        f"latest_model_weight_versioning_status: {MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED}"
+        in output.out
+    )
+    assert "model_weight_versioning_training_result_row_count: 1" in output.out
+    assert "model_weights_reference_created: True" in output.out
+    assert "model_version_metadata_created: True" in output.out
+    assert "parameter_version_metadata_created: True" in output.out
+    assert "threshold_plan_created: True" in output.out
+    assert "prediction_rows_created: True" in output.out
+    assert "probability_calibration_report_created: True" in output.out
+    assert "feature_importance_report_created: True" in output.out
+    assert "active_model: False" in output.out
+    assert "promoted_model: False" in output.out
+    assert "production_model: False" in output.out
+    assert "active_parameters: False" in output.out
+    assert "active_thresholds: False" in output.out
+    assert "advisory_predictions_created: False" in output.out
+    assert "model_weight_versioning_approved_for_paper: False" in output.out
+    assert "model_weight_versioning_strategy_performance_validated: False" in output.out
+    assert "model_weight_versioning_trading_allowed: False" in output.out
+
+
+def test_model_weight_versioning_research_status_docs_and_source_notes_are_safe() -> None:
+    docs = [
+        Path("README.md"),
+        Path("docs/local_research_dashboard.md"),
+        Path("docs/model_weight_versioning.md"),
+        Path("docs/release_checkpoint_v1.51.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_51_0.md"),
+    ]
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED" in text
+        for phrase in [
+            "not an active model",
+            "not a promoted model",
+            "not a production model",
+            "not active parameters",
+            "not active thresholds",
+            "not advisory predictions",
+            "not active probabilities",
+            "not stock_profile",
+            "not buy-review",
+            "not paper approval",
+            "not performance validation",
+            "not trading",
+        ]:
+            assert phrase in text
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_51_0.md").read_text(encoding="utf-8")
     assert "docs/project_sources/ is intentionally absent from Git" in source_text
     assert not Path("docs/project_sources").exists()
 
