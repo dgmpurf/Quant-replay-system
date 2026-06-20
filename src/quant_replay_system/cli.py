@@ -354,6 +354,9 @@ from quant_replay_system.active_model import (
     ActiveModelSettings,
     run_active_model,
 )
+from quant_replay_system.active_model_health import check_active_model_health
+from quant_replay_system.active_model_index import build_active_model_index
+from quant_replay_system.active_model_status import run_active_model_status
 from quant_replay_system.model_weight_versioning_health import check_model_weight_versioning_health
 from quant_replay_system.model_weight_versioning_index import build_model_weight_versioning_index
 from quant_replay_system.model_weight_versioning_status import run_model_weight_versioning_status
@@ -3683,6 +3686,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where research-governed active model artifacts will be written",
     )
     active_model.set_defaults(handler=_handle_active_model)
+
+    active_model_index = subparsers.add_parser(
+        "active-model-index",
+        help="Index research-governed active model phase 1 diagnostics",
+    )
+    active_model_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_model_v0_1",
+        help="Active model artifact root to index",
+    )
+    active_model_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_model_v0_1/index",
+        help="Directory where active model index artifacts will be written",
+    )
+    active_model_index.set_defaults(handler=_handle_active_model_index)
+
+    active_model_health = subparsers.add_parser(
+        "active-model-health",
+        help="Health-check research-governed active model phase 1 diagnostics",
+    )
+    active_model_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_model_v0_1",
+        help="Active model artifact root to health-check",
+    )
+    active_model_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_model_v0_1/health",
+        help="Directory where active model health artifacts will be written",
+    )
+    active_model_health.set_defaults(handler=_handle_active_model_health)
+
+    active_model_status = subparsers.add_parser(
+        "active-model-status",
+        help="Summarize research-governed active model phase 1 diagnostics",
+    )
+    active_model_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/active_model_v0_1",
+        help="Active model artifact root to summarize",
+    )
+    active_model_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_model_v0_1/status",
+        help="Directory where active model status artifacts will be written",
+    )
+    active_model_status.set_defaults(handler=_handle_active_model_status)
 
     model_weight_versioning_index = subparsers.add_parser(
         "model-weight-versioning-index",
@@ -10398,6 +10449,83 @@ def _handle_active_model(args: argparse.Namespace) -> int:
         "no active probabilities, no stock_profile, no buy-review, no paper approval, no performance "
         "validation, and no trading."
     )
+    return 0
+
+
+def _handle_active_model_index(args: argparse.Namespace) -> int:
+    result = build_active_model_index(root=args.root, output_dir=args.output_dir)
+    print(f"active_model_index: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Active model index is report-only. ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED "
+        "means diagnostics-only active model phase 1 artifacts: no promoted model, no production "
+        "model, no active thresholds, no advisory predictions, no active probabilities, no stock_profile, "
+        "no buy-review, no paper approval, no performance validation, no current-candidates, no snapshots, "
+        "no signal_semantics mutation, and no trading."
+    )
+    return 0
+
+
+def _handle_active_model_health(args: argparse.Namespace) -> int:
+    result = check_active_model_health(root=args.root, output_dir=args.output_dir)
+    print(f"active_model_health: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Active model health keeps phase 1 research-governed and fails if outputs imply promoted or "
+        "production models, active thresholds, advisory predictions, active probabilities, stock_profile, "
+        "buy-review, paper approval, performance validation, broker/order/message/API/cache/data side "
+        "effects, current-candidates, snapshots, signal semantics mutation, or trading."
+    )
+    return 0
+
+
+def _handle_active_model_status(args: argparse.Namespace) -> int:
+    result = run_active_model_status(root=args.root, output_dir=args.output_dir)
+    print(f"active_model_status: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_active_model_run_id: {result.latest_active_model_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_active_model: {result.ready_for_active_model}")
+    print(f"active_model_executed: {result.active_model_executed}")
+    print(f"active_model_artifacts_created: {result.active_model_artifacts_created}")
+    print(f"active_model_pointer_created: {result.active_model_pointer_created}")
+    print(f"active_model_registry_entry_created: {result.active_model_registry_entry_created}")
+    print(f"active_parameter_pointer_created: {result.active_parameter_pointer_created}")
+    print(f"active_model_activation_status_created: {result.active_model_activation_status_created}")
+    print(f"active_model_rollback_plan_created: {result.active_model_rollback_plan_created}")
+    print(f"active_model_input_index_created: {result.active_model_input_index_created}")
+    print(f"active_model_lineage_matrix_created: {result.active_model_lineage_matrix_created}")
+    print(f"active_model_limitations_created: {result.active_model_limitations_created}")
+    print(f"active_model_overfit_warnings_created: {result.active_model_overfit_warnings_created}")
+    print(f"active_model_safety_flags_created: {result.active_model_safety_flags_created}")
+    print(f"source_model_workflow_run_id: {result.source_model_workflow_run_id}")
+    print(f"source_model_weight_versioning_status: {result.source_model_weight_versioning_status}")
+    print(f"source_model_weight_versioning_health_status: {result.source_model_weight_versioning_health_status}")
+    print(f"model_weight_reference_id: {result.model_weight_reference_id}")
+    print(f"model_version_id: {result.model_version_id}")
+    print(f"parameter_version_id: {result.parameter_version_id}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 

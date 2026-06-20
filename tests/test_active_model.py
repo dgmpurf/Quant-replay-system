@@ -32,6 +32,9 @@ from quant_replay_system.active_model import (
     ActiveModelSettings,
     run_active_model,
 )
+from quant_replay_system.active_model_health import check_active_model_health
+from quant_replay_system.active_model_index import build_active_model_index
+from quant_replay_system.active_model_status import run_active_model_status
 from quant_replay_system.model_weight_versioning import run_model_weight_versioning
 
 
@@ -381,10 +384,231 @@ def test_cli_active_model_no_input_ready_and_allow_paths(tmp_path: Path) -> None
 
     help_result = _run_cli(["--help"])
     assert "active-model" in help_result.stdout
-    assert "active-model-index" not in help_result.stdout
-    assert "active-model-health" not in help_result.stdout
-    assert "active-model-status" not in help_result.stdout
+    assert "active-model-index" in help_result.stdout
+    assert "active-model-health" in help_result.stdout
+    assert "active-model-status" in help_result.stdout
     assert not Path("docs/project_sources").exists()
+
+
+def test_active_model_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_active_model(ActiveModelSettings(output_dir=root))
+    ready = run_active_model(replace(_happy_settings(tmp_path / "ready"), output_dir=root))
+    created = run_active_model(replace(_happy_settings(tmp_path / "created"), output_dir=root, allow_active_model=True))
+
+    index = build_active_model_index(root=root, output_dir=root / "index")
+
+    assert index.artifact_count == 3
+    statuses = set(index.index_frame["status"])
+    assert {NO_ACTIVE_MODEL_INPUT, READY_FOR_ACTIVE_MODEL, ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED}.issubset(statuses)
+
+    created_row = index.index_frame.loc[
+        index.index_frame["active_model_run_id"] == created.active_model_run_id
+    ].iloc[0]
+    assert created_row["active_model_artifacts_created"] is True
+    assert created_row["active_model_pointer_created"] is True
+    assert created_row["active_model_registry_entry_created"] is True
+    assert created_row["active_parameter_pointer_created"] is True
+    assert created_row["active_model_activation_status_created"] is True
+    assert created_row["active_model_rollback_plan_created"] is True
+    assert created_row["active_model_input_index_created"] is True
+    assert created_row["active_model_lineage_matrix_created"] is True
+    assert created_row["active_model_limitations_created"] is True
+    assert created_row["active_model_overfit_warnings_created"] is True
+    assert created_row["active_model_safety_flags_created"] is True
+    assert created_row["model_weight_reference_id"] == created.model_weight_reference_id
+    assert created_row["model_version_id"] == created.model_version_id
+    assert created_row["parameter_version_id"] == created.parameter_version_id
+    assert "sample_count" in created_row["metric_evidence_names_present"]
+    assert created_row["metric_evidence_reference_count"] == 7
+    assert created_row["input_index_row_count"] > 0
+    assert created_row["lineage_matrix_row_count"] > 0
+    assert created_row["overfit_warning_row_count"] > 0
+    for field in DOWNSTREAM_FALSE_FIELDS:
+        assert created_row[field] is False, field
+
+    no_input_row = index.index_frame.loc[index.index_frame["active_model_run_id"] == no_input.active_model_run_id].iloc[0]
+    assert no_input_row["active_model_artifacts_created"] is False
+    assert no_input_row["active_model_pointer_created"] is False
+    assert ready.active_model_run_id in set(index.index_frame["active_model_run_id"])
+
+
+def test_active_model_health_passes_valid_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_active_model(ActiveModelSettings(output_dir=root))
+    run_active_model(replace(_happy_settings(tmp_path / "ready"), output_dir=root))
+    run_active_model(replace(_happy_settings(tmp_path / "created"), output_dir=root, allow_active_model=True))
+
+    health = check_active_model_health(root=root, output_dir=root / "health")
+
+    assert health.status == "PASS"
+    assert health.error_count == 0
+    assert health.checked_artifact_count == 3
+    assert health.artifact_paths["health_csv"].exists()
+    assert health.artifact_paths["health_report"].exists()
+
+
+@pytest.mark.parametrize(
+    ("artifact_key", "expected_code"),
+    [
+        ("active_model_metadata", "MISSING_ACTIVE_MODEL_METADATA"),
+        ("active_model_pointer", "MISSING_ACTIVE_MODEL_POINTER"),
+        ("active_model_registry_entry", "MISSING_ACTIVE_MODEL_REGISTRY_ENTRY"),
+        ("active_parameter_pointer", "MISSING_ACTIVE_PARAMETER_POINTER"),
+        ("active_model_activation_status", "MISSING_ACTIVE_MODEL_ACTIVATION_STATUS"),
+        ("active_model_rollback_plan", "MISSING_ACTIVE_MODEL_ROLLBACK_PLAN"),
+        ("active_model_input_index", "MISSING_ACTIVE_MODEL_INPUT_INDEX"),
+        ("active_model_lineage_matrix", "MISSING_ACTIVE_MODEL_LINEAGE_MATRIX"),
+        ("active_model_limitations", "MISSING_ACTIVE_MODEL_LIMITATIONS"),
+        ("active_model_overfit_warnings", "MISSING_ACTIVE_MODEL_OVERFIT_WARNINGS"),
+        ("active_model_safety_flags", "MISSING_ACTIVE_MODEL_SAFETY_FLAGS"),
+    ],
+)
+def test_active_model_health_fails_if_created_required_artifact_is_missing(
+    tmp_path: Path, artifact_key: str, expected_code: str
+) -> None:
+    root = _output_dir(tmp_path)
+    created = run_active_model(replace(_happy_settings(tmp_path), output_dir=root, allow_active_model=True))
+    created.artifact_paths[artifact_key].unlink()
+
+    health = check_active_model_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert expected_code in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("artifact_key", "patch", "expected_code"),
+    [
+        ("active_model_metadata", {"active_model_artifacts_created": False}, "ACTIVE_MODEL_ARTIFACTS_CREATED_FLAG_FALSE"),
+        ("active_model_pointer", {"promoted_model": True}, "ACTIVE_MODEL_POINTER_PROMOTED_UNEXPECTED"),
+        ("active_model_pointer", {"production_model": True}, "ACTIVE_MODEL_POINTER_PRODUCTION_UNEXPECTED"),
+        ("active_model_pointer", {"serving_enabled": True}, "ACTIVE_MODEL_POINTER_SERVING_UNEXPECTED"),
+        ("active_model_pointer", {"current_candidates_integration": True}, "ACTIVE_MODEL_POINTER_CURRENT_CANDIDATES_UNEXPECTED"),
+        ("active_model_pointer", {"snapshot_integration": True}, "ACTIVE_MODEL_POINTER_SNAPSHOT_UNEXPECTED"),
+        ("active_model_pointer", {"signal_semantics_mutated": True}, "ACTIVE_MODEL_POINTER_SIGNAL_SEMANTICS_UNEXPECTED"),
+        ("active_model_registry_entry", {"promoted_model": True}, "ACTIVE_MODEL_REGISTRY_PROMOTED_UNEXPECTED"),
+        ("active_model_registry_entry", {"production_model": True}, "ACTIVE_MODEL_REGISTRY_PRODUCTION_UNEXPECTED"),
+        ("active_model_registry_entry", {"serving_enabled": True}, "ACTIVE_MODEL_REGISTRY_SERVING_UNEXPECTED"),
+        ("active_model_registry_entry", {"trading_enabled": True}, "ACTIVE_MODEL_REGISTRY_TRADING_UNEXPECTED"),
+        ("active_parameter_pointer", {"active_thresholds_created": True}, "ACTIVE_PARAMETER_POINTER_THRESHOLD_UNEXPECTED"),
+        ("active_model_activation_status", {"promoted_model_created": True}, "PROMOTED_MODEL_CREATED_UNEXPECTED"),
+        ("active_model_activation_status", {"production_model_created": True}, "PRODUCTION_MODEL_CREATED_UNEXPECTED"),
+        ("active_model_activation_status", {"active_thresholds_created": True}, "ACTIVE_THRESHOLDS_CREATED_UNEXPECTED"),
+        ("active_model_activation_status", {"advisory_predictions_created": True}, "ADVISORY_PREDICTIONS_CREATED_UNEXPECTED"),
+        ("active_model_activation_status", {"active_probabilities_created": True}, "ACTIVE_PROBABILITIES_CREATED_UNEXPECTED"),
+        ("active_model_activation_status", {"stock_profile_created": True}, "STOCK_PROFILE_CREATED_UNEXPECTED"),
+        ("active_model_activation_status", {"approved_for_paper": True}, "APPROVED_FOR_PAPER_UNEXPECTED"),
+        ("active_model_activation_status", {"strategy_performance_validated": True}, "STRATEGY_PERFORMANCE_VALIDATED_UNEXPECTED"),
+        ("active_model_activation_status", {"trading_allowed": True}, "TRADING_ALLOWED_UNEXPECTED"),
+        ("active_model_safety_flags", {"trading_allowed": True}, "TRADING_ALLOWED_UNEXPECTED"),
+    ],
+)
+def test_active_model_health_fails_for_active_or_downstream_leakage(
+    tmp_path: Path, artifact_key: str, patch: dict[str, object], expected_code: str
+) -> None:
+    root = _output_dir(tmp_path)
+    created = run_active_model(replace(_happy_settings(tmp_path), output_dir=root, allow_active_model=True))
+    _patch_json(created.artifact_paths[artifact_key], patch)
+
+    health = check_active_model_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert expected_code in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("mutator_name", "expected_code"),
+    [
+        ("rollback_production_serving", "ACTIVE_MODEL_ROLLBACK_OVERCLAIM"),
+        ("missing_metric_evidence", "ACTIVE_MODEL_METRIC_EVIDENCE_MISSING"),
+        ("metric_profitability_overclaim", "ACTIVE_MODEL_METRIC_EVIDENCE_OVERCLAIM"),
+        ("input_index_missing_source", "ACTIVE_MODEL_INPUT_INDEX_LINEAGE_MISSING"),
+        ("lineage_missing_source_run_id", "ACTIVE_MODEL_LINEAGE_SOURCE_RUN_ID_MISSING"),
+        ("lineage_missing_coverage", "ACTIVE_MODEL_LINEAGE_COVERAGE_MISSING"),
+        ("limitations_missing_no_trading", "ACTIVE_MODEL_LIMITATIONS_WORDING_MISSING"),
+        ("overfit_missing_small_sample", "ACTIVE_MODEL_OVERFIT_WARNING_MISSING"),
+        ("report_overclaim", "ACTIVE_MODEL_REPORT_OVERCLAIM"),
+        ("forbidden_artifact", "FORBIDDEN_ACTIVE_MODEL_ARTIFACT_PRESENT"),
+    ],
+)
+def test_active_model_health_fails_for_contract_and_overclaim_mutations(
+    tmp_path: Path, mutator_name: str, expected_code: str
+) -> None:
+    root = _output_dir(tmp_path)
+    created = run_active_model(replace(_happy_settings(tmp_path), output_dir=root, allow_active_model=True))
+    _mutate_active_model_artifact(created.artifact_paths, mutator_name)
+
+    health = check_active_model_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert expected_code in set(health.health_frame["issue_code"])
+
+
+def test_active_model_health_fails_when_no_input_or_ready_claims_artifacts_created(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_active_model(ActiveModelSettings(output_dir=root))
+    ready = run_active_model(replace(_happy_settings(tmp_path / "ready"), output_dir=root))
+    for result in [no_input, ready]:
+        _patch_json(result.artifact_paths["active_model_metadata"], {"active_model_artifacts_created": True})
+        _patch_json(result.artifact_paths["active_model_safety_flags"], {"active_model_artifacts_created": True})
+
+    health = check_active_model_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "ACTIVE_MODEL_ARTIFACTS_CREATED_UNEXPECTED" in set(health.health_frame["issue_code"])
+
+
+def test_active_model_status_summarizes_latest_created_artifact_with_safety_wording(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    created = run_active_model(replace(_happy_settings(tmp_path), output_dir=root, allow_active_model=True))
+
+    status = run_active_model_status(root=root, output_dir=root / "status")
+
+    assert status.latest_active_model_run_id == created.active_model_run_id
+    assert status.status == ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED
+    assert status.health_status == "PASS"
+    assert status.workflow_stage == ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED
+    assert status.active_model_artifacts_created is True
+    assert status.active_model_pointer_created is True
+    assert status.promoted_model_created is False
+    assert status.production_model_created is False
+    assert status.trading_allowed is False
+    assert status.blocker_count == 0
+    assert "does not create promoted model" in status.safety_statement
+    assert "does not authorize trading" in status.safety_statement
+    assert status.artifact_paths["status_csv"].exists()
+    assert status.artifact_paths["status_report"].exists()
+
+
+def test_active_model_status_reports_missing_artifacts_without_creating_active_context(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+
+    status = run_active_model_status(root=root, output_dir=root / "status")
+
+    assert status.latest_active_model_run_id == ""
+    assert status.status == "MISSING"
+    assert status.workflow_stage == "NO_ACTIVE_MODEL_ARTIFACT_FOUND"
+    assert status.active_model_artifacts_created is False
+    assert status.trading_allowed is False
+
+
+def test_cli_active_model_artifact_view_commands(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    _run_cli(["active-model", "--output-dir", root])
+
+    index = _run_cli(["active-model-index", "--root", root, "--output-dir", root / "index"])
+    assert "artifact_count:" in index.stdout
+    assert "active_model_index:" in index.stdout
+
+    health = _run_cli(["active-model-health", "--root", root, "--output-dir", root / "health"])
+    assert "status: PASS" in health.stdout
+    assert "active_model_health:" in health.stdout
+
+    status = _run_cli(["active-model-status", "--root", root, "--output-dir", root / "status"])
+    assert "workflow_stage: ACTIVE_MODEL_NO_INPUT" in status.stdout
+    assert "active_model_status:" in status.stdout
+    assert "trading_allowed: False" in status.stdout
 
 
 def _happy_settings(tmp_path: Path) -> ActiveModelSettings:
@@ -574,3 +798,49 @@ def _run_cli(args: list[object]) -> subprocess.CompletedProcess[str]:
         capture_output=True,
         check=True,
     )
+
+
+def _mutate_active_model_artifact(artifact_paths: dict[str, Path], mutator_name: str) -> None:
+    if mutator_name == "rollback_production_serving":
+        artifact_paths["active_model_rollback_plan"].write_text(
+            "Production serving exists.\nBroker/order/trading path exists.\n",
+            encoding="utf-8",
+        )
+        return
+    if mutator_name == "missing_metric_evidence":
+        _patch_json(artifact_paths["active_model_metadata"], {"metric_evidence_names_present": "label_coverage"})
+        return
+    if mutator_name == "metric_profitability_overclaim":
+        _patch_json(artifact_paths["active_model_metadata"], {"metric_evidence_names_present": "sample_count,profitability proof"})
+        return
+    if mutator_name == "input_index_missing_source":
+        frame = pd.read_csv(artifact_paths["active_model_input_index"], dtype=str)
+        frame.loc[0, "source_run_id"] = ""
+        frame.to_csv(artifact_paths["active_model_input_index"], index=False)
+        return
+    if mutator_name == "lineage_missing_source_run_id":
+        frame = pd.read_csv(artifact_paths["active_model_lineage_matrix"], dtype=str)
+        frame = frame.loc[frame["lineage_item"] != "training_result_run_id"]
+        frame.to_csv(artifact_paths["active_model_lineage_matrix"], index=False)
+        return
+    if mutator_name == "lineage_missing_coverage":
+        frame = pd.read_csv(artifact_paths["active_model_lineage_matrix"], dtype=str)
+        frame = frame.loc[frame["lineage_item"] != "source_hash"]
+        frame.to_csv(artifact_paths["active_model_lineage_matrix"], index=False)
+        return
+    if mutator_name == "limitations_missing_no_trading":
+        text = artifact_paths["active_model_limitations"].read_text(encoding="utf-8")
+        artifact_paths["active_model_limitations"].write_text(text.replace("- no trading", ""), encoding="utf-8")
+        return
+    if mutator_name == "overfit_missing_small_sample":
+        frame = pd.read_csv(artifact_paths["active_model_overfit_warnings"], dtype=str)
+        frame = frame.loc[frame["risk_item"] != "small sample"]
+        frame.to_csv(artifact_paths["active_model_overfit_warnings"], index=False)
+        return
+    if mutator_name == "report_overclaim":
+        artifact_paths["report"].write_text("Strategy performance validated. Trading permission granted.", encoding="utf-8")
+        return
+    if mutator_name == "forbidden_artifact":
+        (artifact_paths["artifact_dir"] / "promoted_model_pointer.json").write_text("{}", encoding="utf-8")
+        return
+    raise AssertionError(f"Unknown mutator: {mutator_name}")
