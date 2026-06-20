@@ -84,6 +84,11 @@ from quant_replay_system.model_weight_versioning import (
     MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED,
     run_model_weight_versioning,
 )
+from quant_replay_system.active_model import (
+    ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED,
+    run_active_model,
+)
+from test_active_model import _happy_settings as _active_model_happy_settings
 
 
 DECISION_DATE = "2024-05-20"
@@ -4580,6 +4585,175 @@ def test_model_weight_versioning_research_status_docs_and_source_notes_are_safe(
             assert phrase in text
     source_text = Path("SOURCE_UPDATE_NOTES_v1_51_0.md").read_text(encoding="utf-8")
     assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_research_status_includes_active_model_fields_without_promotion_or_trading(tmp_path: Path) -> None:
+    created = run_active_model(replace(_active_model_happy_settings(tmp_path), allow_active_model=True))
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "ACTIVE_MODEL_STATUS"].iloc[0]
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED
+    assert row["workflow_area"] == "ACTIVE_MODEL"
+    assert result.active_model_workflow_implemented is True
+    assert result.active_model_views_implemented is True
+    assert result.latest_active_model_run_id == created.active_model_run_id
+    assert result.latest_active_model_status == ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED
+    assert result.latest_active_model_health_status == "PASS"
+    assert result.latest_active_model_workflow_stage == ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED
+    assert result.active_model_artifact_path.endswith(created.active_model_run_id)
+    assert result.ready_for_active_model is True
+    assert result.active_model_executed is True
+    assert result.active_model_artifacts_created is True
+    assert result.active_model_pointer_created is True
+    assert result.active_model_registry_entry_created is True
+    assert result.active_parameter_pointer_created is True
+    assert result.active_model_activation_status_created is True
+    assert result.active_model_rollback_plan_created is True
+    assert result.active_model_input_index_created is True
+    assert result.active_model_lineage_matrix_created is True
+    assert result.active_model_limitations_created is True
+    assert result.active_model_overfit_warnings_created is True
+    assert result.active_model_safety_flags_created is True
+    assert result.active_model_source_model_workflow_run_id == created.source_model_workflow_run_id
+    assert result.active_model_source_model_weight_versioning_status == "MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED"
+    assert result.active_model_source_model_weight_versioning_health_status == "PASS"
+    assert result.active_model_model_weight_reference_id == created.model_weight_reference_id
+    assert result.active_model_model_version_id == created.model_version_id
+    assert result.active_model_parameter_version_id == created.parameter_version_id
+    assert result.active_model_promoted_model_created is False
+    assert result.active_model_production_model_created is False
+    assert result.active_model_active_thresholds_created is False
+    assert result.active_model_advisory_predictions_created is False
+    assert result.active_model_active_probabilities_created is False
+    assert result.active_model_stock_profile_created is False
+    assert result.active_model_buy_review_allowed is False
+    assert result.active_model_real_buy_review_eligible is False
+    assert result.active_model_approved_for_paper is False
+    assert result.active_model_strategy_performance_validated is False
+    assert result.active_model_trading_allowed is False
+    assert result.active_model_order_placed is False
+    assert result.active_model_broker_api_called is False
+    assert result.active_model_message_sent is False
+    assert result.active_model_llm_api_called is False
+    assert result.active_model_external_api_called is False
+    assert result.active_model_cache_mutated is False
+    assert result.active_model_data_raw_written is False
+    assert result.active_model_data_processed_written is False
+    assert result.active_model_data_cache_written is False
+    assert result.active_model_current_candidates_run is False
+    assert result.active_model_snapshot_built is False
+    assert result.active_model_signal_semantics_changed is False
+    assert result.active_model_research_governed is True
+    assert result.active_model_diagnostic_output is True
+    assert result.active_model_no_live_trading is True
+    assert result.active_model_no_broker_api is True
+    assert result.active_model_no_order_placement is True
+    assert result.active_model_no_message_sent is True
+    assert metadata["latest_active_model_status"] == ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED
+    assert metadata["active_model_artifacts_created"] is True
+    assert metadata["active_model_promoted_model_created"] is False
+    assert metadata["active_model_production_model_created"] is False
+    assert metadata["active_model_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_active_model_context(tmp_path: Path) -> None:
+    run_active_model(replace(_active_model_happy_settings(tmp_path), allow_active_model=True))
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; active-model is research-governed context, "
+            "not promoted model, production model, stock_profile, paper approval, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_active_model_status == ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED
+    assert result.active_model_artifacts_created is True
+    assert result.active_model_promoted_model_created is False
+    assert result.active_model_production_model_created is False
+    assert result.active_model_active_thresholds_created is False
+    assert result.active_model_advisory_predictions_created is False
+    assert result.active_model_active_probabilities_created is False
+    assert result.active_model_stock_profile_created is False
+    assert result.active_model_buy_review_allowed is False
+    assert result.active_model_real_buy_review_eligible is False
+    assert result.active_model_approved_for_paper is False
+    assert result.active_model_strategy_performance_validated is False
+    assert result.active_model_trading_allowed is False
+    assert result.active_model_current_candidates_run is False
+    assert result.active_model_snapshot_built is False
+    assert result.active_model_signal_semantics_changed is False
+
+
+def test_cli_research_status_prints_active_model_fields(tmp_path: Path, capsys) -> None:
+    run_active_model(replace(_active_model_happy_settings(tmp_path), allow_active_model=True))
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "active_model_workflow_implemented: True" in output.out
+    assert "active_model_views_implemented: True" in output.out
+    assert f"latest_active_model_status: {ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED}" in output.out
+    assert "active_model_artifacts_created: True" in output.out
+    assert "active_model_pointer_created: True" in output.out
+    assert "active_model_promoted_model_created: False" in output.out
+    assert "active_model_production_model_created: False" in output.out
+    assert "active_model_active_thresholds_created: False" in output.out
+    assert "active_model_advisory_predictions_created: False" in output.out
+    assert "active_model_active_probabilities_created: False" in output.out
+    assert "active_model_stock_profile_created: False" in output.out
+    assert "active_model_buy_review_allowed: False" in output.out
+    assert "active_model_approved_for_paper: False" in output.out
+    assert "active_model_strategy_performance_validated: False" in output.out
+    assert "active_model_trading_allowed: False" in output.out
+    assert "active_model_current_candidates_run: False" in output.out
+    assert "active_model_snapshot_built: False" in output.out
+    assert "active_model_signal_semantics_changed: False" in output.out
+
+
+def test_active_model_research_status_docs_and_source_notes_are_safe() -> None:
+    docs = [
+        Path("README.md"),
+        Path("docs/local_research_dashboard.md"),
+        Path("docs/active_model.md"),
+        Path("docs/release_checkpoint_v1.52.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_52_0.md"),
+    ]
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED" in text
+        for phrase in [
+            "not promoted model",
+            "not production model",
+            "not active thresholds",
+            "not advisory predictions",
+            "not active probabilities",
+            "not stock_profile",
+            "not buy-review",
+            "not paper approval",
+            "not performance validation",
+            "not current-candidates",
+            "not snapshot",
+            "not signal_semantics",
+            "not trading",
+        ]:
+            assert phrase in text
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_52_0.md").read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert "ChatGPT Project Source is maintained separately" in source_text
     assert not Path("docs/project_sources").exists()
 
 

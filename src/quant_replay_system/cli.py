@@ -17386,6 +17386,78 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"model_weight_versioning_no_message_sent: {result.model_weight_versioning_no_message_sent}")
     print(f"model_weight_versioning_report_path: {result.model_weight_versioning_report_path}")
     print(f"model_weight_versioning_next_action: {result.model_weight_versioning_next_action}")
+    print(f"active_model_workflow_implemented: {result.active_model_workflow_implemented}")
+    print(f"active_model_views_implemented: {result.active_model_views_implemented}")
+    print(f"latest_active_model_run_id: {result.latest_active_model_run_id}")
+    print(f"latest_active_model_status: {result.latest_active_model_status}")
+    print(f"latest_active_model_health_status: {result.latest_active_model_health_status}")
+    print(f"latest_active_model_workflow_stage: {result.latest_active_model_workflow_stage}")
+    print(f"active_model_artifact_path: {result.active_model_artifact_path}")
+    print(f"ready_for_active_model: {result.ready_for_active_model}")
+    print(f"active_model_executed: {result.active_model_executed}")
+    print(f"active_model_artifacts_created: {result.active_model_artifacts_created}")
+    print(f"active_model_pointer_created: {result.active_model_pointer_created}")
+    print(f"active_model_registry_entry_created: {result.active_model_registry_entry_created}")
+    print(f"active_parameter_pointer_created: {result.active_parameter_pointer_created}")
+    print(f"active_model_activation_status_created: {result.active_model_activation_status_created}")
+    print(f"active_model_rollback_plan_created: {result.active_model_rollback_plan_created}")
+    print(f"active_model_input_index_created: {result.active_model_input_index_created}")
+    print(f"active_model_lineage_matrix_created: {result.active_model_lineage_matrix_created}")
+    print(f"active_model_limitations_created: {result.active_model_limitations_created}")
+    print(f"active_model_overfit_warnings_created: {result.active_model_overfit_warnings_created}")
+    print(f"active_model_safety_flags_created: {result.active_model_safety_flags_created}")
+    print(f"active_model_source_model_workflow_run_id: {result.active_model_source_model_workflow_run_id}")
+    print(
+        "active_model_source_model_weight_versioning_status: "
+        f"{result.active_model_source_model_weight_versioning_status}"
+    )
+    print(
+        "active_model_source_model_weight_versioning_health_status: "
+        f"{result.active_model_source_model_weight_versioning_health_status}"
+    )
+    print(f"active_model_model_weight_reference_id: {result.active_model_model_weight_reference_id}")
+    print(f"active_model_model_version_id: {result.active_model_model_version_id}")
+    print(f"active_model_parameter_version_id: {result.active_model_parameter_version_id}")
+    print(f"active_model_promoted_model_created: {result.active_model_promoted_model_created}")
+    print(f"active_model_production_model_created: {result.active_model_production_model_created}")
+    print(f"active_model_active_thresholds_created: {result.active_model_active_thresholds_created}")
+    print(
+        "active_model_advisory_predictions_created: "
+        f"{result.active_model_advisory_predictions_created}"
+    )
+    print(
+        "active_model_active_probabilities_created: "
+        f"{result.active_model_active_probabilities_created}"
+    )
+    print(f"active_model_stock_profile_created: {result.active_model_stock_profile_created}")
+    print(f"active_model_buy_review_allowed: {result.active_model_buy_review_allowed}")
+    print(f"active_model_real_buy_review_eligible: {result.active_model_real_buy_review_eligible}")
+    print(f"active_model_approved_for_paper: {result.active_model_approved_for_paper}")
+    print(
+        "active_model_strategy_performance_validated: "
+        f"{result.active_model_strategy_performance_validated}"
+    )
+    print(f"active_model_trading_allowed: {result.active_model_trading_allowed}")
+    print(f"active_model_order_placed: {result.active_model_order_placed}")
+    print(f"active_model_broker_api_called: {result.active_model_broker_api_called}")
+    print(f"active_model_message_sent: {result.active_model_message_sent}")
+    print(f"active_model_llm_api_called: {result.active_model_llm_api_called}")
+    print(f"active_model_external_api_called: {result.active_model_external_api_called}")
+    print(f"active_model_cache_mutated: {result.active_model_cache_mutated}")
+    print(f"active_model_data_raw_written: {result.active_model_data_raw_written}")
+    print(f"active_model_data_processed_written: {result.active_model_data_processed_written}")
+    print(f"active_model_data_cache_written: {result.active_model_data_cache_written}")
+    print(f"active_model_current_candidates_run: {result.active_model_current_candidates_run}")
+    print(f"active_model_snapshot_built: {result.active_model_snapshot_built}")
+    print(f"active_model_signal_semantics_changed: {result.active_model_signal_semantics_changed}")
+    print(f"active_model_research_governed: {result.active_model_research_governed}")
+    print(f"active_model_diagnostic_output: {result.active_model_diagnostic_output}")
+    print(f"active_model_no_live_trading: {result.active_model_no_live_trading}")
+    print(f"active_model_no_broker_api: {result.active_model_no_broker_api}")
+    print(f"active_model_no_order_placement: {result.active_model_no_order_placement}")
+    print(f"active_model_no_message_sent: {result.active_model_no_message_sent}")
+    print(f"active_model_report_path: {result.active_model_report_path}")
+    print(f"active_model_next_action: {result.active_model_next_action}")
     print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"

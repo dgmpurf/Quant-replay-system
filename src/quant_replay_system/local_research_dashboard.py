@@ -127,6 +127,7 @@ from quant_replay_system.metric_extension_status import run_metric_extension_sta
 from quant_replay_system.training_result_planning_status import run_training_result_planning_status
 from quant_replay_system.training_result_status import run_training_result_status
 from quant_replay_system.model_weight_versioning_status import run_model_weight_versioning_status
+from quant_replay_system.active_model_status import run_active_model_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -1403,6 +1404,63 @@ SUMMARY_COLUMNS = [
     "model_weight_versioning_no_message_sent",
     "model_weight_versioning_report_path",
     "model_weight_versioning_next_action",
+    "active_model_workflow_implemented",
+    "active_model_views_implemented",
+    "latest_active_model_run_id",
+    "latest_active_model_status",
+    "latest_active_model_health_status",
+    "latest_active_model_workflow_stage",
+    "active_model_artifact_path",
+    "ready_for_active_model",
+    "active_model_executed",
+    "active_model_artifacts_created",
+    "active_model_pointer_created",
+    "active_model_registry_entry_created",
+    "active_parameter_pointer_created",
+    "active_model_activation_status_created",
+    "active_model_rollback_plan_created",
+    "active_model_input_index_created",
+    "active_model_lineage_matrix_created",
+    "active_model_limitations_created",
+    "active_model_overfit_warnings_created",
+    "active_model_safety_flags_created",
+    "active_model_source_model_workflow_run_id",
+    "active_model_source_model_weight_versioning_status",
+    "active_model_source_model_weight_versioning_health_status",
+    "active_model_model_weight_reference_id",
+    "active_model_model_version_id",
+    "active_model_parameter_version_id",
+    "active_model_promoted_model_created",
+    "active_model_production_model_created",
+    "active_model_active_thresholds_created",
+    "active_model_advisory_predictions_created",
+    "active_model_active_probabilities_created",
+    "active_model_stock_profile_created",
+    "active_model_buy_review_allowed",
+    "active_model_real_buy_review_eligible",
+    "active_model_approved_for_paper",
+    "active_model_strategy_performance_validated",
+    "active_model_trading_allowed",
+    "active_model_order_placed",
+    "active_model_broker_api_called",
+    "active_model_message_sent",
+    "active_model_llm_api_called",
+    "active_model_external_api_called",
+    "active_model_cache_mutated",
+    "active_model_data_raw_written",
+    "active_model_data_processed_written",
+    "active_model_data_cache_written",
+    "active_model_current_candidates_run",
+    "active_model_snapshot_built",
+    "active_model_signal_semantics_changed",
+    "active_model_research_governed",
+    "active_model_diagnostic_output",
+    "active_model_no_live_trading",
+    "active_model_no_broker_api",
+    "active_model_no_order_placement",
+    "active_model_no_message_sent",
+    "active_model_report_path",
+    "active_model_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1789,6 +1847,7 @@ OPTIONAL_COMPONENTS = {
     "TRAINING_RESULT_PLANNING_STATUS",
     "TRAINING_RESULT_STATUS",
     "MODEL_WEIGHT_VERSIONING_STATUS",
+    "ACTIVE_MODEL_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1844,6 +1903,7 @@ WORKFLOW_AREAS = {
     "TRAINING_RESULT_PLANNING_STATUS": "TRAINING_RESULT_PLANNING",
     "TRAINING_RESULT_STATUS": "TRAINING_RESULT",
     "MODEL_WEIGHT_VERSIONING_STATUS": "MODEL_WEIGHT_VERSIONING",
+    "ACTIVE_MODEL_STATUS": "ACTIVE_MODEL",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -3106,6 +3166,63 @@ class LocalResearchDashboardResult:
     model_weight_versioning_no_message_sent: bool
     model_weight_versioning_report_path: str
     model_weight_versioning_next_action: str
+    active_model_workflow_implemented: bool
+    active_model_views_implemented: bool
+    latest_active_model_run_id: str
+    latest_active_model_status: str
+    latest_active_model_health_status: str
+    latest_active_model_workflow_stage: str
+    active_model_artifact_path: str
+    ready_for_active_model: bool
+    active_model_executed: bool
+    active_model_artifacts_created: bool
+    active_model_pointer_created: bool
+    active_model_registry_entry_created: bool
+    active_parameter_pointer_created: bool
+    active_model_activation_status_created: bool
+    active_model_rollback_plan_created: bool
+    active_model_input_index_created: bool
+    active_model_lineage_matrix_created: bool
+    active_model_limitations_created: bool
+    active_model_overfit_warnings_created: bool
+    active_model_safety_flags_created: bool
+    active_model_source_model_workflow_run_id: str
+    active_model_source_model_weight_versioning_status: str
+    active_model_source_model_weight_versioning_health_status: str
+    active_model_model_weight_reference_id: str
+    active_model_model_version_id: str
+    active_model_parameter_version_id: str
+    active_model_promoted_model_created: bool
+    active_model_production_model_created: bool
+    active_model_active_thresholds_created: bool
+    active_model_advisory_predictions_created: bool
+    active_model_active_probabilities_created: bool
+    active_model_stock_profile_created: bool
+    active_model_buy_review_allowed: bool
+    active_model_real_buy_review_eligible: bool
+    active_model_approved_for_paper: bool
+    active_model_strategy_performance_validated: bool
+    active_model_trading_allowed: bool
+    active_model_order_placed: bool
+    active_model_broker_api_called: bool
+    active_model_message_sent: bool
+    active_model_llm_api_called: bool
+    active_model_external_api_called: bool
+    active_model_cache_mutated: bool
+    active_model_data_raw_written: bool
+    active_model_data_processed_written: bool
+    active_model_data_cache_written: bool
+    active_model_current_candidates_run: bool
+    active_model_snapshot_built: bool
+    active_model_signal_semantics_changed: bool
+    active_model_research_governed: bool
+    active_model_diagnostic_output: bool
+    active_model_no_live_trading: bool
+    active_model_no_broker_api: bool
+    active_model_no_order_placement: bool
+    active_model_no_message_sent: bool
+    active_model_report_path: str
+    active_model_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -3446,6 +3563,7 @@ def run_local_research_dashboard(
     training_result_planning_root: str | Path | None = None,
     training_result_root: str | Path | None = None,
     model_weight_versioning_root: str | Path | None = None,
+    active_model_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -3718,6 +3836,11 @@ def run_local_research_dashboard(
         Path(model_weight_versioning_root)
         if model_weight_versioning_root is not None
         else effective_root / "manual_diagnostics" / "model_weight_versioning_v0_1"
+    )
+    effective_active_model_root = (
+        Path(active_model_root)
+        if active_model_root is not None
+        else effective_root / "manual_diagnostics" / "active_model_v0_1"
     )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
@@ -4059,6 +4182,7 @@ def run_local_research_dashboard(
         training_result_planning_root=effective_training_result_planning_root,
         training_result_root=effective_training_result_root,
         model_weight_versioning_root=effective_model_weight_versioning_root,
+        active_model_root=effective_active_model_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -4158,6 +4282,7 @@ def run_local_research_dashboard(
         "real_replay_execute_root": effective_real_replay_execute_root,
         "actual_replay_execute_root": effective_actual_replay_execute_root,
         "replay_decision_freeze_root": effective_replay_decision_freeze_root,
+        "active_model_root": effective_active_model_root,
         "active_replay_input_ready_root": effective_active_replay_input_ready_root,
         "universe_profile_policy_audit_root": effective_universe_profile_policy_audit_root,
         "universe_profile_split_worklist_plan_root": effective_universe_profile_split_worklist_plan_root,
@@ -7212,6 +7337,121 @@ def run_local_research_dashboard(
         model_weight_versioning_next_action=str(
             summary.get("model_weight_versioning_next_action", "")
         ),
+        active_model_workflow_implemented=_bool_from_text(
+            summary.get("active_model_workflow_implemented")
+        ),
+        active_model_views_implemented=_bool_from_text(summary.get("active_model_views_implemented")),
+        latest_active_model_run_id=str(summary.get("latest_active_model_run_id", "")),
+        latest_active_model_status=str(summary.get("latest_active_model_status", "MISSING")),
+        latest_active_model_health_status=str(summary.get("latest_active_model_health_status", "")),
+        latest_active_model_workflow_stage=str(summary.get("latest_active_model_workflow_stage", "")),
+        active_model_artifact_path=str(summary.get("active_model_artifact_path", "")),
+        ready_for_active_model=_bool_from_text(summary.get("ready_for_active_model")),
+        active_model_executed=_bool_from_text(summary.get("active_model_executed")),
+        active_model_artifacts_created=_bool_from_text(summary.get("active_model_artifacts_created")),
+        active_model_pointer_created=_bool_from_text(summary.get("active_model_pointer_created")),
+        active_model_registry_entry_created=_bool_from_text(
+            summary.get("active_model_registry_entry_created")
+        ),
+        active_parameter_pointer_created=_bool_from_text(
+            summary.get("active_parameter_pointer_created")
+        ),
+        active_model_activation_status_created=_bool_from_text(
+            summary.get("active_model_activation_status_created")
+        ),
+        active_model_rollback_plan_created=_bool_from_text(
+            summary.get("active_model_rollback_plan_created")
+        ),
+        active_model_input_index_created=_bool_from_text(
+            summary.get("active_model_input_index_created")
+        ),
+        active_model_lineage_matrix_created=_bool_from_text(
+            summary.get("active_model_lineage_matrix_created")
+        ),
+        active_model_limitations_created=_bool_from_text(
+            summary.get("active_model_limitations_created")
+        ),
+        active_model_overfit_warnings_created=_bool_from_text(
+            summary.get("active_model_overfit_warnings_created")
+        ),
+        active_model_safety_flags_created=_bool_from_text(
+            summary.get("active_model_safety_flags_created")
+        ),
+        active_model_source_model_workflow_run_id=str(
+            summary.get("active_model_source_model_workflow_run_id", "")
+        ),
+        active_model_source_model_weight_versioning_status=str(
+            summary.get("active_model_source_model_weight_versioning_status", "")
+        ),
+        active_model_source_model_weight_versioning_health_status=str(
+            summary.get("active_model_source_model_weight_versioning_health_status", "")
+        ),
+        active_model_model_weight_reference_id=str(
+            summary.get("active_model_model_weight_reference_id", "")
+        ),
+        active_model_model_version_id=str(summary.get("active_model_model_version_id", "")),
+        active_model_parameter_version_id=str(
+            summary.get("active_model_parameter_version_id", "")
+        ),
+        active_model_promoted_model_created=_bool_from_text(
+            summary.get("active_model_promoted_model_created")
+        ),
+        active_model_production_model_created=_bool_from_text(
+            summary.get("active_model_production_model_created")
+        ),
+        active_model_active_thresholds_created=_bool_from_text(
+            summary.get("active_model_active_thresholds_created")
+        ),
+        active_model_advisory_predictions_created=_bool_from_text(
+            summary.get("active_model_advisory_predictions_created")
+        ),
+        active_model_active_probabilities_created=_bool_from_text(
+            summary.get("active_model_active_probabilities_created")
+        ),
+        active_model_stock_profile_created=_bool_from_text(
+            summary.get("active_model_stock_profile_created")
+        ),
+        active_model_buy_review_allowed=_bool_from_text(summary.get("active_model_buy_review_allowed")),
+        active_model_real_buy_review_eligible=_bool_from_text(
+            summary.get("active_model_real_buy_review_eligible")
+        ),
+        active_model_approved_for_paper=_bool_from_text(summary.get("active_model_approved_for_paper")),
+        active_model_strategy_performance_validated=_bool_from_text(
+            summary.get("active_model_strategy_performance_validated")
+        ),
+        active_model_trading_allowed=_bool_from_text(summary.get("active_model_trading_allowed")),
+        active_model_order_placed=_bool_from_text(summary.get("active_model_order_placed")),
+        active_model_broker_api_called=_bool_from_text(summary.get("active_model_broker_api_called")),
+        active_model_message_sent=_bool_from_text(summary.get("active_model_message_sent")),
+        active_model_llm_api_called=_bool_from_text(summary.get("active_model_llm_api_called")),
+        active_model_external_api_called=_bool_from_text(
+            summary.get("active_model_external_api_called")
+        ),
+        active_model_cache_mutated=_bool_from_text(summary.get("active_model_cache_mutated")),
+        active_model_data_raw_written=_bool_from_text(summary.get("active_model_data_raw_written")),
+        active_model_data_processed_written=_bool_from_text(
+            summary.get("active_model_data_processed_written")
+        ),
+        active_model_data_cache_written=_bool_from_text(
+            summary.get("active_model_data_cache_written")
+        ),
+        active_model_current_candidates_run=_bool_from_text(
+            summary.get("active_model_current_candidates_run")
+        ),
+        active_model_snapshot_built=_bool_from_text(summary.get("active_model_snapshot_built")),
+        active_model_signal_semantics_changed=_bool_from_text(
+            summary.get("active_model_signal_semantics_changed")
+        ),
+        active_model_research_governed=_bool_from_text(summary.get("active_model_research_governed")),
+        active_model_diagnostic_output=_bool_from_text(summary.get("active_model_diagnostic_output")),
+        active_model_no_live_trading=_bool_from_text(summary.get("active_model_no_live_trading")),
+        active_model_no_broker_api=_bool_from_text(summary.get("active_model_no_broker_api")),
+        active_model_no_order_placement=_bool_from_text(
+            summary.get("active_model_no_order_placement")
+        ),
+        active_model_no_message_sent=_bool_from_text(summary.get("active_model_no_message_sent")),
+        active_model_report_path=str(summary.get("active_model_report_path", "")),
+        active_model_next_action=str(summary.get("active_model_next_action", "")),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -7901,6 +8141,7 @@ def scan_local_research_workflow_artifacts(
     training_result_planning_root: str | Path,
     training_result_root: str | Path,
     model_weight_versioning_root: str | Path,
+    active_model_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -7973,6 +8214,7 @@ def scan_local_research_workflow_artifacts(
     training_result_planning_path = Path(training_result_planning_root)
     training_result_path = Path(training_result_root)
     model_weight_versioning_path = Path(model_weight_versioning_root)
+    active_model_path = Path(active_model_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -8067,6 +8309,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_training_result_planning_status(training_result_planning_path))
     records.extend(_scan_training_result_status(training_result_path))
     records.extend(_scan_model_weight_versioning_status(model_weight_versioning_path))
+    records.extend(_scan_active_model_status(active_model_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -18972,6 +19215,142 @@ def summarize_local_research_status(
         "model_weight_versioning_next_action",
     ]:
         row.setdefault(default_empty_field, "")
+    active_model_notes = by_component.get("ACTIVE_MODEL_STATUS", {}).get("notes")
+    if _string_or_empty(active_model_notes):
+        active_model_note_fields = {
+            "active_model_workflow_implemented": "implemented",
+            "active_model_views_implemented": "views_implemented",
+            "latest_active_model_health_status": "health_status",
+            "active_model_artifact_path": "artifact_path",
+            "ready_for_active_model": "ready_for_active_model",
+            "active_model_executed": "active_model_executed",
+            "active_model_artifacts_created": "active_model_artifacts_created",
+            "active_model_pointer_created": "active_model_pointer_created",
+            "active_model_registry_entry_created": "active_model_registry_entry_created",
+            "active_parameter_pointer_created": "active_parameter_pointer_created",
+            "active_model_activation_status_created": "active_model_activation_status_created",
+            "active_model_rollback_plan_created": "active_model_rollback_plan_created",
+            "active_model_input_index_created": "active_model_input_index_created",
+            "active_model_lineage_matrix_created": "active_model_lineage_matrix_created",
+            "active_model_limitations_created": "active_model_limitations_created",
+            "active_model_overfit_warnings_created": "active_model_overfit_warnings_created",
+            "active_model_safety_flags_created": "active_model_safety_flags_created",
+            "active_model_source_model_workflow_run_id": "source_model_workflow_run_id",
+            "active_model_source_model_weight_versioning_status": (
+                "source_model_weight_versioning_status"
+            ),
+            "active_model_source_model_weight_versioning_health_status": (
+                "source_model_weight_versioning_health_status"
+            ),
+            "active_model_model_weight_reference_id": "model_weight_reference_id",
+            "active_model_model_version_id": "model_version_id",
+            "active_model_parameter_version_id": "parameter_version_id",
+            "active_model_promoted_model_created": "promoted_model_created",
+            "active_model_production_model_created": "production_model_created",
+            "active_model_active_thresholds_created": "active_thresholds_created",
+            "active_model_advisory_predictions_created": "advisory_predictions_created",
+            "active_model_active_probabilities_created": "active_probabilities_created",
+            "active_model_stock_profile_created": "stock_profile_created",
+            "active_model_buy_review_allowed": "buy_review_allowed",
+            "active_model_real_buy_review_eligible": "real_buy_review_eligible",
+            "active_model_approved_for_paper": "approved_for_paper",
+            "active_model_strategy_performance_validated": "strategy_performance_validated",
+            "active_model_trading_allowed": "trading_allowed",
+            "active_model_order_placed": "order_placed",
+            "active_model_broker_api_called": "broker_api_called",
+            "active_model_message_sent": "message_sent",
+            "active_model_llm_api_called": "llm_api_called",
+            "active_model_external_api_called": "external_api_called",
+            "active_model_cache_mutated": "cache_mutated",
+            "active_model_data_raw_written": "data_raw_written",
+            "active_model_data_processed_written": "data_processed_written",
+            "active_model_data_cache_written": "data_cache_written",
+            "active_model_current_candidates_run": "current_candidates_run",
+            "active_model_snapshot_built": "snapshot_built",
+            "active_model_signal_semantics_changed": "signal_semantics_changed",
+            "active_model_research_governed": "research_governed",
+            "active_model_diagnostic_output": "diagnostic_output",
+            "active_model_no_live_trading": "no_live_trading",
+            "active_model_no_broker_api": "no_broker_api",
+            "active_model_no_order_placement": "no_order_placement",
+            "active_model_no_message_sent": "no_message_sent",
+            "active_model_report_path": "report_path",
+            "active_model_next_action": "next_manual_action",
+        }
+        for summary_field, note_key in active_model_note_fields.items():
+            value = _parse_note_value(active_model_notes, note_key)
+            if _string_or_empty(value) != "":
+                row[summary_field] = value
+    row["latest_active_model_run_id"] = _string_or_empty(
+        by_component.get("ACTIVE_MODEL_STATUS", {}).get("latest_artifact_id")
+    )
+    row["latest_active_model_status"] = _component_status(
+        by_component,
+        "ACTIVE_MODEL_STATUS",
+    )
+    row["latest_active_model_workflow_stage"] = _string_or_empty(
+        by_component.get("ACTIVE_MODEL_STATUS", {}).get("stage")
+    )
+    for default_false_field in [
+        "active_model_workflow_implemented",
+        "active_model_views_implemented",
+        "ready_for_active_model",
+        "active_model_executed",
+        "active_model_artifacts_created",
+        "active_model_pointer_created",
+        "active_model_registry_entry_created",
+        "active_parameter_pointer_created",
+        "active_model_activation_status_created",
+        "active_model_rollback_plan_created",
+        "active_model_input_index_created",
+        "active_model_lineage_matrix_created",
+        "active_model_limitations_created",
+        "active_model_overfit_warnings_created",
+        "active_model_safety_flags_created",
+        "active_model_promoted_model_created",
+        "active_model_production_model_created",
+        "active_model_active_thresholds_created",
+        "active_model_advisory_predictions_created",
+        "active_model_active_probabilities_created",
+        "active_model_stock_profile_created",
+        "active_model_buy_review_allowed",
+        "active_model_real_buy_review_eligible",
+        "active_model_approved_for_paper",
+        "active_model_strategy_performance_validated",
+        "active_model_trading_allowed",
+        "active_model_order_placed",
+        "active_model_broker_api_called",
+        "active_model_message_sent",
+        "active_model_llm_api_called",
+        "active_model_external_api_called",
+        "active_model_cache_mutated",
+        "active_model_data_raw_written",
+        "active_model_data_processed_written",
+        "active_model_data_cache_written",
+        "active_model_current_candidates_run",
+        "active_model_snapshot_built",
+        "active_model_signal_semantics_changed",
+        "active_model_research_governed",
+        "active_model_diagnostic_output",
+        "active_model_no_live_trading",
+        "active_model_no_broker_api",
+        "active_model_no_order_placement",
+        "active_model_no_message_sent",
+    ]:
+        row.setdefault(default_false_field, False)
+    for default_empty_field in [
+        "latest_active_model_health_status",
+        "active_model_artifact_path",
+        "active_model_source_model_workflow_run_id",
+        "active_model_source_model_weight_versioning_status",
+        "active_model_source_model_weight_versioning_health_status",
+        "active_model_model_weight_reference_id",
+        "active_model_model_version_id",
+        "active_model_parameter_version_id",
+        "active_model_report_path",
+        "active_model_next_action",
+    ]:
+        row.setdefault(default_empty_field, "")
     return pd.DataFrame([row], columns=SUMMARY_COLUMNS)
 
 
@@ -21688,6 +22067,69 @@ def build_local_research_dashboard_metadata(
         "model_weight_versioning_no_message_sent": result.model_weight_versioning_no_message_sent,
         "model_weight_versioning_report_path": result.model_weight_versioning_report_path,
         "model_weight_versioning_next_action": result.model_weight_versioning_next_action,
+        "active_model_workflow_implemented": result.active_model_workflow_implemented,
+        "active_model_views_implemented": result.active_model_views_implemented,
+        "latest_active_model_run_id": result.latest_active_model_run_id,
+        "latest_active_model_status": result.latest_active_model_status,
+        "latest_active_model_health_status": result.latest_active_model_health_status,
+        "latest_active_model_workflow_stage": result.latest_active_model_workflow_stage,
+        "active_model_artifact_path": result.active_model_artifact_path,
+        "ready_for_active_model": result.ready_for_active_model,
+        "active_model_executed": result.active_model_executed,
+        "active_model_artifacts_created": result.active_model_artifacts_created,
+        "active_model_pointer_created": result.active_model_pointer_created,
+        "active_model_registry_entry_created": result.active_model_registry_entry_created,
+        "active_parameter_pointer_created": result.active_parameter_pointer_created,
+        "active_model_activation_status_created": result.active_model_activation_status_created,
+        "active_model_rollback_plan_created": result.active_model_rollback_plan_created,
+        "active_model_input_index_created": result.active_model_input_index_created,
+        "active_model_lineage_matrix_created": result.active_model_lineage_matrix_created,
+        "active_model_limitations_created": result.active_model_limitations_created,
+        "active_model_overfit_warnings_created": result.active_model_overfit_warnings_created,
+        "active_model_safety_flags_created": result.active_model_safety_flags_created,
+        "active_model_source_model_workflow_run_id": result.active_model_source_model_workflow_run_id,
+        "active_model_source_model_weight_versioning_status": (
+            result.active_model_source_model_weight_versioning_status
+        ),
+        "active_model_source_model_weight_versioning_health_status": (
+            result.active_model_source_model_weight_versioning_health_status
+        ),
+        "active_model_model_weight_reference_id": result.active_model_model_weight_reference_id,
+        "active_model_model_version_id": result.active_model_model_version_id,
+        "active_model_parameter_version_id": result.active_model_parameter_version_id,
+        "active_model_promoted_model_created": result.active_model_promoted_model_created,
+        "active_model_production_model_created": result.active_model_production_model_created,
+        "active_model_active_thresholds_created": result.active_model_active_thresholds_created,
+        "active_model_advisory_predictions_created": result.active_model_advisory_predictions_created,
+        "active_model_active_probabilities_created": result.active_model_active_probabilities_created,
+        "active_model_stock_profile_created": result.active_model_stock_profile_created,
+        "active_model_buy_review_allowed": result.active_model_buy_review_allowed,
+        "active_model_real_buy_review_eligible": result.active_model_real_buy_review_eligible,
+        "active_model_approved_for_paper": result.active_model_approved_for_paper,
+        "active_model_strategy_performance_validated": (
+            result.active_model_strategy_performance_validated
+        ),
+        "active_model_trading_allowed": result.active_model_trading_allowed,
+        "active_model_order_placed": result.active_model_order_placed,
+        "active_model_broker_api_called": result.active_model_broker_api_called,
+        "active_model_message_sent": result.active_model_message_sent,
+        "active_model_llm_api_called": result.active_model_llm_api_called,
+        "active_model_external_api_called": result.active_model_external_api_called,
+        "active_model_cache_mutated": result.active_model_cache_mutated,
+        "active_model_data_raw_written": result.active_model_data_raw_written,
+        "active_model_data_processed_written": result.active_model_data_processed_written,
+        "active_model_data_cache_written": result.active_model_data_cache_written,
+        "active_model_current_candidates_run": result.active_model_current_candidates_run,
+        "active_model_snapshot_built": result.active_model_snapshot_built,
+        "active_model_signal_semantics_changed": result.active_model_signal_semantics_changed,
+        "active_model_research_governed": result.active_model_research_governed,
+        "active_model_diagnostic_output": result.active_model_diagnostic_output,
+        "active_model_no_live_trading": result.active_model_no_live_trading,
+        "active_model_no_broker_api": result.active_model_no_broker_api,
+        "active_model_no_order_placement": result.active_model_no_order_placement,
+        "active_model_no_message_sent": result.active_model_no_message_sent,
+        "active_model_report_path": result.active_model_report_path,
+        "active_model_next_action": result.active_model_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -26838,6 +27280,153 @@ def _model_weight_versioning_notes(summary: dict[str, Any]) -> str:
         f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
         f"report_only={_string_or_empty(summary.get('report_only'))}; "
         f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_active_model_status(root: Path) -> list[dict[str, Any]]:
+    active_model_root = root.parent if root.name == "status" else root
+    if not active_model_root.exists():
+        return []
+    try:
+        result = run_active_model_status(
+            root=active_model_root,
+            output_dir=active_model_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_active_model_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = active_model_root / result.latest_active_model_run_id
+    metadata = _load_json_or_none(artifact_dir / "active_model_metadata.json") or {}
+    safety = _load_json_or_none(artifact_dir / "active_model_safety_flags.json") or {}
+    artifact_paths = metadata.get("artifact_paths") if isinstance(metadata.get("artifact_paths"), dict) else {}
+    merged = {**metadata, **safety}
+    summary["artifact_path"] = _string_or_empty(metadata.get("artifact_path")) or str(artifact_dir)
+    summary["report_path"] = (
+        _string_or_empty(summary.get("report_path"))
+        or _string_or_empty(artifact_paths.get("report"))
+        or str(artifact_dir / "active_model_report.md")
+    )
+    for field in [
+        "ready_for_active_model",
+        "active_model_executed",
+        "active_model_artifacts_created",
+        "active_model_pointer_created",
+        "active_model_registry_entry_created",
+        "active_parameter_pointer_created",
+        "active_model_activation_status_created",
+        "active_model_rollback_plan_created",
+        "active_model_input_index_created",
+        "active_model_lineage_matrix_created",
+        "active_model_limitations_created",
+        "active_model_overfit_warnings_created",
+        "active_model_safety_flags_created",
+        "source_model_workflow_run_id",
+        "source_model_weight_versioning_status",
+        "source_model_weight_versioning_health_status",
+        "model_weight_reference_id",
+        "model_version_id",
+        "parameter_version_id",
+        "promoted_model_created",
+        "production_model_created",
+        "active_thresholds_created",
+        "advisory_predictions_created",
+        "active_probabilities_created",
+        "stock_profile_created",
+        "buy_review_allowed",
+        "real_buy_review_eligible",
+        "approved_for_paper",
+        "strategy_performance_validated",
+        "trading_allowed",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+    ]:
+        if field not in summary or _string_or_empty(summary.get(field)) == "":
+            summary[field] = merged.get(field, False)
+    return [
+        _record(
+            workflow_area="ACTIVE_MODEL",
+            component="ACTIVE_MODEL_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_active_model_run_id,
+            report_path=summary["report_path"],
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_active_model_notes(summary),
+        )
+    ]
+
+
+def _active_model_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"ready_for_active_model={_string_or_empty(summary.get('ready_for_active_model'))}; "
+        f"active_model_executed={_string_or_empty(summary.get('active_model_executed'))}; "
+        f"active_model_artifacts_created={_string_or_empty(summary.get('active_model_artifacts_created'))}; "
+        f"active_model_pointer_created={_string_or_empty(summary.get('active_model_pointer_created'))}; "
+        f"active_model_registry_entry_created={_string_or_empty(summary.get('active_model_registry_entry_created'))}; "
+        f"active_parameter_pointer_created={_string_or_empty(summary.get('active_parameter_pointer_created'))}; "
+        f"active_model_activation_status_created={_string_or_empty(summary.get('active_model_activation_status_created'))}; "
+        f"active_model_rollback_plan_created={_string_or_empty(summary.get('active_model_rollback_plan_created'))}; "
+        f"active_model_input_index_created={_string_or_empty(summary.get('active_model_input_index_created'))}; "
+        f"active_model_lineage_matrix_created={_string_or_empty(summary.get('active_model_lineage_matrix_created'))}; "
+        f"active_model_limitations_created={_string_or_empty(summary.get('active_model_limitations_created'))}; "
+        f"active_model_overfit_warnings_created={_string_or_empty(summary.get('active_model_overfit_warnings_created'))}; "
+        f"active_model_safety_flags_created={_string_or_empty(summary.get('active_model_safety_flags_created'))}; "
+        f"source_model_workflow_run_id={_string_or_empty(summary.get('source_model_workflow_run_id'))}; "
+        f"source_model_weight_versioning_status={_string_or_empty(summary.get('source_model_weight_versioning_status'))}; "
+        f"source_model_weight_versioning_health_status={_string_or_empty(summary.get('source_model_weight_versioning_health_status'))}; "
+        f"model_weight_reference_id={_string_or_empty(summary.get('model_weight_reference_id'))}; "
+        f"model_version_id={_string_or_empty(summary.get('model_version_id'))}; "
+        f"parameter_version_id={_string_or_empty(summary.get('parameter_version_id'))}; "
+        f"promoted_model_created={_string_or_empty(summary.get('promoted_model_created'))}; "
+        f"production_model_created={_string_or_empty(summary.get('production_model_created'))}; "
+        f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
+        f"advisory_predictions_created={_string_or_empty(summary.get('advisory_predictions_created'))}; "
+        f"active_probabilities_created={_string_or_empty(summary.get('active_probabilities_created'))}; "
+        f"stock_profile_created={_string_or_empty(summary.get('stock_profile_created'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
+        f"strategy_performance_validated={_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        "research_governed=True; "
+        "diagnostic_output=True; "
         "no_live_trading=True; "
         "no_broker_api=True; "
         "no_order_placement=True; "
