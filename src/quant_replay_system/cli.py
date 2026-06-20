@@ -350,6 +350,10 @@ from quant_replay_system.model_weight_versioning import (
     ModelWeightVersioningSettings,
     run_model_weight_versioning,
 )
+from quant_replay_system.active_model import (
+    ActiveModelSettings,
+    run_active_model,
+)
 from quant_replay_system.model_weight_versioning_health import check_model_weight_versioning_health
 from quant_replay_system.model_weight_versioning_index import build_model_weight_versioning_index
 from quant_replay_system.model_weight_versioning_status import run_model_weight_versioning_status
@@ -3620,6 +3624,65 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where report-only model weight versioning artifacts will be written",
     )
     model_weight_versioning.set_defaults(handler=_handle_model_weight_versioning)
+
+    active_model = subparsers.add_parser(
+        "active-model",
+        help="Create research-governed active model phase 1 diagnostics",
+    )
+    active_model.add_argument("--approval-manifest-path", default=None)
+    active_model.add_argument("--active-model-request-manifest-path", default=None)
+    active_model.add_argument("--model-weight-versioning-metadata-path", default=None)
+    active_model.add_argument("--model-weights-reference-path", default=None)
+    active_model.add_argument("--model-version-metadata-path", default=None)
+    active_model.add_argument("--parameter-version-metadata-path", default=None)
+    active_model.add_argument("--threshold-plan-path", default=None)
+    active_model.add_argument("--prediction-rows-path", default=None)
+    active_model.add_argument("--probability-calibration-report-path", default=None)
+    active_model.add_argument("--feature-importance-report-path", default=None)
+    active_model.add_argument("--model-input-index-path", default=None)
+    active_model.add_argument("--model-lineage-matrix-path", default=None)
+    active_model.add_argument("--model-limitations-path", default=None)
+    active_model.add_argument("--model-overfit-warnings-path", default=None)
+    active_model.add_argument("--model-safety-flags-path", default=None)
+    active_model.add_argument("--model-weight-versioning-status-artifact-path", default=None)
+    active_model.add_argument("--model-weight-versioning-health-artifact-path", default=None)
+    active_model.add_argument("--training-result-metadata-path", default=None)
+    active_model.add_argument("--training-result-rows-path", default=None)
+    active_model.add_argument("--training-result-status-artifact-path", default=None)
+    active_model.add_argument("--training-result-health-artifact-path", default=None)
+    active_model.add_argument("--training-result-planning-metadata-path", default=None)
+    active_model.add_argument("--training-result-planning-health-artifact-path", default=None)
+    active_model.add_argument("--metric-extension-metadata-path", default=None)
+    active_model.add_argument("--metric-extension-result-rows-path", default=None)
+    active_model.add_argument("--metric-extension-health-artifact-path", default=None)
+    active_model.add_argument("--metric-computation-metadata-path", default=None)
+    active_model.add_argument("--metric-computation-result-rows-path", default=None)
+    active_model.add_argument("--metric-computation-health-artifact-path", default=None)
+    active_model.add_argument("--metric-evaluation-metadata-path", default=None)
+    active_model.add_argument("--metric-evaluation-health-artifact-path", default=None)
+    active_model.add_argument("--training-evaluation-metadata-path", default=None)
+    active_model.add_argument("--training-evaluation-sample-rows-path", default=None)
+    active_model.add_argument("--training-evaluation-health-artifact-path", default=None)
+    active_model.add_argument("--forward-return-label-metadata-path", default=None)
+    active_model.add_argument("--forward-return-label-rows-path", default=None)
+    active_model.add_argument("--forward-return-label-health-artifact-path", default=None)
+    active_model.add_argument("--replay-decision-freeze-metadata-path", default=None)
+    active_model.add_argument("--replay-decision-freeze-rows-path", default=None)
+    active_model.add_argument("--replay-decision-freeze-health-artifact-path", default=None)
+    active_model.add_argument("--leakage-evidence-bundle-path", default=None)
+    active_model.add_argument("--overclaim-evidence-bundle-path", default=None)
+    active_model.add_argument("--side-effect-evidence-bundle-path", default=None)
+    active_model.add_argument(
+        "--allow-active-model",
+        action="store_true",
+        help="Explicitly allow research-governed active model artifacts when all gates pass",
+    )
+    active_model.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/active_model_v0_1",
+        help="Directory where research-governed active model artifacts will be written",
+    )
+    active_model.set_defaults(handler=_handle_active_model)
 
     model_weight_versioning_index = subparsers.add_parser(
         "model-weight-versioning-index",
@@ -10263,6 +10326,76 @@ def _handle_model_weight_versioning(args: argparse.Namespace) -> int:
     print(
         "MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED means report-only model research "
         "artifacts only: no stock_profile, no buy-review, no paper approval, no performance "
+        "validation, and no trading."
+    )
+    return 0
+
+
+def _handle_active_model(args: argparse.Namespace) -> int:
+    path_fields = {
+        field_name: Path(getattr(args, field_name)) if getattr(args, field_name, None) else None
+        for field_name in ActiveModelSettings.__dataclass_fields__
+        if field_name
+        not in {
+            "output_dir",
+            "allow_active_model",
+            "write_artifacts",
+            "research_governed",
+            "diagnostic_output",
+        }
+    }
+    result = run_active_model(
+        ActiveModelSettings(
+            **path_fields,
+            output_dir=Path(args.output_dir),
+            allow_active_model=args.allow_active_model,
+        )
+    )
+    print(f"active_model_run_id: {result.active_model_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_active_model: {result.ready_for_active_model}")
+    print(f"active_model_executed: {result.active_model_executed}")
+    print(f"active_model_artifacts_created: {result.active_model_artifacts_created}")
+    print(f"active_model_pointer_created: {result.active_model_pointer_created}")
+    print(f"active_model_registry_entry_created: {result.active_model_registry_entry_created}")
+    print(f"active_parameter_pointer_created: {result.active_parameter_pointer_created}")
+    print(f"active_model_activation_status_created: {result.active_model_activation_status_created}")
+    print(f"active_model_rollback_plan_created: {result.active_model_rollback_plan_created}")
+    print(f"active_model_input_index_created: {result.active_model_input_index_created}")
+    print(f"active_model_lineage_matrix_created: {result.active_model_lineage_matrix_created}")
+    print(f"active_model_limitations_created: {result.active_model_limitations_created}")
+    print(f"active_model_overfit_warnings_created: {result.active_model_overfit_warnings_created}")
+    print(f"active_model_safety_flags_created: {result.active_model_safety_flags_created}")
+    print(f"source_model_workflow_run_id: {result.source_model_workflow_run_id}")
+    print(f"source_model_weight_versioning_status: {result.source_model_weight_versioning_status}")
+    print(f"source_model_weight_versioning_health_status: {result.source_model_weight_versioning_health_status}")
+    print(f"model_weight_reference_id: {result.model_weight_reference_id}")
+    print(f"model_version_id: {result.model_version_id}")
+    print(f"parameter_version_id: {result.parameter_version_id}")
+    print(f"training_result_row_count: {result.training_result_row_count}")
+    print(f"eligible_training_result_row_count: {result.eligible_training_result_row_count}")
+    print(f"metric_evidence_names_present: {result.metric_evidence_names_present}")
+    print(f"metric_evidence_reference_count: {result.metric_evidence_reference_count}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"stock_profile_created: {result.stock_profile_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(
+        "ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED means diagnostics-only active model phase 1 "
+        "artifacts: no promoted model, no production model, no active thresholds, no advisory predictions, "
+        "no active probabilities, no stock_profile, no buy-review, no paper approval, no performance "
         "validation, and no trading."
     )
     return 0
