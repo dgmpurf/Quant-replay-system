@@ -366,6 +366,9 @@ from quant_replay_system.approved_for_paper_phase1 import (
     ApprovedForPaperPhase1Settings,
     run_approved_for_paper_phase1,
 )
+from quant_replay_system.approved_for_paper_phase1_index import build_approved_for_paper_phase1_index
+from quant_replay_system.approved_for_paper_phase1_health import check_approved_for_paper_phase1_health
+from quant_replay_system.approved_for_paper_phase1_status import run_approved_for_paper_phase1_status
 from quant_replay_system.paper_workflow_phase1_health import check_paper_workflow_phase1_health
 from quant_replay_system.paper_workflow_phase1_index import build_paper_workflow_phase1_index
 from quant_replay_system.paper_workflow_phase1_status import run_paper_workflow_phase1_status
@@ -3821,6 +3824,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Explicitly allow report-only APPROVED_FOR_PAPER Phase 1 artifacts when all gates pass",
     )
     approved_for_paper_phase1.set_defaults(handler=_handle_approved_for_paper_phase1)
+
+    approved_for_paper_phase1_index = subparsers.add_parser(
+        "approved-for-paper-phase1-index",
+        help="Index report-only APPROVED_FOR_PAPER Phase 1 diagnostics",
+    )
+    approved_for_paper_phase1_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/approved_for_paper_phase1_v0_1",
+        help="APPROVED_FOR_PAPER Phase 1 artifact root to index",
+    )
+    approved_for_paper_phase1_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/approved_for_paper_phase1_v0_1/index",
+        help="Directory where the index artifacts will be written",
+    )
+    approved_for_paper_phase1_index.set_defaults(handler=_handle_approved_for_paper_phase1_index)
+
+    approved_for_paper_phase1_health = subparsers.add_parser(
+        "approved-for-paper-phase1-health",
+        help="Check report-only APPROVED_FOR_PAPER Phase 1 artifact health",
+    )
+    approved_for_paper_phase1_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/approved_for_paper_phase1_v0_1",
+        help="APPROVED_FOR_PAPER Phase 1 artifact root to check",
+    )
+    approved_for_paper_phase1_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/approved_for_paper_phase1_v0_1/health",
+        help="Directory where health artifacts will be written",
+    )
+    approved_for_paper_phase1_health.set_defaults(handler=_handle_approved_for_paper_phase1_health)
+
+    approved_for_paper_phase1_status = subparsers.add_parser(
+        "approved-for-paper-phase1-status",
+        help="Summarize report-only APPROVED_FOR_PAPER Phase 1 artifact status",
+    )
+    approved_for_paper_phase1_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/approved_for_paper_phase1_v0_1",
+        help="APPROVED_FOR_PAPER Phase 1 artifact root to summarize",
+    )
+    approved_for_paper_phase1_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/approved_for_paper_phase1_v0_1/status",
+        help="Directory where status artifacts will be written",
+    )
+    approved_for_paper_phase1_status.set_defaults(handler=_handle_approved_for_paper_phase1_status)
 
     paper_workflow_phase1_index = subparsers.add_parser(
         "paper-workflow-phase1-index",
@@ -10921,6 +10972,78 @@ def _handle_approved_for_paper_phase1(args: argparse.Namespace) -> int:
         "mutation, no active stock_profile, no promoted/production model, no active thresholds, no "
         "advisory predictions, no active probabilities, no broker/order/message/API integration, and no trading."
     )
+    return 0
+
+
+def _handle_approved_for_paper_phase1_index(args: argparse.Namespace) -> int:
+    result = build_approved_for_paper_phase1_index(root=args.root, output_dir=args.output_dir)
+    print(f"approved_for_paper_phase1_index: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "APPROVED_FOR_PAPER Phase 1 index is report-only. "
+        "APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED means scoped metadata, lineage, "
+        "human review context, decision draft, limitations, overfit, safety, and gate artifacts only: "
+        "no real buy-review eligibility, no strategy performance validation, no current-candidates, "
+        "no snapshots, no signal_semantics mutation, no active stock_profile, no promoted/production "
+        "model, no active thresholds, no advisory predictions, no active probabilities, and no "
+        "broker/order/message/API/trading."
+    )
+    return 0
+
+
+def _handle_approved_for_paper_phase1_health(args: argparse.Namespace) -> int:
+    result = check_approved_for_paper_phase1_health(root=args.root, output_dir=args.output_dir)
+    print(f"approved_for_paper_phase1_health: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "APPROVED_FOR_PAPER Phase 1 health fails closed if artifacts imply real buy-review eligibility, "
+        "strategy performance validation, current-candidates, snapshots, signal_semantics mutation, active "
+        "stock_profile, promoted/production model, active thresholds, advisory predictions, active "
+        "probabilities, broker/order/message/API/cache/data side effects, or trading."
+    )
+    return 0
+
+
+def _handle_approved_for_paper_phase1_status(args: argparse.Namespace) -> int:
+    result = run_approved_for_paper_phase1_status(root=args.root, output_dir=args.output_dir)
+    print(f"approved_for_paper_phase1_status: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_approved_for_paper_run_id: {result.latest_approved_for_paper_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_approved_for_paper_phase1: {result.ready_for_approved_for_paper_phase1}")
+    print(f"approved_for_paper_phase1_executed: {result.approved_for_paper_phase1_executed}")
+    print(
+        "approved_for_paper_phase1_report_only_artifacts_created: "
+        f"{result.approved_for_paper_phase1_report_only_artifacts_created}"
+    )
+    print(f"scoped_approved_for_paper_phase1: {result.scoped_approved_for_paper_phase1}")
+    print(f"scoped_approved_for_paper: {result.scoped_approved_for_paper}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 

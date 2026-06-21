@@ -401,12 +401,9 @@ def test_cli_no_input_and_happy_paths(tmp_path: Path) -> None:
     assert "trading_allowed: False" in allowed.stdout
 
 
-def test_only_core_cli_command_is_added_without_views_research_status_docs_or_project_source() -> None:
+def test_approved_for_paper_phase1_still_has_no_research_status_docs_checkpoint_or_project_source() -> None:
     cli_text = Path("src/quant_replay_system/cli.py").read_text(encoding="utf-8")
     assert "approved-for-paper-phase1" in cli_text
-    assert "approved-for-paper-phase1-index" not in cli_text
-    assert "approved-for-paper-phase1-health" not in cli_text
-    assert "approved-for-paper-phase1-status" not in cli_text
     assert "approved_for_paper_phase1" not in Path("src/quant_replay_system/local_research_dashboard.py").read_text(
         encoding="utf-8"
     )
