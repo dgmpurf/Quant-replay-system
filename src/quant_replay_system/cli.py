@@ -362,6 +362,10 @@ from quant_replay_system.paper_workflow_phase1 import (
     PaperWorkflowPhase1Settings,
     run_paper_workflow_phase1,
 )
+from quant_replay_system.approved_for_paper_phase1 import (
+    ApprovedForPaperPhase1Settings,
+    run_approved_for_paper_phase1,
+)
 from quant_replay_system.paper_workflow_phase1_health import check_paper_workflow_phase1_health
 from quant_replay_system.paper_workflow_phase1_index import build_paper_workflow_phase1_index
 from quant_replay_system.paper_workflow_phase1_status import run_paper_workflow_phase1_status
@@ -3792,6 +3796,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Explicitly allow report-only Paper Workflow Phase 1 artifacts when all gates pass",
     )
     paper_workflow_phase1.set_defaults(handler=_handle_paper_workflow_phase1)
+
+    approved_for_paper_phase1 = subparsers.add_parser(
+        "approved-for-paper-phase1",
+        help="Create report-only APPROVED_FOR_PAPER Phase 1 diagnostics",
+    )
+    approved_for_paper_phase1_defaults = ApprovedForPaperPhase1Settings()
+    for field_name in ApprovedForPaperPhase1Settings.__dataclass_fields__:
+        if field_name in {
+            "allow_approved_for_paper_phase1",
+            "write_artifacts",
+            "research_governed",
+            "diagnostic_output",
+        }:
+            continue
+        default = getattr(approved_for_paper_phase1_defaults, field_name)
+        approved_for_paper_phase1.add_argument(
+            f"--{field_name.replace('_', '-')}",
+            default=str(default) if field_name == "output_dir" else None,
+        )
+    approved_for_paper_phase1.add_argument(
+        "--allow-approved-for-paper-phase1",
+        action="store_true",
+        help="Explicitly allow report-only APPROVED_FOR_PAPER Phase 1 artifacts when all gates pass",
+    )
+    approved_for_paper_phase1.set_defaults(handler=_handle_approved_for_paper_phase1)
 
     paper_workflow_phase1_index = subparsers.add_parser(
         "paper-workflow-phase1-index",
@@ -10802,6 +10831,95 @@ def _handle_paper_workflow_phase1(args: argparse.Namespace) -> int:
         "strategy performance validation, no current-candidates, no snapshots, no signal_semantics mutation, "
         "no active stock_profile, no promoted/production model, no active thresholds, no advisory predictions, "
         "no active probabilities, no broker/order/message/API integration, and no trading."
+    )
+    return 0
+
+
+def _handle_approved_for_paper_phase1(args: argparse.Namespace) -> int:
+    path_fields = {
+        field_name: Path(getattr(args, field_name)) if getattr(args, field_name, None) else None
+        for field_name in ApprovedForPaperPhase1Settings.__dataclass_fields__
+        if field_name
+        not in {
+            "output_dir",
+            "allow_approved_for_paper_phase1",
+            "write_artifacts",
+            "research_governed",
+            "diagnostic_output",
+        }
+    }
+    result = run_approved_for_paper_phase1(
+        ApprovedForPaperPhase1Settings(
+            **path_fields,
+            output_dir=Path(args.output_dir),
+            allow_approved_for_paper_phase1=args.allow_approved_for_paper_phase1,
+        )
+    )
+    print(f"approved_for_paper_run_id: {result.approved_for_paper_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_approved_for_paper_phase1: {result.ready_for_approved_for_paper_phase1}")
+    print(f"approved_for_paper_phase1_executed: {result.approved_for_paper_phase1_executed}")
+    print(
+        "approved_for_paper_phase1_report_only_artifacts_created: "
+        f"{result.approved_for_paper_phase1_report_only_artifacts_created}"
+    )
+    print(f"approved_for_paper_metadata_created: {result.approved_for_paper_metadata_created}")
+    print(f"approved_for_paper_input_index_created: {result.approved_for_paper_input_index_created}")
+    print(f"approved_for_paper_lineage_matrix_created: {result.approved_for_paper_lineage_matrix_created}")
+    print(f"approved_for_paper_review_context_created: {result.approved_for_paper_review_context_created}")
+    print(f"approved_for_paper_decision_draft_created: {result.approved_for_paper_decision_draft_created}")
+    print(f"approved_for_paper_limitations_created: {result.approved_for_paper_limitations_created}")
+    print(f"approved_for_paper_overfit_warnings_created: {result.approved_for_paper_overfit_warnings_created}")
+    print(f"approved_for_paper_safety_flags_created: {result.approved_for_paper_safety_flags_created}")
+    print(f"scoped_approved_for_paper_phase1: {result.scoped_approved_for_paper_phase1}")
+    print(f"scoped_approved_for_paper: {result.scoped_approved_for_paper}")
+    print(f"approved_for_paper_scope: {result.approved_for_paper_scope}")
+    print(f"source_paper_workflow_phase1_run_id: {result.source_paper_workflow_phase1_run_id}")
+    print(f"source_paper_workflow_phase1_status: {result.source_paper_workflow_phase1_status}")
+    print(f"source_paper_workflow_phase1_health_status: {result.source_paper_workflow_phase1_health_status}")
+    print(f"source_stock_profile_run_id: {result.source_stock_profile_run_id}")
+    print(f"source_stock_profile_status: {result.source_stock_profile_status}")
+    print(f"source_stock_profile_health_status: {result.source_stock_profile_health_status}")
+    print(f"source_active_model_run_id: {result.source_active_model_run_id}")
+    print(f"source_active_model_status: {result.source_active_model_status}")
+    print(f"source_active_model_health_status: {result.source_active_model_health_status}")
+    print(f"source_model_workflow_run_id: {result.source_model_workflow_run_id}")
+    print(f"source_model_weight_versioning_status: {result.source_model_weight_versioning_status}")
+    print(f"source_model_weight_versioning_health_status: {result.source_model_weight_versioning_health_status}")
+    print(f"model_weight_reference_id: {result.model_weight_reference_id}")
+    print(f"model_version_id: {result.model_version_id}")
+    print(f"parameter_version_id: {result.parameter_version_id}")
+    print(f"source_training_result_run_id: {result.source_training_result_run_id}")
+    print(f"source_metric_computation_run_id: {result.source_metric_computation_run_id}")
+    print(f"source_metric_extension_run_id: {result.source_metric_extension_run_id}")
+    print(f"source_metric_evaluation_planning_run_id: {result.source_metric_evaluation_planning_run_id}")
+    print(f"source_forward_return_label_run_id: {result.source_forward_return_label_run_id}")
+    print(f"source_replay_decision_freeze_run_id: {result.source_replay_decision_freeze_run_id}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(
+        "APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED means scoped report-only "
+        "APPROVED_FOR_PAPER Phase 1 metadata, lineage, human review context, decision draft, "
+        "limitations, overfit, safety, and gate artifacts only: no real buy-review eligibility, "
+        "no strategy performance validation, no current-candidates, no snapshots, no signal_semantics "
+        "mutation, no active stock_profile, no promoted/production model, no active thresholds, no "
+        "advisory predictions, no active probabilities, no broker/order/message/API integration, and no trading."
     )
     return 0
 
