@@ -36,6 +36,9 @@ from quant_replay_system.paper_workflow_phase1 import (
     PaperWorkflowPhase1Settings,
     run_paper_workflow_phase1,
 )
+from quant_replay_system.paper_workflow_phase1_health import check_paper_workflow_phase1_health
+from quant_replay_system.paper_workflow_phase1_index import build_paper_workflow_phase1_index
+from quant_replay_system.paper_workflow_phase1_status import run_paper_workflow_phase1_status
 from quant_replay_system.stock_profile import run_stock_profile
 
 
@@ -332,11 +335,302 @@ def test_cli_runs_no_input_and_happy_paths(tmp_path: Path) -> None:
     assert "approved_for_paper: False" in allowed.stdout
 
 
-def test_no_forbidden_commands_docs_or_research_status_integration() -> None:
+def test_paper_workflow_phase1_index_health_and_status_cover_no_input_ready_and_created(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    no_input = run_paper_workflow_phase1(PaperWorkflowPhase1Settings(output_dir=root))
+    ready_settings = replace(_happy_settings(tmp_path / "ready"), output_dir=root)
+    ready = run_paper_workflow_phase1(ready_settings)
+    created = run_paper_workflow_phase1(replace(_happy_settings(tmp_path / "created"), output_dir=root, allow_paper_workflow_phase1=True))
+
+    index = build_paper_workflow_phase1_index(root=root, output_dir=root / "index")
+
+    assert index.artifact_count == 3
+    frame = index.index_frame.set_index("paper_workflow_run_id")
+    assert frame.loc[no_input.paper_workflow_run_id, "status"] == NO_PAPER_WORKFLOW_PHASE1_INPUT
+    assert frame.loc[ready.paper_workflow_run_id, "status"] == READY_FOR_PAPER_WORKFLOW_PHASE1
+    created_row = frame.loc[created.paper_workflow_run_id]
+    assert created_row["status"] == PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert created_row["paper_workflow_input_index_created"] is True
+    assert created_row["paper_workflow_lineage_matrix_created"] is True
+    assert created_row["paper_candidate_review_context_created"] is True
+    assert created_row["paper_decision_draft_created"] is True
+    assert created_row["paper_review_queue_created"] is True
+    assert created_row["paper_workflow_limitations_created"] is True
+    assert created_row["paper_workflow_overfit_warnings_created"] is True
+    assert created_row["candidate_review_context_row_count"] == 1
+    assert created_row["paper_decision_draft_row_count"] == 1
+    assert created_row["paper_review_queue_row_count"] == 1
+    assert created_row["overfit_warning_row_count"] >= 5
+    assert created_row["source_stock_profile_run_id"]
+    assert created_row["source_active_model_run_id"]
+    assert created_row["source_model_workflow_run_id"]
+    assert created_row["source_training_result_run_id"]
+    assert created_row["source_metric_computation_run_id"]
+    assert created_row["source_forward_return_label_run_id"]
+    assert created_row["source_replay_decision_freeze_run_id"]
+    for field in DOWNSTREAM_FALSE_FIELDS:
+        assert created_row[field] is False, field
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+    assert health.status == "PASS"
+    assert health.checked_artifact_count == 3
+    assert health.error_count == 0
+
+    status = run_paper_workflow_phase1_status(root=root, output_dir=root / "status")
+    assert status.latest_paper_workflow_run_id == created.paper_workflow_run_id
+    assert status.health_status == "PASS"
+    assert status.status == PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert status.paper_workflow_phase1_report_only_artifacts_created is True
+    assert status.approved_for_paper is False
+    assert status.real_buy_review_eligible is False
+    assert "report-only artifact creation only" in status.safety_statement
+    assert "does not create APPROVED_FOR_PAPER" in status.safety_statement
+    assert "does not create real buy-review eligibility" in status.safety_statement
+    assert "does not validate strategy performance" in status.safety_statement
+    assert "does not integrate current-candidates" in status.safety_statement
+    assert "does not build snapshots" in status.safety_statement
+    assert "does not mutate signal_semantics" in status.safety_statement
+    assert "does not authorize broker/order/message/API/trading" in status.safety_statement
+
+
+@pytest.mark.parametrize(
+    ("artifact_key", "issue_code"),
+    [
+        ("paper_workflow_metadata", "MISSING_PAPER_WORKFLOW_METADATA"),
+        ("paper_workflow_input_index", "MISSING_PAPER_WORKFLOW_INPUT_INDEX"),
+        ("paper_workflow_lineage_matrix", "MISSING_PAPER_WORKFLOW_LINEAGE_MATRIX"),
+        ("paper_candidate_review_context", "MISSING_PAPER_CANDIDATE_REVIEW_CONTEXT"),
+        ("paper_decision_draft", "MISSING_PAPER_DECISION_DRAFT"),
+        ("paper_review_queue", "MISSING_PAPER_REVIEW_QUEUE"),
+        ("paper_workflow_limitations", "MISSING_PAPER_WORKFLOW_LIMITATIONS"),
+        ("paper_workflow_overfit_warnings", "MISSING_PAPER_WORKFLOW_OVERFIT_WARNINGS"),
+        ("paper_workflow_safety_flags", "MISSING_PAPER_WORKFLOW_SAFETY_FLAGS"),
+    ],
+)
+def test_paper_workflow_phase1_health_fails_if_created_artifact_missing(
+    tmp_path: Path, artifact_key: str, issue_code: str
+) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(
+        replace(_happy_settings(tmp_path), output_dir=root, allow_paper_workflow_phase1=True)
+    )
+    result.artifact_paths[artifact_key].unlink()
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert issue_code in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize("status_name", [NO_PAPER_WORKFLOW_PHASE1_INPUT, READY_FOR_PAPER_WORKFLOW_PHASE1])
+def test_paper_workflow_phase1_health_fails_if_created_flag_true_before_created_state(
+    tmp_path: Path, status_name: str
+) -> None:
+    root = _output_dir(tmp_path)
+    if status_name == NO_PAPER_WORKFLOW_PHASE1_INPUT:
+        result = run_paper_workflow_phase1(PaperWorkflowPhase1Settings(output_dir=root))
+    else:
+        result = run_paper_workflow_phase1(replace(_happy_settings(tmp_path), output_dir=root))
+    _patch_json(result.artifact_paths["paper_workflow_metadata"], {"paper_workflow_phase1_report_only_artifacts_created": True})
+    _patch_json(result.artifact_paths["paper_workflow_safety_flags"], {"paper_workflow_phase1_report_only_artifacts_created": True})
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "PAPER_WORKFLOW_REPORT_ONLY_ARTIFACTS_CREATED_UNEXPECTED" in set(health.health_frame["issue_code"])
+
+
+def test_paper_workflow_phase1_health_fails_if_ready_or_no_input_has_substantive_artifact(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(PaperWorkflowPhase1Settings(output_dir=root))
+    result.artifact_paths["paper_decision_draft"].write_text("draft_review_label\nPAPER_REVIEW_DRAFT\n", encoding="utf-8")
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "PAPER_WORKFLOW_SUBSTANTIVE_ARTIFACT_UNEXPECTED" in set(health.health_frame["issue_code"])
+
+
+def test_paper_workflow_phase1_health_fails_if_created_flag_false_for_created_status(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(
+        replace(_happy_settings(tmp_path), output_dir=root, allow_paper_workflow_phase1=True)
+    )
+    _patch_json(result.artifact_paths["paper_workflow_metadata"], {"paper_workflow_phase1_report_only_artifacts_created": False})
+    _patch_json(result.artifact_paths["paper_workflow_safety_flags"], {"paper_workflow_phase1_report_only_artifacts_created": False})
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "PAPER_WORKFLOW_REPORT_ONLY_ARTIFACTS_CREATED_FLAG_FALSE" in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "source_stock_profile_run_id",
+        "source_active_model_run_id",
+        "source_model_workflow_run_id",
+        "source_training_result_run_id",
+        "source_metric_extension_run_id",
+        "source_metric_computation_run_id",
+        "source_metric_evaluation_planning_run_id",
+        "source_training_evaluation_run_id",
+        "source_forward_return_label_run_id",
+        "source_replay_decision_freeze_run_id",
+    ],
+)
+def test_paper_workflow_phase1_health_fails_if_source_lineage_missing(tmp_path: Path, field: str) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(
+        replace(_happy_settings(tmp_path), output_dir=root, allow_paper_workflow_phase1=True)
+    )
+    _patch_json(result.artifact_paths["paper_workflow_metadata"], {field: ""})
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "PAPER_WORKFLOW_SOURCE_LINEAGE_MISSING" in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    ("artifact_key", "mutator", "issue_code"),
+    [
+        (
+            "paper_candidate_review_context",
+            lambda path: pd.DataFrame([{"human_review_context": "BUY now"}]).to_csv(path, index=False),
+            "PAPER_CANDIDATE_CONTEXT_FORBIDDEN_INSTRUCTION",
+        ),
+        (
+            "paper_decision_draft",
+            lambda path: pd.DataFrame([{"draft_review_label": "APPROVED_FOR_PAPER"}]).to_csv(path, index=False),
+            "PAPER_DECISION_DRAFT_FORBIDDEN_LABEL",
+        ),
+        (
+            "paper_decision_draft",
+            lambda path: pd.DataFrame([{"draft_review_label": "BUY"}]).to_csv(path, index=False),
+            "PAPER_DECISION_DRAFT_FORBIDDEN_LABEL",
+        ),
+        (
+            "paper_review_queue",
+            lambda path: pd.DataFrame([{"broker_order": "send message"}]).to_csv(path, index=False),
+            "PAPER_REVIEW_QUEUE_EXECUTION_FIELD",
+        ),
+    ],
+)
+def test_paper_workflow_phase1_health_fails_for_review_artifact_leakage(
+    tmp_path: Path, artifact_key: str, mutator, issue_code: str
+) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(
+        replace(_happy_settings(tmp_path), output_dir=root, allow_paper_workflow_phase1=True)
+    )
+    mutator(result.artifact_paths[artifact_key])
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert issue_code in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize(
+    "phrase",
+        [
+            "does not create `APPROVED_FOR_PAPER`",
+            "no real buy-review",
+        "no strategy performance validation",
+        "no current-candidates",
+        "no snapshot",
+        "no signal_semantics mutation",
+        "no active stock_profile",
+        "no broker/order/message/API/trading",
+        "no promoted model",
+        "no production model",
+        "no active thresholds",
+        "no advisory predictions",
+        "no active probabilities",
+    ],
+)
+def test_paper_workflow_phase1_health_fails_if_limitations_omit_required_wording(
+    tmp_path: Path, phrase: str
+) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(
+        replace(_happy_settings(tmp_path), output_dir=root, allow_paper_workflow_phase1=True)
+    )
+    text = result.artifact_paths["paper_workflow_limitations"].read_text(encoding="utf-8")
+    result.artifact_paths["paper_workflow_limitations"].write_text(text.replace(phrase, ""), encoding="utf-8")
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "PAPER_WORKFLOW_LIMITATIONS_WORDING_MISSING" in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize("warning", ["small sample", "class imbalance", "single-stock overfit", "paper-decision overfit", "lookahead leakage"])
+def test_paper_workflow_phase1_health_fails_if_overfit_warning_missing(tmp_path: Path, warning: str) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(
+        replace(_happy_settings(tmp_path), output_dir=root, allow_paper_workflow_phase1=True)
+    )
+    frame = pd.read_csv(result.artifact_paths["paper_workflow_overfit_warnings"], dtype=str)
+    frame.query("warning_item != @warning").to_csv(result.artifact_paths["paper_workflow_overfit_warnings"], index=False)
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "PAPER_WORKFLOW_OVERFIT_WARNING_MISSING" in set(health.health_frame["issue_code"])
+
+
+@pytest.mark.parametrize("field", DOWNSTREAM_FALSE_FIELDS)
+def test_paper_workflow_phase1_health_fails_if_safety_or_side_effect_flag_true(tmp_path: Path, field: str) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(
+        replace(_happy_settings(tmp_path), output_dir=root, allow_paper_workflow_phase1=True)
+    )
+    _patch_json(result.artifact_paths["paper_workflow_safety_flags"], {field: True})
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert f"{field.upper()}_UNEXPECTED" in set(health.health_frame["issue_code"])
+
+
+def test_paper_workflow_phase1_health_fails_for_forbidden_artifacts(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    result = run_paper_workflow_phase1(
+        replace(_happy_settings(tmp_path), output_dir=root, allow_paper_workflow_phase1=True)
+    )
+    (Path(result.artifact_path) / "approved_for_paper.csv").write_text("", encoding="utf-8")
+
+    health = check_paper_workflow_phase1_health(root=root, output_dir=root / "health")
+
+    assert health.status == "FAIL"
+    assert "FORBIDDEN_PAPER_WORKFLOW_DOWNSTREAM_ARTIFACT_PRESENT" in set(health.health_frame["issue_code"])
+
+
+def test_paper_workflow_phase1_view_cli_commands_run(tmp_path: Path) -> None:
+    root = _output_dir(tmp_path)
+    run_paper_workflow_phase1(PaperWorkflowPhase1Settings(output_dir=root))
+
+    index = _run_cli(["paper-workflow-phase1-index", "--root", root, "--output-dir", root / "cli_index"])
+    health = _run_cli(["paper-workflow-phase1-health", "--root", root, "--output-dir", root / "cli_health"])
+    status = _run_cli(["paper-workflow-phase1-status", "--root", root, "--output-dir", root / "cli_status"])
+
+    assert index.returncode == 0
+    assert "artifact_count: 1" in index.stdout
+    assert health.returncode == 0
+    assert "status: PASS" in health.stdout
+    assert status.returncode == 0
+    assert "workflow_stage: PAPER_WORKFLOW_PHASE1_NO_INPUT" in status.stdout
+    assert "does not create APPROVED_FOR_PAPER" in status.stdout
+
+
+def test_no_forbidden_docs_or_research_status_integration() -> None:
     cli_text = Path("src/quant_replay_system/cli.py").read_text(encoding="utf-8")
-    assert "paper-workflow-phase1-index" not in cli_text
-    assert "paper-workflow-phase1-health" not in cli_text
-    assert "paper-workflow-phase1-status" not in cli_text
+    assert "paper-workflow-phase1-index" in cli_text
+    assert "paper-workflow-phase1-health" in cli_text
+    assert "paper-workflow-phase1-status" in cli_text
     assert "paper_workflow_phase1" not in Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
     assert not Path("docs/project_sources").exists()
     assert not Path("docs/paper_workflow_phase1.md").exists()

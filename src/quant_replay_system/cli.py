@@ -362,6 +362,9 @@ from quant_replay_system.paper_workflow_phase1 import (
     PaperWorkflowPhase1Settings,
     run_paper_workflow_phase1,
 )
+from quant_replay_system.paper_workflow_phase1_health import check_paper_workflow_phase1_health
+from quant_replay_system.paper_workflow_phase1_index import build_paper_workflow_phase1_index
+from quant_replay_system.paper_workflow_phase1_status import run_paper_workflow_phase1_status
 from quant_replay_system.stock_profile_health import check_stock_profile_health
 from quant_replay_system.stock_profile_index import build_stock_profile_index
 from quant_replay_system.stock_profile_status import run_stock_profile_status
@@ -3789,6 +3792,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Explicitly allow report-only Paper Workflow Phase 1 artifacts when all gates pass",
     )
     paper_workflow_phase1.set_defaults(handler=_handle_paper_workflow_phase1)
+
+    paper_workflow_phase1_index = subparsers.add_parser(
+        "paper-workflow-phase1-index",
+        help="Index report-only Paper Workflow Phase 1 diagnostics",
+    )
+    paper_workflow_phase1_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/paper_workflow_phase1_v0_1",
+        help="Paper Workflow Phase 1 artifact root to index",
+    )
+    paper_workflow_phase1_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/paper_workflow_phase1_v0_1/index",
+        help="Directory where Paper Workflow Phase 1 index artifacts will be written",
+    )
+    paper_workflow_phase1_index.set_defaults(handler=_handle_paper_workflow_phase1_index)
+
+    paper_workflow_phase1_health = subparsers.add_parser(
+        "paper-workflow-phase1-health",
+        help="Health-check report-only Paper Workflow Phase 1 diagnostics",
+    )
+    paper_workflow_phase1_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/paper_workflow_phase1_v0_1",
+        help="Paper Workflow Phase 1 artifact root to health-check",
+    )
+    paper_workflow_phase1_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/paper_workflow_phase1_v0_1/health",
+        help="Directory where Paper Workflow Phase 1 health artifacts will be written",
+    )
+    paper_workflow_phase1_health.set_defaults(handler=_handle_paper_workflow_phase1_health)
+
+    paper_workflow_phase1_status = subparsers.add_parser(
+        "paper-workflow-phase1-status",
+        help="Summarize report-only Paper Workflow Phase 1 diagnostics",
+    )
+    paper_workflow_phase1_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/paper_workflow_phase1_v0_1",
+        help="Paper Workflow Phase 1 artifact root to summarize",
+    )
+    paper_workflow_phase1_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/paper_workflow_phase1_v0_1/status",
+        help="Directory where Paper Workflow Phase 1 status artifacts will be written",
+    )
+    paper_workflow_phase1_status.set_defaults(handler=_handle_paper_workflow_phase1_status)
 
     stock_profile_index = subparsers.add_parser(
         "stock-profile-index",
@@ -10752,6 +10803,95 @@ def _handle_paper_workflow_phase1(args: argparse.Namespace) -> int:
         "no active stock_profile, no promoted/production model, no active thresholds, no advisory predictions, "
         "no active probabilities, no broker/order/message/API integration, and no trading."
     )
+    return 0
+
+
+def _handle_paper_workflow_phase1_index(args: argparse.Namespace) -> int:
+    result = build_paper_workflow_phase1_index(root=args.root, output_dir=args.output_dir)
+    print(f"paper_workflow_phase1_index: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Paper Workflow Phase 1 index is report-only. PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED "
+        "means metadata, lineage, review-context, decision draft, review queue, limitations, overfit, "
+        "safety, and gate artifacts only: no APPROVED_FOR_PAPER, no real buy-review eligibility, no "
+        "strategy performance validation, no current-candidates, no snapshots, no signal_semantics "
+        "mutation, no active stock_profile, no promoted/production model, no active thresholds, no "
+        "advisory predictions, no active probabilities, and no broker/order/message/API/trading."
+    )
+    return 0
+
+
+def _handle_paper_workflow_phase1_health(args: argparse.Namespace) -> int:
+    result = check_paper_workflow_phase1_health(root=args.root, output_dir=args.output_dir)
+    print(f"paper_workflow_phase1_health: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Paper Workflow Phase 1 health keeps artifact views report-only and fails if outputs imply "
+        "APPROVED_FOR_PAPER, real buy-review eligibility, strategy performance validation, "
+        "current-candidates, snapshots, signal_semantics mutation, active stock_profile, promoted or "
+        "production models, active thresholds, advisory predictions, active probabilities, "
+        "broker/order/message/API/cache/data side effects, or trading."
+    )
+    return 0
+
+
+def _handle_paper_workflow_phase1_status(args: argparse.Namespace) -> int:
+    result = run_paper_workflow_phase1_status(root=args.root, output_dir=args.output_dir)
+    print(f"paper_workflow_phase1_status: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_paper_workflow_run_id: {result.latest_paper_workflow_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_paper_workflow_phase1: {result.ready_for_paper_workflow_phase1}")
+    print(f"paper_workflow_phase1_executed: {result.paper_workflow_phase1_executed}")
+    print(f"paper_workflow_phase1_report_only_artifacts_created: {result.paper_workflow_phase1_report_only_artifacts_created}")
+    print(f"paper_workflow_metadata_created: {result.paper_workflow_metadata_created}")
+    print(f"paper_workflow_input_index_created: {result.paper_workflow_input_index_created}")
+    print(f"paper_workflow_lineage_matrix_created: {result.paper_workflow_lineage_matrix_created}")
+    print(f"paper_candidate_review_context_created: {result.paper_candidate_review_context_created}")
+    print(f"paper_decision_draft_created: {result.paper_decision_draft_created}")
+    print(f"paper_review_queue_created: {result.paper_review_queue_created}")
+    print(f"paper_workflow_limitations_created: {result.paper_workflow_limitations_created}")
+    print(f"paper_workflow_overfit_warnings_created: {result.paper_workflow_overfit_warnings_created}")
+    print(f"paper_workflow_safety_flags_created: {result.paper_workflow_safety_flags_created}")
+    print(f"source_stock_profile_run_id: {result.source_stock_profile_run_id}")
+    print(f"source_stock_profile_status: {result.source_stock_profile_status}")
+    print(f"source_stock_profile_health_status: {result.source_stock_profile_health_status}")
+    print(f"source_active_model_run_id: {result.source_active_model_run_id}")
+    print(f"source_active_model_status: {result.source_active_model_status}")
+    print(f"source_active_model_health_status: {result.source_active_model_health_status}")
+    print(f"source_model_workflow_run_id: {result.source_model_workflow_run_id}")
+    print(f"source_model_weight_versioning_status: {result.source_model_weight_versioning_status}")
+    print(f"source_model_weight_versioning_health_status: {result.source_model_weight_versioning_health_status}")
+    print(f"model_weight_reference_id: {result.model_weight_reference_id}")
+    print(f"model_version_id: {result.model_version_id}")
+    print(f"parameter_version_id: {result.parameter_version_id}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"approved_for_paper_created: {result.approved_for_paper_created}")
+    print(f"paper_approval_created: {result.paper_approval_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 

@@ -589,6 +589,14 @@ def _source_summary(settings: PaperWorkflowPhase1Settings) -> dict[str, Any]:
     stock = _read_json_path(settings.stock_profile_metadata_path)
     active = _read_json_path(settings.active_model_metadata_path)
     model = _read_json_path(settings.model_weight_versioning_metadata_path)
+    training_result = _read_json_path(settings.training_result_metadata_path)
+    training_result_planning = _read_json_path(settings.training_result_planning_metadata_path)
+    metric_extension = _read_json_path(settings.metric_extension_metadata_path)
+    metric_computation = _read_json_path(settings.metric_computation_metadata_path)
+    metric_evaluation = _read_json_path(settings.metric_evaluation_metadata_path)
+    training_evaluation = _read_json_path(settings.training_evaluation_metadata_path)
+    forward_return_label = _read_json_path(settings.forward_return_label_metadata_path)
+    replay_decision_freeze = _read_json_path(settings.replay_decision_freeze_metadata_path)
     return {
         "stock_profile_run_id": stock.get("stock_profile_run_id", ""),
         "stock_profile_status": stock.get("status", ""),
@@ -602,6 +610,45 @@ def _source_summary(settings: PaperWorkflowPhase1Settings) -> dict[str, Any]:
         "model_weight_reference_id": stock.get("model_weight_reference_id") or model.get("model_weight_reference_id", ""),
         "model_version_id": stock.get("model_version_id") or model.get("model_version_id", ""),
         "parameter_version_id": stock.get("parameter_version_id") or model.get("parameter_version_id", ""),
+        "training_result_run_id": stock.get("source_training_result_run_id") or training_result.get("training_result_run_id", ""),
+        "training_result_status": stock.get("source_training_result_status") or training_result.get("status", ""),
+        "training_result_health_status": stock.get("source_training_result_health_status")
+        or _read_json_path(settings.training_result_health_artifact_path).get("status", ""),
+        "training_result_planning_run_id": stock.get("source_training_result_planning_run_id")
+        or training_result_planning.get("training_result_planning_run_id", ""),
+        "training_result_planning_status": stock.get("source_training_result_planning_status")
+        or training_result_planning.get("status", ""),
+        "training_result_planning_health_status": stock.get("source_training_result_planning_health_status")
+        or _read_json_path(settings.training_result_planning_health_artifact_path).get("status", ""),
+        "metric_extension_run_id": stock.get("source_metric_extension_run_id") or metric_extension.get("metric_extension_run_id", ""),
+        "metric_extension_status": stock.get("source_metric_extension_status") or metric_extension.get("status", ""),
+        "metric_extension_health_status": stock.get("source_metric_extension_health_status")
+        or _read_json_path(settings.metric_extension_health_artifact_path).get("status", ""),
+        "metric_computation_run_id": stock.get("source_metric_computation_run_id") or metric_computation.get("metric_computation_run_id", ""),
+        "metric_computation_status": stock.get("source_metric_computation_status") or metric_computation.get("status", ""),
+        "metric_computation_health_status": stock.get("source_metric_computation_health_status")
+        or _read_json_path(settings.metric_computation_health_artifact_path).get("status", ""),
+        "metric_evaluation_planning_run_id": stock.get("source_metric_evaluation_planning_run_id")
+        or metric_evaluation.get("metric_evaluation_run_id", ""),
+        "metric_evaluation_status": stock.get("source_metric_evaluation_status") or metric_evaluation.get("status", ""),
+        "metric_evaluation_health_status": stock.get("source_metric_evaluation_health_status")
+        or _read_json_path(settings.metric_evaluation_health_artifact_path).get("status", ""),
+        "training_evaluation_run_id": stock.get("source_training_evaluation_run_id")
+        or training_evaluation.get("training_evaluation_run_id", ""),
+        "training_evaluation_status": stock.get("source_training_evaluation_status") or training_evaluation.get("status", ""),
+        "training_evaluation_health_status": stock.get("source_training_evaluation_health_status")
+        or _read_json_path(settings.training_evaluation_health_artifact_path).get("status", ""),
+        "forward_return_label_run_id": stock.get("source_forward_return_label_run_id")
+        or forward_return_label.get("forward_return_label_run_id", ""),
+        "forward_return_label_status": stock.get("source_forward_return_label_status") or forward_return_label.get("status", ""),
+        "forward_return_label_health_status": stock.get("source_forward_return_label_health_status")
+        or _read_json_path(settings.forward_return_label_health_artifact_path).get("status", ""),
+        "replay_decision_freeze_run_id": stock.get("source_replay_decision_freeze_run_id")
+        or replay_decision_freeze.get("replay_decision_freeze_run_id", ""),
+        "replay_decision_freeze_status": stock.get("source_replay_decision_freeze_status")
+        or replay_decision_freeze.get("status", ""),
+        "replay_decision_freeze_health_status": stock.get("source_replay_decision_freeze_health_status")
+        or _read_json_path(settings.replay_decision_freeze_health_artifact_path).get("status", ""),
     }
 
 
@@ -624,6 +671,30 @@ def _metadata(result: PaperWorkflowPhase1Result, source: dict[str, Any]) -> dict
         "source_model_workflow_run_id": result.source_model_workflow_run_id,
         "source_model_weight_versioning_status": result.source_model_weight_versioning_status,
         "source_model_weight_versioning_health_status": result.source_model_weight_versioning_health_status,
+        "source_training_result_run_id": source.get("training_result_run_id", ""),
+        "source_training_result_status": source.get("training_result_status", ""),
+        "source_training_result_health_status": source.get("training_result_health_status", ""),
+        "source_training_result_planning_run_id": source.get("training_result_planning_run_id", ""),
+        "source_training_result_planning_status": source.get("training_result_planning_status", ""),
+        "source_training_result_planning_health_status": source.get("training_result_planning_health_status", ""),
+        "source_metric_extension_run_id": source.get("metric_extension_run_id", ""),
+        "source_metric_extension_status": source.get("metric_extension_status", ""),
+        "source_metric_extension_health_status": source.get("metric_extension_health_status", ""),
+        "source_metric_computation_run_id": source.get("metric_computation_run_id", ""),
+        "source_metric_computation_status": source.get("metric_computation_status", ""),
+        "source_metric_computation_health_status": source.get("metric_computation_health_status", ""),
+        "source_metric_evaluation_planning_run_id": source.get("metric_evaluation_planning_run_id", ""),
+        "source_metric_evaluation_status": source.get("metric_evaluation_status", ""),
+        "source_metric_evaluation_health_status": source.get("metric_evaluation_health_status", ""),
+        "source_training_evaluation_run_id": source.get("training_evaluation_run_id", ""),
+        "source_training_evaluation_status": source.get("training_evaluation_status", ""),
+        "source_training_evaluation_health_status": source.get("training_evaluation_health_status", ""),
+        "source_forward_return_label_run_id": source.get("forward_return_label_run_id", ""),
+        "source_forward_return_label_status": source.get("forward_return_label_status", ""),
+        "source_forward_return_label_health_status": source.get("forward_return_label_health_status", ""),
+        "source_replay_decision_freeze_run_id": source.get("replay_decision_freeze_run_id", ""),
+        "source_replay_decision_freeze_status": source.get("replay_decision_freeze_status", ""),
+        "source_replay_decision_freeze_health_status": source.get("replay_decision_freeze_health_status", ""),
         "model_weight_reference_id": result.model_weight_reference_id,
         "model_version_id": result.model_version_id,
         "parameter_version_id": result.parameter_version_id,
