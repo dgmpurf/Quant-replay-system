@@ -454,7 +454,8 @@ def test_cli_stock_profile_no_input_ready_and_allow_paths(tmp_path: Path) -> Non
     assert "stock-profile-health" in help_result.stdout
     assert "stock-profile-status" in help_result.stdout
     assert not Path("docs/project_sources").exists()
-    assert not Path("docs/release_checkpoint_v1.53.0.md").exists()
+    assert Path("docs/release_checkpoint_v1.53.0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_53_0.md").exists()
 
 
 def test_stock_profile_index_discovers_no_input_ready_and_created_artifacts(tmp_path: Path) -> None:
@@ -652,7 +653,7 @@ def test_stock_profile_status_reports_latest_state_and_safety_wording(tmp_path: 
     assert status.artifact_paths["status_report"].exists()
 
 
-def test_cli_stock_profile_view_commands_run_without_research_status_or_checkpoint(tmp_path: Path) -> None:
+def test_cli_stock_profile_view_commands_run_safely_with_checkpoint_docs(tmp_path: Path) -> None:
     run_stock_profile(StockProfileSettings(output_dir=_output_dir(tmp_path)))
 
     index = _run_cli(["stock-profile-index", "--root", _output_dir(tmp_path), "--output-dir", _output_dir(tmp_path) / "cli_index"])
@@ -666,7 +667,8 @@ def test_cli_stock_profile_view_commands_run_without_research_status_or_checkpoi
     assert "stock_profile_status:" in status.stdout
     assert "status: NO_STOCK_PROFILE_INPUT" in status.stdout
     assert not Path("docs/project_sources").exists()
-    assert not Path("docs/release_checkpoint_v1.53.0.md").exists()
+    assert Path("docs/release_checkpoint_v1.53.0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_53_0.md").exists()
 
 
 def _happy_settings(tmp_path: Path) -> StockProfileSettings:

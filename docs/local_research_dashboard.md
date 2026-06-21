@@ -703,6 +703,18 @@ The unified summary records the latest active-model run id, status/stage, health
 
 Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; active-model fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims promotion, production model state, active thresholds, advisory predictions, active probabilities, stock_profile creation, buy-review eligibility, paper approval, strategy performance validation, current-candidates generation, snapshot builds, signal_semantics changes, broker/order/message/API/cache side effects, data writes, or trading authorization.
 
+## Stock Profile Status
+
+`research-status` includes `stock-profile-status` as report-only Stock Profile Phase 1 research-governed context when those artifacts exist.
+
+Use `stock-profile`, `stock-profile-index`, `stock-profile-health`, and `stock-profile-status` to create, discover, safety-check, and summarize report-only stock-profile research artifacts.
+
+The unified summary records the latest stock-profile run id, status/stage, health status, source active-model lineage, source model-weight-versioning lineage, model weight reference id, model version id, parameter version id, artifact flags, report path, next action, and downstream safety fields.
+
+`STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED` is report-only research-governed artifact creation. It is not active stock_profile, not real buy-review, not paper approval, not performance validation, not current-candidates, not snapshot, not signal_semantics, not promoted model, not production model, not active thresholds, not advisory predictions, not active probabilities, and not trading.
+
+Later paper workflow artifacts keep `PAPER_WORKFLOW_READY`; stock-profile fields remain visible as context. Health failures remain actionable when this layer is active, especially if an artifact claims active stock_profile creation, real buy-review eligibility, paper approval, strategy performance validation, current-candidates generation, snapshot builds, signal_semantics changes, promoted model state, production model state, active thresholds, advisory predictions, active probabilities, broker/order/message/API/cache side effects, data writes, or trading authorization.
+
 ## Advisory Profile Calibration Status
 
 `research-status` includes `advisory-profile-calibration-status` as threshold-design context when calibration artifacts exist.

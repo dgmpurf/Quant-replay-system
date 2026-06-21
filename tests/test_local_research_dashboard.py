@@ -89,6 +89,11 @@ from quant_replay_system.active_model import (
     run_active_model,
 )
 from test_active_model import _happy_settings as _active_model_happy_settings
+from quant_replay_system.stock_profile import (
+    STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED,
+    run_stock_profile,
+)
+from test_stock_profile import _happy_settings as _stock_profile_happy_settings
 
 
 DECISION_DATE = "2024-05-20"
@@ -4752,6 +4757,173 @@ def test_active_model_research_status_docs_and_source_notes_are_safe() -> None:
         ]:
             assert phrase in text
     source_text = Path("SOURCE_UPDATE_NOTES_v1_52_0.md").read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert "ChatGPT Project Source is maintained separately" in source_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_research_status_includes_stock_profile_fields_without_buy_review_or_trading(tmp_path: Path) -> None:
+    created = run_stock_profile(replace(_stock_profile_happy_settings(tmp_path), allow_stock_profile=True))
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[result.dashboard_frame["component"] == "STOCK_PROFILE_STATUS"].iloc[0]
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert row["workflow_area"] == "STOCK_PROFILE"
+    assert result.stock_profile_workflow_implemented is True
+    assert result.stock_profile_views_implemented is True
+    assert result.latest_stock_profile_run_id == created.stock_profile_run_id
+    assert result.latest_stock_profile_status == STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.latest_stock_profile_health_status == "PASS"
+    assert result.latest_stock_profile_workflow_stage == STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.stock_profile_artifact_path.endswith(created.stock_profile_run_id)
+    assert result.ready_for_stock_profile_phase1 is True
+    assert result.stock_profile_phase1_executed is True
+    assert result.stock_profile_phase1_report_only_artifacts_created is True
+    assert result.stock_profile_metadata_created is True
+    assert result.stock_profile_input_index_created is True
+    assert result.stock_profile_lineage_matrix_created is True
+    assert result.stock_profile_factor_coverage_summary_created is True
+    assert result.stock_profile_symbol_coverage_created is True
+    assert result.stock_profile_market_regime_coverage_created is True
+    assert result.stock_profile_metric_summary_created is True
+    assert result.stock_profile_limitations_created is True
+    assert result.stock_profile_overfit_warnings_created is True
+    assert result.stock_profile_safety_flags_created is True
+    assert result.stock_profile_source_active_model_run_id == created.source_active_model_run_id
+    assert result.stock_profile_source_active_model_status == "ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED"
+    assert result.stock_profile_source_active_model_health_status == "PASS"
+    assert result.stock_profile_source_model_workflow_run_id == created.source_model_workflow_run_id
+    assert result.stock_profile_source_model_weight_versioning_status == "MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED"
+    assert result.stock_profile_source_model_weight_versioning_health_status == "PASS"
+    assert result.stock_profile_model_weight_reference_id == created.model_weight_reference_id
+    assert result.stock_profile_model_version_id == created.model_version_id
+    assert result.stock_profile_parameter_version_id == created.parameter_version_id
+    assert result.stock_profile_active_stock_profile_created is False
+    assert result.stock_profile_real_buy_review_eligible is False
+    assert result.stock_profile_buy_review_allowed is False
+    assert result.stock_profile_approved_for_paper is False
+    assert result.stock_profile_strategy_performance_validated is False
+    assert result.stock_profile_trading_allowed is False
+    assert result.stock_profile_current_candidates_run is False
+    assert result.stock_profile_snapshot_built is False
+    assert result.stock_profile_signal_semantics_changed is False
+    assert result.stock_profile_promoted_model_created is False
+    assert result.stock_profile_production_model_created is False
+    assert result.stock_profile_active_thresholds_created is False
+    assert result.stock_profile_advisory_predictions_created is False
+    assert result.stock_profile_active_probabilities_created is False
+    assert result.stock_profile_order_placed is False
+    assert result.stock_profile_broker_api_called is False
+    assert result.stock_profile_message_sent is False
+    assert result.stock_profile_llm_api_called is False
+    assert result.stock_profile_external_api_called is False
+    assert result.stock_profile_cache_mutated is False
+    assert result.stock_profile_data_raw_written is False
+    assert result.stock_profile_data_processed_written is False
+    assert result.stock_profile_data_cache_written is False
+    assert result.stock_profile_report_only is True
+    assert result.stock_profile_research_governed is True
+    assert result.stock_profile_diagnostic_output is True
+    assert result.stock_profile_no_live_trading is True
+    assert result.stock_profile_no_broker_api is True
+    assert result.stock_profile_no_order_placement is True
+    assert result.stock_profile_no_message_sent is True
+    assert metadata["latest_stock_profile_status"] == STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert metadata["stock_profile_phase1_report_only_artifacts_created"] is True
+    assert metadata["stock_profile_active_stock_profile_created"] is False
+    assert metadata["stock_profile_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_stock_profile_context(tmp_path: Path) -> None:
+    run_stock_profile(replace(_stock_profile_happy_settings(tmp_path), allow_stock_profile=True))
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; stock-profile is report-only context, "
+            "not active stock_profile, buy-review, paper approval, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_stock_profile_status == STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.stock_profile_phase1_report_only_artifacts_created is True
+    assert result.stock_profile_active_stock_profile_created is False
+    assert result.stock_profile_real_buy_review_eligible is False
+    assert result.stock_profile_buy_review_allowed is False
+    assert result.stock_profile_approved_for_paper is False
+    assert result.stock_profile_strategy_performance_validated is False
+    assert result.stock_profile_trading_allowed is False
+    assert result.stock_profile_current_candidates_run is False
+    assert result.stock_profile_snapshot_built is False
+    assert result.stock_profile_signal_semantics_changed is False
+
+
+def test_cli_research_status_prints_stock_profile_fields(tmp_path: Path, capsys) -> None:
+    run_stock_profile(replace(_stock_profile_happy_settings(tmp_path), allow_stock_profile=True))
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "stock_profile_workflow_implemented: True" in output.out
+    assert "stock_profile_views_implemented: True" in output.out
+    assert f"latest_stock_profile_status: {STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED}" in output.out
+    assert "stock_profile_phase1_report_only_artifacts_created: True" in output.out
+    assert "stock_profile_active_stock_profile_created: False" in output.out
+    assert "stock_profile_real_buy_review_eligible: False" in output.out
+    assert "stock_profile_buy_review_allowed: False" in output.out
+    assert "stock_profile_approved_for_paper: False" in output.out
+    assert "stock_profile_strategy_performance_validated: False" in output.out
+    assert "stock_profile_trading_allowed: False" in output.out
+    assert "stock_profile_current_candidates_run: False" in output.out
+    assert "stock_profile_snapshot_built: False" in output.out
+    assert "stock_profile_signal_semantics_changed: False" in output.out
+    assert "stock_profile_promoted_model_created: False" in output.out
+    assert "stock_profile_production_model_created: False" in output.out
+    assert "stock_profile_active_thresholds_created: False" in output.out
+    assert "stock_profile_advisory_predictions_created: False" in output.out
+    assert "stock_profile_active_probabilities_created: False" in output.out
+
+
+def test_stock_profile_research_status_docs_and_source_notes_are_safe() -> None:
+    docs = [
+        Path("README.md"),
+        Path("docs/local_research_dashboard.md"),
+        Path("docs/stock_profile.md"),
+        Path("docs/release_checkpoint_v1.53.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_53_0.md"),
+    ]
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED" in text
+        for phrase in [
+            "not active stock_profile",
+            "not real buy-review",
+            "not paper approval",
+            "not performance validation",
+            "not current-candidates",
+            "not snapshot",
+            "not signal_semantics",
+            "not promoted model",
+            "not production model",
+            "not active thresholds",
+            "not advisory predictions",
+            "not active probabilities",
+            "not trading",
+        ]:
+            assert phrase in text
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_53_0.md").read_text(encoding="utf-8")
     assert "docs/project_sources/ is intentionally absent from Git" in source_text
     assert "ChatGPT Project Source is maintained separately" in source_text
     assert not Path("docs/project_sources").exists()

@@ -128,6 +128,7 @@ from quant_replay_system.training_result_planning_status import run_training_res
 from quant_replay_system.training_result_status import run_training_result_status
 from quant_replay_system.model_weight_versioning_status import run_model_weight_versioning_status
 from quant_replay_system.active_model_status import run_active_model_status
+from quant_replay_system.stock_profile_status import run_stock_profile_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -1461,6 +1462,67 @@ SUMMARY_COLUMNS = [
     "active_model_no_message_sent",
     "active_model_report_path",
     "active_model_next_action",
+    "stock_profile_workflow_implemented",
+    "stock_profile_views_implemented",
+    "latest_stock_profile_run_id",
+    "latest_stock_profile_status",
+    "latest_stock_profile_health_status",
+    "latest_stock_profile_workflow_stage",
+    "stock_profile_artifact_path",
+    "ready_for_stock_profile_phase1",
+    "stock_profile_phase1_executed",
+    "stock_profile_phase1_report_only_artifacts_created",
+    "stock_profile_metadata_created",
+    "stock_profile_input_index_created",
+    "stock_profile_lineage_matrix_created",
+    "stock_profile_factor_coverage_summary_created",
+    "stock_profile_symbol_coverage_created",
+    "stock_profile_market_regime_coverage_created",
+    "stock_profile_metric_summary_created",
+    "stock_profile_limitations_created",
+    "stock_profile_overfit_warnings_created",
+    "stock_profile_safety_flags_created",
+    "stock_profile_source_active_model_run_id",
+    "stock_profile_source_active_model_status",
+    "stock_profile_source_active_model_health_status",
+    "stock_profile_source_model_workflow_run_id",
+    "stock_profile_source_model_weight_versioning_status",
+    "stock_profile_source_model_weight_versioning_health_status",
+    "stock_profile_model_weight_reference_id",
+    "stock_profile_model_version_id",
+    "stock_profile_parameter_version_id",
+    "stock_profile_active_stock_profile_created",
+    "stock_profile_real_buy_review_eligible",
+    "stock_profile_buy_review_allowed",
+    "stock_profile_approved_for_paper",
+    "stock_profile_strategy_performance_validated",
+    "stock_profile_trading_allowed",
+    "stock_profile_current_candidates_run",
+    "stock_profile_snapshot_built",
+    "stock_profile_signal_semantics_changed",
+    "stock_profile_promoted_model_created",
+    "stock_profile_production_model_created",
+    "stock_profile_active_thresholds_created",
+    "stock_profile_advisory_predictions_created",
+    "stock_profile_active_probabilities_created",
+    "stock_profile_order_placed",
+    "stock_profile_broker_api_called",
+    "stock_profile_message_sent",
+    "stock_profile_llm_api_called",
+    "stock_profile_external_api_called",
+    "stock_profile_cache_mutated",
+    "stock_profile_data_raw_written",
+    "stock_profile_data_processed_written",
+    "stock_profile_data_cache_written",
+    "stock_profile_report_only",
+    "stock_profile_research_governed",
+    "stock_profile_diagnostic_output",
+    "stock_profile_no_live_trading",
+    "stock_profile_no_broker_api",
+    "stock_profile_no_order_placement",
+    "stock_profile_no_message_sent",
+    "stock_profile_report_path",
+    "stock_profile_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1848,6 +1910,7 @@ OPTIONAL_COMPONENTS = {
     "TRAINING_RESULT_STATUS",
     "MODEL_WEIGHT_VERSIONING_STATUS",
     "ACTIVE_MODEL_STATUS",
+    "STOCK_PROFILE_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1904,6 +1967,7 @@ WORKFLOW_AREAS = {
     "TRAINING_RESULT_STATUS": "TRAINING_RESULT",
     "MODEL_WEIGHT_VERSIONING_STATUS": "MODEL_WEIGHT_VERSIONING",
     "ACTIVE_MODEL_STATUS": "ACTIVE_MODEL",
+    "STOCK_PROFILE_STATUS": "STOCK_PROFILE",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -3223,6 +3287,67 @@ class LocalResearchDashboardResult:
     active_model_no_message_sent: bool
     active_model_report_path: str
     active_model_next_action: str
+    stock_profile_workflow_implemented: bool
+    stock_profile_views_implemented: bool
+    latest_stock_profile_run_id: str
+    latest_stock_profile_status: str
+    latest_stock_profile_health_status: str
+    latest_stock_profile_workflow_stage: str
+    stock_profile_artifact_path: str
+    ready_for_stock_profile_phase1: bool
+    stock_profile_phase1_executed: bool
+    stock_profile_phase1_report_only_artifacts_created: bool
+    stock_profile_metadata_created: bool
+    stock_profile_input_index_created: bool
+    stock_profile_lineage_matrix_created: bool
+    stock_profile_factor_coverage_summary_created: bool
+    stock_profile_symbol_coverage_created: bool
+    stock_profile_market_regime_coverage_created: bool
+    stock_profile_metric_summary_created: bool
+    stock_profile_limitations_created: bool
+    stock_profile_overfit_warnings_created: bool
+    stock_profile_safety_flags_created: bool
+    stock_profile_source_active_model_run_id: str
+    stock_profile_source_active_model_status: str
+    stock_profile_source_active_model_health_status: str
+    stock_profile_source_model_workflow_run_id: str
+    stock_profile_source_model_weight_versioning_status: str
+    stock_profile_source_model_weight_versioning_health_status: str
+    stock_profile_model_weight_reference_id: str
+    stock_profile_model_version_id: str
+    stock_profile_parameter_version_id: str
+    stock_profile_active_stock_profile_created: bool
+    stock_profile_real_buy_review_eligible: bool
+    stock_profile_buy_review_allowed: bool
+    stock_profile_approved_for_paper: bool
+    stock_profile_strategy_performance_validated: bool
+    stock_profile_trading_allowed: bool
+    stock_profile_current_candidates_run: bool
+    stock_profile_snapshot_built: bool
+    stock_profile_signal_semantics_changed: bool
+    stock_profile_promoted_model_created: bool
+    stock_profile_production_model_created: bool
+    stock_profile_active_thresholds_created: bool
+    stock_profile_advisory_predictions_created: bool
+    stock_profile_active_probabilities_created: bool
+    stock_profile_order_placed: bool
+    stock_profile_broker_api_called: bool
+    stock_profile_message_sent: bool
+    stock_profile_llm_api_called: bool
+    stock_profile_external_api_called: bool
+    stock_profile_cache_mutated: bool
+    stock_profile_data_raw_written: bool
+    stock_profile_data_processed_written: bool
+    stock_profile_data_cache_written: bool
+    stock_profile_report_only: bool
+    stock_profile_research_governed: bool
+    stock_profile_diagnostic_output: bool
+    stock_profile_no_live_trading: bool
+    stock_profile_no_broker_api: bool
+    stock_profile_no_order_placement: bool
+    stock_profile_no_message_sent: bool
+    stock_profile_report_path: str
+    stock_profile_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -3564,6 +3689,7 @@ def run_local_research_dashboard(
     training_result_root: str | Path | None = None,
     model_weight_versioning_root: str | Path | None = None,
     active_model_root: str | Path | None = None,
+    stock_profile_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -3841,6 +3967,11 @@ def run_local_research_dashboard(
         Path(active_model_root)
         if active_model_root is not None
         else effective_root / "manual_diagnostics" / "active_model_v0_1"
+    )
+    effective_stock_profile_root = (
+        Path(stock_profile_root)
+        if stock_profile_root is not None
+        else effective_root / "manual_diagnostics" / "stock_profile_v0_1"
     )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
@@ -4183,6 +4314,7 @@ def run_local_research_dashboard(
         training_result_root=effective_training_result_root,
         model_weight_versioning_root=effective_model_weight_versioning_root,
         active_model_root=effective_active_model_root,
+        stock_profile_root=effective_stock_profile_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -7452,6 +7584,133 @@ def run_local_research_dashboard(
         active_model_no_message_sent=_bool_from_text(summary.get("active_model_no_message_sent")),
         active_model_report_path=str(summary.get("active_model_report_path", "")),
         active_model_next_action=str(summary.get("active_model_next_action", "")),
+        stock_profile_workflow_implemented=_bool_from_text(
+            summary.get("stock_profile_workflow_implemented")
+        ),
+        stock_profile_views_implemented=_bool_from_text(summary.get("stock_profile_views_implemented")),
+        latest_stock_profile_run_id=str(summary.get("latest_stock_profile_run_id", "")),
+        latest_stock_profile_status=str(summary.get("latest_stock_profile_status", "MISSING")),
+        latest_stock_profile_health_status=str(summary.get("latest_stock_profile_health_status", "")),
+        latest_stock_profile_workflow_stage=str(summary.get("latest_stock_profile_workflow_stage", "")),
+        stock_profile_artifact_path=str(summary.get("stock_profile_artifact_path", "")),
+        ready_for_stock_profile_phase1=_bool_from_text(summary.get("ready_for_stock_profile_phase1")),
+        stock_profile_phase1_executed=_bool_from_text(summary.get("stock_profile_phase1_executed")),
+        stock_profile_phase1_report_only_artifacts_created=_bool_from_text(
+            summary.get("stock_profile_phase1_report_only_artifacts_created")
+        ),
+        stock_profile_metadata_created=_bool_from_text(summary.get("stock_profile_metadata_created")),
+        stock_profile_input_index_created=_bool_from_text(
+            summary.get("stock_profile_input_index_created")
+        ),
+        stock_profile_lineage_matrix_created=_bool_from_text(
+            summary.get("stock_profile_lineage_matrix_created")
+        ),
+        stock_profile_factor_coverage_summary_created=_bool_from_text(
+            summary.get("stock_profile_factor_coverage_summary_created")
+        ),
+        stock_profile_symbol_coverage_created=_bool_from_text(
+            summary.get("stock_profile_symbol_coverage_created")
+        ),
+        stock_profile_market_regime_coverage_created=_bool_from_text(
+            summary.get("stock_profile_market_regime_coverage_created")
+        ),
+        stock_profile_metric_summary_created=_bool_from_text(
+            summary.get("stock_profile_metric_summary_created")
+        ),
+        stock_profile_limitations_created=_bool_from_text(
+            summary.get("stock_profile_limitations_created")
+        ),
+        stock_profile_overfit_warnings_created=_bool_from_text(
+            summary.get("stock_profile_overfit_warnings_created")
+        ),
+        stock_profile_safety_flags_created=_bool_from_text(
+            summary.get("stock_profile_safety_flags_created")
+        ),
+        stock_profile_source_active_model_run_id=str(
+            summary.get("stock_profile_source_active_model_run_id", "")
+        ),
+        stock_profile_source_active_model_status=str(
+            summary.get("stock_profile_source_active_model_status", "")
+        ),
+        stock_profile_source_active_model_health_status=str(
+            summary.get("stock_profile_source_active_model_health_status", "")
+        ),
+        stock_profile_source_model_workflow_run_id=str(
+            summary.get("stock_profile_source_model_workflow_run_id", "")
+        ),
+        stock_profile_source_model_weight_versioning_status=str(
+            summary.get("stock_profile_source_model_weight_versioning_status", "")
+        ),
+        stock_profile_source_model_weight_versioning_health_status=str(
+            summary.get("stock_profile_source_model_weight_versioning_health_status", "")
+        ),
+        stock_profile_model_weight_reference_id=str(
+            summary.get("stock_profile_model_weight_reference_id", "")
+        ),
+        stock_profile_model_version_id=str(summary.get("stock_profile_model_version_id", "")),
+        stock_profile_parameter_version_id=str(
+            summary.get("stock_profile_parameter_version_id", "")
+        ),
+        stock_profile_active_stock_profile_created=_bool_from_text(
+            summary.get("stock_profile_active_stock_profile_created")
+        ),
+        stock_profile_real_buy_review_eligible=_bool_from_text(
+            summary.get("stock_profile_real_buy_review_eligible")
+        ),
+        stock_profile_buy_review_allowed=_bool_from_text(summary.get("stock_profile_buy_review_allowed")),
+        stock_profile_approved_for_paper=_bool_from_text(summary.get("stock_profile_approved_for_paper")),
+        stock_profile_strategy_performance_validated=_bool_from_text(
+            summary.get("stock_profile_strategy_performance_validated")
+        ),
+        stock_profile_trading_allowed=_bool_from_text(summary.get("stock_profile_trading_allowed")),
+        stock_profile_current_candidates_run=_bool_from_text(
+            summary.get("stock_profile_current_candidates_run")
+        ),
+        stock_profile_snapshot_built=_bool_from_text(summary.get("stock_profile_snapshot_built")),
+        stock_profile_signal_semantics_changed=_bool_from_text(
+            summary.get("stock_profile_signal_semantics_changed")
+        ),
+        stock_profile_promoted_model_created=_bool_from_text(
+            summary.get("stock_profile_promoted_model_created")
+        ),
+        stock_profile_production_model_created=_bool_from_text(
+            summary.get("stock_profile_production_model_created")
+        ),
+        stock_profile_active_thresholds_created=_bool_from_text(
+            summary.get("stock_profile_active_thresholds_created")
+        ),
+        stock_profile_advisory_predictions_created=_bool_from_text(
+            summary.get("stock_profile_advisory_predictions_created")
+        ),
+        stock_profile_active_probabilities_created=_bool_from_text(
+            summary.get("stock_profile_active_probabilities_created")
+        ),
+        stock_profile_order_placed=_bool_from_text(summary.get("stock_profile_order_placed")),
+        stock_profile_broker_api_called=_bool_from_text(summary.get("stock_profile_broker_api_called")),
+        stock_profile_message_sent=_bool_from_text(summary.get("stock_profile_message_sent")),
+        stock_profile_llm_api_called=_bool_from_text(summary.get("stock_profile_llm_api_called")),
+        stock_profile_external_api_called=_bool_from_text(
+            summary.get("stock_profile_external_api_called")
+        ),
+        stock_profile_cache_mutated=_bool_from_text(summary.get("stock_profile_cache_mutated")),
+        stock_profile_data_raw_written=_bool_from_text(summary.get("stock_profile_data_raw_written")),
+        stock_profile_data_processed_written=_bool_from_text(
+            summary.get("stock_profile_data_processed_written")
+        ),
+        stock_profile_data_cache_written=_bool_from_text(
+            summary.get("stock_profile_data_cache_written")
+        ),
+        stock_profile_report_only=_bool_from_text(summary.get("stock_profile_report_only")),
+        stock_profile_research_governed=_bool_from_text(summary.get("stock_profile_research_governed")),
+        stock_profile_diagnostic_output=_bool_from_text(summary.get("stock_profile_diagnostic_output")),
+        stock_profile_no_live_trading=_bool_from_text(summary.get("stock_profile_no_live_trading")),
+        stock_profile_no_broker_api=_bool_from_text(summary.get("stock_profile_no_broker_api")),
+        stock_profile_no_order_placement=_bool_from_text(
+            summary.get("stock_profile_no_order_placement")
+        ),
+        stock_profile_no_message_sent=_bool_from_text(summary.get("stock_profile_no_message_sent")),
+        stock_profile_report_path=str(summary.get("stock_profile_report_path", "")),
+        stock_profile_next_action=str(summary.get("stock_profile_next_action", "")),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -8142,6 +8401,7 @@ def scan_local_research_workflow_artifacts(
     training_result_root: str | Path,
     model_weight_versioning_root: str | Path,
     active_model_root: str | Path,
+    stock_profile_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -8215,6 +8475,7 @@ def scan_local_research_workflow_artifacts(
     training_result_path = Path(training_result_root)
     model_weight_versioning_path = Path(model_weight_versioning_root)
     active_model_path = Path(active_model_root)
+    stock_profile_path = Path(stock_profile_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -8310,6 +8571,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_training_result_status(training_result_path))
     records.extend(_scan_model_weight_versioning_status(model_weight_versioning_path))
     records.extend(_scan_active_model_status(active_model_path))
+    records.extend(_scan_stock_profile_status(stock_profile_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -19351,6 +19613,158 @@ def summarize_local_research_status(
         "active_model_next_action",
     ]:
         row.setdefault(default_empty_field, "")
+    stock_profile_notes = by_component.get("STOCK_PROFILE_STATUS", {}).get("notes")
+    if _string_or_empty(stock_profile_notes):
+        stock_profile_note_fields = {
+            "stock_profile_workflow_implemented": "implemented",
+            "stock_profile_views_implemented": "views_implemented",
+            "latest_stock_profile_health_status": "health_status",
+            "stock_profile_artifact_path": "artifact_path",
+            "ready_for_stock_profile_phase1": "ready_for_stock_profile_phase1",
+            "stock_profile_phase1_executed": "stock_profile_phase1_executed",
+            "stock_profile_phase1_report_only_artifacts_created": (
+                "stock_profile_phase1_report_only_artifacts_created"
+            ),
+            "stock_profile_metadata_created": "stock_profile_metadata_created",
+            "stock_profile_input_index_created": "stock_profile_input_index_created",
+            "stock_profile_lineage_matrix_created": "stock_profile_lineage_matrix_created",
+            "stock_profile_factor_coverage_summary_created": (
+                "stock_profile_factor_coverage_summary_created"
+            ),
+            "stock_profile_symbol_coverage_created": "stock_profile_symbol_coverage_created",
+            "stock_profile_market_regime_coverage_created": (
+                "stock_profile_market_regime_coverage_created"
+            ),
+            "stock_profile_metric_summary_created": "stock_profile_metric_summary_created",
+            "stock_profile_limitations_created": "stock_profile_limitations_created",
+            "stock_profile_overfit_warnings_created": "stock_profile_overfit_warnings_created",
+            "stock_profile_safety_flags_created": "stock_profile_safety_flags_created",
+            "stock_profile_source_active_model_run_id": "source_active_model_run_id",
+            "stock_profile_source_active_model_status": "source_active_model_status",
+            "stock_profile_source_active_model_health_status": (
+                "source_active_model_health_status"
+            ),
+            "stock_profile_source_model_workflow_run_id": "source_model_workflow_run_id",
+            "stock_profile_source_model_weight_versioning_status": (
+                "source_model_weight_versioning_status"
+            ),
+            "stock_profile_source_model_weight_versioning_health_status": (
+                "source_model_weight_versioning_health_status"
+            ),
+            "stock_profile_model_weight_reference_id": "model_weight_reference_id",
+            "stock_profile_model_version_id": "model_version_id",
+            "stock_profile_parameter_version_id": "parameter_version_id",
+            "stock_profile_active_stock_profile_created": "active_stock_profile_created",
+            "stock_profile_real_buy_review_eligible": "real_buy_review_eligible",
+            "stock_profile_buy_review_allowed": "buy_review_allowed",
+            "stock_profile_approved_for_paper": "approved_for_paper",
+            "stock_profile_strategy_performance_validated": "strategy_performance_validated",
+            "stock_profile_trading_allowed": "trading_allowed",
+            "stock_profile_current_candidates_run": "current_candidates_run",
+            "stock_profile_snapshot_built": "snapshot_built",
+            "stock_profile_signal_semantics_changed": "signal_semantics_changed",
+            "stock_profile_promoted_model_created": "promoted_model_created",
+            "stock_profile_production_model_created": "production_model_created",
+            "stock_profile_active_thresholds_created": "active_thresholds_created",
+            "stock_profile_advisory_predictions_created": "advisory_predictions_created",
+            "stock_profile_active_probabilities_created": "active_probabilities_created",
+            "stock_profile_order_placed": "order_placed",
+            "stock_profile_broker_api_called": "broker_api_called",
+            "stock_profile_message_sent": "message_sent",
+            "stock_profile_llm_api_called": "llm_api_called",
+            "stock_profile_external_api_called": "external_api_called",
+            "stock_profile_cache_mutated": "cache_mutated",
+            "stock_profile_data_raw_written": "data_raw_written",
+            "stock_profile_data_processed_written": "data_processed_written",
+            "stock_profile_data_cache_written": "data_cache_written",
+            "stock_profile_report_only": "report_only",
+            "stock_profile_research_governed": "research_governed",
+            "stock_profile_diagnostic_output": "diagnostic_output",
+            "stock_profile_no_live_trading": "no_live_trading",
+            "stock_profile_no_broker_api": "no_broker_api",
+            "stock_profile_no_order_placement": "no_order_placement",
+            "stock_profile_no_message_sent": "no_message_sent",
+            "stock_profile_report_path": "report_path",
+            "stock_profile_next_action": "next_manual_action",
+        }
+        for summary_field, note_key in stock_profile_note_fields.items():
+            value = _parse_note_value(stock_profile_notes, note_key)
+            if _string_or_empty(value) != "":
+                row[summary_field] = value
+    row["latest_stock_profile_run_id"] = _string_or_empty(
+        by_component.get("STOCK_PROFILE_STATUS", {}).get("latest_artifact_id")
+    )
+    row["latest_stock_profile_status"] = _component_status(
+        by_component,
+        "STOCK_PROFILE_STATUS",
+    )
+    row["latest_stock_profile_workflow_stage"] = _string_or_empty(
+        by_component.get("STOCK_PROFILE_STATUS", {}).get("stage")
+    )
+    for default_false_field in [
+        "stock_profile_workflow_implemented",
+        "stock_profile_views_implemented",
+        "ready_for_stock_profile_phase1",
+        "stock_profile_phase1_executed",
+        "stock_profile_phase1_report_only_artifacts_created",
+        "stock_profile_metadata_created",
+        "stock_profile_input_index_created",
+        "stock_profile_lineage_matrix_created",
+        "stock_profile_factor_coverage_summary_created",
+        "stock_profile_symbol_coverage_created",
+        "stock_profile_market_regime_coverage_created",
+        "stock_profile_metric_summary_created",
+        "stock_profile_limitations_created",
+        "stock_profile_overfit_warnings_created",
+        "stock_profile_safety_flags_created",
+        "stock_profile_active_stock_profile_created",
+        "stock_profile_real_buy_review_eligible",
+        "stock_profile_buy_review_allowed",
+        "stock_profile_approved_for_paper",
+        "stock_profile_strategy_performance_validated",
+        "stock_profile_trading_allowed",
+        "stock_profile_current_candidates_run",
+        "stock_profile_snapshot_built",
+        "stock_profile_signal_semantics_changed",
+        "stock_profile_promoted_model_created",
+        "stock_profile_production_model_created",
+        "stock_profile_active_thresholds_created",
+        "stock_profile_advisory_predictions_created",
+        "stock_profile_active_probabilities_created",
+        "stock_profile_order_placed",
+        "stock_profile_broker_api_called",
+        "stock_profile_message_sent",
+        "stock_profile_llm_api_called",
+        "stock_profile_external_api_called",
+        "stock_profile_cache_mutated",
+        "stock_profile_data_raw_written",
+        "stock_profile_data_processed_written",
+        "stock_profile_data_cache_written",
+        "stock_profile_report_only",
+        "stock_profile_research_governed",
+        "stock_profile_diagnostic_output",
+        "stock_profile_no_live_trading",
+        "stock_profile_no_broker_api",
+        "stock_profile_no_order_placement",
+        "stock_profile_no_message_sent",
+    ]:
+        row.setdefault(default_false_field, False)
+    for default_empty_field in [
+        "latest_stock_profile_health_status",
+        "stock_profile_artifact_path",
+        "stock_profile_source_active_model_run_id",
+        "stock_profile_source_active_model_status",
+        "stock_profile_source_active_model_health_status",
+        "stock_profile_source_model_workflow_run_id",
+        "stock_profile_source_model_weight_versioning_status",
+        "stock_profile_source_model_weight_versioning_health_status",
+        "stock_profile_model_weight_reference_id",
+        "stock_profile_model_version_id",
+        "stock_profile_parameter_version_id",
+        "stock_profile_report_path",
+        "stock_profile_next_action",
+    ]:
+        row.setdefault(default_empty_field, "")
     return pd.DataFrame([row], columns=SUMMARY_COLUMNS)
 
 
@@ -22130,6 +22544,87 @@ def build_local_research_dashboard_metadata(
         "active_model_no_message_sent": result.active_model_no_message_sent,
         "active_model_report_path": result.active_model_report_path,
         "active_model_next_action": result.active_model_next_action,
+        "stock_profile_workflow_implemented": result.stock_profile_workflow_implemented,
+        "stock_profile_views_implemented": result.stock_profile_views_implemented,
+        "latest_stock_profile_run_id": result.latest_stock_profile_run_id,
+        "latest_stock_profile_status": result.latest_stock_profile_status,
+        "latest_stock_profile_health_status": result.latest_stock_profile_health_status,
+        "latest_stock_profile_workflow_stage": result.latest_stock_profile_workflow_stage,
+        "stock_profile_artifact_path": result.stock_profile_artifact_path,
+        "ready_for_stock_profile_phase1": result.ready_for_stock_profile_phase1,
+        "stock_profile_phase1_executed": result.stock_profile_phase1_executed,
+        "stock_profile_phase1_report_only_artifacts_created": (
+            result.stock_profile_phase1_report_only_artifacts_created
+        ),
+        "stock_profile_metadata_created": result.stock_profile_metadata_created,
+        "stock_profile_input_index_created": result.stock_profile_input_index_created,
+        "stock_profile_lineage_matrix_created": result.stock_profile_lineage_matrix_created,
+        "stock_profile_factor_coverage_summary_created": (
+            result.stock_profile_factor_coverage_summary_created
+        ),
+        "stock_profile_symbol_coverage_created": result.stock_profile_symbol_coverage_created,
+        "stock_profile_market_regime_coverage_created": (
+            result.stock_profile_market_regime_coverage_created
+        ),
+        "stock_profile_metric_summary_created": result.stock_profile_metric_summary_created,
+        "stock_profile_limitations_created": result.stock_profile_limitations_created,
+        "stock_profile_overfit_warnings_created": result.stock_profile_overfit_warnings_created,
+        "stock_profile_safety_flags_created": result.stock_profile_safety_flags_created,
+        "stock_profile_source_active_model_run_id": result.stock_profile_source_active_model_run_id,
+        "stock_profile_source_active_model_status": result.stock_profile_source_active_model_status,
+        "stock_profile_source_active_model_health_status": (
+            result.stock_profile_source_active_model_health_status
+        ),
+        "stock_profile_source_model_workflow_run_id": (
+            result.stock_profile_source_model_workflow_run_id
+        ),
+        "stock_profile_source_model_weight_versioning_status": (
+            result.stock_profile_source_model_weight_versioning_status
+        ),
+        "stock_profile_source_model_weight_versioning_health_status": (
+            result.stock_profile_source_model_weight_versioning_health_status
+        ),
+        "stock_profile_model_weight_reference_id": result.stock_profile_model_weight_reference_id,
+        "stock_profile_model_version_id": result.stock_profile_model_version_id,
+        "stock_profile_parameter_version_id": result.stock_profile_parameter_version_id,
+        "stock_profile_active_stock_profile_created": result.stock_profile_active_stock_profile_created,
+        "stock_profile_real_buy_review_eligible": result.stock_profile_real_buy_review_eligible,
+        "stock_profile_buy_review_allowed": result.stock_profile_buy_review_allowed,
+        "stock_profile_approved_for_paper": result.stock_profile_approved_for_paper,
+        "stock_profile_strategy_performance_validated": (
+            result.stock_profile_strategy_performance_validated
+        ),
+        "stock_profile_trading_allowed": result.stock_profile_trading_allowed,
+        "stock_profile_current_candidates_run": result.stock_profile_current_candidates_run,
+        "stock_profile_snapshot_built": result.stock_profile_snapshot_built,
+        "stock_profile_signal_semantics_changed": result.stock_profile_signal_semantics_changed,
+        "stock_profile_promoted_model_created": result.stock_profile_promoted_model_created,
+        "stock_profile_production_model_created": result.stock_profile_production_model_created,
+        "stock_profile_active_thresholds_created": result.stock_profile_active_thresholds_created,
+        "stock_profile_advisory_predictions_created": (
+            result.stock_profile_advisory_predictions_created
+        ),
+        "stock_profile_active_probabilities_created": (
+            result.stock_profile_active_probabilities_created
+        ),
+        "stock_profile_order_placed": result.stock_profile_order_placed,
+        "stock_profile_broker_api_called": result.stock_profile_broker_api_called,
+        "stock_profile_message_sent": result.stock_profile_message_sent,
+        "stock_profile_llm_api_called": result.stock_profile_llm_api_called,
+        "stock_profile_external_api_called": result.stock_profile_external_api_called,
+        "stock_profile_cache_mutated": result.stock_profile_cache_mutated,
+        "stock_profile_data_raw_written": result.stock_profile_data_raw_written,
+        "stock_profile_data_processed_written": result.stock_profile_data_processed_written,
+        "stock_profile_data_cache_written": result.stock_profile_data_cache_written,
+        "stock_profile_report_only": result.stock_profile_report_only,
+        "stock_profile_research_governed": result.stock_profile_research_governed,
+        "stock_profile_diagnostic_output": result.stock_profile_diagnostic_output,
+        "stock_profile_no_live_trading": result.stock_profile_no_live_trading,
+        "stock_profile_no_broker_api": result.stock_profile_no_broker_api,
+        "stock_profile_no_order_placement": result.stock_profile_no_order_placement,
+        "stock_profile_no_message_sent": result.stock_profile_no_message_sent,
+        "stock_profile_report_path": result.stock_profile_report_path,
+        "stock_profile_next_action": result.stock_profile_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -27427,6 +27922,173 @@ def _active_model_notes(summary: dict[str, Any]) -> str:
         f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
         "research_governed=True; "
         "diagnostic_output=True; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_stock_profile_status(root: Path) -> list[dict[str, Any]]:
+    stock_profile_root = root.parent if root.name == "status" else root
+    if not stock_profile_root.exists():
+        return []
+    try:
+        result = run_stock_profile_status(
+            root=stock_profile_root,
+            output_dir=stock_profile_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_stock_profile_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = stock_profile_root / result.latest_stock_profile_run_id
+    metadata = _load_json_or_none(artifact_dir / "stock_profile_metadata.json") or {}
+    safety = _load_json_or_none(artifact_dir / "stock_profile_safety_flags.json") or {}
+    artifact_paths = metadata.get("artifact_paths") if isinstance(metadata.get("artifact_paths"), dict) else {}
+    merged = {**metadata, **safety}
+    summary["artifact_path"] = _string_or_empty(metadata.get("artifact_path")) or str(artifact_dir)
+    summary["report_path"] = (
+        _string_or_empty(summary.get("report_path"))
+        or _string_or_empty(artifact_paths.get("stock_profile_limitations"))
+        or str(artifact_dir / "stock_profile_limitations.md")
+    )
+    for field in [
+        "ready_for_stock_profile_phase1",
+        "stock_profile_phase1_executed",
+        "stock_profile_phase1_report_only_artifacts_created",
+        "stock_profile_metadata_created",
+        "stock_profile_input_index_created",
+        "stock_profile_lineage_matrix_created",
+        "stock_profile_factor_coverage_summary_created",
+        "stock_profile_symbol_coverage_created",
+        "stock_profile_market_regime_coverage_created",
+        "stock_profile_metric_summary_created",
+        "stock_profile_limitations_created",
+        "stock_profile_overfit_warnings_created",
+        "stock_profile_safety_flags_created",
+        "source_active_model_run_id",
+        "source_active_model_status",
+        "source_active_model_health_status",
+        "source_model_workflow_run_id",
+        "source_model_weight_versioning_status",
+        "source_model_weight_versioning_health_status",
+        "model_weight_reference_id",
+        "model_version_id",
+        "parameter_version_id",
+        "active_stock_profile_created",
+        "real_buy_review_eligible",
+        "buy_review_allowed",
+        "approved_for_paper",
+        "strategy_performance_validated",
+        "trading_allowed",
+        "current_candidates_run",
+        "snapshot_built",
+        "signal_semantics_changed",
+        "promoted_model_created",
+        "production_model_created",
+        "active_thresholds_created",
+        "advisory_predictions_created",
+        "active_probabilities_created",
+        "order_placed",
+        "broker_api_called",
+        "message_sent",
+        "llm_api_called",
+        "external_api_called",
+        "cache_mutated",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "report_only",
+        "research_governed",
+        "diagnostic_output",
+    ]:
+        if field not in summary or _string_or_empty(summary.get(field)) == "":
+            summary[field] = merged.get(field, False)
+    return [
+        _record(
+            workflow_area="STOCK_PROFILE",
+            component="STOCK_PROFILE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_stock_profile_run_id,
+            report_path=summary["report_path"],
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_stock_profile_notes(summary),
+        )
+    ]
+
+
+def _stock_profile_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"ready_for_stock_profile_phase1={_string_or_empty(summary.get('ready_for_stock_profile_phase1'))}; "
+        f"stock_profile_phase1_executed={_string_or_empty(summary.get('stock_profile_phase1_executed'))}; "
+        "stock_profile_phase1_report_only_artifacts_created="
+        f"{_string_or_empty(summary.get('stock_profile_phase1_report_only_artifacts_created'))}; "
+        f"stock_profile_metadata_created={_string_or_empty(summary.get('stock_profile_metadata_created'))}; "
+        f"stock_profile_input_index_created={_string_or_empty(summary.get('stock_profile_input_index_created'))}; "
+        "stock_profile_lineage_matrix_created="
+        f"{_string_or_empty(summary.get('stock_profile_lineage_matrix_created'))}; "
+        "stock_profile_factor_coverage_summary_created="
+        f"{_string_or_empty(summary.get('stock_profile_factor_coverage_summary_created'))}; "
+        "stock_profile_symbol_coverage_created="
+        f"{_string_or_empty(summary.get('stock_profile_symbol_coverage_created'))}; "
+        "stock_profile_market_regime_coverage_created="
+        f"{_string_or_empty(summary.get('stock_profile_market_regime_coverage_created'))}; "
+        "stock_profile_metric_summary_created="
+        f"{_string_or_empty(summary.get('stock_profile_metric_summary_created'))}; "
+        f"stock_profile_limitations_created={_string_or_empty(summary.get('stock_profile_limitations_created'))}; "
+        "stock_profile_overfit_warnings_created="
+        f"{_string_or_empty(summary.get('stock_profile_overfit_warnings_created'))}; "
+        f"stock_profile_safety_flags_created={_string_or_empty(summary.get('stock_profile_safety_flags_created'))}; "
+        f"source_active_model_run_id={_string_or_empty(summary.get('source_active_model_run_id'))}; "
+        f"source_active_model_status={_string_or_empty(summary.get('source_active_model_status'))}; "
+        "source_active_model_health_status="
+        f"{_string_or_empty(summary.get('source_active_model_health_status'))}; "
+        f"source_model_workflow_run_id={_string_or_empty(summary.get('source_model_workflow_run_id'))}; "
+        "source_model_weight_versioning_status="
+        f"{_string_or_empty(summary.get('source_model_weight_versioning_status'))}; "
+        "source_model_weight_versioning_health_status="
+        f"{_string_or_empty(summary.get('source_model_weight_versioning_health_status'))}; "
+        f"model_weight_reference_id={_string_or_empty(summary.get('model_weight_reference_id'))}; "
+        f"model_version_id={_string_or_empty(summary.get('model_version_id'))}; "
+        f"parameter_version_id={_string_or_empty(summary.get('parameter_version_id'))}; "
+        f"active_stock_profile_created={_string_or_empty(summary.get('active_stock_profile_created'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
+        f"strategy_performance_validated={_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"promoted_model_created={_string_or_empty(summary.get('promoted_model_created'))}; "
+        f"production_model_created={_string_or_empty(summary.get('production_model_created'))}; "
+        f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
+        f"advisory_predictions_created={_string_or_empty(summary.get('advisory_predictions_created'))}; "
+        f"active_probabilities_created={_string_or_empty(summary.get('active_probabilities_created'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"research_governed={_string_or_empty(summary.get('research_governed'))}; "
+        f"diagnostic_output={_string_or_empty(summary.get('diagnostic_output'))}; "
         "no_live_trading=True; "
         "no_broker_api=True; "
         "no_order_placement=True; "

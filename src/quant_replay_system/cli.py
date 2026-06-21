@@ -17737,6 +17737,97 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"active_model_no_message_sent: {result.active_model_no_message_sent}")
     print(f"active_model_report_path: {result.active_model_report_path}")
     print(f"active_model_next_action: {result.active_model_next_action}")
+    print(f"stock_profile_workflow_implemented: {result.stock_profile_workflow_implemented}")
+    print(f"stock_profile_views_implemented: {result.stock_profile_views_implemented}")
+    print(f"latest_stock_profile_run_id: {result.latest_stock_profile_run_id}")
+    print(f"latest_stock_profile_status: {result.latest_stock_profile_status}")
+    print(f"latest_stock_profile_health_status: {result.latest_stock_profile_health_status}")
+    print(f"latest_stock_profile_workflow_stage: {result.latest_stock_profile_workflow_stage}")
+    print(f"stock_profile_artifact_path: {result.stock_profile_artifact_path}")
+    print(f"ready_for_stock_profile_phase1: {result.ready_for_stock_profile_phase1}")
+    print(f"stock_profile_phase1_executed: {result.stock_profile_phase1_executed}")
+    print(
+        "stock_profile_phase1_report_only_artifacts_created: "
+        f"{result.stock_profile_phase1_report_only_artifacts_created}"
+    )
+    print(f"stock_profile_metadata_created: {result.stock_profile_metadata_created}")
+    print(f"stock_profile_input_index_created: {result.stock_profile_input_index_created}")
+    print(f"stock_profile_lineage_matrix_created: {result.stock_profile_lineage_matrix_created}")
+    print(
+        "stock_profile_factor_coverage_summary_created: "
+        f"{result.stock_profile_factor_coverage_summary_created}"
+    )
+    print(f"stock_profile_symbol_coverage_created: {result.stock_profile_symbol_coverage_created}")
+    print(
+        "stock_profile_market_regime_coverage_created: "
+        f"{result.stock_profile_market_regime_coverage_created}"
+    )
+    print(f"stock_profile_metric_summary_created: {result.stock_profile_metric_summary_created}")
+    print(f"stock_profile_limitations_created: {result.stock_profile_limitations_created}")
+    print(f"stock_profile_overfit_warnings_created: {result.stock_profile_overfit_warnings_created}")
+    print(f"stock_profile_safety_flags_created: {result.stock_profile_safety_flags_created}")
+    print(f"stock_profile_source_active_model_run_id: {result.stock_profile_source_active_model_run_id}")
+    print(f"stock_profile_source_active_model_status: {result.stock_profile_source_active_model_status}")
+    print(
+        "stock_profile_source_active_model_health_status: "
+        f"{result.stock_profile_source_active_model_health_status}"
+    )
+    print(
+        "stock_profile_source_model_workflow_run_id: "
+        f"{result.stock_profile_source_model_workflow_run_id}"
+    )
+    print(
+        "stock_profile_source_model_weight_versioning_status: "
+        f"{result.stock_profile_source_model_weight_versioning_status}"
+    )
+    print(
+        "stock_profile_source_model_weight_versioning_health_status: "
+        f"{result.stock_profile_source_model_weight_versioning_health_status}"
+    )
+    print(f"stock_profile_model_weight_reference_id: {result.stock_profile_model_weight_reference_id}")
+    print(f"stock_profile_model_version_id: {result.stock_profile_model_version_id}")
+    print(f"stock_profile_parameter_version_id: {result.stock_profile_parameter_version_id}")
+    print(f"stock_profile_active_stock_profile_created: {result.stock_profile_active_stock_profile_created}")
+    print(f"stock_profile_real_buy_review_eligible: {result.stock_profile_real_buy_review_eligible}")
+    print(f"stock_profile_buy_review_allowed: {result.stock_profile_buy_review_allowed}")
+    print(f"stock_profile_approved_for_paper: {result.stock_profile_approved_for_paper}")
+    print(
+        "stock_profile_strategy_performance_validated: "
+        f"{result.stock_profile_strategy_performance_validated}"
+    )
+    print(f"stock_profile_trading_allowed: {result.stock_profile_trading_allowed}")
+    print(f"stock_profile_current_candidates_run: {result.stock_profile_current_candidates_run}")
+    print(f"stock_profile_snapshot_built: {result.stock_profile_snapshot_built}")
+    print(f"stock_profile_signal_semantics_changed: {result.stock_profile_signal_semantics_changed}")
+    print(f"stock_profile_promoted_model_created: {result.stock_profile_promoted_model_created}")
+    print(f"stock_profile_production_model_created: {result.stock_profile_production_model_created}")
+    print(f"stock_profile_active_thresholds_created: {result.stock_profile_active_thresholds_created}")
+    print(
+        "stock_profile_advisory_predictions_created: "
+        f"{result.stock_profile_advisory_predictions_created}"
+    )
+    print(
+        "stock_profile_active_probabilities_created: "
+        f"{result.stock_profile_active_probabilities_created}"
+    )
+    print(f"stock_profile_order_placed: {result.stock_profile_order_placed}")
+    print(f"stock_profile_broker_api_called: {result.stock_profile_broker_api_called}")
+    print(f"stock_profile_message_sent: {result.stock_profile_message_sent}")
+    print(f"stock_profile_llm_api_called: {result.stock_profile_llm_api_called}")
+    print(f"stock_profile_external_api_called: {result.stock_profile_external_api_called}")
+    print(f"stock_profile_cache_mutated: {result.stock_profile_cache_mutated}")
+    print(f"stock_profile_data_raw_written: {result.stock_profile_data_raw_written}")
+    print(f"stock_profile_data_processed_written: {result.stock_profile_data_processed_written}")
+    print(f"stock_profile_data_cache_written: {result.stock_profile_data_cache_written}")
+    print(f"stock_profile_report_only: {result.stock_profile_report_only}")
+    print(f"stock_profile_research_governed: {result.stock_profile_research_governed}")
+    print(f"stock_profile_diagnostic_output: {result.stock_profile_diagnostic_output}")
+    print(f"stock_profile_no_live_trading: {result.stock_profile_no_live_trading}")
+    print(f"stock_profile_no_broker_api: {result.stock_profile_no_broker_api}")
+    print(f"stock_profile_no_order_placement: {result.stock_profile_no_order_placement}")
+    print(f"stock_profile_no_message_sent: {result.stock_profile_no_message_sent}")
+    print(f"stock_profile_report_path: {result.stock_profile_report_path}")
+    print(f"stock_profile_next_action: {result.stock_profile_next_action}")
     print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
