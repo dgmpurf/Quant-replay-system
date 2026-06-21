@@ -354,6 +354,13 @@ from quant_replay_system.active_model import (
     ActiveModelSettings,
     run_active_model,
 )
+from quant_replay_system.stock_profile import (
+    StockProfileSettings,
+    run_stock_profile,
+)
+from quant_replay_system.stock_profile_health import check_stock_profile_health
+from quant_replay_system.stock_profile_index import build_stock_profile_index
+from quant_replay_system.stock_profile_status import run_stock_profile_status
 from quant_replay_system.active_model_health import check_active_model_health
 from quant_replay_system.active_model_index import build_active_model_index
 from quant_replay_system.active_model_status import run_active_model_status
@@ -3686,6 +3693,121 @@ def build_parser() -> argparse.ArgumentParser:
         help="Directory where research-governed active model artifacts will be written",
     )
     active_model.set_defaults(handler=_handle_active_model)
+
+    stock_profile = subparsers.add_parser(
+        "stock-profile",
+        help="Create report-only research-governed stock profile phase 1 diagnostics",
+    )
+    stock_profile.add_argument("--approval-manifest-path", default=None)
+    stock_profile.add_argument("--stock-profile-request-manifest-path", default=None)
+    stock_profile.add_argument("--active-model-metadata-path", default=None)
+    stock_profile.add_argument("--active-model-pointer-path", default=None)
+    stock_profile.add_argument("--active-model-registry-entry-path", default=None)
+    stock_profile.add_argument("--active-parameter-pointer-path", default=None)
+    stock_profile.add_argument("--active-model-activation-status-path", default=None)
+    stock_profile.add_argument("--active-model-input-index-path", default=None)
+    stock_profile.add_argument("--active-model-lineage-matrix-path", default=None)
+    stock_profile.add_argument("--active-model-limitations-path", default=None)
+    stock_profile.add_argument("--active-model-overfit-warnings-path", default=None)
+    stock_profile.add_argument("--active-model-safety-flags-path", default=None)
+    stock_profile.add_argument("--active-model-status-artifact-path", default=None)
+    stock_profile.add_argument("--active-model-health-artifact-path", default=None)
+    stock_profile.add_argument("--model-weight-versioning-metadata-path", default=None)
+    stock_profile.add_argument("--model-weights-reference-path", default=None)
+    stock_profile.add_argument("--model-version-metadata-path", default=None)
+    stock_profile.add_argument("--parameter-version-metadata-path", default=None)
+    stock_profile.add_argument("--model-input-index-path", default=None)
+    stock_profile.add_argument("--model-lineage-matrix-path", default=None)
+    stock_profile.add_argument("--model-limitations-path", default=None)
+    stock_profile.add_argument("--model-overfit-warnings-path", default=None)
+    stock_profile.add_argument("--model-safety-flags-path", default=None)
+    stock_profile.add_argument("--model-weight-versioning-status-artifact-path", default=None)
+    stock_profile.add_argument("--model-weight-versioning-health-artifact-path", default=None)
+    stock_profile.add_argument("--training-result-metadata-path", default=None)
+    stock_profile.add_argument("--training-result-rows-path", default=None)
+    stock_profile.add_argument("--training-result-status-artifact-path", default=None)
+    stock_profile.add_argument("--training-result-health-artifact-path", default=None)
+    stock_profile.add_argument("--training-result-planning-metadata-path", default=None)
+    stock_profile.add_argument("--training-result-planning-health-artifact-path", default=None)
+    stock_profile.add_argument("--metric-extension-metadata-path", default=None)
+    stock_profile.add_argument("--metric-extension-result-rows-path", default=None)
+    stock_profile.add_argument("--metric-extension-health-artifact-path", default=None)
+    stock_profile.add_argument("--metric-computation-metadata-path", default=None)
+    stock_profile.add_argument("--metric-computation-result-rows-path", default=None)
+    stock_profile.add_argument("--metric-computation-health-artifact-path", default=None)
+    stock_profile.add_argument("--metric-evaluation-metadata-path", default=None)
+    stock_profile.add_argument("--metric-evaluation-health-artifact-path", default=None)
+    stock_profile.add_argument("--training-evaluation-metadata-path", default=None)
+    stock_profile.add_argument("--training-evaluation-sample-rows-path", default=None)
+    stock_profile.add_argument("--training-evaluation-health-artifact-path", default=None)
+    stock_profile.add_argument("--forward-return-label-metadata-path", default=None)
+    stock_profile.add_argument("--forward-return-label-rows-path", default=None)
+    stock_profile.add_argument("--forward-return-label-health-artifact-path", default=None)
+    stock_profile.add_argument("--replay-decision-freeze-metadata-path", default=None)
+    stock_profile.add_argument("--replay-decision-freeze-rows-path", default=None)
+    stock_profile.add_argument("--replay-decision-freeze-health-artifact-path", default=None)
+    stock_profile.add_argument("--leakage-evidence-bundle-path", default=None)
+    stock_profile.add_argument("--overclaim-evidence-bundle-path", default=None)
+    stock_profile.add_argument("--side-effect-evidence-bundle-path", default=None)
+    stock_profile.add_argument(
+        "--allow-stock-profile",
+        action="store_true",
+        help="Explicitly allow report-only research-governed stock_profile phase-1 artifacts when all gates pass",
+    )
+    stock_profile.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/stock_profile_v0_1",
+        help="Directory where report-only stock profile phase 1 artifacts will be written",
+    )
+    stock_profile.set_defaults(handler=_handle_stock_profile)
+
+    stock_profile_index = subparsers.add_parser(
+        "stock-profile-index",
+        help="Index report-only stock profile phase 1 diagnostics",
+    )
+    stock_profile_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/stock_profile_v0_1",
+        help="Stock profile artifact root to index",
+    )
+    stock_profile_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/stock_profile_v0_1/index",
+        help="Directory where stock profile index artifacts will be written",
+    )
+    stock_profile_index.set_defaults(handler=_handle_stock_profile_index)
+
+    stock_profile_health = subparsers.add_parser(
+        "stock-profile-health",
+        help="Health-check report-only stock profile phase 1 diagnostics",
+    )
+    stock_profile_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/stock_profile_v0_1",
+        help="Stock profile artifact root to health-check",
+    )
+    stock_profile_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/stock_profile_v0_1/health",
+        help="Directory where stock profile health artifacts will be written",
+    )
+    stock_profile_health.set_defaults(handler=_handle_stock_profile_health)
+
+    stock_profile_status = subparsers.add_parser(
+        "stock-profile-status",
+        help="Summarize report-only stock profile phase 1 diagnostics",
+    )
+    stock_profile_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/stock_profile_v0_1",
+        help="Stock profile artifact root to summarize",
+    )
+    stock_profile_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/stock_profile_v0_1/status",
+        help="Directory where stock profile status artifacts will be written",
+    )
+    stock_profile_status.set_defaults(handler=_handle_stock_profile_status)
 
     active_model_index = subparsers.add_parser(
         "active-model-index",
@@ -10449,6 +10571,163 @@ def _handle_active_model(args: argparse.Namespace) -> int:
         "no active probabilities, no stock_profile, no buy-review, no paper approval, no performance "
         "validation, and no trading."
     )
+    return 0
+
+
+def _handle_stock_profile(args: argparse.Namespace) -> int:
+    path_fields = {
+        field_name: Path(getattr(args, field_name)) if getattr(args, field_name, None) else None
+        for field_name in StockProfileSettings.__dataclass_fields__
+        if field_name
+        not in {
+            "output_dir",
+            "allow_stock_profile",
+            "write_artifacts",
+            "research_governed",
+            "diagnostic_output",
+        }
+    }
+    result = run_stock_profile(
+        StockProfileSettings(
+            **path_fields,
+            output_dir=Path(args.output_dir),
+            allow_stock_profile=args.allow_stock_profile,
+        )
+    )
+    print(f"stock_profile_run_id: {result.stock_profile_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_stock_profile_phase1: {result.ready_for_stock_profile_phase1}")
+    print(f"stock_profile_phase1_executed: {result.stock_profile_phase1_executed}")
+    print(f"stock_profile_phase1_report_only_artifacts_created: {result.stock_profile_phase1_report_only_artifacts_created}")
+    print(f"stock_profile_metadata_created: {result.stock_profile_metadata_created}")
+    print(f"stock_profile_input_index_created: {result.stock_profile_input_index_created}")
+    print(f"stock_profile_lineage_matrix_created: {result.stock_profile_lineage_matrix_created}")
+    print(f"stock_profile_factor_coverage_summary_created: {result.stock_profile_factor_coverage_summary_created}")
+    print(f"stock_profile_symbol_coverage_created: {result.stock_profile_symbol_coverage_created}")
+    print(f"stock_profile_market_regime_coverage_created: {result.stock_profile_market_regime_coverage_created}")
+    print(f"stock_profile_metric_summary_created: {result.stock_profile_metric_summary_created}")
+    print(f"stock_profile_limitations_created: {result.stock_profile_limitations_created}")
+    print(f"stock_profile_overfit_warnings_created: {result.stock_profile_overfit_warnings_created}")
+    print(f"stock_profile_safety_flags_created: {result.stock_profile_safety_flags_created}")
+    print(f"source_active_model_run_id: {result.source_active_model_run_id}")
+    print(f"source_active_model_status: {result.source_active_model_status}")
+    print(f"source_active_model_health_status: {result.source_active_model_health_status}")
+    print(f"source_model_workflow_run_id: {result.source_model_workflow_run_id}")
+    print(f"source_model_weight_versioning_status: {result.source_model_weight_versioning_status}")
+    print(f"source_model_weight_versioning_health_status: {result.source_model_weight_versioning_health_status}")
+    print(f"model_weight_reference_id: {result.model_weight_reference_id}")
+    print(f"model_version_id: {result.model_version_id}")
+    print(f"parameter_version_id: {result.parameter_version_id}")
+    print(f"training_result_row_count: {result.training_result_row_count}")
+    print(f"eligible_training_result_row_count: {result.eligible_training_result_row_count}")
+    print(f"metric_evidence_names_present: {result.metric_evidence_names_present}")
+    print(f"metric_evidence_reference_count: {result.metric_evidence_reference_count}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(
+        "STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED means report-only research-governed "
+        "stock_profile phase-1 artifacts only: no active stock_profile, no buy-review, no paper "
+        "approval, no performance validation, no current-candidates, no snapshot, no signal_semantics "
+        "mutation, no promoted/production model, no active thresholds, no advisory predictions, no "
+        "active probabilities, and no trading."
+    )
+    return 0
+
+
+def _handle_stock_profile_index(args: argparse.Namespace) -> int:
+    result = build_stock_profile_index(root=args.root, output_dir=args.output_dir)
+    print(f"stock_profile_index: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(
+        "Stock profile index is report-only. STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED "
+        "means metadata, lineage, coverage, limitations, overfit, safety, and gate result artifacts only: "
+        "no active stock_profile, no real buy-review eligibility, no paper approval, no performance "
+        "validation, no current-candidates, no snapshots, no signal_semantics mutation, no promoted or "
+        "production model, no active thresholds, no advisory predictions, no active probabilities, and no trading."
+    )
+    return 0
+
+
+def _handle_stock_profile_health(args: argparse.Namespace) -> int:
+    result = check_stock_profile_health(root=args.root, output_dir=args.output_dir)
+    print(f"stock_profile_health: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Stock profile health keeps phase 1 report-only and fails if outputs imply active stock_profile, "
+        "real buy-review, paper approval, performance validation, current-candidates, snapshots, "
+        "signal_semantics mutation, promoted/production models, active thresholds, advisory predictions, "
+        "active probabilities, broker/order/message/API/cache/data side effects, or trading."
+    )
+    return 0
+
+
+def _handle_stock_profile_status(args: argparse.Namespace) -> int:
+    result = run_stock_profile_status(root=args.root, output_dir=args.output_dir)
+    print(f"stock_profile_status: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"latest_stock_profile_run_id: {result.latest_stock_profile_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"ready_for_stock_profile_phase1: {result.ready_for_stock_profile_phase1}")
+    print(f"stock_profile_phase1_executed: {result.stock_profile_phase1_executed}")
+    print(f"stock_profile_phase1_report_only_artifacts_created: {result.stock_profile_phase1_report_only_artifacts_created}")
+    print(f"stock_profile_metadata_created: {result.stock_profile_metadata_created}")
+    print(f"stock_profile_input_index_created: {result.stock_profile_input_index_created}")
+    print(f"stock_profile_lineage_matrix_created: {result.stock_profile_lineage_matrix_created}")
+    print(f"stock_profile_factor_coverage_summary_created: {result.stock_profile_factor_coverage_summary_created}")
+    print(f"stock_profile_symbol_coverage_created: {result.stock_profile_symbol_coverage_created}")
+    print(f"stock_profile_market_regime_coverage_created: {result.stock_profile_market_regime_coverage_created}")
+    print(f"stock_profile_metric_summary_created: {result.stock_profile_metric_summary_created}")
+    print(f"stock_profile_limitations_created: {result.stock_profile_limitations_created}")
+    print(f"stock_profile_overfit_warnings_created: {result.stock_profile_overfit_warnings_created}")
+    print(f"stock_profile_safety_flags_created: {result.stock_profile_safety_flags_created}")
+    print(f"source_active_model_run_id: {result.source_active_model_run_id}")
+    print(f"source_active_model_status: {result.source_active_model_status}")
+    print(f"source_active_model_health_status: {result.source_active_model_health_status}")
+    print(f"source_model_workflow_run_id: {result.source_model_workflow_run_id}")
+    print(f"source_model_weight_versioning_status: {result.source_model_weight_versioning_status}")
+    print(f"source_model_weight_versioning_health_status: {result.source_model_weight_versioning_health_status}")
+    print(f"model_weight_reference_id: {result.model_weight_reference_id}")
+    print(f"model_version_id: {result.model_version_id}")
+    print(f"parameter_version_id: {result.parameter_version_id}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"approved_for_paper: {result.approved_for_paper}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 
