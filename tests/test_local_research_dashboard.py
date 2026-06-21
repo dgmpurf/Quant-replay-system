@@ -94,6 +94,11 @@ from quant_replay_system.stock_profile import (
     run_stock_profile,
 )
 from test_stock_profile import _happy_settings as _stock_profile_happy_settings
+from quant_replay_system.paper_workflow_phase1 import (
+    PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED,
+    run_paper_workflow_phase1,
+)
+from test_paper_workflow_phase1 import _happy_settings as _paper_workflow_phase1_happy_settings
 
 
 DECISION_DATE = "2024-05-20"
@@ -4924,6 +4929,206 @@ def test_stock_profile_research_status_docs_and_source_notes_are_safe() -> None:
         ]:
             assert phrase in text
     source_text = Path("SOURCE_UPDATE_NOTES_v1_53_0.md").read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert "ChatGPT Project Source is maintained separately" in source_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_research_status_includes_paper_workflow_phase1_fields_without_paper_approval(
+    tmp_path: Path,
+) -> None:
+    created = run_paper_workflow_phase1(
+        replace(_paper_workflow_phase1_happy_settings(tmp_path), allow_paper_workflow_phase1=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "PAPER_WORKFLOW_PHASE1_STATUS"
+    ].iloc[0]
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert row["workflow_area"] == "PAPER_WORKFLOW_PHASE1"
+    assert result.paper_workflow_phase1_workflow_implemented is True
+    assert result.paper_workflow_phase1_views_implemented is True
+    assert result.latest_paper_workflow_phase1_run_id == created.paper_workflow_run_id
+    assert result.latest_paper_workflow_phase1_status == PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.latest_paper_workflow_phase1_health_status == "PASS"
+    assert result.latest_paper_workflow_phase1_workflow_stage == PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.paper_workflow_phase1_artifact_path.endswith(created.paper_workflow_run_id)
+    assert result.ready_for_paper_workflow_phase1 is True
+    assert result.paper_workflow_phase1_executed is True
+    assert result.paper_workflow_phase1_report_only_artifacts_created is True
+    assert result.paper_workflow_metadata_created is True
+    assert result.paper_workflow_input_index_created is True
+    assert result.paper_workflow_lineage_matrix_created is True
+    assert result.paper_candidate_review_context_created is True
+    assert result.paper_decision_draft_created is True
+    assert result.paper_review_queue_created is True
+    assert result.paper_workflow_limitations_created is True
+    assert result.paper_workflow_overfit_warnings_created is True
+    assert result.paper_workflow_safety_flags_created is True
+    assert result.source_stock_profile_run_id == created.source_stock_profile_run_id
+    assert result.source_stock_profile_status == "STOCK_PROFILE_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED"
+    assert result.source_stock_profile_health_status == "PASS"
+    assert result.source_active_model_run_id == created.source_active_model_run_id
+    assert result.source_active_model_status == "ACTIVE_MODEL_RESEARCH_GOVERNED_ARTIFACTS_CREATED"
+    assert result.source_active_model_health_status == "PASS"
+    assert result.source_model_workflow_run_id == created.source_model_workflow_run_id
+    assert result.source_model_weight_versioning_status == "MODEL_WEIGHT_VERSIONING_RESEARCH_ARTIFACTS_CREATED"
+    assert result.source_model_weight_versioning_health_status == "PASS"
+    assert result.model_weight_reference_id == created.model_weight_reference_id
+    assert result.model_version_id == created.model_version_id
+    assert result.parameter_version_id == created.parameter_version_id
+    assert result.approved_for_paper is False
+    assert result.approved_for_paper_created is False
+    assert result.paper_approval_created is False
+    assert result.real_buy_review_eligible is False
+    assert result.buy_review_allowed is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert result.current_candidates_run is False
+    assert result.snapshot_built is False
+    assert result.signal_semantics_changed is False
+    assert result.active_stock_profile_created is False
+    assert result.promoted_model_created is False
+    assert result.production_model_created is False
+    assert result.active_thresholds_created is False
+    assert result.advisory_predictions_created is False
+    assert result.active_probabilities_created is False
+    assert result.order_placed is False
+    assert result.broker_api_called is False
+    assert result.message_sent is False
+    assert result.llm_api_called is False
+    assert result.external_api_called is False
+    assert result.cache_mutated is False
+    assert result.data_raw_written is False
+    assert result.data_processed_written is False
+    assert result.data_cache_written is False
+    assert result.report_only is True
+    assert result.research_governed is True
+    assert result.diagnostic_output is True
+    assert result.no_live_trading is True
+    assert result.no_broker_api is True
+    assert result.no_order_placement is True
+    assert result.no_message_sent is True
+    assert metadata["latest_paper_workflow_phase1_status"] == PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert metadata["paper_workflow_phase1_report_only_artifacts_created"] is True
+    assert metadata["approved_for_paper"] is False
+    assert metadata["real_buy_review_eligible"] is False
+    assert metadata["strategy_performance_validated"] is False
+    assert metadata["trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_paper_workflow_phase1_context(
+    tmp_path: Path,
+) -> None:
+    run_paper_workflow_phase1(
+        replace(_paper_workflow_phase1_happy_settings(tmp_path), allow_paper_workflow_phase1=True)
+    )
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Paper Workflow Phase 1 is report-only "
+            "context, not APPROVED_FOR_PAPER, buy-review, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_paper_workflow_phase1_status == PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.paper_workflow_phase1_report_only_artifacts_created is True
+    assert result.approved_for_paper is False
+    assert result.approved_for_paper_created is False
+    assert result.paper_approval_created is False
+    assert result.real_buy_review_eligible is False
+    assert result.buy_review_allowed is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert result.current_candidates_run is False
+    assert result.snapshot_built is False
+    assert result.signal_semantics_changed is False
+    assert result.active_stock_profile_created is False
+    assert result.promoted_model_created is False
+    assert result.production_model_created is False
+    assert result.active_thresholds_created is False
+    assert result.advisory_predictions_created is False
+    assert result.active_probabilities_created is False
+
+
+def test_cli_research_status_prints_paper_workflow_phase1_fields(tmp_path: Path, capsys) -> None:
+    run_paper_workflow_phase1(
+        replace(_paper_workflow_phase1_happy_settings(tmp_path), allow_paper_workflow_phase1=True)
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "paper_workflow_phase1_workflow_implemented: True" in output.out
+    assert "paper_workflow_phase1_views_implemented: True" in output.out
+    assert (
+        f"latest_paper_workflow_phase1_status: {PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED}"
+        in output.out
+    )
+    assert "paper_workflow_phase1_report_only_artifacts_created: True" in output.out
+    assert "paper_workflow_metadata_created: True" in output.out
+    assert "paper_candidate_review_context_created: True" in output.out
+    assert "paper_decision_draft_created: True" in output.out
+    assert "approved_for_paper: False" in output.out
+    assert "approved_for_paper_created: False" in output.out
+    assert "paper_approval_created: False" in output.out
+    assert "real_buy_review_eligible: False" in output.out
+    assert "buy_review_allowed: False" in output.out
+    assert "strategy_performance_validated: False" in output.out
+    assert "trading_allowed: False" in output.out
+    assert "current_candidates_run: False" in output.out
+    assert "snapshot_built: False" in output.out
+    assert "signal_semantics_changed: False" in output.out
+    assert "active_stock_profile_created: False" in output.out
+    assert "promoted_model_created: False" in output.out
+    assert "production_model_created: False" in output.out
+    assert "active_thresholds_created: False" in output.out
+    assert "advisory_predictions_created: False" in output.out
+    assert "active_probabilities_created: False" in output.out
+
+
+def test_paper_workflow_phase1_research_status_docs_and_source_notes_are_safe() -> None:
+    docs = [
+        Path("README.md"),
+        Path("docs/local_research_dashboard.md"),
+        Path("docs/paper_workflow_phase1.md"),
+        Path("docs/release_checkpoint_v1.54.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_54_0.md"),
+    ]
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED" in text
+        for phrase in [
+            "not APPROVED_FOR_PAPER",
+            "not real buy-review",
+            "not strategy performance validation",
+            "not current-candidates",
+            "not snapshot",
+            "not signal_semantics",
+            "not active stock_profile",
+            "not promoted model",
+            "not production model",
+            "not active thresholds",
+            "not advisory predictions",
+            "not active probabilities",
+            "not trading",
+        ]:
+            assert phrase in text
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_54_0.md").read_text(encoding="utf-8")
     assert "docs/project_sources/ is intentionally absent from Git" in source_text
     assert "ChatGPT Project Source is maintained separately" in source_text
     assert not Path("docs/project_sources").exists()

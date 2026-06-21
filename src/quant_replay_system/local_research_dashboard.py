@@ -129,6 +129,7 @@ from quant_replay_system.training_result_status import run_training_result_statu
 from quant_replay_system.model_weight_versioning_status import run_model_weight_versioning_status
 from quant_replay_system.active_model_status import run_active_model_status
 from quant_replay_system.stock_profile_status import run_stock_profile_status
+from quant_replay_system.paper_workflow_phase1_status import run_paper_workflow_phase1_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -1523,6 +1524,47 @@ SUMMARY_COLUMNS = [
     "stock_profile_no_message_sent",
     "stock_profile_report_path",
     "stock_profile_next_action",
+    "paper_workflow_phase1_workflow_implemented",
+    "paper_workflow_phase1_views_implemented",
+    "latest_paper_workflow_phase1_run_id",
+    "latest_paper_workflow_phase1_status",
+    "latest_paper_workflow_phase1_health_status",
+    "latest_paper_workflow_phase1_workflow_stage",
+    "paper_workflow_phase1_artifact_path",
+    "ready_for_paper_workflow_phase1",
+    "paper_workflow_phase1_executed",
+    "paper_workflow_phase1_report_only_artifacts_created",
+    "paper_workflow_metadata_created",
+    "paper_workflow_input_index_created",
+    "paper_workflow_lineage_matrix_created",
+    "paper_candidate_review_context_created",
+    "paper_decision_draft_created",
+    "paper_review_queue_created",
+    "paper_workflow_limitations_created",
+    "paper_workflow_overfit_warnings_created",
+    "paper_workflow_safety_flags_created",
+    "source_stock_profile_run_id",
+    "source_stock_profile_status",
+    "source_stock_profile_health_status",
+    "source_active_model_run_id",
+    "source_active_model_status",
+    "source_active_model_health_status",
+    "source_model_workflow_run_id",
+    "source_model_weight_versioning_status",
+    "source_model_weight_versioning_health_status",
+    "model_weight_reference_id",
+    "model_version_id",
+    "parameter_version_id",
+    "approved_for_paper_created",
+    "paper_approval_created",
+    "active_stock_profile_created",
+    "promoted_model_created",
+    "production_model_created",
+    "active_thresholds_created",
+    "research_governed",
+    "diagnostic_output",
+    "paper_workflow_phase1_report_path",
+    "paper_workflow_phase1_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1911,6 +1953,7 @@ OPTIONAL_COMPONENTS = {
     "MODEL_WEIGHT_VERSIONING_STATUS",
     "ACTIVE_MODEL_STATUS",
     "STOCK_PROFILE_STATUS",
+    "PAPER_WORKFLOW_PHASE1_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -1968,6 +2011,7 @@ WORKFLOW_AREAS = {
     "MODEL_WEIGHT_VERSIONING_STATUS": "MODEL_WEIGHT_VERSIONING",
     "ACTIVE_MODEL_STATUS": "ACTIVE_MODEL",
     "STOCK_PROFILE_STATUS": "STOCK_PROFILE",
+    "PAPER_WORKFLOW_PHASE1_STATUS": "PAPER_WORKFLOW_PHASE1",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -3348,6 +3392,47 @@ class LocalResearchDashboardResult:
     stock_profile_no_message_sent: bool
     stock_profile_report_path: str
     stock_profile_next_action: str
+    paper_workflow_phase1_workflow_implemented: bool
+    paper_workflow_phase1_views_implemented: bool
+    latest_paper_workflow_phase1_run_id: str
+    latest_paper_workflow_phase1_status: str
+    latest_paper_workflow_phase1_health_status: str
+    latest_paper_workflow_phase1_workflow_stage: str
+    paper_workflow_phase1_artifact_path: str
+    ready_for_paper_workflow_phase1: bool
+    paper_workflow_phase1_executed: bool
+    paper_workflow_phase1_report_only_artifacts_created: bool
+    paper_workflow_metadata_created: bool
+    paper_workflow_input_index_created: bool
+    paper_workflow_lineage_matrix_created: bool
+    paper_candidate_review_context_created: bool
+    paper_decision_draft_created: bool
+    paper_review_queue_created: bool
+    paper_workflow_limitations_created: bool
+    paper_workflow_overfit_warnings_created: bool
+    paper_workflow_safety_flags_created: bool
+    source_stock_profile_run_id: str
+    source_stock_profile_status: str
+    source_stock_profile_health_status: str
+    source_active_model_run_id: str
+    source_active_model_status: str
+    source_active_model_health_status: str
+    source_model_workflow_run_id: str
+    source_model_weight_versioning_status: str
+    source_model_weight_versioning_health_status: str
+    model_weight_reference_id: str
+    model_version_id: str
+    parameter_version_id: str
+    approved_for_paper_created: bool
+    paper_approval_created: bool
+    active_stock_profile_created: bool
+    promoted_model_created: bool
+    production_model_created: bool
+    active_thresholds_created: bool
+    research_governed: bool
+    diagnostic_output: bool
+    paper_workflow_phase1_report_path: str
+    paper_workflow_phase1_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -3690,6 +3775,7 @@ def run_local_research_dashboard(
     model_weight_versioning_root: str | Path | None = None,
     active_model_root: str | Path | None = None,
     stock_profile_root: str | Path | None = None,
+    paper_workflow_phase1_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -3972,6 +4058,11 @@ def run_local_research_dashboard(
         Path(stock_profile_root)
         if stock_profile_root is not None
         else effective_root / "manual_diagnostics" / "stock_profile_v0_1"
+    )
+    effective_paper_workflow_phase1_root = (
+        Path(paper_workflow_phase1_root)
+        if paper_workflow_phase1_root is not None
+        else effective_root / "manual_diagnostics" / "paper_workflow_phase1_v0_1"
     )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
@@ -4315,6 +4406,7 @@ def run_local_research_dashboard(
         model_weight_versioning_root=effective_model_weight_versioning_root,
         active_model_root=effective_active_model_root,
         stock_profile_root=effective_stock_profile_root,
+        paper_workflow_phase1_root=effective_paper_workflow_phase1_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -7711,6 +7803,93 @@ def run_local_research_dashboard(
         stock_profile_no_message_sent=_bool_from_text(summary.get("stock_profile_no_message_sent")),
         stock_profile_report_path=str(summary.get("stock_profile_report_path", "")),
         stock_profile_next_action=str(summary.get("stock_profile_next_action", "")),
+        paper_workflow_phase1_workflow_implemented=_bool_from_text(
+            summary.get("paper_workflow_phase1_workflow_implemented")
+        ),
+        paper_workflow_phase1_views_implemented=_bool_from_text(
+            summary.get("paper_workflow_phase1_views_implemented")
+        ),
+        latest_paper_workflow_phase1_run_id=str(
+            summary.get("latest_paper_workflow_phase1_run_id", "")
+        ),
+        latest_paper_workflow_phase1_status=str(
+            summary.get("latest_paper_workflow_phase1_status", "MISSING")
+        ),
+        latest_paper_workflow_phase1_health_status=str(
+            summary.get("latest_paper_workflow_phase1_health_status", "")
+        ),
+        latest_paper_workflow_phase1_workflow_stage=str(
+            summary.get("latest_paper_workflow_phase1_workflow_stage", "")
+        ),
+        paper_workflow_phase1_artifact_path=str(
+            summary.get("paper_workflow_phase1_artifact_path", "")
+        ),
+        ready_for_paper_workflow_phase1=_bool_from_text(
+            summary.get("ready_for_paper_workflow_phase1")
+        ),
+        paper_workflow_phase1_executed=_bool_from_text(
+            summary.get("paper_workflow_phase1_executed")
+        ),
+        paper_workflow_phase1_report_only_artifacts_created=_bool_from_text(
+            summary.get("paper_workflow_phase1_report_only_artifacts_created")
+        ),
+        paper_workflow_metadata_created=_bool_from_text(
+            summary.get("paper_workflow_metadata_created")
+        ),
+        paper_workflow_input_index_created=_bool_from_text(
+            summary.get("paper_workflow_input_index_created")
+        ),
+        paper_workflow_lineage_matrix_created=_bool_from_text(
+            summary.get("paper_workflow_lineage_matrix_created")
+        ),
+        paper_candidate_review_context_created=_bool_from_text(
+            summary.get("paper_candidate_review_context_created")
+        ),
+        paper_decision_draft_created=_bool_from_text(summary.get("paper_decision_draft_created")),
+        paper_review_queue_created=_bool_from_text(summary.get("paper_review_queue_created")),
+        paper_workflow_limitations_created=_bool_from_text(
+            summary.get("paper_workflow_limitations_created")
+        ),
+        paper_workflow_overfit_warnings_created=_bool_from_text(
+            summary.get("paper_workflow_overfit_warnings_created")
+        ),
+        paper_workflow_safety_flags_created=_bool_from_text(
+            summary.get("paper_workflow_safety_flags_created")
+        ),
+        source_stock_profile_run_id=str(summary.get("source_stock_profile_run_id", "")),
+        source_stock_profile_status=str(summary.get("source_stock_profile_status", "")),
+        source_stock_profile_health_status=str(
+            summary.get("source_stock_profile_health_status", "")
+        ),
+        source_active_model_run_id=str(summary.get("source_active_model_run_id", "")),
+        source_active_model_status=str(summary.get("source_active_model_status", "")),
+        source_active_model_health_status=str(
+            summary.get("source_active_model_health_status", "")
+        ),
+        source_model_workflow_run_id=str(summary.get("source_model_workflow_run_id", "")),
+        source_model_weight_versioning_status=str(
+            summary.get("source_model_weight_versioning_status", "")
+        ),
+        source_model_weight_versioning_health_status=str(
+            summary.get("source_model_weight_versioning_health_status", "")
+        ),
+        model_weight_reference_id=str(summary.get("model_weight_reference_id", "")),
+        model_version_id=str(summary.get("model_version_id", "")),
+        parameter_version_id=str(summary.get("parameter_version_id", "")),
+        approved_for_paper_created=_bool_from_text(summary.get("approved_for_paper_created")),
+        paper_approval_created=_bool_from_text(summary.get("paper_approval_created")),
+        active_stock_profile_created=_bool_from_text(summary.get("active_stock_profile_created")),
+        promoted_model_created=_bool_from_text(summary.get("promoted_model_created")),
+        production_model_created=_bool_from_text(summary.get("production_model_created")),
+        active_thresholds_created=_bool_from_text(summary.get("active_thresholds_created")),
+        research_governed=_bool_from_text(summary.get("research_governed")),
+        diagnostic_output=_bool_from_text(summary.get("diagnostic_output")),
+        paper_workflow_phase1_report_path=str(
+            summary.get("paper_workflow_phase1_report_path", "")
+        ),
+        paper_workflow_phase1_next_action=str(
+            summary.get("paper_workflow_phase1_next_action", "")
+        ),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -8402,6 +8581,7 @@ def scan_local_research_workflow_artifacts(
     model_weight_versioning_root: str | Path,
     active_model_root: str | Path,
     stock_profile_root: str | Path,
+    paper_workflow_phase1_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -8476,6 +8656,7 @@ def scan_local_research_workflow_artifacts(
     model_weight_versioning_path = Path(model_weight_versioning_root)
     active_model_path = Path(active_model_root)
     stock_profile_path = Path(stock_profile_root)
+    paper_workflow_phase1_path = Path(paper_workflow_phase1_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -8572,6 +8753,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_model_weight_versioning_status(model_weight_versioning_path))
     records.extend(_scan_active_model_status(active_model_path))
     records.extend(_scan_stock_profile_status(stock_profile_path))
+    records.extend(_scan_paper_workflow_phase1_status(paper_workflow_phase1_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -19765,6 +19947,134 @@ def summarize_local_research_status(
         "stock_profile_next_action",
     ]:
         row.setdefault(default_empty_field, "")
+    paper_phase1_notes = by_component.get("PAPER_WORKFLOW_PHASE1_STATUS", {}).get("notes")
+    if _string_or_empty(paper_phase1_notes):
+        paper_phase1_note_fields = {
+            "paper_workflow_phase1_workflow_implemented": "implemented",
+            "paper_workflow_phase1_views_implemented": "views_implemented",
+            "latest_paper_workflow_phase1_health_status": "health_status",
+            "paper_workflow_phase1_artifact_path": "artifact_path",
+            "ready_for_paper_workflow_phase1": "ready_for_paper_workflow_phase1",
+            "paper_workflow_phase1_executed": "paper_workflow_phase1_executed",
+            "paper_workflow_phase1_report_only_artifacts_created": (
+                "paper_workflow_phase1_report_only_artifacts_created"
+            ),
+            "paper_workflow_metadata_created": "paper_workflow_metadata_created",
+            "paper_workflow_input_index_created": "paper_workflow_input_index_created",
+            "paper_workflow_lineage_matrix_created": "paper_workflow_lineage_matrix_created",
+            "paper_candidate_review_context_created": "paper_candidate_review_context_created",
+            "paper_decision_draft_created": "paper_decision_draft_created",
+            "paper_review_queue_created": "paper_review_queue_created",
+            "paper_workflow_limitations_created": "paper_workflow_limitations_created",
+            "paper_workflow_overfit_warnings_created": "paper_workflow_overfit_warnings_created",
+            "paper_workflow_safety_flags_created": "paper_workflow_safety_flags_created",
+            "source_stock_profile_run_id": "source_stock_profile_run_id",
+            "source_stock_profile_status": "source_stock_profile_status",
+            "source_stock_profile_health_status": "source_stock_profile_health_status",
+            "source_active_model_run_id": "source_active_model_run_id",
+            "source_active_model_status": "source_active_model_status",
+            "source_active_model_health_status": "source_active_model_health_status",
+            "source_model_workflow_run_id": "source_model_workflow_run_id",
+            "source_model_weight_versioning_status": "source_model_weight_versioning_status",
+            "source_model_weight_versioning_health_status": (
+                "source_model_weight_versioning_health_status"
+            ),
+            "model_weight_reference_id": "model_weight_reference_id",
+            "model_version_id": "model_version_id",
+            "parameter_version_id": "parameter_version_id",
+            "approved_for_paper": "approved_for_paper",
+            "approved_for_paper_created": "approved_for_paper_created",
+            "paper_approval_created": "paper_approval_created",
+            "real_buy_review_eligible": "real_buy_review_eligible",
+            "buy_review_allowed": "buy_review_allowed",
+            "strategy_performance_validated": "strategy_performance_validated",
+            "trading_allowed": "trading_allowed",
+            "current_candidates_run": "current_candidates_run",
+            "snapshot_built": "snapshot_built",
+            "signal_semantics_changed": "signal_semantics_changed",
+            "active_stock_profile_created": "active_stock_profile_created",
+            "promoted_model_created": "promoted_model_created",
+            "production_model_created": "production_model_created",
+            "active_thresholds_created": "active_thresholds_created",
+            "advisory_predictions_created": "advisory_predictions_created",
+            "active_probabilities_created": "active_probabilities_created",
+            "order_placed": "order_placed",
+            "broker_api_called": "broker_api_called",
+            "message_sent": "message_sent",
+            "llm_api_called": "llm_api_called",
+            "external_api_called": "external_api_called",
+            "cache_mutated": "cache_mutated",
+            "data_raw_written": "data_raw_written",
+            "data_processed_written": "data_processed_written",
+            "data_cache_written": "data_cache_written",
+            "report_only": "report_only",
+            "research_governed": "research_governed",
+            "diagnostic_output": "diagnostic_output",
+            "no_live_trading": "no_live_trading",
+            "no_broker_api": "no_broker_api",
+            "no_order_placement": "no_order_placement",
+            "no_message_sent": "no_message_sent",
+            "paper_workflow_phase1_report_path": "report_path",
+            "paper_workflow_phase1_next_action": "next_manual_action",
+        }
+        for summary_field, note_key in paper_phase1_note_fields.items():
+            value = _parse_note_value(paper_phase1_notes, note_key)
+            if _string_or_empty(value) != "":
+                row[summary_field] = value
+    row["latest_paper_workflow_phase1_run_id"] = _string_or_empty(
+        by_component.get("PAPER_WORKFLOW_PHASE1_STATUS", {}).get("latest_artifact_id")
+    )
+    row["latest_paper_workflow_phase1_status"] = _component_status(
+        by_component,
+        "PAPER_WORKFLOW_PHASE1_STATUS",
+    )
+    row["latest_paper_workflow_phase1_workflow_stage"] = _string_or_empty(
+        by_component.get("PAPER_WORKFLOW_PHASE1_STATUS", {}).get("stage")
+    )
+    for default_false_field in [
+        "paper_workflow_phase1_workflow_implemented",
+        "paper_workflow_phase1_views_implemented",
+        "ready_for_paper_workflow_phase1",
+        "paper_workflow_phase1_executed",
+        "paper_workflow_phase1_report_only_artifacts_created",
+        "paper_workflow_metadata_created",
+        "paper_workflow_input_index_created",
+        "paper_workflow_lineage_matrix_created",
+        "paper_candidate_review_context_created",
+        "paper_decision_draft_created",
+        "paper_review_queue_created",
+        "paper_workflow_limitations_created",
+        "paper_workflow_overfit_warnings_created",
+        "paper_workflow_safety_flags_created",
+        "approved_for_paper_created",
+        "paper_approval_created",
+        "active_stock_profile_created",
+        "promoted_model_created",
+        "production_model_created",
+        "active_thresholds_created",
+        "research_governed",
+        "diagnostic_output",
+    ]:
+        row.setdefault(default_false_field, False)
+    for default_empty_field in [
+        "latest_paper_workflow_phase1_health_status",
+        "paper_workflow_phase1_artifact_path",
+        "source_stock_profile_run_id",
+        "source_stock_profile_status",
+        "source_stock_profile_health_status",
+        "source_active_model_run_id",
+        "source_active_model_status",
+        "source_active_model_health_status",
+        "source_model_workflow_run_id",
+        "source_model_weight_versioning_status",
+        "source_model_weight_versioning_health_status",
+        "model_weight_reference_id",
+        "model_version_id",
+        "parameter_version_id",
+        "paper_workflow_phase1_report_path",
+        "paper_workflow_phase1_next_action",
+    ]:
+        row.setdefault(default_empty_field, "")
     return pd.DataFrame([row], columns=SUMMARY_COLUMNS)
 
 
@@ -22625,6 +22935,57 @@ def build_local_research_dashboard_metadata(
         "stock_profile_no_message_sent": result.stock_profile_no_message_sent,
         "stock_profile_report_path": result.stock_profile_report_path,
         "stock_profile_next_action": result.stock_profile_next_action,
+        "paper_workflow_phase1_workflow_implemented": (
+            result.paper_workflow_phase1_workflow_implemented
+        ),
+        "paper_workflow_phase1_views_implemented": result.paper_workflow_phase1_views_implemented,
+        "latest_paper_workflow_phase1_run_id": result.latest_paper_workflow_phase1_run_id,
+        "latest_paper_workflow_phase1_status": result.latest_paper_workflow_phase1_status,
+        "latest_paper_workflow_phase1_health_status": (
+            result.latest_paper_workflow_phase1_health_status
+        ),
+        "latest_paper_workflow_phase1_workflow_stage": (
+            result.latest_paper_workflow_phase1_workflow_stage
+        ),
+        "paper_workflow_phase1_artifact_path": result.paper_workflow_phase1_artifact_path,
+        "ready_for_paper_workflow_phase1": result.ready_for_paper_workflow_phase1,
+        "paper_workflow_phase1_executed": result.paper_workflow_phase1_executed,
+        "paper_workflow_phase1_report_only_artifacts_created": (
+            result.paper_workflow_phase1_report_only_artifacts_created
+        ),
+        "paper_workflow_metadata_created": result.paper_workflow_metadata_created,
+        "paper_workflow_input_index_created": result.paper_workflow_input_index_created,
+        "paper_workflow_lineage_matrix_created": result.paper_workflow_lineage_matrix_created,
+        "paper_candidate_review_context_created": result.paper_candidate_review_context_created,
+        "paper_decision_draft_created": result.paper_decision_draft_created,
+        "paper_review_queue_created": result.paper_review_queue_created,
+        "paper_workflow_limitations_created": result.paper_workflow_limitations_created,
+        "paper_workflow_overfit_warnings_created": result.paper_workflow_overfit_warnings_created,
+        "paper_workflow_safety_flags_created": result.paper_workflow_safety_flags_created,
+        "source_stock_profile_run_id": result.source_stock_profile_run_id,
+        "source_stock_profile_status": result.source_stock_profile_status,
+        "source_stock_profile_health_status": result.source_stock_profile_health_status,
+        "source_active_model_run_id": result.source_active_model_run_id,
+        "source_active_model_status": result.source_active_model_status,
+        "source_active_model_health_status": result.source_active_model_health_status,
+        "source_model_workflow_run_id": result.source_model_workflow_run_id,
+        "source_model_weight_versioning_status": result.source_model_weight_versioning_status,
+        "source_model_weight_versioning_health_status": (
+            result.source_model_weight_versioning_health_status
+        ),
+        "model_weight_reference_id": result.model_weight_reference_id,
+        "model_version_id": result.model_version_id,
+        "parameter_version_id": result.parameter_version_id,
+        "approved_for_paper_created": result.approved_for_paper_created,
+        "paper_approval_created": result.paper_approval_created,
+        "active_stock_profile_created": result.active_stock_profile_created,
+        "promoted_model_created": result.promoted_model_created,
+        "production_model_created": result.production_model_created,
+        "active_thresholds_created": result.active_thresholds_created,
+        "research_governed": result.research_governed,
+        "diagnostic_output": result.diagnostic_output,
+        "paper_workflow_phase1_report_path": result.paper_workflow_phase1_report_path,
+        "paper_workflow_phase1_next_action": result.paper_workflow_phase1_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -28072,6 +28433,121 @@ def _stock_profile_notes(summary: dict[str, Any]) -> str:
         f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
         f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
         f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"promoted_model_created={_string_or_empty(summary.get('promoted_model_created'))}; "
+        f"production_model_created={_string_or_empty(summary.get('production_model_created'))}; "
+        f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
+        f"advisory_predictions_created={_string_or_empty(summary.get('advisory_predictions_created'))}; "
+        f"active_probabilities_created={_string_or_empty(summary.get('active_probabilities_created'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"research_governed={_string_or_empty(summary.get('research_governed'))}; "
+        f"diagnostic_output={_string_or_empty(summary.get('diagnostic_output'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_paper_workflow_phase1_status(root: Path) -> list[dict[str, Any]]:
+    phase1_root = root.parent if root.name == "status" else root
+    if not phase1_root.exists():
+        return []
+    try:
+        result = run_paper_workflow_phase1_status(
+            root=phase1_root,
+            output_dir=phase1_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_paper_workflow_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = phase1_root / result.latest_paper_workflow_run_id
+    summary["artifact_path"] = str(artifact_dir)
+    summary["report_only"] = True
+    summary["research_governed"] = True
+    summary["diagnostic_output"] = True
+    return [
+        _record(
+            workflow_area="PAPER_WORKFLOW_PHASE1",
+            component="PAPER_WORKFLOW_PHASE1_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_paper_workflow_run_id,
+            report_path=summary.get("report_path", ""),
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_paper_workflow_phase1_notes(summary),
+        )
+    ]
+
+
+def _paper_workflow_phase1_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"ready_for_paper_workflow_phase1={_string_or_empty(summary.get('ready_for_paper_workflow_phase1'))}; "
+        f"paper_workflow_phase1_executed={_string_or_empty(summary.get('paper_workflow_phase1_executed'))}; "
+        "paper_workflow_phase1_report_only_artifacts_created="
+        f"{_string_or_empty(summary.get('paper_workflow_phase1_report_only_artifacts_created'))}; "
+        f"paper_workflow_metadata_created={_string_or_empty(summary.get('paper_workflow_metadata_created'))}; "
+        "paper_workflow_input_index_created="
+        f"{_string_or_empty(summary.get('paper_workflow_input_index_created'))}; "
+        "paper_workflow_lineage_matrix_created="
+        f"{_string_or_empty(summary.get('paper_workflow_lineage_matrix_created'))}; "
+        "paper_candidate_review_context_created="
+        f"{_string_or_empty(summary.get('paper_candidate_review_context_created'))}; "
+        f"paper_decision_draft_created={_string_or_empty(summary.get('paper_decision_draft_created'))}; "
+        f"paper_review_queue_created={_string_or_empty(summary.get('paper_review_queue_created'))}; "
+        "paper_workflow_limitations_created="
+        f"{_string_or_empty(summary.get('paper_workflow_limitations_created'))}; "
+        "paper_workflow_overfit_warnings_created="
+        f"{_string_or_empty(summary.get('paper_workflow_overfit_warnings_created'))}; "
+        "paper_workflow_safety_flags_created="
+        f"{_string_or_empty(summary.get('paper_workflow_safety_flags_created'))}; "
+        f"source_stock_profile_run_id={_string_or_empty(summary.get('source_stock_profile_run_id'))}; "
+        f"source_stock_profile_status={_string_or_empty(summary.get('source_stock_profile_status'))}; "
+        "source_stock_profile_health_status="
+        f"{_string_or_empty(summary.get('source_stock_profile_health_status'))}; "
+        f"source_active_model_run_id={_string_or_empty(summary.get('source_active_model_run_id'))}; "
+        f"source_active_model_status={_string_or_empty(summary.get('source_active_model_status'))}; "
+        "source_active_model_health_status="
+        f"{_string_or_empty(summary.get('source_active_model_health_status'))}; "
+        f"source_model_workflow_run_id={_string_or_empty(summary.get('source_model_workflow_run_id'))}; "
+        "source_model_weight_versioning_status="
+        f"{_string_or_empty(summary.get('source_model_weight_versioning_status'))}; "
+        "source_model_weight_versioning_health_status="
+        f"{_string_or_empty(summary.get('source_model_weight_versioning_health_status'))}; "
+        f"model_weight_reference_id={_string_or_empty(summary.get('model_weight_reference_id'))}; "
+        f"model_version_id={_string_or_empty(summary.get('model_version_id'))}; "
+        f"parameter_version_id={_string_or_empty(summary.get('parameter_version_id'))}; "
+        f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
+        f"approved_for_paper_created={_string_or_empty(summary.get('approved_for_paper_created'))}; "
+        f"paper_approval_created={_string_or_empty(summary.get('paper_approval_created'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        "strategy_performance_validated="
+        f"{_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"active_stock_profile_created={_string_or_empty(summary.get('active_stock_profile_created'))}; "
         f"promoted_model_created={_string_or_empty(summary.get('promoted_model_created'))}; "
         f"production_model_created={_string_or_empty(summary.get('production_model_created'))}; "
         f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "

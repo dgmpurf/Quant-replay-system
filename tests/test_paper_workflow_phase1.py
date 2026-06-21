@@ -626,14 +626,18 @@ def test_paper_workflow_phase1_view_cli_commands_run(tmp_path: Path) -> None:
     assert "does not create APPROVED_FOR_PAPER" in status.stdout
 
 
-def test_no_forbidden_docs_or_research_status_integration() -> None:
+def test_research_status_docs_and_view_hooks_are_present_without_project_source_duplication() -> None:
     cli_text = Path("src/quant_replay_system/cli.py").read_text(encoding="utf-8")
     assert "paper-workflow-phase1-index" in cli_text
     assert "paper-workflow-phase1-health" in cli_text
     assert "paper-workflow-phase1-status" in cli_text
-    assert "paper_workflow_phase1" not in Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
+    dashboard_text = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
+    assert "paper_workflow_phase1" in dashboard_text
+    assert "PAPER_WORKFLOW_PHASE1_STATUS" in dashboard_text
+    assert Path("docs/paper_workflow_phase1.md").exists()
+    assert Path("docs/release_checkpoint_v1.54.0.md").exists()
+    assert Path("SOURCE_UPDATE_NOTES_v1_54_0.md").exists()
     assert not Path("docs/project_sources").exists()
-    assert not Path("docs/paper_workflow_phase1.md").exists()
 
 
 def _happy_settings(tmp_path: Path) -> PaperWorkflowPhase1Settings:

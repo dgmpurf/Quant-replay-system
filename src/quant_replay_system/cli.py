@@ -18075,6 +18075,59 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"stock_profile_no_message_sent: {result.stock_profile_no_message_sent}")
     print(f"stock_profile_report_path: {result.stock_profile_report_path}")
     print(f"stock_profile_next_action: {result.stock_profile_next_action}")
+    print(f"paper_workflow_phase1_workflow_implemented: {result.paper_workflow_phase1_workflow_implemented}")
+    print(f"paper_workflow_phase1_views_implemented: {result.paper_workflow_phase1_views_implemented}")
+    print(f"latest_paper_workflow_phase1_run_id: {result.latest_paper_workflow_phase1_run_id}")
+    print(f"latest_paper_workflow_phase1_status: {result.latest_paper_workflow_phase1_status}")
+    print(
+        "latest_paper_workflow_phase1_health_status: "
+        f"{result.latest_paper_workflow_phase1_health_status}"
+    )
+    print(
+        "latest_paper_workflow_phase1_workflow_stage: "
+        f"{result.latest_paper_workflow_phase1_workflow_stage}"
+    )
+    print(f"paper_workflow_phase1_artifact_path: {result.paper_workflow_phase1_artifact_path}")
+    print(f"ready_for_paper_workflow_phase1: {result.ready_for_paper_workflow_phase1}")
+    print(f"paper_workflow_phase1_executed: {result.paper_workflow_phase1_executed}")
+    print(
+        "paper_workflow_phase1_report_only_artifacts_created: "
+        f"{result.paper_workflow_phase1_report_only_artifacts_created}"
+    )
+    print(f"paper_workflow_metadata_created: {result.paper_workflow_metadata_created}")
+    print(f"paper_workflow_input_index_created: {result.paper_workflow_input_index_created}")
+    print(f"paper_workflow_lineage_matrix_created: {result.paper_workflow_lineage_matrix_created}")
+    print(f"paper_candidate_review_context_created: {result.paper_candidate_review_context_created}")
+    print(f"paper_decision_draft_created: {result.paper_decision_draft_created}")
+    print(f"paper_review_queue_created: {result.paper_review_queue_created}")
+    print(f"paper_workflow_limitations_created: {result.paper_workflow_limitations_created}")
+    print(f"paper_workflow_overfit_warnings_created: {result.paper_workflow_overfit_warnings_created}")
+    print(f"paper_workflow_safety_flags_created: {result.paper_workflow_safety_flags_created}")
+    print(f"source_stock_profile_run_id: {result.source_stock_profile_run_id}")
+    print(f"source_stock_profile_status: {result.source_stock_profile_status}")
+    print(f"source_stock_profile_health_status: {result.source_stock_profile_health_status}")
+    print(f"source_active_model_run_id: {result.source_active_model_run_id}")
+    print(f"source_active_model_status: {result.source_active_model_status}")
+    print(f"source_active_model_health_status: {result.source_active_model_health_status}")
+    print(f"source_model_workflow_run_id: {result.source_model_workflow_run_id}")
+    print(f"source_model_weight_versioning_status: {result.source_model_weight_versioning_status}")
+    print(
+        "source_model_weight_versioning_health_status: "
+        f"{result.source_model_weight_versioning_health_status}"
+    )
+    print(f"model_weight_reference_id: {result.model_weight_reference_id}")
+    print(f"model_version_id: {result.model_version_id}")
+    print(f"parameter_version_id: {result.parameter_version_id}")
+    print(f"approved_for_paper_created: {result.approved_for_paper_created}")
+    print(f"paper_approval_created: {result.paper_approval_created}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"research_governed: {result.research_governed}")
+    print(f"diagnostic_output: {result.diagnostic_output}")
+    print(f"paper_workflow_phase1_report_path: {result.paper_workflow_phase1_report_path}")
+    print(f"paper_workflow_phase1_next_action: {result.paper_workflow_phase1_next_action}")
     print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
