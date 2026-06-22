@@ -200,9 +200,9 @@ def test_cli_no_input_and_only_core_command_registered(tmp_path: Path) -> None:
 
     cli_text = Path("src/quant_replay_system/cli.py").read_text(encoding="utf-8")
     assert "global-approved-for-paper-approval-review" in cli_text
-    assert "global-approved-for-paper-approval-review-index" not in cli_text
-    assert "global-approved-for-paper-approval-review-health" not in cli_text
-    assert "global-approved-for-paper-approval-review-status" not in cli_text
+    assert "global-approved-for-paper-approval-review-index" in cli_text
+    assert "global-approved-for-paper-approval-review-health" in cli_text
+    assert "global-approved-for-paper-approval-review-status" in cli_text
 
 
 def _happy_settings(tmp_path: Path) -> GlobalApprovedForPaperApprovalReviewSettings:
