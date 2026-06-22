@@ -366,6 +366,10 @@ from quant_replay_system.approved_for_paper_phase1 import (
     ApprovedForPaperPhase1Settings,
     run_approved_for_paper_phase1,
 )
+from quant_replay_system.global_approved_for_paper_approval_review import (
+    GlobalApprovedForPaperApprovalReviewSettings,
+    run_global_approved_for_paper_approval_review,
+)
 from quant_replay_system.approved_for_paper_phase1_index import build_approved_for_paper_phase1_index
 from quant_replay_system.approved_for_paper_phase1_health import check_approved_for_paper_phase1_health
 from quant_replay_system.approved_for_paper_phase1_status import run_approved_for_paper_phase1_status
@@ -3824,6 +3828,33 @@ def build_parser() -> argparse.ArgumentParser:
         help="Explicitly allow report-only APPROVED_FOR_PAPER Phase 1 artifacts when all gates pass",
     )
     approved_for_paper_phase1.set_defaults(handler=_handle_approved_for_paper_phase1)
+
+    global_approved_for_paper_approval_review = subparsers.add_parser(
+        "global-approved-for-paper-approval-review",
+        help="Create report-only Global APPROVED_FOR_PAPER approval-review diagnostics",
+    )
+    global_approved_for_paper_approval_review_defaults = GlobalApprovedForPaperApprovalReviewSettings()
+    for field_name in GlobalApprovedForPaperApprovalReviewSettings.__dataclass_fields__:
+        if field_name in {
+            "allow_global_approved_for_paper_approval_review",
+            "write_artifacts",
+            "research_governed",
+            "diagnostic_output",
+        }:
+            continue
+        default = getattr(global_approved_for_paper_approval_review_defaults, field_name)
+        global_approved_for_paper_approval_review.add_argument(
+            f"--{field_name.replace('_', '-')}",
+            default=str(default) if field_name == "output_dir" else None,
+        )
+    global_approved_for_paper_approval_review.add_argument(
+        "--allow-global-approved-for-paper-approval-review",
+        action="store_true",
+        help="Explicitly allow report-only Global APPROVED_FOR_PAPER approval-review artifacts when all gates pass",
+    )
+    global_approved_for_paper_approval_review.set_defaults(
+        handler=_handle_global_approved_for_paper_approval_review
+    )
 
     approved_for_paper_phase1_index = subparsers.add_parser(
         "approved-for-paper-phase1-index",
@@ -10971,6 +11002,94 @@ def _handle_approved_for_paper_phase1(args: argparse.Namespace) -> int:
         "no strategy performance validation, no current-candidates, no snapshots, no signal_semantics "
         "mutation, no active stock_profile, no promoted/production model, no active thresholds, no "
         "advisory predictions, no active probabilities, no broker/order/message/API integration, and no trading."
+    )
+    return 0
+
+
+def _handle_global_approved_for_paper_approval_review(args: argparse.Namespace) -> int:
+    path_fields = {
+        field_name: Path(getattr(args, field_name)) if getattr(args, field_name, None) else None
+        for field_name in GlobalApprovedForPaperApprovalReviewSettings.__dataclass_fields__
+        if field_name
+        not in {
+            "output_dir",
+            "allow_global_approved_for_paper_approval_review",
+            "write_artifacts",
+            "research_governed",
+            "diagnostic_output",
+        }
+    }
+    result = run_global_approved_for_paper_approval_review(
+        GlobalApprovedForPaperApprovalReviewSettings(
+            **path_fields,
+            output_dir=Path(args.output_dir),
+            allow_global_approved_for_paper_approval_review=args.allow_global_approved_for_paper_approval_review,
+        )
+    )
+    print(
+        "global_approved_for_paper_approval_review_id: "
+        f"{result.global_approved_for_paper_approval_review_id}"
+    )
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(
+        "ready_for_global_approved_for_paper_approval_review: "
+        f"{result.ready_for_global_approved_for_paper_approval_review}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_executed: "
+        f"{result.global_approved_for_paper_approval_review_executed}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_report_only_artifacts_created: "
+        f"{result.global_approved_for_paper_approval_review_report_only_artifacts_created}"
+    )
+    print(
+        "scoped_global_approved_for_paper_approval_review: "
+        f"{result.scoped_global_approved_for_paper_approval_review}"
+    )
+    print(f"global_approved_for_paper: {result.global_approved_for_paper}")
+    print(f"global_approved_for_paper_scope: {result.global_approved_for_paper_scope}")
+    print(
+        "source_approved_for_paper_phase1_run_id: "
+        f"{result.source_approved_for_paper_phase1_run_id}"
+    )
+    print(f"source_approved_for_paper_phase1_status: {result.source_approved_for_paper_phase1_status}")
+    print(
+        "source_approved_for_paper_phase1_health_status: "
+        f"{result.source_approved_for_paper_phase1_health_status}"
+    )
+    print(f"source_paper_workflow_phase1_run_id: {result.source_paper_workflow_phase1_run_id}")
+    print(f"source_model_workflow_run_id: {result.source_model_workflow_run_id}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"llm_api_called: {result.llm_api_called}")
+    print(f"external_api_called: {result.external_api_called}")
+    print(f"cache_mutated: {result.cache_mutated}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(
+        "Global APPROVED_FOR_PAPER approval review is report-only governance context: "
+        "no real buy-review eligibility, no strategy performance validation, no current-candidates, "
+        "no snapshots, no signal_semantics mutation, no active stock_profile, no promoted/production "
+        "model, no active thresholds, no advisory predictions, no active probabilities, and no "
+        "broker/order/message/API/trading."
     )
     return 0
 
