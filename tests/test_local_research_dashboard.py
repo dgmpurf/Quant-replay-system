@@ -99,6 +99,11 @@ from quant_replay_system.paper_workflow_phase1 import (
     run_paper_workflow_phase1,
 )
 from test_paper_workflow_phase1 import _happy_settings as _paper_workflow_phase1_happy_settings
+from quant_replay_system.approved_for_paper_phase1 import (
+    APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED,
+    run_approved_for_paper_phase1,
+)
+from test_approved_for_paper_phase1 import _happy_settings as _approved_for_paper_phase1_happy_settings
 
 
 DECISION_DATE = "2024-05-20"
@@ -5129,6 +5134,208 @@ def test_paper_workflow_phase1_research_status_docs_and_source_notes_are_safe() 
         ]:
             assert phrase in text
     source_text = Path("SOURCE_UPDATE_NOTES_v1_54_0.md").read_text(encoding="utf-8")
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert "ChatGPT Project Source is maintained separately" in source_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_research_status_includes_approved_for_paper_phase1_fields_without_global_approval(
+    tmp_path: Path,
+) -> None:
+    created = run_approved_for_paper_phase1(
+        replace(
+            _approved_for_paper_phase1_happy_settings(tmp_path),
+            allow_approved_for_paper_phase1=True,
+        )
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "APPROVED_FOR_PAPER_PHASE1_STATUS"
+    ].iloc[0]
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert row["workflow_area"] == "APPROVED_FOR_PAPER_PHASE1"
+    assert result.approved_for_paper_phase1_workflow_implemented is True
+    assert result.approved_for_paper_phase1_views_implemented is True
+    assert result.latest_approved_for_paper_phase1_run_id == created.approved_for_paper_run_id
+    assert result.latest_approved_for_paper_phase1_status == APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.latest_approved_for_paper_phase1_health_status == "PASS"
+    assert result.latest_approved_for_paper_phase1_workflow_stage == APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.approved_for_paper_phase1_artifact_path.endswith(created.approved_for_paper_run_id)
+    assert result.ready_for_approved_for_paper_phase1 is True
+    assert result.approved_for_paper_phase1_executed is True
+    assert result.approved_for_paper_phase1_report_only_artifacts_created is True
+    assert result.approved_for_paper_metadata_created is True
+    assert result.approved_for_paper_input_index_created is True
+    assert result.approved_for_paper_lineage_matrix_created is True
+    assert result.approved_for_paper_review_context_created is True
+    assert result.approved_for_paper_decision_draft_created is True
+    assert result.approved_for_paper_limitations_created is True
+    assert result.approved_for_paper_overfit_warnings_created is True
+    assert result.approved_for_paper_safety_flags_created is True
+    assert result.scoped_approved_for_paper_phase1 is True
+    assert result.scoped_approved_for_paper is True
+    assert result.approved_for_paper_scope == "report_only_phase1_artifact_state_only"
+    assert result.approved_for_paper_phase1_source_paper_workflow_run_id == created.source_paper_workflow_phase1_run_id
+    assert result.approved_for_paper_phase1_source_paper_workflow_status == "PAPER_WORKFLOW_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED"
+    assert result.approved_for_paper_phase1_source_paper_workflow_health_status == "PASS"
+    assert result.approved_for_paper_phase1_model_weight_reference_id == created.model_weight_reference_id
+    assert result.approved_for_paper_phase1_model_version_id == created.model_version_id
+    assert result.approved_for_paper_phase1_parameter_version_id == created.parameter_version_id
+    assert result.approved_for_paper_phase1_real_buy_review_eligible is False
+    assert result.approved_for_paper_phase1_buy_review_allowed is False
+    assert result.approved_for_paper_phase1_strategy_performance_validated is False
+    assert result.approved_for_paper_phase1_trading_allowed is False
+    assert result.approved_for_paper_phase1_current_candidates_run is False
+    assert result.approved_for_paper_phase1_snapshot_built is False
+    assert result.approved_for_paper_phase1_signal_semantics_changed is False
+    assert result.approved_for_paper_phase1_active_stock_profile_created is False
+    assert result.approved_for_paper_phase1_promoted_model_created is False
+    assert result.approved_for_paper_phase1_production_model_created is False
+    assert result.approved_for_paper_phase1_active_thresholds_created is False
+    assert result.approved_for_paper_phase1_advisory_predictions_created is False
+    assert result.approved_for_paper_phase1_active_probabilities_created is False
+    assert result.approved_for_paper_phase1_order_placed is False
+    assert result.approved_for_paper_phase1_broker_api_called is False
+    assert result.approved_for_paper_phase1_message_sent is False
+    assert result.approved_for_paper_phase1_llm_api_called is False
+    assert result.approved_for_paper_phase1_external_api_called is False
+    assert result.approved_for_paper_phase1_cache_mutated is False
+    assert result.approved_for_paper_phase1_data_raw_written is False
+    assert result.approved_for_paper_phase1_data_processed_written is False
+    assert result.approved_for_paper_phase1_data_cache_written is False
+    assert result.approved_for_paper_phase1_report_only is True
+    assert result.approved_for_paper_phase1_research_governed is True
+    assert result.approved_for_paper_phase1_diagnostic_output is True
+    assert result.approved_for_paper_phase1_no_live_trading is True
+    assert result.approved_for_paper_phase1_no_broker_api is True
+    assert result.approved_for_paper_phase1_no_order_placement is True
+    assert result.approved_for_paper_phase1_no_message_sent is True
+    assert result.approved_for_paper is False
+    assert result.real_buy_review_eligible is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert metadata["latest_approved_for_paper_phase1_status"] == APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert metadata["approved_for_paper_phase1_report_only_artifacts_created"] is True
+    assert metadata["approved_for_paper_phase1_real_buy_review_eligible"] is False
+    assert metadata["approved_for_paper_phase1_trading_allowed"] is False
+    assert metadata["approved_for_paper"] is False
+    assert metadata["real_buy_review_eligible"] is False
+    assert metadata["strategy_performance_validated"] is False
+    assert metadata["trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_approved_for_paper_phase1_context(
+    tmp_path: Path,
+) -> None:
+    run_approved_for_paper_phase1(
+        replace(
+            _approved_for_paper_phase1_happy_settings(tmp_path),
+            allow_approved_for_paper_phase1=True,
+        )
+    )
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; APPROVED_FOR_PAPER Phase 1 is scoped "
+            "report-only context, not global approval, buy-review, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_approved_for_paper_phase1_status == APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    assert result.approved_for_paper_phase1_report_only_artifacts_created is True
+    assert result.approved_for_paper is False
+    assert result.real_buy_review_eligible is False
+    assert result.buy_review_allowed is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert result.current_candidates_run is False
+    assert result.snapshot_built is False
+    assert result.signal_semantics_changed is False
+    assert result.active_stock_profile_created is False
+    assert result.promoted_model_created is False
+    assert result.production_model_created is False
+    assert result.active_thresholds_created is False
+    assert result.advisory_predictions_created is False
+    assert result.active_probabilities_created is False
+
+
+def test_cli_research_status_prints_approved_for_paper_phase1_fields(tmp_path: Path, capsys) -> None:
+    run_approved_for_paper_phase1(
+        replace(
+            _approved_for_paper_phase1_happy_settings(tmp_path),
+            allow_approved_for_paper_phase1=True,
+        )
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "approved_for_paper_phase1_workflow_implemented: True" in output.out
+    assert "approved_for_paper_phase1_views_implemented: True" in output.out
+    assert (
+        f"latest_approved_for_paper_phase1_status: {APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED}"
+        in output.out
+    )
+    assert "approved_for_paper_phase1_report_only_artifacts_created: True" in output.out
+    assert "approved_for_paper_metadata_created: True" in output.out
+    assert "approved_for_paper_review_context_created: True" in output.out
+    assert "approved_for_paper_decision_draft_created: True" in output.out
+    assert "scoped_approved_for_paper_phase1: True" in output.out
+    assert "approved_for_paper_phase1_real_buy_review_eligible: False" in output.out
+    assert "approved_for_paper_phase1_buy_review_allowed: False" in output.out
+    assert "approved_for_paper_phase1_strategy_performance_validated: False" in output.out
+    assert "approved_for_paper_phase1_trading_allowed: False" in output.out
+    assert "approved_for_paper_phase1_current_candidates_run: False" in output.out
+    assert "approved_for_paper_phase1_snapshot_built: False" in output.out
+    assert "approved_for_paper_phase1_signal_semantics_changed: False" in output.out
+    assert "approved_for_paper: False" in output.out
+    assert "real_buy_review_eligible: False" in output.out
+    assert "strategy_performance_validated: False" in output.out
+    assert "trading_allowed: False" in output.out
+
+
+def test_approved_for_paper_phase1_research_status_docs_and_source_notes_are_safe() -> None:
+    docs = [
+        Path("README.md"),
+        Path("docs/local_research_dashboard.md"),
+        Path("docs/approved_for_paper_phase1.md"),
+        Path("docs/release_checkpoint_v1.55.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_55_0.md"),
+    ]
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED" in text
+        for phrase in [
+            "not global APPROVED_FOR_PAPER",
+            "not real buy-review",
+            "not strategy performance validation",
+            "not current-candidates",
+            "not snapshot",
+            "not signal_semantics",
+            "not active stock_profile",
+            "not promoted model",
+            "not production model",
+            "not active thresholds",
+            "not advisory predictions",
+            "not active probabilities",
+            "not trading",
+        ]:
+            assert phrase in text
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_55_0.md").read_text(encoding="utf-8")
     assert "docs/project_sources/ is intentionally absent from Git" in source_text
     assert "ChatGPT Project Source is maintained separately" in source_text
     assert not Path("docs/project_sources").exists()

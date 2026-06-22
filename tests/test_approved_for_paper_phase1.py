@@ -401,13 +401,13 @@ def test_cli_no_input_and_happy_paths(tmp_path: Path) -> None:
     assert "trading_allowed: False" in allowed.stdout
 
 
-def test_approved_for_paper_phase1_still_has_no_research_status_docs_checkpoint_or_project_source() -> None:
+def test_approved_for_paper_phase1_research_status_docs_do_not_create_project_source() -> None:
     cli_text = Path("src/quant_replay_system/cli.py").read_text(encoding="utf-8")
     assert "approved-for-paper-phase1" in cli_text
-    assert "approved_for_paper_phase1" not in Path("src/quant_replay_system/local_research_dashboard.py").read_text(
+    assert "approved_for_paper_phase1" in Path("src/quant_replay_system/local_research_dashboard.py").read_text(
         encoding="utf-8"
     )
-    assert not Path("docs/release_checkpoint_v1.55.0.md").exists()
+    assert Path("docs/release_checkpoint_v1.55.0.md").exists()
     assert not Path("docs/project_sources").exists()
 
 

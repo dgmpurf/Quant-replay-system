@@ -130,6 +130,7 @@ from quant_replay_system.model_weight_versioning_status import run_model_weight_
 from quant_replay_system.active_model_status import run_active_model_status
 from quant_replay_system.stock_profile_status import run_stock_profile_status
 from quant_replay_system.paper_workflow_phase1_status import run_paper_workflow_phase1_status
+from quant_replay_system.approved_for_paper_phase1_status import run_approved_for_paper_phase1_status
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -1565,6 +1566,73 @@ SUMMARY_COLUMNS = [
     "diagnostic_output",
     "paper_workflow_phase1_report_path",
     "paper_workflow_phase1_next_action",
+    "approved_for_paper_phase1_workflow_implemented",
+    "approved_for_paper_phase1_views_implemented",
+    "latest_approved_for_paper_phase1_run_id",
+    "latest_approved_for_paper_phase1_status",
+    "latest_approved_for_paper_phase1_health_status",
+    "latest_approved_for_paper_phase1_workflow_stage",
+    "approved_for_paper_phase1_artifact_path",
+    "ready_for_approved_for_paper_phase1",
+    "approved_for_paper_phase1_executed",
+    "approved_for_paper_phase1_report_only_artifacts_created",
+    "approved_for_paper_metadata_created",
+    "approved_for_paper_input_index_created",
+    "approved_for_paper_lineage_matrix_created",
+    "approved_for_paper_review_context_created",
+    "approved_for_paper_decision_draft_created",
+    "approved_for_paper_limitations_created",
+    "approved_for_paper_overfit_warnings_created",
+    "approved_for_paper_safety_flags_created",
+    "scoped_approved_for_paper_phase1",
+    "scoped_approved_for_paper",
+    "approved_for_paper_scope",
+    "approved_for_paper_phase1_source_paper_workflow_run_id",
+    "approved_for_paper_phase1_source_paper_workflow_status",
+    "approved_for_paper_phase1_source_paper_workflow_health_status",
+    "approved_for_paper_phase1_source_stock_profile_run_id",
+    "approved_for_paper_phase1_source_stock_profile_status",
+    "approved_for_paper_phase1_source_stock_profile_health_status",
+    "approved_for_paper_phase1_source_active_model_run_id",
+    "approved_for_paper_phase1_source_active_model_status",
+    "approved_for_paper_phase1_source_active_model_health_status",
+    "approved_for_paper_phase1_source_model_workflow_run_id",
+    "approved_for_paper_phase1_source_model_weight_versioning_status",
+    "approved_for_paper_phase1_source_model_weight_versioning_health_status",
+    "approved_for_paper_phase1_model_weight_reference_id",
+    "approved_for_paper_phase1_model_version_id",
+    "approved_for_paper_phase1_parameter_version_id",
+    "approved_for_paper_phase1_real_buy_review_eligible",
+    "approved_for_paper_phase1_buy_review_allowed",
+    "approved_for_paper_phase1_strategy_performance_validated",
+    "approved_for_paper_phase1_trading_allowed",
+    "approved_for_paper_phase1_current_candidates_run",
+    "approved_for_paper_phase1_snapshot_built",
+    "approved_for_paper_phase1_signal_semantics_changed",
+    "approved_for_paper_phase1_active_stock_profile_created",
+    "approved_for_paper_phase1_promoted_model_created",
+    "approved_for_paper_phase1_production_model_created",
+    "approved_for_paper_phase1_active_thresholds_created",
+    "approved_for_paper_phase1_advisory_predictions_created",
+    "approved_for_paper_phase1_active_probabilities_created",
+    "approved_for_paper_phase1_order_placed",
+    "approved_for_paper_phase1_broker_api_called",
+    "approved_for_paper_phase1_message_sent",
+    "approved_for_paper_phase1_llm_api_called",
+    "approved_for_paper_phase1_external_api_called",
+    "approved_for_paper_phase1_cache_mutated",
+    "approved_for_paper_phase1_data_raw_written",
+    "approved_for_paper_phase1_data_processed_written",
+    "approved_for_paper_phase1_data_cache_written",
+    "approved_for_paper_phase1_report_only",
+    "approved_for_paper_phase1_research_governed",
+    "approved_for_paper_phase1_diagnostic_output",
+    "approved_for_paper_phase1_no_live_trading",
+    "approved_for_paper_phase1_no_broker_api",
+    "approved_for_paper_phase1_no_order_placement",
+    "approved_for_paper_phase1_no_message_sent",
+    "approved_for_paper_phase1_report_path",
+    "approved_for_paper_phase1_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -1954,6 +2022,7 @@ OPTIONAL_COMPONENTS = {
     "ACTIVE_MODEL_STATUS",
     "STOCK_PROFILE_STATUS",
     "PAPER_WORKFLOW_PHASE1_STATUS",
+    "APPROVED_FOR_PAPER_PHASE1_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -2012,6 +2081,7 @@ WORKFLOW_AREAS = {
     "ACTIVE_MODEL_STATUS": "ACTIVE_MODEL",
     "STOCK_PROFILE_STATUS": "STOCK_PROFILE",
     "PAPER_WORKFLOW_PHASE1_STATUS": "PAPER_WORKFLOW_PHASE1",
+    "APPROVED_FOR_PAPER_PHASE1_STATUS": "APPROVED_FOR_PAPER_PHASE1",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -3433,6 +3503,73 @@ class LocalResearchDashboardResult:
     diagnostic_output: bool
     paper_workflow_phase1_report_path: str
     paper_workflow_phase1_next_action: str
+    approved_for_paper_phase1_workflow_implemented: bool
+    approved_for_paper_phase1_views_implemented: bool
+    latest_approved_for_paper_phase1_run_id: str
+    latest_approved_for_paper_phase1_status: str
+    latest_approved_for_paper_phase1_health_status: str
+    latest_approved_for_paper_phase1_workflow_stage: str
+    approved_for_paper_phase1_artifact_path: str
+    ready_for_approved_for_paper_phase1: bool
+    approved_for_paper_phase1_executed: bool
+    approved_for_paper_phase1_report_only_artifacts_created: bool
+    approved_for_paper_metadata_created: bool
+    approved_for_paper_input_index_created: bool
+    approved_for_paper_lineage_matrix_created: bool
+    approved_for_paper_review_context_created: bool
+    approved_for_paper_decision_draft_created: bool
+    approved_for_paper_limitations_created: bool
+    approved_for_paper_overfit_warnings_created: bool
+    approved_for_paper_safety_flags_created: bool
+    scoped_approved_for_paper_phase1: bool
+    scoped_approved_for_paper: bool
+    approved_for_paper_scope: str
+    approved_for_paper_phase1_source_paper_workflow_run_id: str
+    approved_for_paper_phase1_source_paper_workflow_status: str
+    approved_for_paper_phase1_source_paper_workflow_health_status: str
+    approved_for_paper_phase1_source_stock_profile_run_id: str
+    approved_for_paper_phase1_source_stock_profile_status: str
+    approved_for_paper_phase1_source_stock_profile_health_status: str
+    approved_for_paper_phase1_source_active_model_run_id: str
+    approved_for_paper_phase1_source_active_model_status: str
+    approved_for_paper_phase1_source_active_model_health_status: str
+    approved_for_paper_phase1_source_model_workflow_run_id: str
+    approved_for_paper_phase1_source_model_weight_versioning_status: str
+    approved_for_paper_phase1_source_model_weight_versioning_health_status: str
+    approved_for_paper_phase1_model_weight_reference_id: str
+    approved_for_paper_phase1_model_version_id: str
+    approved_for_paper_phase1_parameter_version_id: str
+    approved_for_paper_phase1_real_buy_review_eligible: bool
+    approved_for_paper_phase1_buy_review_allowed: bool
+    approved_for_paper_phase1_strategy_performance_validated: bool
+    approved_for_paper_phase1_trading_allowed: bool
+    approved_for_paper_phase1_current_candidates_run: bool
+    approved_for_paper_phase1_snapshot_built: bool
+    approved_for_paper_phase1_signal_semantics_changed: bool
+    approved_for_paper_phase1_active_stock_profile_created: bool
+    approved_for_paper_phase1_promoted_model_created: bool
+    approved_for_paper_phase1_production_model_created: bool
+    approved_for_paper_phase1_active_thresholds_created: bool
+    approved_for_paper_phase1_advisory_predictions_created: bool
+    approved_for_paper_phase1_active_probabilities_created: bool
+    approved_for_paper_phase1_order_placed: bool
+    approved_for_paper_phase1_broker_api_called: bool
+    approved_for_paper_phase1_message_sent: bool
+    approved_for_paper_phase1_llm_api_called: bool
+    approved_for_paper_phase1_external_api_called: bool
+    approved_for_paper_phase1_cache_mutated: bool
+    approved_for_paper_phase1_data_raw_written: bool
+    approved_for_paper_phase1_data_processed_written: bool
+    approved_for_paper_phase1_data_cache_written: bool
+    approved_for_paper_phase1_report_only: bool
+    approved_for_paper_phase1_research_governed: bool
+    approved_for_paper_phase1_diagnostic_output: bool
+    approved_for_paper_phase1_no_live_trading: bool
+    approved_for_paper_phase1_no_broker_api: bool
+    approved_for_paper_phase1_no_order_placement: bool
+    approved_for_paper_phase1_no_message_sent: bool
+    approved_for_paper_phase1_report_path: str
+    approved_for_paper_phase1_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -3776,6 +3913,7 @@ def run_local_research_dashboard(
     active_model_root: str | Path | None = None,
     stock_profile_root: str | Path | None = None,
     paper_workflow_phase1_root: str | Path | None = None,
+    approved_for_paper_phase1_root: str | Path | None = None,
     active_replay_input_ready_root: str | Path | None = None,
     universe_profile_policy_audit_root: str | Path | None = None,
     universe_profile_split_worklist_plan_root: str | Path | None = None,
@@ -4063,6 +4201,11 @@ def run_local_research_dashboard(
         Path(paper_workflow_phase1_root)
         if paper_workflow_phase1_root is not None
         else effective_root / "manual_diagnostics" / "paper_workflow_phase1_v0_1"
+    )
+    effective_approved_for_paper_phase1_root = (
+        Path(approved_for_paper_phase1_root)
+        if approved_for_paper_phase1_root is not None
+        else effective_root / "manual_diagnostics" / "approved_for_paper_phase1_v0_1"
     )
     effective_active_replay_input_ready_root = (
         Path(active_replay_input_ready_root)
@@ -4407,6 +4550,7 @@ def run_local_research_dashboard(
         active_model_root=effective_active_model_root,
         stock_profile_root=effective_stock_profile_root,
         paper_workflow_phase1_root=effective_paper_workflow_phase1_root,
+        approved_for_paper_phase1_root=effective_approved_for_paper_phase1_root,
         active_replay_input_ready_root=effective_active_replay_input_ready_root,
         universe_profile_policy_audit_root=effective_universe_profile_policy_audit_root,
         universe_profile_split_worklist_plan_root=effective_universe_profile_split_worklist_plan_root,
@@ -7890,6 +8034,203 @@ def run_local_research_dashboard(
         paper_workflow_phase1_next_action=str(
             summary.get("paper_workflow_phase1_next_action", "")
         ),
+        approved_for_paper_phase1_workflow_implemented=_bool_from_text(
+            summary.get("approved_for_paper_phase1_workflow_implemented")
+        ),
+        approved_for_paper_phase1_views_implemented=_bool_from_text(
+            summary.get("approved_for_paper_phase1_views_implemented")
+        ),
+        latest_approved_for_paper_phase1_run_id=str(
+            summary.get("latest_approved_for_paper_phase1_run_id", "")
+        ),
+        latest_approved_for_paper_phase1_status=str(
+            summary.get("latest_approved_for_paper_phase1_status", "MISSING")
+        ),
+        latest_approved_for_paper_phase1_health_status=str(
+            summary.get("latest_approved_for_paper_phase1_health_status", "")
+        ),
+        latest_approved_for_paper_phase1_workflow_stage=str(
+            summary.get("latest_approved_for_paper_phase1_workflow_stage", "")
+        ),
+        approved_for_paper_phase1_artifact_path=str(
+            summary.get("approved_for_paper_phase1_artifact_path", "")
+        ),
+        ready_for_approved_for_paper_phase1=_bool_from_text(
+            summary.get("ready_for_approved_for_paper_phase1")
+        ),
+        approved_for_paper_phase1_executed=_bool_from_text(
+            summary.get("approved_for_paper_phase1_executed")
+        ),
+        approved_for_paper_phase1_report_only_artifacts_created=_bool_from_text(
+            summary.get("approved_for_paper_phase1_report_only_artifacts_created")
+        ),
+        approved_for_paper_metadata_created=_bool_from_text(
+            summary.get("approved_for_paper_metadata_created")
+        ),
+        approved_for_paper_input_index_created=_bool_from_text(
+            summary.get("approved_for_paper_input_index_created")
+        ),
+        approved_for_paper_lineage_matrix_created=_bool_from_text(
+            summary.get("approved_for_paper_lineage_matrix_created")
+        ),
+        approved_for_paper_review_context_created=_bool_from_text(
+            summary.get("approved_for_paper_review_context_created")
+        ),
+        approved_for_paper_decision_draft_created=_bool_from_text(
+            summary.get("approved_for_paper_decision_draft_created")
+        ),
+        approved_for_paper_limitations_created=_bool_from_text(
+            summary.get("approved_for_paper_limitations_created")
+        ),
+        approved_for_paper_overfit_warnings_created=_bool_from_text(
+            summary.get("approved_for_paper_overfit_warnings_created")
+        ),
+        approved_for_paper_safety_flags_created=_bool_from_text(
+            summary.get("approved_for_paper_safety_flags_created")
+        ),
+        scoped_approved_for_paper_phase1=_bool_from_text(
+            summary.get("scoped_approved_for_paper_phase1")
+        ),
+        scoped_approved_for_paper=_bool_from_text(summary.get("scoped_approved_for_paper")),
+        approved_for_paper_scope=str(summary.get("approved_for_paper_scope", "")),
+        approved_for_paper_phase1_source_paper_workflow_run_id=str(
+            summary.get("approved_for_paper_phase1_source_paper_workflow_run_id", "")
+        ),
+        approved_for_paper_phase1_source_paper_workflow_status=str(
+            summary.get("approved_for_paper_phase1_source_paper_workflow_status", "")
+        ),
+        approved_for_paper_phase1_source_paper_workflow_health_status=str(
+            summary.get("approved_for_paper_phase1_source_paper_workflow_health_status", "")
+        ),
+        approved_for_paper_phase1_source_stock_profile_run_id=str(
+            summary.get("approved_for_paper_phase1_source_stock_profile_run_id", "")
+        ),
+        approved_for_paper_phase1_source_stock_profile_status=str(
+            summary.get("approved_for_paper_phase1_source_stock_profile_status", "")
+        ),
+        approved_for_paper_phase1_source_stock_profile_health_status=str(
+            summary.get("approved_for_paper_phase1_source_stock_profile_health_status", "")
+        ),
+        approved_for_paper_phase1_source_active_model_run_id=str(
+            summary.get("approved_for_paper_phase1_source_active_model_run_id", "")
+        ),
+        approved_for_paper_phase1_source_active_model_status=str(
+            summary.get("approved_for_paper_phase1_source_active_model_status", "")
+        ),
+        approved_for_paper_phase1_source_active_model_health_status=str(
+            summary.get("approved_for_paper_phase1_source_active_model_health_status", "")
+        ),
+        approved_for_paper_phase1_source_model_workflow_run_id=str(
+            summary.get("approved_for_paper_phase1_source_model_workflow_run_id", "")
+        ),
+        approved_for_paper_phase1_source_model_weight_versioning_status=str(
+            summary.get("approved_for_paper_phase1_source_model_weight_versioning_status", "")
+        ),
+        approved_for_paper_phase1_source_model_weight_versioning_health_status=str(
+            summary.get("approved_for_paper_phase1_source_model_weight_versioning_health_status", "")
+        ),
+        approved_for_paper_phase1_model_weight_reference_id=str(
+            summary.get("approved_for_paper_phase1_model_weight_reference_id", "")
+        ),
+        approved_for_paper_phase1_model_version_id=str(
+            summary.get("approved_for_paper_phase1_model_version_id", "")
+        ),
+        approved_for_paper_phase1_parameter_version_id=str(
+            summary.get("approved_for_paper_phase1_parameter_version_id", "")
+        ),
+        approved_for_paper_phase1_real_buy_review_eligible=_bool_from_text(
+            summary.get("approved_for_paper_phase1_real_buy_review_eligible")
+        ),
+        approved_for_paper_phase1_buy_review_allowed=_bool_from_text(
+            summary.get("approved_for_paper_phase1_buy_review_allowed")
+        ),
+        approved_for_paper_phase1_strategy_performance_validated=_bool_from_text(
+            summary.get("approved_for_paper_phase1_strategy_performance_validated")
+        ),
+        approved_for_paper_phase1_trading_allowed=_bool_from_text(
+            summary.get("approved_for_paper_phase1_trading_allowed")
+        ),
+        approved_for_paper_phase1_current_candidates_run=_bool_from_text(
+            summary.get("approved_for_paper_phase1_current_candidates_run")
+        ),
+        approved_for_paper_phase1_snapshot_built=_bool_from_text(
+            summary.get("approved_for_paper_phase1_snapshot_built")
+        ),
+        approved_for_paper_phase1_signal_semantics_changed=_bool_from_text(
+            summary.get("approved_for_paper_phase1_signal_semantics_changed")
+        ),
+        approved_for_paper_phase1_active_stock_profile_created=_bool_from_text(
+            summary.get("approved_for_paper_phase1_active_stock_profile_created")
+        ),
+        approved_for_paper_phase1_promoted_model_created=_bool_from_text(
+            summary.get("approved_for_paper_phase1_promoted_model_created")
+        ),
+        approved_for_paper_phase1_production_model_created=_bool_from_text(
+            summary.get("approved_for_paper_phase1_production_model_created")
+        ),
+        approved_for_paper_phase1_active_thresholds_created=_bool_from_text(
+            summary.get("approved_for_paper_phase1_active_thresholds_created")
+        ),
+        approved_for_paper_phase1_advisory_predictions_created=_bool_from_text(
+            summary.get("approved_for_paper_phase1_advisory_predictions_created")
+        ),
+        approved_for_paper_phase1_active_probabilities_created=_bool_from_text(
+            summary.get("approved_for_paper_phase1_active_probabilities_created")
+        ),
+        approved_for_paper_phase1_order_placed=_bool_from_text(
+            summary.get("approved_for_paper_phase1_order_placed")
+        ),
+        approved_for_paper_phase1_broker_api_called=_bool_from_text(
+            summary.get("approved_for_paper_phase1_broker_api_called")
+        ),
+        approved_for_paper_phase1_message_sent=_bool_from_text(
+            summary.get("approved_for_paper_phase1_message_sent")
+        ),
+        approved_for_paper_phase1_llm_api_called=_bool_from_text(
+            summary.get("approved_for_paper_phase1_llm_api_called")
+        ),
+        approved_for_paper_phase1_external_api_called=_bool_from_text(
+            summary.get("approved_for_paper_phase1_external_api_called")
+        ),
+        approved_for_paper_phase1_cache_mutated=_bool_from_text(
+            summary.get("approved_for_paper_phase1_cache_mutated")
+        ),
+        approved_for_paper_phase1_data_raw_written=_bool_from_text(
+            summary.get("approved_for_paper_phase1_data_raw_written")
+        ),
+        approved_for_paper_phase1_data_processed_written=_bool_from_text(
+            summary.get("approved_for_paper_phase1_data_processed_written")
+        ),
+        approved_for_paper_phase1_data_cache_written=_bool_from_text(
+            summary.get("approved_for_paper_phase1_data_cache_written")
+        ),
+        approved_for_paper_phase1_report_only=_bool_from_text(
+            summary.get("approved_for_paper_phase1_report_only")
+        ),
+        approved_for_paper_phase1_research_governed=_bool_from_text(
+            summary.get("approved_for_paper_phase1_research_governed")
+        ),
+        approved_for_paper_phase1_diagnostic_output=_bool_from_text(
+            summary.get("approved_for_paper_phase1_diagnostic_output")
+        ),
+        approved_for_paper_phase1_no_live_trading=_bool_from_text(
+            summary.get("approved_for_paper_phase1_no_live_trading")
+        ),
+        approved_for_paper_phase1_no_broker_api=_bool_from_text(
+            summary.get("approved_for_paper_phase1_no_broker_api")
+        ),
+        approved_for_paper_phase1_no_order_placement=_bool_from_text(
+            summary.get("approved_for_paper_phase1_no_order_placement")
+        ),
+        approved_for_paper_phase1_no_message_sent=_bool_from_text(
+            summary.get("approved_for_paper_phase1_no_message_sent")
+        ),
+        approved_for_paper_phase1_report_path=str(
+            summary.get("approved_for_paper_phase1_report_path", "")
+        ),
+        approved_for_paper_phase1_next_action=str(
+            summary.get("approved_for_paper_phase1_next_action", "")
+        ),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -8582,6 +8923,7 @@ def scan_local_research_workflow_artifacts(
     active_model_root: str | Path,
     stock_profile_root: str | Path,
     paper_workflow_phase1_root: str | Path,
+    approved_for_paper_phase1_root: str | Path,
     active_replay_input_ready_root: str | Path,
     universe_profile_policy_audit_root: str | Path,
     universe_profile_split_worklist_plan_root: str | Path,
@@ -8657,6 +8999,7 @@ def scan_local_research_workflow_artifacts(
     active_model_path = Path(active_model_root)
     stock_profile_path = Path(stock_profile_root)
     paper_workflow_phase1_path = Path(paper_workflow_phase1_root)
+    approved_for_paper_phase1_path = Path(approved_for_paper_phase1_root)
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -8754,6 +9097,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_active_model_status(active_model_path))
     records.extend(_scan_stock_profile_status(stock_profile_path))
     records.extend(_scan_paper_workflow_phase1_status(paper_workflow_phase1_path))
+    records.extend(_scan_approved_for_paper_phase1_status(approved_for_paper_phase1_path))
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
     records.extend(_scan_universe_profile_split_worklist_plan_status(universe_profile_split_worklist_plan_path))
@@ -20075,6 +20419,174 @@ def summarize_local_research_status(
         "paper_workflow_phase1_next_action",
     ]:
         row.setdefault(default_empty_field, "")
+    approved_phase1_notes = by_component.get("APPROVED_FOR_PAPER_PHASE1_STATUS", {}).get("notes")
+    if _string_or_empty(approved_phase1_notes):
+        approved_phase1_note_fields = {
+            "approved_for_paper_phase1_workflow_implemented": "implemented",
+            "approved_for_paper_phase1_views_implemented": "views_implemented",
+            "latest_approved_for_paper_phase1_health_status": "health_status",
+            "approved_for_paper_phase1_artifact_path": "artifact_path",
+            "ready_for_approved_for_paper_phase1": "ready_for_approved_for_paper_phase1",
+            "approved_for_paper_phase1_executed": "approved_for_paper_phase1_executed",
+            "approved_for_paper_phase1_report_only_artifacts_created": (
+                "approved_for_paper_phase1_report_only_artifacts_created"
+            ),
+            "approved_for_paper_metadata_created": "approved_for_paper_metadata_created",
+            "approved_for_paper_input_index_created": "approved_for_paper_input_index_created",
+            "approved_for_paper_lineage_matrix_created": "approved_for_paper_lineage_matrix_created",
+            "approved_for_paper_review_context_created": "approved_for_paper_review_context_created",
+            "approved_for_paper_decision_draft_created": "approved_for_paper_decision_draft_created",
+            "approved_for_paper_limitations_created": "approved_for_paper_limitations_created",
+            "approved_for_paper_overfit_warnings_created": "approved_for_paper_overfit_warnings_created",
+            "approved_for_paper_safety_flags_created": "approved_for_paper_safety_flags_created",
+            "scoped_approved_for_paper_phase1": "scoped_approved_for_paper_phase1",
+            "scoped_approved_for_paper": "scoped_approved_for_paper",
+            "approved_for_paper_scope": "approved_for_paper_scope",
+            "approved_for_paper_phase1_source_paper_workflow_run_id": (
+                "source_paper_workflow_phase1_run_id"
+            ),
+            "approved_for_paper_phase1_source_paper_workflow_status": (
+                "source_paper_workflow_phase1_status"
+            ),
+            "approved_for_paper_phase1_source_paper_workflow_health_status": (
+                "source_paper_workflow_phase1_health_status"
+            ),
+            "approved_for_paper_phase1_source_stock_profile_run_id": "source_stock_profile_run_id",
+            "approved_for_paper_phase1_source_stock_profile_status": "source_stock_profile_status",
+            "approved_for_paper_phase1_source_stock_profile_health_status": (
+                "source_stock_profile_health_status"
+            ),
+            "approved_for_paper_phase1_source_active_model_run_id": "source_active_model_run_id",
+            "approved_for_paper_phase1_source_active_model_status": "source_active_model_status",
+            "approved_for_paper_phase1_source_active_model_health_status": (
+                "source_active_model_health_status"
+            ),
+            "approved_for_paper_phase1_source_model_workflow_run_id": "source_model_workflow_run_id",
+            "approved_for_paper_phase1_source_model_weight_versioning_status": (
+                "source_model_weight_versioning_status"
+            ),
+            "approved_for_paper_phase1_source_model_weight_versioning_health_status": (
+                "source_model_weight_versioning_health_status"
+            ),
+            "approved_for_paper_phase1_model_weight_reference_id": "model_weight_reference_id",
+            "approved_for_paper_phase1_model_version_id": "model_version_id",
+            "approved_for_paper_phase1_parameter_version_id": "parameter_version_id",
+            "approved_for_paper_phase1_real_buy_review_eligible": "real_buy_review_eligible",
+            "approved_for_paper_phase1_buy_review_allowed": "buy_review_allowed",
+            "approved_for_paper_phase1_strategy_performance_validated": "strategy_performance_validated",
+            "approved_for_paper_phase1_trading_allowed": "trading_allowed",
+            "approved_for_paper_phase1_current_candidates_run": "current_candidates_run",
+            "approved_for_paper_phase1_snapshot_built": "snapshot_built",
+            "approved_for_paper_phase1_signal_semantics_changed": "signal_semantics_changed",
+            "approved_for_paper_phase1_active_stock_profile_created": "active_stock_profile_created",
+            "approved_for_paper_phase1_promoted_model_created": "promoted_model_created",
+            "approved_for_paper_phase1_production_model_created": "production_model_created",
+            "approved_for_paper_phase1_active_thresholds_created": "active_thresholds_created",
+            "approved_for_paper_phase1_advisory_predictions_created": "advisory_predictions_created",
+            "approved_for_paper_phase1_active_probabilities_created": "active_probabilities_created",
+            "approved_for_paper_phase1_order_placed": "order_placed",
+            "approved_for_paper_phase1_broker_api_called": "broker_api_called",
+            "approved_for_paper_phase1_message_sent": "message_sent",
+            "approved_for_paper_phase1_llm_api_called": "llm_api_called",
+            "approved_for_paper_phase1_external_api_called": "external_api_called",
+            "approved_for_paper_phase1_cache_mutated": "cache_mutated",
+            "approved_for_paper_phase1_data_raw_written": "data_raw_written",
+            "approved_for_paper_phase1_data_processed_written": "data_processed_written",
+            "approved_for_paper_phase1_data_cache_written": "data_cache_written",
+            "approved_for_paper_phase1_report_only": "report_only",
+            "approved_for_paper_phase1_research_governed": "research_governed",
+            "approved_for_paper_phase1_diagnostic_output": "diagnostic_output",
+            "approved_for_paper_phase1_no_live_trading": "no_live_trading",
+            "approved_for_paper_phase1_no_broker_api": "no_broker_api",
+            "approved_for_paper_phase1_no_order_placement": "no_order_placement",
+            "approved_for_paper_phase1_no_message_sent": "no_message_sent",
+            "approved_for_paper_phase1_report_path": "report_path",
+            "approved_for_paper_phase1_next_action": "next_manual_action",
+        }
+        for summary_field, note_key in approved_phase1_note_fields.items():
+            value = _parse_note_value(approved_phase1_notes, note_key)
+            if _string_or_empty(value) != "":
+                row[summary_field] = value
+    row["latest_approved_for_paper_phase1_run_id"] = _string_or_empty(
+        by_component.get("APPROVED_FOR_PAPER_PHASE1_STATUS", {}).get("latest_artifact_id")
+    )
+    row["latest_approved_for_paper_phase1_status"] = _component_status(
+        by_component,
+        "APPROVED_FOR_PAPER_PHASE1_STATUS",
+    )
+    row["latest_approved_for_paper_phase1_workflow_stage"] = _string_or_empty(
+        by_component.get("APPROVED_FOR_PAPER_PHASE1_STATUS", {}).get("stage")
+    )
+    for default_false_field in [
+        "approved_for_paper_phase1_workflow_implemented",
+        "approved_for_paper_phase1_views_implemented",
+        "ready_for_approved_for_paper_phase1",
+        "approved_for_paper_phase1_executed",
+        "approved_for_paper_phase1_report_only_artifacts_created",
+        "approved_for_paper_metadata_created",
+        "approved_for_paper_input_index_created",
+        "approved_for_paper_lineage_matrix_created",
+        "approved_for_paper_review_context_created",
+        "approved_for_paper_decision_draft_created",
+        "approved_for_paper_limitations_created",
+        "approved_for_paper_overfit_warnings_created",
+        "approved_for_paper_safety_flags_created",
+        "scoped_approved_for_paper_phase1",
+        "scoped_approved_for_paper",
+        "approved_for_paper_phase1_real_buy_review_eligible",
+        "approved_for_paper_phase1_buy_review_allowed",
+        "approved_for_paper_phase1_strategy_performance_validated",
+        "approved_for_paper_phase1_trading_allowed",
+        "approved_for_paper_phase1_current_candidates_run",
+        "approved_for_paper_phase1_snapshot_built",
+        "approved_for_paper_phase1_signal_semantics_changed",
+        "approved_for_paper_phase1_active_stock_profile_created",
+        "approved_for_paper_phase1_promoted_model_created",
+        "approved_for_paper_phase1_production_model_created",
+        "approved_for_paper_phase1_active_thresholds_created",
+        "approved_for_paper_phase1_advisory_predictions_created",
+        "approved_for_paper_phase1_active_probabilities_created",
+        "approved_for_paper_phase1_order_placed",
+        "approved_for_paper_phase1_broker_api_called",
+        "approved_for_paper_phase1_message_sent",
+        "approved_for_paper_phase1_llm_api_called",
+        "approved_for_paper_phase1_external_api_called",
+        "approved_for_paper_phase1_cache_mutated",
+        "approved_for_paper_phase1_data_raw_written",
+        "approved_for_paper_phase1_data_processed_written",
+        "approved_for_paper_phase1_data_cache_written",
+        "approved_for_paper_phase1_report_only",
+        "approved_for_paper_phase1_research_governed",
+        "approved_for_paper_phase1_diagnostic_output",
+        "approved_for_paper_phase1_no_live_trading",
+        "approved_for_paper_phase1_no_broker_api",
+        "approved_for_paper_phase1_no_order_placement",
+        "approved_for_paper_phase1_no_message_sent",
+    ]:
+        row.setdefault(default_false_field, False)
+    for default_empty_field in [
+        "latest_approved_for_paper_phase1_health_status",
+        "approved_for_paper_phase1_artifact_path",
+        "approved_for_paper_scope",
+        "approved_for_paper_phase1_source_paper_workflow_run_id",
+        "approved_for_paper_phase1_source_paper_workflow_status",
+        "approved_for_paper_phase1_source_paper_workflow_health_status",
+        "approved_for_paper_phase1_source_stock_profile_run_id",
+        "approved_for_paper_phase1_source_stock_profile_status",
+        "approved_for_paper_phase1_source_stock_profile_health_status",
+        "approved_for_paper_phase1_source_active_model_run_id",
+        "approved_for_paper_phase1_source_active_model_status",
+        "approved_for_paper_phase1_source_active_model_health_status",
+        "approved_for_paper_phase1_source_model_workflow_run_id",
+        "approved_for_paper_phase1_source_model_weight_versioning_status",
+        "approved_for_paper_phase1_source_model_weight_versioning_health_status",
+        "approved_for_paper_phase1_model_weight_reference_id",
+        "approved_for_paper_phase1_model_version_id",
+        "approved_for_paper_phase1_parameter_version_id",
+        "approved_for_paper_phase1_report_path",
+        "approved_for_paper_phase1_next_action",
+    ]:
+        row.setdefault(default_empty_field, "")
     return pd.DataFrame([row], columns=SUMMARY_COLUMNS)
 
 
@@ -22986,6 +23498,129 @@ def build_local_research_dashboard_metadata(
         "diagnostic_output": result.diagnostic_output,
         "paper_workflow_phase1_report_path": result.paper_workflow_phase1_report_path,
         "paper_workflow_phase1_next_action": result.paper_workflow_phase1_next_action,
+        "approved_for_paper_phase1_workflow_implemented": (
+            result.approved_for_paper_phase1_workflow_implemented
+        ),
+        "approved_for_paper_phase1_views_implemented": result.approved_for_paper_phase1_views_implemented,
+        "latest_approved_for_paper_phase1_run_id": result.latest_approved_for_paper_phase1_run_id,
+        "latest_approved_for_paper_phase1_status": result.latest_approved_for_paper_phase1_status,
+        "latest_approved_for_paper_phase1_health_status": (
+            result.latest_approved_for_paper_phase1_health_status
+        ),
+        "latest_approved_for_paper_phase1_workflow_stage": (
+            result.latest_approved_for_paper_phase1_workflow_stage
+        ),
+        "approved_for_paper_phase1_artifact_path": result.approved_for_paper_phase1_artifact_path,
+        "ready_for_approved_for_paper_phase1": result.ready_for_approved_for_paper_phase1,
+        "approved_for_paper_phase1_executed": result.approved_for_paper_phase1_executed,
+        "approved_for_paper_phase1_report_only_artifacts_created": (
+            result.approved_for_paper_phase1_report_only_artifacts_created
+        ),
+        "approved_for_paper_metadata_created": result.approved_for_paper_metadata_created,
+        "approved_for_paper_input_index_created": result.approved_for_paper_input_index_created,
+        "approved_for_paper_lineage_matrix_created": result.approved_for_paper_lineage_matrix_created,
+        "approved_for_paper_review_context_created": result.approved_for_paper_review_context_created,
+        "approved_for_paper_decision_draft_created": result.approved_for_paper_decision_draft_created,
+        "approved_for_paper_limitations_created": result.approved_for_paper_limitations_created,
+        "approved_for_paper_overfit_warnings_created": result.approved_for_paper_overfit_warnings_created,
+        "approved_for_paper_safety_flags_created": result.approved_for_paper_safety_flags_created,
+        "scoped_approved_for_paper_phase1": result.scoped_approved_for_paper_phase1,
+        "scoped_approved_for_paper": result.scoped_approved_for_paper,
+        "approved_for_paper_scope": result.approved_for_paper_scope,
+        "approved_for_paper_phase1_source_paper_workflow_run_id": (
+            result.approved_for_paper_phase1_source_paper_workflow_run_id
+        ),
+        "approved_for_paper_phase1_source_paper_workflow_status": (
+            result.approved_for_paper_phase1_source_paper_workflow_status
+        ),
+        "approved_for_paper_phase1_source_paper_workflow_health_status": (
+            result.approved_for_paper_phase1_source_paper_workflow_health_status
+        ),
+        "approved_for_paper_phase1_source_stock_profile_run_id": (
+            result.approved_for_paper_phase1_source_stock_profile_run_id
+        ),
+        "approved_for_paper_phase1_source_stock_profile_status": (
+            result.approved_for_paper_phase1_source_stock_profile_status
+        ),
+        "approved_for_paper_phase1_source_stock_profile_health_status": (
+            result.approved_for_paper_phase1_source_stock_profile_health_status
+        ),
+        "approved_for_paper_phase1_source_active_model_run_id": (
+            result.approved_for_paper_phase1_source_active_model_run_id
+        ),
+        "approved_for_paper_phase1_source_active_model_status": (
+            result.approved_for_paper_phase1_source_active_model_status
+        ),
+        "approved_for_paper_phase1_source_active_model_health_status": (
+            result.approved_for_paper_phase1_source_active_model_health_status
+        ),
+        "approved_for_paper_phase1_source_model_workflow_run_id": (
+            result.approved_for_paper_phase1_source_model_workflow_run_id
+        ),
+        "approved_for_paper_phase1_source_model_weight_versioning_status": (
+            result.approved_for_paper_phase1_source_model_weight_versioning_status
+        ),
+        "approved_for_paper_phase1_source_model_weight_versioning_health_status": (
+            result.approved_for_paper_phase1_source_model_weight_versioning_health_status
+        ),
+        "approved_for_paper_phase1_model_weight_reference_id": (
+            result.approved_for_paper_phase1_model_weight_reference_id
+        ),
+        "approved_for_paper_phase1_model_version_id": result.approved_for_paper_phase1_model_version_id,
+        "approved_for_paper_phase1_parameter_version_id": result.approved_for_paper_phase1_parameter_version_id,
+        "approved_for_paper_phase1_real_buy_review_eligible": (
+            result.approved_for_paper_phase1_real_buy_review_eligible
+        ),
+        "approved_for_paper_phase1_buy_review_allowed": result.approved_for_paper_phase1_buy_review_allowed,
+        "approved_for_paper_phase1_strategy_performance_validated": (
+            result.approved_for_paper_phase1_strategy_performance_validated
+        ),
+        "approved_for_paper_phase1_trading_allowed": result.approved_for_paper_phase1_trading_allowed,
+        "approved_for_paper_phase1_current_candidates_run": (
+            result.approved_for_paper_phase1_current_candidates_run
+        ),
+        "approved_for_paper_phase1_snapshot_built": result.approved_for_paper_phase1_snapshot_built,
+        "approved_for_paper_phase1_signal_semantics_changed": (
+            result.approved_for_paper_phase1_signal_semantics_changed
+        ),
+        "approved_for_paper_phase1_active_stock_profile_created": (
+            result.approved_for_paper_phase1_active_stock_profile_created
+        ),
+        "approved_for_paper_phase1_promoted_model_created": (
+            result.approved_for_paper_phase1_promoted_model_created
+        ),
+        "approved_for_paper_phase1_production_model_created": (
+            result.approved_for_paper_phase1_production_model_created
+        ),
+        "approved_for_paper_phase1_active_thresholds_created": (
+            result.approved_for_paper_phase1_active_thresholds_created
+        ),
+        "approved_for_paper_phase1_advisory_predictions_created": (
+            result.approved_for_paper_phase1_advisory_predictions_created
+        ),
+        "approved_for_paper_phase1_active_probabilities_created": (
+            result.approved_for_paper_phase1_active_probabilities_created
+        ),
+        "approved_for_paper_phase1_order_placed": result.approved_for_paper_phase1_order_placed,
+        "approved_for_paper_phase1_broker_api_called": result.approved_for_paper_phase1_broker_api_called,
+        "approved_for_paper_phase1_message_sent": result.approved_for_paper_phase1_message_sent,
+        "approved_for_paper_phase1_llm_api_called": result.approved_for_paper_phase1_llm_api_called,
+        "approved_for_paper_phase1_external_api_called": result.approved_for_paper_phase1_external_api_called,
+        "approved_for_paper_phase1_cache_mutated": result.approved_for_paper_phase1_cache_mutated,
+        "approved_for_paper_phase1_data_raw_written": result.approved_for_paper_phase1_data_raw_written,
+        "approved_for_paper_phase1_data_processed_written": (
+            result.approved_for_paper_phase1_data_processed_written
+        ),
+        "approved_for_paper_phase1_data_cache_written": result.approved_for_paper_phase1_data_cache_written,
+        "approved_for_paper_phase1_report_only": result.approved_for_paper_phase1_report_only,
+        "approved_for_paper_phase1_research_governed": result.approved_for_paper_phase1_research_governed,
+        "approved_for_paper_phase1_diagnostic_output": result.approved_for_paper_phase1_diagnostic_output,
+        "approved_for_paper_phase1_no_live_trading": result.approved_for_paper_phase1_no_live_trading,
+        "approved_for_paper_phase1_no_broker_api": result.approved_for_paper_phase1_no_broker_api,
+        "approved_for_paper_phase1_no_order_placement": result.approved_for_paper_phase1_no_order_placement,
+        "approved_for_paper_phase1_no_message_sent": result.approved_for_paper_phase1_no_message_sent,
+        "approved_for_paper_phase1_report_path": result.approved_for_paper_phase1_report_path,
+        "approved_for_paper_phase1_next_action": result.approved_for_paper_phase1_next_action,
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
         ),
@@ -28539,6 +29174,124 @@ def _paper_workflow_phase1_notes(summary: dict[str, Any]) -> str:
         f"approved_for_paper={_string_or_empty(summary.get('approved_for_paper'))}; "
         f"approved_for_paper_created={_string_or_empty(summary.get('approved_for_paper_created'))}; "
         f"paper_approval_created={_string_or_empty(summary.get('paper_approval_created'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        "strategy_performance_validated="
+        f"{_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"active_stock_profile_created={_string_or_empty(summary.get('active_stock_profile_created'))}; "
+        f"promoted_model_created={_string_or_empty(summary.get('promoted_model_created'))}; "
+        f"production_model_created={_string_or_empty(summary.get('production_model_created'))}; "
+        f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
+        f"advisory_predictions_created={_string_or_empty(summary.get('advisory_predictions_created'))}; "
+        f"active_probabilities_created={_string_or_empty(summary.get('active_probabilities_created'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"research_governed={_string_or_empty(summary.get('research_governed'))}; "
+        f"diagnostic_output={_string_or_empty(summary.get('diagnostic_output'))}; "
+        "no_live_trading=True; "
+        "no_broker_api=True; "
+        "no_order_placement=True; "
+        "no_message_sent=True; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_approved_for_paper_phase1_status(root: Path) -> list[dict[str, Any]]:
+    approved_root = root.parent if root.name == "status" else root
+    if not approved_root.exists():
+        return []
+    try:
+        result = run_approved_for_paper_phase1_status(
+            root=approved_root,
+            output_dir=approved_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_approved_for_paper_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = approved_root / result.latest_approved_for_paper_run_id
+    summary["artifact_path"] = str(artifact_dir)
+    summary["report_only"] = True
+    summary["research_governed"] = True
+    summary["diagnostic_output"] = True
+    return [
+        _record(
+            workflow_area="APPROVED_FOR_PAPER_PHASE1",
+            component="APPROVED_FOR_PAPER_PHASE1_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_approved_for_paper_run_id,
+            report_path=summary.get("report_path", ""),
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_approved_for_paper_phase1_notes(summary),
+        )
+    ]
+
+
+def _approved_for_paper_phase1_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        "ready_for_approved_for_paper_phase1="
+        f"{_string_or_empty(summary.get('ready_for_approved_for_paper_phase1'))}; "
+        f"approved_for_paper_phase1_executed={_string_or_empty(summary.get('approved_for_paper_phase1_executed'))}; "
+        "approved_for_paper_phase1_report_only_artifacts_created="
+        f"{_string_or_empty(summary.get('approved_for_paper_phase1_report_only_artifacts_created'))}; "
+        f"approved_for_paper_metadata_created={_string_or_empty(summary.get('approved_for_paper_metadata_created'))}; "
+        f"approved_for_paper_input_index_created={_string_or_empty(summary.get('approved_for_paper_input_index_created'))}; "
+        "approved_for_paper_lineage_matrix_created="
+        f"{_string_or_empty(summary.get('approved_for_paper_lineage_matrix_created'))}; "
+        "approved_for_paper_review_context_created="
+        f"{_string_or_empty(summary.get('approved_for_paper_review_context_created'))}; "
+        f"approved_for_paper_decision_draft_created={_string_or_empty(summary.get('approved_for_paper_decision_draft_created'))}; "
+        f"approved_for_paper_limitations_created={_string_or_empty(summary.get('approved_for_paper_limitations_created'))}; "
+        "approved_for_paper_overfit_warnings_created="
+        f"{_string_or_empty(summary.get('approved_for_paper_overfit_warnings_created'))}; "
+        f"approved_for_paper_safety_flags_created={_string_or_empty(summary.get('approved_for_paper_safety_flags_created'))}; "
+        f"scoped_approved_for_paper_phase1={_string_or_empty(summary.get('scoped_approved_for_paper_phase1'))}; "
+        f"scoped_approved_for_paper={_string_or_empty(summary.get('scoped_approved_for_paper'))}; "
+        f"approved_for_paper_scope={_string_or_empty(summary.get('approved_for_paper_scope'))}; "
+        "source_paper_workflow_phase1_run_id="
+        f"{_string_or_empty(summary.get('source_paper_workflow_phase1_run_id'))}; "
+        "source_paper_workflow_phase1_status="
+        f"{_string_or_empty(summary.get('source_paper_workflow_phase1_status'))}; "
+        "source_paper_workflow_phase1_health_status="
+        f"{_string_or_empty(summary.get('source_paper_workflow_phase1_health_status'))}; "
+        f"source_stock_profile_run_id={_string_or_empty(summary.get('source_stock_profile_run_id'))}; "
+        f"source_stock_profile_status={_string_or_empty(summary.get('source_stock_profile_status'))}; "
+        "source_stock_profile_health_status="
+        f"{_string_or_empty(summary.get('source_stock_profile_health_status'))}; "
+        f"source_active_model_run_id={_string_or_empty(summary.get('source_active_model_run_id'))}; "
+        f"source_active_model_status={_string_or_empty(summary.get('source_active_model_status'))}; "
+        "source_active_model_health_status="
+        f"{_string_or_empty(summary.get('source_active_model_health_status'))}; "
+        f"source_model_workflow_run_id={_string_or_empty(summary.get('source_model_workflow_run_id'))}; "
+        "source_model_weight_versioning_status="
+        f"{_string_or_empty(summary.get('source_model_weight_versioning_status'))}; "
+        "source_model_weight_versioning_health_status="
+        f"{_string_or_empty(summary.get('source_model_weight_versioning_health_status'))}; "
+        f"model_weight_reference_id={_string_or_empty(summary.get('model_weight_reference_id'))}; "
+        f"model_version_id={_string_or_empty(summary.get('model_version_id'))}; "
+        f"parameter_version_id={_string_or_empty(summary.get('parameter_version_id'))}; "
         f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
         f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
         "strategy_performance_validated="

@@ -682,7 +682,11 @@ def test_research_status_exports_active_input_creation_fields_to_summary_metadat
     )
 
     result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
-    summary = pd.read_csv(result.artifact_paths["local_research_summary"], keep_default_na=False)
+    summary = pd.read_csv(
+        result.artifact_paths["local_research_summary"],
+        dtype={"latest_active_replay_input_creation_run_id": str},
+        keep_default_na=False,
+    )
     metadata = _read_json(result.artifact_paths["metadata"])
     row = summary.iloc[0].to_dict()
 

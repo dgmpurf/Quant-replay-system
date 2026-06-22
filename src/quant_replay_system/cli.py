@@ -18370,6 +18370,130 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"paper_workflow_phase1_report_path: {result.paper_workflow_phase1_report_path}")
     print(f"paper_workflow_phase1_next_action: {result.paper_workflow_phase1_next_action}")
     print(
+        "approved_for_paper_phase1_workflow_implemented: "
+        f"{result.approved_for_paper_phase1_workflow_implemented}"
+    )
+    print(
+        "approved_for_paper_phase1_views_implemented: "
+        f"{result.approved_for_paper_phase1_views_implemented}"
+    )
+    print(f"latest_approved_for_paper_phase1_run_id: {result.latest_approved_for_paper_phase1_run_id}")
+    print(f"latest_approved_for_paper_phase1_status: {result.latest_approved_for_paper_phase1_status}")
+    print(
+        "latest_approved_for_paper_phase1_health_status: "
+        f"{result.latest_approved_for_paper_phase1_health_status}"
+    )
+    print(
+        "latest_approved_for_paper_phase1_workflow_stage: "
+        f"{result.latest_approved_for_paper_phase1_workflow_stage}"
+    )
+    print(f"approved_for_paper_phase1_artifact_path: {result.approved_for_paper_phase1_artifact_path}")
+    print(f"ready_for_approved_for_paper_phase1: {result.ready_for_approved_for_paper_phase1}")
+    print(f"approved_for_paper_phase1_executed: {result.approved_for_paper_phase1_executed}")
+    print(
+        "approved_for_paper_phase1_report_only_artifacts_created: "
+        f"{result.approved_for_paper_phase1_report_only_artifacts_created}"
+    )
+    print(f"approved_for_paper_metadata_created: {result.approved_for_paper_metadata_created}")
+    print(f"approved_for_paper_input_index_created: {result.approved_for_paper_input_index_created}")
+    print(f"approved_for_paper_lineage_matrix_created: {result.approved_for_paper_lineage_matrix_created}")
+    print(f"approved_for_paper_review_context_created: {result.approved_for_paper_review_context_created}")
+    print(f"approved_for_paper_decision_draft_created: {result.approved_for_paper_decision_draft_created}")
+    print(f"approved_for_paper_limitations_created: {result.approved_for_paper_limitations_created}")
+    print(f"approved_for_paper_overfit_warnings_created: {result.approved_for_paper_overfit_warnings_created}")
+    print(f"approved_for_paper_safety_flags_created: {result.approved_for_paper_safety_flags_created}")
+    print(f"scoped_approved_for_paper_phase1: {result.scoped_approved_for_paper_phase1}")
+    print(f"scoped_approved_for_paper: {result.scoped_approved_for_paper}")
+    print(f"approved_for_paper_scope: {result.approved_for_paper_scope}")
+    print(
+        "approved_for_paper_phase1_source_paper_workflow_run_id: "
+        f"{result.approved_for_paper_phase1_source_paper_workflow_run_id}"
+    )
+    print(
+        "approved_for_paper_phase1_source_paper_workflow_status: "
+        f"{result.approved_for_paper_phase1_source_paper_workflow_status}"
+    )
+    print(
+        "approved_for_paper_phase1_source_paper_workflow_health_status: "
+        f"{result.approved_for_paper_phase1_source_paper_workflow_health_status}"
+    )
+    print(
+        "approved_for_paper_phase1_model_weight_reference_id: "
+        f"{result.approved_for_paper_phase1_model_weight_reference_id}"
+    )
+    print(f"approved_for_paper_phase1_model_version_id: {result.approved_for_paper_phase1_model_version_id}")
+    print(
+        "approved_for_paper_phase1_parameter_version_id: "
+        f"{result.approved_for_paper_phase1_parameter_version_id}"
+    )
+    print(
+        "approved_for_paper_phase1_real_buy_review_eligible: "
+        f"{result.approved_for_paper_phase1_real_buy_review_eligible}"
+    )
+    print(f"approved_for_paper_phase1_buy_review_allowed: {result.approved_for_paper_phase1_buy_review_allowed}")
+    print(
+        "approved_for_paper_phase1_strategy_performance_validated: "
+        f"{result.approved_for_paper_phase1_strategy_performance_validated}"
+    )
+    print(f"approved_for_paper_phase1_trading_allowed: {result.approved_for_paper_phase1_trading_allowed}")
+    print(
+        "approved_for_paper_phase1_current_candidates_run: "
+        f"{result.approved_for_paper_phase1_current_candidates_run}"
+    )
+    print(f"approved_for_paper_phase1_snapshot_built: {result.approved_for_paper_phase1_snapshot_built}")
+    print(
+        "approved_for_paper_phase1_signal_semantics_changed: "
+        f"{result.approved_for_paper_phase1_signal_semantics_changed}"
+    )
+    print(
+        "approved_for_paper_phase1_active_stock_profile_created: "
+        f"{result.approved_for_paper_phase1_active_stock_profile_created}"
+    )
+    print(
+        "approved_for_paper_phase1_promoted_model_created: "
+        f"{result.approved_for_paper_phase1_promoted_model_created}"
+    )
+    print(
+        "approved_for_paper_phase1_production_model_created: "
+        f"{result.approved_for_paper_phase1_production_model_created}"
+    )
+    print(
+        "approved_for_paper_phase1_active_thresholds_created: "
+        f"{result.approved_for_paper_phase1_active_thresholds_created}"
+    )
+    print(
+        "approved_for_paper_phase1_advisory_predictions_created: "
+        f"{result.approved_for_paper_phase1_advisory_predictions_created}"
+    )
+    print(
+        "approved_for_paper_phase1_active_probabilities_created: "
+        f"{result.approved_for_paper_phase1_active_probabilities_created}"
+    )
+    print(f"approved_for_paper_phase1_order_placed: {result.approved_for_paper_phase1_order_placed}")
+    print(f"approved_for_paper_phase1_broker_api_called: {result.approved_for_paper_phase1_broker_api_called}")
+    print(f"approved_for_paper_phase1_message_sent: {result.approved_for_paper_phase1_message_sent}")
+    print(f"approved_for_paper_phase1_llm_api_called: {result.approved_for_paper_phase1_llm_api_called}")
+    print(f"approved_for_paper_phase1_external_api_called: {result.approved_for_paper_phase1_external_api_called}")
+    print(f"approved_for_paper_phase1_cache_mutated: {result.approved_for_paper_phase1_cache_mutated}")
+    print(f"approved_for_paper_phase1_data_raw_written: {result.approved_for_paper_phase1_data_raw_written}")
+    print(
+        "approved_for_paper_phase1_data_processed_written: "
+        f"{result.approved_for_paper_phase1_data_processed_written}"
+    )
+    print(f"approved_for_paper_phase1_data_cache_written: {result.approved_for_paper_phase1_data_cache_written}")
+    print(f"approved_for_paper_phase1_report_only: {result.approved_for_paper_phase1_report_only}")
+    print(f"approved_for_paper_phase1_research_governed: {result.approved_for_paper_phase1_research_governed}")
+    print(f"approved_for_paper_phase1_diagnostic_output: {result.approved_for_paper_phase1_diagnostic_output}")
+    print(f"approved_for_paper_phase1_no_live_trading: {result.approved_for_paper_phase1_no_live_trading}")
+    print(f"approved_for_paper_phase1_no_broker_api: {result.approved_for_paper_phase1_no_broker_api}")
+    print(
+        "approved_for_paper_phase1_no_order_placement: "
+        f"{result.approved_for_paper_phase1_no_order_placement}"
+    )
+    print(f"approved_for_paper_phase1_no_message_sent: {result.approved_for_paper_phase1_no_message_sent}")
+    print(f"approved_for_paper_phase1_report_path: {result.approved_for_paper_phase1_report_path}")
+    print(f"approved_for_paper_phase1_next_action: {result.approved_for_paper_phase1_next_action}")
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

@@ -994,6 +994,14 @@ The CLI prints:
 - report path,
 - `No live trading or broker API was invoked.`
 
+## APPROVED_FOR_PAPER Phase 1 Context
+
+`research-status` includes APPROVED_FOR_PAPER Phase 1 context when `approved-for-paper-phase1-status` artifacts exist. It exposes the latest scoped phase-1 run id, status/stage, health, artifact path, source paper-workflow lineage, source stock-profile lineage, source active-model lineage, source model-weight-versioning lineage, model reference ids, report-only artifact flags, report path, next action, and safety fields.
+
+`APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED` is not global APPROVED_FOR_PAPER, not real buy-review, not strategy performance validation, not current-candidates, not snapshot, not signal_semantics, not active stock_profile, not promoted model, not production model, not active thresholds, not advisory predictions, not active probabilities, and not trading.
+
+The dashboard preserves existing paper workflow priority. A scoped APPROVED_FOR_PAPER Phase 1 row is context for future review only and does not override global approval, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:

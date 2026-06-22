@@ -309,12 +309,12 @@ def test_approved_for_paper_phase1_view_cli_commands_run(tmp_path: Path) -> None
     assert "does not create real buy-review eligibility" in status.stdout
 
 
-def test_views_are_cli_only_without_research_status_docs_or_project_source() -> None:
+def test_views_have_research_status_docs_without_project_source() -> None:
     cli_text = Path("src/quant_replay_system/cli.py").read_text(encoding="utf-8")
     assert "approved-for-paper-phase1-index" in cli_text
     assert "approved-for-paper-phase1-health" in cli_text
     assert "approved-for-paper-phase1-status" in cli_text
     dashboard_text = Path("src/quant_replay_system/local_research_dashboard.py").read_text(encoding="utf-8")
-    assert "approved_for_paper_phase1" not in dashboard_text
-    assert not Path("docs/approved_for_paper_phase1.md").exists()
+    assert "approved_for_paper_phase1" in dashboard_text
+    assert Path("docs/approved_for_paper_phase1.md").exists()
     assert not Path("docs/project_sources").exists()
