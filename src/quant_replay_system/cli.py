@@ -374,6 +374,15 @@ from quant_replay_system.operational_global_approved_for_paper import (
     OperationalGlobalApprovedForPaperSettings,
     run_operational_global_approved_for_paper,
 )
+from quant_replay_system.operational_global_approved_for_paper_health import (
+    check_operational_global_approved_for_paper_health,
+)
+from quant_replay_system.operational_global_approved_for_paper_index import (
+    build_operational_global_approved_for_paper_index,
+)
+from quant_replay_system.operational_global_approved_for_paper_status import (
+    run_operational_global_approved_for_paper_status,
+)
 from quant_replay_system.global_approved_for_paper_approval_review_health import (
     check_global_approved_for_paper_approval_review_health,
 )
@@ -3890,6 +3899,54 @@ def build_parser() -> argparse.ArgumentParser:
         help="Explicitly allow report-only Operational Global APPROVED_FOR_PAPER planning artifacts; does not grant operational approval",
     )
     operational_global_approved_for_paper.set_defaults(handler=_handle_operational_global_approved_for_paper)
+
+    operational_global_approved_for_paper_index = subparsers.add_parser(
+        "operational-global-approved-for-paper-index",
+        help="Index report-only Operational Global APPROVED_FOR_PAPER planning diagnostics",
+    )
+    operational_global_approved_for_paper_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/operational_global_approved_for_paper_v0_1",
+        help="Operational Global APPROVED_FOR_PAPER artifact root to index",
+    )
+    operational_global_approved_for_paper_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/operational_global_approved_for_paper_v0_1/index",
+        help="Directory where the index artifacts will be written",
+    )
+    operational_global_approved_for_paper_index.set_defaults(handler=_handle_operational_global_approved_for_paper_index)
+
+    operational_global_approved_for_paper_health = subparsers.add_parser(
+        "operational-global-approved-for-paper-health",
+        help="Check report-only Operational Global APPROVED_FOR_PAPER planning artifact health",
+    )
+    operational_global_approved_for_paper_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/operational_global_approved_for_paper_v0_1",
+        help="Operational Global APPROVED_FOR_PAPER artifact root to check",
+    )
+    operational_global_approved_for_paper_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/operational_global_approved_for_paper_v0_1/health",
+        help="Directory where health artifacts will be written",
+    )
+    operational_global_approved_for_paper_health.set_defaults(handler=_handle_operational_global_approved_for_paper_health)
+
+    operational_global_approved_for_paper_status = subparsers.add_parser(
+        "operational-global-approved-for-paper-status",
+        help="Summarize report-only Operational Global APPROVED_FOR_PAPER planning artifact status",
+    )
+    operational_global_approved_for_paper_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/operational_global_approved_for_paper_v0_1",
+        help="Operational Global APPROVED_FOR_PAPER artifact root to summarize",
+    )
+    operational_global_approved_for_paper_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/operational_global_approved_for_paper_v0_1/status",
+        help="Directory where status artifacts will be written",
+    )
+    operational_global_approved_for_paper_status.set_defaults(handler=_handle_operational_global_approved_for_paper_status)
 
     global_approved_for_paper_approval_review_index = subparsers.add_parser(
         "global-approved-for-paper-approval-review-index",
@@ -11243,6 +11300,98 @@ def _handle_operational_global_approved_for_paper(args: argparse.Namespace) -> i
         "active stock_profile, no promoted/production model, no active thresholds, no advisory predictions, "
         "no active probabilities, and no broker/order/message/API/trading."
     )
+    return 0
+
+
+def _handle_operational_global_approved_for_paper_index(args: argparse.Namespace) -> int:
+    result = build_operational_global_approved_for_paper_index(root=args.root, output_dir=args.output_dir)
+    print(f"operational_global_approved_for_paper_index: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_artifact_path: {result.latest_artifact_path}")
+    print(
+        "Operational Global APPROVED_FOR_PAPER index is report-only planning context: no operational "
+        "global APPROVED_FOR_PAPER grant, no real buy-review eligibility, no buy_review_allowed, no "
+        "strategy performance validation, no current-candidates, no snapshots, no signal_semantics mutation, "
+        "no active stock_profile, no promoted/production model, no active thresholds, no advisory predictions, "
+        "no active probabilities, and no broker/order/message/API/trading."
+    )
+    return 0
+
+
+def _handle_operational_global_approved_for_paper_health(args: argparse.Namespace) -> int:
+    result = check_operational_global_approved_for_paper_health(root=args.root, output_dir=args.output_dir)
+    print(f"operational_global_approved_for_paper_health: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Operational Global APPROVED_FOR_PAPER health is report-only and fails closed if artifacts imply "
+        "operational global approval, real buy-review eligibility, buy_review_allowed, strategy performance "
+        "validation, current-candidates, snapshots, signal_semantics mutation, active stock_profile, model "
+        "promotion, active thresholds, advisory predictions, active probabilities, broker/order/message/API "
+        "behavior, data/cache writes, or trading."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_operational_global_approved_for_paper_status(args: argparse.Namespace) -> int:
+    result = run_operational_global_approved_for_paper_status(root=args.root, output_dir=args.output_dir)
+    print(f"latest_operational_global_approved_for_paper_id: {result.latest_operational_global_approved_for_paper_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(
+        "ready_for_operational_global_approved_for_paper_review: "
+        f"{result.ready_for_operational_global_approved_for_paper_review}"
+    )
+    print(
+        "operational_global_approved_for_paper_executed: "
+        f"{result.operational_global_approved_for_paper_executed}"
+    )
+    print(
+        "operational_global_approved_for_paper_planning_artifacts_created: "
+        f"{result.operational_global_approved_for_paper_planning_artifacts_created}"
+    )
+    print(
+        "operational_global_approved_for_paper_granted: "
+        f"{result.operational_global_approved_for_paper_granted}"
+    )
+    print(f"global_approved_for_paper: {result.global_approved_for_paper}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"promoted_model_created: {result.promoted_model_created}")
+    print(f"production_model_created: {result.production_model_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"advisory_predictions_created: {result.advisory_predictions_created}")
+    print(f"active_probabilities_created: {result.active_probabilities_created}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"llm_api_called: {result.llm_api_called}")
+    print(f"external_api_called: {result.external_api_called}")
+    print(f"cache_mutated: {result.cache_mutated}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_action: {result.next_action}")
+    print(result.safety_statement)
     return 0
 
 
