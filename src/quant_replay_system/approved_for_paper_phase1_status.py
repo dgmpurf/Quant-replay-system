@@ -17,7 +17,7 @@ from quant_replay_system.approved_for_paper_phase1 import (
 )
 from quant_replay_system.approved_for_paper_phase1_health import check_approved_for_paper_phase1_health
 from quant_replay_system.approved_for_paper_phase1_index import DEFAULT_ROOT, build_approved_for_paper_phase1_index
-from quant_replay_system.approved_for_paper_phase1_index import _text, _to_bool, _to_int
+from quant_replay_system.approved_for_paper_phase1_index import _frame_to_markdown, _text, _to_bool, _to_int
 
 
 DEFAULT_OUTPUT_DIR = DEFAULT_ROOT / "status"
@@ -320,7 +320,7 @@ def _write(result: ApprovedForPaperPhase1StatusResult) -> None:
                 f"- parameter_version_id: {result.parameter_version_id}",
                 f"- next_action: {result.next_action}",
                 "",
-                result.summary_frame.to_markdown(index=False),
+                _frame_to_markdown(result.summary_frame),
             ]
         ),
         encoding="utf-8",

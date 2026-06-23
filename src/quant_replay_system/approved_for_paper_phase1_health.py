@@ -24,6 +24,7 @@ from quant_replay_system.approved_for_paper_phase1 import (
 from quant_replay_system.approved_for_paper_phase1_index import (
     DEFAULT_ROOT,
     SOURCE_FIELDS,
+    _frame_to_markdown,
     _read_csv,
     _read_json,
     _text,
@@ -457,7 +458,7 @@ def _write(result: ApprovedForPaperPhase1HealthResult) -> None:
                 f"- error_count: {result.error_count}",
                 f"- warning_count: {result.warning_count}",
                 "",
-                result.health_frame.to_markdown(index=False) if not result.health_frame.empty else "No issues found.",
+                _frame_to_markdown(result.health_frame) if not result.health_frame.empty else "No issues found.",
             ]
         ),
         encoding="utf-8",

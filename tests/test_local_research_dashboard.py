@@ -104,6 +104,13 @@ from quant_replay_system.approved_for_paper_phase1 import (
     run_approved_for_paper_phase1,
 )
 from test_approved_for_paper_phase1 import _happy_settings as _approved_for_paper_phase1_happy_settings
+from quant_replay_system.global_approved_for_paper_approval_review import (
+    GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_REPORT_ONLY_APPROVED,
+    run_global_approved_for_paper_approval_review,
+)
+from test_global_approved_for_paper_approval_review import (
+    _happy_settings as _global_approved_for_paper_approval_review_happy_settings,
+)
 
 
 DECISION_DATE = "2024-05-20"
@@ -5306,6 +5313,196 @@ def test_cli_research_status_prints_approved_for_paper_phase1_fields(tmp_path: P
     assert "real_buy_review_eligible: False" in output.out
     assert "strategy_performance_validated: False" in output.out
     assert "trading_allowed: False" in output.out
+
+
+def test_research_status_includes_global_approval_review_report_only_fields(
+    tmp_path: Path,
+) -> None:
+    created = run_global_approved_for_paper_approval_review(
+        replace(
+            _global_approved_for_paper_approval_review_happy_settings(tmp_path),
+            allow_global_approved_for_paper_approval_review=True,
+        )
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_STATUS"
+    ].iloc[0]
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert row["status"] == GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_REPORT_ONLY_APPROVED
+    assert row["workflow_area"] == "GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW"
+    assert result.global_approved_for_paper_approval_review_workflow_implemented is True
+    assert result.global_approved_for_paper_approval_review_views_implemented is True
+    assert (
+        result.latest_global_approved_for_paper_approval_review_id
+        == created.global_approved_for_paper_approval_review_id
+    )
+    assert (
+        result.latest_global_approved_for_paper_approval_review_status
+        == GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_REPORT_ONLY_APPROVED
+    )
+    assert result.latest_global_approved_for_paper_approval_review_health_status == "PASS"
+    assert (
+        result.latest_global_approved_for_paper_approval_review_workflow_stage
+        == GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_REPORT_ONLY_APPROVED
+    )
+    assert result.global_approved_for_paper_approval_review_artifact_path.endswith(
+        created.global_approved_for_paper_approval_review_id
+    )
+    assert result.ready_for_global_approved_for_paper_approval_review is True
+    assert result.global_approved_for_paper_approval_review_executed is True
+    assert result.global_approved_for_paper_approval_review_report_only_artifacts_created is True
+    assert result.scoped_global_approved_for_paper_approval_review is True
+    assert result.global_approved_for_paper is False
+    assert result.global_approved_for_paper_scope == "report_only_global_approval_review_only"
+    assert (
+        result.global_approved_for_paper_approval_review_source_approved_for_paper_phase1_status
+        == APPROVED_FOR_PAPER_PHASE1_REPORT_ONLY_ARTIFACTS_CREATED
+    )
+    assert result.global_approved_for_paper_approval_review_source_approved_for_paper_phase1_health_status == "PASS"
+    assert result.global_approved_for_paper_approval_review_real_buy_review_eligible is False
+    assert result.global_approved_for_paper_approval_review_buy_review_allowed is False
+    assert result.global_approved_for_paper_approval_review_strategy_performance_validated is False
+    assert result.global_approved_for_paper_approval_review_trading_allowed is False
+    assert result.global_approved_for_paper_approval_review_current_candidates_run is False
+    assert result.global_approved_for_paper_approval_review_snapshot_built is False
+    assert result.global_approved_for_paper_approval_review_signal_semantics_changed is False
+    assert result.global_approved_for_paper_approval_review_active_stock_profile_created is False
+    assert result.global_approved_for_paper_approval_review_promoted_model_created is False
+    assert result.global_approved_for_paper_approval_review_production_model_created is False
+    assert result.global_approved_for_paper_approval_review_active_thresholds_created is False
+    assert result.global_approved_for_paper_approval_review_advisory_predictions_created is False
+    assert result.global_approved_for_paper_approval_review_active_probabilities_created is False
+    assert result.global_approved_for_paper_approval_review_broker_api_called is False
+    assert result.global_approved_for_paper_approval_review_order_placed is False
+    assert result.global_approved_for_paper_approval_review_message_sent is False
+    assert result.global_approved_for_paper_approval_review_llm_api_called is False
+    assert result.global_approved_for_paper_approval_review_external_api_called is False
+    assert result.global_approved_for_paper_approval_review_cache_mutated is False
+    assert result.global_approved_for_paper_approval_review_data_raw_written is False
+    assert result.global_approved_for_paper_approval_review_data_processed_written is False
+    assert result.global_approved_for_paper_approval_review_data_cache_written is False
+    assert result.approved_for_paper is False
+    assert result.real_buy_review_eligible is False
+    assert result.buy_review_allowed is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert metadata["latest_global_approved_for_paper_approval_review_status"] == (
+        GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_REPORT_ONLY_APPROVED
+    )
+    assert metadata["global_approved_for_paper_approval_review_report_only_artifacts_created"] is True
+    assert metadata["global_approved_for_paper"] is False
+    assert metadata["global_approved_for_paper_approval_review_buy_review_allowed"] is False
+    assert metadata["global_approved_for_paper_approval_review_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_with_global_approval_review_context(
+    tmp_path: Path,
+) -> None:
+    run_global_approved_for_paper_approval_review(
+        replace(
+            _global_approved_for_paper_approval_review_happy_settings(tmp_path),
+            allow_global_approved_for_paper_approval_review=True,
+        )
+    )
+    root = _workflow_to_daily(tmp_path / "outputs" / "reports")
+    _reconciliation(root, status="PASS")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Global APPROVED_FOR_PAPER approval review "
+            "is report-only context, not buy-review, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert (
+        result.latest_global_approved_for_paper_approval_review_status
+        == GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_REPORT_ONLY_APPROVED
+    )
+    assert result.global_approved_for_paper is False
+    assert result.real_buy_review_eligible is False
+    assert result.buy_review_allowed is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+
+
+def test_cli_research_status_prints_global_approval_review_fields(tmp_path: Path, capsys) -> None:
+    run_global_approved_for_paper_approval_review(
+        replace(
+            _global_approved_for_paper_approval_review_happy_settings(tmp_path),
+            allow_global_approved_for_paper_approval_review=True,
+        )
+    )
+    root = tmp_path / "outputs" / "reports"
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "global_approved_for_paper_approval_review_workflow_implemented: True" in output.out
+    assert "global_approved_for_paper_approval_review_views_implemented: True" in output.out
+    assert (
+        "latest_global_approved_for_paper_approval_review_status: "
+        f"{GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_REPORT_ONLY_APPROVED}"
+    ) in output.out
+    assert "global_approved_for_paper_approval_review_report_only_artifacts_created: True" in output.out
+    assert "scoped_global_approved_for_paper_approval_review: True" in output.out
+    assert "global_approved_for_paper: False" in output.out
+    assert "global_approved_for_paper_approval_review_buy_review_allowed: False" in output.out
+    assert "global_approved_for_paper_approval_review_strategy_performance_validated: False" in output.out
+    assert "global_approved_for_paper_approval_review_trading_allowed: False" in output.out
+    assert "global_approved_for_paper_approval_review_current_candidates_run: False" in output.out
+    assert "global_approved_for_paper_approval_review_snapshot_built: False" in output.out
+    assert "global_approved_for_paper_approval_review_signal_semantics_changed: False" in output.out
+    assert "global_approved_for_paper_approval_review_active_stock_profile_created: False" in output.out
+    assert "global_approved_for_paper_approval_review_promoted_model_created: False" in output.out
+    assert "global_approved_for_paper_approval_review_production_model_created: False" in output.out
+    assert "global_approved_for_paper_approval_review_active_thresholds_created: False" in output.out
+    assert "global_approved_for_paper_approval_review_advisory_predictions_created: False" in output.out
+    assert "global_approved_for_paper_approval_review_active_probabilities_created: False" in output.out
+    assert "approved_for_paper: False" in output.out
+    assert "real_buy_review_eligible: False" in output.out
+    assert "buy_review_allowed: False" in output.out
+    assert "strategy_performance_validated: False" in output.out
+    assert "trading_allowed: False" in output.out
+
+
+def test_global_approval_review_research_status_docs_and_source_notes_are_safe() -> None:
+    docs = [
+        Path("docs/global_approved_for_paper_approval_review.md"),
+        Path("docs/release_checkpoint_v1.56.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_56_0.md"),
+    ]
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_REPORT_ONLY_APPROVED" in text
+        for phrase in [
+            "not real buy-review eligibility",
+            "does not set buy_review_allowed",
+            "not strategy performance validation",
+            "does not authorize current-candidates",
+            "does not authorize snapshots",
+            "does not authorize signal_semantics mutation",
+            "does not authorize active stock_profile",
+            "does not authorize promoted/production models",
+            "does not authorize active thresholds",
+            "does not authorize advisory predictions/probabilities",
+            "does not authorize broker/order/message/API/trading",
+        ]:
+            assert phrase in text, f"{path}: {phrase}"
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_56_0.md").read_text(encoding="utf-8")
+    assert "do not include src/ or tests/ in ChatGPT Project Source upload lists" in source_text
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
 
 
 def test_approved_for_paper_phase1_research_status_docs_and_source_notes_are_safe() -> None:

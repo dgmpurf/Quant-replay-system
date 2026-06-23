@@ -20,6 +20,7 @@ from quant_replay_system.global_approved_for_paper_approval_review_health import
 )
 from quant_replay_system.global_approved_for_paper_approval_review_index import (
     DEFAULT_ROOT,
+    _frame_to_markdown,
     _text,
     _to_bool,
     _to_int,
@@ -266,12 +267,12 @@ def _write(result: GlobalApprovedForPaperApprovalReviewStatusResult) -> None:
                 f"- status: {result.status}",
                 f"- health_status: {result.health_status}",
                 f"- workflow_stage: {result.workflow_stage}",
-                "f- global_approved_for_paper_approval_review_report_only_artifacts_created: "
+                "- global_approved_for_paper_approval_review_report_only_artifacts_created: "
                 f"{result.global_approved_for_paper_approval_review_report_only_artifacts_created}",
                 f"- global_approved_for_paper: {result.global_approved_for_paper}",
                 f"- next_action: {result.next_action}",
                 "",
-                result.summary_frame.to_markdown(index=False),
+                _frame_to_markdown(result.summary_frame),
             ]
         ),
         encoding="utf-8",

@@ -190,7 +190,7 @@ def write_approved_for_paper_phase1_index(result: ApprovedForPaperPhase1IndexRes
                 "",
                 f"- artifact_count: {result.artifact_count}",
                 "",
-                result.index_frame.to_markdown(index=False)
+                _frame_to_markdown(result.index_frame)
                 if not result.index_frame.empty
                 else "No APPROVED_FOR_PAPER phase 1 artifacts found.",
             ]
@@ -220,6 +220,25 @@ def _scan_rows(root: Path) -> tuple[list[dict[str, Any]], list[str]]:
         if _text(metadata.get("approved_for_paper_run_id")):
             rows.append(_row_from_metadata(artifact_dir, metadata_path, metadata))
     return rows, warnings
+
+
+def _frame_to_markdown(frame: pd.DataFrame) -> str:
+    if frame.empty:
+        return ""
+    text_frame = frame.astype(object).where(pd.notna(frame), "").astype(str)
+    columns = list(text_frame.columns)
+    header = "| " + " | ".join(columns) + " |"
+    separator = "| " + " | ".join("---" for _ in columns) + " |"
+    rows = []
+    for _, row in text_frame.iterrows():
+        values = [_markdown_cell(row.get(column, "")) for column in columns]
+        rows.append("| " + " | ".join(values) + " |")
+    return "\n".join([header, separator, *rows])
+
+
+def _markdown_cell(value: Any) -> str:
+    text = _text(value).replace("\r", " ").replace("\n", " ")
+    return text.replace("|", "\\|")
 
 
 def _row_from_metadata(artifact_dir: Path, metadata_path: Path, metadata: dict[str, Any]) -> dict[str, Any]:

@@ -18791,6 +18791,176 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"approved_for_paper_phase1_report_path: {result.approved_for_paper_phase1_report_path}")
     print(f"approved_for_paper_phase1_next_action: {result.approved_for_paper_phase1_next_action}")
     print(
+        "global_approved_for_paper_approval_review_workflow_implemented: "
+        f"{result.global_approved_for_paper_approval_review_workflow_implemented}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_views_implemented: "
+        f"{result.global_approved_for_paper_approval_review_views_implemented}"
+    )
+    print(
+        "latest_global_approved_for_paper_approval_review_id: "
+        f"{result.latest_global_approved_for_paper_approval_review_id}"
+    )
+    print(
+        "latest_global_approved_for_paper_approval_review_status: "
+        f"{result.latest_global_approved_for_paper_approval_review_status}"
+    )
+    print(
+        "latest_global_approved_for_paper_approval_review_health_status: "
+        f"{result.latest_global_approved_for_paper_approval_review_health_status}"
+    )
+    print(
+        "latest_global_approved_for_paper_approval_review_workflow_stage: "
+        f"{result.latest_global_approved_for_paper_approval_review_workflow_stage}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_artifact_path: "
+        f"{result.global_approved_for_paper_approval_review_artifact_path}"
+    )
+    print(
+        "ready_for_global_approved_for_paper_approval_review: "
+        f"{result.ready_for_global_approved_for_paper_approval_review}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_executed: "
+        f"{result.global_approved_for_paper_approval_review_executed}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_report_only_artifacts_created: "
+        f"{result.global_approved_for_paper_approval_review_report_only_artifacts_created}"
+    )
+    print(
+        "scoped_global_approved_for_paper_approval_review: "
+        f"{result.scoped_global_approved_for_paper_approval_review}"
+    )
+    print(f"global_approved_for_paper: {result.global_approved_for_paper}")
+    print(f"global_approved_for_paper_scope: {result.global_approved_for_paper_scope}")
+    print(
+        "global_approved_for_paper_approval_review_source_approved_for_paper_phase1_run_id: "
+        f"{result.global_approved_for_paper_approval_review_source_approved_for_paper_phase1_run_id}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_source_approved_for_paper_phase1_status: "
+        f"{result.global_approved_for_paper_approval_review_source_approved_for_paper_phase1_status}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_source_approved_for_paper_phase1_health_status: "
+        f"{result.global_approved_for_paper_approval_review_source_approved_for_paper_phase1_health_status}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_source_paper_workflow_phase1_run_id: "
+        f"{result.global_approved_for_paper_approval_review_source_paper_workflow_phase1_run_id}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_source_model_workflow_run_id: "
+        f"{result.global_approved_for_paper_approval_review_source_model_workflow_run_id}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_real_buy_review_eligible: "
+        f"{result.global_approved_for_paper_approval_review_real_buy_review_eligible}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_buy_review_allowed: "
+        f"{result.global_approved_for_paper_approval_review_buy_review_allowed}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_strategy_performance_validated: "
+        f"{result.global_approved_for_paper_approval_review_strategy_performance_validated}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_trading_allowed: "
+        f"{result.global_approved_for_paper_approval_review_trading_allowed}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_current_candidates_run: "
+        f"{result.global_approved_for_paper_approval_review_current_candidates_run}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_snapshot_built: "
+        f"{result.global_approved_for_paper_approval_review_snapshot_built}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_signal_semantics_changed: "
+        f"{result.global_approved_for_paper_approval_review_signal_semantics_changed}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_active_stock_profile_created: "
+        f"{result.global_approved_for_paper_approval_review_active_stock_profile_created}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_promoted_model_created: "
+        f"{result.global_approved_for_paper_approval_review_promoted_model_created}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_production_model_created: "
+        f"{result.global_approved_for_paper_approval_review_production_model_created}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_active_thresholds_created: "
+        f"{result.global_approved_for_paper_approval_review_active_thresholds_created}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_advisory_predictions_created: "
+        f"{result.global_approved_for_paper_approval_review_advisory_predictions_created}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_active_probabilities_created: "
+        f"{result.global_approved_for_paper_approval_review_active_probabilities_created}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_broker_api_called: "
+        f"{result.global_approved_for_paper_approval_review_broker_api_called}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_order_placed: "
+        f"{result.global_approved_for_paper_approval_review_order_placed}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_message_sent: "
+        f"{result.global_approved_for_paper_approval_review_message_sent}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_llm_api_called: "
+        f"{result.global_approved_for_paper_approval_review_llm_api_called}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_external_api_called: "
+        f"{result.global_approved_for_paper_approval_review_external_api_called}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_cache_mutated: "
+        f"{result.global_approved_for_paper_approval_review_cache_mutated}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_data_raw_written: "
+        f"{result.global_approved_for_paper_approval_review_data_raw_written}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_data_processed_written: "
+        f"{result.global_approved_for_paper_approval_review_data_processed_written}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_data_cache_written: "
+        f"{result.global_approved_for_paper_approval_review_data_cache_written}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_blocker_count: "
+        f"{result.global_approved_for_paper_approval_review_blocker_count}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_warning_count: "
+        f"{result.global_approved_for_paper_approval_review_warning_count}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_report_path: "
+        f"{result.global_approved_for_paper_approval_review_report_path}"
+    )
+    print(
+        "global_approved_for_paper_approval_review_next_action: "
+        f"{result.global_approved_for_paper_approval_review_next_action}"
+    )
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

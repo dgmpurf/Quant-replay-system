@@ -9,7 +9,7 @@ description = "Point-in-time historical replay quant research system for China A
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "pandas>=1.5",
+  "pandas>=1.5,<3",
   "numpy>=1.23",
   "pydantic>=1.10",
   "PyYAML>=6.0",
