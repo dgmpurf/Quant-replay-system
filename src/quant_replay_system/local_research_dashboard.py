@@ -134,6 +134,9 @@ from quant_replay_system.approved_for_paper_phase1_status import run_approved_fo
 from quant_replay_system.global_approved_for_paper_approval_review_status import (
     run_global_approved_for_paper_approval_review_status,
 )
+from quant_replay_system.operational_global_approved_for_paper_status import (
+    run_operational_global_approved_for_paper_status,
+)
 from quant_replay_system.active_replay_input_ready_status import (
     run_active_replay_input_ready_status,
 )
@@ -1680,6 +1683,47 @@ SUMMARY_COLUMNS = [
     "global_approved_for_paper_approval_review_warning_count",
     "global_approved_for_paper_approval_review_report_path",
     "global_approved_for_paper_approval_review_next_action",
+    "operational_global_approved_for_paper_workflow_implemented",
+    "operational_global_approved_for_paper_views_implemented",
+    "latest_operational_global_approved_for_paper_id",
+    "latest_operational_global_approved_for_paper_status",
+    "latest_operational_global_approved_for_paper_health_status",
+    "latest_operational_global_approved_for_paper_workflow_stage",
+    "operational_global_approved_for_paper_artifact_path",
+    "operational_global_approved_for_paper_context_visible",
+    "ready_for_operational_global_approved_for_paper_review",
+    "operational_global_approved_for_paper_executed",
+    "operational_global_approved_for_paper_planning_artifacts_created",
+    "operational_global_approved_for_paper_granted",
+    "operational_global_approved_for_paper_scope",
+    "operational_global_approved_for_paper_approval_expiry",
+    "operational_global_approved_for_paper_revocation_path",
+    "operational_global_approved_for_paper_real_buy_review_eligible",
+    "operational_global_approved_for_paper_buy_review_allowed",
+    "operational_global_approved_for_paper_strategy_performance_validated",
+    "operational_global_approved_for_paper_trading_allowed",
+    "operational_global_approved_for_paper_current_candidates_run",
+    "operational_global_approved_for_paper_snapshot_built",
+    "operational_global_approved_for_paper_signal_semantics_changed",
+    "operational_global_approved_for_paper_active_stock_profile_created",
+    "operational_global_approved_for_paper_promoted_model_created",
+    "operational_global_approved_for_paper_production_model_created",
+    "operational_global_approved_for_paper_active_thresholds_created",
+    "operational_global_approved_for_paper_advisory_predictions_created",
+    "operational_global_approved_for_paper_active_probabilities_created",
+    "operational_global_approved_for_paper_broker_api_called",
+    "operational_global_approved_for_paper_order_placed",
+    "operational_global_approved_for_paper_message_sent",
+    "operational_global_approved_for_paper_llm_api_called",
+    "operational_global_approved_for_paper_external_api_called",
+    "operational_global_approved_for_paper_cache_mutated",
+    "operational_global_approved_for_paper_data_raw_written",
+    "operational_global_approved_for_paper_data_processed_written",
+    "operational_global_approved_for_paper_data_cache_written",
+    "operational_global_approved_for_paper_blocker_count",
+    "operational_global_approved_for_paper_warning_count",
+    "operational_global_approved_for_paper_report_path",
+    "operational_global_approved_for_paper_next_action",
     "active_replay_input_ready_workflow_implemented",
     "active_replay_input_ready_views_implemented",
     "latest_active_replay_input_ready_run_id",
@@ -2071,6 +2115,7 @@ OPTIONAL_COMPONENTS = {
     "PAPER_WORKFLOW_PHASE1_STATUS",
     "APPROVED_FOR_PAPER_PHASE1_STATUS",
     "GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_STATUS",
+    "OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -2131,6 +2176,7 @@ WORKFLOW_AREAS = {
     "PAPER_WORKFLOW_PHASE1_STATUS": "PAPER_WORKFLOW_PHASE1",
     "APPROVED_FOR_PAPER_PHASE1_STATUS": "APPROVED_FOR_PAPER_PHASE1",
     "GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_STATUS": "GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW",
+    "OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_STATUS": "OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER",
     "ACTIVE_REPLAY_INPUT_READY_STATUS": "ACTIVE_REPLAY_INPUT_READY",
     "UNIVERSE_PROFILE_POLICY_AUDIT_STATUS": "UNIVERSE_PROFILE_POLICY_AUDIT",
     "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN_STATUS": "UNIVERSE_PROFILE_SPLIT_WORKLIST_PLAN",
@@ -3663,6 +3709,47 @@ class LocalResearchDashboardResult:
     global_approved_for_paper_approval_review_warning_count: int
     global_approved_for_paper_approval_review_report_path: str
     global_approved_for_paper_approval_review_next_action: str
+    operational_global_approved_for_paper_workflow_implemented: bool
+    operational_global_approved_for_paper_views_implemented: bool
+    latest_operational_global_approved_for_paper_id: str
+    latest_operational_global_approved_for_paper_status: str
+    latest_operational_global_approved_for_paper_health_status: str
+    latest_operational_global_approved_for_paper_workflow_stage: str
+    operational_global_approved_for_paper_artifact_path: str
+    operational_global_approved_for_paper_context_visible: bool
+    ready_for_operational_global_approved_for_paper_review: bool
+    operational_global_approved_for_paper_executed: bool
+    operational_global_approved_for_paper_planning_artifacts_created: bool
+    operational_global_approved_for_paper_granted: bool
+    operational_global_approved_for_paper_scope: str
+    operational_global_approved_for_paper_approval_expiry: str
+    operational_global_approved_for_paper_revocation_path: str
+    operational_global_approved_for_paper_real_buy_review_eligible: bool
+    operational_global_approved_for_paper_buy_review_allowed: bool
+    operational_global_approved_for_paper_strategy_performance_validated: bool
+    operational_global_approved_for_paper_trading_allowed: bool
+    operational_global_approved_for_paper_current_candidates_run: bool
+    operational_global_approved_for_paper_snapshot_built: bool
+    operational_global_approved_for_paper_signal_semantics_changed: bool
+    operational_global_approved_for_paper_active_stock_profile_created: bool
+    operational_global_approved_for_paper_promoted_model_created: bool
+    operational_global_approved_for_paper_production_model_created: bool
+    operational_global_approved_for_paper_active_thresholds_created: bool
+    operational_global_approved_for_paper_advisory_predictions_created: bool
+    operational_global_approved_for_paper_active_probabilities_created: bool
+    operational_global_approved_for_paper_broker_api_called: bool
+    operational_global_approved_for_paper_order_placed: bool
+    operational_global_approved_for_paper_message_sent: bool
+    operational_global_approved_for_paper_llm_api_called: bool
+    operational_global_approved_for_paper_external_api_called: bool
+    operational_global_approved_for_paper_cache_mutated: bool
+    operational_global_approved_for_paper_data_raw_written: bool
+    operational_global_approved_for_paper_data_processed_written: bool
+    operational_global_approved_for_paper_data_cache_written: bool
+    operational_global_approved_for_paper_blocker_count: int
+    operational_global_approved_for_paper_warning_count: int
+    operational_global_approved_for_paper_report_path: str
+    operational_global_approved_for_paper_next_action: str
     active_replay_input_ready_workflow_implemented: bool
     active_replay_input_ready_views_implemented: bool
     latest_active_replay_input_ready_run_id: str
@@ -8464,6 +8551,129 @@ def run_local_research_dashboard(
         global_approved_for_paper_approval_review_next_action=str(
             summary.get("global_approved_for_paper_approval_review_next_action", "")
         ),
+        operational_global_approved_for_paper_workflow_implemented=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_workflow_implemented")
+        ),
+        operational_global_approved_for_paper_views_implemented=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_views_implemented")
+        ),
+        latest_operational_global_approved_for_paper_id=str(
+            summary.get("latest_operational_global_approved_for_paper_id", "")
+        ),
+        latest_operational_global_approved_for_paper_status=str(
+            summary.get("latest_operational_global_approved_for_paper_status", "MISSING")
+        ),
+        latest_operational_global_approved_for_paper_health_status=str(
+            summary.get("latest_operational_global_approved_for_paper_health_status", "")
+        ),
+        latest_operational_global_approved_for_paper_workflow_stage=str(
+            summary.get("latest_operational_global_approved_for_paper_workflow_stage", "")
+        ),
+        operational_global_approved_for_paper_artifact_path=str(
+            summary.get("operational_global_approved_for_paper_artifact_path", "")
+        ),
+        operational_global_approved_for_paper_context_visible=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_context_visible")
+        ),
+        ready_for_operational_global_approved_for_paper_review=_bool_from_text(
+            summary.get("ready_for_operational_global_approved_for_paper_review")
+        ),
+        operational_global_approved_for_paper_executed=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_executed")
+        ),
+        operational_global_approved_for_paper_planning_artifacts_created=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_planning_artifacts_created")
+        ),
+        operational_global_approved_for_paper_granted=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_granted")
+        ),
+        operational_global_approved_for_paper_scope=str(
+            summary.get("operational_global_approved_for_paper_scope", "")
+        ),
+        operational_global_approved_for_paper_approval_expiry=str(
+            summary.get("operational_global_approved_for_paper_approval_expiry", "")
+        ),
+        operational_global_approved_for_paper_revocation_path=str(
+            summary.get("operational_global_approved_for_paper_revocation_path", "")
+        ),
+        operational_global_approved_for_paper_real_buy_review_eligible=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_real_buy_review_eligible")
+        ),
+        operational_global_approved_for_paper_buy_review_allowed=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_buy_review_allowed")
+        ),
+        operational_global_approved_for_paper_strategy_performance_validated=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_strategy_performance_validated")
+        ),
+        operational_global_approved_for_paper_trading_allowed=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_trading_allowed")
+        ),
+        operational_global_approved_for_paper_current_candidates_run=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_current_candidates_run")
+        ),
+        operational_global_approved_for_paper_snapshot_built=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_snapshot_built")
+        ),
+        operational_global_approved_for_paper_signal_semantics_changed=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_signal_semantics_changed")
+        ),
+        operational_global_approved_for_paper_active_stock_profile_created=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_active_stock_profile_created")
+        ),
+        operational_global_approved_for_paper_promoted_model_created=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_promoted_model_created")
+        ),
+        operational_global_approved_for_paper_production_model_created=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_production_model_created")
+        ),
+        operational_global_approved_for_paper_active_thresholds_created=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_active_thresholds_created")
+        ),
+        operational_global_approved_for_paper_advisory_predictions_created=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_advisory_predictions_created")
+        ),
+        operational_global_approved_for_paper_active_probabilities_created=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_active_probabilities_created")
+        ),
+        operational_global_approved_for_paper_broker_api_called=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_broker_api_called")
+        ),
+        operational_global_approved_for_paper_order_placed=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_order_placed")
+        ),
+        operational_global_approved_for_paper_message_sent=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_message_sent")
+        ),
+        operational_global_approved_for_paper_llm_api_called=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_llm_api_called")
+        ),
+        operational_global_approved_for_paper_external_api_called=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_external_api_called")
+        ),
+        operational_global_approved_for_paper_cache_mutated=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_cache_mutated")
+        ),
+        operational_global_approved_for_paper_data_raw_written=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_data_raw_written")
+        ),
+        operational_global_approved_for_paper_data_processed_written=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_data_processed_written")
+        ),
+        operational_global_approved_for_paper_data_cache_written=_bool_from_text(
+            summary.get("operational_global_approved_for_paper_data_cache_written")
+        ),
+        operational_global_approved_for_paper_blocker_count=_int_or_zero(
+            summary.get("operational_global_approved_for_paper_blocker_count")
+        ),
+        operational_global_approved_for_paper_warning_count=_int_or_zero(
+            summary.get("operational_global_approved_for_paper_warning_count")
+        ),
+        operational_global_approved_for_paper_report_path=str(
+            summary.get("operational_global_approved_for_paper_report_path", "")
+        ),
+        operational_global_approved_for_paper_next_action=str(
+            summary.get("operational_global_approved_for_paper_next_action", "")
+        ),
         active_replay_input_ready_workflow_implemented=_bool_from_text(
             summary.get("active_replay_input_ready_workflow_implemented")
         ),
@@ -9236,6 +9446,9 @@ def scan_local_research_workflow_artifacts(
     global_approved_for_paper_approval_review_path = (
         root_path / "manual_diagnostics" / "global_approved_for_paper_approval_review_v0_1"
     )
+    operational_global_approved_for_paper_path = (
+        root_path / "manual_diagnostics" / "operational_global_approved_for_paper_v0_1"
+    )
     active_replay_input_ready_path = Path(active_replay_input_ready_root)
     universe_profile_policy_audit_path = Path(universe_profile_policy_audit_root)
     universe_profile_split_worklist_plan_path = Path(universe_profile_split_worklist_plan_root)
@@ -9338,6 +9551,9 @@ def scan_local_research_workflow_artifacts(
         _scan_global_approved_for_paper_approval_review_status(
             global_approved_for_paper_approval_review_path
         )
+    )
+    records.extend(
+        _scan_operational_global_approved_for_paper_status(operational_global_approved_for_paper_path)
     )
     records.extend(_scan_active_replay_input_ready_status(active_replay_input_ready_path))
     records.extend(_scan_universe_profile_policy_audit_status(universe_profile_policy_audit_path))
@@ -20996,6 +21212,142 @@ def summarize_local_research_status(
         "global_approved_for_paper_approval_review_next_action",
     ]:
         row.setdefault(default_empty_field, "")
+    operational_global_notes = by_component.get(
+        "OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_STATUS", {}
+    ).get("notes")
+    if _string_or_empty(operational_global_notes):
+        operational_global_note_fields = {
+            "operational_global_approved_for_paper_workflow_implemented": "implemented",
+            "operational_global_approved_for_paper_views_implemented": "views_implemented",
+            "latest_operational_global_approved_for_paper_health_status": "health_status",
+            "operational_global_approved_for_paper_artifact_path": "artifact_path",
+            "operational_global_approved_for_paper_context_visible": "context_visible",
+            "ready_for_operational_global_approved_for_paper_review": (
+                "ready_for_operational_global_approved_for_paper_review"
+            ),
+            "operational_global_approved_for_paper_executed": (
+                "operational_global_approved_for_paper_executed"
+            ),
+            "operational_global_approved_for_paper_planning_artifacts_created": (
+                "operational_global_approved_for_paper_planning_artifacts_created"
+            ),
+            "operational_global_approved_for_paper_granted": (
+                "operational_global_approved_for_paper_granted"
+            ),
+            "operational_global_approved_for_paper_scope": "approval_scope",
+            "operational_global_approved_for_paper_approval_expiry": "approval_expiry",
+            "operational_global_approved_for_paper_revocation_path": "revocation_path",
+            "operational_global_approved_for_paper_real_buy_review_eligible": (
+                "real_buy_review_eligible"
+            ),
+            "operational_global_approved_for_paper_buy_review_allowed": "buy_review_allowed",
+            "operational_global_approved_for_paper_strategy_performance_validated": (
+                "strategy_performance_validated"
+            ),
+            "operational_global_approved_for_paper_trading_allowed": "trading_allowed",
+            "operational_global_approved_for_paper_current_candidates_run": "current_candidates_run",
+            "operational_global_approved_for_paper_snapshot_built": "snapshot_built",
+            "operational_global_approved_for_paper_signal_semantics_changed": (
+                "signal_semantics_changed"
+            ),
+            "operational_global_approved_for_paper_active_stock_profile_created": (
+                "active_stock_profile_created"
+            ),
+            "operational_global_approved_for_paper_promoted_model_created": (
+                "promoted_model_created"
+            ),
+            "operational_global_approved_for_paper_production_model_created": (
+                "production_model_created"
+            ),
+            "operational_global_approved_for_paper_active_thresholds_created": (
+                "active_thresholds_created"
+            ),
+            "operational_global_approved_for_paper_advisory_predictions_created": (
+                "advisory_predictions_created"
+            ),
+            "operational_global_approved_for_paper_active_probabilities_created": (
+                "active_probabilities_created"
+            ),
+            "operational_global_approved_for_paper_broker_api_called": "broker_api_called",
+            "operational_global_approved_for_paper_order_placed": "order_placed",
+            "operational_global_approved_for_paper_message_sent": "message_sent",
+            "operational_global_approved_for_paper_llm_api_called": "llm_api_called",
+            "operational_global_approved_for_paper_external_api_called": "external_api_called",
+            "operational_global_approved_for_paper_cache_mutated": "cache_mutated",
+            "operational_global_approved_for_paper_data_raw_written": "data_raw_written",
+            "operational_global_approved_for_paper_data_processed_written": (
+                "data_processed_written"
+            ),
+            "operational_global_approved_for_paper_data_cache_written": "data_cache_written",
+            "operational_global_approved_for_paper_blocker_count": "blocker_count",
+            "operational_global_approved_for_paper_warning_count": "warning_count",
+            "operational_global_approved_for_paper_report_path": "report_path",
+            "operational_global_approved_for_paper_next_action": "next_manual_action",
+        }
+        for summary_field, note_key in operational_global_note_fields.items():
+            value = _parse_note_value(operational_global_notes, note_key)
+            if _string_or_empty(value) != "":
+                row[summary_field] = value
+    row["latest_operational_global_approved_for_paper_id"] = _string_or_empty(
+        by_component.get("OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_STATUS", {}).get(
+            "latest_artifact_id"
+        )
+    )
+    row["latest_operational_global_approved_for_paper_status"] = _component_status(
+        by_component,
+        "OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_STATUS",
+    )
+    row["latest_operational_global_approved_for_paper_workflow_stage"] = _string_or_empty(
+        by_component.get("OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_STATUS", {}).get("stage")
+    )
+    for default_false_field in [
+        "operational_global_approved_for_paper_workflow_implemented",
+        "operational_global_approved_for_paper_views_implemented",
+        "operational_global_approved_for_paper_context_visible",
+        "ready_for_operational_global_approved_for_paper_review",
+        "operational_global_approved_for_paper_executed",
+        "operational_global_approved_for_paper_planning_artifacts_created",
+        "operational_global_approved_for_paper_granted",
+        "operational_global_approved_for_paper_real_buy_review_eligible",
+        "operational_global_approved_for_paper_buy_review_allowed",
+        "operational_global_approved_for_paper_strategy_performance_validated",
+        "operational_global_approved_for_paper_trading_allowed",
+        "operational_global_approved_for_paper_current_candidates_run",
+        "operational_global_approved_for_paper_snapshot_built",
+        "operational_global_approved_for_paper_signal_semantics_changed",
+        "operational_global_approved_for_paper_active_stock_profile_created",
+        "operational_global_approved_for_paper_promoted_model_created",
+        "operational_global_approved_for_paper_production_model_created",
+        "operational_global_approved_for_paper_active_thresholds_created",
+        "operational_global_approved_for_paper_advisory_predictions_created",
+        "operational_global_approved_for_paper_active_probabilities_created",
+        "operational_global_approved_for_paper_broker_api_called",
+        "operational_global_approved_for_paper_order_placed",
+        "operational_global_approved_for_paper_message_sent",
+        "operational_global_approved_for_paper_llm_api_called",
+        "operational_global_approved_for_paper_external_api_called",
+        "operational_global_approved_for_paper_cache_mutated",
+        "operational_global_approved_for_paper_data_raw_written",
+        "operational_global_approved_for_paper_data_processed_written",
+        "operational_global_approved_for_paper_data_cache_written",
+    ]:
+        row.setdefault(default_false_field, False)
+    for default_zero_field in [
+        "operational_global_approved_for_paper_blocker_count",
+        "operational_global_approved_for_paper_warning_count",
+    ]:
+        row.setdefault(default_zero_field, 0)
+    for default_empty_field in [
+        "latest_operational_global_approved_for_paper_health_status",
+        "latest_operational_global_approved_for_paper_workflow_stage",
+        "operational_global_approved_for_paper_artifact_path",
+        "operational_global_approved_for_paper_scope",
+        "operational_global_approved_for_paper_approval_expiry",
+        "operational_global_approved_for_paper_revocation_path",
+        "operational_global_approved_for_paper_report_path",
+        "operational_global_approved_for_paper_next_action",
+    ]:
+        row.setdefault(default_empty_field, "")
     return pd.DataFrame([row], columns=SUMMARY_COLUMNS)
 
 
@@ -24157,6 +24509,127 @@ def build_local_research_dashboard_metadata(
         ),
         "global_approved_for_paper_approval_review_next_action": (
             result.global_approved_for_paper_approval_review_next_action
+        ),
+        "operational_global_approved_for_paper_workflow_implemented": (
+            result.operational_global_approved_for_paper_workflow_implemented
+        ),
+        "operational_global_approved_for_paper_views_implemented": (
+            result.operational_global_approved_for_paper_views_implemented
+        ),
+        "latest_operational_global_approved_for_paper_id": (
+            result.latest_operational_global_approved_for_paper_id
+        ),
+        "latest_operational_global_approved_for_paper_status": (
+            result.latest_operational_global_approved_for_paper_status
+        ),
+        "latest_operational_global_approved_for_paper_health_status": (
+            result.latest_operational_global_approved_for_paper_health_status
+        ),
+        "latest_operational_global_approved_for_paper_workflow_stage": (
+            result.latest_operational_global_approved_for_paper_workflow_stage
+        ),
+        "operational_global_approved_for_paper_artifact_path": (
+            result.operational_global_approved_for_paper_artifact_path
+        ),
+        "operational_global_approved_for_paper_context_visible": (
+            result.operational_global_approved_for_paper_context_visible
+        ),
+        "ready_for_operational_global_approved_for_paper_review": (
+            result.ready_for_operational_global_approved_for_paper_review
+        ),
+        "operational_global_approved_for_paper_executed": (
+            result.operational_global_approved_for_paper_executed
+        ),
+        "operational_global_approved_for_paper_planning_artifacts_created": (
+            result.operational_global_approved_for_paper_planning_artifacts_created
+        ),
+        "operational_global_approved_for_paper_granted": (
+            result.operational_global_approved_for_paper_granted
+        ),
+        "operational_global_approved_for_paper_scope": result.operational_global_approved_for_paper_scope,
+        "operational_global_approved_for_paper_approval_expiry": (
+            result.operational_global_approved_for_paper_approval_expiry
+        ),
+        "operational_global_approved_for_paper_revocation_path": (
+            result.operational_global_approved_for_paper_revocation_path
+        ),
+        "operational_global_approved_for_paper_real_buy_review_eligible": (
+            result.operational_global_approved_for_paper_real_buy_review_eligible
+        ),
+        "operational_global_approved_for_paper_buy_review_allowed": (
+            result.operational_global_approved_for_paper_buy_review_allowed
+        ),
+        "operational_global_approved_for_paper_strategy_performance_validated": (
+            result.operational_global_approved_for_paper_strategy_performance_validated
+        ),
+        "operational_global_approved_for_paper_trading_allowed": (
+            result.operational_global_approved_for_paper_trading_allowed
+        ),
+        "operational_global_approved_for_paper_current_candidates_run": (
+            result.operational_global_approved_for_paper_current_candidates_run
+        ),
+        "operational_global_approved_for_paper_snapshot_built": (
+            result.operational_global_approved_for_paper_snapshot_built
+        ),
+        "operational_global_approved_for_paper_signal_semantics_changed": (
+            result.operational_global_approved_for_paper_signal_semantics_changed
+        ),
+        "operational_global_approved_for_paper_active_stock_profile_created": (
+            result.operational_global_approved_for_paper_active_stock_profile_created
+        ),
+        "operational_global_approved_for_paper_promoted_model_created": (
+            result.operational_global_approved_for_paper_promoted_model_created
+        ),
+        "operational_global_approved_for_paper_production_model_created": (
+            result.operational_global_approved_for_paper_production_model_created
+        ),
+        "operational_global_approved_for_paper_active_thresholds_created": (
+            result.operational_global_approved_for_paper_active_thresholds_created
+        ),
+        "operational_global_approved_for_paper_advisory_predictions_created": (
+            result.operational_global_approved_for_paper_advisory_predictions_created
+        ),
+        "operational_global_approved_for_paper_active_probabilities_created": (
+            result.operational_global_approved_for_paper_active_probabilities_created
+        ),
+        "operational_global_approved_for_paper_broker_api_called": (
+            result.operational_global_approved_for_paper_broker_api_called
+        ),
+        "operational_global_approved_for_paper_order_placed": (
+            result.operational_global_approved_for_paper_order_placed
+        ),
+        "operational_global_approved_for_paper_message_sent": (
+            result.operational_global_approved_for_paper_message_sent
+        ),
+        "operational_global_approved_for_paper_llm_api_called": (
+            result.operational_global_approved_for_paper_llm_api_called
+        ),
+        "operational_global_approved_for_paper_external_api_called": (
+            result.operational_global_approved_for_paper_external_api_called
+        ),
+        "operational_global_approved_for_paper_cache_mutated": (
+            result.operational_global_approved_for_paper_cache_mutated
+        ),
+        "operational_global_approved_for_paper_data_raw_written": (
+            result.operational_global_approved_for_paper_data_raw_written
+        ),
+        "operational_global_approved_for_paper_data_processed_written": (
+            result.operational_global_approved_for_paper_data_processed_written
+        ),
+        "operational_global_approved_for_paper_data_cache_written": (
+            result.operational_global_approved_for_paper_data_cache_written
+        ),
+        "operational_global_approved_for_paper_blocker_count": (
+            result.operational_global_approved_for_paper_blocker_count
+        ),
+        "operational_global_approved_for_paper_warning_count": (
+            result.operational_global_approved_for_paper_warning_count
+        ),
+        "operational_global_approved_for_paper_report_path": (
+            result.operational_global_approved_for_paper_report_path
+        ),
+        "operational_global_approved_for_paper_next_action": (
+            result.operational_global_approved_for_paper_next_action
         ),
         "active_replay_input_ready_workflow_implemented": (
             result.active_replay_input_ready_workflow_implemented
@@ -29922,6 +30395,95 @@ def _global_approved_for_paper_approval_review_notes(summary: dict[str, Any]) ->
         "source_paper_workflow_phase1_run_id="
         f"{_string_or_empty(summary.get('source_paper_workflow_phase1_run_id'))}; "
         f"source_model_workflow_run_id={_string_or_empty(summary.get('source_model_workflow_run_id'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        "strategy_performance_validated="
+        f"{_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"active_stock_profile_created={_string_or_empty(summary.get('active_stock_profile_created'))}; "
+        f"promoted_model_created={_string_or_empty(summary.get('promoted_model_created'))}; "
+        f"production_model_created={_string_or_empty(summary.get('production_model_created'))}; "
+        f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
+        f"advisory_predictions_created={_string_or_empty(summary.get('advisory_predictions_created'))}; "
+        f"active_probabilities_created={_string_or_empty(summary.get('active_probabilities_created'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"cache_mutated={_string_or_empty(summary.get('cache_mutated'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"blocker_count={_string_or_empty(summary.get('blocker_count'))}; "
+        f"warning_count={_string_or_empty(summary.get('warning_count'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_operational_global_approved_for_paper_status(root: Path) -> list[dict[str, Any]]:
+    operational_root = root.parent if root.name == "status" else root
+    if not operational_root.exists():
+        return []
+    try:
+        result = run_operational_global_approved_for_paper_status(
+            root=operational_root,
+            output_dir=operational_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_operational_global_approved_for_paper_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = operational_root / result.latest_operational_global_approved_for_paper_id
+    metadata = _load_json_or_none(
+        artifact_dir / "operational_global_approved_for_paper_metadata.json"
+    ) or {}
+    summary["artifact_path"] = str(artifact_dir)
+    summary["context_visible"] = True
+    summary["approval_scope"] = _string_or_empty(metadata.get("approval_scope"))
+    summary["approval_expiry"] = _string_or_empty(metadata.get("approval_expiry"))
+    summary["revocation_path"] = _string_or_empty(metadata.get("revocation_path"))
+    return [
+        _record(
+            workflow_area="OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER",
+            component="OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_operational_global_approved_for_paper_id,
+            report_path=summary.get("report_path", ""),
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.health_status == "WARN" else 0,
+            error_count=1 if result.health_status == "FAIL" else 0,
+            notes=_operational_global_approved_for_paper_notes(summary),
+        )
+    ]
+
+
+def _operational_global_approved_for_paper_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"context_visible={_string_or_empty(summary.get('context_visible'))}; "
+        "ready_for_operational_global_approved_for_paper_review="
+        f"{_string_or_empty(summary.get('ready_for_operational_global_approved_for_paper_review'))}; "
+        "operational_global_approved_for_paper_executed="
+        f"{_string_or_empty(summary.get('operational_global_approved_for_paper_executed'))}; "
+        "operational_global_approved_for_paper_planning_artifacts_created="
+        f"{_string_or_empty(summary.get('operational_global_approved_for_paper_planning_artifacts_created'))}; "
+        "operational_global_approved_for_paper_granted="
+        f"{_string_or_empty(summary.get('operational_global_approved_for_paper_granted'))}; "
+        f"approval_scope={_string_or_empty(summary.get('approval_scope'))}; "
+        f"approval_expiry={_string_or_empty(summary.get('approval_expiry'))}; "
+        f"revocation_path={_note_safe_text(summary.get('revocation_path'))}; "
+        f"global_approved_for_paper={_string_or_empty(summary.get('global_approved_for_paper'))}; "
         f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
         f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
         "strategy_performance_validated="

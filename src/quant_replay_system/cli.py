@@ -19199,6 +19199,170 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         f"{result.global_approved_for_paper_approval_review_next_action}"
     )
     print(
+        "operational_global_approved_for_paper_workflow_implemented: "
+        f"{result.operational_global_approved_for_paper_workflow_implemented}"
+    )
+    print(
+        "operational_global_approved_for_paper_views_implemented: "
+        f"{result.operational_global_approved_for_paper_views_implemented}"
+    )
+    print(
+        "latest_operational_global_approved_for_paper_id: "
+        f"{result.latest_operational_global_approved_for_paper_id}"
+    )
+    print(
+        "latest_operational_global_approved_for_paper_status: "
+        f"{result.latest_operational_global_approved_for_paper_status}"
+    )
+    print(
+        "latest_operational_global_approved_for_paper_health_status: "
+        f"{result.latest_operational_global_approved_for_paper_health_status}"
+    )
+    print(
+        "latest_operational_global_approved_for_paper_workflow_stage: "
+        f"{result.latest_operational_global_approved_for_paper_workflow_stage}"
+    )
+    print(
+        "operational_global_approved_for_paper_artifact_path: "
+        f"{result.operational_global_approved_for_paper_artifact_path}"
+    )
+    print(
+        "operational_global_approved_for_paper_context_visible: "
+        f"{result.operational_global_approved_for_paper_context_visible}"
+    )
+    print(
+        "ready_for_operational_global_approved_for_paper_review: "
+        f"{result.ready_for_operational_global_approved_for_paper_review}"
+    )
+    print(
+        "operational_global_approved_for_paper_executed: "
+        f"{result.operational_global_approved_for_paper_executed}"
+    )
+    print(
+        "operational_global_approved_for_paper_planning_artifacts_created: "
+        f"{result.operational_global_approved_for_paper_planning_artifacts_created}"
+    )
+    print(
+        "operational_global_approved_for_paper_granted: "
+        f"{result.operational_global_approved_for_paper_granted}"
+    )
+    print(
+        "operational_global_approved_for_paper_scope: "
+        f"{result.operational_global_approved_for_paper_scope}"
+    )
+    print(
+        "operational_global_approved_for_paper_approval_expiry: "
+        f"{result.operational_global_approved_for_paper_approval_expiry}"
+    )
+    print(
+        "operational_global_approved_for_paper_revocation_path: "
+        f"{result.operational_global_approved_for_paper_revocation_path}"
+    )
+    print(
+        "operational_global_approved_for_paper_real_buy_review_eligible: "
+        f"{result.operational_global_approved_for_paper_real_buy_review_eligible}"
+    )
+    print(
+        "operational_global_approved_for_paper_buy_review_allowed: "
+        f"{result.operational_global_approved_for_paper_buy_review_allowed}"
+    )
+    print(
+        "operational_global_approved_for_paper_strategy_performance_validated: "
+        f"{result.operational_global_approved_for_paper_strategy_performance_validated}"
+    )
+    print(
+        "operational_global_approved_for_paper_trading_allowed: "
+        f"{result.operational_global_approved_for_paper_trading_allowed}"
+    )
+    print(
+        "operational_global_approved_for_paper_current_candidates_run: "
+        f"{result.operational_global_approved_for_paper_current_candidates_run}"
+    )
+    print(
+        "operational_global_approved_for_paper_snapshot_built: "
+        f"{result.operational_global_approved_for_paper_snapshot_built}"
+    )
+    print(
+        "operational_global_approved_for_paper_signal_semantics_changed: "
+        f"{result.operational_global_approved_for_paper_signal_semantics_changed}"
+    )
+    print(
+        "operational_global_approved_for_paper_active_stock_profile_created: "
+        f"{result.operational_global_approved_for_paper_active_stock_profile_created}"
+    )
+    print(
+        "operational_global_approved_for_paper_promoted_model_created: "
+        f"{result.operational_global_approved_for_paper_promoted_model_created}"
+    )
+    print(
+        "operational_global_approved_for_paper_production_model_created: "
+        f"{result.operational_global_approved_for_paper_production_model_created}"
+    )
+    print(
+        "operational_global_approved_for_paper_active_thresholds_created: "
+        f"{result.operational_global_approved_for_paper_active_thresholds_created}"
+    )
+    print(
+        "operational_global_approved_for_paper_advisory_predictions_created: "
+        f"{result.operational_global_approved_for_paper_advisory_predictions_created}"
+    )
+    print(
+        "operational_global_approved_for_paper_active_probabilities_created: "
+        f"{result.operational_global_approved_for_paper_active_probabilities_created}"
+    )
+    print(
+        "operational_global_approved_for_paper_broker_api_called: "
+        f"{result.operational_global_approved_for_paper_broker_api_called}"
+    )
+    print(
+        "operational_global_approved_for_paper_order_placed: "
+        f"{result.operational_global_approved_for_paper_order_placed}"
+    )
+    print(
+        "operational_global_approved_for_paper_message_sent: "
+        f"{result.operational_global_approved_for_paper_message_sent}"
+    )
+    print(
+        "operational_global_approved_for_paper_llm_api_called: "
+        f"{result.operational_global_approved_for_paper_llm_api_called}"
+    )
+    print(
+        "operational_global_approved_for_paper_external_api_called: "
+        f"{result.operational_global_approved_for_paper_external_api_called}"
+    )
+    print(
+        "operational_global_approved_for_paper_cache_mutated: "
+        f"{result.operational_global_approved_for_paper_cache_mutated}"
+    )
+    print(
+        "operational_global_approved_for_paper_data_raw_written: "
+        f"{result.operational_global_approved_for_paper_data_raw_written}"
+    )
+    print(
+        "operational_global_approved_for_paper_data_processed_written: "
+        f"{result.operational_global_approved_for_paper_data_processed_written}"
+    )
+    print(
+        "operational_global_approved_for_paper_data_cache_written: "
+        f"{result.operational_global_approved_for_paper_data_cache_written}"
+    )
+    print(
+        "operational_global_approved_for_paper_blocker_count: "
+        f"{result.operational_global_approved_for_paper_blocker_count}"
+    )
+    print(
+        "operational_global_approved_for_paper_warning_count: "
+        f"{result.operational_global_approved_for_paper_warning_count}"
+    )
+    print(
+        "operational_global_approved_for_paper_report_path: "
+        f"{result.operational_global_approved_for_paper_report_path}"
+    )
+    print(
+        "operational_global_approved_for_paper_next_action: "
+        f"{result.operational_global_approved_for_paper_next_action}"
+    )
+    print(
         "active_replay_input_ready_workflow_implemented: "
         f"{result.active_replay_input_ready_workflow_implemented}"
     )

@@ -1002,6 +1002,14 @@ The CLI prints:
 
 The dashboard preserves existing paper workflow priority. A scoped APPROVED_FOR_PAPER Phase 1 row is context for future review only and does not override global approval, buy-review, performance validation, or trading safety fields.
 
+## Operational Global APPROVED_FOR_PAPER Planning Context
+
+`research-status` includes Operational Global APPROVED_FOR_PAPER planning context when `operational-global-approved-for-paper-status` artifacts exist. It exposes the latest operational planning run id, status/stage, health, artifact path, approval scope, approval expiry, revocation path, report path, next action, and safety fields.
+
+`OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_PLANNING_ARTIFACTS_CREATED` does not grant operational global APPROVED_FOR_PAPER, is not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, does not authorize active stock_profile, does not authorize promoted/production models, does not authorize active thresholds, does not authorize advisory predictions/probabilities, and does not authorize broker/order/message/API/trading.
+
+The dashboard preserves existing paper workflow priority. Operational planning rows remain context for future review only and do not override global approval, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:
