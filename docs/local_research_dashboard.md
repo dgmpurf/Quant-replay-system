@@ -1010,6 +1010,14 @@ The dashboard preserves existing paper workflow priority. A scoped APPROVED_FOR_
 
 The dashboard preserves existing paper workflow priority. Operational planning rows remain context for future review only and do not override global approval, buy-review, performance validation, or trading safety fields.
 
+## Source Registry Schema Fixture Context
+
+`research-status` includes Source Registry Schema Fixture context when `source-registry-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, source count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`SOURCE_REGISTRY_SCHEMA_FIXTURE_CREATED` means synthetic schema fixture rows exist for audit only. It does not create real source permissions, does not create production source registry state, does not fetch real data, does not write data/raw, does not write data/processed, does not write data/cache, is not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, does not authorize active stock_profile, does not authorize promoted/production models, does not authorize active thresholds, does not authorize advisory predictions/probabilities, and does not authorize broker/order/message/API/trading.
+
+The dashboard preserves existing paper workflow priority. Source Registry Schema Fixture rows remain context for future source-registry design review only and do not create production source permission, replay-ready source approval, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:

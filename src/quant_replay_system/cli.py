@@ -17058,6 +17058,111 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"replay_substrate_schema_fixture_report_path: {result.replay_substrate_schema_fixture_report_path}")
     print(f"replay_substrate_schema_fixture_next_action: {result.replay_substrate_schema_fixture_next_action}")
     print(
+        "source_registry_schema_fixture_workflow_implemented: "
+        f"{result.source_registry_schema_fixture_workflow_implemented}"
+    )
+    print(
+        "source_registry_schema_fixture_views_implemented: "
+        f"{result.source_registry_schema_fixture_views_implemented}"
+    )
+    print(
+        "latest_source_registry_schema_fixture_id: "
+        f"{result.latest_source_registry_schema_fixture_id}"
+    )
+    print(
+        "latest_source_registry_schema_fixture_status: "
+        f"{result.latest_source_registry_schema_fixture_status}"
+    )
+    print(
+        "latest_source_registry_schema_fixture_health_status: "
+        f"{result.latest_source_registry_schema_fixture_health_status}"
+    )
+    print(
+        "latest_source_registry_schema_fixture_workflow_stage: "
+        f"{result.latest_source_registry_schema_fixture_workflow_stage}"
+    )
+    print(
+        "source_registry_schema_fixture_artifact_path: "
+        f"{result.source_registry_schema_fixture_artifact_path}"
+    )
+    print(
+        "source_registry_schema_fixture_context_visible: "
+        f"{result.source_registry_schema_fixture_context_visible}"
+    )
+    print(
+        "source_registry_schema_fixture_created: "
+        f"{result.source_registry_schema_fixture_created}"
+    )
+    print(
+        "source_registry_schema_fixture_source_count: "
+        f"{result.source_registry_schema_fixture_source_count}"
+    )
+    print(
+        "source_registry_schema_fixture_validation_issue_count: "
+        f"{result.source_registry_schema_fixture_validation_issue_count}"
+    )
+    print(f"source_registry_schema_fixture_report_only: {result.source_registry_schema_fixture_report_only}")
+    print(f"source_registry_schema_fixture_diagnostic_only: {result.source_registry_schema_fixture_diagnostic_only}")
+    print(
+        "source_registry_schema_fixture_live_trading_enabled: "
+        f"{result.source_registry_schema_fixture_live_trading_enabled}"
+    )
+    print(
+        "source_registry_schema_fixture_broker_api_called: "
+        f"{result.source_registry_schema_fixture_broker_api_called}"
+    )
+    print(
+        "source_registry_schema_fixture_external_api_called: "
+        f"{result.source_registry_schema_fixture_external_api_called}"
+    )
+    print(
+        "source_registry_schema_fixture_llm_api_called: "
+        f"{result.source_registry_schema_fixture_llm_api_called}"
+    )
+    print(
+        "source_registry_schema_fixture_data_raw_written: "
+        f"{result.source_registry_schema_fixture_data_raw_written}"
+    )
+    print(
+        "source_registry_schema_fixture_data_processed_written: "
+        f"{result.source_registry_schema_fixture_data_processed_written}"
+    )
+    print(
+        "source_registry_schema_fixture_data_cache_written: "
+        f"{result.source_registry_schema_fixture_data_cache_written}"
+    )
+    print(
+        "source_registry_schema_fixture_current_candidates_run: "
+        f"{result.source_registry_schema_fixture_current_candidates_run}"
+    )
+    print(f"source_registry_schema_fixture_snapshot_built: {result.source_registry_schema_fixture_snapshot_built}")
+    print(
+        "source_registry_schema_fixture_signal_semantics_changed: "
+        f"{result.source_registry_schema_fixture_signal_semantics_changed}"
+    )
+    print(
+        "source_registry_schema_fixture_active_stock_profile_created: "
+        f"{result.source_registry_schema_fixture_active_stock_profile_created}"
+    )
+    print(
+        "source_registry_schema_fixture_real_buy_review_eligible: "
+        f"{result.source_registry_schema_fixture_real_buy_review_eligible}"
+    )
+    print(
+        "source_registry_schema_fixture_buy_review_allowed: "
+        f"{result.source_registry_schema_fixture_buy_review_allowed}"
+    )
+    print(
+        "source_registry_schema_fixture_strategy_performance_validated: "
+        f"{result.source_registry_schema_fixture_strategy_performance_validated}"
+    )
+    print(f"source_registry_schema_fixture_trading_allowed: {result.source_registry_schema_fixture_trading_allowed}")
+    print(
+        "source_registry_schema_fixture_operational_global_approved_for_paper_granted: "
+        f"{result.source_registry_schema_fixture_operational_global_approved_for_paper_granted}"
+    )
+    print(f"source_registry_schema_fixture_next_action: {result.source_registry_schema_fixture_next_action}")
+    print(
         "latest_input_gate_validator_fixture_run_id: "
         f"{result.latest_input_gate_validator_fixture_run_id}"
     )

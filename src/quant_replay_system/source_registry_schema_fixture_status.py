@@ -34,6 +34,13 @@ SUMMARY_COLUMNS = [
     "next_action",
 ]
 
+POST_CHECKPOINT_NEXT_ACTION = (
+    "Source Registry Schema Fixture core/views/research-status/checkpoint context is available as "
+    "report-only schema-fixture governance. Review the checkpoint and run post-checkpoint governance "
+    "audit before any raw document store, real source registry, production source permission, replay "
+    "input, buy-review, performance validation, or trading workflow."
+)
+
 
 @dataclass(frozen=True)
 class SourceRegistrySchemaFixtureStatusResult:
@@ -88,7 +95,12 @@ def run_source_registry_schema_fixture_status(
                 status="FAIL",
                 stage=SOURCE_REGISTRY_SCHEMA_FIXTURE_INVALID,
                 health_status=health.status,
-                next_action="Repair source registry schema fixture artifacts before research-status integration. Fixture rows are not production sources.",
+                next_action=(
+                    "Repair source registry schema fixture artifacts, then review the checkpoint and run "
+                    "post-checkpoint governance audit before any raw document store, real source registry, "
+                    "production source permission, replay input, buy-review, performance validation, or "
+                    "trading workflow. Fixture rows are not production sources."
+                ),
                 output_dir=output_dir,
                 root=root,
             )
@@ -98,7 +110,7 @@ def run_source_registry_schema_fixture_status(
                 status="PASS",
                 stage=SOURCE_REGISTRY_SCHEMA_FIXTURE_CREATED,
                 health_status=health.status,
-                next_action="Add source-registry schema fixture research-status integration next. Fixture rows are not production sources and grant no source permission.",
+                next_action=POST_CHECKPOINT_NEXT_ACTION,
                 output_dir=output_dir,
                 root=root,
             )

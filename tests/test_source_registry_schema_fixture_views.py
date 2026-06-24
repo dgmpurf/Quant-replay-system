@@ -246,7 +246,11 @@ def test_status_safe_empty_behavior_and_latest_fixture_summary(tmp_path: Path) -
     assert result.source_registry_schema_fixture_created is True
     for flag in FORBIDDEN_SIDE_EFFECT_FLAGS:
         assert getattr(result, flag) is False
-    assert "not production sources" in result.next_action
+    assert "Add source-registry schema fixture research-status integration next" not in result.next_action
+    assert "post-checkpoint governance audit" in result.next_action
+    assert "report-only schema-fixture governance" in result.next_action
+    assert "real source registry" in result.next_action
+    assert "trading workflow" in result.next_action
 
 
 def test_status_marks_invalid_fixture_without_granting_permission(tmp_path: Path) -> None:

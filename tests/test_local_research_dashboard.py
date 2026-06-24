@@ -60,6 +60,7 @@ from quant_replay_system.metric_evaluation import (
 )
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
+from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
     build_reviewer_no_hit_source_coverage_acceptance,
 )
@@ -1798,6 +1799,129 @@ def test_research_status_preserves_paper_priority_over_replay_substrate_schema_f
     assert result.workflow_stage == "PAPER_WORKFLOW_READY"
     assert result.replay_substrate_schema_fixture_status == "PASS"
     assert row["status"] == "PASS"
+
+
+def test_research_status_includes_source_registry_schema_fixture_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_source_registry_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "source_registry_schema_fixture_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.source_registry_schema_fixture_workflow_implemented is True
+    assert result.source_registry_schema_fixture_views_implemented is True
+    assert result.latest_source_registry_schema_fixture_id == fixture.source_registry_schema_fixture_id
+    assert result.latest_source_registry_schema_fixture_status == "PASS"
+    assert result.latest_source_registry_schema_fixture_health_status == "PASS"
+    assert result.latest_source_registry_schema_fixture_workflow_stage == "SOURCE_REGISTRY_SCHEMA_FIXTURE_CREATED"
+    assert result.source_registry_schema_fixture_context_visible is True
+    assert result.source_registry_schema_fixture_created is True
+    assert result.source_registry_schema_fixture_source_count == 5
+    assert result.source_registry_schema_fixture_validation_issue_count == 0
+    assert result.source_registry_schema_fixture_report_only is True
+    assert result.source_registry_schema_fixture_diagnostic_only is True
+    assert result.source_registry_schema_fixture_live_trading_enabled is False
+    assert result.source_registry_schema_fixture_broker_api_called is False
+    assert result.source_registry_schema_fixture_external_api_called is False
+    assert result.source_registry_schema_fixture_llm_api_called is False
+    assert result.source_registry_schema_fixture_data_raw_written is False
+    assert result.source_registry_schema_fixture_data_processed_written is False
+    assert result.source_registry_schema_fixture_data_cache_written is False
+    assert result.source_registry_schema_fixture_current_candidates_run is False
+    assert result.source_registry_schema_fixture_snapshot_built is False
+    assert result.source_registry_schema_fixture_signal_semantics_changed is False
+    assert result.source_registry_schema_fixture_active_stock_profile_created is False
+    assert result.source_registry_schema_fixture_real_buy_review_eligible is False
+    assert result.source_registry_schema_fixture_buy_review_allowed is False
+    assert result.source_registry_schema_fixture_strategy_performance_validated is False
+    assert result.source_registry_schema_fixture_trading_allowed is False
+    assert result.source_registry_schema_fixture_operational_global_approved_for_paper_granted is False
+    assert result.real_buy_review_eligible is False
+    assert result.buy_review_allowed is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert row["status"] == "PASS"
+    assert row["workflow_area"] == "SOURCE_REGISTRY_SCHEMA_FIXTURE"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_source_registry_schema_fixture_id"] == (
+        fixture.source_registry_schema_fixture_id
+    )
+    assert summary.loc[0, "source_registry_schema_fixture_source_count"] == "5"
+    assert summary.loc[0, "source_registry_schema_fixture_context_visible"] == "True"
+    assert metadata["latest_source_registry_schema_fixture_status"] == "PASS"
+    assert metadata["source_registry_schema_fixture_context_visible"] is True
+    assert metadata["source_registry_schema_fixture_created"] is True
+    assert metadata["source_registry_schema_fixture_report_only"] is True
+    assert metadata["source_registry_schema_fixture_diagnostic_only"] is True
+    assert metadata["source_registry_schema_fixture_buy_review_allowed"] is False
+    assert metadata["source_registry_schema_fixture_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_over_source_registry_schema_fixture(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    build_source_registry_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "source_registry_schema_fixture_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Source Registry Schema Fixture is report-only context, "
+            "not real source permission, production readiness, buy-review, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_source_registry_schema_fixture_status == "PASS"
+    assert result.source_registry_schema_fixture_context_visible is True
+    assert result.source_registry_schema_fixture_buy_review_allowed is False
+    assert result.source_registry_schema_fixture_trading_allowed is False
+
+
+def test_cli_research_status_prints_source_registry_schema_fixture_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_source_registry_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "source_registry_schema_fixture_v0_1"
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "source_registry_schema_fixture_workflow_implemented: True" in output.out
+    assert "source_registry_schema_fixture_views_implemented: True" in output.out
+    assert (
+        f"latest_source_registry_schema_fixture_id: {fixture.source_registry_schema_fixture_id}"
+        in output.out
+    )
+    assert "latest_source_registry_schema_fixture_status: PASS" in output.out
+    assert "latest_source_registry_schema_fixture_health_status: PASS" in output.out
+    assert "latest_source_registry_schema_fixture_workflow_stage: SOURCE_REGISTRY_SCHEMA_FIXTURE_CREATED" in output.out
+    assert "source_registry_schema_fixture_context_visible: True" in output.out
+    assert "source_registry_schema_fixture_created: True" in output.out
+    assert "source_registry_schema_fixture_source_count: 5" in output.out
+    assert "source_registry_schema_fixture_validation_issue_count: 0" in output.out
+    assert "source_registry_schema_fixture_report_only: True" in output.out
+    assert "source_registry_schema_fixture_diagnostic_only: True" in output.out
+    assert "source_registry_schema_fixture_current_candidates_run: False" in output.out
+    assert "source_registry_schema_fixture_snapshot_built: False" in output.out
+    assert "source_registry_schema_fixture_signal_semantics_changed: False" in output.out
+    assert "source_registry_schema_fixture_active_stock_profile_created: False" in output.out
+    assert "source_registry_schema_fixture_real_buy_review_eligible: False" in output.out
+    assert "source_registry_schema_fixture_buy_review_allowed: False" in output.out
+    assert "source_registry_schema_fixture_strategy_performance_validated: False" in output.out
+    assert "source_registry_schema_fixture_trading_allowed: False" in output.out
+    assert "source_registry_schema_fixture_operational_global_approved_for_paper_granted: False" in output.out
 
 
 def test_research_status_reports_failed_replay_substrate_fixture_as_context_blocker(tmp_path: Path) -> None:
@@ -5688,6 +5812,43 @@ def test_operational_global_approved_for_paper_research_status_docs_and_source_n
         ]:
             assert phrase in text, f"{path}: {phrase}"
     source_text = Path("SOURCE_UPDATE_NOTES_v1_57_0.md").read_text(encoding="utf-8")
+    assert "do not include src/ or tests/ in ChatGPT Project Source upload lists" in source_text
+    assert "docs/project_sources/ is intentionally absent from Git" in source_text
+    assert not Path("docs/project_sources").exists()
+
+
+def test_source_registry_schema_fixture_research_status_docs_and_source_notes_are_safe() -> None:
+    docs = [
+        Path("README.md"),
+        Path("docs/local_research_dashboard.md"),
+        Path("docs/source_registry_schema_fixture.md"),
+        Path("docs/release_checkpoint_v1.58.0.md"),
+        Path("SOURCE_UPDATE_NOTES_v1_58_0.md"),
+    ]
+    for path in docs:
+        text = path.read_text(encoding="utf-8")
+        assert "SOURCE_REGISTRY_SCHEMA_FIXTURE_CREATED" in text
+        for phrase in [
+            "does not create real source permissions",
+            "does not create production source registry state",
+            "does not fetch real data",
+            "does not write data/raw",
+            "does not write data/processed",
+            "does not write data/cache",
+            "not real buy-review eligibility",
+            "does not set buy_review_allowed",
+            "not strategy performance validation",
+            "does not authorize current-candidates",
+            "does not authorize snapshots",
+            "does not authorize signal_semantics mutation",
+            "does not authorize active stock_profile",
+            "does not authorize promoted/production models",
+            "does not authorize active thresholds",
+            "does not authorize advisory predictions/probabilities",
+            "does not authorize broker/order/message/API/trading",
+        ]:
+            assert phrase in text, f"{path}: {phrase}"
+    source_text = Path("SOURCE_UPDATE_NOTES_v1_58_0.md").read_text(encoding="utf-8")
     assert "do not include src/ or tests/ in ChatGPT Project Source upload lists" in source_text
     assert "docs/project_sources/ is intentionally absent from Git" in source_text
     assert not Path("docs/project_sources").exists()
