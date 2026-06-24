@@ -541,6 +541,7 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture_status i
     run_historical_replay_input_gate_validator_fixture_status,
 )
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
+from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.replay_substrate_schema_fixture_health import (
     check_replay_substrate_schema_fixture_health,
 )
@@ -5250,6 +5251,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     replay_substrate_schema_fixture.set_defaults(handler=_handle_replay_substrate_schema_fixture)
 
+    source_registry_schema_fixture = subparsers.add_parser(
+        "source-registry-schema-fixture",
+        help="Write report-only synthetic source registry schema fixture artifacts",
+    )
+    source_registry_schema_fixture.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/source_registry_schema_fixture_v0_1",
+        help="Directory where source registry schema fixture artifacts will be written",
+    )
+    source_registry_schema_fixture.set_defaults(handler=_handle_source_registry_schema_fixture)
+
     replay_substrate_schema_fixture_index = subparsers.add_parser(
         "replay-substrate-schema-fixture-index",
         help="Build an index for report-only replay substrate schema fixture artifacts",
@@ -9101,6 +9113,27 @@ def _handle_replay_substrate_schema_fixture(args: argparse.Namespace) -> int:
     print(f"report_path: {result.artifact_paths['report']}")
     print(f"metadata_path: {result.artifact_paths['metadata']}")
     print("No replay, current-candidates, snapshot build, forward labels, weights training, active stock profile, data writes, API calls, messages, broker integration, orders, or cache mutation was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_source_registry_schema_fixture(args: argparse.Namespace) -> int:
+    result = build_source_registry_schema_fixture(output_dir=args.output_dir)
+    print(f"source_registry_schema_fixture_id: {result.source_registry_schema_fixture_id}")
+    print(f"status: {result.status}")
+    print(f"source_count: {result.source_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"schema_fields_path: {result.artifact_paths['schema_fields']}")
+    print(f"fixture_rows_path: {result.artifact_paths['fixture_rows']}")
+    print(f"permission_matrix_path: {result.artifact_paths['permission_matrix']}")
+    print(f"replay_suitability_matrix_path: {result.artifact_paths['replay_suitability_matrix']}")
+    print(f"validation_summary_path: {result.artifact_paths['validation_summary']}")
+    print(f"limitations_path: {result.artifact_paths['limitations']}")
+    print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
+    print("No data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, stock profiles, broker/API/order/message behavior, buy-review eligibility, performance validation, or trading was invoked.")
     return 1 if result.status == "FAIL" else 0
 
 
