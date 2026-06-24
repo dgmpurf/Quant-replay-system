@@ -542,6 +542,9 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture_status i
 )
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
+from quant_replay_system.source_registry_schema_fixture_health import check_source_registry_schema_fixture_health
+from quant_replay_system.source_registry_schema_fixture_index import build_source_registry_schema_fixture_index
+from quant_replay_system.source_registry_schema_fixture_status import run_source_registry_schema_fixture_status
 from quant_replay_system.replay_substrate_schema_fixture_health import (
     check_replay_substrate_schema_fixture_health,
 )
@@ -5262,6 +5265,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     source_registry_schema_fixture.set_defaults(handler=_handle_source_registry_schema_fixture)
 
+    source_registry_schema_fixture_index = subparsers.add_parser(
+        "source-registry-schema-fixture-index",
+        help="Build an index for report-only source registry schema fixture artifacts",
+    )
+    source_registry_schema_fixture_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/source_registry_schema_fixture_v0_1",
+    )
+    source_registry_schema_fixture_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/source_registry_schema_fixture_v0_1/index",
+    )
+    source_registry_schema_fixture_index.set_defaults(handler=_handle_source_registry_schema_fixture_index)
+
+    source_registry_schema_fixture_health = subparsers.add_parser(
+        "source-registry-schema-fixture-health",
+        help="Check report-only source registry schema fixture artifact health",
+    )
+    source_registry_schema_fixture_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/source_registry_schema_fixture_v0_1",
+    )
+    source_registry_schema_fixture_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/source_registry_schema_fixture_v0_1/health",
+    )
+    source_registry_schema_fixture_health.set_defaults(handler=_handle_source_registry_schema_fixture_health)
+
+    source_registry_schema_fixture_status = subparsers.add_parser(
+        "source-registry-schema-fixture-status",
+        help="Summarize latest report-only source registry schema fixture status",
+    )
+    source_registry_schema_fixture_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/source_registry_schema_fixture_v0_1",
+    )
+    source_registry_schema_fixture_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/source_registry_schema_fixture_v0_1/status",
+    )
+    source_registry_schema_fixture_status.set_defaults(handler=_handle_source_registry_schema_fixture_status)
+
     replay_substrate_schema_fixture_index = subparsers.add_parser(
         "replay-substrate-schema-fixture-index",
         help="Build an index for report-only replay substrate schema fixture artifacts",
@@ -9134,6 +9179,54 @@ def _handle_source_registry_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, stock profiles, broker/API/order/message behavior, buy-review eligibility, performance validation, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_source_registry_schema_fixture_index(args: argparse.Namespace) -> int:
+    result = build_source_registry_schema_fixture_index(root=args.root, output_dir=args.output_dir)
+    print(f"Source registry schema fixture index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print("Report-only index: no real source permission, production source state, API calls, buy-review eligibility, performance validation, or trading was created.")
+    return 0
+
+
+def _handle_source_registry_schema_fixture_health(args: argparse.Namespace) -> int:
+    result = check_source_registry_schema_fixture_health(root=args.root, output_dir=args.output_dir)
+    print(f"Source registry schema fixture health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: fixture rows remain non-production source context and grant no source permission, buy-review eligibility, performance validation, or trading readiness.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_source_registry_schema_fixture_status(args: argparse.Namespace) -> int:
+    result = run_source_registry_schema_fixture_status(root=args.root, output_dir=args.output_dir)
+    print(f"Source registry schema fixture status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"health_status: {result.health_status}")
+    print(f"source_count: {result.source_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"source_registry_schema_fixture_created: {result.source_registry_schema_fixture_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"next_action: {result.next_action}")
+    print("Report-only status: no real source permission, production source state, API calls, broker/order/message behavior, current-candidates, snapshots, signal_semantics mutation, buy-review eligibility, performance validation, or trading was created.")
     return 1 if result.status == "FAIL" else 0
 
 
