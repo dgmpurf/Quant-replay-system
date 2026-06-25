@@ -541,6 +541,7 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture_status i
     run_historical_replay_input_gate_validator_fixture_status,
 )
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
+from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.source_registry_schema_fixture_health import check_source_registry_schema_fixture_health
 from quant_replay_system.source_registry_schema_fixture_index import build_source_registry_schema_fixture_index
@@ -5265,6 +5266,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     source_registry_schema_fixture.set_defaults(handler=_handle_source_registry_schema_fixture)
 
+    raw_document_store_schema_fixture = subparsers.add_parser(
+        "raw-document-store-schema-fixture",
+        help="Write report-only synthetic raw document store schema fixture artifacts",
+    )
+    raw_document_store_schema_fixture.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/raw_document_store_schema_fixture_v0_1",
+        help="Directory where raw document store schema fixture artifacts will be written",
+    )
+    raw_document_store_schema_fixture.set_defaults(handler=_handle_raw_document_store_schema_fixture)
+
     source_registry_schema_fixture_index = subparsers.add_parser(
         "source-registry-schema-fixture-index",
         help="Build an index for report-only source registry schema fixture artifacts",
@@ -9179,6 +9191,29 @@ def _handle_source_registry_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, stock profiles, broker/API/order/message behavior, buy-review eligibility, performance validation, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_raw_document_store_schema_fixture(args: argparse.Namespace) -> int:
+    result = build_raw_document_store_schema_fixture(output_dir=args.output_dir)
+    print(f"raw_document_store_schema_fixture_id: {result.raw_document_store_schema_fixture_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"document_count: {result.document_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"schema_fields_path: {result.artifact_paths['schema_fields']}")
+    print(f"fixture_rows_path: {result.artifact_paths['fixture_rows']}")
+    print(f"permission_matrix_path: {result.artifact_paths['permission_matrix']}")
+    print(f"storage_policy_matrix_path: {result.artifact_paths['storage_policy_matrix']}")
+    print(f"pit_timing_matrix_path: {result.artifact_paths['pit_timing_matrix']}")
+    print(f"validation_summary_path: {result.artifact_paths['validation_summary']}")
+    print(f"limitations_path: {result.artifact_paths['limitations']}")
+    print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
+    print("No data/raw, data/processed, data/cache, real data fetch, production raw document store, real source permission, raw document ingestion, factor observations, event ingestion, company exposure, replay evidence bundle, current-candidates, snapshots, signal_semantics changes, stock profiles, broker/API/order/message behavior, buy-review eligibility, performance validation, or trading was invoked.")
     return 1 if result.status == "FAIL" else 0
 
 
