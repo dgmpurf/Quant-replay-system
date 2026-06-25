@@ -542,6 +542,9 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture_status i
 )
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
+from quant_replay_system.raw_document_store_schema_fixture_health import check_raw_document_store_schema_fixture_health
+from quant_replay_system.raw_document_store_schema_fixture_index import build_raw_document_store_schema_fixture_index
+from quant_replay_system.raw_document_store_schema_fixture_status import run_raw_document_store_schema_fixture_status
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.source_registry_schema_fixture_health import check_source_registry_schema_fixture_health
 from quant_replay_system.source_registry_schema_fixture_index import build_source_registry_schema_fixture_index
@@ -5277,6 +5280,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     raw_document_store_schema_fixture.set_defaults(handler=_handle_raw_document_store_schema_fixture)
 
+    raw_document_store_schema_fixture_index = subparsers.add_parser(
+        "raw-document-store-schema-fixture-index",
+        help="Build an index for report-only raw document store schema fixture artifacts",
+    )
+    raw_document_store_schema_fixture_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/raw_document_store_schema_fixture_v0_1",
+    )
+    raw_document_store_schema_fixture_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/raw_document_store_schema_fixture_v0_1/index",
+    )
+    raw_document_store_schema_fixture_index.set_defaults(handler=_handle_raw_document_store_schema_fixture_index)
+
+    raw_document_store_schema_fixture_health = subparsers.add_parser(
+        "raw-document-store-schema-fixture-health",
+        help="Check report-only raw document store schema fixture artifact health",
+    )
+    raw_document_store_schema_fixture_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/raw_document_store_schema_fixture_v0_1",
+    )
+    raw_document_store_schema_fixture_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/raw_document_store_schema_fixture_v0_1/health",
+    )
+    raw_document_store_schema_fixture_health.set_defaults(handler=_handle_raw_document_store_schema_fixture_health)
+
+    raw_document_store_schema_fixture_status = subparsers.add_parser(
+        "raw-document-store-schema-fixture-status",
+        help="Summarize latest report-only raw document store schema fixture status",
+    )
+    raw_document_store_schema_fixture_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/raw_document_store_schema_fixture_v0_1",
+    )
+    raw_document_store_schema_fixture_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/raw_document_store_schema_fixture_v0_1/status",
+    )
+    raw_document_store_schema_fixture_status.set_defaults(handler=_handle_raw_document_store_schema_fixture_status)
+
     source_registry_schema_fixture_index = subparsers.add_parser(
         "source-registry-schema-fixture-index",
         help="Build an index for report-only source registry schema fixture artifacts",
@@ -9214,6 +9259,63 @@ def _handle_raw_document_store_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No data/raw, data/processed, data/cache, real data fetch, production raw document store, real source permission, raw document ingestion, factor observations, event ingestion, company exposure, replay evidence bundle, current-candidates, snapshots, signal_semantics changes, stock profiles, broker/API/order/message behavior, buy-review eligibility, performance validation, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_raw_document_store_schema_fixture_index(args: argparse.Namespace) -> int:
+    result = build_raw_document_store_schema_fixture_index(root=args.root, output_dir=args.output_dir)
+    print(f"Raw document store schema fixture index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print("Report-only index: no production raw document store, real source permissions, real data fetch, raw document ingestion, replay-ready evidence, buy-review eligibility, performance validation, or trading was created.")
+    return 0
+
+
+def _handle_raw_document_store_schema_fixture_health(args: argparse.Namespace) -> int:
+    result = check_raw_document_store_schema_fixture_health(root=args.root, output_dir=args.output_dir)
+    print(f"Raw document store schema fixture health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: fixture rows remain non-production raw document context and grant no real source permission, raw document ingestion, buy-review eligibility, performance validation, or trading readiness.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_raw_document_store_schema_fixture_status(args: argparse.Namespace) -> int:
+    result = run_raw_document_store_schema_fixture_status(root=args.root, output_dir=args.output_dir)
+    print(f"Raw document store schema fixture status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"health_status: {result.health_status}")
+    print(f"document_count: {result.document_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"raw_document_store_schema_fixture_created: {result.raw_document_store_schema_fixture_created}")
+    print(f"production_raw_document_store_created: {result.production_raw_document_store_created}")
+    print(f"real_source_permission_created: {result.real_source_permission_created}")
+    print(f"real_data_fetched: {result.real_data_fetched}")
+    print(f"raw_document_ingestion_created: {result.raw_document_ingestion_created}")
+    print(f"factor_observations_created: {result.factor_observations_created}")
+    print(f"event_ingestion_created: {result.event_ingestion_created}")
+    print(f"company_exposure_created: {result.company_exposure_created}")
+    print(f"replay_evidence_bundle_created: {result.replay_evidence_bundle_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"operational_global_approved_for_paper_granted: {result.operational_global_approved_for_paper_granted}")
+    print(f"next_action: {result.next_action}")
+    print("Report-only status: no production raw document store, real source permissions, real data fetch, raw document ingestion, factor observations, event ingestion, company exposure, replay evidence bundles, broker/order/message/API behavior, current-candidates, snapshots, signal_semantics mutation, buy-review eligibility, performance validation, or trading was created.")
     return 1 if result.status == "FAIL" else 0
 
 

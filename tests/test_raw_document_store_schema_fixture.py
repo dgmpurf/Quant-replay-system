@@ -237,9 +237,10 @@ def test_recommended_next_task_and_no_views_commands_boundary(tmp_path: Path) ->
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "raw-document-store-schema-fixture" in help_output
-    assert "raw-document-store-schema-fixture-index" not in help_output
-    assert "raw-document-store-schema-fixture-health" not in help_output
-    assert "raw-document-store-schema-fixture-status" not in help_output
+    assert "raw-document-store-schema-fixture-index" in help_output
+    assert "raw-document-store-schema-fixture-health" in help_output
+    assert "raw-document-store-schema-fixture-status" in help_output
+    assert "raw-document-store-schema-fixture-research-status" not in help_output
 
 
 def test_cli_command_runs_successfully(tmp_path: Path) -> None:
