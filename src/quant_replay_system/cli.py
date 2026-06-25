@@ -542,6 +542,9 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture_status i
 )
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.factor_definition_schema_fixture import build_factor_definition_schema_fixture
+from quant_replay_system.factor_definition_schema_fixture_health import check_factor_definition_schema_fixture_health
+from quant_replay_system.factor_definition_schema_fixture_index import build_factor_definition_schema_fixture_index
+from quant_replay_system.factor_definition_schema_fixture_status import run_factor_definition_schema_fixture_status
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.raw_document_store_schema_fixture_health import check_raw_document_store_schema_fixture_health
 from quant_replay_system.raw_document_store_schema_fixture_index import build_raw_document_store_schema_fixture_index
@@ -5292,6 +5295,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     factor_definition_schema_fixture.set_defaults(handler=_handle_factor_definition_schema_fixture)
 
+    factor_definition_schema_fixture_index = subparsers.add_parser(
+        "factor-definition-schema-fixture-index",
+        help="Build an index for report-only factor definition schema fixture artifacts",
+    )
+    factor_definition_schema_fixture_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/factor_definition_schema_fixture_v0_1",
+    )
+    factor_definition_schema_fixture_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/factor_definition_schema_fixture_v0_1/index",
+    )
+    factor_definition_schema_fixture_index.set_defaults(handler=_handle_factor_definition_schema_fixture_index)
+
+    factor_definition_schema_fixture_health = subparsers.add_parser(
+        "factor-definition-schema-fixture-health",
+        help="Check report-only factor definition schema fixture artifact health",
+    )
+    factor_definition_schema_fixture_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/factor_definition_schema_fixture_v0_1",
+    )
+    factor_definition_schema_fixture_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/factor_definition_schema_fixture_v0_1/health",
+    )
+    factor_definition_schema_fixture_health.set_defaults(handler=_handle_factor_definition_schema_fixture_health)
+
+    factor_definition_schema_fixture_status = subparsers.add_parser(
+        "factor-definition-schema-fixture-status",
+        help="Summarize latest report-only factor definition schema fixture status",
+    )
+    factor_definition_schema_fixture_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/factor_definition_schema_fixture_v0_1",
+    )
+    factor_definition_schema_fixture_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/factor_definition_schema_fixture_v0_1/status",
+    )
+    factor_definition_schema_fixture_status.set_defaults(handler=_handle_factor_definition_schema_fixture_status)
+
     raw_document_store_schema_fixture_index = subparsers.add_parser(
         "raw-document-store-schema-fixture-index",
         help="Build an index for report-only raw document store schema fixture artifacts",
@@ -9294,6 +9339,72 @@ def _handle_factor_definition_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No factor observations, event ingestion, company exposure, replay evidence bundle, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_factor_definition_schema_fixture_index(args: argparse.Namespace) -> int:
+    result = build_factor_definition_schema_fixture_index(root=args.root, output_dir=args.output_dir)
+    print(f"Factor definition schema fixture index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print("Report-only index: fixture rows remain schema context only and create no factor observations, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, buy-review eligibility, performance validation, or trading readiness.")
+    return 0
+
+
+def _handle_factor_definition_schema_fixture_health(args: argparse.Namespace) -> int:
+    result = check_factor_definition_schema_fixture_health(root=args.root, output_dir=args.output_dir)
+    print(f"Factor definition schema fixture health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: no factor observations, event ingestion, company exposure mappings, replay evidence bundles, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, buy-review eligibility, performance validation, or trading readiness was created.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_factor_definition_schema_fixture_status(args: argparse.Namespace) -> int:
+    result = run_factor_definition_schema_fixture_status(root=args.root, output_dir=args.output_dir)
+    print(f"Factor definition schema fixture status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"health_status: {result.health_status}")
+    print(f"factor_count: {result.factor_count}")
+    print(f"taxonomy_layer_count: {result.taxonomy_layer_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"factor_definition_schema_fixture_created: {result.factor_definition_schema_fixture_created}")
+    print(f"factor_definition_rows_created: {result.factor_definition_rows_created}")
+    print(f"taxonomy_primary_classification: {result.taxonomy_primary_classification}")
+    print(f"legacy_12_factor_tags_checklist_only: {result.legacy_12_factor_tags_checklist_only}")
+    print(f"signal_score_formula_active: {result.signal_score_formula_active}")
+    print(f"signal_score_implemented: {result.signal_score_implemented}")
+    print(f"live_signals_created: {result.live_signals_created}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"factor_observations_created: {result.factor_observations_created}")
+    print(f"event_ingestion_created: {result.event_ingestion_created}")
+    print(f"company_exposure_created: {result.company_exposure_created}")
+    print(f"replay_evidence_bundle_created: {result.replay_evidence_bundle_created}")
+    print(f"model_training_performed: {result.model_training_performed}")
+    print(f"active_weights_created: {result.active_weights_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"stock_profile_validation_created: {result.stock_profile_validation_created}")
+    print(f"paper_validation_created: {result.paper_validation_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"operational_global_approved_for_paper_granted: {result.operational_global_approved_for_paper_granted}")
+    print(f"next_action: {result.next_action}")
+    print("Report-only status: no factor observations, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, buy-review eligibility, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading was created.")
     return 1 if result.status == "FAIL" else 0
 
 

@@ -239,7 +239,7 @@ def test_validation_usage_matrix_and_artifacts_do_not_activate_signal_score(tmp_
     assert "trading_signal" not in artifact_text
 
 
-def test_recommended_next_task_and_no_views_or_project_source_boundary(tmp_path: Path) -> None:
+def test_recommended_next_task_views_commands_and_project_source_boundary(tmp_path: Path) -> None:
     result = _build(tmp_path)
     next_task = result.artifact_paths["recommended_next_task"].read_text(encoding="utf-8")
 
@@ -255,9 +255,10 @@ def test_recommended_next_task_and_no_views_or_project_source_boundary(tmp_path:
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "factor-definition-schema-fixture" in help_output
-    assert "factor-definition-schema-fixture-index" not in help_output
-    assert "factor-definition-schema-fixture-health" not in help_output
-    assert "factor-definition-schema-fixture-status" not in help_output
+    assert "factor-definition-schema-fixture-index" in help_output
+    assert "factor-definition-schema-fixture-health" in help_output
+    assert "factor-definition-schema-fixture-status" in help_output
+    assert "factor-definition-schema-fixture-research-status" not in help_output
 
 
 def test_cli_command_runs_successfully(tmp_path: Path) -> None:
