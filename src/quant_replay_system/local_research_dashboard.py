@@ -80,6 +80,9 @@ from quant_replay_system.one_row_checklist_pass_candidate_preview_status import 
 from quant_replay_system.replay_substrate_schema_fixture_status import (
     run_replay_substrate_schema_fixture_status,
 )
+from quant_replay_system.raw_document_store_schema_fixture_status import (
+    run_raw_document_store_schema_fixture_status,
+)
 from quant_replay_system.source_registry_schema_fixture_status import (
     run_source_registry_schema_fixture_status,
 )
@@ -565,6 +568,44 @@ SUMMARY_COLUMNS = [
     "source_registry_schema_fixture_trading_allowed",
     "source_registry_schema_fixture_operational_global_approved_for_paper_granted",
     "source_registry_schema_fixture_next_action",
+    "raw_document_store_schema_fixture_workflow_implemented",
+    "raw_document_store_schema_fixture_views_implemented",
+    "latest_raw_document_store_schema_fixture_id",
+    "latest_raw_document_store_schema_fixture_status",
+    "latest_raw_document_store_schema_fixture_health_status",
+    "latest_raw_document_store_schema_fixture_workflow_stage",
+    "raw_document_store_schema_fixture_artifact_path",
+    "raw_document_store_schema_fixture_context_visible",
+    "raw_document_store_schema_fixture_created",
+    "raw_document_store_schema_fixture_document_count",
+    "raw_document_store_schema_fixture_validation_issue_count",
+    "raw_document_store_schema_fixture_report_only",
+    "raw_document_store_schema_fixture_diagnostic_only",
+    "raw_document_store_schema_fixture_next_action",
+    "raw_document_store_schema_fixture_production_raw_document_store_created",
+    "raw_document_store_schema_fixture_real_source_permission_created",
+    "raw_document_store_schema_fixture_real_data_fetched",
+    "raw_document_store_schema_fixture_raw_document_ingestion_created",
+    "raw_document_store_schema_fixture_factor_observations_created",
+    "raw_document_store_schema_fixture_event_ingestion_created",
+    "raw_document_store_schema_fixture_company_exposure_created",
+    "raw_document_store_schema_fixture_replay_evidence_bundle_created",
+    "raw_document_store_schema_fixture_live_trading_enabled",
+    "raw_document_store_schema_fixture_broker_api_called",
+    "raw_document_store_schema_fixture_external_api_called",
+    "raw_document_store_schema_fixture_llm_api_called",
+    "raw_document_store_schema_fixture_data_raw_written",
+    "raw_document_store_schema_fixture_data_processed_written",
+    "raw_document_store_schema_fixture_data_cache_written",
+    "raw_document_store_schema_fixture_current_candidates_run",
+    "raw_document_store_schema_fixture_snapshot_built",
+    "raw_document_store_schema_fixture_signal_semantics_changed",
+    "raw_document_store_schema_fixture_active_stock_profile_created",
+    "raw_document_store_schema_fixture_real_buy_review_eligible",
+    "raw_document_store_schema_fixture_buy_review_allowed",
+    "raw_document_store_schema_fixture_strategy_performance_validated",
+    "raw_document_store_schema_fixture_trading_allowed",
+    "raw_document_store_schema_fixture_operational_global_approved_for_paper_granted",
     "input_gate_validator_fixture_status",
     "latest_input_gate_validator_fixture_run_id",
     "input_gate_validator_fixture_stage",
@@ -2150,6 +2191,7 @@ OPTIONAL_COMPONENTS = {
     "GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_STATUS",
     "OPERATIONAL_GLOBAL_APPROVED_FOR_PAPER_STATUS",
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
+    "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
 
 WORKFLOW_AREAS = {
@@ -2183,6 +2225,7 @@ WORKFLOW_AREAS = {
     "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW_STATUS": "ONE_ROW_CHECKLIST_PASS_CANDIDATE_PREVIEW",
     "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_STATUS": "REPLAY_SUBSTRATE_SCHEMA_FIXTURE",
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS": "SOURCE_REGISTRY_SCHEMA_FIXTURE",
+    "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS": "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE",
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
     "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS": "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE",
@@ -2623,6 +2666,44 @@ class LocalResearchDashboardResult:
     source_registry_schema_fixture_trading_allowed: bool
     source_registry_schema_fixture_operational_global_approved_for_paper_granted: bool
     source_registry_schema_fixture_next_action: str
+    raw_document_store_schema_fixture_workflow_implemented: bool
+    raw_document_store_schema_fixture_views_implemented: bool
+    latest_raw_document_store_schema_fixture_id: str
+    latest_raw_document_store_schema_fixture_status: str
+    latest_raw_document_store_schema_fixture_health_status: str
+    latest_raw_document_store_schema_fixture_workflow_stage: str
+    raw_document_store_schema_fixture_artifact_path: str
+    raw_document_store_schema_fixture_context_visible: bool
+    raw_document_store_schema_fixture_created: bool
+    raw_document_store_schema_fixture_document_count: int
+    raw_document_store_schema_fixture_validation_issue_count: int
+    raw_document_store_schema_fixture_report_only: bool
+    raw_document_store_schema_fixture_diagnostic_only: bool
+    raw_document_store_schema_fixture_next_action: str
+    raw_document_store_schema_fixture_production_raw_document_store_created: bool
+    raw_document_store_schema_fixture_real_source_permission_created: bool
+    raw_document_store_schema_fixture_real_data_fetched: bool
+    raw_document_store_schema_fixture_raw_document_ingestion_created: bool
+    raw_document_store_schema_fixture_factor_observations_created: bool
+    raw_document_store_schema_fixture_event_ingestion_created: bool
+    raw_document_store_schema_fixture_company_exposure_created: bool
+    raw_document_store_schema_fixture_replay_evidence_bundle_created: bool
+    raw_document_store_schema_fixture_live_trading_enabled: bool
+    raw_document_store_schema_fixture_broker_api_called: bool
+    raw_document_store_schema_fixture_external_api_called: bool
+    raw_document_store_schema_fixture_llm_api_called: bool
+    raw_document_store_schema_fixture_data_raw_written: bool
+    raw_document_store_schema_fixture_data_processed_written: bool
+    raw_document_store_schema_fixture_data_cache_written: bool
+    raw_document_store_schema_fixture_current_candidates_run: bool
+    raw_document_store_schema_fixture_snapshot_built: bool
+    raw_document_store_schema_fixture_signal_semantics_changed: bool
+    raw_document_store_schema_fixture_active_stock_profile_created: bool
+    raw_document_store_schema_fixture_real_buy_review_eligible: bool
+    raw_document_store_schema_fixture_buy_review_allowed: bool
+    raw_document_store_schema_fixture_strategy_performance_validated: bool
+    raw_document_store_schema_fixture_trading_allowed: bool
+    raw_document_store_schema_fixture_operational_global_approved_for_paper_granted: bool
     input_gate_validator_fixture_status: str
     latest_input_gate_validator_fixture_run_id: str
     input_gate_validator_fixture_stage: str
@@ -4134,6 +4215,7 @@ def run_local_research_dashboard(
     one_row_checklist_pass_candidate_preview_root: str | Path | None = None,
     replay_substrate_schema_fixture_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
+    raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
     historical_replay_input_gate_validator_root: str | Path | None = None,
     minimal_replay_input_package_fixture_smoke_root: str | Path | None = None,
@@ -4327,6 +4409,11 @@ def run_local_research_dashboard(
         Path(source_registry_schema_fixture_root)
         if source_registry_schema_fixture_root is not None
         else effective_root / "manual_diagnostics" / "source_registry_schema_fixture_v0_1"
+    )
+    effective_raw_document_store_schema_fixture_root = (
+        Path(raw_document_store_schema_fixture_root)
+        if raw_document_store_schema_fixture_root is not None
+        else effective_root / "manual_diagnostics" / "raw_document_store_schema_fixture_v0_1"
     )
     effective_input_gate_validator_fixture_root = (
         Path(input_gate_validator_fixture_root)
@@ -4773,6 +4860,7 @@ def run_local_research_dashboard(
         one_row_checklist_pass_candidate_preview_root=effective_one_row_checklist_pass_candidate_preview_root,
         replay_substrate_schema_fixture_root=effective_replay_substrate_schema_fixture_root,
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
+        raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
         historical_replay_input_gate_validator_root=effective_historical_replay_input_gate_validator_root,
         minimal_replay_input_package_fixture_smoke_root=(
@@ -4884,6 +4972,7 @@ def run_local_research_dashboard(
         ),
         "replay_substrate_schema_fixture_root": effective_replay_substrate_schema_fixture_root,
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
+        "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
         "input_gate_validator_fixture_root": effective_input_gate_validator_fixture_root,
         "historical_replay_input_gate_validator_root": effective_historical_replay_input_gate_validator_root,
         "minimal_replay_input_package_fixture_smoke_root": (
@@ -5952,6 +6041,120 @@ def run_local_research_dashboard(
         ),
         source_registry_schema_fixture_next_action=str(
             summary.get("source_registry_schema_fixture_next_action", "")
+        ),
+        raw_document_store_schema_fixture_workflow_implemented=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_workflow_implemented")
+        ),
+        raw_document_store_schema_fixture_views_implemented=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_views_implemented")
+        ),
+        latest_raw_document_store_schema_fixture_id=str(
+            summary.get("latest_raw_document_store_schema_fixture_id", "")
+        ),
+        latest_raw_document_store_schema_fixture_status=str(
+            summary.get("latest_raw_document_store_schema_fixture_status", "MISSING")
+        ),
+        latest_raw_document_store_schema_fixture_health_status=str(
+            summary.get("latest_raw_document_store_schema_fixture_health_status", "")
+        ),
+        latest_raw_document_store_schema_fixture_workflow_stage=str(
+            summary.get("latest_raw_document_store_schema_fixture_workflow_stage", "")
+        ),
+        raw_document_store_schema_fixture_artifact_path=str(
+            summary.get("raw_document_store_schema_fixture_artifact_path", "")
+        ),
+        raw_document_store_schema_fixture_context_visible=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_context_visible")
+        ),
+        raw_document_store_schema_fixture_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_created")
+        ),
+        raw_document_store_schema_fixture_document_count=_int_or_zero(
+            summary.get("raw_document_store_schema_fixture_document_count")
+        ),
+        raw_document_store_schema_fixture_validation_issue_count=_int_or_zero(
+            summary.get("raw_document_store_schema_fixture_validation_issue_count")
+        ),
+        raw_document_store_schema_fixture_report_only=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_report_only")
+        ),
+        raw_document_store_schema_fixture_diagnostic_only=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_diagnostic_only")
+        ),
+        raw_document_store_schema_fixture_next_action=str(
+            summary.get("raw_document_store_schema_fixture_next_action", "")
+        ),
+        raw_document_store_schema_fixture_production_raw_document_store_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_production_raw_document_store_created")
+        ),
+        raw_document_store_schema_fixture_real_source_permission_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_real_source_permission_created")
+        ),
+        raw_document_store_schema_fixture_real_data_fetched=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_real_data_fetched")
+        ),
+        raw_document_store_schema_fixture_raw_document_ingestion_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_raw_document_ingestion_created")
+        ),
+        raw_document_store_schema_fixture_factor_observations_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_factor_observations_created")
+        ),
+        raw_document_store_schema_fixture_event_ingestion_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_event_ingestion_created")
+        ),
+        raw_document_store_schema_fixture_company_exposure_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_company_exposure_created")
+        ),
+        raw_document_store_schema_fixture_replay_evidence_bundle_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_replay_evidence_bundle_created")
+        ),
+        raw_document_store_schema_fixture_live_trading_enabled=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_live_trading_enabled")
+        ),
+        raw_document_store_schema_fixture_broker_api_called=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_broker_api_called")
+        ),
+        raw_document_store_schema_fixture_external_api_called=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_external_api_called")
+        ),
+        raw_document_store_schema_fixture_llm_api_called=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_llm_api_called")
+        ),
+        raw_document_store_schema_fixture_data_raw_written=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_data_raw_written")
+        ),
+        raw_document_store_schema_fixture_data_processed_written=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_data_processed_written")
+        ),
+        raw_document_store_schema_fixture_data_cache_written=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_data_cache_written")
+        ),
+        raw_document_store_schema_fixture_current_candidates_run=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_current_candidates_run")
+        ),
+        raw_document_store_schema_fixture_snapshot_built=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_snapshot_built")
+        ),
+        raw_document_store_schema_fixture_signal_semantics_changed=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_signal_semantics_changed")
+        ),
+        raw_document_store_schema_fixture_active_stock_profile_created=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_active_stock_profile_created")
+        ),
+        raw_document_store_schema_fixture_real_buy_review_eligible=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_real_buy_review_eligible")
+        ),
+        raw_document_store_schema_fixture_buy_review_allowed=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_buy_review_allowed")
+        ),
+        raw_document_store_schema_fixture_strategy_performance_validated=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_strategy_performance_validated")
+        ),
+        raw_document_store_schema_fixture_trading_allowed=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_trading_allowed")
+        ),
+        raw_document_store_schema_fixture_operational_global_approved_for_paper_granted=_bool_from_text(
+            summary.get("raw_document_store_schema_fixture_operational_global_approved_for_paper_granted")
         ),
         input_gate_validator_fixture_status=str(
             summary.get("input_gate_validator_fixture_status", "MISSING")
@@ -9505,6 +9708,7 @@ def scan_local_research_workflow_artifacts(
     one_row_checklist_pass_candidate_preview_root: str | Path,
     replay_substrate_schema_fixture_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
+    raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
     historical_replay_input_gate_validator_root: str | Path,
     minimal_replay_input_package_fixture_smoke_root: str | Path,
@@ -9581,6 +9785,7 @@ def scan_local_research_workflow_artifacts(
     one_row_checklist_pass_candidate_preview_path = Path(one_row_checklist_pass_candidate_preview_root)
     replay_substrate_schema_fixture_path = Path(replay_substrate_schema_fixture_root)
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
+    raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
     input_gate_validator_fixture_path = Path(input_gate_validator_fixture_root)
     historical_replay_input_gate_validator_path = Path(historical_replay_input_gate_validator_root)
     minimal_replay_input_package_fixture_smoke_path = Path(minimal_replay_input_package_fixture_smoke_root)
@@ -9686,6 +9891,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_one_row_checklist_pass_candidate_preview_status(one_row_checklist_pass_candidate_preview_path))
     records.extend(_scan_replay_substrate_schema_fixture_status(replay_substrate_schema_fixture_path))
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
+    records.extend(_scan_raw_document_store_schema_fixture_status(raw_document_store_schema_fixture_path))
     records.extend(_scan_input_gate_validator_fixture_status(input_gate_validator_fixture_path))
     records.extend(_scan_historical_replay_input_gate_validator_status(historical_replay_input_gate_validator_path))
     records.extend(_scan_minimal_replay_input_package_fixture_smoke_status(minimal_replay_input_package_fixture_smoke_path))
@@ -13318,6 +13524,8 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             return "REPLAY_SUBSTRATE_SCHEMA_FIXTURE_FAILED"
         if statuses["SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS"] == "FAIL":
             return "SOURCE_REGISTRY_SCHEMA_FIXTURE_FAILED"
+        if statuses["RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS"] == "FAIL":
+            return "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_FAILED"
         if statuses["INPUT_GATE_VALIDATOR_FIXTURE_STATUS"] == "FAIL":
             return "INPUT_GATE_VALIDATOR_FIXTURE_BLOCKED"
         if statuses["HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS"] == "FAIL":
@@ -13552,6 +13760,11 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
         and _source_registry_schema_fixture_stage_from_frame(dashboard_frame)
     ):
         return _source_registry_schema_fixture_stage_from_frame(dashboard_frame)
+    if (
+        statuses["RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS"] in {"PASS", "WARN", "READY"}
+        and _raw_document_store_schema_fixture_stage_from_frame(dashboard_frame)
+    ):
+        return _raw_document_store_schema_fixture_stage_from_frame(dashboard_frame)
     if (
         statuses["INPUT_GATE_VALIDATOR_FIXTURE_STATUS"] in {"PASS", "WARN", "READY"}
         and _input_gate_validator_fixture_stage_from_frame(dashboard_frame)
@@ -15838,6 +16051,160 @@ def summarize_local_research_status(
         "source_registry_schema_fixture_next_action": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "next_manual_action",
+        ),
+        "raw_document_store_schema_fixture_workflow_implemented": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "raw_document_store_schema_fixture_views_implemented": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_raw_document_store_schema_fixture_id": _string_or_empty(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_raw_document_store_schema_fixture_status": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "latest_status",
+        ),
+        "latest_raw_document_store_schema_fixture_health_status": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_raw_document_store_schema_fixture_workflow_stage": _string_or_empty(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("stage")
+        ),
+        "raw_document_store_schema_fixture_artifact_path": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "raw_document_store_schema_fixture_context_visible": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "context_visible",
+        ),
+        "raw_document_store_schema_fixture_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "raw_document_store_schema_fixture_created",
+        ),
+        "raw_document_store_schema_fixture_document_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "document_count",
+            )
+        ),
+        "raw_document_store_schema_fixture_validation_issue_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "validation_issue_count",
+            )
+        ),
+        "raw_document_store_schema_fixture_report_only": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "raw_document_store_schema_fixture_diagnostic_only": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "raw_document_store_schema_fixture_next_action": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "raw_document_store_schema_fixture_production_raw_document_store_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_raw_document_store_created",
+        ),
+        "raw_document_store_schema_fixture_real_source_permission_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_source_permission_created",
+        ),
+        "raw_document_store_schema_fixture_real_data_fetched": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_data_fetched",
+        ),
+        "raw_document_store_schema_fixture_raw_document_ingestion_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "raw_document_ingestion_created",
+        ),
+        "raw_document_store_schema_fixture_factor_observations_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "factor_observations_created",
+        ),
+        "raw_document_store_schema_fixture_event_ingestion_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "event_ingestion_created",
+        ),
+        "raw_document_store_schema_fixture_company_exposure_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "company_exposure_created",
+        ),
+        "raw_document_store_schema_fixture_replay_evidence_bundle_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "replay_evidence_bundle_created",
+        ),
+        "raw_document_store_schema_fixture_live_trading_enabled": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "live_trading_enabled",
+        ),
+        "raw_document_store_schema_fixture_broker_api_called": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "broker_api_called",
+        ),
+        "raw_document_store_schema_fixture_external_api_called": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "raw_document_store_schema_fixture_llm_api_called": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "raw_document_store_schema_fixture_data_raw_written": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_raw_written",
+        ),
+        "raw_document_store_schema_fixture_data_processed_written": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_processed_written",
+        ),
+        "raw_document_store_schema_fixture_data_cache_written": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_cache_written",
+        ),
+        "raw_document_store_schema_fixture_current_candidates_run": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "raw_document_store_schema_fixture_snapshot_built": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "raw_document_store_schema_fixture_signal_semantics_changed": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "raw_document_store_schema_fixture_active_stock_profile_created": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_stock_profile_created",
+        ),
+        "raw_document_store_schema_fixture_real_buy_review_eligible": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "raw_document_store_schema_fixture_buy_review_allowed": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "buy_review_allowed",
+        ),
+        "raw_document_store_schema_fixture_strategy_performance_validated": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "strategy_performance_validated",
+        ),
+        "raw_document_store_schema_fixture_trading_allowed": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "trading_allowed",
+        ),
+        "raw_document_store_schema_fixture_operational_global_approved_for_paper_granted": _parse_note_value(
+            by_component.get("RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "operational_global_approved_for_paper_granted",
         ),
         "input_gate_validator_fixture_status": _component_status(
             by_component,
@@ -22971,6 +23338,110 @@ def build_local_research_dashboard_metadata(
             result.source_registry_schema_fixture_operational_global_approved_for_paper_granted
         ),
         "source_registry_schema_fixture_next_action": result.source_registry_schema_fixture_next_action,
+        "raw_document_store_schema_fixture_workflow_implemented": (
+            result.raw_document_store_schema_fixture_workflow_implemented
+        ),
+        "raw_document_store_schema_fixture_views_implemented": (
+            result.raw_document_store_schema_fixture_views_implemented
+        ),
+        "latest_raw_document_store_schema_fixture_id": result.latest_raw_document_store_schema_fixture_id,
+        "latest_raw_document_store_schema_fixture_status": (
+            result.latest_raw_document_store_schema_fixture_status
+        ),
+        "latest_raw_document_store_schema_fixture_health_status": (
+            result.latest_raw_document_store_schema_fixture_health_status
+        ),
+        "latest_raw_document_store_schema_fixture_workflow_stage": (
+            result.latest_raw_document_store_schema_fixture_workflow_stage
+        ),
+        "raw_document_store_schema_fixture_artifact_path": (
+            result.raw_document_store_schema_fixture_artifact_path
+        ),
+        "raw_document_store_schema_fixture_context_visible": (
+            result.raw_document_store_schema_fixture_context_visible
+        ),
+        "raw_document_store_schema_fixture_created": result.raw_document_store_schema_fixture_created,
+        "raw_document_store_schema_fixture_document_count": (
+            result.raw_document_store_schema_fixture_document_count
+        ),
+        "raw_document_store_schema_fixture_validation_issue_count": (
+            result.raw_document_store_schema_fixture_validation_issue_count
+        ),
+        "raw_document_store_schema_fixture_report_only": result.raw_document_store_schema_fixture_report_only,
+        "raw_document_store_schema_fixture_diagnostic_only": (
+            result.raw_document_store_schema_fixture_diagnostic_only
+        ),
+        "raw_document_store_schema_fixture_next_action": result.raw_document_store_schema_fixture_next_action,
+        "raw_document_store_schema_fixture_production_raw_document_store_created": (
+            result.raw_document_store_schema_fixture_production_raw_document_store_created
+        ),
+        "raw_document_store_schema_fixture_real_source_permission_created": (
+            result.raw_document_store_schema_fixture_real_source_permission_created
+        ),
+        "raw_document_store_schema_fixture_real_data_fetched": (
+            result.raw_document_store_schema_fixture_real_data_fetched
+        ),
+        "raw_document_store_schema_fixture_raw_document_ingestion_created": (
+            result.raw_document_store_schema_fixture_raw_document_ingestion_created
+        ),
+        "raw_document_store_schema_fixture_factor_observations_created": (
+            result.raw_document_store_schema_fixture_factor_observations_created
+        ),
+        "raw_document_store_schema_fixture_event_ingestion_created": (
+            result.raw_document_store_schema_fixture_event_ingestion_created
+        ),
+        "raw_document_store_schema_fixture_company_exposure_created": (
+            result.raw_document_store_schema_fixture_company_exposure_created
+        ),
+        "raw_document_store_schema_fixture_replay_evidence_bundle_created": (
+            result.raw_document_store_schema_fixture_replay_evidence_bundle_created
+        ),
+        "raw_document_store_schema_fixture_live_trading_enabled": (
+            result.raw_document_store_schema_fixture_live_trading_enabled
+        ),
+        "raw_document_store_schema_fixture_broker_api_called": (
+            result.raw_document_store_schema_fixture_broker_api_called
+        ),
+        "raw_document_store_schema_fixture_external_api_called": (
+            result.raw_document_store_schema_fixture_external_api_called
+        ),
+        "raw_document_store_schema_fixture_llm_api_called": (
+            result.raw_document_store_schema_fixture_llm_api_called
+        ),
+        "raw_document_store_schema_fixture_data_raw_written": (
+            result.raw_document_store_schema_fixture_data_raw_written
+        ),
+        "raw_document_store_schema_fixture_data_processed_written": (
+            result.raw_document_store_schema_fixture_data_processed_written
+        ),
+        "raw_document_store_schema_fixture_data_cache_written": (
+            result.raw_document_store_schema_fixture_data_cache_written
+        ),
+        "raw_document_store_schema_fixture_current_candidates_run": (
+            result.raw_document_store_schema_fixture_current_candidates_run
+        ),
+        "raw_document_store_schema_fixture_snapshot_built": result.raw_document_store_schema_fixture_snapshot_built,
+        "raw_document_store_schema_fixture_signal_semantics_changed": (
+            result.raw_document_store_schema_fixture_signal_semantics_changed
+        ),
+        "raw_document_store_schema_fixture_active_stock_profile_created": (
+            result.raw_document_store_schema_fixture_active_stock_profile_created
+        ),
+        "raw_document_store_schema_fixture_real_buy_review_eligible": (
+            result.raw_document_store_schema_fixture_real_buy_review_eligible
+        ),
+        "raw_document_store_schema_fixture_buy_review_allowed": (
+            result.raw_document_store_schema_fixture_buy_review_allowed
+        ),
+        "raw_document_store_schema_fixture_strategy_performance_validated": (
+            result.raw_document_store_schema_fixture_strategy_performance_validated
+        ),
+        "raw_document_store_schema_fixture_trading_allowed": (
+            result.raw_document_store_schema_fixture_trading_allowed
+        ),
+        "raw_document_store_schema_fixture_operational_global_approved_for_paper_granted": (
+            result.raw_document_store_schema_fixture_operational_global_approved_for_paper_granted
+        ),
         "input_gate_validator_fixture_status": result.input_gate_validator_fixture_status,
         "latest_input_gate_validator_fixture_run_id": result.latest_input_gate_validator_fixture_run_id,
         "input_gate_validator_fixture_stage": result.input_gate_validator_fixture_stage,
@@ -27335,6 +27806,94 @@ def _source_registry_schema_fixture_notes(summary: dict[str, Any]) -> str:
         f"validation_issue_count={_string_or_empty(summary.get('validation_issue_count'))}; "
         f"report_only={_string_or_empty(summary.get('report_only'))}; "
         f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"live_trading_enabled={_string_or_empty(summary.get('live_trading_enabled'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"active_stock_profile_created={_string_or_empty(summary.get('active_stock_profile_created'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        "strategy_performance_validated="
+        f"{_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        "operational_global_approved_for_paper_granted="
+        f"{_string_or_empty(summary.get('operational_global_approved_for_paper_granted'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_raw_document_store_schema_fixture_status(root: Path) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_raw_document_store_schema_fixture_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = fixture_root / result.latest_run_id
+    summary["artifact_path"] = str(artifact_dir)
+    summary["context_visible"] = True
+    summary["latest_status"] = result.workflow_stage
+    summary["next_action"] = (
+        "Review raw document store schema fixture context only; do not treat fixture rows as "
+        "production raw documents, real source permissions, raw ingestion, replay-ready evidence, "
+        "buy-review, performance validation, or trading permission."
+    )
+    return [
+        _record(
+            workflow_area="RAW_DOCUMENT_STORE_SCHEMA_FIXTURE",
+            component="RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_raw_document_store_schema_fixture_notes(summary),
+        )
+    ]
+
+
+def _raw_document_store_schema_fixture_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"latest_status={_string_or_empty(summary.get('latest_status'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"context_visible={_string_or_empty(summary.get('context_visible'))}; "
+        "raw_document_store_schema_fixture_created="
+        f"{_string_or_empty(summary.get('raw_document_store_schema_fixture_created'))}; "
+        f"document_count={_string_or_empty(summary.get('document_count'))}; "
+        f"validation_issue_count={_string_or_empty(summary.get('validation_issue_count'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "production_raw_document_store_created="
+        f"{_string_or_empty(summary.get('production_raw_document_store_created'))}; "
+        "real_source_permission_created="
+        f"{_string_or_empty(summary.get('real_source_permission_created'))}; "
+        f"real_data_fetched={_string_or_empty(summary.get('real_data_fetched'))}; "
+        "raw_document_ingestion_created="
+        f"{_string_or_empty(summary.get('raw_document_ingestion_created'))}; "
+        f"factor_observations_created={_string_or_empty(summary.get('factor_observations_created'))}; "
+        f"event_ingestion_created={_string_or_empty(summary.get('event_ingestion_created'))}; "
+        f"company_exposure_created={_string_or_empty(summary.get('company_exposure_created'))}; "
+        f"replay_evidence_bundle_created={_string_or_empty(summary.get('replay_evidence_bundle_created'))}; "
         f"live_trading_enabled={_string_or_empty(summary.get('live_trading_enabled'))}; "
         f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
         f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
@@ -33386,6 +33945,14 @@ def _replay_substrate_schema_fixture_stage_from_frame(dashboard_frame: pd.DataFr
 def _source_registry_schema_fixture_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
     frame = _finalize_dashboard_frame(dashboard_frame)
     rows = frame.loc[frame["component"] == "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS"]
+    if rows.empty:
+        return ""
+    return _string_or_empty(rows.iloc[0].get("stage"))
+
+
+def _raw_document_store_schema_fixture_stage_from_frame(dashboard_frame: pd.DataFrame) -> str:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    rows = frame.loc[frame["component"] == "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS"]
     if rows.empty:
         return ""
     return _string_or_empty(rows.iloc[0].get("stage"))

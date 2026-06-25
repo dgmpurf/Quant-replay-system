@@ -1018,6 +1018,14 @@ The dashboard preserves existing paper workflow priority. Operational planning r
 
 The dashboard preserves existing paper workflow priority. Source Registry Schema Fixture rows remain context for future source-registry design review only and do not create production source permission, replay-ready source approval, buy-review, performance validation, or trading safety fields.
 
+## Raw Document Store Schema Fixture Context
+
+`research-status` includes Raw Document Store Schema Fixture context when `raw-document-store-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, document count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_CREATED` means synthetic/report-only raw document and dataset-reference fixture rows exist for audit only. It is not production raw_document_store, not real data fetch, not raw document ingestion, not real source permission, and not replay-ready evidence from real data. It does not write data/raw, does not write data/processed, does not write data/cache, does not create factor observations, does not create event ingestion, does not create company exposure, does not create replay evidence bundles, does not create buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, does not authorize active stock_profile, does not authorize promoted/production models, does not authorize active thresholds, does not authorize advisory predictions/probabilities, and does not authorize broker/order/message/API/trading.
+
+The dashboard preserves existing paper workflow priority. Raw Document Store Schema Fixture rows remain context for future raw-document-store design review only and do not create production raw document state, source permission, raw ingestion, replay-ready evidence, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:

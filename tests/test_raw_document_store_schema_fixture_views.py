@@ -274,10 +274,11 @@ def test_status_safe_empty_behavior_and_latest_fixture_summary(tmp_path: Path) -
     assert result.raw_document_store_schema_fixture_created is True
     for flag in FORBIDDEN_METADATA_FALSE_FLAGS:
         assert getattr(result, flag) is False
-    assert "Raw Document Store Schema Fixture Views are report-only" in result.next_action
-    assert "research-status/checkpoint integration" in result.next_action
+    assert "Raw Document Store Schema Fixture core/views/research-status/checkpoint context is available" in result.next_action
+    assert "post-checkpoint governance audit" in result.next_action
+    assert "research-status integration only after" not in result.next_action
     assert "production raw documents" in result.next_action
-    assert "trading permission" in result.next_action
+    assert "trading workflow" in result.next_action
 
 
 def test_status_marks_invalid_fixture_without_granting_downstream_readiness(tmp_path: Path) -> None:

@@ -35,10 +35,11 @@ SUMMARY_COLUMNS = [
 ]
 
 VIEWS_NEXT_ACTION = (
-    "Raw Document Store Schema Fixture Views are report-only. Review the fixture context and add "
-    "research-status/checkpoint integration only after the views remain stable. Do not treat fixture "
-    "rows as production raw documents, real source permissions, replay-ready evidence, buy-review, "
-    "performance validation, or trading permission."
+    "Raw Document Store Schema Fixture core/views/research-status/checkpoint context is available "
+    "as report-only schema-fixture governance. Review the checkpoint and run post-checkpoint "
+    "governance audit before any production raw document store, production raw documents, real "
+    "source permission, real data fetch, raw document ingestion, replay evidence, buy-review, "
+    "performance validation, or trading workflow."
 )
 
 
@@ -104,9 +105,10 @@ def run_raw_document_store_schema_fixture_status(
                 stage=RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_INVALID,
                 health_status=health.status,
                 next_action=(
-                    "Repair raw document store schema fixture artifacts before adding research-status/checkpoint "
-                    "integration. Fixture rows are not production raw documents, real source permissions, "
-                    "raw document ingestion, replay-ready evidence, buy-review, performance validation, or trading permission."
+                    "Repair raw document store schema fixture artifacts before relying on "
+                    "research-status/checkpoint context. Fixture rows are not production raw documents, "
+                    "real source permissions, raw document ingestion, replay-ready evidence, buy-review, "
+                    "performance validation, or trading permission."
                 ),
                 output_dir=output_dir,
                 root=root,
