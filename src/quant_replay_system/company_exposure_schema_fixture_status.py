@@ -36,13 +36,18 @@ SUMMARY_COLUMNS = [
 ]
 
 VIEWS_NEXT_ACTION = (
-    "Company Exposure Schema Fixture Views are report-only. Review fixture context and add "
-    "research-status/checkpoint integration only after the views remain stable. Do not treat "
-    "fixture rows as production company exposure mappings, active company exposure mappings, "
-    "company knowledge graph, real ETF holdings ingestion, supplier/customer graph, factor "
-    "observations, event ingestion, replay evidence bundles, signal_score, model training inputs, "
-    "active weights, active thresholds, stock_profile validation, buy-review, performance validation, "
-    "or trading permission."
+    "Company Exposure Schema Fixture core/views/research-status/checkpoint context is available "
+    "as report-only schema-fixture governance. Review the checkpoint and run post-checkpoint "
+    "governance audit before any raw document store, real source registry, production company "
+    "exposure mapping, active company exposure mapping, company knowledge graph, real ETF holdings "
+    "ingestion, supplier/customer graph, factor observations, event ingestion, replay evidence "
+    "bundles, signal_score, model training inputs, active weights, active thresholds, stock_profile "
+    "validation, paper validation, buy-review, performance validation, current-candidates, snapshots, "
+    "signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API, or "
+    "trading workflow. Do not treat fixture rows as production mappings, active mappings, company "
+    "knowledge graph, real holdings ingestion, factor observations, event ingestion, replay evidence "
+    "bundles, model training inputs, weights, thresholds, stock_profile validation, buy-review, "
+    "performance validation, or trading permission."
 )
 
 

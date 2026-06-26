@@ -391,8 +391,10 @@ def test_status_safe_empty_behavior_and_latest_fixture_summary(tmp_path: Path) -
     assert result.company_exposure_rows_created is True
     for flag in FORBIDDEN_METADATA_FALSE_FLAGS:
         assert getattr(result, flag) is False
-    assert "Company Exposure Schema Fixture Views are report-only" in result.next_action
-    assert "research-status/checkpoint integration only after the views remain stable" in result.next_action
+    assert "core/views/research-status/checkpoint context is available" in result.next_action
+    assert "research-status/checkpoint integration only after the views remain stable" not in result.next_action
+    assert "post-checkpoint governance audit" in result.next_action
+    assert "production company exposure mapping" in result.next_action
     assert "trading permission" in result.next_action
 
 

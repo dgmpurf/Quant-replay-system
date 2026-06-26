@@ -61,6 +61,7 @@ from quant_replay_system.metric_evaluation import (
 from quant_replay_system.pit_evidence_checklist_validator import SUMMARY_COLUMNS, VALIDATION_COLUMNS
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.factor_definition_schema_fixture import build_factor_definition_schema_fixture
+from quant_replay_system.company_exposure_schema_fixture import build_company_exposure_schema_fixture
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -2225,6 +2226,166 @@ def test_cli_research_status_prints_factor_definition_schema_fixture_fields(tmp_
     assert "factor_definition_schema_fixture_current_candidates_run: False" in output.out
     assert "factor_definition_schema_fixture_snapshot_built: False" in output.out
     assert "factor_definition_schema_fixture_operational_global_approved_for_paper_granted: False" in output.out
+
+
+def test_research_status_includes_company_exposure_schema_fixture_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_company_exposure_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "company_exposure_schema_fixture_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "COMPANY_EXPOSURE_SCHEMA_FIXTURE_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.company_exposure_schema_fixture_workflow_implemented is True
+    assert result.company_exposure_schema_fixture_views_implemented is True
+    assert result.latest_company_exposure_schema_fixture_id == fixture.company_exposure_schema_fixture_id
+    assert result.latest_company_exposure_schema_fixture_status == "PASS"
+    assert result.latest_company_exposure_schema_fixture_health_status == "PASS"
+    assert result.latest_company_exposure_schema_fixture_workflow_stage == (
+        "COMPANY_EXPOSURE_SCHEMA_FIXTURE_CREATED"
+    )
+    assert result.company_exposure_schema_fixture_context_visible is True
+    assert result.company_exposure_schema_fixture_created is True
+    assert result.company_exposure_schema_fixture_exposure_count == 10
+    assert result.company_exposure_schema_fixture_validation_issue_count == 0
+    assert result.company_exposure_schema_fixture_report_only is True
+    assert result.company_exposure_schema_fixture_diagnostic_only is True
+    assert result.company_exposure_schema_fixture_rows_created is True
+    assert result.company_exposure_schema_fixture_production_company_exposure_created is False
+    assert result.company_exposure_schema_fixture_active_company_exposure_mapping_created is False
+    assert result.company_exposure_schema_fixture_company_knowledge_graph_created is False
+    assert result.company_exposure_schema_fixture_real_holdings_ingested is False
+    assert result.company_exposure_schema_fixture_supplier_customer_graph_created is False
+    assert result.company_exposure_schema_fixture_factor_observations_created is False
+    assert result.company_exposure_schema_fixture_event_ingestion_created is False
+    assert result.company_exposure_schema_fixture_replay_evidence_bundle_created is False
+    assert result.company_exposure_schema_fixture_signal_score_implemented is False
+    assert result.company_exposure_schema_fixture_model_training_performed is False
+    assert result.company_exposure_schema_fixture_active_weights_created is False
+    assert result.company_exposure_schema_fixture_active_thresholds_created is False
+    assert result.company_exposure_schema_fixture_stock_profile_validation_created is False
+    assert result.company_exposure_schema_fixture_paper_validation_created is False
+    assert result.company_exposure_schema_fixture_real_buy_review_eligible is False
+    assert result.company_exposure_schema_fixture_buy_review_allowed is False
+    assert result.company_exposure_schema_fixture_strategy_performance_validated is False
+    assert result.company_exposure_schema_fixture_trading_allowed is False
+    assert result.company_exposure_schema_fixture_live_trading_enabled is False
+    assert result.company_exposure_schema_fixture_broker_api_called is False
+    assert result.company_exposure_schema_fixture_external_api_called is False
+    assert result.company_exposure_schema_fixture_llm_api_called is False
+    assert result.company_exposure_schema_fixture_data_raw_written is False
+    assert result.company_exposure_schema_fixture_data_processed_written is False
+    assert result.company_exposure_schema_fixture_data_cache_written is False
+    assert result.company_exposure_schema_fixture_current_candidates_run is False
+    assert result.company_exposure_schema_fixture_snapshot_built is False
+    assert result.company_exposure_schema_fixture_signal_semantics_changed is False
+    assert result.company_exposure_schema_fixture_active_stock_profile_created is False
+    assert result.company_exposure_schema_fixture_operational_global_approved_for_paper_granted is False
+    assert result.real_buy_review_eligible is False
+    assert result.buy_review_allowed is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert row["status"] == "PASS"
+    assert row["workflow_area"] == "COMPANY_EXPOSURE_SCHEMA_FIXTURE"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_company_exposure_schema_fixture_id"] == (
+        fixture.company_exposure_schema_fixture_id
+    )
+    assert summary.loc[0, "company_exposure_schema_fixture_exposure_count"] == "10"
+    assert summary.loc[0, "company_exposure_schema_fixture_context_visible"] == "True"
+    assert metadata["latest_company_exposure_schema_fixture_status"] == "PASS"
+    assert metadata["company_exposure_schema_fixture_context_visible"] is True
+    assert metadata["company_exposure_schema_fixture_created"] is True
+    assert metadata["company_exposure_schema_fixture_report_only"] is True
+    assert metadata["company_exposure_schema_fixture_diagnostic_only"] is True
+    assert metadata["company_exposure_schema_fixture_buy_review_allowed"] is False
+    assert metadata["company_exposure_schema_fixture_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_over_company_exposure_schema_fixture(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    build_company_exposure_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "company_exposure_schema_fixture_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Company Exposure Schema Fixture is report-only context, "
+            "not production exposure mapping, signal_score, training input, stock_profile validation, "
+            "buy-review, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.latest_company_exposure_schema_fixture_status == "PASS"
+    assert result.company_exposure_schema_fixture_context_visible is True
+    assert result.company_exposure_schema_fixture_production_company_exposure_created is False
+    assert result.company_exposure_schema_fixture_factor_observations_created is False
+    assert result.company_exposure_schema_fixture_signal_score_implemented is False
+    assert result.company_exposure_schema_fixture_model_training_performed is False
+    assert result.company_exposure_schema_fixture_buy_review_allowed is False
+    assert result.company_exposure_schema_fixture_trading_allowed is False
+
+
+def test_cli_research_status_prints_company_exposure_schema_fixture_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_company_exposure_schema_fixture(
+        output_dir=root / "manual_diagnostics" / "company_exposure_schema_fixture_v0_1"
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "company_exposure_schema_fixture_workflow_implemented: True" in output.out
+    assert "company_exposure_schema_fixture_views_implemented: True" in output.out
+    assert (
+        f"latest_company_exposure_schema_fixture_id: {fixture.company_exposure_schema_fixture_id}"
+        in output.out
+    )
+    assert "latest_company_exposure_schema_fixture_status: PASS" in output.out
+    assert "latest_company_exposure_schema_fixture_health_status: PASS" in output.out
+    assert "latest_company_exposure_schema_fixture_workflow_stage: COMPANY_EXPOSURE_SCHEMA_FIXTURE_CREATED" in output.out
+    assert "company_exposure_schema_fixture_context_visible: True" in output.out
+    assert "company_exposure_schema_fixture_created: True" in output.out
+    assert "company_exposure_schema_fixture_exposure_count: 10" in output.out
+    assert "company_exposure_schema_fixture_validation_issue_count: 0" in output.out
+    assert "company_exposure_schema_fixture_report_only: True" in output.out
+    assert "company_exposure_schema_fixture_diagnostic_only: True" in output.out
+    assert "company_exposure_schema_fixture_rows_created: True" in output.out
+    assert "company_exposure_schema_fixture_production_company_exposure_created: False" in output.out
+    assert "company_exposure_schema_fixture_active_company_exposure_mapping_created: False" in output.out
+    assert "company_exposure_schema_fixture_company_knowledge_graph_created: False" in output.out
+    assert "company_exposure_schema_fixture_real_holdings_ingested: False" in output.out
+    assert "company_exposure_schema_fixture_supplier_customer_graph_created: False" in output.out
+    assert "company_exposure_schema_fixture_factor_observations_created: False" in output.out
+    assert "company_exposure_schema_fixture_event_ingestion_created: False" in output.out
+    assert "company_exposure_schema_fixture_replay_evidence_bundle_created: False" in output.out
+    assert "company_exposure_schema_fixture_signal_score_implemented: False" in output.out
+    assert "company_exposure_schema_fixture_model_training_performed: False" in output.out
+    assert "company_exposure_schema_fixture_active_weights_created: False" in output.out
+    assert "company_exposure_schema_fixture_active_thresholds_created: False" in output.out
+    assert "company_exposure_schema_fixture_stock_profile_validation_created: False" in output.out
+    assert "company_exposure_schema_fixture_paper_validation_created: False" in output.out
+    assert "company_exposure_schema_fixture_real_buy_review_eligible: False" in output.out
+    assert "company_exposure_schema_fixture_buy_review_allowed: False" in output.out
+    assert "company_exposure_schema_fixture_strategy_performance_validated: False" in output.out
+    assert "company_exposure_schema_fixture_trading_allowed: False" in output.out
+    assert "company_exposure_schema_fixture_current_candidates_run: False" in output.out
+    assert "company_exposure_schema_fixture_snapshot_built: False" in output.out
+    assert "company_exposure_schema_fixture_signal_semantics_changed: False" in output.out
+    assert "company_exposure_schema_fixture_active_stock_profile_created: False" in output.out
+    assert "company_exposure_schema_fixture_operational_global_approved_for_paper_granted: False" in output.out
 
 
 def test_research_status_reports_failed_replay_substrate_fixture_as_context_blocker(tmp_path: Path) -> None:

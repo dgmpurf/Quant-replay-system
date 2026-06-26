@@ -1034,6 +1034,16 @@ The dashboard preserves existing paper workflow priority. Raw Document Store Sch
 
 The dashboard preserves existing paper workflow priority. Factor Definition Schema Fixture rows remain context for future factor-definition design review only and do not create production factor registry state, live signals, training inputs, buy-review, performance validation, or trading safety fields.
 
+## Company Exposure Schema Fixture Context
+
+`research-status` includes Company Exposure Schema Fixture context when `company-exposure-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, exposure count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`COMPANY_EXPOSURE_SCHEMA_FIXTURE_CREATED` means synthetic/report-only company exposure mapping rows exist for schema governance only. It is not production company exposure mapping, not active mapping, not company knowledge graph state, not real ETF holdings ingestion, not supplier/customer graph construction, not factor observations, not event ingestion, not replay evidence bundles, not signal_score implementation, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, and does not authorize current-candidates, snapshots, signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes.
+
+Exposure strength, exposure measure, and mapping confidence remain descriptive evidence context only. They are not model weights, return probabilities, portfolio weights, signal weights, thresholds, or trading weights.
+
+The dashboard preserves existing paper workflow priority. Company Exposure Schema Fixture rows remain context for future company-exposure design review only and do not create production mappings, active mappings, training inputs, stock_profile validation, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:
