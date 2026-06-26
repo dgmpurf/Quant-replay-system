@@ -342,8 +342,11 @@ def test_status_safe_empty_behavior_and_latest_fixture_summary(tmp_path: Path) -
     assert result.legacy_12_factor_tags_checklist_only is True
     for flag in FORBIDDEN_METADATA_FALSE_FLAGS:
         assert getattr(result, flag) is False
-    assert "Factor Definition Schema Fixture Views are report-only" in result.next_action
-    assert "research-status/checkpoint integration only after" in result.next_action
+    assert "Factor Definition Schema Fixture core/views/research-status/checkpoint context is available" in (
+        result.next_action
+    )
+    assert "research-status/checkpoint integration only after" not in result.next_action
+    assert "post-checkpoint governance audit" in result.next_action
     assert "live signals" in result.next_action
     assert "trading permission" in result.next_action
 

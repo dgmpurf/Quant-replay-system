@@ -39,11 +39,15 @@ SUMMARY_COLUMNS = [
 ]
 
 VIEWS_NEXT_ACTION = (
-    "Factor Definition Schema Fixture Views are report-only. Review fixture context and add "
-    "research-status/checkpoint integration only after the views remain stable. Do not treat "
-    "fixture rows as live signals, factor observations, active factor library, model training "
-    "inputs, active weights, active thresholds, stock_profile validation, buy-review, "
-    "performance validation, or trading permission."
+    "Factor Definition Schema Fixture core/views/research-status/checkpoint context is available "
+    "as report-only schema-fixture governance. Run the post-checkpoint governance audit before "
+    "any real factor observations, event ingestion, company exposure mappings, replay evidence "
+    "bundles, signal_score implementation, model training, active weights, active thresholds, "
+    "stock_profile validation, paper validation, buy-review, performance validation, current-candidates, "
+    "snapshots, signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API, "
+    "or trading workflow. Do not treat fixture rows as live signals, factor observations, active "
+    "factor library, model training inputs, active weights, active thresholds, stock_profile validation, "
+    "buy-review, performance validation, or trading permission."
 )
 
 

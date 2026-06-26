@@ -1026,6 +1026,14 @@ The dashboard preserves existing paper workflow priority. Source Registry Schema
 
 The dashboard preserves existing paper workflow priority. Raw Document Store Schema Fixture rows remain context for future raw-document-store design review only and do not create production raw document state, source permission, raw ingestion, replay-ready evidence, buy-review, performance validation, or trading safety fields.
 
+## Factor Definition Schema Fixture Context
+
+`research-status` includes Factor Definition Schema Fixture context when `factor-definition-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, factor count, taxonomy layer count, validation issue count, report-only flags, taxonomy classification flags, report path, next action, and safety fields.
+
+`FACTOR_DEFINITION_SCHEMA_FIXTURE_CREATED` means synthetic/report-only factor definition observation-rule rows exist for schema governance only. It is not an active factor library, not factor observations, not event ingestion, not company exposure, not replay evidence bundles, not signal_score implementation, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, and does not authorize current-candidates, snapshots, signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes.
+
+The dashboard preserves existing paper workflow priority. Factor Definition Schema Fixture rows remain context for future factor-definition design review only and do not create production factor registry state, live signals, training inputs, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:
