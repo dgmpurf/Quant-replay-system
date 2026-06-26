@@ -545,6 +545,7 @@ from quant_replay_system.company_exposure_schema_fixture import build_company_ex
 from quant_replay_system.company_exposure_schema_fixture_health import check_company_exposure_schema_fixture_health
 from quant_replay_system.company_exposure_schema_fixture_index import build_company_exposure_schema_fixture_index
 from quant_replay_system.company_exposure_schema_fixture_status import run_company_exposure_schema_fixture_status
+from quant_replay_system.event_structured_schema_fixture import build_event_structured_schema_fixture
 from quant_replay_system.factor_definition_schema_fixture import build_factor_definition_schema_fixture
 from quant_replay_system.factor_definition_schema_fixture_health import check_factor_definition_schema_fixture_health
 from quant_replay_system.factor_definition_schema_fixture_index import build_factor_definition_schema_fixture_index
@@ -5310,6 +5311,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     company_exposure_schema_fixture.set_defaults(handler=_handle_company_exposure_schema_fixture)
 
+    event_structured_schema_fixture = subparsers.add_parser(
+        "event-structured-schema-fixture",
+        help="Write report-only synthetic event structured schema fixture artifacts",
+    )
+    event_structured_schema_fixture.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/event_structured_schema_fixture_v0_1",
+        help="Directory where event structured schema fixture artifacts will be written",
+    )
+    event_structured_schema_fixture.set_defaults(handler=_handle_event_structured_schema_fixture)
+
     company_exposure_schema_fixture_index = subparsers.add_parser(
         "company-exposure-schema-fixture-index",
         help="Build an index for report-only company exposure schema fixture artifacts",
@@ -9419,6 +9431,30 @@ def _handle_company_exposure_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No production company exposure mapping, company knowledge graph, real holdings ingestion, supplier/customer production graph, factor observations, event ingestion, replay evidence bundle, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_event_structured_schema_fixture(args: argparse.Namespace) -> int:
+    result = build_event_structured_schema_fixture(output_dir=args.output_dir)
+    print(f"event_structured_schema_fixture_id: {result.event_structured_schema_fixture_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"event_count: {result.event_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"schema_fields_path: {result.artifact_paths['schema_fields']}")
+    print(f"fixture_rows_path: {result.artifact_paths['fixture_rows']}")
+    print(f"type_matrix_path: {result.artifact_paths['type_matrix']}")
+    print(f"direction_matrix_path: {result.artifact_paths['direction_matrix']}")
+    print(f"pit_lineage_matrix_path: {result.artifact_paths['pit_lineage_matrix']}")
+    print(f"source_quality_matrix_path: {result.artifact_paths['source_quality_matrix']}")
+    print(f"validation_summary_path: {result.artifact_paths['validation_summary']}")
+    print(f"limitations_path: {result.artifact_paths['limitations']}")
+    print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
+    print("No production event ingestion, active event library, real raw document ingestion, real source adapters, factor observations, production company exposure mapping, replay evidence bundles, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
     return 1 if result.status == "FAIL" else 0
 
 
