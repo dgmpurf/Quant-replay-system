@@ -542,6 +542,9 @@ from quant_replay_system.historical_replay_input_gate_validator_fixture_status i
 )
 from quant_replay_system.replay_substrate_schema_fixture import build_replay_substrate_schema_fixture
 from quant_replay_system.company_exposure_schema_fixture import build_company_exposure_schema_fixture
+from quant_replay_system.company_exposure_schema_fixture_health import check_company_exposure_schema_fixture_health
+from quant_replay_system.company_exposure_schema_fixture_index import build_company_exposure_schema_fixture_index
+from quant_replay_system.company_exposure_schema_fixture_status import run_company_exposure_schema_fixture_status
 from quant_replay_system.factor_definition_schema_fixture import build_factor_definition_schema_fixture
 from quant_replay_system.factor_definition_schema_fixture_health import check_factor_definition_schema_fixture_health
 from quant_replay_system.factor_definition_schema_fixture_index import build_factor_definition_schema_fixture_index
@@ -5307,6 +5310,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     company_exposure_schema_fixture.set_defaults(handler=_handle_company_exposure_schema_fixture)
 
+    company_exposure_schema_fixture_index = subparsers.add_parser(
+        "company-exposure-schema-fixture-index",
+        help="Build an index for report-only company exposure schema fixture artifacts",
+    )
+    company_exposure_schema_fixture_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/company_exposure_schema_fixture_v0_1",
+    )
+    company_exposure_schema_fixture_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/company_exposure_schema_fixture_v0_1/index",
+    )
+    company_exposure_schema_fixture_index.set_defaults(handler=_handle_company_exposure_schema_fixture_index)
+
+    company_exposure_schema_fixture_health = subparsers.add_parser(
+        "company-exposure-schema-fixture-health",
+        help="Check report-only company exposure schema fixture artifact health",
+    )
+    company_exposure_schema_fixture_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/company_exposure_schema_fixture_v0_1",
+    )
+    company_exposure_schema_fixture_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/company_exposure_schema_fixture_v0_1/health",
+    )
+    company_exposure_schema_fixture_health.set_defaults(handler=_handle_company_exposure_schema_fixture_health)
+
+    company_exposure_schema_fixture_status = subparsers.add_parser(
+        "company-exposure-schema-fixture-status",
+        help="Summarize latest report-only company exposure schema fixture status",
+    )
+    company_exposure_schema_fixture_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/company_exposure_schema_fixture_v0_1",
+    )
+    company_exposure_schema_fixture_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/company_exposure_schema_fixture_v0_1/status",
+    )
+    company_exposure_schema_fixture_status.set_defaults(handler=_handle_company_exposure_schema_fixture_status)
+
     factor_definition_schema_fixture_index = subparsers.add_parser(
         "factor-definition-schema-fixture-index",
         help="Build an index for report-only factor definition schema fixture artifacts",
@@ -9374,6 +9419,70 @@ def _handle_company_exposure_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No production company exposure mapping, company knowledge graph, real holdings ingestion, supplier/customer production graph, factor observations, event ingestion, replay evidence bundle, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_company_exposure_schema_fixture_index(args: argparse.Namespace) -> int:
+    result = build_company_exposure_schema_fixture_index(root=args.root, output_dir=args.output_dir)
+    print(f"Company exposure schema fixture index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print("Report-only index: no production company exposure mappings, active company exposure mappings, company knowledge graph, real holdings ingestion, factor observations, event ingestion, replay evidence bundles, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, buy-review eligibility, performance validation, or trading readiness was created.")
+    return 0
+
+
+def _handle_company_exposure_schema_fixture_health(args: argparse.Namespace) -> int:
+    result = check_company_exposure_schema_fixture_health(root=args.root, output_dir=args.output_dir)
+    print(f"Company exposure schema fixture health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: fixture rows remain schema context only and create no production company exposure mapping, active company exposure mapping, company knowledge graph, real holdings ingestion, factor observations, event ingestion, replay evidence bundles, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, buy-review eligibility, performance validation, or trading readiness.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_company_exposure_schema_fixture_status(args: argparse.Namespace) -> int:
+    result = run_company_exposure_schema_fixture_status(root=args.root, output_dir=args.output_dir)
+    print(f"Company exposure schema fixture status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"health_status: {result.health_status}")
+    print(f"exposure_count: {result.exposure_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"company_exposure_schema_fixture_created: {result.company_exposure_schema_fixture_created}")
+    print(f"company_exposure_rows_created: {result.company_exposure_rows_created}")
+    print(f"production_company_exposure_created: {result.production_company_exposure_created}")
+    print(f"active_company_exposure_mapping_created: {result.active_company_exposure_mapping_created}")
+    print(f"company_knowledge_graph_created: {result.company_knowledge_graph_created}")
+    print(f"real_holdings_ingested: {result.real_holdings_ingested}")
+    print(f"supplier_customer_graph_created: {result.supplier_customer_graph_created}")
+    print(f"factor_observations_created: {result.factor_observations_created}")
+    print(f"event_ingestion_created: {result.event_ingestion_created}")
+    print(f"replay_evidence_bundle_created: {result.replay_evidence_bundle_created}")
+    print(f"signal_score_implemented: {result.signal_score_implemented}")
+    print(f"model_training_performed: {result.model_training_performed}")
+    print(f"active_weights_created: {result.active_weights_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"stock_profile_validation_created: {result.stock_profile_validation_created}")
+    print(f"paper_validation_created: {result.paper_validation_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"operational_global_approved_for_paper_granted: {result.operational_global_approved_for_paper_granted}")
+    print(f"next_action: {result.next_action}")
+    print("Report-only status: no production company exposure mappings, active company exposure mappings, company knowledge graph, real holdings ingestion, factor observations, event ingestion, replay evidence bundles, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, buy-review eligibility, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading was created.")
     return 1 if result.status == "FAIL" else 0
 
 

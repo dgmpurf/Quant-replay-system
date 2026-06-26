@@ -277,6 +277,6 @@ def test_cli_command_runs_successfully_and_no_views_commands_are_added(tmp_path:
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "company-exposure-schema-fixture" in help_output
-    assert "company-exposure-schema-fixture-index" not in help_output
-    assert "company-exposure-schema-fixture-health" not in help_output
-    assert "company-exposure-schema-fixture-status" not in help_output
+    assert "company-exposure-schema-fixture-index" in help_output
+    assert "company-exposure-schema-fixture-health" in help_output
+    assert "company-exposure-schema-fixture-status" in help_output
