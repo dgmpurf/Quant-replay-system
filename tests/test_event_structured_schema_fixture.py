@@ -254,7 +254,7 @@ def test_validation_summary_recommended_next_task_and_project_source_boundary(tm
     assert not (tmp_path / "docs" / "project_sources").exists()
 
 
-def test_cli_command_runs_successfully_and_only_core_command_is_added(tmp_path: Path) -> None:
+def test_cli_command_runs_successfully_and_view_commands_are_available(tmp_path: Path) -> None:
     output_dir = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "event_structured_schema_fixture_v0_1"
 
     completed = subprocess.run(
@@ -293,7 +293,6 @@ def test_cli_command_runs_successfully_and_only_core_command_is_added(tmp_path: 
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "event-structured-schema-fixture" in help_output
-    assert "event-structured-schema-fixture-index" not in help_output
-    assert "event-structured-schema-fixture-health" not in help_output
-    assert "event-structured-schema-fixture-status" not in help_output
-
+    assert "event-structured-schema-fixture-index" in help_output
+    assert "event-structured-schema-fixture-health" in help_output
+    assert "event-structured-schema-fixture-status" in help_output
