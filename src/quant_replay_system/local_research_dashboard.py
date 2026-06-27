@@ -92,6 +92,9 @@ from quant_replay_system.event_structured_schema_fixture_status import (
 from quant_replay_system.factor_observation_schema_fixture_status import (
     run_factor_observation_schema_fixture_status,
 )
+from quant_replay_system.replay_evidence_bundle_schema_fixture_status import (
+    run_replay_evidence_bundle_schema_fixture_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -736,6 +739,59 @@ SUMMARY_COLUMNS = [
     "factor_observation_schema_fixture_signal_semantics_changed",
     "factor_observation_schema_fixture_active_stock_profile_created",
     "factor_observation_schema_fixture_operational_global_approved_for_paper_granted",
+    "replay_evidence_bundle_schema_fixture_workflow_implemented",
+    "replay_evidence_bundle_schema_fixture_views_implemented",
+    "latest_replay_evidence_bundle_schema_fixture_id",
+    "latest_replay_evidence_bundle_schema_fixture_status",
+    "latest_replay_evidence_bundle_schema_fixture_health_status",
+    "latest_replay_evidence_bundle_schema_fixture_workflow_stage",
+    "replay_evidence_bundle_schema_fixture_artifact_path",
+    "replay_evidence_bundle_schema_fixture_context_visible",
+    "replay_evidence_bundle_schema_fixture_created",
+    "replay_evidence_bundle_schema_fixture_bundle_count",
+    "replay_evidence_bundle_schema_fixture_validation_issue_count",
+    "replay_evidence_bundle_schema_fixture_report_only",
+    "replay_evidence_bundle_schema_fixture_diagnostic_only",
+    "replay_evidence_bundle_schema_fixture_next_action",
+    "replay_evidence_bundle_schema_fixture_rows_created",
+    "replay_evidence_bundle_schema_fixture_real_replay_evidence_bundles_created",
+    "replay_evidence_bundle_schema_fixture_replay_decisions_created",
+    "replay_evidence_bundle_schema_fixture_forward_labels_created",
+    "replay_evidence_bundle_schema_fixture_future_labels_joined",
+    "replay_evidence_bundle_schema_fixture_production_factor_observations_created",
+    "replay_evidence_bundle_schema_fixture_real_factor_observations_created",
+    "replay_evidence_bundle_schema_fixture_production_factor_registry_created",
+    "replay_evidence_bundle_schema_fixture_active_factor_library_created",
+    "replay_evidence_bundle_schema_fixture_production_event_ingestion_created",
+    "replay_evidence_bundle_schema_fixture_active_event_library_created",
+    "replay_evidence_bundle_schema_fixture_production_company_exposure_mapping_created",
+    "replay_evidence_bundle_schema_fixture_real_raw_document_ingestion_created",
+    "replay_evidence_bundle_schema_fixture_normalization_created",
+    "replay_evidence_bundle_schema_fixture_winsorization_created",
+    "replay_evidence_bundle_schema_fixture_direction_adjusted_values_created",
+    "replay_evidence_bundle_schema_fixture_signal_score_implemented",
+    "replay_evidence_bundle_schema_fixture_signal_score_input_authorized",
+    "replay_evidence_bundle_schema_fixture_model_training_performed",
+    "replay_evidence_bundle_schema_fixture_active_weights_created",
+    "replay_evidence_bundle_schema_fixture_active_thresholds_created",
+    "replay_evidence_bundle_schema_fixture_stock_profile_validation_created",
+    "replay_evidence_bundle_schema_fixture_paper_validation_created",
+    "replay_evidence_bundle_schema_fixture_real_buy_review_eligible",
+    "replay_evidence_bundle_schema_fixture_buy_review_allowed",
+    "replay_evidence_bundle_schema_fixture_strategy_performance_validated",
+    "replay_evidence_bundle_schema_fixture_trading_allowed",
+    "replay_evidence_bundle_schema_fixture_live_trading_enabled",
+    "replay_evidence_bundle_schema_fixture_broker_api_called",
+    "replay_evidence_bundle_schema_fixture_external_api_called",
+    "replay_evidence_bundle_schema_fixture_llm_api_called",
+    "replay_evidence_bundle_schema_fixture_data_raw_written",
+    "replay_evidence_bundle_schema_fixture_data_processed_written",
+    "replay_evidence_bundle_schema_fixture_data_cache_written",
+    "replay_evidence_bundle_schema_fixture_current_candidates_run",
+    "replay_evidence_bundle_schema_fixture_snapshot_built",
+    "replay_evidence_bundle_schema_fixture_signal_semantics_changed",
+    "replay_evidence_bundle_schema_fixture_active_stock_profile_created",
+    "replay_evidence_bundle_schema_fixture_operational_global_approved_for_paper_granted",
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2392,6 +2448,7 @@ OPTIONAL_COMPONENTS = {
     "COMPANY_EXPOSURE_SCHEMA_FIXTURE_STATUS",
     "EVENT_STRUCTURED_SCHEMA_FIXTURE_STATUS",
     "FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS",
+    "REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS",
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -2430,6 +2487,7 @@ WORKFLOW_AREAS = {
     "COMPANY_EXPOSURE_SCHEMA_FIXTURE_STATUS": "COMPANY_EXPOSURE_SCHEMA_FIXTURE",
     "EVENT_STRUCTURED_SCHEMA_FIXTURE_STATUS": "EVENT_STRUCTURED_SCHEMA_FIXTURE",
     "FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS": "FACTOR_OBSERVATION_SCHEMA_FIXTURE",
+    "REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS": "REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE",
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS": "SOURCE_REGISTRY_SCHEMA_FIXTURE",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS": "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE",
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
@@ -3028,6 +3086,59 @@ class LocalResearchDashboardResult:
     factor_observation_schema_fixture_signal_semantics_changed: bool
     factor_observation_schema_fixture_active_stock_profile_created: bool
     factor_observation_schema_fixture_operational_global_approved_for_paper_granted: bool
+    replay_evidence_bundle_schema_fixture_workflow_implemented: bool
+    replay_evidence_bundle_schema_fixture_views_implemented: bool
+    latest_replay_evidence_bundle_schema_fixture_id: str
+    latest_replay_evidence_bundle_schema_fixture_status: str
+    latest_replay_evidence_bundle_schema_fixture_health_status: str
+    latest_replay_evidence_bundle_schema_fixture_workflow_stage: str
+    replay_evidence_bundle_schema_fixture_artifact_path: str
+    replay_evidence_bundle_schema_fixture_context_visible: bool
+    replay_evidence_bundle_schema_fixture_created: bool
+    replay_evidence_bundle_schema_fixture_bundle_count: int
+    replay_evidence_bundle_schema_fixture_validation_issue_count: int
+    replay_evidence_bundle_schema_fixture_report_only: bool
+    replay_evidence_bundle_schema_fixture_diagnostic_only: bool
+    replay_evidence_bundle_schema_fixture_next_action: str
+    replay_evidence_bundle_schema_fixture_rows_created: bool
+    replay_evidence_bundle_schema_fixture_real_replay_evidence_bundles_created: bool
+    replay_evidence_bundle_schema_fixture_replay_decisions_created: bool
+    replay_evidence_bundle_schema_fixture_forward_labels_created: bool
+    replay_evidence_bundle_schema_fixture_future_labels_joined: bool
+    replay_evidence_bundle_schema_fixture_production_factor_observations_created: bool
+    replay_evidence_bundle_schema_fixture_real_factor_observations_created: bool
+    replay_evidence_bundle_schema_fixture_production_factor_registry_created: bool
+    replay_evidence_bundle_schema_fixture_active_factor_library_created: bool
+    replay_evidence_bundle_schema_fixture_production_event_ingestion_created: bool
+    replay_evidence_bundle_schema_fixture_active_event_library_created: bool
+    replay_evidence_bundle_schema_fixture_production_company_exposure_mapping_created: bool
+    replay_evidence_bundle_schema_fixture_real_raw_document_ingestion_created: bool
+    replay_evidence_bundle_schema_fixture_normalization_created: bool
+    replay_evidence_bundle_schema_fixture_winsorization_created: bool
+    replay_evidence_bundle_schema_fixture_direction_adjusted_values_created: bool
+    replay_evidence_bundle_schema_fixture_signal_score_implemented: bool
+    replay_evidence_bundle_schema_fixture_signal_score_input_authorized: bool
+    replay_evidence_bundle_schema_fixture_model_training_performed: bool
+    replay_evidence_bundle_schema_fixture_active_weights_created: bool
+    replay_evidence_bundle_schema_fixture_active_thresholds_created: bool
+    replay_evidence_bundle_schema_fixture_stock_profile_validation_created: bool
+    replay_evidence_bundle_schema_fixture_paper_validation_created: bool
+    replay_evidence_bundle_schema_fixture_real_buy_review_eligible: bool
+    replay_evidence_bundle_schema_fixture_buy_review_allowed: bool
+    replay_evidence_bundle_schema_fixture_strategy_performance_validated: bool
+    replay_evidence_bundle_schema_fixture_trading_allowed: bool
+    replay_evidence_bundle_schema_fixture_live_trading_enabled: bool
+    replay_evidence_bundle_schema_fixture_broker_api_called: bool
+    replay_evidence_bundle_schema_fixture_external_api_called: bool
+    replay_evidence_bundle_schema_fixture_llm_api_called: bool
+    replay_evidence_bundle_schema_fixture_data_raw_written: bool
+    replay_evidence_bundle_schema_fixture_data_processed_written: bool
+    replay_evidence_bundle_schema_fixture_data_cache_written: bool
+    replay_evidence_bundle_schema_fixture_current_candidates_run: bool
+    replay_evidence_bundle_schema_fixture_snapshot_built: bool
+    replay_evidence_bundle_schema_fixture_signal_semantics_changed: bool
+    replay_evidence_bundle_schema_fixture_active_stock_profile_created: bool
+    replay_evidence_bundle_schema_fixture_operational_global_approved_for_paper_granted: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -4610,6 +4721,7 @@ def run_local_research_dashboard(
     company_exposure_schema_fixture_root: str | Path | None = None,
     event_structured_schema_fixture_root: str | Path | None = None,
     factor_observation_schema_fixture_root: str | Path | None = None,
+    replay_evidence_bundle_schema_fixture_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -4820,6 +4932,11 @@ def run_local_research_dashboard(
         Path(factor_observation_schema_fixture_root)
         if factor_observation_schema_fixture_root is not None
         else effective_root / "manual_diagnostics" / "factor_observation_schema_fixture_v0_1"
+    )
+    effective_replay_evidence_bundle_schema_fixture_root = (
+        Path(replay_evidence_bundle_schema_fixture_root)
+        if replay_evidence_bundle_schema_fixture_root is not None
+        else effective_root / "manual_diagnostics" / "replay_evidence_bundle_schema_fixture_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -5283,6 +5400,7 @@ def run_local_research_dashboard(
         company_exposure_schema_fixture_root=effective_company_exposure_schema_fixture_root,
         event_structured_schema_fixture_root=effective_event_structured_schema_fixture_root,
         factor_observation_schema_fixture_root=effective_factor_observation_schema_fixture_root,
+        replay_evidence_bundle_schema_fixture_root=effective_replay_evidence_bundle_schema_fixture_root,
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -5399,6 +5517,7 @@ def run_local_research_dashboard(
         "company_exposure_schema_fixture_root": effective_company_exposure_schema_fixture_root,
         "event_structured_schema_fixture_root": effective_event_structured_schema_fixture_root,
         "factor_observation_schema_fixture_root": effective_factor_observation_schema_fixture_root,
+        "replay_evidence_bundle_schema_fixture_root": effective_replay_evidence_bundle_schema_fixture_root,
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
         "input_gate_validator_fixture_root": effective_input_gate_validator_fixture_root,
@@ -6937,6 +7056,165 @@ def run_local_research_dashboard(
         ),
         factor_observation_schema_fixture_operational_global_approved_for_paper_granted=_bool_from_text(
             summary.get("factor_observation_schema_fixture_operational_global_approved_for_paper_granted")
+        ),
+        replay_evidence_bundle_schema_fixture_workflow_implemented=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_workflow_implemented")
+        ),
+        replay_evidence_bundle_schema_fixture_views_implemented=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_views_implemented")
+        ),
+        latest_replay_evidence_bundle_schema_fixture_id=str(
+            summary.get("latest_replay_evidence_bundle_schema_fixture_id", "")
+        ),
+        latest_replay_evidence_bundle_schema_fixture_status=str(
+            summary.get("latest_replay_evidence_bundle_schema_fixture_status", "MISSING")
+        ),
+        latest_replay_evidence_bundle_schema_fixture_health_status=str(
+            summary.get("latest_replay_evidence_bundle_schema_fixture_health_status", "")
+        ),
+        latest_replay_evidence_bundle_schema_fixture_workflow_stage=str(
+            summary.get("latest_replay_evidence_bundle_schema_fixture_workflow_stage", "")
+        ),
+        replay_evidence_bundle_schema_fixture_artifact_path=str(
+            summary.get("replay_evidence_bundle_schema_fixture_artifact_path", "")
+        ),
+        replay_evidence_bundle_schema_fixture_context_visible=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_context_visible")
+        ),
+        replay_evidence_bundle_schema_fixture_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_created")
+        ),
+        replay_evidence_bundle_schema_fixture_bundle_count=_int_or_zero(
+            summary.get("replay_evidence_bundle_schema_fixture_bundle_count")
+        ),
+        replay_evidence_bundle_schema_fixture_validation_issue_count=_int_or_zero(
+            summary.get("replay_evidence_bundle_schema_fixture_validation_issue_count")
+        ),
+        replay_evidence_bundle_schema_fixture_report_only=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_report_only")
+        ),
+        replay_evidence_bundle_schema_fixture_diagnostic_only=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_diagnostic_only")
+        ),
+        replay_evidence_bundle_schema_fixture_next_action=str(
+            summary.get("replay_evidence_bundle_schema_fixture_next_action", "")
+        ),
+        replay_evidence_bundle_schema_fixture_rows_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_rows_created")
+        ),
+        replay_evidence_bundle_schema_fixture_real_replay_evidence_bundles_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_real_replay_evidence_bundles_created")
+        ),
+        replay_evidence_bundle_schema_fixture_replay_decisions_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_replay_decisions_created")
+        ),
+        replay_evidence_bundle_schema_fixture_forward_labels_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_forward_labels_created")
+        ),
+        replay_evidence_bundle_schema_fixture_future_labels_joined=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_future_labels_joined")
+        ),
+        replay_evidence_bundle_schema_fixture_production_factor_observations_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_production_factor_observations_created")
+        ),
+        replay_evidence_bundle_schema_fixture_real_factor_observations_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_real_factor_observations_created")
+        ),
+        replay_evidence_bundle_schema_fixture_production_factor_registry_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_production_factor_registry_created")
+        ),
+        replay_evidence_bundle_schema_fixture_active_factor_library_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_active_factor_library_created")
+        ),
+        replay_evidence_bundle_schema_fixture_production_event_ingestion_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_production_event_ingestion_created")
+        ),
+        replay_evidence_bundle_schema_fixture_active_event_library_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_active_event_library_created")
+        ),
+        replay_evidence_bundle_schema_fixture_production_company_exposure_mapping_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_production_company_exposure_mapping_created")
+        ),
+        replay_evidence_bundle_schema_fixture_real_raw_document_ingestion_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_real_raw_document_ingestion_created")
+        ),
+        replay_evidence_bundle_schema_fixture_normalization_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_normalization_created")
+        ),
+        replay_evidence_bundle_schema_fixture_winsorization_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_winsorization_created")
+        ),
+        replay_evidence_bundle_schema_fixture_direction_adjusted_values_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_direction_adjusted_values_created")
+        ),
+        replay_evidence_bundle_schema_fixture_signal_score_implemented=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_signal_score_implemented")
+        ),
+        replay_evidence_bundle_schema_fixture_signal_score_input_authorized=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_signal_score_input_authorized")
+        ),
+        replay_evidence_bundle_schema_fixture_model_training_performed=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_model_training_performed")
+        ),
+        replay_evidence_bundle_schema_fixture_active_weights_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_active_weights_created")
+        ),
+        replay_evidence_bundle_schema_fixture_active_thresholds_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_active_thresholds_created")
+        ),
+        replay_evidence_bundle_schema_fixture_stock_profile_validation_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_stock_profile_validation_created")
+        ),
+        replay_evidence_bundle_schema_fixture_paper_validation_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_paper_validation_created")
+        ),
+        replay_evidence_bundle_schema_fixture_real_buy_review_eligible=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_real_buy_review_eligible")
+        ),
+        replay_evidence_bundle_schema_fixture_buy_review_allowed=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_buy_review_allowed")
+        ),
+        replay_evidence_bundle_schema_fixture_strategy_performance_validated=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_strategy_performance_validated")
+        ),
+        replay_evidence_bundle_schema_fixture_trading_allowed=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_trading_allowed")
+        ),
+        replay_evidence_bundle_schema_fixture_live_trading_enabled=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_live_trading_enabled")
+        ),
+        replay_evidence_bundle_schema_fixture_broker_api_called=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_broker_api_called")
+        ),
+        replay_evidence_bundle_schema_fixture_external_api_called=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_external_api_called")
+        ),
+        replay_evidence_bundle_schema_fixture_llm_api_called=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_llm_api_called")
+        ),
+        replay_evidence_bundle_schema_fixture_data_raw_written=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_data_raw_written")
+        ),
+        replay_evidence_bundle_schema_fixture_data_processed_written=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_data_processed_written")
+        ),
+        replay_evidence_bundle_schema_fixture_data_cache_written=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_data_cache_written")
+        ),
+        replay_evidence_bundle_schema_fixture_current_candidates_run=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_current_candidates_run")
+        ),
+        replay_evidence_bundle_schema_fixture_snapshot_built=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_snapshot_built")
+        ),
+        replay_evidence_bundle_schema_fixture_signal_semantics_changed=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_signal_semantics_changed")
+        ),
+        replay_evidence_bundle_schema_fixture_active_stock_profile_created=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_active_stock_profile_created")
+        ),
+        replay_evidence_bundle_schema_fixture_operational_global_approved_for_paper_granted=_bool_from_text(
+            summary.get("replay_evidence_bundle_schema_fixture_operational_global_approved_for_paper_granted")
         ),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
@@ -10697,6 +10975,7 @@ def scan_local_research_workflow_artifacts(
     company_exposure_schema_fixture_root: str | Path,
     event_structured_schema_fixture_root: str | Path,
     factor_observation_schema_fixture_root: str | Path,
+    replay_evidence_bundle_schema_fixture_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -10778,6 +11057,7 @@ def scan_local_research_workflow_artifacts(
     company_exposure_schema_fixture_path = Path(company_exposure_schema_fixture_root)
     event_structured_schema_fixture_path = Path(event_structured_schema_fixture_root)
     factor_observation_schema_fixture_path = Path(factor_observation_schema_fixture_root)
+    replay_evidence_bundle_schema_fixture_path = Path(replay_evidence_bundle_schema_fixture_root)
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
     input_gate_validator_fixture_path = Path(input_gate_validator_fixture_root)
@@ -10888,6 +11168,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_company_exposure_schema_fixture_status(company_exposure_schema_fixture_path))
     records.extend(_scan_event_structured_schema_fixture_status(event_structured_schema_fixture_path))
     records.extend(_scan_factor_observation_schema_fixture_status(factor_observation_schema_fixture_path))
+    records.extend(_scan_replay_evidence_bundle_schema_fixture_status(replay_evidence_bundle_schema_fixture_path))
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
     records.extend(_scan_raw_document_store_schema_fixture_status(raw_document_store_schema_fixture_path))
     records.extend(_scan_input_gate_validator_fixture_status(input_gate_validator_fixture_path))
@@ -17674,6 +17955,220 @@ def summarize_local_research_status(
         ),
         "factor_observation_schema_fixture_operational_global_approved_for_paper_granted": _parse_note_value(
             by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "operational_global_approved_for_paper_granted",
+        ),
+        "replay_evidence_bundle_schema_fixture_workflow_implemented": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "replay_evidence_bundle_schema_fixture_views_implemented": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_replay_evidence_bundle_schema_fixture_id": _string_or_empty(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_replay_evidence_bundle_schema_fixture_status": _component_status(
+            by_component,
+            "REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS",
+        ),
+        "latest_replay_evidence_bundle_schema_fixture_health_status": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_replay_evidence_bundle_schema_fixture_workflow_stage": _string_or_empty(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("stage")
+        ),
+        "replay_evidence_bundle_schema_fixture_artifact_path": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "replay_evidence_bundle_schema_fixture_context_visible": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "context_visible",
+        ),
+        "replay_evidence_bundle_schema_fixture_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "replay_evidence_bundle_schema_fixture_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_bundle_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "bundle_count",
+            )
+        ),
+        "replay_evidence_bundle_schema_fixture_validation_issue_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "validation_issue_count",
+            )
+        ),
+        "replay_evidence_bundle_schema_fixture_report_only": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "replay_evidence_bundle_schema_fixture_diagnostic_only": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "replay_evidence_bundle_schema_fixture_next_action": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "replay_evidence_bundle_schema_fixture_rows_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "replay_evidence_bundle_rows_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_real_replay_evidence_bundles_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_replay_evidence_bundles_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_replay_decisions_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "replay_decisions_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_forward_labels_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "forward_labels_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_future_labels_joined": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "future_labels_joined",
+        ),
+        "replay_evidence_bundle_schema_fixture_production_factor_observations_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_factor_observations_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_real_factor_observations_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_factor_observations_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_production_factor_registry_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_factor_registry_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_active_factor_library_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_factor_library_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_production_event_ingestion_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_event_ingestion_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_active_event_library_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_event_library_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_production_company_exposure_mapping_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_company_exposure_mapping_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_real_raw_document_ingestion_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_raw_document_ingestion_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_normalization_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "normalization_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_winsorization_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "winsorization_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_direction_adjusted_values_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "direction_adjusted_values_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_signal_score_implemented": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "signal_score_implemented",
+        ),
+        "replay_evidence_bundle_schema_fixture_signal_score_input_authorized": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "signal_score_input_authorized",
+        ),
+        "replay_evidence_bundle_schema_fixture_model_training_performed": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "model_training_performed",
+        ),
+        "replay_evidence_bundle_schema_fixture_active_weights_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_weights_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_active_thresholds_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_thresholds_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_stock_profile_validation_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "stock_profile_validation_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_paper_validation_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "paper_validation_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_real_buy_review_eligible": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "replay_evidence_bundle_schema_fixture_buy_review_allowed": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "buy_review_allowed",
+        ),
+        "replay_evidence_bundle_schema_fixture_strategy_performance_validated": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "strategy_performance_validated",
+        ),
+        "replay_evidence_bundle_schema_fixture_trading_allowed": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "trading_allowed",
+        ),
+        "replay_evidence_bundle_schema_fixture_live_trading_enabled": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "live_trading_enabled",
+        ),
+        "replay_evidence_bundle_schema_fixture_broker_api_called": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "broker_api_called",
+        ),
+        "replay_evidence_bundle_schema_fixture_external_api_called": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "replay_evidence_bundle_schema_fixture_llm_api_called": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "replay_evidence_bundle_schema_fixture_data_raw_written": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_raw_written",
+        ),
+        "replay_evidence_bundle_schema_fixture_data_processed_written": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_processed_written",
+        ),
+        "replay_evidence_bundle_schema_fixture_data_cache_written": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_cache_written",
+        ),
+        "replay_evidence_bundle_schema_fixture_current_candidates_run": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "replay_evidence_bundle_schema_fixture_snapshot_built": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "replay_evidence_bundle_schema_fixture_signal_semantics_changed": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "replay_evidence_bundle_schema_fixture_active_stock_profile_created": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_stock_profile_created",
+        ),
+        "replay_evidence_bundle_schema_fixture_operational_global_approved_for_paper_granted": _parse_note_value(
+            by_component.get("REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "operational_global_approved_for_paper_granted",
         ),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
@@ -25488,6 +25983,59 @@ def build_local_research_dashboard_metadata(
         "factor_observation_schema_fixture_operational_global_approved_for_paper_granted": (
             result.factor_observation_schema_fixture_operational_global_approved_for_paper_granted
         ),
+        "replay_evidence_bundle_schema_fixture_workflow_implemented": result.replay_evidence_bundle_schema_fixture_workflow_implemented,
+        "replay_evidence_bundle_schema_fixture_views_implemented": result.replay_evidence_bundle_schema_fixture_views_implemented,
+        "latest_replay_evidence_bundle_schema_fixture_id": result.latest_replay_evidence_bundle_schema_fixture_id,
+        "latest_replay_evidence_bundle_schema_fixture_status": result.latest_replay_evidence_bundle_schema_fixture_status,
+        "latest_replay_evidence_bundle_schema_fixture_health_status": result.latest_replay_evidence_bundle_schema_fixture_health_status,
+        "latest_replay_evidence_bundle_schema_fixture_workflow_stage": result.latest_replay_evidence_bundle_schema_fixture_workflow_stage,
+        "replay_evidence_bundle_schema_fixture_artifact_path": result.replay_evidence_bundle_schema_fixture_artifact_path,
+        "replay_evidence_bundle_schema_fixture_context_visible": result.replay_evidence_bundle_schema_fixture_context_visible,
+        "replay_evidence_bundle_schema_fixture_created": result.replay_evidence_bundle_schema_fixture_created,
+        "replay_evidence_bundle_schema_fixture_bundle_count": result.replay_evidence_bundle_schema_fixture_bundle_count,
+        "replay_evidence_bundle_schema_fixture_validation_issue_count": result.replay_evidence_bundle_schema_fixture_validation_issue_count,
+        "replay_evidence_bundle_schema_fixture_report_only": result.replay_evidence_bundle_schema_fixture_report_only,
+        "replay_evidence_bundle_schema_fixture_diagnostic_only": result.replay_evidence_bundle_schema_fixture_diagnostic_only,
+        "replay_evidence_bundle_schema_fixture_next_action": result.replay_evidence_bundle_schema_fixture_next_action,
+        "replay_evidence_bundle_schema_fixture_rows_created": result.replay_evidence_bundle_schema_fixture_rows_created,
+        "replay_evidence_bundle_schema_fixture_real_replay_evidence_bundles_created": result.replay_evidence_bundle_schema_fixture_real_replay_evidence_bundles_created,
+        "replay_evidence_bundle_schema_fixture_replay_decisions_created": result.replay_evidence_bundle_schema_fixture_replay_decisions_created,
+        "replay_evidence_bundle_schema_fixture_forward_labels_created": result.replay_evidence_bundle_schema_fixture_forward_labels_created,
+        "replay_evidence_bundle_schema_fixture_future_labels_joined": result.replay_evidence_bundle_schema_fixture_future_labels_joined,
+        "replay_evidence_bundle_schema_fixture_production_factor_observations_created": result.replay_evidence_bundle_schema_fixture_production_factor_observations_created,
+        "replay_evidence_bundle_schema_fixture_real_factor_observations_created": result.replay_evidence_bundle_schema_fixture_real_factor_observations_created,
+        "replay_evidence_bundle_schema_fixture_production_factor_registry_created": result.replay_evidence_bundle_schema_fixture_production_factor_registry_created,
+        "replay_evidence_bundle_schema_fixture_active_factor_library_created": result.replay_evidence_bundle_schema_fixture_active_factor_library_created,
+        "replay_evidence_bundle_schema_fixture_production_event_ingestion_created": result.replay_evidence_bundle_schema_fixture_production_event_ingestion_created,
+        "replay_evidence_bundle_schema_fixture_active_event_library_created": result.replay_evidence_bundle_schema_fixture_active_event_library_created,
+        "replay_evidence_bundle_schema_fixture_production_company_exposure_mapping_created": result.replay_evidence_bundle_schema_fixture_production_company_exposure_mapping_created,
+        "replay_evidence_bundle_schema_fixture_real_raw_document_ingestion_created": result.replay_evidence_bundle_schema_fixture_real_raw_document_ingestion_created,
+        "replay_evidence_bundle_schema_fixture_normalization_created": result.replay_evidence_bundle_schema_fixture_normalization_created,
+        "replay_evidence_bundle_schema_fixture_winsorization_created": result.replay_evidence_bundle_schema_fixture_winsorization_created,
+        "replay_evidence_bundle_schema_fixture_direction_adjusted_values_created": result.replay_evidence_bundle_schema_fixture_direction_adjusted_values_created,
+        "replay_evidence_bundle_schema_fixture_signal_score_implemented": result.replay_evidence_bundle_schema_fixture_signal_score_implemented,
+        "replay_evidence_bundle_schema_fixture_signal_score_input_authorized": result.replay_evidence_bundle_schema_fixture_signal_score_input_authorized,
+        "replay_evidence_bundle_schema_fixture_model_training_performed": result.replay_evidence_bundle_schema_fixture_model_training_performed,
+        "replay_evidence_bundle_schema_fixture_active_weights_created": result.replay_evidence_bundle_schema_fixture_active_weights_created,
+        "replay_evidence_bundle_schema_fixture_active_thresholds_created": result.replay_evidence_bundle_schema_fixture_active_thresholds_created,
+        "replay_evidence_bundle_schema_fixture_stock_profile_validation_created": result.replay_evidence_bundle_schema_fixture_stock_profile_validation_created,
+        "replay_evidence_bundle_schema_fixture_paper_validation_created": result.replay_evidence_bundle_schema_fixture_paper_validation_created,
+        "replay_evidence_bundle_schema_fixture_real_buy_review_eligible": result.replay_evidence_bundle_schema_fixture_real_buy_review_eligible,
+        "replay_evidence_bundle_schema_fixture_buy_review_allowed": result.replay_evidence_bundle_schema_fixture_buy_review_allowed,
+        "replay_evidence_bundle_schema_fixture_strategy_performance_validated": result.replay_evidence_bundle_schema_fixture_strategy_performance_validated,
+        "replay_evidence_bundle_schema_fixture_trading_allowed": result.replay_evidence_bundle_schema_fixture_trading_allowed,
+        "replay_evidence_bundle_schema_fixture_live_trading_enabled": result.replay_evidence_bundle_schema_fixture_live_trading_enabled,
+        "replay_evidence_bundle_schema_fixture_broker_api_called": result.replay_evidence_bundle_schema_fixture_broker_api_called,
+        "replay_evidence_bundle_schema_fixture_external_api_called": result.replay_evidence_bundle_schema_fixture_external_api_called,
+        "replay_evidence_bundle_schema_fixture_llm_api_called": result.replay_evidence_bundle_schema_fixture_llm_api_called,
+        "replay_evidence_bundle_schema_fixture_data_raw_written": result.replay_evidence_bundle_schema_fixture_data_raw_written,
+        "replay_evidence_bundle_schema_fixture_data_processed_written": result.replay_evidence_bundle_schema_fixture_data_processed_written,
+        "replay_evidence_bundle_schema_fixture_data_cache_written": result.replay_evidence_bundle_schema_fixture_data_cache_written,
+        "replay_evidence_bundle_schema_fixture_current_candidates_run": result.replay_evidence_bundle_schema_fixture_current_candidates_run,
+        "replay_evidence_bundle_schema_fixture_snapshot_built": result.replay_evidence_bundle_schema_fixture_snapshot_built,
+        "replay_evidence_bundle_schema_fixture_signal_semantics_changed": result.replay_evidence_bundle_schema_fixture_signal_semantics_changed,
+        "replay_evidence_bundle_schema_fixture_active_stock_profile_created": result.replay_evidence_bundle_schema_fixture_active_stock_profile_created,
+        "replay_evidence_bundle_schema_fixture_operational_global_approved_for_paper_granted": result.replay_evidence_bundle_schema_fixture_operational_global_approved_for_paper_granted,
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -30310,6 +30858,109 @@ def _factor_observation_schema_fixture_notes(summary: dict[str, Any]) -> str:
         f"replay_evidence_bundle_created={_string_or_empty(summary.get('replay_evidence_bundle_created'))}; "
         f"replay_decisions_created={_string_or_empty(summary.get('replay_decisions_created'))}; "
         f"forward_labels_created={_string_or_empty(summary.get('forward_labels_created'))}; "
+        f"normalization_created={_string_or_empty(summary.get('normalization_created'))}; "
+        f"winsorization_created={_string_or_empty(summary.get('winsorization_created'))}; "
+        "direction_adjusted_values_created="
+        f"{_string_or_empty(summary.get('direction_adjusted_values_created'))}; "
+        f"signal_score_implemented={_string_or_empty(summary.get('signal_score_implemented'))}; "
+        f"signal_score_input_authorized={_string_or_empty(summary.get('signal_score_input_authorized'))}; "
+        f"model_training_performed={_string_or_empty(summary.get('model_training_performed'))}; "
+        f"active_weights_created={_string_or_empty(summary.get('active_weights_created'))}; "
+        f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
+        f"stock_profile_validation_created={_string_or_empty(summary.get('stock_profile_validation_created'))}; "
+        f"paper_validation_created={_string_or_empty(summary.get('paper_validation_created'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        "strategy_performance_validated="
+        f"{_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"live_trading_enabled={_string_or_empty(summary.get('live_trading_enabled'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"active_stock_profile_created={_string_or_empty(summary.get('active_stock_profile_created'))}; "
+        "operational_global_approved_for_paper_granted="
+        f"{_string_or_empty(summary.get('operational_global_approved_for_paper_granted'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_replay_evidence_bundle_schema_fixture_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = fixture_root / result.latest_run_id
+    summary["artifact_path"] = str(artifact_dir)
+    summary["context_visible"] = True
+    summary["next_action"] = result.next_action
+    return [
+        _record(
+            workflow_area="REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE",
+            component="REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_replay_evidence_bundle_schema_fixture_notes(summary),
+        )
+    ]
+
+
+def _replay_evidence_bundle_schema_fixture_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"context_visible={_string_or_empty(summary.get('context_visible'))}; "
+        "replay_evidence_bundle_schema_fixture_created="
+        f"{_string_or_empty(summary.get('replay_evidence_bundle_schema_fixture_created'))}; "
+        f"bundle_count={_string_or_empty(summary.get('bundle_count'))}; "
+        f"validation_issue_count={_string_or_empty(summary.get('validation_issue_count'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "replay_evidence_bundle_rows_created="
+        f"{_string_or_empty(summary.get('replay_evidence_bundle_rows_created'))}; "
+        "real_replay_evidence_bundles_created="
+        f"{_string_or_empty(summary.get('real_replay_evidence_bundles_created'))}; "
+        f"replay_decisions_created={_string_or_empty(summary.get('replay_decisions_created'))}; "
+        f"forward_labels_created={_string_or_empty(summary.get('forward_labels_created'))}; "
+        f"future_labels_joined={_string_or_empty(summary.get('future_labels_joined'))}; "
+        "production_factor_observations_created="
+        f"{_string_or_empty(summary.get('production_factor_observations_created'))}; "
+        "real_factor_observations_created="
+        f"{_string_or_empty(summary.get('real_factor_observations_created'))}; "
+        "production_factor_registry_created="
+        f"{_string_or_empty(summary.get('production_factor_registry_created'))}; "
+        f"active_factor_library_created={_string_or_empty(summary.get('active_factor_library_created'))}; "
+        "production_event_ingestion_created="
+        f"{_string_or_empty(summary.get('production_event_ingestion_created'))}; "
+        f"active_event_library_created={_string_or_empty(summary.get('active_event_library_created'))}; "
+        "production_company_exposure_mapping_created="
+        f"{_string_or_empty(summary.get('production_company_exposure_mapping_created'))}; "
+        "real_raw_document_ingestion_created="
+        f"{_string_or_empty(summary.get('real_raw_document_ingestion_created'))}; "
         f"normalization_created={_string_or_empty(summary.get('normalization_created'))}; "
         f"winsorization_created={_string_or_empty(summary.get('winsorization_created'))}; "
         "direction_adjusted_values_created="
@@ -36285,6 +36936,17 @@ def _component_next_action(component: str, status: str) -> str:
                 "Review report-only factor observation schema fixture context; do not treat rows as real "
                 "factor observations, signal_score inputs, model training inputs, active weights, active "
                 "thresholds, stock_profile validation, buy-review, performance validation, or trading."
+            )
+        )
+    if component == "REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS":
+        return (
+            "Run replay-evidence-bundle-schema-fixture-status."
+            if status == "MISSING"
+            else (
+                "Review report-only replay evidence bundle schema fixture context; do not treat rows as "
+                "real replay evidence bundles, replay decisions, forward labels, future labels, "
+                "signal_score inputs, model training inputs, active weights, active thresholds, "
+                "stock_profile validation, paper validation, buy-review, performance validation, or trading."
             )
         )
     if component == "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS":

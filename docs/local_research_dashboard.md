@@ -1060,6 +1060,14 @@ The dashboard preserves existing paper workflow priority. Event Structured Schem
 
 The dashboard preserves existing paper workflow priority. Factor Observation Schema Fixture rows remain context for future PIT-valid factor observation workflow design only and do not create active factor inputs, signal_score inputs, model training inputs, stock_profile validation, buy-review, performance validation, or trading safety fields.
 
+## Replay Evidence Bundle Schema Fixture Context
+
+`research-status` includes Replay Evidence Bundle Schema Fixture context when `replay-evidence-bundle-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, bundle count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_CREATED` means synthetic/report-only replay evidence bundle rows exist for schema governance only. It is not real replay evidence bundles, not replay decisions, not forward labels, not future labels, not production factor observations, not real factor observations, not production factor registry state, not active factor library state, not production event ingestion, not active event library state, not production company exposure mapping, not real raw document ingestion, not signal_score implementation, not authorized signal_score input, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, and does not authorize current-candidates, snapshots, signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes.
+
+The dashboard preserves existing paper workflow priority. Replay Evidence Bundle Schema Fixture rows remain context for future PIT-valid replay evidence bundle workflow design only and do not create replay decisions, forward labels, signal_score inputs, model training inputs, stock_profile validation, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:
