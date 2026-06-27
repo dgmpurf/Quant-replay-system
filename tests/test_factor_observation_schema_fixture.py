@@ -304,7 +304,7 @@ def test_validation_summary_limitations_next_task_and_secret_scan(tmp_path: Path
     assert not (tmp_path / "docs" / "project_sources").exists()
 
 
-def test_cli_command_runs_and_no_view_commands_are_added(tmp_path: Path) -> None:
+def test_cli_command_runs_and_view_commands_are_registered(tmp_path: Path) -> None:
     output_dir = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "factor_observation_schema_fixture_v0_1"
 
     completed = subprocess.run(
@@ -343,6 +343,6 @@ def test_cli_command_runs_and_no_view_commands_are_added(tmp_path: Path) -> None
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "factor-observation-schema-fixture" in help_output
-    assert "factor-observation-schema-fixture-index" not in help_output
-    assert "factor-observation-schema-fixture-health" not in help_output
-    assert "factor-observation-schema-fixture-status" not in help_output
+    assert "factor-observation-schema-fixture-index" in help_output
+    assert "factor-observation-schema-fixture-health" in help_output
+    assert "factor-observation-schema-fixture-status" in help_output
