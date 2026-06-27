@@ -356,6 +356,6 @@ def test_cli_command_runs_and_only_core_command_is_registered(tmp_path: Path) ->
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "replay-evidence-bundle-schema-fixture" in help_output
-    assert "replay-evidence-bundle-schema-fixture-index" not in help_output
-    assert "replay-evidence-bundle-schema-fixture-health" not in help_output
-    assert "replay-evidence-bundle-schema-fixture-status" not in help_output
+    assert "replay-evidence-bundle-schema-fixture-index" in help_output
+    assert "replay-evidence-bundle-schema-fixture-health" in help_output
+    assert "replay-evidence-bundle-schema-fixture-status" in help_output
