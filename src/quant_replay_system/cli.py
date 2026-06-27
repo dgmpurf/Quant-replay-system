@@ -559,6 +559,9 @@ from quant_replay_system.factor_observation_schema_fixture_index import (
 from quant_replay_system.factor_observation_schema_fixture_status import (
     run_factor_observation_schema_fixture_status,
 )
+from quant_replay_system.replay_evidence_bundle_schema_fixture import (
+    build_replay_evidence_bundle_schema_fixture,
+)
 from quant_replay_system.factor_definition_schema_fixture import build_factor_definition_schema_fixture
 from quant_replay_system.factor_definition_schema_fixture_health import check_factor_definition_schema_fixture_health
 from quant_replay_system.factor_definition_schema_fixture_index import build_factor_definition_schema_fixture_index
@@ -5346,6 +5349,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     factor_observation_schema_fixture.set_defaults(handler=_handle_factor_observation_schema_fixture)
 
+    replay_evidence_bundle_schema_fixture = subparsers.add_parser(
+        "replay-evidence-bundle-schema-fixture",
+        help="Write report-only synthetic replay evidence bundle schema fixture artifacts",
+    )
+    replay_evidence_bundle_schema_fixture.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_evidence_bundle_schema_fixture_v0_1",
+        help="Directory where replay evidence bundle schema fixture artifacts will be written",
+    )
+    replay_evidence_bundle_schema_fixture.set_defaults(handler=_handle_replay_evidence_bundle_schema_fixture)
+
     factor_observation_schema_fixture_index = subparsers.add_parser(
         "factor-observation-schema-fixture-index",
         help="Build an index for report-only factor observation schema fixture artifacts",
@@ -9591,6 +9605,32 @@ def _handle_factor_observation_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No real factor observations, production factor registry, active factor library, production event ingestion, production company exposure mapping, real raw document ingestion, normalization runtime, winsorization runtime, direction-adjusted factor values runtime, replay evidence bundles, replay decisions, forward labels, signal_score implementation, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_replay_evidence_bundle_schema_fixture(args: argparse.Namespace) -> int:
+    result = build_replay_evidence_bundle_schema_fixture(output_dir=args.output_dir)
+    print(f"replay_evidence_bundle_schema_fixture_id: {result.replay_evidence_bundle_schema_fixture_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"bundle_count: {result.bundle_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"schema_fields_path: {result.artifact_paths['schema_fields']}")
+    print(f"fixture_rows_path: {result.artifact_paths['fixture_rows']}")
+    print(f"item_matrix_path: {result.artifact_paths['item_matrix']}")
+    print(f"pit_admissibility_matrix_path: {result.artifact_paths['pit_admissibility_matrix']}")
+    print(f"lineage_matrix_path: {result.artifact_paths['lineage_matrix']}")
+    print(f"quality_compliance_matrix_path: {result.artifact_paths['quality_compliance_matrix']}")
+    print(f"risk_veto_matrix_path: {result.artifact_paths['risk_veto_matrix']}")
+    print(f"forbidden_output_guard_matrix_path: {result.artifact_paths['forbidden_output_guard_matrix']}")
+    print(f"validation_summary_path: {result.artifact_paths['validation_summary']}")
+    print(f"limitations_path: {result.artifact_paths['limitations']}")
+    print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
+    print("No real replay evidence bundles, replay decisions, forward labels, future labels, real factor observations, production factor registry, active factor library, production event ingestion, production company exposure mapping, real raw document ingestion, source adapters, crawlers, connectors, LLM extraction runtime, normalization runtime, winsorization runtime, direction-adjusted factor values runtime, signal_score implementation, signal_score input authorization, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
     return 1 if result.status == "FAIL" else 0
 
 
