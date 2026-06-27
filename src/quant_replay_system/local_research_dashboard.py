@@ -89,6 +89,9 @@ from quant_replay_system.company_exposure_schema_fixture_status import (
 from quant_replay_system.event_structured_schema_fixture_status import (
     run_event_structured_schema_fixture_status,
 )
+from quant_replay_system.factor_observation_schema_fixture_status import (
+    run_factor_observation_schema_fixture_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -681,6 +684,58 @@ SUMMARY_COLUMNS = [
     "event_structured_schema_fixture_signal_semantics_changed",
     "event_structured_schema_fixture_active_stock_profile_created",
     "event_structured_schema_fixture_operational_global_approved_for_paper_granted",
+    "factor_observation_schema_fixture_workflow_implemented",
+    "factor_observation_schema_fixture_views_implemented",
+    "latest_factor_observation_schema_fixture_id",
+    "latest_factor_observation_schema_fixture_status",
+    "latest_factor_observation_schema_fixture_health_status",
+    "latest_factor_observation_schema_fixture_workflow_stage",
+    "factor_observation_schema_fixture_artifact_path",
+    "factor_observation_schema_fixture_context_visible",
+    "factor_observation_schema_fixture_created",
+    "factor_observation_schema_fixture_observation_count",
+    "factor_observation_schema_fixture_validation_issue_count",
+    "factor_observation_schema_fixture_report_only",
+    "factor_observation_schema_fixture_diagnostic_only",
+    "factor_observation_schema_fixture_next_action",
+    "factor_observation_schema_fixture_rows_created",
+    "factor_observation_schema_fixture_production_factor_observations_created",
+    "factor_observation_schema_fixture_real_factor_observations_created",
+    "factor_observation_schema_fixture_production_factor_registry_created",
+    "factor_observation_schema_fixture_active_factor_library_created",
+    "factor_observation_schema_fixture_production_event_ingestion_created",
+    "factor_observation_schema_fixture_active_event_library_created",
+    "factor_observation_schema_fixture_production_company_exposure_mapping_created",
+    "factor_observation_schema_fixture_real_raw_document_ingestion_created",
+    "factor_observation_schema_fixture_replay_evidence_bundle_created",
+    "factor_observation_schema_fixture_replay_decisions_created",
+    "factor_observation_schema_fixture_forward_labels_created",
+    "factor_observation_schema_fixture_normalization_created",
+    "factor_observation_schema_fixture_winsorization_created",
+    "factor_observation_schema_fixture_direction_adjusted_values_created",
+    "factor_observation_schema_fixture_signal_score_implemented",
+    "factor_observation_schema_fixture_signal_score_input_authorized",
+    "factor_observation_schema_fixture_model_training_performed",
+    "factor_observation_schema_fixture_active_weights_created",
+    "factor_observation_schema_fixture_active_thresholds_created",
+    "factor_observation_schema_fixture_stock_profile_validation_created",
+    "factor_observation_schema_fixture_paper_validation_created",
+    "factor_observation_schema_fixture_real_buy_review_eligible",
+    "factor_observation_schema_fixture_buy_review_allowed",
+    "factor_observation_schema_fixture_strategy_performance_validated",
+    "factor_observation_schema_fixture_trading_allowed",
+    "factor_observation_schema_fixture_live_trading_enabled",
+    "factor_observation_schema_fixture_broker_api_called",
+    "factor_observation_schema_fixture_external_api_called",
+    "factor_observation_schema_fixture_llm_api_called",
+    "factor_observation_schema_fixture_data_raw_written",
+    "factor_observation_schema_fixture_data_processed_written",
+    "factor_observation_schema_fixture_data_cache_written",
+    "factor_observation_schema_fixture_current_candidates_run",
+    "factor_observation_schema_fixture_snapshot_built",
+    "factor_observation_schema_fixture_signal_semantics_changed",
+    "factor_observation_schema_fixture_active_stock_profile_created",
+    "factor_observation_schema_fixture_operational_global_approved_for_paper_granted",
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2336,6 +2391,7 @@ OPTIONAL_COMPONENTS = {
     "FACTOR_DEFINITION_SCHEMA_FIXTURE_STATUS",
     "COMPANY_EXPOSURE_SCHEMA_FIXTURE_STATUS",
     "EVENT_STRUCTURED_SCHEMA_FIXTURE_STATUS",
+    "FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS",
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -2373,6 +2429,7 @@ WORKFLOW_AREAS = {
     "FACTOR_DEFINITION_SCHEMA_FIXTURE_STATUS": "FACTOR_DEFINITION_SCHEMA_FIXTURE",
     "COMPANY_EXPOSURE_SCHEMA_FIXTURE_STATUS": "COMPANY_EXPOSURE_SCHEMA_FIXTURE",
     "EVENT_STRUCTURED_SCHEMA_FIXTURE_STATUS": "EVENT_STRUCTURED_SCHEMA_FIXTURE",
+    "FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS": "FACTOR_OBSERVATION_SCHEMA_FIXTURE",
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS": "SOURCE_REGISTRY_SCHEMA_FIXTURE",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS": "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE",
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
@@ -2919,6 +2976,58 @@ class LocalResearchDashboardResult:
     event_structured_schema_fixture_signal_semantics_changed: bool
     event_structured_schema_fixture_active_stock_profile_created: bool
     event_structured_schema_fixture_operational_global_approved_for_paper_granted: bool
+    factor_observation_schema_fixture_workflow_implemented: bool
+    factor_observation_schema_fixture_views_implemented: bool
+    latest_factor_observation_schema_fixture_id: str
+    latest_factor_observation_schema_fixture_status: str
+    latest_factor_observation_schema_fixture_health_status: str
+    latest_factor_observation_schema_fixture_workflow_stage: str
+    factor_observation_schema_fixture_artifact_path: str
+    factor_observation_schema_fixture_context_visible: bool
+    factor_observation_schema_fixture_created: bool
+    factor_observation_schema_fixture_observation_count: int
+    factor_observation_schema_fixture_validation_issue_count: int
+    factor_observation_schema_fixture_report_only: bool
+    factor_observation_schema_fixture_diagnostic_only: bool
+    factor_observation_schema_fixture_next_action: str
+    factor_observation_schema_fixture_rows_created: bool
+    factor_observation_schema_fixture_production_factor_observations_created: bool
+    factor_observation_schema_fixture_real_factor_observations_created: bool
+    factor_observation_schema_fixture_production_factor_registry_created: bool
+    factor_observation_schema_fixture_active_factor_library_created: bool
+    factor_observation_schema_fixture_production_event_ingestion_created: bool
+    factor_observation_schema_fixture_active_event_library_created: bool
+    factor_observation_schema_fixture_production_company_exposure_mapping_created: bool
+    factor_observation_schema_fixture_real_raw_document_ingestion_created: bool
+    factor_observation_schema_fixture_replay_evidence_bundle_created: bool
+    factor_observation_schema_fixture_replay_decisions_created: bool
+    factor_observation_schema_fixture_forward_labels_created: bool
+    factor_observation_schema_fixture_normalization_created: bool
+    factor_observation_schema_fixture_winsorization_created: bool
+    factor_observation_schema_fixture_direction_adjusted_values_created: bool
+    factor_observation_schema_fixture_signal_score_implemented: bool
+    factor_observation_schema_fixture_signal_score_input_authorized: bool
+    factor_observation_schema_fixture_model_training_performed: bool
+    factor_observation_schema_fixture_active_weights_created: bool
+    factor_observation_schema_fixture_active_thresholds_created: bool
+    factor_observation_schema_fixture_stock_profile_validation_created: bool
+    factor_observation_schema_fixture_paper_validation_created: bool
+    factor_observation_schema_fixture_real_buy_review_eligible: bool
+    factor_observation_schema_fixture_buy_review_allowed: bool
+    factor_observation_schema_fixture_strategy_performance_validated: bool
+    factor_observation_schema_fixture_trading_allowed: bool
+    factor_observation_schema_fixture_live_trading_enabled: bool
+    factor_observation_schema_fixture_broker_api_called: bool
+    factor_observation_schema_fixture_external_api_called: bool
+    factor_observation_schema_fixture_llm_api_called: bool
+    factor_observation_schema_fixture_data_raw_written: bool
+    factor_observation_schema_fixture_data_processed_written: bool
+    factor_observation_schema_fixture_data_cache_written: bool
+    factor_observation_schema_fixture_current_candidates_run: bool
+    factor_observation_schema_fixture_snapshot_built: bool
+    factor_observation_schema_fixture_signal_semantics_changed: bool
+    factor_observation_schema_fixture_active_stock_profile_created: bool
+    factor_observation_schema_fixture_operational_global_approved_for_paper_granted: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -4500,6 +4609,7 @@ def run_local_research_dashboard(
     factor_definition_schema_fixture_root: str | Path | None = None,
     company_exposure_schema_fixture_root: str | Path | None = None,
     event_structured_schema_fixture_root: str | Path | None = None,
+    factor_observation_schema_fixture_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -4705,6 +4815,11 @@ def run_local_research_dashboard(
         Path(event_structured_schema_fixture_root)
         if event_structured_schema_fixture_root is not None
         else effective_root / "manual_diagnostics" / "event_structured_schema_fixture_v0_1"
+    )
+    effective_factor_observation_schema_fixture_root = (
+        Path(factor_observation_schema_fixture_root)
+        if factor_observation_schema_fixture_root is not None
+        else effective_root / "manual_diagnostics" / "factor_observation_schema_fixture_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -5167,6 +5282,7 @@ def run_local_research_dashboard(
         factor_definition_schema_fixture_root=effective_factor_definition_schema_fixture_root,
         company_exposure_schema_fixture_root=effective_company_exposure_schema_fixture_root,
         event_structured_schema_fixture_root=effective_event_structured_schema_fixture_root,
+        factor_observation_schema_fixture_root=effective_factor_observation_schema_fixture_root,
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -5282,6 +5398,7 @@ def run_local_research_dashboard(
         "factor_definition_schema_fixture_root": effective_factor_definition_schema_fixture_root,
         "company_exposure_schema_fixture_root": effective_company_exposure_schema_fixture_root,
         "event_structured_schema_fixture_root": effective_event_structured_schema_fixture_root,
+        "factor_observation_schema_fixture_root": effective_factor_observation_schema_fixture_root,
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
         "input_gate_validator_fixture_root": effective_input_gate_validator_fixture_root,
@@ -6664,6 +6781,162 @@ def run_local_research_dashboard(
         ),
         event_structured_schema_fixture_operational_global_approved_for_paper_granted=_bool_from_text(
             summary.get("event_structured_schema_fixture_operational_global_approved_for_paper_granted")
+        ),
+        factor_observation_schema_fixture_workflow_implemented=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_workflow_implemented")
+        ),
+        factor_observation_schema_fixture_views_implemented=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_views_implemented")
+        ),
+        latest_factor_observation_schema_fixture_id=str(
+            summary.get("latest_factor_observation_schema_fixture_id", "")
+        ),
+        latest_factor_observation_schema_fixture_status=str(
+            summary.get("latest_factor_observation_schema_fixture_status", "MISSING")
+        ),
+        latest_factor_observation_schema_fixture_health_status=str(
+            summary.get("latest_factor_observation_schema_fixture_health_status", "")
+        ),
+        latest_factor_observation_schema_fixture_workflow_stage=str(
+            summary.get("latest_factor_observation_schema_fixture_workflow_stage", "")
+        ),
+        factor_observation_schema_fixture_artifact_path=str(
+            summary.get("factor_observation_schema_fixture_artifact_path", "")
+        ),
+        factor_observation_schema_fixture_context_visible=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_context_visible")
+        ),
+        factor_observation_schema_fixture_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_created")
+        ),
+        factor_observation_schema_fixture_observation_count=_int_or_zero(
+            summary.get("factor_observation_schema_fixture_observation_count")
+        ),
+        factor_observation_schema_fixture_validation_issue_count=_int_or_zero(
+            summary.get("factor_observation_schema_fixture_validation_issue_count")
+        ),
+        factor_observation_schema_fixture_report_only=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_report_only")
+        ),
+        factor_observation_schema_fixture_diagnostic_only=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_diagnostic_only")
+        ),
+        factor_observation_schema_fixture_next_action=str(
+            summary.get("factor_observation_schema_fixture_next_action", "")
+        ),
+        factor_observation_schema_fixture_rows_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_rows_created")
+        ),
+        factor_observation_schema_fixture_production_factor_observations_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_production_factor_observations_created")
+        ),
+        factor_observation_schema_fixture_real_factor_observations_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_real_factor_observations_created")
+        ),
+        factor_observation_schema_fixture_production_factor_registry_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_production_factor_registry_created")
+        ),
+        factor_observation_schema_fixture_active_factor_library_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_active_factor_library_created")
+        ),
+        factor_observation_schema_fixture_production_event_ingestion_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_production_event_ingestion_created")
+        ),
+        factor_observation_schema_fixture_active_event_library_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_active_event_library_created")
+        ),
+        factor_observation_schema_fixture_production_company_exposure_mapping_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_production_company_exposure_mapping_created")
+        ),
+        factor_observation_schema_fixture_real_raw_document_ingestion_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_real_raw_document_ingestion_created")
+        ),
+        factor_observation_schema_fixture_replay_evidence_bundle_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_replay_evidence_bundle_created")
+        ),
+        factor_observation_schema_fixture_replay_decisions_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_replay_decisions_created")
+        ),
+        factor_observation_schema_fixture_forward_labels_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_forward_labels_created")
+        ),
+        factor_observation_schema_fixture_normalization_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_normalization_created")
+        ),
+        factor_observation_schema_fixture_winsorization_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_winsorization_created")
+        ),
+        factor_observation_schema_fixture_direction_adjusted_values_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_direction_adjusted_values_created")
+        ),
+        factor_observation_schema_fixture_signal_score_implemented=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_signal_score_implemented")
+        ),
+        factor_observation_schema_fixture_signal_score_input_authorized=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_signal_score_input_authorized")
+        ),
+        factor_observation_schema_fixture_model_training_performed=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_model_training_performed")
+        ),
+        factor_observation_schema_fixture_active_weights_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_active_weights_created")
+        ),
+        factor_observation_schema_fixture_active_thresholds_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_active_thresholds_created")
+        ),
+        factor_observation_schema_fixture_stock_profile_validation_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_stock_profile_validation_created")
+        ),
+        factor_observation_schema_fixture_paper_validation_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_paper_validation_created")
+        ),
+        factor_observation_schema_fixture_real_buy_review_eligible=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_real_buy_review_eligible")
+        ),
+        factor_observation_schema_fixture_buy_review_allowed=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_buy_review_allowed")
+        ),
+        factor_observation_schema_fixture_strategy_performance_validated=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_strategy_performance_validated")
+        ),
+        factor_observation_schema_fixture_trading_allowed=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_trading_allowed")
+        ),
+        factor_observation_schema_fixture_live_trading_enabled=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_live_trading_enabled")
+        ),
+        factor_observation_schema_fixture_broker_api_called=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_broker_api_called")
+        ),
+        factor_observation_schema_fixture_external_api_called=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_external_api_called")
+        ),
+        factor_observation_schema_fixture_llm_api_called=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_llm_api_called")
+        ),
+        factor_observation_schema_fixture_data_raw_written=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_data_raw_written")
+        ),
+        factor_observation_schema_fixture_data_processed_written=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_data_processed_written")
+        ),
+        factor_observation_schema_fixture_data_cache_written=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_data_cache_written")
+        ),
+        factor_observation_schema_fixture_current_candidates_run=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_current_candidates_run")
+        ),
+        factor_observation_schema_fixture_snapshot_built=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_snapshot_built")
+        ),
+        factor_observation_schema_fixture_signal_semantics_changed=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_signal_semantics_changed")
+        ),
+        factor_observation_schema_fixture_active_stock_profile_created=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_active_stock_profile_created")
+        ),
+        factor_observation_schema_fixture_operational_global_approved_for_paper_granted=_bool_from_text(
+            summary.get("factor_observation_schema_fixture_operational_global_approved_for_paper_granted")
         ),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
@@ -10423,6 +10696,7 @@ def scan_local_research_workflow_artifacts(
     factor_definition_schema_fixture_root: str | Path,
     company_exposure_schema_fixture_root: str | Path,
     event_structured_schema_fixture_root: str | Path,
+    factor_observation_schema_fixture_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -10503,6 +10777,7 @@ def scan_local_research_workflow_artifacts(
     factor_definition_schema_fixture_path = Path(factor_definition_schema_fixture_root)
     company_exposure_schema_fixture_path = Path(company_exposure_schema_fixture_root)
     event_structured_schema_fixture_path = Path(event_structured_schema_fixture_root)
+    factor_observation_schema_fixture_path = Path(factor_observation_schema_fixture_root)
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
     input_gate_validator_fixture_path = Path(input_gate_validator_fixture_root)
@@ -10612,6 +10887,7 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_factor_definition_schema_fixture_status(factor_definition_schema_fixture_path))
     records.extend(_scan_company_exposure_schema_fixture_status(company_exposure_schema_fixture_path))
     records.extend(_scan_event_structured_schema_fixture_status(event_structured_schema_fixture_path))
+    records.extend(_scan_factor_observation_schema_fixture_status(factor_observation_schema_fixture_path))
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
     records.extend(_scan_raw_document_store_schema_fixture_status(raw_document_store_schema_fixture_path))
     records.extend(_scan_input_gate_validator_fixture_status(input_gate_validator_fixture_path))
@@ -17188,6 +17464,216 @@ def summarize_local_research_status(
         ),
         "event_structured_schema_fixture_operational_global_approved_for_paper_granted": _parse_note_value(
             by_component.get("EVENT_STRUCTURED_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "operational_global_approved_for_paper_granted",
+        ),
+        "factor_observation_schema_fixture_workflow_implemented": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "implemented",
+        ),
+        "factor_observation_schema_fixture_views_implemented": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "views_implemented",
+        ),
+        "latest_factor_observation_schema_fixture_id": _string_or_empty(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("latest_artifact_id")
+        ),
+        "latest_factor_observation_schema_fixture_status": _component_status(
+            by_component,
+            "FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS",
+        ),
+        "latest_factor_observation_schema_fixture_health_status": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_factor_observation_schema_fixture_workflow_stage": _string_or_empty(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("stage")
+        ),
+        "factor_observation_schema_fixture_artifact_path": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "factor_observation_schema_fixture_context_visible": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "context_visible",
+        ),
+        "factor_observation_schema_fixture_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "factor_observation_schema_fixture_created",
+        ),
+        "factor_observation_schema_fixture_observation_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "observation_count",
+            )
+        ),
+        "factor_observation_schema_fixture_validation_issue_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+                "validation_issue_count",
+            )
+        ),
+        "factor_observation_schema_fixture_report_only": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "factor_observation_schema_fixture_diagnostic_only": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "factor_observation_schema_fixture_next_action": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "factor_observation_schema_fixture_rows_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "factor_observation_rows_created",
+        ),
+        "factor_observation_schema_fixture_production_factor_observations_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_factor_observations_created",
+        ),
+        "factor_observation_schema_fixture_real_factor_observations_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_factor_observations_created",
+        ),
+        "factor_observation_schema_fixture_production_factor_registry_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_factor_registry_created",
+        ),
+        "factor_observation_schema_fixture_active_factor_library_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_factor_library_created",
+        ),
+        "factor_observation_schema_fixture_production_event_ingestion_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_event_ingestion_created",
+        ),
+        "factor_observation_schema_fixture_active_event_library_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_event_library_created",
+        ),
+        "factor_observation_schema_fixture_production_company_exposure_mapping_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "production_company_exposure_mapping_created",
+        ),
+        "factor_observation_schema_fixture_real_raw_document_ingestion_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_raw_document_ingestion_created",
+        ),
+        "factor_observation_schema_fixture_replay_evidence_bundle_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "replay_evidence_bundle_created",
+        ),
+        "factor_observation_schema_fixture_replay_decisions_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "replay_decisions_created",
+        ),
+        "factor_observation_schema_fixture_forward_labels_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "forward_labels_created",
+        ),
+        "factor_observation_schema_fixture_normalization_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "normalization_created",
+        ),
+        "factor_observation_schema_fixture_winsorization_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "winsorization_created",
+        ),
+        "factor_observation_schema_fixture_direction_adjusted_values_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "direction_adjusted_values_created",
+        ),
+        "factor_observation_schema_fixture_signal_score_implemented": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "signal_score_implemented",
+        ),
+        "factor_observation_schema_fixture_signal_score_input_authorized": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "signal_score_input_authorized",
+        ),
+        "factor_observation_schema_fixture_model_training_performed": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "model_training_performed",
+        ),
+        "factor_observation_schema_fixture_active_weights_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_weights_created",
+        ),
+        "factor_observation_schema_fixture_active_thresholds_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_thresholds_created",
+        ),
+        "factor_observation_schema_fixture_stock_profile_validation_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "stock_profile_validation_created",
+        ),
+        "factor_observation_schema_fixture_paper_validation_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "paper_validation_created",
+        ),
+        "factor_observation_schema_fixture_real_buy_review_eligible": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "real_buy_review_eligible",
+        ),
+        "factor_observation_schema_fixture_buy_review_allowed": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "buy_review_allowed",
+        ),
+        "factor_observation_schema_fixture_strategy_performance_validated": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "strategy_performance_validated",
+        ),
+        "factor_observation_schema_fixture_trading_allowed": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "trading_allowed",
+        ),
+        "factor_observation_schema_fixture_live_trading_enabled": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "live_trading_enabled",
+        ),
+        "factor_observation_schema_fixture_broker_api_called": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "broker_api_called",
+        ),
+        "factor_observation_schema_fixture_external_api_called": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "external_api_called",
+        ),
+        "factor_observation_schema_fixture_llm_api_called": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "llm_api_called",
+        ),
+        "factor_observation_schema_fixture_data_raw_written": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_raw_written",
+        ),
+        "factor_observation_schema_fixture_data_processed_written": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_processed_written",
+        ),
+        "factor_observation_schema_fixture_data_cache_written": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "data_cache_written",
+        ),
+        "factor_observation_schema_fixture_current_candidates_run": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "current_candidates_run",
+        ),
+        "factor_observation_schema_fixture_snapshot_built": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "snapshot_built",
+        ),
+        "factor_observation_schema_fixture_signal_semantics_changed": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "signal_semantics_changed",
+        ),
+        "factor_observation_schema_fixture_active_stock_profile_created": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
+            "active_stock_profile_created",
+        ),
+        "factor_observation_schema_fixture_operational_global_approved_for_paper_granted": _parse_note_value(
+            by_component.get("FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "operational_global_approved_for_paper_granted",
         ),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
@@ -24862,6 +25348,146 @@ def build_local_research_dashboard_metadata(
         "event_structured_schema_fixture_operational_global_approved_for_paper_granted": (
             result.event_structured_schema_fixture_operational_global_approved_for_paper_granted
         ),
+        "factor_observation_schema_fixture_workflow_implemented": (
+            result.factor_observation_schema_fixture_workflow_implemented
+        ),
+        "factor_observation_schema_fixture_views_implemented": (
+            result.factor_observation_schema_fixture_views_implemented
+        ),
+        "latest_factor_observation_schema_fixture_id": result.latest_factor_observation_schema_fixture_id,
+        "latest_factor_observation_schema_fixture_status": result.latest_factor_observation_schema_fixture_status,
+        "latest_factor_observation_schema_fixture_health_status": (
+            result.latest_factor_observation_schema_fixture_health_status
+        ),
+        "latest_factor_observation_schema_fixture_workflow_stage": (
+            result.latest_factor_observation_schema_fixture_workflow_stage
+        ),
+        "factor_observation_schema_fixture_artifact_path": result.factor_observation_schema_fixture_artifact_path,
+        "factor_observation_schema_fixture_context_visible": result.factor_observation_schema_fixture_context_visible,
+        "factor_observation_schema_fixture_created": result.factor_observation_schema_fixture_created,
+        "factor_observation_schema_fixture_observation_count": (
+            result.factor_observation_schema_fixture_observation_count
+        ),
+        "factor_observation_schema_fixture_validation_issue_count": (
+            result.factor_observation_schema_fixture_validation_issue_count
+        ),
+        "factor_observation_schema_fixture_report_only": result.factor_observation_schema_fixture_report_only,
+        "factor_observation_schema_fixture_diagnostic_only": (
+            result.factor_observation_schema_fixture_diagnostic_only
+        ),
+        "factor_observation_schema_fixture_next_action": result.factor_observation_schema_fixture_next_action,
+        "factor_observation_schema_fixture_rows_created": result.factor_observation_schema_fixture_rows_created,
+        "factor_observation_schema_fixture_production_factor_observations_created": (
+            result.factor_observation_schema_fixture_production_factor_observations_created
+        ),
+        "factor_observation_schema_fixture_real_factor_observations_created": (
+            result.factor_observation_schema_fixture_real_factor_observations_created
+        ),
+        "factor_observation_schema_fixture_production_factor_registry_created": (
+            result.factor_observation_schema_fixture_production_factor_registry_created
+        ),
+        "factor_observation_schema_fixture_active_factor_library_created": (
+            result.factor_observation_schema_fixture_active_factor_library_created
+        ),
+        "factor_observation_schema_fixture_production_event_ingestion_created": (
+            result.factor_observation_schema_fixture_production_event_ingestion_created
+        ),
+        "factor_observation_schema_fixture_active_event_library_created": (
+            result.factor_observation_schema_fixture_active_event_library_created
+        ),
+        "factor_observation_schema_fixture_production_company_exposure_mapping_created": (
+            result.factor_observation_schema_fixture_production_company_exposure_mapping_created
+        ),
+        "factor_observation_schema_fixture_real_raw_document_ingestion_created": (
+            result.factor_observation_schema_fixture_real_raw_document_ingestion_created
+        ),
+        "factor_observation_schema_fixture_replay_evidence_bundle_created": (
+            result.factor_observation_schema_fixture_replay_evidence_bundle_created
+        ),
+        "factor_observation_schema_fixture_replay_decisions_created": (
+            result.factor_observation_schema_fixture_replay_decisions_created
+        ),
+        "factor_observation_schema_fixture_forward_labels_created": (
+            result.factor_observation_schema_fixture_forward_labels_created
+        ),
+        "factor_observation_schema_fixture_normalization_created": (
+            result.factor_observation_schema_fixture_normalization_created
+        ),
+        "factor_observation_schema_fixture_winsorization_created": (
+            result.factor_observation_schema_fixture_winsorization_created
+        ),
+        "factor_observation_schema_fixture_direction_adjusted_values_created": (
+            result.factor_observation_schema_fixture_direction_adjusted_values_created
+        ),
+        "factor_observation_schema_fixture_signal_score_implemented": (
+            result.factor_observation_schema_fixture_signal_score_implemented
+        ),
+        "factor_observation_schema_fixture_signal_score_input_authorized": (
+            result.factor_observation_schema_fixture_signal_score_input_authorized
+        ),
+        "factor_observation_schema_fixture_model_training_performed": (
+            result.factor_observation_schema_fixture_model_training_performed
+        ),
+        "factor_observation_schema_fixture_active_weights_created": (
+            result.factor_observation_schema_fixture_active_weights_created
+        ),
+        "factor_observation_schema_fixture_active_thresholds_created": (
+            result.factor_observation_schema_fixture_active_thresholds_created
+        ),
+        "factor_observation_schema_fixture_stock_profile_validation_created": (
+            result.factor_observation_schema_fixture_stock_profile_validation_created
+        ),
+        "factor_observation_schema_fixture_paper_validation_created": (
+            result.factor_observation_schema_fixture_paper_validation_created
+        ),
+        "factor_observation_schema_fixture_real_buy_review_eligible": (
+            result.factor_observation_schema_fixture_real_buy_review_eligible
+        ),
+        "factor_observation_schema_fixture_buy_review_allowed": (
+            result.factor_observation_schema_fixture_buy_review_allowed
+        ),
+        "factor_observation_schema_fixture_strategy_performance_validated": (
+            result.factor_observation_schema_fixture_strategy_performance_validated
+        ),
+        "factor_observation_schema_fixture_trading_allowed": (
+            result.factor_observation_schema_fixture_trading_allowed
+        ),
+        "factor_observation_schema_fixture_live_trading_enabled": (
+            result.factor_observation_schema_fixture_live_trading_enabled
+        ),
+        "factor_observation_schema_fixture_broker_api_called": (
+            result.factor_observation_schema_fixture_broker_api_called
+        ),
+        "factor_observation_schema_fixture_external_api_called": (
+            result.factor_observation_schema_fixture_external_api_called
+        ),
+        "factor_observation_schema_fixture_llm_api_called": (
+            result.factor_observation_schema_fixture_llm_api_called
+        ),
+        "factor_observation_schema_fixture_data_raw_written": (
+            result.factor_observation_schema_fixture_data_raw_written
+        ),
+        "factor_observation_schema_fixture_data_processed_written": (
+            result.factor_observation_schema_fixture_data_processed_written
+        ),
+        "factor_observation_schema_fixture_data_cache_written": (
+            result.factor_observation_schema_fixture_data_cache_written
+        ),
+        "factor_observation_schema_fixture_current_candidates_run": (
+            result.factor_observation_schema_fixture_current_candidates_run
+        ),
+        "factor_observation_schema_fixture_snapshot_built": (
+            result.factor_observation_schema_fixture_snapshot_built
+        ),
+        "factor_observation_schema_fixture_signal_semantics_changed": (
+            result.factor_observation_schema_fixture_signal_semantics_changed
+        ),
+        "factor_observation_schema_fixture_active_stock_profile_created": (
+            result.factor_observation_schema_fixture_active_stock_profile_created
+        ),
+        "factor_observation_schema_fixture_operational_global_approved_for_paper_granted": (
+            result.factor_observation_schema_fixture_operational_global_approved_for_paper_granted
+        ),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -29589,6 +30215,107 @@ def _event_structured_schema_fixture_notes(summary: dict[str, Any]) -> str:
         f"{_string_or_empty(summary.get('company_exposure_production_mapping_created'))}; "
         f"replay_evidence_bundle_created={_string_or_empty(summary.get('replay_evidence_bundle_created'))}; "
         f"signal_score_implemented={_string_or_empty(summary.get('signal_score_implemented'))}; "
+        f"model_training_performed={_string_or_empty(summary.get('model_training_performed'))}; "
+        f"active_weights_created={_string_or_empty(summary.get('active_weights_created'))}; "
+        f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
+        f"stock_profile_validation_created={_string_or_empty(summary.get('stock_profile_validation_created'))}; "
+        f"paper_validation_created={_string_or_empty(summary.get('paper_validation_created'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        "strategy_performance_validated="
+        f"{_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"live_trading_enabled={_string_or_empty(summary.get('live_trading_enabled'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"active_stock_profile_created={_string_or_empty(summary.get('active_stock_profile_created'))}; "
+        "operational_global_approved_for_paper_granted="
+        f"{_string_or_empty(summary.get('operational_global_approved_for_paper_granted'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _scan_factor_observation_schema_fixture_status(root: Path) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_factor_observation_schema_fixture_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = fixture_root / result.latest_run_id
+    summary["artifact_path"] = str(artifact_dir)
+    summary["context_visible"] = True
+    summary["next_action"] = result.next_action
+    return [
+        _record(
+            workflow_area="FACTOR_OBSERVATION_SCHEMA_FIXTURE",
+            component="FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_factor_observation_schema_fixture_notes(summary),
+        )
+    ]
+
+
+def _factor_observation_schema_fixture_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"context_visible={_string_or_empty(summary.get('context_visible'))}; "
+        "factor_observation_schema_fixture_created="
+        f"{_string_or_empty(summary.get('factor_observation_schema_fixture_created'))}; "
+        f"observation_count={_string_or_empty(summary.get('observation_count'))}; "
+        f"validation_issue_count={_string_or_empty(summary.get('validation_issue_count'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        "factor_observation_rows_created="
+        f"{_string_or_empty(summary.get('factor_observation_rows_created'))}; "
+        "production_factor_observations_created="
+        f"{_string_or_empty(summary.get('production_factor_observations_created'))}; "
+        "real_factor_observations_created="
+        f"{_string_or_empty(summary.get('real_factor_observations_created'))}; "
+        "production_factor_registry_created="
+        f"{_string_or_empty(summary.get('production_factor_registry_created'))}; "
+        f"active_factor_library_created={_string_or_empty(summary.get('active_factor_library_created'))}; "
+        "production_event_ingestion_created="
+        f"{_string_or_empty(summary.get('production_event_ingestion_created'))}; "
+        f"active_event_library_created={_string_or_empty(summary.get('active_event_library_created'))}; "
+        "production_company_exposure_mapping_created="
+        f"{_string_or_empty(summary.get('production_company_exposure_mapping_created'))}; "
+        "real_raw_document_ingestion_created="
+        f"{_string_or_empty(summary.get('real_raw_document_ingestion_created'))}; "
+        f"replay_evidence_bundle_created={_string_or_empty(summary.get('replay_evidence_bundle_created'))}; "
+        f"replay_decisions_created={_string_or_empty(summary.get('replay_decisions_created'))}; "
+        f"forward_labels_created={_string_or_empty(summary.get('forward_labels_created'))}; "
+        f"normalization_created={_string_or_empty(summary.get('normalization_created'))}; "
+        f"winsorization_created={_string_or_empty(summary.get('winsorization_created'))}; "
+        "direction_adjusted_values_created="
+        f"{_string_or_empty(summary.get('direction_adjusted_values_created'))}; "
+        f"signal_score_implemented={_string_or_empty(summary.get('signal_score_implemented'))}; "
+        f"signal_score_input_authorized={_string_or_empty(summary.get('signal_score_input_authorized'))}; "
         f"model_training_performed={_string_or_empty(summary.get('model_training_performed'))}; "
         f"active_weights_created={_string_or_empty(summary.get('active_weights_created'))}; "
         f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
@@ -35548,6 +36275,16 @@ def _component_next_action(component: str, status: str) -> str:
             else (
                 "Review report-only event structured schema fixture context; do not treat rows as "
                 "production event ingestion, active event library, factor observations, signal_score, or trading."
+            )
+        )
+    if component == "FACTOR_OBSERVATION_SCHEMA_FIXTURE_STATUS":
+        return (
+            "Run factor-observation-schema-fixture-status."
+            if status == "MISSING"
+            else (
+                "Review report-only factor observation schema fixture context; do not treat rows as real "
+                "factor observations, signal_score inputs, model training inputs, active weights, active "
+                "thresholds, stock_profile validation, buy-review, performance validation, or trading."
             )
         )
     if component == "REVIEWED_REPLACEMENT_WORKLIST_ACTIVATION_STATUS":

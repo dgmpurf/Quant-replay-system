@@ -2,6 +2,12 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Factor Observation Schema Fixture v1.63.0
+
+`FACTOR_OBSERVATION_SCHEMA_FIXTURE_CREATED` means synthetic/report-only factor observation fixture rows exist for schema governance only. The checkpoint is not real factor observations, not production factor registry, not active factor library, not production event ingestion, not production company exposure mapping, not real raw document ingestion, not replay evidence bundle, not replay decisions, not forward labels, not signal_score implementation, not normalization/winsorization/direction-adjusted runtime, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
+
+It does not authorize current-candidates, snapshots, signal_semantics mutation, active stock_profile, promoted/production model, active thresholds, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes. Real factor observations, replay inputs, labels, model training, stock_profile validation, paper approval, buy-review, performance validation, and trading require separate exact approval.
+
 ## Event Structured Schema Fixture v1.62.0
 
 `EVENT_STRUCTURED_SCHEMA_FIXTURE_CREATED` means synthetic/report-only event structured fixture rows exist for schema governance only. The checkpoint is not production event ingestion, not active event library, not real raw document ingestion, not real source adapter, not factor observation, not production company exposure mapping, not replay evidence bundle, not signal_score implementation, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.

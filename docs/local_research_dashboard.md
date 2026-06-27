@@ -1052,6 +1052,14 @@ The dashboard preserves existing paper workflow priority. Company Exposure Schem
 
 The dashboard preserves existing paper workflow priority. Event Structured Schema Fixture rows remain context for future event-structured design review only and do not create production event ingestion, active event libraries, raw ingestion, source adapters, factor observations, company exposure mappings, replay evidence bundles, signal_score, training inputs, stock_profile validation, buy-review, performance validation, or trading safety fields.
 
+## Factor Observation Schema Fixture Context
+
+`research-status` includes Factor Observation Schema Fixture context when `factor-observation-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, observation count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`FACTOR_OBSERVATION_SCHEMA_FIXTURE_CREATED` means synthetic/report-only factor observation rows exist for schema governance only. It is not real factor observations, not production factor registry state, not active factor library state, not production event ingestion, not production company exposure mapping, not real raw document ingestion, not replay evidence bundle, not replay decisions, not forward labels, not signal_score implementation, not normalization/winsorization/direction-adjusted runtime, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, and does not authorize current-candidates, snapshots, signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes.
+
+The dashboard preserves existing paper workflow priority. Factor Observation Schema Fixture rows remain context for future PIT-valid factor observation workflow design only and do not create active factor inputs, signal_score inputs, model training inputs, stock_profile validation, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:
