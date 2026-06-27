@@ -342,9 +342,10 @@ def test_status_safe_empty_and_latest_fixture_summary(tmp_path: Path) -> None:
     for flag in FORBIDDEN_METADATA_FALSE_FLAGS:
         assert getattr(result, flag) is False
     assert "report-only" in result.next_action
-    assert "research-status/checkpoint integration only after the views remain stable" in result.next_action
+    assert "post-checkpoint governance audit" in result.next_action
+    assert "research-status/checkpoint context is available" in result.next_action
     assert "production event ingestion" in result.next_action
-    assert "trading permission" in result.next_action
+    assert "trading workflow" in result.next_action
 
 
 def test_status_marks_invalid_fixture_without_granting_downstream_readiness(tmp_path: Path) -> None:

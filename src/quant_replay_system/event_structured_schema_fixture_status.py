@@ -36,12 +36,14 @@ SUMMARY_COLUMNS = [
 ]
 
 VIEWS_NEXT_ACTION = (
-    "Event Structured Schema Fixture Views are report-only. Review fixture context and add "
-    "research-status/checkpoint integration only after the views remain stable. Do not treat "
-    "fixture rows as production event ingestion, active event library, real raw document ingestion, "
-    "factor observations, production company exposure mapping, replay evidence bundles, signal_score, "
-    "model training inputs, active weights, active thresholds, stock_profile validation, buy-review, "
-    "performance validation, or trading permission."
+    "Event Structured Schema Fixture core/views/research-status/checkpoint context is available as "
+    "report-only schema-fixture governance. Review the checkpoint and run post-checkpoint governance "
+    "audit before any production event ingestion, active event library, real raw document ingestion, "
+    "real source adapter, crawler, connector, LLM extraction runtime, factor observation, production "
+    "company exposure mapping, replay evidence bundle, signal_score implementation, model training, "
+    "active weights, active thresholds, stock_profile validation, paper validation, real buy-review, "
+    "performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/"
+    "message/API, or trading workflow."
 )
 
 

@@ -17734,6 +17734,45 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "company_exposure_schema_fixture_operational_global_approved_for_paper_granted",
     ):
         print(f"{field_name}: {getattr(result, field_name)}")
+    for field_name in (
+        "event_structured_schema_fixture_workflow_implemented",
+        "event_structured_schema_fixture_views_implemented",
+        "latest_event_structured_schema_fixture_id",
+        "latest_event_structured_schema_fixture_status",
+        "latest_event_structured_schema_fixture_health_status",
+        "latest_event_structured_schema_fixture_workflow_stage",
+        "event_structured_schema_fixture_artifact_path",
+        "event_structured_schema_fixture_context_visible",
+        "event_structured_schema_fixture_created",
+        "event_structured_schema_fixture_event_count",
+        "event_structured_schema_fixture_validation_issue_count",
+        "event_structured_schema_fixture_report_only",
+        "event_structured_schema_fixture_diagnostic_only",
+        "event_structured_schema_fixture_next_action",
+        "event_structured_schema_fixture_rows_created",
+        "event_structured_schema_fixture_production_event_ingestion_created",
+        "event_structured_schema_fixture_active_event_library_created",
+        "event_structured_schema_fixture_real_raw_document_ingestion_created",
+        "event_structured_schema_fixture_factor_observations_created",
+        "event_structured_schema_fixture_company_exposure_production_mapping_created",
+        "event_structured_schema_fixture_replay_evidence_bundle_created",
+        "event_structured_schema_fixture_signal_score_implemented",
+        "event_structured_schema_fixture_model_training_performed",
+        "event_structured_schema_fixture_active_weights_created",
+        "event_structured_schema_fixture_active_thresholds_created",
+        "event_structured_schema_fixture_stock_profile_validation_created",
+        "event_structured_schema_fixture_paper_validation_created",
+        "event_structured_schema_fixture_real_buy_review_eligible",
+        "event_structured_schema_fixture_buy_review_allowed",
+        "event_structured_schema_fixture_strategy_performance_validated",
+        "event_structured_schema_fixture_trading_allowed",
+        "event_structured_schema_fixture_current_candidates_run",
+        "event_structured_schema_fixture_snapshot_built",
+        "event_structured_schema_fixture_signal_semantics_changed",
+        "event_structured_schema_fixture_active_stock_profile_created",
+        "event_structured_schema_fixture_operational_global_approved_for_paper_granted",
+    ):
+        print(f"{field_name}: {getattr(result, field_name)}")
     print(
         "source_registry_schema_fixture_workflow_implemented: "
         f"{result.source_registry_schema_fixture_workflow_implemented}"

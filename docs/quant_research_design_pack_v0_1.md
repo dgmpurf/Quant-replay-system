@@ -81,3 +81,10 @@ Real buy-review requires explicit human approval after source, raw-document, fac
 ## What Is Still Forbidden: Broker/Order/API/Trading Automation
 
 Broker integration, order placement, real messages, external API calls, LLM API calls, automated trading, active stock_profile, promoted model, production model, active thresholds, advisory predictions, active probabilities, current-candidates integration, snapshot integration, signal_semantics mutation, and trading automation remain forbidden in the current scope.
+# Event Structured Schema Fixture Checkpoint Note
+
+`EVENT_STRUCTURED_SCHEMA_FIXTURE_CREATED` means synthetic/report-only event structured fixture rows exist for schema governance only. This note preserves the Algorithm Timing Guard and clarifies that the fixture is not production event ingestion, not active event library, not real raw document ingestion, not real source adapter, not factor observation, not production company exposure mapping, not replay evidence bundle, not signal_score implementation, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
+
+It does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, and does not authorize broker/order/message/API/trading.
+
+The v1.59 Algorithm Timing Guard remains active: signal_score formula is design reference only; real weights are not calibrated yet; thresholds are not active yet; ML training must wait until PIT-valid factor observations and forward labels exist; factor IC / Rank IC / CAR / event study metrics are evaluation methods, not strategy performance validation by themselves; stock_profile is a validation dossier, not a trade instruction; paper workflow must precede real buy-review; buy-review does not equal trading; no broker/order/API/trading integration is allowed in current scope.

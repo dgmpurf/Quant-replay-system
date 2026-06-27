@@ -1044,6 +1044,14 @@ Exposure strength, exposure measure, and mapping confidence remain descriptive e
 
 The dashboard preserves existing paper workflow priority. Company Exposure Schema Fixture rows remain context for future company-exposure design review only and do not create production mappings, active mappings, training inputs, stock_profile validation, buy-review, performance validation, or trading safety fields.
 
+## Event Structured Schema Fixture Context
+
+`research-status` includes Event Structured Schema Fixture context when `event-structured-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, event count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`EVENT_STRUCTURED_SCHEMA_FIXTURE_CREATED` means synthetic/report-only event structured rows exist for schema governance only. It is not production event ingestion, not active event library, not real raw document ingestion, not real source adapter, not factor observation, not production company exposure mapping, not replay evidence bundle, not signal_score implementation, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, and does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes.
+
+The dashboard preserves existing paper workflow priority. Event Structured Schema Fixture rows remain context for future event-structured design review only and do not create production event ingestion, active event libraries, raw ingestion, source adapters, factor observations, company exposure mappings, replay evidence bundles, signal_score, training inputs, stock_profile validation, buy-review, performance validation, or trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:

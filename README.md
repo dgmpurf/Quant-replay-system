@@ -2,6 +2,12 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Event Structured Schema Fixture v1.62.0
+
+`EVENT_STRUCTURED_SCHEMA_FIXTURE_CREATED` means synthetic/report-only event structured fixture rows exist for schema governance only. The checkpoint is not production event ingestion, not active event library, not real raw document ingestion, not real source adapter, not factor observation, not production company exposure mapping, not replay evidence bundle, not signal_score implementation, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
+
+It does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, and does not authorize broker/order/message/API/trading. Production event ingestion, active event libraries, real source adapters, factor observations, replay evidence bundles, signal_score, model training, stock_profile validation, buy-review, performance validation, and trading require separate exact approval.
+
 The first goal is to build an explainable scoring workflow, replay historical decision dates using only data available at that time, select candidates, simulate T+1 execution, evaluate forward performance, and later calibrate weights, thresholds, and risk rules.
 
 This project is research infrastructure. It is not an automatic trading bot, high-frequency system, broker auto-order system, insider-information system, or profit guarantee.
