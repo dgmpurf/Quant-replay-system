@@ -242,7 +242,7 @@ def test_validation_results_report_and_recommended_next_task_are_safe(tmp_path: 
     assert not re.search(r"(api[_-]?key|access[_-]?token|secret|password|bearer\s+[a-z0-9])", all_text.lower())
 
 
-def test_cli_command_runs_and_only_core_command_is_registered(tmp_path: Path) -> None:
+def test_cli_command_runs_and_view_commands_are_registered(tmp_path: Path) -> None:
     output_dir = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "forward_return_label_schema_fixture_v0_1"
 
     completed = subprocess.run(
@@ -281,6 +281,6 @@ def test_cli_command_runs_and_only_core_command_is_registered(tmp_path: Path) ->
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "forward-return-label-schema-fixture" in help_output
-    assert "forward-return-label-schema-fixture-index" not in help_output
-    assert "forward-return-label-schema-fixture-health" not in help_output
-    assert "forward-return-label-schema-fixture-status" not in help_output
+    assert "forward-return-label-schema-fixture-index" in help_output
+    assert "forward-return-label-schema-fixture-health" in help_output
+    assert "forward-return-label-schema-fixture-status" in help_output

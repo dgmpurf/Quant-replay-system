@@ -568,6 +568,15 @@ from quant_replay_system.replay_decision_schema_fixture import (
 from quant_replay_system.forward_return_label_schema_fixture import (
     build_forward_return_label_schema_fixture,
 )
+from quant_replay_system.forward_return_label_schema_fixture_health import (
+    check_forward_return_label_schema_fixture_health,
+)
+from quant_replay_system.forward_return_label_schema_fixture_index import (
+    build_forward_return_label_schema_fixture_index,
+)
+from quant_replay_system.forward_return_label_schema_fixture_status import (
+    run_forward_return_label_schema_fixture_status,
+)
 from quant_replay_system.replay_decision_schema_fixture_health import (
     check_replay_decision_schema_fixture_health,
 )
@@ -5406,6 +5415,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     forward_return_label_schema_fixture.set_defaults(handler=_handle_forward_return_label_schema_fixture)
 
+    forward_return_label_schema_fixture_index = subparsers.add_parser(
+        "forward-return-label-schema-fixture-index",
+        help="Build an index for report-only forward return label schema fixture artifacts",
+    )
+    forward_return_label_schema_fixture_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/forward_return_label_schema_fixture_v0_1",
+    )
+    forward_return_label_schema_fixture_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/forward_return_label_schema_fixture_v0_1/index",
+    )
+    forward_return_label_schema_fixture_index.set_defaults(handler=_handle_forward_return_label_schema_fixture_index)
+
+    forward_return_label_schema_fixture_health = subparsers.add_parser(
+        "forward-return-label-schema-fixture-health",
+        help="Check report-only forward return label schema fixture artifact health",
+    )
+    forward_return_label_schema_fixture_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/forward_return_label_schema_fixture_v0_1",
+    )
+    forward_return_label_schema_fixture_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/forward_return_label_schema_fixture_v0_1/health",
+    )
+    forward_return_label_schema_fixture_health.set_defaults(handler=_handle_forward_return_label_schema_fixture_health)
+
+    forward_return_label_schema_fixture_status = subparsers.add_parser(
+        "forward-return-label-schema-fixture-status",
+        help="Summarize latest report-only forward return label schema fixture status",
+    )
+    forward_return_label_schema_fixture_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/forward_return_label_schema_fixture_v0_1",
+    )
+    forward_return_label_schema_fixture_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/forward_return_label_schema_fixture_v0_1/status",
+    )
+    forward_return_label_schema_fixture_status.set_defaults(handler=_handle_forward_return_label_schema_fixture_status)
+
     replay_decision_schema_fixture_index = subparsers.add_parser(
         "replay-decision-schema-fixture-index",
         help="Build an index for report-only replay decision schema fixture artifacts",
@@ -9817,6 +9868,59 @@ def _handle_forward_return_label_schema_fixture(args: argparse.Namespace) -> int
     print(f"report_path: {result.artifact_paths['report']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No real forward labels, future labels joined to replay decisions or training datasets, real replay decisions, real replay evidence bundle consumption, replay execution, metric computation, signal_score implementation, signal_score input authorization, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_forward_return_label_schema_fixture_index(args: argparse.Namespace) -> int:
+    result = build_forward_return_label_schema_fixture_index(root=args.root, output_dir=args.output_dir)
+    print(f"Forward return label schema fixture index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print("Report-only index: no real forward labels, future-label joins, replay execution, metric computation, signal_score input authorization, model training inputs, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading readiness was created.")
+    return 0
+
+
+def _handle_forward_return_label_schema_fixture_health(args: argparse.Namespace) -> int:
+    result = check_forward_return_label_schema_fixture_health(root=args.root, output_dir=args.output_dir)
+    print(f"Forward return label schema fixture health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: no real forward labels, future-label joins, replay execution, metric computation, signal_score input authorization, model training inputs, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading readiness was created.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_forward_return_label_schema_fixture_status(args: argparse.Namespace) -> int:
+    result = run_forward_return_label_schema_fixture_status(root=args.root, output_dir=args.output_dir)
+    print(f"Forward return label schema fixture status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"health_status: {result.health_status}")
+    print(f"label_count: {result.label_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"real_forward_labels_created: {result.real_forward_labels_created}")
+    print(f"future_labels_joined: {result.future_labels_joined}")
+    print(f"future_label_joined_to_decision_input: {result.future_label_joined_to_decision_input}")
+    print(f"signal_score_input_authorized: {result.signal_score_input_authorized}")
+    print(f"model_training_input_authorized: {result.model_training_input_authorized}")
+    print(f"stock_profile_validation_created: {result.stock_profile_validation_created}")
+    print(f"paper_validation_created: {result.paper_validation_created}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"next_action: {result.next_action}")
+    print("Report-only status: no real forward labels, future-label joins, replay execution, metric computation, signal_score input authorization, model training inputs, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading readiness was created.")
     return 1 if result.status == "FAIL" else 0
 
 
