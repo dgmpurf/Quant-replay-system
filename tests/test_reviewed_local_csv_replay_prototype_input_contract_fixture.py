@@ -181,7 +181,7 @@ def test_safety_flags_report_and_next_task_are_bounded(tmp_path: Path) -> None:
     assert not re.search(r"(api[_-]?key|access[_-]?token|secret|password|bearer\s+[a-z0-9])", all_text.lower())
 
 
-def test_cli_command_runs_and_no_view_commands_are_registered_yet(tmp_path: Path) -> None:
+def test_cli_command_runs_and_view_commands_are_registered(tmp_path: Path) -> None:
     output_dir = (
         tmp_path
         / "outputs"
@@ -226,6 +226,6 @@ def test_cli_command_runs_and_no_view_commands_are_registered_yet(tmp_path: Path
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "reviewed-local-csv-replay-prototype-input-contract-fixture" in help_output
-    assert "reviewed-local-csv-replay-prototype-input-contract-fixture-index" not in help_output
-    assert "reviewed-local-csv-replay-prototype-input-contract-fixture-health" not in help_output
-    assert "reviewed-local-csv-replay-prototype-input-contract-fixture-status" not in help_output
+    assert "reviewed-local-csv-replay-prototype-input-contract-fixture-index" in help_output
+    assert "reviewed-local-csv-replay-prototype-input-contract-fixture-health" in help_output
+    assert "reviewed-local-csv-replay-prototype-input-contract-fixture-status" in help_output
