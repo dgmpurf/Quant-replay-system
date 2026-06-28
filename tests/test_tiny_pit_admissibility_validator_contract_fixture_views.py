@@ -165,6 +165,8 @@ def test_status_reports_latest_context_and_forbidden_flags_false(tmp_path: Path)
     assert status.diagnostic_only is True
     assert status.forbidden_future_status_present is False
     assert status.next_action == VIEWS_NEXT_ACTION
+    assert "Research-Status and Checkpoint" not in status.next_action
+    assert "Post-Checkpoint Governance Audit Report-Only v0.1" in status.next_action
     for flag in SAFETY_FALSE_FLAGS:
         assert getattr(status, flag) is False
 
@@ -274,5 +276,6 @@ def test_cli_view_commands_run_and_remain_report_only(tmp_path: Path) -> None:
     assert "trading_allowed: False" in status.stdout
     assert "forbidden_future_status_present: False" in status.stdout
     assert VIEWS_NEXT_ACTION in status.stdout
+    assert "Research-Status and Checkpoint" not in status.stdout
     for forbidden_status in FORBIDDEN_FUTURE_STATUSES:
         assert forbidden_status not in status.stdout

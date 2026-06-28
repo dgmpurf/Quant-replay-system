@@ -104,6 +104,12 @@ from quant_replay_system.forward_return_label_schema_fixture_status import (
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_status import (
     run_reviewed_local_csv_replay_prototype_input_contract_fixture_status,
 )
+from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture import (
+    SAFETY_FALSE_FLAGS as TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture_status import (
+    run_tiny_pit_admissibility_validator_contract_fixture_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -934,6 +940,58 @@ SUMMARY_COLUMNS = [
     "reviewed_local_csv_replay_prototype_input_contract_fixture_data_raw_written",
     "reviewed_local_csv_replay_prototype_input_contract_fixture_data_processed_written",
     "reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written",
+    "tiny_pit_admissibility_validator_contract_fixture_context_visible",
+    "latest_tiny_pit_admissibility_validator_contract_fixture_id",
+    "latest_tiny_pit_admissibility_validator_contract_fixture_status",
+    "latest_tiny_pit_admissibility_validator_contract_fixture_health_status",
+    "latest_tiny_pit_admissibility_validator_contract_fixture_workflow_stage",
+    "tiny_pit_admissibility_validator_contract_fixture_artifact_path",
+    "tiny_pit_admissibility_validator_contract_fixture_created",
+    "tiny_pit_admissibility_validator_contract_fixture_case_count",
+    "tiny_pit_admissibility_validator_contract_fixture_package_section_count",
+    "tiny_pit_admissibility_validator_contract_fixture_gate_group_count",
+    "tiny_pit_admissibility_validator_contract_fixture_timing_rule_count",
+    "tiny_pit_admissibility_validator_contract_fixture_validation_issue_count",
+    "tiny_pit_admissibility_validator_contract_fixture_report_only",
+    "tiny_pit_admissibility_validator_contract_fixture_diagnostic_only",
+    "tiny_pit_admissibility_validator_contract_fixture_next_action",
+    "tiny_pit_admissibility_validator_contract_fixture_cases_created",
+    "tiny_pit_admissibility_validator_contract_fixture_package_sections_created",
+    "tiny_pit_admissibility_validator_contract_fixture_gate_groups_created",
+    "tiny_pit_admissibility_validator_contract_fixture_timing_rules_created",
+    "tiny_pit_admissibility_validator_contract_fixture_real_reviewed_csv_package_created",
+    "tiny_pit_admissibility_validator_contract_fixture_active_reviewed_input_candidate_created",
+    "tiny_pit_admissibility_validator_contract_fixture_pit_admissibility_validator_implemented",
+    "tiny_pit_admissibility_validator_contract_fixture_real_replay_input_created",
+    "tiny_pit_admissibility_validator_contract_fixture_real_replay_evidence_bundle_created",
+    "tiny_pit_admissibility_validator_contract_fixture_real_replay_decision_created",
+    "tiny_pit_admissibility_validator_contract_fixture_replay_decision_frozen",
+    "tiny_pit_admissibility_validator_contract_fixture_real_forward_labels_created",
+    "tiny_pit_admissibility_validator_contract_fixture_future_labels_joined",
+    "tiny_pit_admissibility_validator_contract_fixture_future_labels_joined_to_decision_inputs",
+    "tiny_pit_admissibility_validator_contract_fixture_future_labels_joined_to_training_dataset",
+    "tiny_pit_admissibility_validator_contract_fixture_training_dataset_created",
+    "tiny_pit_admissibility_validator_contract_fixture_metric_computation_performed",
+    "tiny_pit_admissibility_validator_contract_fixture_signal_score_implemented",
+    "tiny_pit_admissibility_validator_contract_fixture_signal_score_input_authorized",
+    "tiny_pit_admissibility_validator_contract_fixture_model_training_performed",
+    "tiny_pit_admissibility_validator_contract_fixture_active_weights_created",
+    "tiny_pit_admissibility_validator_contract_fixture_active_thresholds_created",
+    "tiny_pit_admissibility_validator_contract_fixture_stock_profile_validation_created",
+    "tiny_pit_admissibility_validator_contract_fixture_paper_validation_created",
+    "tiny_pit_admissibility_validator_contract_fixture_real_buy_review_eligible",
+    "tiny_pit_admissibility_validator_contract_fixture_buy_review_allowed",
+    "tiny_pit_admissibility_validator_contract_fixture_strategy_performance_validated",
+    "tiny_pit_admissibility_validator_contract_fixture_current_candidates_run",
+    "tiny_pit_admissibility_validator_contract_fixture_snapshot_built",
+    "tiny_pit_admissibility_validator_contract_fixture_signal_semantics_changed",
+    "tiny_pit_admissibility_validator_contract_fixture_broker_api_called",
+    "tiny_pit_admissibility_validator_contract_fixture_order_placed",
+    "tiny_pit_admissibility_validator_contract_fixture_message_sent",
+    "tiny_pit_admissibility_validator_contract_fixture_trading_allowed",
+    "tiny_pit_admissibility_validator_contract_fixture_data_raw_written",
+    "tiny_pit_admissibility_validator_contract_fixture_data_processed_written",
+    "tiny_pit_admissibility_validator_contract_fixture_data_cache_written",
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2594,6 +2652,7 @@ OPTIONAL_COMPONENTS = {
     "REPLAY_DECISION_SCHEMA_FIXTURE_STATUS",
     "FORWARD_RETURN_LABEL_SCHEMA_FIXTURE_STATUS",
     "REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS",
+    "TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_STATUS",
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -3422,6 +3481,58 @@ class LocalResearchDashboardResult:
     reviewed_local_csv_replay_prototype_input_contract_fixture_data_raw_written: bool
     reviewed_local_csv_replay_prototype_input_contract_fixture_data_processed_written: bool
     reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written: bool
+    tiny_pit_admissibility_validator_contract_fixture_context_visible: bool
+    latest_tiny_pit_admissibility_validator_contract_fixture_id: str
+    latest_tiny_pit_admissibility_validator_contract_fixture_status: str
+    latest_tiny_pit_admissibility_validator_contract_fixture_health_status: str
+    latest_tiny_pit_admissibility_validator_contract_fixture_workflow_stage: str
+    tiny_pit_admissibility_validator_contract_fixture_artifact_path: str
+    tiny_pit_admissibility_validator_contract_fixture_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_case_count: int
+    tiny_pit_admissibility_validator_contract_fixture_package_section_count: int
+    tiny_pit_admissibility_validator_contract_fixture_gate_group_count: int
+    tiny_pit_admissibility_validator_contract_fixture_timing_rule_count: int
+    tiny_pit_admissibility_validator_contract_fixture_validation_issue_count: int
+    tiny_pit_admissibility_validator_contract_fixture_report_only: bool
+    tiny_pit_admissibility_validator_contract_fixture_diagnostic_only: bool
+    tiny_pit_admissibility_validator_contract_fixture_next_action: str
+    tiny_pit_admissibility_validator_contract_fixture_cases_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_package_sections_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_gate_groups_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_timing_rules_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_real_reviewed_csv_package_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_active_reviewed_input_candidate_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_pit_admissibility_validator_implemented: bool
+    tiny_pit_admissibility_validator_contract_fixture_real_replay_input_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_real_replay_evidence_bundle_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_real_replay_decision_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_replay_decision_frozen: bool
+    tiny_pit_admissibility_validator_contract_fixture_real_forward_labels_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_future_labels_joined: bool
+    tiny_pit_admissibility_validator_contract_fixture_future_labels_joined_to_decision_inputs: bool
+    tiny_pit_admissibility_validator_contract_fixture_future_labels_joined_to_training_dataset: bool
+    tiny_pit_admissibility_validator_contract_fixture_training_dataset_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_metric_computation_performed: bool
+    tiny_pit_admissibility_validator_contract_fixture_signal_score_implemented: bool
+    tiny_pit_admissibility_validator_contract_fixture_signal_score_input_authorized: bool
+    tiny_pit_admissibility_validator_contract_fixture_model_training_performed: bool
+    tiny_pit_admissibility_validator_contract_fixture_active_weights_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_active_thresholds_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_stock_profile_validation_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_paper_validation_created: bool
+    tiny_pit_admissibility_validator_contract_fixture_real_buy_review_eligible: bool
+    tiny_pit_admissibility_validator_contract_fixture_buy_review_allowed: bool
+    tiny_pit_admissibility_validator_contract_fixture_strategy_performance_validated: bool
+    tiny_pit_admissibility_validator_contract_fixture_current_candidates_run: bool
+    tiny_pit_admissibility_validator_contract_fixture_snapshot_built: bool
+    tiny_pit_admissibility_validator_contract_fixture_signal_semantics_changed: bool
+    tiny_pit_admissibility_validator_contract_fixture_broker_api_called: bool
+    tiny_pit_admissibility_validator_contract_fixture_order_placed: bool
+    tiny_pit_admissibility_validator_contract_fixture_message_sent: bool
+    tiny_pit_admissibility_validator_contract_fixture_trading_allowed: bool
+    tiny_pit_admissibility_validator_contract_fixture_data_raw_written: bool
+    tiny_pit_admissibility_validator_contract_fixture_data_processed_written: bool
+    tiny_pit_admissibility_validator_contract_fixture_data_cache_written: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -5008,6 +5119,7 @@ def run_local_research_dashboard(
     replay_decision_schema_fixture_root: str | Path | None = None,
     forward_return_label_schema_fixture_root: str | Path | None = None,
     reviewed_local_csv_replay_prototype_input_contract_fixture_root: str | Path | None = None,
+    tiny_pit_admissibility_validator_contract_fixture_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -5240,6 +5352,13 @@ def run_local_research_dashboard(
         else effective_root
         / "manual_diagnostics"
         / "reviewed_local_csv_replay_prototype_input_contract_fixture_v0_1"
+    )
+    effective_tiny_pit_admissibility_validator_contract_fixture_root = (
+        Path(tiny_pit_admissibility_validator_contract_fixture_root)
+        if tiny_pit_admissibility_validator_contract_fixture_root is not None
+        else effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_admissibility_validator_contract_fixture_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -5709,6 +5828,9 @@ def run_local_research_dashboard(
         reviewed_local_csv_replay_prototype_input_contract_fixture_root=(
             effective_reviewed_local_csv_replay_prototype_input_contract_fixture_root
         ),
+        tiny_pit_admissibility_validator_contract_fixture_root=(
+            effective_tiny_pit_admissibility_validator_contract_fixture_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -5830,6 +5952,9 @@ def run_local_research_dashboard(
         "forward_return_label_schema_fixture_root": effective_forward_return_label_schema_fixture_root,
         "reviewed_local_csv_replay_prototype_input_contract_fixture_root": (
             effective_reviewed_local_csv_replay_prototype_input_contract_fixture_root
+        ),
+        "tiny_pit_admissibility_validator_contract_fixture_root": (
+            effective_tiny_pit_admissibility_validator_contract_fixture_root
         ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
@@ -7932,6 +8057,7 @@ def run_local_research_dashboard(
         reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written=_bool_from_text(
             summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written")
         ),
+        **_tiny_pit_admissibility_validator_contract_fixture_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -11695,6 +11821,7 @@ def scan_local_research_workflow_artifacts(
     replay_decision_schema_fixture_root: str | Path,
     forward_return_label_schema_fixture_root: str | Path,
     reviewed_local_csv_replay_prototype_input_contract_fixture_root: str | Path,
+    tiny_pit_admissibility_validator_contract_fixture_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -11781,6 +11908,9 @@ def scan_local_research_workflow_artifacts(
     forward_return_label_schema_fixture_path = Path(forward_return_label_schema_fixture_root)
     reviewed_local_csv_replay_prototype_input_contract_fixture_path = Path(
         reviewed_local_csv_replay_prototype_input_contract_fixture_root
+    )
+    tiny_pit_admissibility_validator_contract_fixture_path = Path(
+        tiny_pit_admissibility_validator_contract_fixture_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -11898,6 +12028,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_reviewed_local_csv_replay_prototype_input_contract_fixture_status(
             reviewed_local_csv_replay_prototype_input_contract_fixture_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_admissibility_validator_contract_fixture_status(
+            tiny_pit_admissibility_validator_contract_fixture_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -19354,6 +19489,7 @@ def summarize_local_research_status(
                 "data_cache_written",
             ]
         },
+        **_tiny_pit_admissibility_validator_contract_fixture_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -27521,6 +27657,7 @@ def build_local_research_dashboard_metadata(
         "reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written": (
             result.reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written
         ),
+        **_tiny_pit_admissibility_validator_contract_fixture_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -32639,6 +32776,218 @@ def _reviewed_local_csv_replay_prototype_input_contract_fixture_notes(summary: d
         f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
         f"report_path={_note_safe_text(summary.get('report_path'))}"
     )
+
+
+_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_COMPONENT = (
+    "TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_STATUS"
+)
+_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX = (
+    "tiny_pit_admissibility_validator_contract_fixture_"
+)
+_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_COUNT_FIELDS = [
+    "case_count",
+    "package_section_count",
+    "gate_group_count",
+    "timing_rule_count",
+    "validation_issue_count",
+]
+_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_CONTEXT_BOOL_KEYS = [
+    "context_visible",
+    "created",
+    "report_only",
+    "diagnostic_only",
+    "cases_created",
+    "package_sections_created",
+    "gate_groups_created",
+    "timing_rules_created",
+]
+_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_BOOL_FIELDS = [
+    f"{_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX}{key}"
+    for key in _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_CONTEXT_BOOL_KEYS
+] + [
+    f"{_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX}{flag}"
+    for flag in TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_SAFETY_FALSE_FLAGS
+]
+_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_TEXT_FIELDS = [
+    "latest_tiny_pit_admissibility_validator_contract_fixture_id",
+    "latest_tiny_pit_admissibility_validator_contract_fixture_status",
+    "latest_tiny_pit_admissibility_validator_contract_fixture_health_status",
+    "latest_tiny_pit_admissibility_validator_contract_fixture_workflow_stage",
+    "tiny_pit_admissibility_validator_contract_fixture_artifact_path",
+    "tiny_pit_admissibility_validator_contract_fixture_next_action",
+]
+_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_RESULT_FIELDS = (
+    _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_TEXT_FIELDS
+    + [
+        f"{_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX}{field}"
+        for field in _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_COUNT_FIELDS
+    ]
+    + _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_BOOL_FIELDS
+)
+
+
+def _scan_tiny_pit_admissibility_validator_contract_fixture_status(root: Path) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_tiny_pit_admissibility_validator_contract_fixture_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_fixture_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = fixture_root / result.latest_fixture_id
+    summary["artifact_path"] = str(artifact_dir)
+    summary["context_visible"] = True
+    summary["next_action"] = result.next_action
+    return [
+        _record(
+            workflow_area="TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE",
+            component=_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_COMPONENT,
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_fixture_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_tiny_pit_admissibility_validator_contract_fixture_notes(summary),
+        )
+    ]
+
+
+def _tiny_pit_admissibility_validator_contract_fixture_notes(summary: dict[str, Any]) -> str:
+    safety_notes = " ".join(
+        f"{flag}={_string_or_empty(summary.get(flag))};"
+        for flag in TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_SAFETY_FALSE_FLAGS
+    )
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"context_visible={_string_or_empty(summary.get('context_visible'))}; "
+        "tiny_pit_admissibility_validator_contract_fixture_created="
+        f"{_string_or_empty(summary.get('contract_fixture'))}; "
+        f"case_count={_string_or_empty(summary.get('case_count'))}; "
+        f"package_section_count={_string_or_empty(summary.get('package_section_count'))}; "
+        f"gate_group_count={_string_or_empty(summary.get('gate_group_count'))}; "
+        f"timing_rule_count={_string_or_empty(summary.get('timing_rule_count'))}; "
+        f"validation_issue_count={_string_or_empty(summary.get('validation_issue_count'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"cases_created={_string_or_empty(summary.get('contract_fixture'))}; "
+        f"package_sections_created={_string_or_empty(summary.get('contract_fixture'))}; "
+        f"gate_groups_created={_string_or_empty(summary.get('contract_fixture'))}; "
+        f"timing_rules_created={_string_or_empty(summary.get('contract_fixture'))}; "
+        f"{safety_notes} "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
+
+def _tiny_pit_admissibility_validator_contract_fixture_summary_fields(
+    by_component: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    component = by_component.get(_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "tiny_pit_admissibility_validator_contract_fixture_context_visible": _parse_note_value(
+            notes,
+            "context_visible",
+        ),
+        "latest_tiny_pit_admissibility_validator_contract_fixture_id": _string_or_empty(
+            component.get("latest_artifact_id")
+        ),
+        "latest_tiny_pit_admissibility_validator_contract_fixture_status": _component_status(
+            by_component,
+            _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_COMPONENT,
+        ),
+        "latest_tiny_pit_admissibility_validator_contract_fixture_health_status": _parse_note_value(
+            notes,
+            "health_status",
+        ),
+        "latest_tiny_pit_admissibility_validator_contract_fixture_workflow_stage": _string_or_empty(
+            component.get("stage")
+        ),
+        "tiny_pit_admissibility_validator_contract_fixture_artifact_path": _parse_note_value(
+            notes,
+            "artifact_path",
+        ),
+        "tiny_pit_admissibility_validator_contract_fixture_next_action": _parse_note_value(
+            notes,
+            "next_manual_action",
+        ),
+    }
+    fields.update(
+        {
+            f"{_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX}{field}": _int_or_zero(
+                _parse_note_value(notes, field)
+            )
+            for field in _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_COUNT_FIELDS
+        }
+    )
+    fields.update(
+        {
+            f"{_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX}{key}": _parse_note_value(
+                notes,
+                (
+                    "tiny_pit_admissibility_validator_contract_fixture_created"
+                    if key == "created"
+                    else key
+                ),
+            )
+            for key in _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_CONTEXT_BOOL_KEYS
+        }
+    )
+    fields.update(
+        {
+            f"{_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX}{flag}": _parse_note_value(
+                notes,
+                flag,
+            )
+            for flag in TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_SAFETY_FALSE_FLAGS
+        }
+    )
+    return fields
+
+
+def _tiny_pit_admissibility_validator_contract_fixture_result_kwargs(
+    summary: dict[str, Any]
+) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, ""))
+        for field in _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_TEXT_FIELDS
+    }
+    kwargs.update(
+        {
+            f"{_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX}{field}": _int_or_zero(
+                summary.get(f"{_TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_PREFIX}{field}")
+            )
+            for field in _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_COUNT_FIELDS
+        }
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_BOOL_FIELDS
+        }
+    )
+    return kwargs
+
+
+def _tiny_pit_admissibility_validator_contract_fixture_metadata(
+    result: LocalResearchDashboardResult,
+) -> dict[str, Any]:
+    return {
+        field: getattr(result, field)
+        for field in _TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_RESULT_FIELDS
+    }
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:

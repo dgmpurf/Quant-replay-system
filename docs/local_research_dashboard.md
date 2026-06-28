@@ -1092,6 +1092,14 @@ The dashboard preserves existing paper workflow priority. Forward Return Label S
 
 The dashboard preserves existing paper workflow priority. Reviewed LOCAL_CSV Replay Prototype Input Contract Fixture rows remain context for future reviewed local CSV replay input contract design only and do not create actual reviewed input packages, authorize PIT validation, create replay inputs, create labels, authorize signal_score inputs, train models, validate stock_profile, enable buy-review, validate performance, or create trading safety fields.
 
+## Tiny PIT Admissibility Validator Contract Fixture Context
+
+`research-status` includes Tiny PIT Admissibility Validator Contract Fixture context when `tiny-pit-admissibility-validator-contract-fixture-status` artifacts exist. It exposes the latest fixture id, status/stage, health, artifact path, case count, package section count, gate group count, timing rule count, validation issue count, report-only flags, next action, created flags, and safety fields.
+
+`TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_CREATED` is a context stage only. It is not a real PIT validator, not real reviewed CSV packages, not active reviewed input candidates, not replay input, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, not buy_review_allowed, not strategy performance validation, and not trading.
+
+The dashboard preserves existing paper workflow priority. Tiny PIT fixture rows remain contract governance for a future validator and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
+
 ## Artifact Outputs
 
 Default output folder:
