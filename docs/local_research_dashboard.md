@@ -1068,6 +1068,14 @@ The dashboard preserves existing paper workflow priority. Factor Observation Sch
 
 The dashboard preserves existing paper workflow priority. Replay Evidence Bundle Schema Fixture rows remain context for future PIT-valid replay evidence bundle workflow design only and do not create replay decisions, forward labels, signal_score inputs, model training inputs, stock_profile validation, buy-review, performance validation, or trading safety fields.
 
+## Replay Decision Schema Fixture Context
+
+`research-status` includes Replay Decision Schema Fixture context when `replay-decision-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, decision count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`REPLAY_DECISION_SCHEMA_FIXTURE_CREATED` means synthetic/report-only replay decision rows exist for schema governance only. It is not real replay decisions, not real replay evidence bundle consumption, not forward labels, not future labels joined, not signal_score input authorization, not model training input, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, and does not authorize current-candidates, snapshots, signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes.
+
+The dashboard preserves existing paper workflow priority. Replay Decision Schema Fixture rows remain context for future PIT-valid replay decision workflow design only and do not consume real replay evidence bundles, create decision freeze artifacts, create forward labels, authorize signal_score inputs, train models, validate stock_profile, enable buy-review, validate performance, or create trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:

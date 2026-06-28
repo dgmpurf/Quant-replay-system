@@ -373,7 +373,9 @@ def test_status_safe_empty_and_latest_fixture_summary(tmp_path: Path) -> None:
     assert status.signal_score_input_authorized is False
     assert status.buy_review_allowed is False
     assert status.trading_allowed is False
-    assert "Replay Decision Schema Fixture Views are report-only" in status.next_action
+    assert "core/views/research-status/checkpoint context is available" in status.next_action
+    assert "post-checkpoint governance audit" in status.next_action
+    assert "research-status/checkpoint integration only after the views remain stable" not in status.next_action
     assert "forward label readiness" not in status.next_action.lower()
 
 

@@ -38,12 +38,12 @@ SUMMARY_COLUMNS = [
 ]
 
 VIEWS_NEXT_ACTION = (
-    "Replay Decision Schema Fixture Views are report-only. Review fixture context and add "
-    "research-status/checkpoint integration only after the views remain stable. Do not treat fixture rows "
-    "as real replay decisions, real replay evidence bundle consumption, forward labels, future labels "
-    "joined, signal_score inputs, model training inputs, active weights, active thresholds, "
+    "Replay Decision Schema Fixture core/views/research-status/checkpoint context is available as "
+    "report-only schema-fixture governance. Review the checkpoint and run post-checkpoint governance "
+    "audit before any real replay decision, real replay evidence bundle consumption, forward label, "
+    "future label join, signal_score input, model training input, active weights, active thresholds, "
     "stock_profile validation, paper validation, buy-review, performance validation, current-candidates, "
-    "snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading permission."
+    "snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading workflow."
 )
 
 
