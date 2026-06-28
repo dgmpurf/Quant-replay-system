@@ -565,6 +565,9 @@ from quant_replay_system.replay_evidence_bundle_schema_fixture import (
 from quant_replay_system.replay_decision_schema_fixture import (
     build_replay_decision_schema_fixture,
 )
+from quant_replay_system.forward_return_label_schema_fixture import (
+    build_forward_return_label_schema_fixture,
+)
 from quant_replay_system.replay_decision_schema_fixture_health import (
     check_replay_decision_schema_fixture_health,
 )
@@ -5392,6 +5395,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     replay_decision_schema_fixture.set_defaults(handler=_handle_replay_decision_schema_fixture)
 
+    forward_return_label_schema_fixture = subparsers.add_parser(
+        "forward-return-label-schema-fixture",
+        help="Write report-only synthetic forward return label schema fixture artifacts",
+    )
+    forward_return_label_schema_fixture.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/forward_return_label_schema_fixture_v0_1",
+        help="Directory where forward return label schema fixture artifacts will be written",
+    )
+    forward_return_label_schema_fixture.set_defaults(handler=_handle_forward_return_label_schema_fixture)
+
     replay_decision_schema_fixture_index = subparsers.add_parser(
         "replay-decision-schema-fixture-index",
         help="Build an index for report-only replay decision schema fixture artifacts",
@@ -9780,6 +9794,29 @@ def _handle_replay_decision_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No real replay decisions, real replay evidence bundle consumption, real replay evidence bundles, forward labels, future labels joined, signal_score implementation, signal_score input authorization, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_forward_return_label_schema_fixture(args: argparse.Namespace) -> int:
+    result = build_forward_return_label_schema_fixture(output_dir=args.output_dir)
+    print(f"forward_return_label_schema_fixture_id: {result.forward_return_label_schema_fixture_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"label_count: {result.label_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"fixture_rows_path: {result.artifact_paths['fixture_rows']}")
+    print(f"case_matrix_path: {result.artifact_paths['case_matrix']}")
+    print(f"field_contract_path: {result.artifact_paths['field_contract']}")
+    print(f"validation_results_path: {result.artifact_paths['validation_results']}")
+    print(f"leakage_guard_results_path: {result.artifact_paths['leakage_guard_results']}")
+    print(f"safety_flags_path: {result.artifact_paths['safety_flags']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
+    print("No real forward labels, future labels joined to replay decisions or training datasets, real replay decisions, real replay evidence bundle consumption, replay execution, metric computation, signal_score implementation, signal_score input authorization, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
     return 1 if result.status == "FAIL" else 0
 
 
