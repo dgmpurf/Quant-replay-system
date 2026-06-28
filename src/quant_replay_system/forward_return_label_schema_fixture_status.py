@@ -36,7 +36,7 @@ SUMMARY_COLUMNS = [
     "next_action",
 ]
 
-VIEWS_NEXT_ACTION = "Forward Return Label Schema Fixture Research-Status and Checkpoint Report-Only v0.1"
+VIEWS_NEXT_ACTION = "Forward Return Label Schema Fixture Post-Checkpoint Governance Audit Report-Only v0.1"
 
 
 @dataclass(frozen=True)

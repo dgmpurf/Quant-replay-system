@@ -224,7 +224,10 @@ def test_status_safe_empty_latest_fixture_and_invalid_health(tmp_path: Path) -> 
     assert status.model_training_input_authorized is False
     assert status.buy_review_allowed is False
     assert status.trading_allowed is False
-    assert "Forward Return Label Schema Fixture Research-Status and Checkpoint Report-Only v0.1" in status.next_action
+    assert "Forward Return Label Schema Fixture Post-Checkpoint Governance Audit Report-Only v0.1" in (
+        status.next_action
+    )
+    assert "Research-Status and Checkpoint" not in status.next_action
 
     metadata = _metadata(fixture.artifact_paths["metadata"])
     metadata["status"] = "MAYBE"

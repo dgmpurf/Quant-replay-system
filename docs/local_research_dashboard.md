@@ -1076,6 +1076,14 @@ The dashboard preserves existing paper workflow priority. Replay Evidence Bundle
 
 The dashboard preserves existing paper workflow priority. Replay Decision Schema Fixture rows remain context for future PIT-valid replay decision workflow design only and do not consume real replay evidence bundles, create decision freeze artifacts, create forward labels, authorize signal_score inputs, train models, validate stock_profile, enable buy-review, validate performance, or create trading safety fields.
 
+## Forward Return Label Schema Fixture Context
+
+`research-status` includes Forward Return Label Schema Fixture context when `forward-return-label-schema-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, label count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`FORWARD_RETURN_LABEL_SCHEMA_FIXTURE_CREATED` means synthetic/report-only forward return label rows exist for schema governance only. It is not real forward labels, not future labels joined to decision inputs, not signal_score input authorization, not model training input authorization, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, and does not authorize current-candidates, snapshots, signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes.
+
+The dashboard preserves existing paper workflow priority. Forward Return Label Schema Fixture rows remain context for future PIT-valid label workflow design only and do not create real forward labels, join future labels to decision inputs, authorize signal_score inputs, authorize model training inputs, create active weights or thresholds, validate stock_profile, enable buy-review, validate performance, or create trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:
