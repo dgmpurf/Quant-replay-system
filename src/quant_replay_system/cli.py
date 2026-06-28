@@ -574,6 +574,15 @@ from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixt
 from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture import (
     build_tiny_pit_admissibility_validator_contract_fixture,
 )
+from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture_health import (
+    check_tiny_pit_admissibility_validator_contract_fixture_health,
+)
+from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture_index import (
+    build_tiny_pit_admissibility_validator_contract_fixture_index,
+)
+from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture_status import (
+    run_tiny_pit_admissibility_validator_contract_fixture_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -5462,6 +5471,72 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_tiny_pit_admissibility_validator_contract_fixture
     )
 
+    tiny_pit_admissibility_validator_contract_fixture_index = subparsers.add_parser(
+        "tiny-pit-admissibility-validator-contract-fixture-index",
+        help="Build an index for report-only tiny PIT admissibility validator contract fixture artifacts",
+    )
+    tiny_pit_admissibility_validator_contract_fixture_index.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_admissibility_validator_contract_fixture_v0_1"
+        ),
+    )
+    tiny_pit_admissibility_validator_contract_fixture_index.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_admissibility_validator_contract_fixture_v0_1/index"
+        ),
+    )
+    tiny_pit_admissibility_validator_contract_fixture_index.set_defaults(
+        handler=_handle_tiny_pit_admissibility_validator_contract_fixture_index
+    )
+
+    tiny_pit_admissibility_validator_contract_fixture_health = subparsers.add_parser(
+        "tiny-pit-admissibility-validator-contract-fixture-health",
+        help="Check report-only tiny PIT admissibility validator contract fixture artifact health",
+    )
+    tiny_pit_admissibility_validator_contract_fixture_health.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_admissibility_validator_contract_fixture_v0_1"
+        ),
+    )
+    tiny_pit_admissibility_validator_contract_fixture_health.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_admissibility_validator_contract_fixture_v0_1/health"
+        ),
+    )
+    tiny_pit_admissibility_validator_contract_fixture_health.set_defaults(
+        handler=_handle_tiny_pit_admissibility_validator_contract_fixture_health
+    )
+
+    tiny_pit_admissibility_validator_contract_fixture_status = subparsers.add_parser(
+        "tiny-pit-admissibility-validator-contract-fixture-status",
+        help="Summarize latest report-only tiny PIT admissibility validator contract fixture status",
+    )
+    tiny_pit_admissibility_validator_contract_fixture_status.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_admissibility_validator_contract_fixture_v0_1"
+        ),
+    )
+    tiny_pit_admissibility_validator_contract_fixture_status.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_admissibility_validator_contract_fixture_v0_1/status"
+        ),
+    )
+    tiny_pit_admissibility_validator_contract_fixture_status.set_defaults(
+        handler=_handle_tiny_pit_admissibility_validator_contract_fixture_status
+    )
+
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
         "reviewed-local-csv-replay-prototype-input-contract-fixture-index",
         help="Build an index for report-only reviewed LOCAL_CSV replay prototype input contract fixture artifacts",
@@ -10038,6 +10113,112 @@ def _handle_tiny_pit_admissibility_validator_contract_fixture(args: argparse.Nam
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No real reviewed CSV package or active reviewed input candidate was created. No PIT admissibility validator was implemented. No replay input, replay evidence bundle, replay decision, replay decision freeze, forward labels, future-label joins, training dataset, metric computation, signal_score, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, strategy performance validation, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, or trading was created. No data/raw, data/processed, or data/cache writes were created.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_admissibility_validator_contract_fixture_index(args: argparse.Namespace) -> int:
+    result = build_tiny_pit_admissibility_validator_contract_fixture_index(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(
+        "Tiny PIT admissibility validator contract fixture index artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_fixture_id: {result.latest_fixture_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"case_count: {result.latest_case_count}")
+    print(f"package_section_count: {result.latest_package_section_count}")
+    print(f"gate_group_count: {result.latest_gate_group_count}")
+    print(f"timing_rule_count: {result.latest_timing_rule_count}")
+    print(f"validation_issue_count: {result.latest_validation_issue_count}")
+    print("Report-only index: no real reviewed CSV package, active reviewed input candidate, PIT validator, replay input, evidence bundle, decision, freeze, labels, future-label joins, training, metrics, signal_score, model training, stock_profile validation, paper validation, buy-review, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/API/order/message behavior, trading, or data writes were created.")
+    return 0
+
+
+def _handle_tiny_pit_admissibility_validator_contract_fixture_health(args: argparse.Namespace) -> int:
+    result = check_tiny_pit_admissibility_validator_contract_fixture_health(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(
+        "Tiny PIT admissibility validator contract fixture health artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: no real reviewed CSV package, active reviewed input candidate, PIT validator, replay input, evidence bundle, decision, freeze, labels, future-label joins, training, metrics, signal_score, model training, stock_profile validation, paper validation, buy-review, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/API/order/message behavior, trading, or data writes were created.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_admissibility_validator_contract_fixture_status(args: argparse.Namespace) -> int:
+    result = run_tiny_pit_admissibility_validator_contract_fixture_status(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(
+        "Tiny PIT admissibility validator contract fixture status artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_fixture_id: {result.latest_fixture_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"health_status: {result.health_status}")
+    print(f"case_count: {result.case_count}")
+    print(f"package_section_count: {result.package_section_count}")
+    print(f"gate_group_count: {result.gate_group_count}")
+    print(f"timing_rule_count: {result.timing_rule_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"contract_fixture: {result.contract_fixture}")
+    print(f"forbidden_future_status_present: {result.forbidden_future_status_present}")
+    print(f"real_reviewed_csv_package_created: {result.real_reviewed_csv_package_created}")
+    print(f"active_reviewed_input_candidate_created: {result.active_reviewed_input_candidate_created}")
+    print(f"pit_admissibility_validator_implemented: {result.pit_admissibility_validator_implemented}")
+    print(f"real_replay_input_created: {result.real_replay_input_created}")
+    print(f"real_replay_evidence_bundle_created: {result.real_replay_evidence_bundle_created}")
+    print(f"real_replay_decision_created: {result.real_replay_decision_created}")
+    print(f"replay_decision_frozen: {result.replay_decision_frozen}")
+    print(f"real_forward_labels_created: {result.real_forward_labels_created}")
+    print(f"future_labels_joined: {result.future_labels_joined}")
+    print(f"future_labels_joined_to_decision_inputs: {result.future_labels_joined_to_decision_inputs}")
+    print(f"future_labels_joined_to_training_dataset: {result.future_labels_joined_to_training_dataset}")
+    print(f"training_dataset_created: {result.training_dataset_created}")
+    print(f"metric_computation_performed: {result.metric_computation_performed}")
+    print(f"signal_score_implemented: {result.signal_score_implemented}")
+    print(f"signal_score_input_authorized: {result.signal_score_input_authorized}")
+    print(f"model_training_performed: {result.model_training_performed}")
+    print(f"active_weights_created: {result.active_weights_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"stock_profile_validation_created: {result.stock_profile_validation_created}")
+    print(f"paper_validation_created: {result.paper_validation_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"order_placed: {result.order_placed}")
+    print(f"message_sent: {result.message_sent}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"artifact_path: {result.artifact_path}")
+    print(f"report_path: {result.report_path}")
+    print(f"next_action: {result.next_action}")
+    print("Report-only status: no real reviewed CSV package, active reviewed input candidate, PIT validator, replay input, evidence bundle, decision, freeze, labels, future-label joins, training, metrics, signal_score, model training, stock_profile validation, paper validation, buy-review, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/API/order/message behavior, trading, or data writes were created.")
     return 1 if result.status == "FAIL" else 0
 
 
