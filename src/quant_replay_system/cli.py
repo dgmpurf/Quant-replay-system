@@ -571,6 +571,9 @@ from quant_replay_system.forward_return_label_schema_fixture import (
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture import (
     build_reviewed_local_csv_replay_prototype_input_contract_fixture,
 )
+from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture import (
+    build_tiny_pit_admissibility_validator_contract_fixture,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -5443,6 +5446,22 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_reviewed_local_csv_replay_prototype_input_contract_fixture
     )
 
+    tiny_pit_admissibility_validator_contract_fixture = subparsers.add_parser(
+        "tiny-pit-admissibility-validator-contract-fixture",
+        help="Write report-only tiny PIT admissibility validator contract fixture artifacts",
+    )
+    tiny_pit_admissibility_validator_contract_fixture.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_admissibility_validator_contract_fixture_v0_1"
+        ),
+        help="Directory where tiny PIT admissibility validator contract fixture artifacts will be written",
+    )
+    tiny_pit_admissibility_validator_contract_fixture.set_defaults(
+        handler=_handle_tiny_pit_admissibility_validator_contract_fixture
+    )
+
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
         "reviewed-local-csv-replay-prototype-input-contract-fixture-index",
         help="Build an index for report-only reviewed LOCAL_CSV replay prototype input contract fixture artifacts",
@@ -9989,6 +10008,36 @@ def _handle_reviewed_local_csv_replay_prototype_input_contract_fixture(args: arg
     print(f"report_path: {result.artifact_paths['report']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No real reviewed input package, active reviewed input candidate, PIT admissibility validator, real replay input, real replay evidence bundle, real replay decision, replay decision freeze, real forward labels, future-label joins, training dataset, metric computation, signal_score, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, strategy performance validation, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, trading, or data/raw, data/processed, data/cache writes were created.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_admissibility_validator_contract_fixture(args: argparse.Namespace) -> int:
+    result = build_tiny_pit_admissibility_validator_contract_fixture(output_dir=args.output_dir)
+    print(
+        "tiny_pit_admissibility_validator_contract_fixture_id: "
+        f"{result.tiny_pit_admissibility_validator_contract_fixture_id}"
+    )
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"case_count: {result.case_count}")
+    print(f"package_section_count: {result.package_section_count}")
+    print(f"gate_group_count: {result.gate_group_count}")
+    print(f"timing_rule_count: {result.timing_rule_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"gate_case_matrix_path: {result.artifact_paths['gate_case_matrix']}")
+    print(f"package_section_contract_path: {result.artifact_paths['package_section_contract']}")
+    print(f"output_status_contract_path: {result.artifact_paths['output_status_contract']}")
+    print(f"pit_timing_rule_matrix_path: {result.artifact_paths['pit_timing_rule_matrix']}")
+    print(f"forbidden_interpretation_matrix_path: {result.artifact_paths['forbidden_interpretation_matrix']}")
+    print(f"safety_flags_path: {result.artifact_paths['safety_flags']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"limitations_path: {result.artifact_paths['limitations']}")
+    print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
+    print("No real reviewed CSV package or active reviewed input candidate was created. No PIT admissibility validator was implemented. No replay input, replay evidence bundle, replay decision, replay decision freeze, forward labels, future-label joins, training dataset, metric computation, signal_score, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, strategy performance validation, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, or trading was created. No data/raw, data/processed, or data/cache writes were created.")
     return 1 if result.status == "FAIL" else 0
 
 
