@@ -565,6 +565,15 @@ from quant_replay_system.replay_evidence_bundle_schema_fixture import (
 from quant_replay_system.replay_decision_schema_fixture import (
     build_replay_decision_schema_fixture,
 )
+from quant_replay_system.replay_decision_schema_fixture_health import (
+    check_replay_decision_schema_fixture_health,
+)
+from quant_replay_system.replay_decision_schema_fixture_index import (
+    build_replay_decision_schema_fixture_index,
+)
+from quant_replay_system.replay_decision_schema_fixture_status import (
+    run_replay_decision_schema_fixture_status,
+)
 from quant_replay_system.replay_evidence_bundle_schema_fixture_health import (
     check_replay_evidence_bundle_schema_fixture_health,
 )
@@ -5383,6 +5392,48 @@ def build_parser() -> argparse.ArgumentParser:
     )
     replay_decision_schema_fixture.set_defaults(handler=_handle_replay_decision_schema_fixture)
 
+    replay_decision_schema_fixture_index = subparsers.add_parser(
+        "replay-decision-schema-fixture-index",
+        help="Build an index for report-only replay decision schema fixture artifacts",
+    )
+    replay_decision_schema_fixture_index.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_decision_schema_fixture_v0_1",
+    )
+    replay_decision_schema_fixture_index.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_decision_schema_fixture_v0_1/index",
+    )
+    replay_decision_schema_fixture_index.set_defaults(handler=_handle_replay_decision_schema_fixture_index)
+
+    replay_decision_schema_fixture_health = subparsers.add_parser(
+        "replay-decision-schema-fixture-health",
+        help="Check report-only replay decision schema fixture artifact health",
+    )
+    replay_decision_schema_fixture_health.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_decision_schema_fixture_v0_1",
+    )
+    replay_decision_schema_fixture_health.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_decision_schema_fixture_v0_1/health",
+    )
+    replay_decision_schema_fixture_health.set_defaults(handler=_handle_replay_decision_schema_fixture_health)
+
+    replay_decision_schema_fixture_status = subparsers.add_parser(
+        "replay-decision-schema-fixture-status",
+        help="Summarize latest report-only replay decision schema fixture status",
+    )
+    replay_decision_schema_fixture_status.add_argument(
+        "--root",
+        default="outputs/reports/manual_diagnostics/replay_decision_schema_fixture_v0_1",
+    )
+    replay_decision_schema_fixture_status.add_argument(
+        "--output-dir",
+        default="outputs/reports/manual_diagnostics/replay_decision_schema_fixture_v0_1/status",
+    )
+    replay_decision_schema_fixture_status.set_defaults(handler=_handle_replay_decision_schema_fixture_status)
+
     replay_evidence_bundle_schema_fixture_index = subparsers.add_parser(
         "replay-evidence-bundle-schema-fixture-index",
         help="Build an index for report-only replay evidence bundle schema fixture artifacts",
@@ -9729,6 +9780,79 @@ def _handle_replay_decision_schema_fixture(args: argparse.Namespace) -> int:
     print(f"limitations_path: {result.artifact_paths['limitations']}")
     print(f"recommended_next_task_path: {result.artifact_paths['recommended_next_task']}")
     print("No real replay decisions, real replay evidence bundle consumption, real replay evidence bundles, forward labels, future labels joined, signal_score implementation, signal_score input authorization, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, data/raw, data/processed, data/cache, current-candidates, snapshots, signal_semantics changes, broker/API/order/message behavior, advisory predictions/probabilities, or trading was invoked.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_replay_decision_schema_fixture_index(args: argparse.Namespace) -> int:
+    result = build_replay_decision_schema_fixture_index(root=args.root, output_dir=args.output_dir)
+    print(f"Replay decision schema fixture index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print("Report-only index: no real replay decisions, real replay evidence bundle consumption, forward labels, future labels joined, signal_score input authorization, model training inputs, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading readiness was created.")
+    return 0
+
+
+def _handle_replay_decision_schema_fixture_health(args: argparse.Namespace) -> int:
+    result = check_replay_decision_schema_fixture_health(root=args.root, output_dir=args.output_dir)
+    print(f"Replay decision schema fixture health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: fixture rows remain schema context only and create no real replay decisions, real replay evidence bundle consumption, forward labels, future labels joined, signal_score input authorization, model training inputs, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading readiness.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_replay_decision_schema_fixture_status(args: argparse.Namespace) -> int:
+    result = run_replay_decision_schema_fixture_status(root=args.root, output_dir=args.output_dir)
+    print(f"Replay decision schema fixture status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"status: {result.status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"health_status: {result.health_status}")
+    print(f"decision_count: {result.decision_count}")
+    print(f"validation_issue_count: {result.validation_issue_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"replay_decision_schema_fixture_created: {result.replay_decision_schema_fixture_created}")
+    print(f"replay_decision_rows_created: {result.replay_decision_rows_created}")
+    print(f"real_replay_decisions_created: {result.real_replay_decisions_created}")
+    print(f"replay_evidence_bundle_schema_fixture_used: {result.replay_evidence_bundle_schema_fixture_used}")
+    print(f"real_replay_evidence_bundle_used: {result.real_replay_evidence_bundle_used}")
+    print(f"forward_labels_created: {result.forward_labels_created}")
+    print(f"future_labels_joined: {result.future_labels_joined}")
+    print(f"signal_score_implemented: {result.signal_score_implemented}")
+    print(f"signal_score_input_authorized: {result.signal_score_input_authorized}")
+    print(f"model_training_performed: {result.model_training_performed}")
+    print(f"active_weights_created: {result.active_weights_created}")
+    print(f"active_thresholds_created: {result.active_thresholds_created}")
+    print(f"stock_profile_validation_created: {result.stock_profile_validation_created}")
+    print(f"paper_validation_created: {result.paper_validation_created}")
+    print(f"real_buy_review_eligible: {result.real_buy_review_eligible}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"strategy_performance_validated: {result.strategy_performance_validated}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"live_trading_enabled: {result.live_trading_enabled}")
+    print(f"broker_api_called: {result.broker_api_called}")
+    print(f"external_api_called: {result.external_api_called}")
+    print(f"llm_api_called: {result.llm_api_called}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"current_candidates_run: {result.current_candidates_run}")
+    print(f"snapshot_built: {result.snapshot_built}")
+    print(f"signal_semantics_changed: {result.signal_semantics_changed}")
+    print(f"active_stock_profile_created: {result.active_stock_profile_created}")
+    print(f"operational_global_approved_for_paper_granted: {result.operational_global_approved_for_paper_granted}")
+    print(f"next_action: {result.next_action}")
+    print("Report-only status: no real replay decisions, real replay evidence bundle consumption, forward labels, future labels joined, signal_score input authorization, model training inputs, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, performance validation, current-candidates, snapshots, signal_semantics mutation, broker/order/message/API behavior, or trading readiness was created.")
     return 1 if result.status == "FAIL" else 0
 
 

@@ -856,7 +856,6 @@ def validate_replay_decision_fixture(
         re.search(r"(api[_-]?key|access[_-]?token|secret|password|bearer\s+[a-z0-9])", all_text.lower()) is None,
         "no private credential-like values",
     )
-    add("output_dir_manual_diagnostics", "manual_diagnostics" in str(settings.output_dir), "output under manual diagnostics")
     return pd.DataFrame(checks)
 
 

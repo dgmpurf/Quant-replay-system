@@ -303,7 +303,7 @@ def test_rows_metadata_limitations_next_task_and_secret_scan(tmp_path: Path) -> 
     assert not re.search(r"(api[_-]?key|access[_-]?token|secret|password|bearer\s+[a-z0-9])", all_text.lower())
 
 
-def test_cli_command_runs_and_only_core_replay_decision_command_is_registered(tmp_path: Path) -> None:
+def test_cli_command_runs_and_replay_decision_view_commands_are_registered(tmp_path: Path) -> None:
     output_dir = tmp_path / "outputs" / "reports" / "manual_diagnostics" / "replay_decision_schema_fixture_v0_1"
 
     completed = subprocess.run(
@@ -342,6 +342,6 @@ def test_cli_command_runs_and_only_core_replay_decision_command_is_registered(tm
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
     assert "replay-decision-schema-fixture" in help_output
-    assert "replay-decision-schema-fixture-index" not in help_output
-    assert "replay-decision-schema-fixture-health" not in help_output
-    assert "replay-decision-schema-fixture-status" not in help_output
+    assert "replay-decision-schema-fixture-index" in help_output
+    assert "replay-decision-schema-fixture-health" in help_output
+    assert "replay-decision-schema-fixture-status" in help_output
