@@ -128,10 +128,8 @@ def test_status_reports_latest_context_and_forbidden_flags_false(tmp_path: Path)
     assert status.diagnostic_only is True
     for flag in SAFETY_FALSE_FLAGS:
         assert getattr(status, flag) is False
-    assert (
-        "Reviewed LOCAL_CSV Replay Prototype Input Contract Fixture Research-Status and Checkpoint Report-Only v0.1"
-        in status.next_action
-    )
+    assert "Research-Status and Checkpoint" not in status.next_action
+    assert "Post-Checkpoint Governance Audit Report-Only v0.1" in status.next_action
 
 
 def test_status_handles_no_artifact_and_invalid_health(tmp_path: Path) -> None:
@@ -234,5 +232,5 @@ def test_cli_view_commands_run_and_remain_report_only(tmp_path: Path) -> None:
     assert f"workflow_stage: {REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_CREATED}" in status.stdout
     assert "buy_review_allowed: False" in status.stdout
     assert "trading_allowed: False" in status.stdout
-    assert "Research-Status and Checkpoint Report-Only v0.1" in status.stdout
-
+    assert "Research-Status and Checkpoint" not in status.stdout
+    assert "Post-Checkpoint Governance Audit Report-Only v0.1" in status.stdout

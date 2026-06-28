@@ -1084,6 +1084,14 @@ The dashboard preserves existing paper workflow priority. Replay Decision Schema
 
 The dashboard preserves existing paper workflow priority. Forward Return Label Schema Fixture rows remain context for future PIT-valid label workflow design only and do not create real forward labels, join future labels to decision inputs, authorize signal_score inputs, authorize model training inputs, create active weights or thresholds, validate stock_profile, enable buy-review, validate performance, or create trading safety fields.
 
+## Reviewed LOCAL_CSV Replay Prototype Input Contract Fixture Context
+
+`research-status` includes Reviewed LOCAL_CSV Replay Prototype Input Contract Fixture context when `reviewed-local-csv-replay-prototype-input-contract-fixture-status` artifacts exist. It exposes the latest fixture run id, status/stage, health, artifact path, contract count, validation issue count, report-only flags, report path, next action, and safety fields.
+
+`REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_CREATED` means synthetic/report-only reviewed LOCAL_CSV replay prototype input contract rows exist for schema governance only. It is not real reviewed CSV packages, not active reviewed input candidates, not PIT admissibility validation, not real replay inputs, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future labels joined to decision inputs, not training datasets, not metric computation, not signal_score input authorization, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, is not strategy performance validation, and does not authorize current-candidates, snapshots, signal_semantics mutation, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes.
+
+The dashboard preserves existing paper workflow priority. Reviewed LOCAL_CSV Replay Prototype Input Contract Fixture rows remain context for future reviewed local CSV replay input contract design only and do not create actual reviewed input packages, authorize PIT validation, create replay inputs, create labels, authorize signal_score inputs, train models, validate stock_profile, enable buy-review, validate performance, or create trading safety fields.
+
 ## Artifact Outputs
 
 Default output folder:

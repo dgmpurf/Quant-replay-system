@@ -36,7 +36,9 @@ SUMMARY_COLUMNS = [
     "next_action",
 ]
 
-VIEWS_NEXT_ACTION = "Reviewed LOCAL_CSV Replay Prototype Input Contract Fixture Research-Status and Checkpoint Report-Only v0.1"
+VIEWS_NEXT_ACTION = (
+    "Reviewed LOCAL_CSV Replay Prototype Input Contract Fixture Post-Checkpoint Governance Audit Report-Only v0.1"
+)
 
 
 @dataclass(frozen=True)
@@ -317,4 +319,3 @@ def _to_bool(value: Any) -> bool:
     if isinstance(value, bool):
         return value
     return str(value).strip().lower() in {"true", "1", "yes", "y"}
-

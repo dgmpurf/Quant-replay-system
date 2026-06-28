@@ -71,6 +71,9 @@ from quant_replay_system.replay_decision_schema_fixture import build_replay_deci
 from quant_replay_system.forward_return_label_schema_fixture import (
     build_forward_return_label_schema_fixture,
 )
+from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture import (
+    build_reviewed_local_csv_replay_prototype_input_contract_fixture,
+)
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -14601,3 +14604,200 @@ def _reviewer_no_hit_downstream_impact_artifact(root: Path) -> Path:
         output_dir=root / "reviewer_no_hit_acceptance_downstream_impact",
     )
     return result.artifact_paths["artifact_dir"]
+
+
+def test_research_status_includes_reviewed_local_csv_input_contract_fixture_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_reviewed_local_csv_replay_prototype_input_contract_fixture(
+        output_dir=root
+        / "manual_diagnostics"
+        / "reviewed_local_csv_replay_prototype_input_contract_fixture_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"] == "REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible is True
+    assert result.latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id == (
+        fixture.reviewed_local_csv_replay_prototype_input_contract_fixture_id
+    )
+    assert result.latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status == "PASS"
+    assert result.latest_reviewed_local_csv_replay_prototype_input_contract_fixture_health_status == "PASS"
+    assert result.latest_reviewed_local_csv_replay_prototype_input_contract_fixture_workflow_stage == (
+        "REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_CREATED"
+    )
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_created is True
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count == 12
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count == 0
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_report_only is True
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only is True
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created is True
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_active_reviewed_input_candidate_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_evidence_bundle_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_decision_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_replay_decision_frozen is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_future_label_joined_to_decision_input is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_training_dataset_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_metric_computation_performed is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_stock_profile_validation_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_paper_validation_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_buy_review_eligible is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_strategy_performance_validated is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_current_candidates_run is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_snapshot_built is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_signal_semantics_changed is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed is False
+    assert result.real_buy_review_eligible is False
+    assert result.buy_review_allowed is False
+    assert result.strategy_performance_validated is False
+    assert result.trading_allowed is False
+    assert row["status"] == "PASS"
+    assert row["workflow_area"] == "REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id"] == (
+        fixture.reviewed_local_csv_replay_prototype_input_contract_fixture_id
+    )
+    assert summary.loc[
+        0,
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count",
+    ] == "12"
+    assert metadata["research_status_final_workflow_stage"] == result.workflow_stage
+    assert metadata["reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible"] is True
+    assert metadata["reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created"] is True
+    assert metadata["reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed"] is False
+    assert metadata["reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_over_reviewed_local_csv_input_contract_fixture(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    build_reviewed_local_csv_replay_prototype_input_contract_fixture(
+        output_dir=root
+        / "manual_diagnostics"
+        / "reviewed_local_csv_replay_prototype_input_contract_fixture_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Reviewed LOCAL_CSV input contract fixture is report-only "
+            "context, not real reviewed input, PIT validation, replay input, labels, training, "
+            "stock_profile validation, paper validation, buy-review, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible is True
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed is False
+    assert result.reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed is False
+
+
+def test_cli_research_status_prints_reviewed_local_csv_input_contract_fixture_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_reviewed_local_csv_replay_prototype_input_contract_fixture(
+        output_dir=root
+        / "manual_diagnostics"
+        / "reviewed_local_csv_replay_prototype_input_contract_fixture_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Reviewed LOCAL_CSV input contract fixture is report-only "
+            "context, not real reviewed input, PIT validation, replay input, labels, training, "
+            "stock_profile validation, paper validation, buy-review, performance validation, or trading."
+        ),
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible: True" in output.out
+    assert (
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id: "
+        f"{fixture.reviewed_local_csv_replay_prototype_input_contract_fixture_id}"
+    ) in output.out
+    assert "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status: PASS" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count: 12" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count: 0" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_report_only: True" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only: True" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created: True" in output.out
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created: False"
+        in output.out
+    )
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented: False"
+        in output.out
+    )
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created: False" in output.out
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_evidence_bundle_created: False"
+        in output.out
+    )
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_decision_created: False"
+        in output.out
+    )
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_replay_decision_frozen: False" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created: False" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined: False" in output.out
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_future_label_joined_to_decision_input: False"
+        in output.out
+    )
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_training_dataset_created: False" in output.out
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_metric_computation_performed: False"
+        in output.out
+    )
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized: False"
+        in output.out
+    )
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed: False" in output.out
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_stock_profile_validation_created: False"
+        in output.out
+    )
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_paper_validation_created: False" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_real_buy_review_eligible: False" in output.out
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed: False" in output.out
+    assert (
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_strategy_performance_validated: False"
+        in output.out
+    )
+    assert "reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed: False" in output.out
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out

@@ -101,6 +101,9 @@ from quant_replay_system.replay_decision_schema_fixture_status import (
 from quant_replay_system.forward_return_label_schema_fixture_status import (
     run_forward_return_label_schema_fixture_status,
 )
+from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_status import (
+    run_reviewed_local_csv_replay_prototype_input_contract_fixture_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -884,6 +887,53 @@ SUMMARY_COLUMNS = [
     "forward_return_label_schema_fixture_signal_semantics_changed",
     "forward_return_label_schema_fixture_active_stock_profile_created",
     "forward_return_label_schema_fixture_operational_global_approved_for_paper_granted",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible",
+    "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id",
+    "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status",
+    "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_health_status",
+    "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_workflow_stage",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_artifact_path",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_report_only",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_next_action",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_active_reviewed_input_candidate_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_evidence_bundle_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_decision_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_replay_decision_frozen",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_future_label_joined_to_decision_input",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_training_dataset_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_metric_computation_performed",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_implemented",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_active_weights_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_active_thresholds_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_stock_profile_validation_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_paper_validation_created",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_real_buy_review_eligible",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_strategy_performance_validated",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_current_candidates_run",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_snapshot_built",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_signal_semantics_changed",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_broker_api_called",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_external_api_called",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_llm_api_called",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_message_sent",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_order_placed",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_data_raw_written",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_data_processed_written",
+    "reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written",
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2543,6 +2593,7 @@ OPTIONAL_COMPONENTS = {
     "REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS",
     "REPLAY_DECISION_SCHEMA_FIXTURE_STATUS",
     "FORWARD_RETURN_LABEL_SCHEMA_FIXTURE_STATUS",
+    "REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS",
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -2584,6 +2635,9 @@ WORKFLOW_AREAS = {
     "REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE_STATUS": "REPLAY_EVIDENCE_BUNDLE_SCHEMA_FIXTURE",
     "REPLAY_DECISION_SCHEMA_FIXTURE_STATUS": "REPLAY_DECISION_SCHEMA_FIXTURE",
     "FORWARD_RETURN_LABEL_SCHEMA_FIXTURE_STATUS": "FORWARD_RETURN_LABEL_SCHEMA_FIXTURE",
+    "REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS": (
+        "REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE"
+    ),
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS": "SOURCE_REGISTRY_SCHEMA_FIXTURE",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS": "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE",
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
@@ -3321,6 +3375,53 @@ class LocalResearchDashboardResult:
     forward_return_label_schema_fixture_signal_semantics_changed: bool
     forward_return_label_schema_fixture_active_stock_profile_created: bool
     forward_return_label_schema_fixture_operational_global_approved_for_paper_granted: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible: bool
+    latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id: str
+    latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status: str
+    latest_reviewed_local_csv_replay_prototype_input_contract_fixture_health_status: str
+    latest_reviewed_local_csv_replay_prototype_input_contract_fixture_workflow_stage: str
+    reviewed_local_csv_replay_prototype_input_contract_fixture_artifact_path: str
+    reviewed_local_csv_replay_prototype_input_contract_fixture_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count: int
+    reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count: int
+    reviewed_local_csv_replay_prototype_input_contract_fixture_report_only: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_next_action: str
+    reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_active_reviewed_input_candidate_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_evidence_bundle_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_decision_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_replay_decision_frozen: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_future_label_joined_to_decision_input: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_training_dataset_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_metric_computation_performed: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_implemented: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_active_weights_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_active_thresholds_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_stock_profile_validation_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_paper_validation_created: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_real_buy_review_eligible: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_strategy_performance_validated: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_current_candidates_run: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_snapshot_built: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_signal_semantics_changed: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_broker_api_called: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_external_api_called: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_llm_api_called: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_message_sent: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_order_placed: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_data_raw_written: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_data_processed_written: bool
+    reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -4906,6 +5007,7 @@ def run_local_research_dashboard(
     replay_evidence_bundle_schema_fixture_root: str | Path | None = None,
     replay_decision_schema_fixture_root: str | Path | None = None,
     forward_return_label_schema_fixture_root: str | Path | None = None,
+    reviewed_local_csv_replay_prototype_input_contract_fixture_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -5131,6 +5233,13 @@ def run_local_research_dashboard(
         Path(forward_return_label_schema_fixture_root)
         if forward_return_label_schema_fixture_root is not None
         else effective_root / "manual_diagnostics" / "forward_return_label_schema_fixture_v0_1"
+    )
+    effective_reviewed_local_csv_replay_prototype_input_contract_fixture_root = (
+        Path(reviewed_local_csv_replay_prototype_input_contract_fixture_root)
+        if reviewed_local_csv_replay_prototype_input_contract_fixture_root is not None
+        else effective_root
+        / "manual_diagnostics"
+        / "reviewed_local_csv_replay_prototype_input_contract_fixture_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -5597,6 +5706,9 @@ def run_local_research_dashboard(
         replay_evidence_bundle_schema_fixture_root=effective_replay_evidence_bundle_schema_fixture_root,
         replay_decision_schema_fixture_root=effective_replay_decision_schema_fixture_root,
         forward_return_label_schema_fixture_root=effective_forward_return_label_schema_fixture_root,
+        reviewed_local_csv_replay_prototype_input_contract_fixture_root=(
+            effective_reviewed_local_csv_replay_prototype_input_contract_fixture_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -5716,6 +5828,9 @@ def run_local_research_dashboard(
         "replay_evidence_bundle_schema_fixture_root": effective_replay_evidence_bundle_schema_fixture_root,
         "replay_decision_schema_fixture_root": effective_replay_decision_schema_fixture_root,
         "forward_return_label_schema_fixture_root": effective_forward_return_label_schema_fixture_root,
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_root": (
+            effective_reviewed_local_csv_replay_prototype_input_contract_fixture_root
+        ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
         "input_gate_validator_fixture_root": effective_input_gate_validator_fixture_root,
@@ -7665,6 +7780,157 @@ def run_local_research_dashboard(
         ),
         forward_return_label_schema_fixture_operational_global_approved_for_paper_granted=_bool_from_text(
             summary.get("forward_return_label_schema_fixture_operational_global_approved_for_paper_granted")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible")
+        ),
+        latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id=str(
+            summary.get("latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id", "")
+        ),
+        latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status=str(
+            summary.get("latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status", "MISSING")
+        ),
+        latest_reviewed_local_csv_replay_prototype_input_contract_fixture_health_status=str(
+            summary.get("latest_reviewed_local_csv_replay_prototype_input_contract_fixture_health_status", "")
+        ),
+        latest_reviewed_local_csv_replay_prototype_input_contract_fixture_workflow_stage=str(
+            summary.get("latest_reviewed_local_csv_replay_prototype_input_contract_fixture_workflow_stage", "")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_artifact_path=str(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_artifact_path", "")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count=_int_or_zero(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count=_int_or_zero(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_report_only=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_report_only")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_next_action=str(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_next_action", "")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created=_bool_from_text(
+            summary.get(
+                "reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created"
+            )
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_active_reviewed_input_candidate_created=_bool_from_text(
+            summary.get(
+                "reviewed_local_csv_replay_prototype_input_contract_fixture_active_reviewed_input_candidate_created"
+            )
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented=_bool_from_text(
+            summary.get(
+                "reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented"
+            )
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_evidence_bundle_created=_bool_from_text(
+            summary.get(
+                "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_evidence_bundle_created"
+            )
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_decision_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_decision_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_replay_decision_frozen=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_replay_decision_frozen")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_future_label_joined_to_decision_input=_bool_from_text(
+            summary.get(
+                "reviewed_local_csv_replay_prototype_input_contract_fixture_future_label_joined_to_decision_input"
+            )
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_training_dataset_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_training_dataset_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_metric_computation_performed=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_metric_computation_performed")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_implemented=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_implemented")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_active_weights_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_active_weights_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_active_thresholds_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_active_thresholds_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_stock_profile_validation_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_stock_profile_validation_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_paper_validation_created=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_paper_validation_created")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_real_buy_review_eligible=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_real_buy_review_eligible")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_strategy_performance_validated=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_strategy_performance_validated")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_current_candidates_run=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_current_candidates_run")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_snapshot_built=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_snapshot_built")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_signal_semantics_changed=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_signal_semantics_changed")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_broker_api_called=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_broker_api_called")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_external_api_called=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_external_api_called")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_llm_api_called=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_llm_api_called")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_message_sent=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_message_sent")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_order_placed=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_order_placed")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_data_raw_written=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_data_raw_written")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_data_processed_written=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_data_processed_written")
+        ),
+        reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written=_bool_from_text(
+            summary.get("reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written")
         ),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
@@ -11428,6 +11694,7 @@ def scan_local_research_workflow_artifacts(
     replay_evidence_bundle_schema_fixture_root: str | Path,
     replay_decision_schema_fixture_root: str | Path,
     forward_return_label_schema_fixture_root: str | Path,
+    reviewed_local_csv_replay_prototype_input_contract_fixture_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -11512,6 +11779,9 @@ def scan_local_research_workflow_artifacts(
     replay_evidence_bundle_schema_fixture_path = Path(replay_evidence_bundle_schema_fixture_root)
     replay_decision_schema_fixture_path = Path(replay_decision_schema_fixture_root)
     forward_return_label_schema_fixture_path = Path(forward_return_label_schema_fixture_root)
+    reviewed_local_csv_replay_prototype_input_contract_fixture_path = Path(
+        reviewed_local_csv_replay_prototype_input_contract_fixture_root
+    )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
     input_gate_validator_fixture_path = Path(input_gate_validator_fixture_root)
@@ -11625,6 +11895,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(_scan_replay_evidence_bundle_schema_fixture_status(replay_evidence_bundle_schema_fixture_path))
     records.extend(_scan_replay_decision_schema_fixture_status(replay_decision_schema_fixture_path))
     records.extend(_scan_forward_return_label_schema_fixture_status(forward_return_label_schema_fixture_path))
+    records.extend(
+        _scan_reviewed_local_csv_replay_prototype_input_contract_fixture_status(
+            reviewed_local_csv_replay_prototype_input_contract_fixture_path
+        )
+    )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
     records.extend(_scan_raw_document_store_schema_fixture_status(raw_document_store_schema_fixture_path))
     records.extend(_scan_input_gate_validator_fixture_status(input_gate_validator_fixture_path))
@@ -18975,6 +19250,110 @@ def summarize_local_research_status(
             by_component.get("FORWARD_RETURN_LABEL_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "operational_global_approved_for_paper_granted",
         ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible": _parse_note_value(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("notes"),
+            "context_visible",
+        ),
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id": _string_or_empty(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get(
+                "latest_artifact_id"
+            )
+        ),
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status": _component_status(
+            by_component,
+            "REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS",
+        ),
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_health_status": _parse_note_value(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("notes"),
+            "health_status",
+        ),
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_workflow_stage": _string_or_empty(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("stage")
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_artifact_path": _parse_note_value(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("notes"),
+            "artifact_path",
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_created": _parse_note_value(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("notes"),
+            "reviewed_local_csv_replay_prototype_input_contract_fixture_created",
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get(
+                    "notes"
+                ),
+                "contract_count",
+            )
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count": _int_or_zero(
+            _parse_note_value(
+                by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get(
+                    "notes"
+                ),
+                "validation_issue_count",
+            )
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_report_only": _parse_note_value(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("notes"),
+            "report_only",
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only": _parse_note_value(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("notes"),
+            "diagnostic_only",
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_next_action": _parse_note_value(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("notes"),
+            "next_manual_action",
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created": _parse_note_value(
+            by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get("notes"),
+            "contracts_created",
+        ),
+        **{
+            f"reviewed_local_csv_replay_prototype_input_contract_fixture_{flag}": _parse_note_value(
+                by_component.get("REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS", {}).get(
+                    "notes"
+                ),
+                flag,
+            )
+            for flag in [
+                "real_reviewed_input_package_created",
+                "active_reviewed_input_candidate_created",
+                "pit_admissibility_validator_implemented",
+                "real_replay_input_created",
+                "real_replay_evidence_bundle_created",
+                "real_replay_decision_created",
+                "replay_decision_frozen",
+                "real_forward_labels_created",
+                "future_labels_joined",
+                "future_label_joined_to_decision_input",
+                "training_dataset_created",
+                "metric_computation_performed",
+                "signal_score_implemented",
+                "signal_score_input_authorized",
+                "model_training_performed",
+                "active_weights_created",
+                "active_thresholds_created",
+                "stock_profile_validation_created",
+                "paper_validation_created",
+                "real_buy_review_eligible",
+                "buy_review_allowed",
+                "strategy_performance_validated",
+                "current_candidates_run",
+                "snapshot_built",
+                "signal_semantics_changed",
+                "broker_api_called",
+                "external_api_called",
+                "llm_api_called",
+                "message_sent",
+                "order_placed",
+                "trading_allowed",
+                "data_raw_written",
+                "data_processed_written",
+                "data_cache_written",
+            ]
+        },
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -27001,6 +27380,147 @@ def build_local_research_dashboard_metadata(
         "forward_return_label_schema_fixture_operational_global_approved_for_paper_granted": (
             result.forward_return_label_schema_fixture_operational_global_approved_for_paper_granted
         ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_context_visible
+        ),
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id": (
+            result.latest_reviewed_local_csv_replay_prototype_input_contract_fixture_id
+        ),
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status": (
+            result.latest_reviewed_local_csv_replay_prototype_input_contract_fixture_status
+        ),
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_health_status": (
+            result.latest_reviewed_local_csv_replay_prototype_input_contract_fixture_health_status
+        ),
+        "latest_reviewed_local_csv_replay_prototype_input_contract_fixture_workflow_stage": (
+            result.latest_reviewed_local_csv_replay_prototype_input_contract_fixture_workflow_stage
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_artifact_path": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_artifact_path
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_contract_count
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_validation_issue_count
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_report_only": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_report_only
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_diagnostic_only
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_next_action": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_next_action
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_contracts_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_reviewed_input_package_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_active_reviewed_input_candidate_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_active_reviewed_input_candidate_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_pit_admissibility_validator_implemented
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_input_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_evidence_bundle_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_evidence_bundle_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_decision_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_replay_decision_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_replay_decision_frozen": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_replay_decision_frozen
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_forward_labels_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_future_labels_joined
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_future_label_joined_to_decision_input": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_future_label_joined_to_decision_input
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_training_dataset_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_training_dataset_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_metric_computation_performed": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_metric_computation_performed
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_implemented": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_implemented
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_signal_score_input_authorized
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_model_training_performed
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_active_weights_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_active_weights_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_active_thresholds_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_active_thresholds_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_stock_profile_validation_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_stock_profile_validation_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_paper_validation_created": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_paper_validation_created
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_real_buy_review_eligible": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_real_buy_review_eligible
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_buy_review_allowed
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_strategy_performance_validated": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_strategy_performance_validated
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_current_candidates_run": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_current_candidates_run
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_snapshot_built": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_snapshot_built
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_signal_semantics_changed": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_signal_semantics_changed
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_broker_api_called": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_broker_api_called
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_external_api_called": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_external_api_called
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_llm_api_called": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_llm_api_called
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_message_sent": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_message_sent
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_order_placed": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_order_placed
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_data_raw_written": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_data_raw_written
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_data_processed_written": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_data_processed_written
+        ),
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written": (
+            result.reviewed_local_csv_replay_prototype_input_contract_fixture_data_cache_written
+        ),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -32026,6 +32546,100 @@ def _forward_return_label_schema_fixture_notes(summary: dict[str, Any]) -> str:
         "operational_global_approved_for_paper_granted=False; "
         f"report_path={_note_safe_text(summary.get('report_path'))}"
     )
+
+
+def _scan_reviewed_local_csv_replay_prototype_input_contract_fixture_status(root: Path) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_reviewed_local_csv_replay_prototype_input_contract_fixture_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    artifact_dir = fixture_root / result.latest_run_id
+    summary["artifact_path"] = str(artifact_dir)
+    summary["context_visible"] = True
+    summary["next_action"] = result.next_action
+    return [
+        _record(
+            workflow_area="REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE",
+            component="REVIEWED_LOCAL_CSV_REPLAY_PROTOTYPE_INPUT_CONTRACT_FIXTURE_STATUS",
+            status=result.status,
+            stage=result.workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.status == "WARN" else 0,
+            error_count=1 if result.status == "FAIL" else 0,
+            notes=_reviewed_local_csv_replay_prototype_input_contract_fixture_notes(summary),
+        )
+    ]
+
+
+def _reviewed_local_csv_replay_prototype_input_contract_fixture_notes(summary: dict[str, Any]) -> str:
+    return (
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('artifact_path'))}; "
+        f"context_visible={_string_or_empty(summary.get('context_visible'))}; "
+        "reviewed_local_csv_replay_prototype_input_contract_fixture_created="
+        f"{_string_or_empty(summary.get('schema_fixture'))}; "
+        f"contract_count={_string_or_empty(summary.get('contract_count'))}; "
+        f"validation_issue_count={_string_or_empty(summary.get('validation_issue_count'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"contracts_created={_string_or_empty(summary.get('schema_fixture'))}; "
+        f"real_reviewed_input_package_created={_string_or_empty(summary.get('real_reviewed_input_package_created'))}; "
+        "active_reviewed_input_candidate_created="
+        f"{_string_or_empty(summary.get('active_reviewed_input_candidate_created'))}; "
+        "pit_admissibility_validator_implemented="
+        f"{_string_or_empty(summary.get('pit_admissibility_validator_implemented'))}; "
+        f"real_replay_input_created={_string_or_empty(summary.get('real_replay_input_created'))}; "
+        "real_replay_evidence_bundle_created="
+        f"{_string_or_empty(summary.get('real_replay_evidence_bundle_created'))}; "
+        f"real_replay_decision_created={_string_or_empty(summary.get('real_replay_decision_created'))}; "
+        f"replay_decision_frozen={_string_or_empty(summary.get('replay_decision_frozen'))}; "
+        f"real_forward_labels_created={_string_or_empty(summary.get('real_forward_labels_created'))}; "
+        f"future_labels_joined={_string_or_empty(summary.get('future_labels_joined'))}; "
+        "future_label_joined_to_decision_input="
+        f"{_string_or_empty(summary.get('future_label_joined_to_decision_input'))}; "
+        f"training_dataset_created={_string_or_empty(summary.get('training_dataset_created'))}; "
+        f"metric_computation_performed={_string_or_empty(summary.get('metric_computation_performed'))}; "
+        f"signal_score_implemented={_string_or_empty(summary.get('signal_score_implemented'))}; "
+        f"signal_score_input_authorized={_string_or_empty(summary.get('signal_score_input_authorized'))}; "
+        f"model_training_performed={_string_or_empty(summary.get('model_training_performed'))}; "
+        f"active_weights_created={_string_or_empty(summary.get('active_weights_created'))}; "
+        f"active_thresholds_created={_string_or_empty(summary.get('active_thresholds_created'))}; "
+        f"stock_profile_validation_created={_string_or_empty(summary.get('stock_profile_validation_created'))}; "
+        f"paper_validation_created={_string_or_empty(summary.get('paper_validation_created'))}; "
+        f"real_buy_review_eligible={_string_or_empty(summary.get('real_buy_review_eligible'))}; "
+        f"buy_review_allowed={_string_or_empty(summary.get('buy_review_allowed'))}; "
+        "strategy_performance_validated="
+        f"{_string_or_empty(summary.get('strategy_performance_validated'))}; "
+        f"current_candidates_run={_string_or_empty(summary.get('current_candidates_run'))}; "
+        f"snapshot_built={_string_or_empty(summary.get('snapshot_built'))}; "
+        f"signal_semantics_changed={_string_or_empty(summary.get('signal_semantics_changed'))}; "
+        f"broker_api_called={_string_or_empty(summary.get('broker_api_called'))}; "
+        f"external_api_called={_string_or_empty(summary.get('external_api_called'))}; "
+        f"llm_api_called={_string_or_empty(summary.get('llm_api_called'))}; "
+        f"message_sent={_string_or_empty(summary.get('message_sent'))}; "
+        f"order_placed={_string_or_empty(summary.get('order_placed'))}; "
+        f"trading_allowed={_string_or_empty(summary.get('trading_allowed'))}; "
+        f"data_raw_written={_string_or_empty(summary.get('data_raw_written'))}; "
+        f"data_processed_written={_string_or_empty(summary.get('data_processed_written'))}; "
+        f"data_cache_written={_string_or_empty(summary.get('data_cache_written'))}; "
+        f"report_path={_note_safe_text(summary.get('report_path'))}"
+    )
+
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:
     fixture_root = root.parent if root.name == "status" else root
