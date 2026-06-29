@@ -2,6 +2,12 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed Package Candidate Contract Fixture v1.71.0
+
+`REAL_REVIEWED_PACKAGE_CANDIDATE_SCHEMA_DESIGNED_REPORT_ONLY` means synthetic/report-only Tiny PIT real reviewed package candidate contract fixture artifacts exist for future package-candidate governance context only. The checkpoint is not a real reviewed CSV package, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
+
+Use `tiny-pit-real-reviewed-package-candidate-contract-fixture`, `tiny-pit-real-reviewed-package-candidate-contract-fixture-index`, `tiny-pit-real-reviewed-package-candidate-contract-fixture-health`, and `tiny-pit-real-reviewed-package-candidate-contract-fixture-status` to create, discover, safety-check, and summarize the synthetic contract fixture. `research-status` exposes the latest fixture context while preserving later `PAPER_WORKFLOW_READY` priority.
+
 ## Tiny PIT Reviewed Package Fixture v1.70.0
 
 `TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY` means synthetic/report-only Tiny PIT reviewed package fixture artifacts exist for diagnostics and future reviewed package governance only. The checkpoint is not a real reviewed CSV package, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.

@@ -21,7 +21,7 @@ from quant_replay_system.tiny_pit_real_reviewed_package_candidate_contract_fixtu
 
 
 VIEWS_NEXT_ACTION = (
-    "Tiny PIT Real Reviewed Package Candidate Contract Fixture Research-Status and Checkpoint "
+    "Tiny PIT Real Reviewed Package Candidate Contract Fixture Post-Checkpoint Governance Audit "
     "Report-Only v0.1"
 )
 

@@ -221,7 +221,7 @@ def test_status_selects_latest_artifact_deterministically_and_preserves_safe_bou
     assert result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_trading_allowed is False
     assert result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_buy_review_allowed is False
     assert result.recommended_next_task == VIEWS_NEXT_ACTION
-    assert "Research-Status and Checkpoint Report-Only" in result.recommended_next_task
+    assert "Post-Checkpoint Governance Audit Report-Only" in result.recommended_next_task
 
 
 def test_status_no_artifact_case_is_non_active(tmp_path: Path) -> None:
