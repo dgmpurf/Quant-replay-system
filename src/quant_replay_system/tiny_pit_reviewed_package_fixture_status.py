@@ -17,7 +17,7 @@ from quant_replay_system.tiny_pit_reviewed_package_fixture_index import (
 )
 
 
-VIEWS_NEXT_ACTION = "Tiny PIT Reviewed Package Fixture Research-Status and Checkpoint Report-Only v0.1"
+VIEWS_NEXT_ACTION = "Tiny PIT Reviewed Package Fixture Post-Checkpoint Governance Audit Report-Only v0.1"
 
 SUMMARY_COLUMNS = [
     "latest_tiny_pit_reviewed_package_fixture_id",

@@ -119,6 +119,14 @@ The v1.59 Algorithm Timing Guard remains active: signal_score formula is design 
 
 It does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, and does not authorize broker/order/message/API/trading.
 
+# Tiny PIT Reviewed Package Fixture Checkpoint Note
+
+`TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY` means synthetic/report-only Tiny PIT reviewed package fixture artifacts exist for governance context only. This note preserves the Algorithm Timing Guard and clarifies that the fixture is not a real reviewed CSV package, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score input authorization, not model training input authorization, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
+
+It does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, and does not authorize broker/order/message/API/trading or data/raw, data/processed, or data/cache writes.
+
+The v1.59 Algorithm Timing Guard remains active: signal_score formula is design reference only; real weights are not calibrated yet; thresholds are not active yet; ML training must wait until PIT-valid factor observations and real governed forward labels exist; normalization, winsorization, and direction-adjusted values are inactive; factor IC / Rank IC / CAR / event study metrics are evaluation methods, not strategy performance validation by themselves; stock_profile is a validation dossier, not a trade instruction; paper workflow must precede real buy-review; buy-review does not equal trading; no broker/order/API/trading integration is allowed in current scope.
+
 The v1.59 Algorithm Timing Guard remains active: signal_score formula is design reference only; real weights are not calibrated yet; thresholds are not active yet; ML training must wait until PIT-valid factor observations and real governed forward labels exist; normalization, winsorization, and direction-adjusted values are inactive; factor IC / Rank IC / CAR / event study metrics are evaluation methods, not strategy performance validation by themselves; stock_profile is a validation dossier, not a trade instruction; paper workflow must precede real buy-review; buy-review does not equal trading; no broker/order/API/trading integration is allowed in current scope.
 
 # Tiny PIT Admissibility Validator Contract Fixture Checkpoint Note

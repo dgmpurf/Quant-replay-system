@@ -173,7 +173,7 @@ def test_status_selects_latest_artifact_deterministically_and_preserves_safe_bou
     assert result.latest_tiny_pit_reviewed_package_fixture_active_replay_input is False
     assert result.latest_tiny_pit_reviewed_package_fixture_trading_allowed is False
     assert result.recommended_next_task == VIEWS_NEXT_ACTION
-    assert "Research-Status and Checkpoint" in result.recommended_next_task
+    assert "Post-Checkpoint Governance Audit" in result.recommended_next_task
 
 
 def test_cli_core_index_health_status_smoke_remains_report_only(tmp_path: Path) -> None:

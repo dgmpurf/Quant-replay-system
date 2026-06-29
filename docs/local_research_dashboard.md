@@ -36,6 +36,7 @@ The project now has separate dashboards and health checks for data preparation, 
 - Has a report-only historical replay input gate validator fixture produced validator contract context without becoming real replay input?
 - Has the report-only real historical replay input gate validator checked a candidate package or reported that no input package exists?
 - Has the report-only minimal replay input package fixture smoke exercised the validator contract without becoming active replay input?
+- Has the report-only Tiny PIT reviewed package fixture produced synthetic reviewed-package context without becoming a real reviewed CSV package or active replay input?
 - Has the report-only active replay input promotion workflow produced `PROMOTION_READY_FOR_HUMAN_REVIEW` context without becoming active replay input?
 - Has the report-only real replay execution precheck reached pre-execution review readiness without running replay?
 - Has the current-to-paper handoff run?
@@ -75,6 +76,7 @@ outputs/reports/manual_diagnostics/replay_substrate_schema_fixture_v0_1/status/
 outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_fixture_v0_1/status/
 outputs/reports/manual_diagnostics/historical_replay_input_gate_validator_v0_1/status/
 outputs/reports/manual_diagnostics/minimal_replay_input_package_fixture_smoke_v0_1/status/
+outputs/reports/manual_diagnostics/tiny_pit_reviewed_package_fixture_v0_1/status/
 outputs/reports/manual_diagnostics/active_replay_input_promotion_v0_1/status/
 outputs/reports/manual_diagnostics/active_replay_input_create_v0_1/status/
 outputs/reports/manual_diagnostics/real_replay_execute_v0_1/status/
@@ -1107,6 +1109,14 @@ The dashboard preserves existing paper workflow priority. Tiny PIT fixture rows 
 `TINY_PIT_ADMISSIBILITY_VALIDATOR_SYNTHETIC_CORE_CREATED` is a context stage only. It is not a real PIT validator, not real reviewed CSV packages, not active reviewed input candidates, not real replay input, not active replay input, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, not buy_review_allowed, not strategy performance validation, and not trading.
 
 The dashboard preserves existing paper workflow priority. Tiny PIT synthetic validator artifacts remain report-only diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
+
+## Tiny PIT Reviewed Package Fixture Context
+
+`research-status` includes Tiny PIT Reviewed Package Fixture synthetic context when `tiny-pit-reviewed-package-fixture-status` artifacts exist. It exposes the latest fixture id, status/stage, health, artifact path, report path, case count, pass/warn/fail counts, blocker/warning counts, report-only flags, diagnostic-only flags, synthetic-only flags, recommended next task, and safety fields.
+
+`TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY` is a context stage only. It is not a real reviewed CSV package, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, not buy_review_allowed, not strategy performance validation, and not trading.
+
+The dashboard preserves existing paper workflow priority. Tiny PIT reviewed package fixture artifacts remain synthetic report-only diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
 
 ## Artifact Outputs
 

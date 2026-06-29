@@ -78,6 +78,9 @@ from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture impor
     build_tiny_pit_admissibility_validator_contract_fixture,
 )
 from quant_replay_system.tiny_pit_admissibility_validator import build_synthetic_validator_artifacts
+from quant_replay_system.tiny_pit_reviewed_package_fixture import (
+    build_tiny_pit_reviewed_package_fixture_artifacts,
+)
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -15155,5 +15158,183 @@ def test_cli_research_status_prints_tiny_pit_validator_fields(
     assert "latest_tiny_pit_admissibility_validator_strategy_performance_validated: False" in output.out
     assert "latest_tiny_pit_admissibility_validator_trading_allowed: False" in output.out
     assert "tiny_pit_admissibility_validator_next_action: Tiny PIT Admissibility Validator Post-Checkpoint" in output.out
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+
+
+def test_research_status_includes_tiny_pit_reviewed_package_fixture_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_tiny_pit_reviewed_package_fixture_artifacts(
+        output_root=root / "manual_diagnostics" / "tiny_pit_reviewed_package_fixture_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"] == "TINY_PIT_REVIEWED_PACKAGE_FIXTURE_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.tiny_pit_reviewed_package_fixture_context_visible is True
+    assert result.latest_tiny_pit_reviewed_package_fixture_id == fixture.fixture_id
+    assert result.latest_tiny_pit_reviewed_package_fixture_status == (
+        "TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_tiny_pit_reviewed_package_fixture_health_status == "PASS"
+    assert result.latest_tiny_pit_reviewed_package_fixture_workflow_stage == (
+        "TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_tiny_pit_reviewed_package_fixture_case_count == 15
+    assert result.latest_tiny_pit_reviewed_package_fixture_pass_count == 9
+    assert result.latest_tiny_pit_reviewed_package_fixture_warn_count == 2
+    assert result.latest_tiny_pit_reviewed_package_fixture_fail_count == 4
+    assert result.latest_tiny_pit_reviewed_package_fixture_blocker_count == 13
+    assert result.latest_tiny_pit_reviewed_package_fixture_warning_count == 2
+    assert result.latest_tiny_pit_reviewed_package_fixture_report_only is True
+    assert result.latest_tiny_pit_reviewed_package_fixture_diagnostic_only is True
+    assert result.latest_tiny_pit_reviewed_package_fixture_synthetic_only is True
+    assert result.latest_tiny_pit_reviewed_package_fixture_real_reviewed_csv_package_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_active_reviewed_input_candidate_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_real_replay_input_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_active_replay_input is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_active_replay_ready is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_active_replay_input_ready_emitted is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_replay_execution_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_replay_decisions_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_forward_labels_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_future_labels_joined is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_training_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_training_dataset_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_metric_computation_performed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_signal_score_implemented is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_model_training_performed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_active_weights_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_active_thresholds_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_stock_profile_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_stock_profile_validation_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_paper_validation_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_real_buy_review_eligible is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_buy_review_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_strategy_performance_validated is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_current_candidates_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_snapshots_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_signal_semantics_mutated is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_broker_api_called is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_order_placed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_message_sent is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_external_api_called is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_llm_api_called is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_trading_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_data_raw_written is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_data_processed_written is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_data_cache_written is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_recommended_next_task == (
+        "Tiny PIT Reviewed Package Fixture Post-Checkpoint Governance Audit Report-Only v0.1"
+    )
+    assert result.workflow_stage != "TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY"
+    assert row["status"] == "TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY"
+    assert row["workflow_area"] == "TINY_PIT_REVIEWED_PACKAGE_FIXTURE"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_tiny_pit_reviewed_package_fixture_id"] == fixture.fixture_id
+    assert summary.loc[0, "latest_tiny_pit_reviewed_package_fixture_case_count"] == "15"
+    assert summary.loc[0, "tiny_pit_reviewed_package_fixture_context_visible"] == "True"
+    assert metadata["research_status_final_workflow_stage"] == result.workflow_stage
+    assert metadata["tiny_pit_reviewed_package_fixture_context_visible"] is True
+    assert metadata["latest_tiny_pit_reviewed_package_fixture_report_only"] is True
+    assert metadata["latest_tiny_pit_reviewed_package_fixture_diagnostic_only"] is True
+    assert metadata["latest_tiny_pit_reviewed_package_fixture_synthetic_only"] is True
+    assert metadata["latest_tiny_pit_reviewed_package_fixture_buy_review_allowed"] is False
+    assert metadata["latest_tiny_pit_reviewed_package_fixture_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_over_tiny_pit_reviewed_package_fixture(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    build_tiny_pit_reviewed_package_fixture_artifacts(
+        output_root=root / "manual_diagnostics" / "tiny_pit_reviewed_package_fixture_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Tiny PIT reviewed package fixture is synthetic-only "
+            "context, not a real reviewed CSV package, active replay input, replay, labels, training, "
+            "stock_profile, paper validation, buy-review, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.tiny_pit_reviewed_package_fixture_context_visible is True
+    assert result.latest_tiny_pit_reviewed_package_fixture_status == (
+        "TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_tiny_pit_reviewed_package_fixture_real_reviewed_csv_package_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_active_reviewed_input_candidate_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_real_replay_input_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_active_replay_input is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_replay_execution_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_forward_labels_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_training_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_stock_profile_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_paper_validation_created is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_buy_review_allowed is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_strategy_performance_validated is False
+    assert result.latest_tiny_pit_reviewed_package_fixture_trading_allowed is False
+
+
+def test_cli_research_status_prints_tiny_pit_reviewed_package_fixture_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_tiny_pit_reviewed_package_fixture_artifacts(
+        output_root=root / "manual_diagnostics" / "tiny_pit_reviewed_package_fixture_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority; Tiny PIT reviewed package fixture is report-only.",
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "tiny_pit_reviewed_package_fixture_context_visible: True" in output.out
+    assert f"latest_tiny_pit_reviewed_package_fixture_id: {fixture.fixture_id}" in output.out
+    assert (
+        "latest_tiny_pit_reviewed_package_fixture_status: "
+        "TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY"
+    ) in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_health_status: PASS" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_case_count: 15" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_report_only: True" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_diagnostic_only: True" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_synthetic_only: True" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_real_reviewed_csv_package_created: False" in output.out
+    assert (
+        "latest_tiny_pit_reviewed_package_fixture_active_reviewed_input_candidate_created: False"
+        in output.out
+    )
+    assert "latest_tiny_pit_reviewed_package_fixture_active_replay_input: False" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_replay_execution_allowed: False" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_forward_labels_created: False" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_training_allowed: False" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_stock_profile_allowed: False" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_buy_review_allowed: False" in output.out
+    assert "latest_tiny_pit_reviewed_package_fixture_trading_allowed: False" in output.out
+    assert (
+        "latest_tiny_pit_reviewed_package_fixture_recommended_next_task: "
+        "Tiny PIT Reviewed Package Fixture Post-Checkpoint Governance Audit Report-Only v0.1"
+    ) in output.out
     assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
     assert "ACTIVE_REPLAY_INPUT_READY" not in output.out

@@ -2,6 +2,12 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Reviewed Package Fixture v1.70.0
+
+`TINY_PIT_REVIEWED_PACKAGE_FIXTURE_CREATED_REPORT_ONLY` means synthetic/report-only Tiny PIT reviewed package fixture artifacts exist for diagnostics and future reviewed package governance only. The checkpoint is not a real reviewed CSV package, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
+
+It does not authorize current-candidates, snapshots, signal_semantics mutation, active stock_profile, promoted/production models, active thresholds, advisory predictions/probabilities, broker/order/message/API/trading, or data/raw, data/processed, or data/cache writes. No trading is authorized.
+
 ## Tiny PIT Admissibility Validator v1.69.0
 
 `TINY_PIT_ADMISSIBILITY_VALIDATOR_SYNTHETIC_CORE_CREATED` means synthetic/report-only Tiny PIT validator package cases were evaluated for diagnostics and future PIT admissibility governance only. The checkpoint is not a real PIT validator, not real reviewed CSV packages, not active reviewed input candidates, not real replay inputs, not active replay input, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
