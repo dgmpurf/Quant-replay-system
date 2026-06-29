@@ -244,7 +244,7 @@ def test_csv_artifacts_have_expected_columns_and_status_contract_is_safe(tmp_pat
     assert "trading_allowed" in {row["forbidden_interpretation"] for row in forbidden}
 
 
-def test_no_standalone_cli_command_is_added_for_core_task() -> None:
+def test_core_cli_command_is_report_only_after_views_task() -> None:
     help_output = subprocess.run(
         [sys.executable, "-m", "quant_replay_system.cli", "--help"],
         check=True,
@@ -253,4 +253,4 @@ def test_no_standalone_cli_command_is_added_for_core_task() -> None:
         env={**os.environ, "PYTHONPATH": "src"},
     ).stdout
 
-    assert re.search(r"^\s*tiny-pit-admissibility-validator\s", help_output, re.MULTILINE) is None
+    assert re.search(r"^\s*tiny-pit-admissibility-validator\s", help_output, re.MULTILINE)
