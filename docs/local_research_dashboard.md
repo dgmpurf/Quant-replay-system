@@ -1100,6 +1100,14 @@ The dashboard preserves existing paper workflow priority. Reviewed LOCAL_CSV Rep
 
 The dashboard preserves existing paper workflow priority. Tiny PIT fixture rows remain contract governance for a future validator and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
 
+## Tiny PIT Admissibility Validator Context
+
+`research-status` includes Tiny PIT Admissibility Validator synthetic context when `tiny-pit-admissibility-validator-status` artifacts exist. It exposes the latest validator id, status/stage, health, artifact path, report path, case count, pass-candidate count, warning count, blocker count, report-only flags, synthetic-only flags, next action, and safety fields.
+
+`TINY_PIT_ADMISSIBILITY_VALIDATOR_SYNTHETIC_CORE_CREATED` is a context stage only. It is not a real PIT validator, not real reviewed CSV packages, not active reviewed input candidates, not real replay input, not active replay input, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, not buy_review_allowed, not strategy performance validation, and not trading.
+
+The dashboard preserves existing paper workflow priority. Tiny PIT synthetic validator artifacts remain report-only diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
+
 ## Artifact Outputs
 
 Default output folder:

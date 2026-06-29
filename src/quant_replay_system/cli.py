@@ -19367,6 +19367,45 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "tiny_pit_admissibility_validator_contract_fixture_data_cache_written",
     ):
         print(f"{field_name}: {getattr(result, field_name)}")
+    for field_name in (
+        "tiny_pit_admissibility_validator_context_visible",
+        "latest_tiny_pit_admissibility_validator_id",
+        "latest_tiny_pit_admissibility_validator_status",
+        "latest_tiny_pit_admissibility_validator_health_status",
+        "latest_tiny_pit_admissibility_validator_workflow_stage",
+        "latest_tiny_pit_admissibility_validator_artifact_path",
+        "latest_tiny_pit_admissibility_validator_report_path",
+        "latest_tiny_pit_admissibility_validator_case_count",
+        "latest_tiny_pit_admissibility_validator_pass_candidate_count",
+        "latest_tiny_pit_admissibility_validator_warning_count",
+        "latest_tiny_pit_admissibility_validator_blocker_count",
+        "latest_tiny_pit_admissibility_validator_report_only",
+        "latest_tiny_pit_admissibility_validator_diagnostic_only",
+        "latest_tiny_pit_admissibility_validator_synthetic_only",
+        "latest_tiny_pit_admissibility_validator_active_replay_input",
+        "latest_tiny_pit_admissibility_validator_active_replay_ready",
+        "latest_tiny_pit_admissibility_validator_trading_allowed",
+        "latest_tiny_pit_admissibility_validator_real_reviewed_csv_package_created",
+        "latest_tiny_pit_admissibility_validator_active_reviewed_input_candidate_created",
+        "latest_tiny_pit_admissibility_validator_real_replay_input_created",
+        "latest_tiny_pit_admissibility_validator_replay_execution_allowed",
+        "latest_tiny_pit_admissibility_validator_forward_labels_allowed",
+        "latest_tiny_pit_admissibility_validator_training_allowed",
+        "latest_tiny_pit_admissibility_validator_metric_computation_performed",
+        "latest_tiny_pit_admissibility_validator_signal_score_implemented",
+        "latest_tiny_pit_admissibility_validator_model_training_performed",
+        "latest_tiny_pit_admissibility_validator_stock_profile_allowed",
+        "latest_tiny_pit_admissibility_validator_paper_validation_created",
+        "latest_tiny_pit_admissibility_validator_real_buy_review_eligible",
+        "latest_tiny_pit_admissibility_validator_buy_review_allowed",
+        "latest_tiny_pit_admissibility_validator_strategy_performance_validated",
+        "latest_tiny_pit_admissibility_validator_broker_api_calls",
+        "latest_tiny_pit_admissibility_validator_data_raw_written",
+        "latest_tiny_pit_admissibility_validator_data_processed_written",
+        "latest_tiny_pit_admissibility_validator_data_cache_written",
+        "tiny_pit_admissibility_validator_next_action",
+    ):
+        print(f"{field_name}: {getattr(result, field_name)}")
     print(
         "source_registry_schema_fixture_workflow_implemented: "
         f"{result.source_registry_schema_fixture_workflow_implemented}"

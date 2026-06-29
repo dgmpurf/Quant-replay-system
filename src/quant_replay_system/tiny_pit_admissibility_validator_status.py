@@ -17,7 +17,7 @@ from quant_replay_system.tiny_pit_admissibility_validator_index import (
 )
 
 
-VIEWS_NEXT_ACTION = "Tiny PIT Admissibility Validator Research-Status and Checkpoint Report-Only v0.1"
+VIEWS_NEXT_ACTION = "Tiny PIT Admissibility Validator Post-Checkpoint Governance Audit Report-Only v0.1"
 SUMMARY_COLUMNS = [
     "latest_tiny_pit_admissibility_validator_id",
     "latest_tiny_pit_admissibility_validator_status",

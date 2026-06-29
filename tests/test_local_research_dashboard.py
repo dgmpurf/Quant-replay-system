@@ -77,6 +77,7 @@ from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixt
 from quant_replay_system.tiny_pit_admissibility_validator_contract_fixture import (
     build_tiny_pit_admissibility_validator_contract_fixture,
 )
+from quant_replay_system.tiny_pit_admissibility_validator import build_synthetic_validator_artifacts
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -14987,3 +14988,172 @@ def test_cli_research_status_prints_reviewed_local_csv_input_contract_fixture_fi
     )
     assert "reviewed_local_csv_replay_prototype_input_contract_fixture_trading_allowed: False" in output.out
     assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
+
+
+def test_research_status_includes_tiny_pit_admissibility_validator_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_synthetic_validator_artifacts(
+        output_dir=root / "manual_diagnostics" / "tiny_pit_admissibility_validator_v0_1"
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"] == "TINY_PIT_ADMISSIBILITY_VALIDATOR_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.tiny_pit_admissibility_validator_context_visible is True
+    assert result.latest_tiny_pit_admissibility_validator_id == fixture.validator_run_id
+    assert result.latest_tiny_pit_admissibility_validator_status == "PASS"
+    assert result.latest_tiny_pit_admissibility_validator_health_status == "PASS"
+    assert result.latest_tiny_pit_admissibility_validator_workflow_stage == (
+        "TINY_PIT_ADMISSIBILITY_VALIDATOR_SYNTHETIC_CORE_CREATED"
+    )
+    assert result.latest_tiny_pit_admissibility_validator_case_count == 14
+    assert result.latest_tiny_pit_admissibility_validator_pass_candidate_count == 1
+    assert result.latest_tiny_pit_admissibility_validator_warning_count == 3
+    assert result.latest_tiny_pit_admissibility_validator_blocker_count == 11
+    assert result.latest_tiny_pit_admissibility_validator_report_only is True
+    assert result.latest_tiny_pit_admissibility_validator_diagnostic_only is True
+    assert result.latest_tiny_pit_admissibility_validator_synthetic_only is True
+    assert result.latest_tiny_pit_admissibility_validator_active_replay_input is False
+    assert result.latest_tiny_pit_admissibility_validator_active_replay_ready is False
+    assert result.latest_tiny_pit_admissibility_validator_trading_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_real_reviewed_csv_package_created is False
+    assert result.latest_tiny_pit_admissibility_validator_active_reviewed_input_candidate_created is False
+    assert result.latest_tiny_pit_admissibility_validator_real_replay_input_created is False
+    assert result.latest_tiny_pit_admissibility_validator_replay_execution_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_forward_labels_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_training_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_metric_computation_performed is False
+    assert result.latest_tiny_pit_admissibility_validator_signal_score_implemented is False
+    assert result.latest_tiny_pit_admissibility_validator_model_training_performed is False
+    assert result.latest_tiny_pit_admissibility_validator_stock_profile_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_paper_validation_created is False
+    assert result.latest_tiny_pit_admissibility_validator_real_buy_review_eligible is False
+    assert result.latest_tiny_pit_admissibility_validator_buy_review_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_strategy_performance_validated is False
+    assert result.latest_tiny_pit_admissibility_validator_broker_api_calls is False
+    assert result.latest_tiny_pit_admissibility_validator_data_raw_written is False
+    assert result.latest_tiny_pit_admissibility_validator_data_processed_written is False
+    assert result.latest_tiny_pit_admissibility_validator_data_cache_written is False
+    assert result.tiny_pit_admissibility_validator_next_action == (
+        "Tiny PIT Admissibility Validator Post-Checkpoint Governance Audit Report-Only v0.1"
+    )
+    assert result.workflow_stage != "TINY_PIT_ADMISSIBILITY_VALIDATOR_SYNTHETIC_CORE_CREATED"
+    assert row["status"] == "PASS"
+    assert row["workflow_area"] == "TINY_PIT_ADMISSIBILITY_VALIDATOR"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_tiny_pit_admissibility_validator_id"] == fixture.validator_run_id
+    assert summary.loc[0, "latest_tiny_pit_admissibility_validator_case_count"] == "14"
+    assert summary.loc[0, "tiny_pit_admissibility_validator_context_visible"] == "True"
+    assert metadata["research_status_final_workflow_stage"] == result.workflow_stage
+    assert metadata["tiny_pit_admissibility_validator_context_visible"] is True
+    assert metadata["latest_tiny_pit_admissibility_validator_report_only"] is True
+    assert metadata["latest_tiny_pit_admissibility_validator_diagnostic_only"] is True
+    assert metadata["latest_tiny_pit_admissibility_validator_synthetic_only"] is True
+    assert metadata["latest_tiny_pit_admissibility_validator_buy_review_allowed"] is False
+    assert metadata["latest_tiny_pit_admissibility_validator_trading_allowed"] is False
+
+
+def test_research_status_preserves_paper_priority_over_tiny_pit_validator(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    build_synthetic_validator_artifacts(
+        output_dir=root / "manual_diagnostics" / "tiny_pit_admissibility_validator_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Tiny PIT synthetic validator is report-only context, "
+            "not real PIT validation, reviewed CSV, replay input, labels, training, stock_profile, "
+            "paper validation, buy-review, performance validation, or trading."
+        ),
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.tiny_pit_admissibility_validator_context_visible is True
+    assert result.latest_tiny_pit_admissibility_validator_status == "PASS"
+    assert result.latest_tiny_pit_admissibility_validator_active_replay_input is False
+    assert result.latest_tiny_pit_admissibility_validator_active_replay_ready is False
+    assert result.latest_tiny_pit_admissibility_validator_real_reviewed_csv_package_created is False
+    assert result.latest_tiny_pit_admissibility_validator_active_reviewed_input_candidate_created is False
+    assert result.latest_tiny_pit_admissibility_validator_real_replay_input_created is False
+    assert result.latest_tiny_pit_admissibility_validator_replay_execution_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_forward_labels_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_training_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_stock_profile_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_paper_validation_created is False
+    assert result.latest_tiny_pit_admissibility_validator_buy_review_allowed is False
+    assert result.latest_tiny_pit_admissibility_validator_strategy_performance_validated is False
+    assert result.latest_tiny_pit_admissibility_validator_trading_allowed is False
+
+
+def test_cli_research_status_prints_tiny_pit_validator_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = build_synthetic_validator_artifacts(
+        output_dir=root / "manual_diagnostics" / "tiny_pit_admissibility_validator_v0_1"
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action=(
+            "Paper workflow remains later priority; Tiny PIT synthetic validator is report-only context."
+        ),
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "tiny_pit_admissibility_validator_context_visible: True" in output.out
+    assert f"latest_tiny_pit_admissibility_validator_id: {fixture.validator_run_id}" in output.out
+    assert "latest_tiny_pit_admissibility_validator_status: PASS" in output.out
+    assert "latest_tiny_pit_admissibility_validator_health_status: PASS" in output.out
+    assert (
+        "latest_tiny_pit_admissibility_validator_workflow_stage: "
+        "TINY_PIT_ADMISSIBILITY_VALIDATOR_SYNTHETIC_CORE_CREATED"
+    ) in output.out
+    assert "latest_tiny_pit_admissibility_validator_case_count: 14" in output.out
+    assert "latest_tiny_pit_admissibility_validator_pass_candidate_count: 1" in output.out
+    assert "latest_tiny_pit_admissibility_validator_warning_count: 3" in output.out
+    assert "latest_tiny_pit_admissibility_validator_blocker_count: 11" in output.out
+    assert "latest_tiny_pit_admissibility_validator_report_only: True" in output.out
+    assert "latest_tiny_pit_admissibility_validator_diagnostic_only: True" in output.out
+    assert "latest_tiny_pit_admissibility_validator_synthetic_only: True" in output.out
+    assert "latest_tiny_pit_admissibility_validator_active_replay_input: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_active_replay_ready: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_real_reviewed_csv_package_created: False" in output.out
+    assert (
+        "latest_tiny_pit_admissibility_validator_active_reviewed_input_candidate_created: False"
+        in output.out
+    )
+    assert "latest_tiny_pit_admissibility_validator_real_replay_input_created: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_replay_execution_allowed: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_forward_labels_allowed: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_training_allowed: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_metric_computation_performed: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_signal_score_implemented: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_model_training_performed: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_stock_profile_allowed: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_paper_validation_created: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_buy_review_allowed: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_strategy_performance_validated: False" in output.out
+    assert "latest_tiny_pit_admissibility_validator_trading_allowed: False" in output.out
+    assert "tiny_pit_admissibility_validator_next_action: Tiny PIT Admissibility Validator Post-Checkpoint" in output.out
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
