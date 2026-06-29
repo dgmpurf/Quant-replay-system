@@ -607,6 +607,18 @@ from quant_replay_system.tiny_pit_reviewed_package_fixture_index import (
 from quant_replay_system.tiny_pit_reviewed_package_fixture_status import (
     run_tiny_pit_reviewed_package_fixture_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_package_candidate_contract_fixture import (
+    build_real_reviewed_package_candidate_contract_fixture_artifacts,
+)
+from quant_replay_system.tiny_pit_real_reviewed_package_candidate_contract_fixture_health import (
+    check_tiny_pit_real_reviewed_package_candidate_contract_fixture_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_package_candidate_contract_fixture_index import (
+    build_tiny_pit_real_reviewed_package_candidate_contract_fixture_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_package_candidate_contract_fixture_status import (
+    run_tiny_pit_real_reviewed_package_candidate_contract_fixture_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -5665,6 +5677,87 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tiny_pit_reviewed_package_fixture_status.set_defaults(handler=_handle_tiny_pit_reviewed_package_fixture_status)
 
+    tiny_pit_real_reviewed_package_candidate_contract_fixture = subparsers.add_parser(
+        "tiny-pit-real-reviewed-package-candidate-contract-fixture",
+        help="Write report-only synthetic Tiny PIT real reviewed package candidate contract fixture artifacts",
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture.add_argument(
+        "--output-root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_package_candidate_contract_fixture_v0_1"
+        ),
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_package_candidate_contract_fixture
+    )
+
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-package-candidate-contract-fixture-index",
+        help="Build an index for report-only Tiny PIT real reviewed package candidate contract fixture artifacts",
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_index.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_package_candidate_contract_fixture_v0_1"
+        ),
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_index.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_package_candidate_contract_fixture_v0_1/index"
+        ),
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_package_candidate_contract_fixture_index
+    )
+
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-package-candidate-contract-fixture-health",
+        help="Check report-only Tiny PIT real reviewed package candidate contract fixture artifact health",
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_health.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_package_candidate_contract_fixture_v0_1"
+        ),
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_health.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_package_candidate_contract_fixture_v0_1/health"
+        ),
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_package_candidate_contract_fixture_health
+    )
+
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-package-candidate-contract-fixture-status",
+        help="Summarize latest report-only Tiny PIT real reviewed package candidate contract fixture status",
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_status.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_package_candidate_contract_fixture_v0_1"
+        ),
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_status.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_package_candidate_contract_fixture_v0_1/status"
+        ),
+    )
+    tiny_pit_real_reviewed_package_candidate_contract_fixture_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_package_candidate_contract_fixture_status
+    )
+
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
         "reviewed-local-csv-replay-prototype-input-contract-fixture-index",
         help="Build an index for report-only reviewed LOCAL_CSV replay prototype input contract fixture artifacts",
@@ -10606,6 +10699,189 @@ def _handle_tiny_pit_reviewed_package_fixture_status(args: argparse.Namespace) -
     print(f"recommended_next_task: {result.recommended_next_task}")
     print("Report-only status: no active replay input, buy-review, performance validation, trading, or data writes were created.")
     return 1 if result.latest_tiny_pit_reviewed_package_fixture_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_package_candidate_contract_fixture(args: argparse.Namespace) -> int:
+    result = build_real_reviewed_package_candidate_contract_fixture_artifacts(output_root=args.output_root)
+    print(f"fixture_id: {result.fixture_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"case_count: {result.case_count}")
+    print(f"pass_count: {result.pass_count}")
+    print(f"warn_count: {result.warn_count}")
+    print(f"fail_count: {result.fail_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"blocker_count: {result.blocker_count}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"synthetic_only: {result.synthetic_only}")
+    print("real_reviewed_csv_package_created: False")
+    print("active_reviewed_input_candidate_created: False")
+    print("real_replay_input_created: False")
+    print("active_replay_input: False")
+    print("active_replay_ready: False")
+    print("active_replay_input_ready_emitted: False")
+    print("replay_execution_allowed: False")
+    print("buy_review_allowed: False")
+    print("trading_allowed: False")
+    print("data_raw_written: False")
+    print("data_processed_written: False")
+    print("data_cache_written: False")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print("Report-only synthetic Tiny PIT real reviewed package candidate contract fixture: no real CSV, real package candidate, PIT validator, active reviewed input candidate, replay input, active replay input, ACTIVE_REPLAY_INPUT_READY, replay execution, labels, training, model, stock_profile, paper validation, buy-review, performance validation, trading, or protected data writes were created.")
+    return 1 if result.health_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_package_candidate_contract_fixture_index(args: argparse.Namespace) -> int:
+    result = build_tiny_pit_real_reviewed_package_candidate_contract_fixture_index(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(
+        "Tiny PIT real reviewed package candidate contract fixture index artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_fixture_id: {result.latest_fixture_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"case_count: {result.latest_case_count}")
+    print(f"pass_candidate_count: {result.latest_pass_candidate_count}")
+    print(f"warning_count: {result.latest_warning_count}")
+    print(f"blocker_count: {result.latest_blocker_count}")
+    print("Report-only index: no real CSV, real package candidate, active replay input, buy-review, performance validation, trading, or data writes were created.")
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_package_candidate_contract_fixture_health(args: argparse.Namespace) -> int:
+    result = check_tiny_pit_real_reviewed_package_candidate_contract_fixture_health(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(
+        "Tiny PIT real reviewed package candidate contract fixture health artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: no real CSV, real package candidate, active replay input, buy-review, performance validation, trading, or data writes were created.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_package_candidate_contract_fixture_status(args: argparse.Namespace) -> int:
+    result = run_tiny_pit_real_reviewed_package_candidate_contract_fixture_status(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(
+        "Tiny PIT real reviewed package candidate contract fixture status artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_id: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_id}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_status: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_status}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_health_status: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_health_status}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_workflow_stage: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_workflow_stage}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_case_count: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_case_count}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_pass_candidate_count: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_pass_candidate_count}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_warn_count: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_warn_count}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_fail_count: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_fail_count}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_warning_count: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_warning_count}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_blocker_count: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_blocker_count}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_report_only: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_report_only}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_diagnostic_only: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_diagnostic_only}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_synthetic_only: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_synthetic_only}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_real_reviewed_csv_package_created: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_real_reviewed_csv_package_created}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_active_reviewed_input_candidate_created: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_active_reviewed_input_candidate_created}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_real_replay_input_created: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_real_replay_input_created}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_active_replay_input: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_active_replay_input}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_active_replay_ready: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_active_replay_ready}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_active_replay_input_ready_emitted: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_active_replay_input_ready_emitted}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_replay_execution_allowed: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_replay_execution_allowed}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_trading_allowed: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_trading_allowed}"
+    )
+    print(
+        "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_buy_review_allowed: "
+        f"{result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_buy_review_allowed}"
+    )
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"artifact_path: {result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_artifact_path}")
+    print(f"report_path: {result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_report_path}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    print("Report-only status: no real CSV, real package candidate, active replay input, buy-review, performance validation, trading, or data writes were created.")
+    return 1 if result.latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_status == "FAIL" else 0
 
 
 def _handle_reviewed_local_csv_replay_prototype_input_contract_fixture_index(args: argparse.Namespace) -> int:
