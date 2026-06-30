@@ -91,6 +91,11 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype import (
     run_manifest_only_preflight_prototype,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following import (
+    INSPECTION_LEVEL_FOLLOWED_METADATA_ONLY,
+    REQUIRED_FALSE_FLAGS as METADATA_REFERENCE_FOLLOWING_REQUIRED_FALSE_FLAGS,
+    run_metadata_reference_following,
+)
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -9757,6 +9762,66 @@ def _reports_root(tmp_path: Path) -> Path:
     return root
 
 
+def _metadata_reference_following_manifest(root: Path) -> Path:
+    metadata_path = root / "metadata_refs" / "source_registry_snapshot.json"
+    metadata_path.parent.mkdir(parents=True, exist_ok=True)
+    metadata_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "v0.1",
+                "metadata_kind": "syntactic_fixture_metadata",
+                "available_time": "2024-04-02T15:00:00+08:00",
+                "source_hash": "sha256:metadata-reference-following-fixture",
+                "revision_id": "rev-001",
+                "reviewer_id": "reviewer-fixture",
+                "quality_status": "accepted_for_review_context_only",
+                "limitation_note": "Synthetic metadata-only dashboard fixture.",
+                "forbidden_downstream_flags": {
+                    flag: False for flag in METADATA_REFERENCE_FOLLOWING_REQUIRED_FALSE_FLAGS
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    manifest_path = root / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "package_id": "tiny-pit-metadata-reference-following-dashboard",
+                "package_schema_version": "v0.1",
+                "created_at": "2026-06-30T00:00:00Z",
+                "prepared_by": "synthetic-reviewer",
+                "report_only": True,
+                "diagnostic_only": True,
+                "inspection_level": INSPECTION_LEVEL_FOLLOWED_METADATA_ONLY,
+                "metadata_references": [
+                    {
+                        "reference_type": "source_registry_snapshot_ref",
+                        "reference_name": "source-registry-snapshot-fixture",
+                        "path": str(metadata_path),
+                        "required": True,
+                        "expected_schema_version": "v0.1",
+                        "declared_only": False,
+                        "notes": "synthetic metadata-only reference",
+                    }
+                ],
+                "forbidden_downstream_flags": {
+                    flag: False for flag in METADATA_REFERENCE_FOLLOWING_REQUIRED_FALSE_FLAGS
+                },
+                "limitations": ["metadata-reference-following is report-only and CSV_READ_NONE"],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return manifest_path
+
+
 def _active_replay_input_promotion_ready(root: Path):
     input_root = root / "manual_diagnostics" / "active_replay_input_promotion_test_inputs"
     validator = _active_replay_input_promotion_validator_artifact(input_root / "validator")
@@ -15348,6 +15413,195 @@ def test_cli_research_status_prints_tiny_pit_reviewed_package_fixture_fields(
     ) in output.out
     assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
     assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+
+
+def test_research_status_includes_tiny_pit_metadata_reference_following_fields(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    manifest_root = tmp_path / "metadata_reference_following_inputs"
+    manifest_path = _metadata_reference_following_manifest(manifest_root)
+    run = run_metadata_reference_following(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
+        ),
+        package_manifest_path=manifest_path,
+        allowed_manifest_roots=[manifest_root],
+        inspection_level=INSPECTION_LEVEL_FOLLOWED_METADATA_ONLY,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.metadata_reference_following_context_visible is True
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_run_id
+        == run["run_id"]
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_runtime_status
+        == "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCES_FOLLOWED_REPORT_ONLY"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health_status
+        == "PASS"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_workflow_stage
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_CORE_CREATED_REPORT_ONLY"
+    )
+    assert result.metadata_reference_following_csv_read_level == "CSV_READ_NONE"
+    assert result.metadata_reference_following_inspection_level == INSPECTION_LEVEL_FOLLOWED_METADATA_ONLY
+    assert result.metadata_reference_following_real_manifest_read is True
+    assert result.metadata_reference_following_references_declared is True
+    assert result.metadata_reference_following_references_followed is True
+    assert result.metadata_reference_following_metadata_files_followed_count == 1
+    assert result.metadata_reference_following_forbidden_data_references_count == 0
+    assert result.metadata_reference_following_path_guard_blocker_count == 0
+    assert result.metadata_reference_following_manifest_schema_blocker_count == 0
+    assert result.metadata_reference_following_metadata_schema_blocker_count == 0
+    assert result.metadata_reference_following_available_time_metadata_blocker_count == 0
+    assert result.metadata_reference_following_source_hash_revision_metadata_blocker_count == 0
+    assert result.metadata_reference_following_reviewer_quality_metadata_blocker_count == 0
+    assert result.metadata_reference_following_limitation_warning_count == 0
+    assert result.metadata_reference_following_local_file_hash_computed is False
+    assert result.metadata_reference_following_external_source_validated is False
+    assert result.metadata_reference_following_pit_admissibility_validated is False
+    assert result.metadata_reference_following_real_csv_consumed is False
+    assert result.metadata_reference_following_real_reviewed_csv_package_created is False
+    assert result.metadata_reference_following_real_package_candidate_created is False
+    assert result.metadata_reference_following_active_reviewed_input_candidate_created is False
+    assert result.metadata_reference_following_real_replay_input_created is False
+    assert result.metadata_reference_following_active_replay_input is False
+    assert result.metadata_reference_following_active_replay_ready is False
+    assert result.metadata_reference_following_active_replay_input_ready_emitted is False
+    assert result.metadata_reference_following_replay_execution_allowed is False
+    assert result.metadata_reference_following_trading_allowed is False
+    assert result.metadata_reference_following_buy_review_allowed is False
+    assert result.metadata_reference_following_data_raw_written is False
+    assert result.metadata_reference_following_data_processed_written is False
+    assert result.metadata_reference_following_data_cache_written is False
+    assert (
+        result.metadata_reference_following_recommended_next_task
+        == "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
+        "Research-Status and Checkpoint Report-Only v0.1"
+    )
+    assert row["status"] == "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCES_FOLLOWED_REPORT_ONLY"
+    assert row["workflow_area"] == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING"
+    )
+    assert row["blocking_error_count"] == 0
+    assert (
+        summary.loc[
+            0,
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_run_id",
+        ]
+        == run["run_id"]
+    )
+    assert summary.loc[0, "metadata_reference_following_context_visible"] == "True"
+    assert summary.loc[0, "metadata_reference_following_csv_read_level"] == "CSV_READ_NONE"
+    assert summary.loc[0, "metadata_reference_following_references_followed"] == "True"
+    assert summary.loc[0, "metadata_reference_following_real_csv_consumed"] == "False"
+    assert summary.loc[0, "metadata_reference_following_trading_allowed"] == "False"
+    assert metadata["metadata_reference_following_context_visible"] is True
+    assert metadata["metadata_reference_following_csv_read_level"] == "CSV_READ_NONE"
+    assert metadata["metadata_reference_following_references_followed"] is True
+    assert metadata["metadata_reference_following_real_csv_consumed"] is False
+    assert metadata["metadata_reference_following_trading_allowed"] is False
+    assert "ACTIVE_REPLAY_INPUT_READY" not in json.dumps(metadata)
+
+
+def test_research_status_preserves_paper_priority_over_tiny_pit_metadata_reference_following(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    manifest_root = tmp_path / "metadata_reference_following_inputs"
+    manifest_path = _metadata_reference_following_manifest(manifest_root)
+    run_metadata_reference_following(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
+        ),
+        package_manifest_path=manifest_path,
+        allowed_manifest_roots=[manifest_root],
+        inspection_level=INSPECTION_LEVEL_FOLLOWED_METADATA_ONLY,
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.metadata_reference_following_context_visible is True
+    assert result.metadata_reference_following_csv_read_level == "CSV_READ_NONE"
+    assert result.metadata_reference_following_references_followed is True
+    assert result.metadata_reference_following_active_replay_input is False
+    assert result.metadata_reference_following_active_replay_input_ready_emitted is False
+    assert result.metadata_reference_following_replay_execution_allowed is False
+    assert result.metadata_reference_following_buy_review_allowed is False
+    assert result.metadata_reference_following_trading_allowed is False
+
+
+def test_cli_research_status_prints_tiny_pit_metadata_reference_following_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    manifest_root = tmp_path / "metadata_reference_following_inputs"
+    manifest_path = _metadata_reference_following_manifest(manifest_root)
+    run = run_metadata_reference_following(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
+        ),
+        package_manifest_path=manifest_path,
+        allowed_manifest_roots=[manifest_root],
+        inspection_level=INSPECTION_LEVEL_FOLLOWED_METADATA_ONLY,
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+    metadata_paths = list((tmp_path / "dashboard").glob("*/metadata.json"))
+    assert len(metadata_paths) == 1
+    metadata = json.loads(metadata_paths[0].read_text(encoding="utf-8"))
+    assert (
+        metadata[
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_run_id"
+        ]
+        == run["run_id"]
+    )
+    assert metadata["metadata_reference_following_context_visible"] is True
+    assert metadata["metadata_reference_following_csv_read_level"] == "CSV_READ_NONE"
+    assert metadata["metadata_reference_following_references_followed"] is True
+    assert metadata["metadata_reference_following_real_csv_consumed"] is False
+    assert metadata["metadata_reference_following_active_replay_input"] is False
+    assert metadata["metadata_reference_following_buy_review_allowed"] is False
+    assert metadata["metadata_reference_following_trading_allowed"] is False
 
 
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(

@@ -140,6 +140,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status import (
     run_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following import (
+    REQUIRED_FALSE_FLAGS as METADATA_REFERENCE_FOLLOWING_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status import (
+    run_metadata_reference_following_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1177,6 +1183,32 @@ SUMMARY_COLUMNS = [
         )
     ],
     "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_recommended_next_task",
+    "metadata_reference_following_context_visible",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_run_id",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_runtime_status",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health_status",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_workflow_stage",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_artifact_path",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_report_path",
+    "metadata_reference_following_csv_read_level",
+    "metadata_reference_following_inspection_level",
+    "metadata_reference_following_real_manifest_read",
+    "metadata_reference_following_references_declared",
+    "metadata_reference_following_references_followed",
+    "metadata_reference_following_metadata_files_followed_count",
+    "metadata_reference_following_forbidden_data_references_count",
+    "metadata_reference_following_path_guard_blocker_count",
+    "metadata_reference_following_manifest_schema_blocker_count",
+    "metadata_reference_following_metadata_schema_blocker_count",
+    "metadata_reference_following_available_time_metadata_blocker_count",
+    "metadata_reference_following_source_hash_revision_metadata_blocker_count",
+    "metadata_reference_following_reviewer_quality_metadata_blocker_count",
+    "metadata_reference_following_limitation_warning_count",
+    "metadata_reference_following_local_file_hash_computed",
+    "metadata_reference_following_external_source_validated",
+    "metadata_reference_following_pit_admissibility_validated",
+    *[f"metadata_reference_following_{flag}" for flag in METADATA_REFERENCE_FOLLOWING_SAFETY_FALSE_FLAGS],
+    "metadata_reference_following_recommended_next_task",
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2843,6 +2875,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_PACKAGE_CANDIDATE_CONTRACT_FIXTURE_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -2899,6 +2932,9 @@ WORKFLOW_AREAS = {
     ),
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS": "SOURCE_REGISTRY_SCHEMA_FIXTURE",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS": "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE",
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING"
+    ),
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
     "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE_STATUS": "MINIMAL_REPLAY_INPUT_PACKAGE_FIXTURE_SMOKE",
@@ -3984,6 +4020,69 @@ class LocalResearchDashboardResult:
     latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_processed_written: bool
     latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_cache_written: bool
     latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_recommended_next_task: str
+    metadata_reference_following_context_visible: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_run_id: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_runtime_status: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health_status: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_workflow_stage: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_artifact_path: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_report_path: str
+    metadata_reference_following_csv_read_level: str
+    metadata_reference_following_inspection_level: str
+    metadata_reference_following_real_manifest_read: bool
+    metadata_reference_following_references_declared: bool
+    metadata_reference_following_references_followed: bool
+    metadata_reference_following_metadata_files_followed_count: int
+    metadata_reference_following_forbidden_data_references_count: int
+    metadata_reference_following_path_guard_blocker_count: int
+    metadata_reference_following_manifest_schema_blocker_count: int
+    metadata_reference_following_metadata_schema_blocker_count: int
+    metadata_reference_following_available_time_metadata_blocker_count: int
+    metadata_reference_following_source_hash_revision_metadata_blocker_count: int
+    metadata_reference_following_reviewer_quality_metadata_blocker_count: int
+    metadata_reference_following_limitation_warning_count: int
+    metadata_reference_following_local_file_hash_computed: bool
+    metadata_reference_following_external_source_validated: bool
+    metadata_reference_following_pit_admissibility_validated: bool
+    metadata_reference_following_real_csv_consumed: bool
+    metadata_reference_following_real_reviewed_csv_package_created: bool
+    metadata_reference_following_real_package_candidate_created: bool
+    metadata_reference_following_active_reviewed_input_candidate_created: bool
+    metadata_reference_following_real_replay_input_created: bool
+    metadata_reference_following_active_replay_input: bool
+    metadata_reference_following_active_replay_ready: bool
+    metadata_reference_following_active_replay_input_ready_emitted: bool
+    metadata_reference_following_replay_execution_allowed: bool
+    metadata_reference_following_replay_evidence_bundle_created: bool
+    metadata_reference_following_replay_decision_created: bool
+    metadata_reference_following_replay_decision_freeze_created: bool
+    metadata_reference_following_forward_labels_created: bool
+    metadata_reference_following_future_labels_joined: bool
+    metadata_reference_following_training_dataset_created: bool
+    metadata_reference_following_metric_computation_performed: bool
+    metadata_reference_following_signal_score_implemented: bool
+    metadata_reference_following_signal_score_input_authorized: bool
+    metadata_reference_following_model_training_performed: bool
+    metadata_reference_following_active_weights_created: bool
+    metadata_reference_following_active_thresholds_created: bool
+    metadata_reference_following_stock_profile_validation_created: bool
+    metadata_reference_following_paper_validation_created: bool
+    metadata_reference_following_real_buy_review_eligible: bool
+    metadata_reference_following_buy_review_allowed: bool
+    metadata_reference_following_strategy_performance_validated: bool
+    metadata_reference_following_current_candidates_created: bool
+    metadata_reference_following_snapshots_created: bool
+    metadata_reference_following_signal_semantics_mutated: bool
+    metadata_reference_following_broker_api_called: bool
+    metadata_reference_following_order_placed: bool
+    metadata_reference_following_message_sent: bool
+    metadata_reference_following_external_api_called: bool
+    metadata_reference_following_llm_api_called: bool
+    metadata_reference_following_trading_allowed: bool
+    metadata_reference_following_data_raw_written: bool
+    metadata_reference_following_data_processed_written: bool
+    metadata_reference_following_data_cache_written: bool
+    metadata_reference_following_recommended_next_task: str
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -5576,6 +5675,7 @@ def run_local_research_dashboard(
     tiny_pit_real_reviewed_package_candidate_contract_fixture_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root: str | Path | None = None,
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -5846,6 +5946,13 @@ def run_local_research_dashboard(
         else effective_root
         / "manual_diagnostics"
         / "tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_v0_1"
+    )
+    effective_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root = (
+        Path(tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root)
+        if tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root is not None
+        else effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -6329,6 +6436,9 @@ def run_local_research_dashboard(
         tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root=(
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root
         ),
+        tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root=(
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -6464,6 +6574,9 @@ def run_local_research_dashboard(
         ),
         "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root": (
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root
+        ),
+        "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root": (
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root
         ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
@@ -8574,6 +8687,7 @@ def run_local_research_dashboard(
         **_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_result_kwargs(
             summary
         ),
+        **_metadata_reference_following_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -12343,6 +12457,7 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_real_reviewed_package_candidate_contract_fixture_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root: str | Path,
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -12443,6 +12558,9 @@ def scan_local_research_workflow_artifacts(
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_path = Path(
+        tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -12582,6 +12700,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -20046,6 +20169,7 @@ def summarize_local_research_status(
         **_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_summary_fields(
             by_component
         ),
+        **_metadata_reference_following_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -28221,6 +28345,7 @@ def build_local_research_dashboard_metadata(
         **_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_metadata(
             result
         ),
+        **_metadata_reference_following_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -34539,6 +34664,201 @@ def _tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_
         field: getattr(result, field)
         for field in _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_RESULT_FIELDS
     }
+
+
+_METADATA_REFERENCE_FOLLOWING_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_STATUS"
+)
+_METADATA_REFERENCE_FOLLOWING_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING"
+)
+_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX = (
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_"
+)
+_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX = "metadata_reference_following_"
+_METADATA_REFERENCE_FOLLOWING_LATEST_FIELDS = [
+    f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}run_id",
+    f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}runtime_status",
+    f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}health_status",
+    f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}workflow_stage",
+    f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}artifact_path",
+    f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}report_path",
+]
+_METADATA_REFERENCE_FOLLOWING_TEXT_FIELDS = [
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}csv_read_level",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}inspection_level",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}recommended_next_task",
+]
+_METADATA_REFERENCE_FOLLOWING_INT_FIELDS = [
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}metadata_files_followed_count",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}forbidden_data_references_count",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}path_guard_blocker_count",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}manifest_schema_blocker_count",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}metadata_schema_blocker_count",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}available_time_metadata_blocker_count",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}source_hash_revision_metadata_blocker_count",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}reviewer_quality_metadata_blocker_count",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}limitation_warning_count",
+]
+_METADATA_REFERENCE_FOLLOWING_BOOL_FIELDS = [
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}real_manifest_read",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}references_declared",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}references_followed",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}local_file_hash_computed",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}external_source_validated",
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}pit_admissibility_validated",
+]
+_METADATA_REFERENCE_FOLLOWING_SAFETY_FIELDS = [
+    f"{_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX}{flag}" for flag in METADATA_REFERENCE_FOLLOWING_SAFETY_FALSE_FLAGS
+]
+_METADATA_REFERENCE_FOLLOWING_RESULT_FIELDS = (
+    ["metadata_reference_following_context_visible"]
+    + _METADATA_REFERENCE_FOLLOWING_LATEST_FIELDS
+    + _METADATA_REFERENCE_FOLLOWING_TEXT_FIELDS
+    + _METADATA_REFERENCE_FOLLOWING_INT_FIELDS
+    + _METADATA_REFERENCE_FOLLOWING_BOOL_FIELDS
+    + _METADATA_REFERENCE_FOLLOWING_SAFETY_FIELDS
+)
+_METADATA_REFERENCE_FOLLOWING_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
+    "Research-Status and Checkpoint Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_metadata_reference_following_status(root=fixture_root, output_dir=fixture_root / "status")
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _METADATA_REFERENCE_FOLLOWING_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair metadata-reference-following artifacts before checkpoint planning."
+    )
+    return [
+        _record(
+            workflow_area=_METADATA_REFERENCE_FOLLOWING_WORKFLOW_AREA,
+            component=_METADATA_REFERENCE_FOLLOWING_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.latest_runtime_status == "WARN" else 0,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_metadata_reference_following_notes(summary),
+        )
+    ]
+
+
+def _metadata_reference_following_notes(summary: dict[str, Any]) -> str:
+    safety_notes = " ".join(
+        f"{field.removeprefix(_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX)}="
+        f"{_string_or_empty(_metadata_reference_following_summary_value(summary, field))};"
+        for field in _METADATA_REFERENCE_FOLLOWING_SAFETY_FIELDS
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "references_followed_semantics=whitelisted_local_json_metadata_only; "
+        "csv_data_references_opened=False; "
+        "real_csv_consumed=False; "
+        "local_file_byte_hash_computed=False; "
+        "pit_admissibility_validated=False; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get(_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX + 'health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get(_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX + 'workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get(_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX + 'artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get(_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX + 'report_path'))}; "
+        + " ".join(
+            f"{field.removeprefix(_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX)}="
+            f"{_string_or_empty(_metadata_reference_following_summary_value(summary, field))};"
+            for field in (
+                _METADATA_REFERENCE_FOLLOWING_TEXT_FIELDS
+                + _METADATA_REFERENCE_FOLLOWING_INT_FIELDS
+                + _METADATA_REFERENCE_FOLLOWING_BOOL_FIELDS
+            )
+            if field != "metadata_reference_following_recommended_next_task"
+        )
+        + f" {safety_notes}"
+    )
+
+
+def _metadata_reference_following_summary_value(summary: dict[str, Any], dashboard_field: str) -> Any:
+    raw_field = dashboard_field.removeprefix(_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX)
+    if dashboard_field in summary:
+        return summary.get(dashboard_field)
+    return summary.get(raw_field)
+
+
+def _metadata_reference_following_summary_fields(by_component: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    component = by_component.get(_METADATA_REFERENCE_FOLLOWING_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "metadata_reference_following_context_visible": _parse_note_value(notes, "context_visible"),
+        f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}run_id": _string_or_empty(
+            component.get("latest_artifact_id")
+        ),
+        f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}runtime_status": _component_status(
+            by_component,
+            _METADATA_REFERENCE_FOLLOWING_COMPONENT,
+        ),
+        f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}health_status": _parse_note_value(notes, "health_status"),
+        f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}workflow_stage": _string_or_empty(component.get("stage")),
+        f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}artifact_path": _parse_note_value(notes, "artifact_path"),
+        f"{_METADATA_REFERENCE_FOLLOWING_LATEST_PREFIX}report_path": _parse_note_value(notes, "report_path"),
+        "metadata_reference_following_recommended_next_task": _parse_note_value(notes, "next_manual_action"),
+    }
+    fields.update({field: _parse_note_value(notes, field.removeprefix(_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX)) for field in _METADATA_REFERENCE_FOLLOWING_TEXT_FIELDS if field != "metadata_reference_following_recommended_next_task"})
+    fields.update(
+        {
+            field: _int_or_zero(
+                _parse_note_value(notes, field.removeprefix(_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX))
+            )
+            for field in _METADATA_REFERENCE_FOLLOWING_INT_FIELDS
+        }
+    )
+    fields.update(
+        {
+            field: _parse_note_value(notes, field.removeprefix(_METADATA_REFERENCE_FOLLOWING_DETAIL_PREFIX))
+            for field in _METADATA_REFERENCE_FOLLOWING_BOOL_FIELDS + _METADATA_REFERENCE_FOLLOWING_SAFETY_FIELDS
+        }
+    )
+    return fields
+
+
+def _metadata_reference_following_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, "")) for field in _METADATA_REFERENCE_FOLLOWING_LATEST_FIELDS
+    }
+    kwargs.update({field: str(summary.get(field, "")) for field in _METADATA_REFERENCE_FOLLOWING_TEXT_FIELDS})
+    kwargs["metadata_reference_following_context_visible"] = _bool_from_text(
+        summary.get("metadata_reference_following_context_visible")
+    )
+    kwargs.update({field: _int_or_zero(summary.get(field)) for field in _METADATA_REFERENCE_FOLLOWING_INT_FIELDS})
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in _METADATA_REFERENCE_FOLLOWING_BOOL_FIELDS + _METADATA_REFERENCE_FOLLOWING_SAFETY_FIELDS
+        }
+    )
+    if not kwargs["metadata_reference_following_csv_read_level"]:
+        kwargs["metadata_reference_following_csv_read_level"] = "CSV_READ_NONE"
+    return kwargs
+
+
+def _metadata_reference_following_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _METADATA_REFERENCE_FOLLOWING_RESULT_FIELDS}
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:
