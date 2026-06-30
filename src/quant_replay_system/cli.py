@@ -644,6 +644,18 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status import (
     run_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following import (
+    run_metadata_reference_following,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health import (
+    check_metadata_reference_following_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_index import (
+    build_metadata_reference_following_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status import (
+    run_metadata_reference_following_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -5894,6 +5906,94 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status.set_defaults(
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-metadata-reference-following",
+        help=(
+            "Write report-only Tiny PIT metadata-reference-following no-input artifacts "
+            "without reading CSV/data references"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following.add_argument(
+        "--output-root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following.add_argument(
+        "--run-id",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-metadata-reference-following-index",
+        help="Build an index for report-only Tiny PIT metadata-reference-following artifacts",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_index.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_index.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1/index"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_index
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-metadata-reference-following-health",
+        help="Check report-only Tiny PIT metadata-reference-following artifact health",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1/health"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-metadata-reference-following-status",
+        help="Summarize latest report-only Tiny PIT metadata-reference-following status",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status.add_argument(
+        "--root",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status.add_argument(
+        "--output-dir",
+        default=(
+            "outputs/reports/manual_diagnostics/"
+            "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1/status"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status
     )
 
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
@@ -11346,6 +11446,151 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_pr
     print(f"report_path: {result.latest_report_path}")
     print(f"recommended_next_task: {result.recommended_next_task}")
     print("Report-only status: no real CSV, package candidate, active input, replay, buy-review, performance validation, trading, or data writes were created.")
+    return 1 if result.latest_runtime_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following(
+    args: argparse.Namespace,
+) -> int:
+    result = run_metadata_reference_following(
+        output_root=args.output_root,
+        run_id=args.run_id,
+    )
+    print(f"run_id: {result['run_id']}")
+    print(f"runtime_status: {result['runtime_status']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"report_only: {result['report_only']}")
+    print(f"diagnostic_only: {result['diagnostic_only']}")
+    print(f"inspection_level: {result['inspection_level']}")
+    print(f"csv_read_level: {result['csv_read_level']}")
+    print(f"real_manifest_read: {result['real_manifest_read']}")
+    print(f"references_declared: {result['references_declared']}")
+    print(f"references_followed: {result['references_followed']}")
+    print(f"metadata_files_followed_count: {result['metadata_files_followed_count']}")
+    print(f"local_file_hash_computed: {result['local_file_hash_computed']}")
+    print(f"external_source_validated: {result['external_source_validated']}")
+    print(f"pit_admissibility_validated: {result['pit_admissibility_validated']}")
+    print(f"real_csv_consumed: {result['real_csv_consumed']}")
+    print(f"real_reviewed_csv_package_created: {result['real_reviewed_csv_package_created']}")
+    print(f"real_package_candidate_created: {result['real_package_candidate_created']}")
+    print(f"active_reviewed_input_candidate_created: {result['active_reviewed_input_candidate_created']}")
+    print(f"real_replay_input_created: {result['real_replay_input_created']}")
+    print(f"active_replay_input: {result['active_replay_input']}")
+    print(f"active_replay_ready: {result['active_replay_ready']}")
+    print(f"active_replay_input_ready_emitted: {result['active_replay_input_ready_emitted']}")
+    print(f"replay_execution_allowed: {result['replay_execution_allowed']}")
+    print(f"trading_allowed: {result['trading_allowed']}")
+    print(f"buy_review_allowed: {result['buy_review_allowed']}")
+    print(f"data_raw_written: {result['data_raw_written']}")
+    print(f"data_processed_written: {result['data_processed_written']}")
+    print(f"data_cache_written: {result['data_cache_written']}")
+    print(f"artifact_path: {result['artifact_path']}")
+    print(f"report_path: {result['report_path']}")
+    print(f"recommended_next_task: {result['recommended_next_task']}")
+    print(
+        "references_followed means metadata-only local JSON references under allowed roots; "
+        "it does not mean CSV/data references were opened."
+    )
+    print(
+        "Report-only metadata-reference-following: no real CSV, package candidate, active input, "
+        "replay, labels, training, model, stock_profile, paper, buy-review, performance validation, "
+        "trading, or protected data writes were created."
+    )
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_metadata_reference_following_index(root=args.root, output_dir=args.output_dir)
+    print(
+        "Tiny PIT metadata-reference-following index artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(
+        "Report-only index: no real CSV, package candidate, active input, replay, buy-review, "
+        "performance validation, trading, or data writes were created."
+    )
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_metadata_reference_following_health(root=args.root, output_dir=args.output_dir)
+    print(
+        "Tiny PIT metadata-reference-following health artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Report-only health: no real CSV, package candidate, active input, replay, buy-review, "
+        "performance validation, trading, or data writes were created."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_metadata_reference_following_status(root=args.root, output_dir=args.output_dir)
+    print(
+        "Tiny PIT metadata-reference-following status artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"csv_read_level: {result.csv_read_level}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"inspection_level: {result.inspection_level}")
+    print(f"real_manifest_read: {result.real_manifest_read}")
+    print(f"references_declared: {result.references_declared}")
+    print(f"references_followed: {result.references_followed}")
+    print(f"metadata_files_followed_count: {result.metadata_files_followed_count}")
+    print(f"local_file_hash_computed: {result.local_file_hash_computed}")
+    print(f"external_source_validated: {result.external_source_validated}")
+    print(f"pit_admissibility_validated: {result.pit_admissibility_validated}")
+    print(f"real_csv_consumed: {result.real_csv_consumed}")
+    print(f"real_reviewed_csv_package_created: {result.real_reviewed_csv_package_created}")
+    print(f"real_package_candidate_created: {result.real_package_candidate_created}")
+    print(f"active_reviewed_input_candidate_created: {result.active_reviewed_input_candidate_created}")
+    print(f"real_replay_input_created: {result.real_replay_input_created}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_replay_ready: {result.active_replay_ready}")
+    print(f"active_replay_input_ready_emitted: {result.active_replay_input_ready_emitted}")
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"artifact_path: {result.latest_artifact_path}")
+    print(f"report_path: {result.latest_report_path}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    print(
+        "references_followed means metadata-only local JSON references under allowed roots; "
+        "it does not mean CSV/data references were opened."
+    )
+    print(
+        "Report-only status: no real CSV, package candidate, active input, replay, buy-review, "
+        "performance validation, trading, or data writes were created."
+    )
     return 1 if result.latest_runtime_status == "FAIL" else 0
 
 
