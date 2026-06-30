@@ -1126,6 +1126,14 @@ The dashboard preserves existing paper workflow priority. Tiny PIT reviewed pack
 
 The dashboard preserves existing paper workflow priority. Tiny PIT real reviewed package candidate contract fixture artifacts remain synthetic report-only diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Contract Fixture Context
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Contract Fixture synthetic context when `tiny-pit-real-reviewed-local-csv-package-candidate-preflight-contract-fixture-status` artifacts exist. It exposes the latest fixture id, status/stage, health, artifact path, report path, case count, pass-candidate/warn/fail counts, blocker/warning counts, report-only flags, diagnostic-only flags, synthetic-only flags, real CSV safety fields, recommended next task, and downstream safety fields.
+
+`REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SCHEMA_DESIGNED_REPORT_ONLY` is a context stage only. It is not a real reviewed CSV package, not a real package candidate, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, not buy_review_allowed, not strategy performance validation, and not trading.
+
+The dashboard preserves existing paper workflow priority. Tiny PIT real reviewed LOCAL_CSV package candidate preflight contract fixture artifacts remain synthetic report-only diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
+
 ## Artifact Outputs
 
 Default output folder:

@@ -2,6 +2,12 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Contract Fixture v1.72.0
+
+`REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SCHEMA_DESIGNED_REPORT_ONLY` means synthetic/report-only Tiny PIT real reviewed LOCAL_CSV package candidate preflight contract fixture artifacts exist for future preflight governance context only. The checkpoint is not a real reviewed CSV package, not a real package candidate, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-preflight-contract-fixture`, `tiny-pit-real-reviewed-local-csv-package-candidate-preflight-contract-fixture-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-preflight-contract-fixture-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-preflight-contract-fixture-status` to create, discover, safety-check, and summarize the synthetic preflight contract fixture. `research-status` exposes the latest fixture context while preserving later `PAPER_WORKFLOW_READY` priority.
+
 ## Tiny PIT Real Reviewed Package Candidate Contract Fixture v1.71.0
 
 `REAL_REVIEWED_PACKAGE_CANDIDATE_SCHEMA_DESIGNED_REPORT_ONLY` means synthetic/report-only Tiny PIT real reviewed package candidate contract fixture artifacts exist for future package-candidate governance context only. The checkpoint is not a real reviewed CSV package, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.

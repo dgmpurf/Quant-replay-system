@@ -84,6 +84,10 @@ from quant_replay_system.tiny_pit_reviewed_package_fixture import (
 from quant_replay_system.tiny_pit_real_reviewed_package_candidate_contract_fixture import (
     build_real_reviewed_package_candidate_contract_fixture_artifacts,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture import (
+    build_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts,
+    write_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts,
+)
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -15494,6 +15498,242 @@ def test_cli_research_status_prints_tiny_pit_real_reviewed_package_candidate_con
         "latest_tiny_pit_real_reviewed_package_candidate_contract_fixture_recommended_next_task: "
         "Tiny PIT Real Reviewed Package Candidate Contract Fixture Post-Checkpoint "
         "Governance Audit Report-Only v0.1"
+    ) in output.out
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+
+
+def test_research_status_includes_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = write_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts(
+        build_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts(
+            output_root=(
+                root
+                / "manual_diagnostics"
+                / "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_v0_1"
+            )
+        )
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert (
+        result.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_context_visible
+        is True
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_id
+        == fixture.fixture_id
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status == (
+        "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SCHEMA_DESIGNED_REPORT_ONLY"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_health_status
+        == "PASS"
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_workflow_stage == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_case_count == 56
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_pass_candidate_count
+        == 1
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_warn_count == 3
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_fail_count == 49
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_blocker_count
+        == 69
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_warning_count
+        == 3
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_report_only is True
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_diagnostic_only is True
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_synthetic_only is True
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_real_csv_required is False
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_real_csv_consumed is False
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_real_package_candidate_created
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_active_reviewed_input_candidate_created
+        is False
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_active_replay_input is False
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_active_replay_ready is False
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_active_replay_input_ready_emitted
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_replay_execution_allowed
+        is False
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_buy_review_allowed is False
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_trading_allowed is False
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_data_raw_written is False
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_data_processed_written
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_data_cache_written
+        is False
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_recommended_next_task == (
+        "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Contract Fixture "
+        "Post-Checkpoint Governance Audit Report-Only v0.1"
+    )
+    assert row["status"] == "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SCHEMA_DESIGNED_REPORT_ONLY"
+    assert row["workflow_area"] == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE"
+    assert row["blocking_error_count"] == 0
+    assert (
+        summary.loc[
+            0,
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_id",
+        ]
+        == fixture.fixture_id
+    )
+    assert (
+        summary.loc[
+            0,
+            "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_context_visible",
+        ]
+        == "True"
+    )
+    assert (
+        metadata[
+            "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_context_visible"
+        ]
+        is True
+    )
+    assert (
+        metadata[
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_report_only"
+        ]
+        is True
+    )
+    assert (
+        metadata[
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_real_csv_consumed"
+        ]
+        is False
+    )
+    assert (
+        metadata[
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_trading_allowed"
+        ]
+        is False
+    )
+
+
+def test_research_status_preserves_paper_priority_over_tiny_pit_real_reviewed_local_csv_package_candidate_preflight(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    write_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts(
+        build_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts(
+            output_root=(
+                root
+                / "manual_diagnostics"
+                / "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_v0_1"
+            )
+        )
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert (
+        result.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_context_visible
+        is True
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_real_csv_consumed is False
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_real_package_candidate_created is False
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_active_replay_input is False
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_replay_execution_allowed
+        is False
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_buy_review_allowed is False
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_trading_allowed is False
+
+
+def test_cli_research_status_prints_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = write_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts(
+        build_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts(
+            output_root=(
+                root
+                / "manual_diagnostics"
+                / "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_v0_1"
+            )
+        )
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_context_visible: True" in output.out
+    assert (
+        f"latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_id: {fixture.fixture_id}"
+        in output.out
+    )
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status: "
+        "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SCHEMA_DESIGNED_REPORT_ONLY"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_health_status: PASS"
+        in output.out
+    )
+    assert "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_case_count: 56" in output.out
+    assert "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_report_only: True" in output.out
+    assert "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_real_csv_consumed: False" in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_real_package_candidate_created: False"
+        in output.out
+    )
+    assert "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_active_replay_input: False" in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_buy_review_allowed: False"
+        in output.out
+    )
+    assert "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_trading_allowed: False" in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_recommended_next_task: "
+        "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Contract Fixture "
+        "Post-Checkpoint Governance Audit Report-Only v0.1"
     ) in output.out
     assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
     assert "ACTIVE_REPLAY_INPUT_READY" not in output.out

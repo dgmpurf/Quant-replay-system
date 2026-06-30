@@ -24,7 +24,7 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
 
 VIEWS_NEXT_ACTION = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Contract Fixture "
-    "Research-Status and Checkpoint Report-Only v0.1"
+    "Post-Checkpoint Governance Audit Report-Only v0.1"
 )
 
 PREFIX = "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture"

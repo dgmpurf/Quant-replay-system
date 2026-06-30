@@ -135,6 +135,12 @@ The v1.59 Algorithm Timing Guard remains active: signal_score formula is design 
 
 It does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, and does not authorize broker/order/message/API/trading or data/raw, data/processed, or data/cache writes.
 
+# Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Contract Fixture Checkpoint Note
+
+`REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SCHEMA_DESIGNED_REPORT_ONLY` means synthetic/report-only Tiny PIT real reviewed LOCAL_CSV package candidate preflight contract fixture artifacts exist for future preflight governance context only. This note preserves the Algorithm Timing Guard and clarifies that the fixture is not a real reviewed CSV package, not a real package candidate, not an active reviewed input candidate, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score input authorization, not model training input authorization, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
+
+It does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, and does not authorize broker/order/message/API/trading or data/raw, data/processed, or data/cache writes.
+
 # Tiny PIT Admissibility Validator Contract Fixture Checkpoint Note
 
 `TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_CREATED` means synthetic/report-only Tiny PIT admissibility validator contract fixture rows exist for schema governance only. This note preserves the Algorithm Timing Guard and clarifies that the fixture is not a real PIT validator, not real reviewed CSV packages, not active reviewed input candidates, not real replay inputs, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score input authorization, not model training input authorization, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.
