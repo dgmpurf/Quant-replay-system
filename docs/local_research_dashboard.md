@@ -1142,6 +1142,20 @@ The dashboard preserves existing paper workflow priority. Tiny PIT real reviewed
 
 The dashboard preserves existing paper workflow priority. Tiny PIT manifest-only preflight prototype artifacts remain report-only diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following Context
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following context when status artifacts exist under:
+
+```text
+outputs/reports/manual_diagnostics/tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1/status/
+```
+
+It exposes the latest run id, runtime status, health status, workflow stage, artifact path, report path, `csv_read_level`, inspection level, manifest-read flag, reference declaration flag, reference-following flag, metadata-files-followed count, forbidden-data-reference count, path-guard blocker count, manifest-schema blocker count, metadata-schema blocker count, available-time metadata blocker count, source-hash/revision metadata blocker count, reviewer/quality metadata blocker count, limitation warning count, local-file-hash flag, external-source-validation flag, PIT-admissibility-validation flag, recommended next task, and downstream safety flags.
+
+`references_followed=true` means metadata-only following of whitelisted local JSON metadata references under explicit allowed roots. It is not CSV/data reference following, not real CSV consumption, not local byte hashing, not package discovery, and not real package candidate creation. The context preserves `CSV_READ_NONE`.
+
+The dashboard preserves later `PAPER_WORKFLOW_READY` priority. Tiny PIT metadata-reference-following artifacts remain context only; they do not validate real PIT timing, source evidence, reviewer authority, source reliability, or reviewed CSV contents. They do not create active reviewed input, real replay input, active replay input, `ACTIVE_REPLAY_INPUT_READY`, replay execution, replay evidence bundles, replay decisions, decision freezes, forward labels, future-label joins, training datasets, metric computation, signal_score inputs, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, buy_review_allowed, strategy performance validation, current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading behavior, or data/raw, data/processed, or data/cache writes.
+
 ## Artifact Outputs
 
 Default output folder:
