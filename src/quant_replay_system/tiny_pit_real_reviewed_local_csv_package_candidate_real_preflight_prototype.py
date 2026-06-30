@@ -524,6 +524,7 @@ def _result_payload(
         "pass_candidate": context["pass_candidate"],
         "report_only": True,
         "diagnostic_only": True,
+        "synthetic_only": context["input_mode"] == INPUT_MODE_NO_INPUT_SYNTHETIC_DECLARATIONS,
         "csv_read_level": CSV_READ_LEVEL_NONE,
         "manifest_read": context["manifest_read"],
         "references_followed": False,
@@ -713,4 +714,3 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
-

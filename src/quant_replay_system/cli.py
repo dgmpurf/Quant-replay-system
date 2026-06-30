@@ -632,6 +632,18 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status import (
     run_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype import (
+    run_manifest_only_preflight_prototype,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_health import (
+    check_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_index import (
+    build_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status import (
+    run_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -5850,6 +5862,38 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status.set_defaults(
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-real-preflight-prototype",
+        help="Write report-only manifest-only Tiny PIT real reviewed LOCAL_CSV preflight prototype no-input artifacts",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-real-preflight-prototype-index",
+        help="Build an index for report-only manifest-only Tiny PIT real reviewed LOCAL_CSV preflight prototype artifacts",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_index
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-real-preflight-prototype-health",
+        help="Check report-only manifest-only Tiny PIT real reviewed LOCAL_CSV preflight prototype artifact health",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_health
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-real-preflight-prototype-status",
+        help="Summarize latest report-only manifest-only Tiny PIT real reviewed LOCAL_CSV preflight prototype status",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status
     )
 
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
@@ -11186,6 +11230,123 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contrac
         if result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status == "FAIL"
         else 0
     )
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype(
+    args: argparse.Namespace,
+) -> int:
+    result = run_manifest_only_preflight_prototype()
+    print(f"run_id: {result['run_id']}")
+    print(f"runtime_status: {result['runtime_status']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"input_mode: {result['input_mode']}")
+    print(f"csv_read_level: {result['csv_read_level']}")
+    print(f"report_only: {result['report_only']}")
+    print(f"diagnostic_only: {result['diagnostic_only']}")
+    print(f"synthetic_only: {result['synthetic_only']}")
+    print(f"manifest_read: {result['manifest_read']}")
+    print(f"references_followed: {result['references_followed']}")
+    print(f"local_file_hash_computed: {result['local_file_hash_computed']}")
+    print(f"external_source_validated: {result['external_source_validated']}")
+    print(f"pit_admissibility_validated: {result['pit_admissibility_validated']}")
+    print(f"real_csv_consumed: {result['real_csv_consumed']}")
+    print(f"real_reviewed_csv_package_created: {result['real_reviewed_csv_package_created']}")
+    print(f"real_package_candidate_created: {result['real_package_candidate_created']}")
+    print(f"active_reviewed_input_candidate_created: {result['active_reviewed_input_candidate_created']}")
+    print(f"real_replay_input_created: {result['real_replay_input_created']}")
+    print(f"active_replay_input: {result['active_replay_input']}")
+    print(f"active_replay_ready: {result['active_replay_ready']}")
+    print(f"active_replay_input_ready_emitted: {result['active_replay_input_ready_emitted']}")
+    print(f"replay_execution_allowed: {result['replay_execution_allowed']}")
+    print(f"buy_review_allowed: {result['buy_review_allowed']}")
+    print(f"trading_allowed: {result['trading_allowed']}")
+    print(f"data_raw_written: {result['data_raw_written']}")
+    print(f"data_processed_written: {result['data_processed_written']}")
+    print(f"data_cache_written: {result['data_cache_written']}")
+    print(f"artifact_path: {result['artifact_path']}")
+    print(f"report_path: {result['report_path']}")
+    print("Report-only manifest preflight prototype: no real CSV, package candidate, active input, replay, labels, training, model, stock_profile, paper, buy-review, performance validation, trading, or protected data writes were created.")
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_index()
+    print(
+        "Tiny PIT real reviewed LOCAL_CSV manifest-only preflight prototype index artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print("Report-only index: no real CSV, package candidate, active input, replay, buy-review, performance validation, trading, or data writes were created.")
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_health()
+    print(
+        "Tiny PIT real reviewed LOCAL_CSV manifest-only preflight prototype health artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print("Report-only health: no real CSV, package candidate, active input, replay, buy-review, performance validation, trading, or data writes were created.")
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status()
+    print(
+        "Tiny PIT real reviewed LOCAL_CSV manifest-only preflight prototype status artifact folder: "
+        f"{result.artifact_paths['artifact_dir']}"
+    )
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"csv_read_level: {result.csv_read_level}")
+    print(f"report_only: {result.report_only}")
+    print(f"diagnostic_only: {result.diagnostic_only}")
+    print(f"synthetic_only: {result.synthetic_only}")
+    print(f"real_manifest_read: {result.real_manifest_read}")
+    print(f"references_followed: {result.references_followed}")
+    print(f"local_file_hash_computed: {result.local_file_hash_computed}")
+    print(f"external_source_validated: {result.external_source_validated}")
+    print(f"pit_admissibility_validated: {result.pit_admissibility_validated}")
+    print(f"real_csv_consumed: {result.real_csv_consumed}")
+    print(f"real_reviewed_csv_package_created: {result.real_reviewed_csv_package_created}")
+    print(f"real_package_candidate_created: {result.real_package_candidate_created}")
+    print(f"active_reviewed_input_candidate_created: {result.active_reviewed_input_candidate_created}")
+    print(f"real_replay_input_created: {result.real_replay_input_created}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_replay_ready: {result.active_replay_ready}")
+    print(f"active_replay_input_ready_emitted: {result.active_replay_input_ready_emitted}")
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"artifact_path: {result.latest_artifact_path}")
+    print(f"report_path: {result.latest_report_path}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    print("Report-only status: no real CSV, package candidate, active input, replay, buy-review, performance validation, trading, or data writes were created.")
+    return 1 if result.latest_runtime_status == "FAIL" else 0
 
 
 def _handle_reviewed_local_csv_replay_prototype_input_contract_fixture_index(args: argparse.Namespace) -> int:
