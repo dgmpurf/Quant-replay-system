@@ -20516,6 +20516,40 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_recommended_next_task",
     ):
         print(f"{field_name}: {getattr(result, field_name)}")
+    for field_name in (
+        "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_id",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_health_status",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_workflow_stage",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_artifact_path",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_report_path",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_csv_read_level",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_manifest_read",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_references_followed",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_local_file_hash_computed",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_external_source_validated",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_pit_admissibility_validated",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_report_only",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_diagnostic_only",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_synthetic_only",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_csv_consumed",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_reviewed_csv_package_created",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_package_candidate_created",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_reviewed_input_candidate_created",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_replay_input_created",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_input",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_ready",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_input_ready_emitted",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_replay_execution_allowed",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_buy_review_allowed",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_trading_allowed",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_raw_written",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_processed_written",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_cache_written",
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_recommended_next_task",
+    ):
+        print(f"{field_name}: {getattr(result, field_name)}")
     print(
         "source_registry_schema_fixture_workflow_implemented: "
         f"{result.source_registry_schema_fixture_workflow_implemented}"

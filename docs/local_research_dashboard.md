@@ -1134,6 +1134,14 @@ The dashboard preserves existing paper workflow priority. Tiny PIT real reviewed
 
 The dashboard preserves existing paper workflow priority. Tiny PIT real reviewed LOCAL_CSV package candidate preflight contract fixture artifacts remain synthetic report-only diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Manifest-Only Preflight Prototype Context
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Manifest-Only Preflight Prototype context when `tiny-pit-real-reviewed-local-csv-package-candidate-real-preflight-prototype-status` artifacts exist. It exposes the latest prototype id, status/stage, health, artifact path, report path, CSV read level, manifest-read flag, reference-following flag, local-file-hash flag, external-source-validation flag, PIT-admissibility-validation flag, report-only flags, diagnostic-only flags, synthetic-only flags, recommended next task, and downstream safety fields.
+
+`REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_PROTOTYPE_NO_INPUT` and related safe statuses are context stages only. They are manifest-only and metadata-only. They are not real CSV handling, not real package manifest consumption, not reference following, not local byte hashing, not real package candidate creation, not real PIT admissibility, not active reviewed input, not real replay input, not active replay input, not `ACTIVE_REPLAY_INPUT_READY`, not replay execution, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score inputs, not model training, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, not buy_review_allowed, not strategy performance validation, and not trading.
+
+The dashboard preserves existing paper workflow priority. Tiny PIT manifest-only preflight prototype artifacts remain report-only diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
+
 ## Artifact Outputs
 
 Default output folder:

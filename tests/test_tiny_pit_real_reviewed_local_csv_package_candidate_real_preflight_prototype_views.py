@@ -200,7 +200,8 @@ def test_status_selects_latest_deterministically_and_preserves_safe_flags(tmp_pa
     assert result.recommended_next_task == VIEWS_NEXT_ACTION
     for flag in REQUIRED_FALSE_FLAGS:
         assert getattr(result, flag) is False
-    assert "Research-Status and Checkpoint Report-Only" in result.recommended_next_task
+    assert "Post-Checkpoint Governance Audit Report-Only" in result.recommended_next_task
+    assert "Research-Status and Checkpoint Report-Only" not in result.recommended_next_task
     assert "ACTIVE_REPLAY_INPUT_READY" not in result.latest_runtime_status
     assert "TRADING_READY" not in result.latest_runtime_status
     assert "PERFORMANCE_VALIDATED" not in result.latest_runtime_status
@@ -292,7 +293,8 @@ def test_cli_core_index_health_status_smoke_has_no_real_path_arguments(tmp_path:
         env=env,
     )
     assert f"latest_runtime_status: {STATUS_NO_INPUT}" in status.stdout
-    assert "recommended_next_task: Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Manifest-Only Preflight Prototype Research-Status and Checkpoint Report-Only v0.1" in status.stdout
+    assert "recommended_next_task: Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Manifest-Only Preflight Prototype Post-Checkpoint Governance Audit Report-Only v0.1" in status.stdout
+    assert "Research-Status and Checkpoint Report-Only v0.1" not in status.stdout
     assert "active_replay_input_ready_emitted: False" in status.stdout
     assert "trading_allowed: False" in status.stdout
     assert not (tmp_path / "data" / "raw").exists()
@@ -327,4 +329,3 @@ def test_views_write_only_expected_view_artifacts_under_root(tmp_path: Path) -> 
     assert not (tmp_path / "data" / "cache").exists()
     assert not (tmp_path / "docs" / "project_sources").exists()
     assert not Path("docs/project_sources").exists()
-

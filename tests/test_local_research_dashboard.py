@@ -88,6 +88,9 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
     build_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts,
     write_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_artifacts,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype import (
+    run_manifest_only_preflight_prototype,
+)
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -15733,6 +15736,320 @@ def test_cli_research_status_prints_tiny_pit_real_reviewed_local_csv_package_can
     assert (
         "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_recommended_next_task: "
         "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Contract Fixture "
+        "Post-Checkpoint Governance Audit Report-Only v0.1"
+    ) in output.out
+    assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+
+
+def test_research_status_includes_tiny_pit_real_reviewed_local_csv_manifest_only_preflight_prototype_fields(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    run = run_manifest_only_preflight_prototype(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_v0_1"
+        )
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert (
+        result.tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible
+        is True
+    )
+    assert result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_id == (
+        run["run_id"]
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status
+        == "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_PROTOTYPE_NO_INPUT"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_health_status
+        == "PASS"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_workflow_stage
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_CORE_CREATED_REPORT_ONLY"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_csv_read_level
+        == "CSV_READ_NONE"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_manifest_read
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_references_followed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_local_file_hash_computed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_external_source_validated
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_pit_admissibility_validated
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_report_only
+        is True
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_diagnostic_only
+        is True
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_synthetic_only
+        is True
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_csv_consumed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_package_candidate_created
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_reviewed_input_candidate_created
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_input
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_ready
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_input_ready_emitted
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_replay_execution_allowed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_buy_review_allowed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_trading_allowed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_raw_written
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_processed_written
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_cache_written
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_recommended_next_task
+        == "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Manifest-Only Preflight Prototype "
+        "Post-Checkpoint Governance Audit Report-Only v0.1"
+    )
+    assert row["status"] == "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_PROTOTYPE_NO_INPUT"
+    assert row["workflow_area"] == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE"
+    )
+    assert row["blocking_error_count"] == 0
+    assert (
+        summary.loc[
+            0,
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_id",
+        ]
+        == run["run_id"]
+    )
+    assert (
+        summary.loc[
+            0,
+            "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible",
+        ]
+        == "True"
+    )
+    assert (
+        metadata[
+            "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible"
+        ]
+        is True
+    )
+    assert (
+        metadata[
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_csv_read_level"
+        ]
+        == "CSV_READ_NONE"
+    )
+    assert (
+        metadata[
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_csv_consumed"
+        ]
+        is False
+    )
+    assert (
+        metadata[
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_trading_allowed"
+        ]
+        is False
+    )
+
+
+def test_research_status_preserves_paper_priority_over_tiny_pit_real_reviewed_local_csv_manifest_only_preflight(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    run_manifest_only_preflight_prototype(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_v0_1"
+        )
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert (
+        result.tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible
+        is True
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_csv_consumed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_package_candidate_created
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_input
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_replay_execution_allowed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_buy_review_allowed
+        is False
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_trading_allowed
+        is False
+    )
+
+
+def test_cli_research_status_prints_tiny_pit_real_reviewed_local_csv_manifest_only_preflight_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    run = run_manifest_only_preflight_prototype(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_v0_1"
+        )
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert (
+        "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible: True"
+        in output.out
+    )
+    assert (
+        f"latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_id: {run['run_id']}"
+        in output.out
+    )
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status: "
+        "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_PROTOTYPE_NO_INPUT"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_health_status: PASS"
+        in output.out
+    )
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_csv_read_level: "
+        "CSV_READ_NONE"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_manifest_read: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_references_followed: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_local_file_hash_computed: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_pit_admissibility_validated: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_csv_consumed: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_package_candidate_created: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_input: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_buy_review_allowed: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_trading_allowed: "
+        "False"
+    ) in output.out
+    assert (
+        "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_recommended_next_task: "
+        "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Manifest-Only Preflight Prototype "
         "Post-Checkpoint Governance Audit Report-Only v0.1"
     ) in output.out
     assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out

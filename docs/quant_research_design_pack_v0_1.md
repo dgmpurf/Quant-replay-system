@@ -141,6 +141,14 @@ It does not authorize current-candidates, does not authorize snapshots, does not
 
 It does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, and does not authorize broker/order/message/API/trading or data/raw, data/processed, or data/cache writes.
 
+# Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Manifest-Only Preflight Prototype Checkpoint Note
+
+`REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_PROTOTYPE_NO_INPUT` and related safe statuses are manifest-only/metadata-only report-only prototype context only. They are not real CSV handling, not real package candidate, not PIT admissibility, not active input, not replay, not labels/training/model/stock_profile/paper/buy-review/trading.
+
+This note preserves the Algorithm Timing Guard and clarifies that the prototype does not read real CSV files, read CSV headers, count CSV rows, compute local file hashes from file bytes, follow referenced manifests, discover package directories, accept package roots, accept reviewed CSV paths, validate real available_time evidence, score source reliability, validate real reviewer authority, create real package candidates, create active reviewed input candidates, create real replay input, create active replay input, emit `ACTIVE_REPLAY_INPUT_READY`, run replay, create replay evidence bundles, create replay decisions, create replay decision freezes, create forward labels, join future labels to decision-time inputs, create training datasets, compute metrics, implement signal_score, train models, create active weights, create active thresholds, validate stock_profile, validate paper workflow, create real buy-review eligibility, set buy_review_allowed, or validate strategy performance.
+
+It does not authorize current-candidates, does not authorize snapshots, does not authorize signal_semantics mutation, and does not authorize broker/order/message/API/trading or data/raw, data/processed, or data/cache writes.
+
 # Tiny PIT Admissibility Validator Contract Fixture Checkpoint Note
 
 `TINY_PIT_ADMISSIBILITY_VALIDATOR_CONTRACT_FIXTURE_CREATED` means synthetic/report-only Tiny PIT admissibility validator contract fixture rows exist for schema governance only. This note preserves the Algorithm Timing Guard and clarifies that the fixture is not a real PIT validator, not real reviewed CSV packages, not active reviewed input candidates, not real replay inputs, not replay evidence bundles, not replay decisions, not replay decision freezes, not forward labels, not future-label joins, not training datasets, not metric computation, not signal_score input authorization, not model training input authorization, not active weights, not active thresholds, not stock_profile validation, not paper validation, not real buy-review eligibility, does not set buy_review_allowed, and is not strategy performance validation.

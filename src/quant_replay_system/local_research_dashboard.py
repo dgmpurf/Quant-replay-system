@@ -134,6 +134,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status import (
     run_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype import (
+    REQUIRED_FALSE_FLAGS as TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status import (
+    run_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1148,6 +1154,29 @@ SUMMARY_COLUMNS = [
         )
     ],
     "latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_recommended_next_task",
+    "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_id",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_health_status",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_workflow_stage",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_artifact_path",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_report_path",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_csv_read_level",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_manifest_read",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_references_followed",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_local_file_hash_computed",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_external_source_validated",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_pit_admissibility_validated",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_report_only",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_diagnostic_only",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_synthetic_only",
+    *[
+        f"latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_{flag}"
+        for flag in (
+            TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_SAFETY_FALSE_FLAGS
+        )
+    ],
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_recommended_next_task",
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2813,6 +2842,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REVIEWED_PACKAGE_FIXTURE_STATUS",
                     "TINY_PIT_REAL_REVIEWED_PACKAGE_CANDIDATE_CONTRACT_FIXTURE_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -2863,6 +2893,9 @@ WORKFLOW_AREAS = {
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE"
     ),
     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS": "SOURCE_REGISTRY_SCHEMA_FIXTURE",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS": "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE",
@@ -3896,6 +3929,61 @@ class LocalResearchDashboardResult:
     latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_data_processed_written: bool
     latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_data_cache_written: bool
     latest_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_recommended_next_task: str
+    tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_id: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_health_status: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_workflow_stage: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_artifact_path: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_report_path: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_csv_read_level: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_manifest_read: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_references_followed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_local_file_hash_computed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_external_source_validated: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_pit_admissibility_validated: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_report_only: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_diagnostic_only: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_synthetic_only: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_csv_consumed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_reviewed_csv_package_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_package_candidate_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_reviewed_input_candidate_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_replay_input_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_input: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_ready: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_replay_input_ready_emitted: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_replay_execution_allowed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_replay_evidence_bundle_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_replay_decision_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_replay_decision_freeze_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_forward_labels_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_future_labels_joined: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_training_dataset_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_metric_computation_performed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_signal_score_implemented: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_signal_score_input_authorized: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_model_training_performed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_weights_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_active_thresholds_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_stock_profile_validation_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_paper_validation_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_real_buy_review_eligible: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_buy_review_allowed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_strategy_performance_validated: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_current_candidates_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_snapshots_created: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_signal_semantics_mutated: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_broker_api_called: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_order_placed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_message_sent: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_external_api_called: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_llm_api_called: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_trading_allowed: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_raw_written: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_processed_written: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_data_cache_written: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_recommended_next_task: str
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -5487,6 +5575,7 @@ def run_local_research_dashboard(
     tiny_pit_reviewed_package_fixture_root: str | Path | None = None,
     tiny_pit_real_reviewed_package_candidate_contract_fixture_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root: str | Path | None = None,
+    tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -5750,6 +5839,13 @@ def run_local_research_dashboard(
         else effective_root
         / "manual_diagnostics"
         / "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_v0_1"
+    )
+    effective_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root = (
+        Path(tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root)
+        if tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root is not None
+        else effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -6230,6 +6326,9 @@ def run_local_research_dashboard(
         tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root=(
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root
         ),
+        tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root=(
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -6362,6 +6461,9 @@ def run_local_research_dashboard(
         ),
         "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root": (
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root
+        ),
+        "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root": (
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root
         ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
@@ -8469,6 +8571,9 @@ def run_local_research_dashboard(
         **_tiny_pit_reviewed_package_fixture_result_kwargs(summary),
         **_tiny_pit_real_reviewed_package_candidate_contract_fixture_result_kwargs(summary),
         **_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_result_kwargs(summary),
+        **_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_result_kwargs(
+            summary
+        ),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -12237,6 +12342,7 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_reviewed_package_fixture_root: str | Path,
     tiny_pit_real_reviewed_package_candidate_contract_fixture_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root: str | Path,
+    tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -12334,6 +12440,9 @@ def scan_local_research_workflow_artifacts(
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_path = Path(
+        tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -12468,6 +12577,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -19929,6 +20043,9 @@ def summarize_local_research_status(
         **_tiny_pit_reviewed_package_fixture_summary_fields(by_component),
         **_tiny_pit_real_reviewed_package_candidate_contract_fixture_summary_fields(by_component),
         **_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_summary_fields(by_component),
+        **_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_summary_fields(
+            by_component
+        ),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -28101,6 +28218,9 @@ def build_local_research_dashboard_metadata(
         **_tiny_pit_reviewed_package_fixture_metadata(result),
         **_tiny_pit_real_reviewed_package_candidate_contract_fixture_metadata(result),
         **_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_metadata(result),
+        **_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_metadata(
+            result
+        ),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -34221,6 +34341,203 @@ def _tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixtu
     return {
         field: getattr(result, field)
         for field in _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE_RESULT_FIELDS
+    }
+
+
+_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_STATUS"
+)
+_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_PREFIX = (
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_"
+)
+_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_TEXT_FIELDS = [
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_id",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_health_status",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_workflow_stage",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_artifact_path",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_report_path",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_csv_read_level",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_recommended_next_task",
+]
+_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_BOOL_FIELDS = [
+    "real_manifest_read",
+    "references_followed",
+    "local_file_hash_computed",
+    "external_source_validated",
+    "pit_admissibility_validated",
+    "report_only",
+    "diagnostic_only",
+    "synthetic_only",
+]
+_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_RESULT_FIELDS = (
+    ["tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible"]
+    + _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_TEXT_FIELDS
+    + [
+        f"{_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_PREFIX}{field}"
+        for field in _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_BOOL_FIELDS
+    ]
+    + [
+        f"{_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_PREFIX}{flag}"
+        for flag in (
+            TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_SAFETY_FALSE_FLAGS
+        )
+    ]
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    prefix = _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_PREFIX
+    summary[f"{prefix}health_status"] = result.latest_health_status
+    summary[f"{prefix}workflow_stage"] = result.latest_workflow_stage
+    summary[f"{prefix}artifact_path"] = result.latest_artifact_path
+    summary[f"{prefix}report_path"] = result.latest_report_path
+    summary["context_visible"] = True
+    summary["next_action"] = result.recommended_next_task
+    return [
+        _record(
+            workflow_area="TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE",
+            component=_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.artifact_paths.get("metadata", ""),
+            warning_count=1 if result.latest_runtime_status == "WARN" else 0,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_notes(summary),
+        )
+    ]
+
+
+def _tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_notes(
+    summary: dict[str, Any]
+) -> str:
+    safety_notes = " ".join(
+        f"{flag}={_string_or_empty(summary.get(flag))};"
+        for flag in (
+            TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_SAFETY_FALSE_FLAGS
+        )
+    )
+    prefix = _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_PREFIX
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get(prefix + 'health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get(prefix + 'workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get(prefix + 'artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get(prefix + 'report_path'))}; "
+        f"csv_read_level={_string_or_empty(summary.get('csv_read_level'))}; "
+        f"real_manifest_read={_string_or_empty(summary.get('real_manifest_read'))}; "
+        f"references_followed={_string_or_empty(summary.get('references_followed'))}; "
+        f"local_file_hash_computed={_string_or_empty(summary.get('local_file_hash_computed'))}; "
+        f"external_source_validated={_string_or_empty(summary.get('external_source_validated'))}; "
+        f"pit_admissibility_validated={_string_or_empty(summary.get('pit_admissibility_validated'))}; "
+        f"report_only={_string_or_empty(summary.get('report_only'))}; "
+        f"diagnostic_only={_string_or_empty(summary.get('diagnostic_only'))}; "
+        f"synthetic_only={_string_or_empty(summary.get('synthetic_only'))}; "
+        f"{safety_notes}"
+    )
+
+
+def _tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_summary_fields(
+    by_component: dict[str, dict[str, Any]]
+) -> dict[str, Any]:
+    component = by_component.get(
+        _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_COMPONENT,
+        {},
+    )
+    notes = component.get("notes")
+    prefix = _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_PREFIX
+    fields: dict[str, Any] = {
+        "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible": (
+            _parse_note_value(notes, "context_visible")
+        ),
+        f"{prefix}id": _string_or_empty(component.get("latest_artifact_id")),
+        f"{prefix}status": _component_status(
+            by_component,
+            _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_COMPONENT,
+        ),
+        f"{prefix}health_status": _parse_note_value(notes, "health_status"),
+        f"{prefix}workflow_stage": _string_or_empty(component.get("stage")),
+        f"{prefix}artifact_path": _parse_note_value(notes, "artifact_path"),
+        f"{prefix}report_path": _parse_note_value(notes, "report_path"),
+        f"{prefix}csv_read_level": _parse_note_value(notes, "csv_read_level"),
+        f"{prefix}recommended_next_task": _parse_note_value(notes, "next_manual_action"),
+    }
+    fields.update(
+        {
+            f"{prefix}{field}": _parse_note_value(notes, field)
+            for field in (
+                _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_BOOL_FIELDS
+            )
+        }
+    )
+    fields.update(
+        {
+            f"{prefix}{flag}": _parse_note_value(notes, flag)
+            for flag in (
+                TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_SAFETY_FALSE_FLAGS
+            )
+        }
+    )
+    return fields
+
+
+def _tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_result_kwargs(
+    summary: dict[str, Any],
+) -> dict[str, Any]:
+    prefix = _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_PREFIX
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, ""))
+        for field in _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_TEXT_FIELDS
+    }
+    kwargs["tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible"] = (
+        _bool_from_text(
+            summary.get(
+                "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible"
+            )
+        )
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in (
+                _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_RESULT_FIELDS
+            )
+            if field not in kwargs
+            and field
+            != "tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_context_visible"
+        }
+    )
+    if not kwargs[f"{prefix}csv_read_level"]:
+        kwargs[f"{prefix}csv_read_level"] = "CSV_READ_NONE"
+    return kwargs
+
+
+def _tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_metadata(
+    result: LocalResearchDashboardResult,
+) -> dict[str, Any]:
+    return {
+        field: getattr(result, field)
+        for field in _TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_RESULT_FIELDS
     }
 
 

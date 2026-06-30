@@ -23,7 +23,7 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_real
 
 VIEWS_NEXT_ACTION = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Manifest-Only Preflight Prototype "
-    "Research-Status and Checkpoint Report-Only v0.1"
+    "Post-Checkpoint Governance Audit Report-Only v0.1"
 )
 NO_ARTIFACT_STAGE = "NO_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE"
 PREFIX = "latest_tiny_pit_real_reviewed_local_csv_package_candidate_real_preflight_prototype"
@@ -210,4 +210,3 @@ def _to_bool(value: Any) -> bool:
     if isinstance(value, str):
         return value.strip().lower() in {"true", "1", "yes", "y"}
     return bool(value)
-
