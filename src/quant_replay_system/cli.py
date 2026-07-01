@@ -656,6 +656,22 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_meta
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status import (
     run_metadata_reference_following_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch import (
+    CSV_READ_HEADER_ONLY,
+    FILE_TOUCH_HEADER_ONLY,
+    LOCAL_FILE_HASH_NONE,
+    run_csv_structural_file_touch,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_health import (
+    check_csv_structural_file_touch_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_index import (
+    DEFAULT_ROOT as CSV_STRUCTURAL_FILE_TOUCH_DEFAULT_ROOT,
+    build_csv_structural_file_touch_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_status import (
+    run_csv_structural_file_touch_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -5994,6 +6010,86 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status.set_defaults(
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only",
+        help=(
+            "Write report-only Tiny PIT LOCAL_CSV package-candidate structural artifacts "
+            "using optional manifest-authorized header-only access"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only.add_argument(
+        "--output-root",
+        default=CSV_STRUCTURAL_FILE_TOUCH_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only.add_argument(
+        "--run-id",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only.add_argument(
+        "--package-manifest-path",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only.add_argument(
+        "--allowed-manifest-root",
+        action="append",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only.add_argument(
+        "--allow-csv-header-only",
+        action="store_true",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-index",
+        help="Build an index for report-only Tiny PIT LOCAL_CSV structural header-only artifacts",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_index.add_argument(
+        "--root",
+        default=CSV_STRUCTURAL_FILE_TOUCH_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_index.add_argument(
+        "--output-dir",
+        default=f"{CSV_STRUCTURAL_FILE_TOUCH_DEFAULT_ROOT}/index",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_index
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-health",
+        help="Check report-only Tiny PIT LOCAL_CSV structural header-only artifact health",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health.add_argument(
+        "--root",
+        default=CSV_STRUCTURAL_FILE_TOUCH_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health.add_argument(
+        "--output-dir",
+        default=f"{CSV_STRUCTURAL_FILE_TOUCH_DEFAULT_ROOT}/health",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-status",
+        help="Summarize latest report-only Tiny PIT LOCAL_CSV structural header-only status",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status.add_argument(
+        "--root",
+        default=CSV_STRUCTURAL_FILE_TOUCH_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status.add_argument(
+        "--output-dir",
+        default=f"{CSV_STRUCTURAL_FILE_TOUCH_DEFAULT_ROOT}/status",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status
     )
 
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
@@ -11590,6 +11686,146 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_referenc
     print(
         "Report-only status: no real CSV, package candidate, active input, replay, buy-review, "
         "performance validation, trading, or data writes were created."
+    )
+    return 1 if result.latest_runtime_status == "FAIL" else 0
+
+
+CSV_STRUCTURAL_HEADER_ONLY_CLI_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
+    "Research-Status Planning Report-Only v0.1"
+)
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only(
+    args: argparse.Namespace,
+) -> int:
+    if args.package_manifest_path:
+        result = run_csv_structural_file_touch(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            package_manifest_path=args.package_manifest_path,
+            allowed_manifest_roots=args.allowed_manifest_root,
+            file_touch_level=FILE_TOUCH_HEADER_ONLY,
+            csv_read_level=CSV_READ_HEADER_ONLY,
+            local_file_hash_level=LOCAL_FILE_HASH_NONE,
+            allow_csv_header_only=args.allow_csv_header_only,
+        )
+    else:
+        result = run_csv_structural_file_touch(
+            output_root=args.output_root,
+            run_id=args.run_id,
+        )
+    print(f"run_id: {result['run_id']}")
+    print(f"runtime_status: {result['runtime_status']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"report_only: {result['report_only']}")
+    print(f"diagnostic_only: {result['diagnostic_only']}")
+    print(f"file_touch_level: {result['file_touch_level']}")
+    print(f"csv_read_level: {result['csv_read_level']}")
+    print(f"local_file_hash_level: {result['local_file_hash_level']}")
+    print(f"csv_file_opened_structurally: {result['csv_file_opened_structurally']}")
+    print(f"csv_header_read: {result['csv_header_read']}")
+    print(f"csv_header_column_count: {result['csv_header_column_count']}")
+    print(f"csv_row_count_computed: {result['csv_row_count_computed']}")
+    print(f"local_file_byte_hash_computed: {result['local_file_byte_hash_computed']}")
+    print(f"real_csv_consumed: {result['real_csv_consumed']}")
+    print(f"real_package_candidate_created: {result['real_package_candidate_created']}")
+    print(f"active_reviewed_input_candidate_created: {result['active_reviewed_input_candidate_created']}")
+    print(f"real_replay_input_created: {result['real_replay_input_created']}")
+    print(f"active_replay_input: {result['active_replay_input']}")
+    print(f"active_replay_ready: {result['active_replay_ready']}")
+    print(f"active_replay_input_ready_emitted: {result['active_replay_input_ready_emitted']}")
+    print(f"replay_execution_allowed: {result['replay_execution_allowed']}")
+    print(f"trading_allowed: {result['trading_allowed']}")
+    print(f"buy_review_allowed: {result['buy_review_allowed']}")
+    print(f"data_raw_written: {result['data_raw_written']}")
+    print(f"data_processed_written: {result['data_processed_written']}")
+    print(f"data_cache_written: {result['data_cache_written']}")
+    print(f"artifact_path: {result['artifact_paths']['metadata'].parent}")
+    print(f"report_path: {result['artifact_paths']['report']}")
+    print(f"recommended_next_task: {CSV_STRUCTURAL_HEADER_ONLY_CLI_NEXT_TASK}")
+    print(
+        "Report-only structural header check: no real package candidate, active input, replay, "
+        "buy-review, performance validation, trading, or protected data writes were created."
+    )
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_csv_structural_file_touch_index(root=args.root, output_dir=args.output_dir)
+    latest = result.index_frame.sort_values(["run_id"]).iloc[-1].to_dict() if not result.index_frame.empty else {}
+    print(f"Tiny PIT CSV structural header-only index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"latest_runtime_status: {latest.get('runtime_status', '')}")
+    print(f"latest_health_status: {latest.get('health_status', '')}")
+    print(f"latest_workflow_stage: {latest.get('workflow_stage', '')}")
+    print(
+        "Report-only index: no real package candidate, active input, replay, buy-review, "
+        "performance validation, trading, or protected data writes were created."
+    )
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_csv_structural_file_touch_health(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT CSV structural header-only health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Report-only health: no real package candidate, active input, replay, buy-review, "
+        "performance validation, trading, or protected data writes were created."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_csv_structural_file_touch_status(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT CSV structural header-only status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"file_touch_level: {result.file_touch_level}")
+    print(f"csv_read_level: {result.csv_read_level}")
+    print(f"local_file_hash_level: {result.local_file_hash_level}")
+    print(f"csv_file_opened_structurally: {result.csv_file_opened_structurally}")
+    print(f"csv_header_read: {result.csv_header_read}")
+    print(f"csv_header_column_count: {result.csv_header_column_count}")
+    print(f"csv_row_count_computed: {result.csv_row_count_computed}")
+    print(f"local_file_byte_hash_computed: {result.local_file_byte_hash_computed}")
+    print(f"real_csv_consumed: {result.real_csv_consumed}")
+    print(f"real_package_candidate_created: {result.real_package_candidate_created}")
+    print(f"active_reviewed_input_candidate_created: {result.active_reviewed_input_candidate_created}")
+    print(f"real_replay_input_created: {result.real_replay_input_created}")
+    print(f"active_replay_input: {result.active_replay_input}")
+    print(f"active_replay_ready: {result.active_replay_ready}")
+    print(f"active_replay_input_ready_emitted: {result.active_replay_input_ready_emitted}")
+    print(f"replay_execution_allowed: {result.replay_execution_allowed}")
+    print(f"trading_allowed: {result.trading_allowed}")
+    print(f"buy_review_allowed: {result.buy_review_allowed}")
+    print(f"data_raw_written: {result.data_raw_written}")
+    print(f"data_processed_written: {result.data_processed_written}")
+    print(f"data_cache_written: {result.data_cache_written}")
+    print(f"artifact_path: {result.latest_artifact_path}")
+    print(f"report_path: {result.latest_report_path}")
+    print(f"recommended_next_task: {CSV_STRUCTURAL_HEADER_ONLY_CLI_NEXT_TASK}")
+    print(
+        "Report-only status: no real package candidate, active input, replay, buy-review, "
+        "performance validation, trading, or protected data writes were created."
     )
     return 1 if result.latest_runtime_status == "FAIL" else 0
 
