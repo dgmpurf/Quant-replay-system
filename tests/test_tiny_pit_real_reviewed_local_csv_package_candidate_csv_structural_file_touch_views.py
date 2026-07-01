@@ -200,7 +200,11 @@ def test_status_summarizes_latest_context_and_safe_next_task(tmp_path: Path) -> 
     assert result.csv_header_read is True
     assert result.csv_header_column_count == 3
     assert result.csv_row_count_computed is False
+    assert result.csv_row_count == ""
+    assert result.csv_values_read is False
+    assert result.csv_full_content_read is False
     assert result.local_file_byte_hash_computed is False
+    assert result.local_file_byte_hash_algorithm == ""
     assert result.real_csv_consumed is False
     assert result.active_replay_input is False
     assert result.buy_review_allowed is False

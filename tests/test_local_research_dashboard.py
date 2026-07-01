@@ -96,6 +96,10 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_meta
     REQUIRED_FALSE_FLAGS as METADATA_REFERENCE_FOLLOWING_REQUIRED_FALSE_FLAGS,
     run_metadata_reference_following,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch import (
+    REQUIRED_FALSE_FLAGS as CSV_STRUCTURAL_HEADER_ONLY_REQUIRED_FALSE_FLAGS,
+    run_csv_structural_file_touch,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -107,6 +111,10 @@ STALE_METADATA_REFERENCE_FOLLOWING_NEXT_ACTION_PHRASES = [
     "Artifact Views / Index / Health / Status",
     "checkpoint planning",
 ]
+EXPECTED_CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
+    "Research-Status and Checkpoint Planning Report-Only v0.1"
+)
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
@@ -9834,6 +9842,52 @@ def _metadata_reference_following_manifest(root: Path) -> Path:
     return manifest_path
 
 
+def _csv_structural_header_only_manifest(root: Path) -> Path:
+    csv_path = root / "reviewed" / "tiny_header_only.csv"
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    csv_path.write_text(
+        "symbol,signal_date,review_note\n"
+        "000001,2024-04-02,SENTINEL_DASHBOARD_ROW_VALUE_DO_NOT_READ\n",
+        encoding="utf-8",
+        newline="",
+    )
+    manifest_path = root / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "package_id": "tiny-pit-csv-structural-header-only-dashboard",
+                "package_schema_version": "v0.1",
+                "created_at": "2026-07-01T00:00:00Z",
+                "prepared_by": "synthetic-reviewer",
+                "report_only": True,
+                "diagnostic_only": True,
+                "requested_file_touch_level": "CSV_STRUCTURAL_HEADER_ONLY",
+                "requested_csv_read_level": "CSV_HEADER_ONLY",
+                "requested_local_file_hash_level": "LOCAL_FILE_HASH_NONE",
+                "csv_file_references": [
+                    {
+                        "reference_type": "reviewed_local_csv_file_ref",
+                        "reference_name": "tiny-header-only-dashboard",
+                        "path": str(csv_path),
+                        "required": True,
+                        "intended_touch_level": "CSV_HEADER_ONLY",
+                        "declared_only": False,
+                    }
+                ],
+                "forbidden_downstream_flags": {
+                    flag: False for flag in CSV_STRUCTURAL_HEADER_ONLY_REQUIRED_FALSE_FLAGS
+                },
+                "limitations": ["Header-only structural dashboard fixture; no row values consumed."],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return manifest_path
+
+
 def _active_replay_input_promotion_ready(root: Path):
     input_root = root / "manual_diagnostics" / "active_replay_input_promotion_test_inputs"
     validator = _active_replay_input_promotion_validator_artifact(input_root / "validator")
@@ -15618,6 +15672,154 @@ def test_cli_research_status_prints_tiny_pit_metadata_reference_following_fields
     assert metadata["metadata_reference_following_active_replay_input"] is False
     assert metadata["metadata_reference_following_buy_review_allowed"] is False
     assert metadata["metadata_reference_following_trading_allowed"] is False
+
+
+def test_research_status_includes_csv_structural_header_only_fields(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    manifest_root = tmp_path / "csv_structural_header_only_inputs"
+    manifest_path = _csv_structural_header_only_manifest(manifest_root)
+    run = run_csv_structural_file_touch(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_v0_1"
+        ),
+        run_id="002_header",
+        package_manifest_path=manifest_path,
+        allowed_manifest_roots=[manifest_root],
+        file_touch_level="CSV_STRUCTURAL_HEADER_ONLY",
+        csv_read_level="CSV_HEADER_ONLY",
+        local_file_hash_level="LOCAL_FILE_HASH_NONE",
+        allow_csv_header_only=True,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.csv_structural_header_only_context_visible is True
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_run_id
+        == run["run_id"]
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_runtime_status
+        == "CSV_STRUCTURAL_HEADER_ONLY_REPORT_ONLY"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health_status
+        == "PASS"
+    )
+    assert (
+        result.latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_workflow_stage
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_CORE_CREATED_REPORT_ONLY"
+    )
+    assert result.csv_structural_header_only_file_touch_level == "CSV_STRUCTURAL_HEADER_ONLY"
+    assert result.csv_structural_header_only_csv_read_level == "CSV_HEADER_ONLY"
+    assert result.csv_structural_header_only_local_file_hash_level == "LOCAL_FILE_HASH_NONE"
+    assert result.csv_structural_header_only_csv_file_opened_structurally is True
+    assert result.csv_structural_header_only_csv_header_read is True
+    assert result.csv_structural_header_only_csv_header_column_count == 3
+    assert result.csv_structural_header_only_csv_row_count_computed is False
+    assert result.csv_structural_header_only_csv_row_count == ""
+    assert result.csv_structural_header_only_csv_values_read is False
+    assert result.csv_structural_header_only_csv_full_content_read is False
+    assert result.csv_structural_header_only_local_file_byte_hash_computed is False
+    assert result.csv_structural_header_only_local_file_byte_hash_algorithm == ""
+    assert result.csv_structural_header_only_real_csv_consumed is False
+    assert result.csv_structural_header_only_real_package_candidate_created is False
+    assert result.csv_structural_header_only_active_reviewed_input_candidate_created is False
+    assert result.csv_structural_header_only_real_replay_input_created is False
+    assert result.csv_structural_header_only_active_replay_input is False
+    assert result.csv_structural_header_only_active_replay_ready is False
+    assert result.csv_structural_header_only_active_replay_input_ready_emitted is False
+    assert result.csv_structural_header_only_replay_execution_allowed is False
+    assert result.csv_structural_header_only_trading_allowed is False
+    assert result.csv_structural_header_only_buy_review_allowed is False
+    assert result.csv_structural_header_only_data_raw_written is False
+    assert result.csv_structural_header_only_data_processed_written is False
+    assert result.csv_structural_header_only_data_cache_written is False
+    assert result.csv_structural_header_only_recommended_next_task == EXPECTED_CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK
+    assert "row count" not in result.csv_structural_header_only_recommended_next_task.lower()
+    assert "file hash" not in result.csv_structural_header_only_recommended_next_task.lower()
+    assert "active replay" not in result.csv_structural_header_only_recommended_next_task.lower()
+    assert row["status"] == "CSV_STRUCTURAL_HEADER_ONLY_REPORT_ONLY"
+    assert row["workflow_area"] == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY"
+    )
+    assert row["blocking_error_count"] == 0
+    assert (
+        summary.loc[
+            0,
+            "latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_run_id",
+        ]
+        == run["run_id"]
+    )
+    assert summary.loc[0, "csv_structural_header_only_context_visible"] == "True"
+    assert summary.loc[0, "csv_structural_header_only_csv_header_read"] == "True"
+    assert summary.loc[0, "csv_structural_header_only_csv_row_count_computed"] == "False"
+    assert summary.loc[0, "csv_structural_header_only_csv_values_read"] == "False"
+    assert summary.loc[0, "csv_structural_header_only_csv_full_content_read"] == "False"
+    assert summary.loc[0, "csv_structural_header_only_local_file_byte_hash_computed"] == "False"
+    assert summary.loc[0, "csv_structural_header_only_real_csv_consumed"] == "False"
+    assert summary.loc[0, "csv_structural_header_only_trading_allowed"] == "False"
+    assert metadata["csv_structural_header_only_context_visible"] is True
+    assert metadata["csv_structural_header_only_csv_header_read"] is True
+    assert metadata["csv_structural_header_only_csv_row_count_computed"] is False
+    assert metadata["csv_structural_header_only_csv_values_read"] is False
+    assert metadata["csv_structural_header_only_csv_full_content_read"] is False
+    assert metadata["csv_structural_header_only_local_file_byte_hash_computed"] is False
+    assert metadata["csv_structural_header_only_real_csv_consumed"] is False
+    assert metadata["csv_structural_header_only_trading_allowed"] is False
+    assert "SENTINEL_DASHBOARD_ROW_VALUE_DO_NOT_READ" not in json.dumps(metadata)
+    assert "ACTIVE_REPLAY_INPUT_READY" not in json.dumps(metadata)
+
+
+def test_research_status_preserves_paper_priority_over_csv_structural_header_only(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    manifest_root = tmp_path / "csv_structural_header_only_inputs"
+    manifest_path = _csv_structural_header_only_manifest(manifest_root)
+    run_csv_structural_file_touch(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_v0_1"
+        ),
+        run_id="002_header",
+        package_manifest_path=manifest_path,
+        allowed_manifest_roots=[manifest_root],
+        file_touch_level="CSV_STRUCTURAL_HEADER_ONLY",
+        csv_read_level="CSV_HEADER_ONLY",
+        local_file_hash_level="LOCAL_FILE_HASH_NONE",
+        allow_csv_header_only=True,
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.csv_structural_header_only_context_visible is True
+    assert result.csv_structural_header_only_csv_header_read is True
+    assert result.csv_structural_header_only_csv_values_read is False
+    assert result.csv_structural_header_only_csv_full_content_read is False
+    assert result.csv_structural_header_only_real_csv_consumed is False
+    assert result.csv_structural_header_only_active_replay_input is False
+    assert result.csv_structural_header_only_active_replay_input_ready_emitted is False
+    assert result.csv_structural_header_only_replay_execution_allowed is False
+    assert result.csv_structural_header_only_buy_review_allowed is False
+    assert result.csv_structural_header_only_trading_allowed is False
 
 
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(

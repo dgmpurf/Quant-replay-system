@@ -146,6 +146,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_meta
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status import (
     run_metadata_reference_following_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch import (
+    REQUIRED_FALSE_FLAGS as CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_status import (
+    run_csv_structural_file_touch_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1209,6 +1215,28 @@ SUMMARY_COLUMNS = [
     "metadata_reference_following_pit_admissibility_validated",
     *[f"metadata_reference_following_{flag}" for flag in METADATA_REFERENCE_FOLLOWING_SAFETY_FALSE_FLAGS],
     "metadata_reference_following_recommended_next_task",
+    "csv_structural_header_only_context_visible",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_run_id",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_runtime_status",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health_status",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_workflow_stage",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_artifact_path",
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_report_path",
+    "csv_structural_header_only_file_touch_level",
+    "csv_structural_header_only_csv_read_level",
+    "csv_structural_header_only_local_file_hash_level",
+    "csv_structural_header_only_csv_file_opened_structurally",
+    "csv_structural_header_only_csv_header_read",
+    "csv_structural_header_only_csv_header_column_count",
+    "csv_structural_header_only_csv_row_count_computed",
+    "csv_structural_header_only_csv_row_count",
+    "csv_structural_header_only_csv_values_read",
+    "csv_structural_header_only_csv_full_content_read",
+    "csv_structural_header_only_local_file_byte_hash_computed",
+    "csv_structural_header_only_local_file_byte_hash_algorithm",
+    "csv_structural_header_only_real_csv_consumed",
+    *[f"csv_structural_header_only_{flag}" for flag in CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FALSE_FLAGS],
+    "csv_structural_header_only_recommended_next_task",
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2876,6 +2904,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTRACT_FIXTURE_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -2934,6 +2963,9 @@ WORKFLOW_AREAS = {
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS": "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE",
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY"
     ),
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
@@ -4083,6 +4115,39 @@ class LocalResearchDashboardResult:
     metadata_reference_following_data_processed_written: bool
     metadata_reference_following_data_cache_written: bool
     metadata_reference_following_recommended_next_task: str
+    csv_structural_header_only_context_visible: bool
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_run_id: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_runtime_status: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_health_status: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_workflow_stage: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_artifact_path: str
+    latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_report_path: str
+    csv_structural_header_only_file_touch_level: str
+    csv_structural_header_only_csv_read_level: str
+    csv_structural_header_only_local_file_hash_level: str
+    csv_structural_header_only_csv_file_opened_structurally: bool
+    csv_structural_header_only_csv_header_read: bool
+    csv_structural_header_only_csv_header_column_count: int
+    csv_structural_header_only_csv_row_count_computed: bool
+    csv_structural_header_only_csv_row_count: str
+    csv_structural_header_only_csv_values_read: bool
+    csv_structural_header_only_csv_full_content_read: bool
+    csv_structural_header_only_local_file_byte_hash_computed: bool
+    csv_structural_header_only_local_file_byte_hash_algorithm: str
+    csv_structural_header_only_real_csv_consumed: bool
+    csv_structural_header_only_real_package_candidate_created: bool
+    csv_structural_header_only_active_reviewed_input_candidate_created: bool
+    csv_structural_header_only_real_replay_input_created: bool
+    csv_structural_header_only_active_replay_input: bool
+    csv_structural_header_only_active_replay_ready: bool
+    csv_structural_header_only_active_replay_input_ready_emitted: bool
+    csv_structural_header_only_replay_execution_allowed: bool
+    csv_structural_header_only_trading_allowed: bool
+    csv_structural_header_only_buy_review_allowed: bool
+    csv_structural_header_only_data_raw_written: bool
+    csv_structural_header_only_data_processed_written: bool
+    csv_structural_header_only_data_cache_written: bool
+    csv_structural_header_only_recommended_next_task: str
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -5676,6 +5741,7 @@ def run_local_research_dashboard(
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root: str | Path | None = None,
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -5953,6 +6019,13 @@ def run_local_research_dashboard(
         else effective_root
         / "manual_diagnostics"
         / "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
+    )
+    effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root = (
+        Path(tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root)
+        if tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root is not None
+        else effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -6439,6 +6512,9 @@ def run_local_research_dashboard(
         tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root=(
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root
         ),
+        tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root=(
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -6577,6 +6653,9 @@ def run_local_research_dashboard(
         ),
         "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root": (
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root
+        ),
+        "tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root": (
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root
         ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
@@ -8688,6 +8767,7 @@ def run_local_research_dashboard(
             summary
         ),
         **_metadata_reference_following_result_kwargs(summary),
+        **_csv_structural_header_only_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -12458,6 +12538,7 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_contract_fixture_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root: str | Path,
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -12561,6 +12642,9 @@ def scan_local_research_workflow_artifacts(
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_path = Path(
+        tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -12705,6 +12789,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -20170,6 +20259,7 @@ def summarize_local_research_status(
             by_component
         ),
         **_metadata_reference_following_summary_fields(by_component),
+        **_csv_structural_header_only_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -28346,6 +28436,7 @@ def build_local_research_dashboard_metadata(
             result
         ),
         **_metadata_reference_following_metadata(result),
+        **_csv_structural_header_only_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -34859,6 +34950,206 @@ def _metadata_reference_following_result_kwargs(summary: dict[str, Any]) -> dict
 
 def _metadata_reference_following_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _METADATA_REFERENCE_FOLLOWING_RESULT_FIELDS}
+
+
+_CSV_STRUCTURAL_HEADER_ONLY_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_STATUS"
+)
+_CSV_STRUCTURAL_HEADER_ONLY_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY"
+)
+_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX = (
+    "latest_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_"
+)
+_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX = "csv_structural_header_only_"
+_CSV_STRUCTURAL_HEADER_ONLY_LATEST_FIELDS = [
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}run_id",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}runtime_status",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}health_status",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}workflow_stage",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}artifact_path",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}report_path",
+]
+_CSV_STRUCTURAL_HEADER_ONLY_TEXT_FIELDS = [
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}file_touch_level",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}csv_read_level",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}local_file_hash_level",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}csv_row_count",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}local_file_byte_hash_algorithm",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}recommended_next_task",
+]
+_CSV_STRUCTURAL_HEADER_ONLY_INT_FIELDS = [
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}csv_header_column_count",
+]
+_CSV_STRUCTURAL_HEADER_ONLY_BOOL_FIELDS = [
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}csv_file_opened_structurally",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}csv_header_read",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}csv_row_count_computed",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}csv_values_read",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}csv_full_content_read",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}local_file_byte_hash_computed",
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}real_csv_consumed",
+]
+_CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FIELDS = [
+    f"{_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX}{flag}" for flag in CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FALSE_FLAGS
+]
+_CSV_STRUCTURAL_HEADER_ONLY_RESULT_FIELDS = (
+    ["csv_structural_header_only_context_visible"]
+    + _CSV_STRUCTURAL_HEADER_ONLY_LATEST_FIELDS
+    + _CSV_STRUCTURAL_HEADER_ONLY_TEXT_FIELDS
+    + _CSV_STRUCTURAL_HEADER_ONLY_INT_FIELDS
+    + _CSV_STRUCTURAL_HEADER_ONLY_BOOL_FIELDS
+    + _CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FIELDS
+)
+_CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
+    "Research-Status and Checkpoint Planning Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_csv_structural_file_touch_status(root=fixture_root, output_dir=fixture_root / "status")
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = result.summary_frame.iloc[0].to_dict() if not result.summary_frame.empty else {}
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair CSV structural header-only artifacts before checkpoint planning."
+    )
+    return [
+        _record(
+            workflow_area=_CSV_STRUCTURAL_HEADER_ONLY_WORKFLOW_AREA,
+            component=_CSV_STRUCTURAL_HEADER_ONLY_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.artifact_paths.get("metadata_json", ""),
+            warning_count=1 if result.latest_runtime_status == "WARN" else 0,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_csv_structural_header_only_notes(summary),
+        )
+    ]
+
+
+def _csv_structural_header_only_notes(summary: dict[str, Any]) -> str:
+    safety_notes = " ".join(
+        f"{field.removeprefix(_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX)}="
+        f"{_string_or_empty(_csv_structural_header_only_summary_value(summary, field))};"
+        for field in _CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FIELDS
+    )
+    proof_notes = " ".join(
+        f"{field.removeprefix(_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX)}="
+        f"{_string_or_empty(_csv_structural_header_only_summary_value(summary, field))};"
+        for field in (
+            _CSV_STRUCTURAL_HEADER_ONLY_TEXT_FIELDS
+            + _CSV_STRUCTURAL_HEADER_ONLY_INT_FIELDS
+            + _CSV_STRUCTURAL_HEADER_ONLY_BOOL_FIELDS
+        )
+        if field != "csv_structural_header_only_recommended_next_task"
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "header_only_semantics=structural_metadata_only_no_rows_no_values_no_hash; "
+        "pit_admissibility_validated=False; "
+        "source_reliability_scored=False; "
+        "reviewer_authority_validated=False; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('latest_health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('latest_workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('latest_artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get('latest_report_path'))}; "
+        f"{proof_notes} {safety_notes}"
+    )
+
+
+def _csv_structural_header_only_summary_value(summary: dict[str, Any], dashboard_field: str) -> Any:
+    raw_field = dashboard_field.removeprefix(_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX)
+    if dashboard_field in summary:
+        return summary.get(dashboard_field)
+    return summary.get(raw_field)
+
+
+def _csv_structural_header_only_summary_fields(by_component: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    component = by_component.get(_CSV_STRUCTURAL_HEADER_ONLY_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "csv_structural_header_only_context_visible": _parse_note_value(notes, "context_visible"),
+        f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}run_id": _string_or_empty(
+            component.get("latest_artifact_id")
+        ),
+        f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}runtime_status": _component_status(
+            by_component,
+            _CSV_STRUCTURAL_HEADER_ONLY_COMPONENT,
+        ),
+        f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}health_status": _parse_note_value(notes, "health_status"),
+        f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}workflow_stage": _string_or_empty(component.get("stage")),
+        f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}artifact_path": _parse_note_value(notes, "artifact_path"),
+        f"{_CSV_STRUCTURAL_HEADER_ONLY_LATEST_PREFIX}report_path": _parse_note_value(notes, "report_path"),
+        "csv_structural_header_only_recommended_next_task": _parse_note_value(notes, "next_manual_action"),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field.removeprefix(_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX))
+            for field in _CSV_STRUCTURAL_HEADER_ONLY_TEXT_FIELDS
+            if field != "csv_structural_header_only_recommended_next_task"
+        }
+    )
+    fields.update(
+        {
+            field: _int_or_zero(
+                _parse_note_value(notes, field.removeprefix(_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX))
+            )
+            for field in _CSV_STRUCTURAL_HEADER_ONLY_INT_FIELDS
+        }
+    )
+    fields.update(
+        {
+            field: _parse_note_value(notes, field.removeprefix(_CSV_STRUCTURAL_HEADER_ONLY_DETAIL_PREFIX))
+            for field in _CSV_STRUCTURAL_HEADER_ONLY_BOOL_FIELDS + _CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FIELDS
+        }
+    )
+    return fields
+
+
+def _csv_structural_header_only_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, "")) for field in _CSV_STRUCTURAL_HEADER_ONLY_LATEST_FIELDS
+    }
+    kwargs.update({field: str(summary.get(field, "")) for field in _CSV_STRUCTURAL_HEADER_ONLY_TEXT_FIELDS})
+    kwargs["csv_structural_header_only_context_visible"] = _bool_from_text(
+        summary.get("csv_structural_header_only_context_visible")
+    )
+    kwargs.update({field: _int_or_zero(summary.get(field)) for field in _CSV_STRUCTURAL_HEADER_ONLY_INT_FIELDS})
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in _CSV_STRUCTURAL_HEADER_ONLY_BOOL_FIELDS + _CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FIELDS
+        }
+    )
+    if not kwargs["csv_structural_header_only_file_touch_level"]:
+        kwargs["csv_structural_header_only_file_touch_level"] = "FILE_TOUCH_NONE"
+    if not kwargs["csv_structural_header_only_csv_read_level"]:
+        kwargs["csv_structural_header_only_csv_read_level"] = "CSV_READ_NONE"
+    if not kwargs["csv_structural_header_only_local_file_hash_level"]:
+        kwargs["csv_structural_header_only_local_file_hash_level"] = "LOCAL_FILE_HASH_NONE"
+    return kwargs
+
+
+def _csv_structural_header_only_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _CSV_STRUCTURAL_HEADER_ONLY_RESULT_FIELDS}
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:

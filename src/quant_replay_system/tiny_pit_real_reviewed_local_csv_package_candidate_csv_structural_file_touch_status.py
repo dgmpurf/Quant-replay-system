@@ -44,7 +44,11 @@ class CsvStructuralFileTouchStatusResult:
     csv_header_read: bool
     csv_header_column_count: int
     csv_row_count_computed: bool
+    csv_row_count: str
+    csv_values_read: bool
+    csv_full_content_read: bool
     local_file_byte_hash_computed: bool
+    local_file_byte_hash_algorithm: str
     real_csv_consumed: bool
     recommended_next_task: str
     summary_frame: pd.DataFrame
@@ -91,6 +95,7 @@ def run_csv_structural_file_touch_status(
 
 def _summary_from_latest(latest: dict[str, Any], health_status: str) -> dict[str, Any]:
     runtime_status = "FAIL" if health_status == "FAIL" else _text(latest.get("runtime_status"))
+    metadata = _metadata_for_latest(latest)
     return {
         "latest_run_id": _text(latest.get("run_id")),
         "latest_runtime_status": runtime_status,
@@ -105,7 +110,11 @@ def _summary_from_latest(latest: dict[str, Any], health_status: str) -> dict[str
         "csv_header_read": _to_bool(latest.get("csv_header_read")),
         "csv_header_column_count": _to_int(latest.get("csv_header_column_count")),
         "csv_row_count_computed": _to_bool(latest.get("csv_row_count_computed")),
+        "csv_row_count": _text(metadata.get("csv_row_count")),
+        "csv_values_read": _to_bool(metadata.get("csv_values_read")),
+        "csv_full_content_read": _to_bool(metadata.get("csv_full_content_read")),
         "local_file_byte_hash_computed": _to_bool(latest.get("local_file_byte_hash_computed")),
+        "local_file_byte_hash_algorithm": _text(metadata.get("local_file_byte_hash_algorithm")),
         "real_csv_consumed": _to_bool(latest.get("real_csv_consumed")),
         "recommended_next_task": NEXT_TASK if health_status == "PASS" else "Repair CSV structural header-only artifacts.",
         **{flag: _to_bool(latest.get(flag)) for flag in REQUIRED_FALSE_FLAGS},
@@ -127,7 +136,11 @@ def _no_artifact_summary(health_status: str) -> dict[str, Any]:
         "csv_header_read": False,
         "csv_header_column_count": 0,
         "csv_row_count_computed": False,
+        "csv_row_count": "",
+        "csv_values_read": False,
+        "csv_full_content_read": False,
         "local_file_byte_hash_computed": False,
+        "local_file_byte_hash_algorithm": "",
         "real_csv_consumed": False,
         "recommended_next_task": NEXT_TASK,
         **{flag: False for flag in REQUIRED_FALSE_FLAGS},
@@ -137,6 +150,14 @@ def _no_artifact_summary(health_status: str) -> dict[str, Any]:
 def _paths(output_dir: str | Path) -> dict[str, Path]:
     root = Path(output_dir)
     return {"artifact_dir": root, "status_csv": root / "csv_structural_file_touch_status.csv", "metadata_json": root / "metadata.json"}
+
+
+def _metadata_for_latest(latest: dict[str, Any]) -> dict[str, Any]:
+    metadata_path = Path(_text(latest.get("artifact_path"))) / "metadata.json"
+    try:
+        return json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
 
 
 def _write(result: CsvStructuralFileTouchStatusResult) -> None:
