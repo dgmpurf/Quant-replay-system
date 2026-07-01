@@ -96,6 +96,18 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_meta
     REQUIRED_FALSE_FLAGS as METADATA_REFERENCE_FOLLOWING_REQUIRED_FALSE_FLAGS,
     run_metadata_reference_following,
 )
+
+EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
+    "Next Boundary Design Planning Report-Only v0.1"
+)
+STALE_METADATA_REFERENCE_FOLLOWING_NEXT_ACTION_PHRASES = [
+    "CLI or Research-Status Planning",
+    "Research-Status and Checkpoint",
+    "Artifact Views / Index / Health / Status",
+    "checkpoint planning",
+]
+
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
 from quant_replay_system.reviewer_no_hit_source_coverage_acceptance import (
@@ -15490,9 +15502,13 @@ def test_research_status_includes_tiny_pit_metadata_reference_following_fields(
     assert result.metadata_reference_following_data_cache_written is False
     assert (
         result.metadata_reference_following_recommended_next_task
-        == "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
-        "Research-Status and Checkpoint Report-Only v0.1"
+        == EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK
     )
+    for phrase in STALE_METADATA_REFERENCE_FOLLOWING_NEXT_ACTION_PHRASES:
+        assert phrase not in result.metadata_reference_following_recommended_next_task
+    assert "CSV header allowed" not in result.metadata_reference_following_recommended_next_task
+    assert "row count allowed" not in result.metadata_reference_following_recommended_next_task
+    assert "file hash allowed" not in result.metadata_reference_following_recommended_next_task
     assert row["status"] == "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCES_FOLLOWED_REPORT_ONLY"
     assert row["workflow_area"] == (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING"

@@ -18,9 +18,20 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_meta
     build_metadata_reference_following_index,
 )
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_status import (
-    VIEWS_NEXT_ACTION,
     run_metadata_reference_following_status,
 )
+
+
+EXPECTED_NEXT_BOUNDARY_DESIGN_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
+    "Next Boundary Design Planning Report-Only v0.1"
+)
+STALE_NEXT_ACTION_PHRASES = [
+    "CLI or Research-Status Planning",
+    "Research-Status and Checkpoint",
+    "Artifact Views / Index / Health / Status",
+    "checkpoint planning",
+]
 
 
 def _root(tmp_path: Path) -> Path:
@@ -205,7 +216,12 @@ def test_status_selects_latest_and_preserves_compact_safety_summary(tmp_path: Pa
     assert result.csv_read_level == "CSV_READ_NONE"
     assert result.references_followed is True
     assert result.metadata_files_followed_count == 1
-    assert result.recommended_next_task == VIEWS_NEXT_ACTION
+    assert result.recommended_next_task == EXPECTED_NEXT_BOUNDARY_DESIGN_TASK
+    for phrase in STALE_NEXT_ACTION_PHRASES:
+        assert phrase not in result.recommended_next_task
+    assert "CSV header allowed" not in result.recommended_next_task
+    assert "row count allowed" not in result.recommended_next_task
+    assert "file hash allowed" not in result.recommended_next_task
     for flag in REQUIRED_FALSE_FLAGS:
         assert getattr(result, flag) is False
     assert "ACTIVE_REPLAY_INPUT_READY" not in result.latest_runtime_status

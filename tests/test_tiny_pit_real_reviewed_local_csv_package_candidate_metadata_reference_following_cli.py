@@ -11,6 +11,16 @@ COMMAND = "tiny-pit-real-reviewed-local-csv-package-candidate-metadata-reference
 INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
+EXPECTED_NEXT_BOUNDARY_DESIGN_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
+    "Next Boundary Design Planning Report-Only v0.1"
+)
+STALE_NEXT_ACTION_PHRASES = [
+    "CLI or Research-Status Planning",
+    "Research-Status and Checkpoint",
+    "Artifact Views / Index / Health / Status",
+    "checkpoint planning",
+]
 
 
 def _root(tmp_path: Path) -> Path:
@@ -94,7 +104,9 @@ def test_metadata_reference_following_core_cli_no_input_writes_only_tmp_path_out
     assert "data_cache_written: False" in output
     assert "artifact_path:" in output
     assert "report_path:" in output
-    assert "recommended_next_task:" in output
+    assert f"recommended_next_task: {EXPECTED_NEXT_BOUNDARY_DESIGN_TASK}" in output
+    for phrase in STALE_NEXT_ACTION_PHRASES:
+        assert phrase not in output
     assert "metadata-only local JSON references" in output
     assert "CSV/data references" in output
     _assert_no_forbidden_wording(output)
@@ -124,6 +136,9 @@ def test_metadata_reference_following_index_health_status_cli_commands_use_tmp_p
     assert "latest_health_status: PASS" in status_output
     assert "csv_read_level: CSV_READ_NONE" in status_output
     assert "recommended_next_task:" in status_output
+    assert EXPECTED_NEXT_BOUNDARY_DESIGN_TASK in status_output
+    for phrase in STALE_NEXT_ACTION_PHRASES:
+        assert phrase not in status_output
     assert "references_followed: False" in status_output
     assert "metadata-only local JSON references" in status_output
     assert "CSV/data references" in status_output

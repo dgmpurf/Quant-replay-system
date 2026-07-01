@@ -68,6 +68,10 @@ DEFAULT_OUTPUT_ROOT = (
     "outputs/reports/manual_diagnostics/"
     "tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_v0_1"
 )
+NEXT_BOUNDARY_DESIGN_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
+    "Next Boundary Design Planning Report-Only v0.1"
+)
 
 ALLOWED_METADATA_REFERENCE_TYPES = [
     "source_registry_snapshot_ref",
@@ -901,10 +905,7 @@ def _result_payload(
         "data_raw_written": False,
         "data_processed_written": False,
         "data_cache_written": False,
-        "recommended_next_task": (
-            "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
-            "Artifact Views / Index / Health / Status Report-Only v0.1"
-        ),
+        "recommended_next_task": NEXT_BOUNDARY_DESIGN_TASK,
         "artifact_path": str(artifact_path),
         "report_path": str(artifact_paths["report"]),
         "artifact_files": {key: str(path) for key, path in artifact_paths.items() if key != "artifact_dir"},

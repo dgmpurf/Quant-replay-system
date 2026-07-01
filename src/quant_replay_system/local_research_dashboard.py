@@ -34721,7 +34721,7 @@ _METADATA_REFERENCE_FOLLOWING_RESULT_FIELDS = (
 )
 _METADATA_REFERENCE_FOLLOWING_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
-    "Research-Status and Checkpoint Report-Only v0.1"
+    "Next Boundary Design Planning Report-Only v0.1"
 )
 
 
@@ -34742,7 +34742,7 @@ def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_
     summary["next_action"] = (
         _METADATA_REFERENCE_FOLLOWING_NEXT_TASK
         if result.latest_health_status in {"PASS", "WARN"}
-        else "Repair metadata-reference-following artifacts before checkpoint planning."
+        else "Repair metadata-reference-following artifacts before next boundary design planning."
     )
     return [
         _record(

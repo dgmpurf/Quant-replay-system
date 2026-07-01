@@ -30,6 +30,18 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_meta
 )
 
 
+EXPECTED_NEXT_BOUNDARY_DESIGN_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
+    "Next Boundary Design Planning Report-Only v0.1"
+)
+STALE_NEXT_ACTION_PHRASES = [
+    "CLI or Research-Status Planning",
+    "Research-Status and Checkpoint",
+    "Artifact Views / Index / Health / Status",
+    "checkpoint planning",
+]
+
+
 def _output_root(tmp_path: Path) -> Path:
     return tmp_path / "outputs" / "reports" / "manual_diagnostics" / "metadata_reference_following"
 
@@ -102,6 +114,12 @@ def test_no_input_remains_synthetic_report_only(tmp_path: Path) -> None:
     assert result["references_followed"] is False
     assert result["local_file_hash_computed"] is False
     assert all(result[flag] is False for flag in REQUIRED_FALSE_FLAGS)
+    assert result["recommended_next_task"] == EXPECTED_NEXT_BOUNDARY_DESIGN_TASK
+    for phrase in STALE_NEXT_ACTION_PHRASES:
+        assert phrase not in result["recommended_next_task"]
+    assert "CSV header allowed" not in result["recommended_next_task"]
+    assert "row count allowed" not in result["recommended_next_task"]
+    assert "file hash allowed" not in result["recommended_next_task"]
 
 
 def test_explicit_manifest_requires_explicit_allowed_roots(tmp_path: Path) -> None:

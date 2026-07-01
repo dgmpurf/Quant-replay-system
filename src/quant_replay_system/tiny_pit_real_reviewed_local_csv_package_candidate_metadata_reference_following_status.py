@@ -10,6 +10,7 @@ from typing import Any
 import pandas as pd
 
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following import (
+    NEXT_BOUNDARY_DESIGN_TASK,
     REQUIRED_FALSE_FLAGS,
     STATUS_NO_INPUT,
 )
@@ -22,10 +23,7 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_meta
 )
 
 
-VIEWS_NEXT_ACTION = (
-    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
-    "CLI or Research-Status Planning Report-Only v0.1"
-)
+VIEWS_NEXT_ACTION = NEXT_BOUNDARY_DESIGN_TASK
 NO_ARTIFACT_STAGE = "NO_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING"
 PREFIX = "latest_tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following"
 
