@@ -25,7 +25,7 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
 NO_ARTIFACT_STAGE = "NO_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_FILE_TOUCH"
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
-    "CLI Report-Only v0.1"
+    "Post-v1.75 Next Boundary Design Planning Report-Only v0.1"
 )
 
 

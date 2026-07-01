@@ -17,8 +17,29 @@ HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
 EXPECTED_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
-    "Research-Status Planning Report-Only v0.1"
+    "Post-v1.75 Next Boundary Design Planning Report-Only v0.1"
 )
+COMPLETED_PHASE_NEXT_ACTIONS = [
+    "Artifact Views Report-Only v0.1",
+    "CLI Report-Only v0.1",
+    "Research-Status Planning Report-Only v0.1",
+]
+UNSAFE_NEXT_ACTION_PHRASES = [
+    "row-count implementation",
+    "file-hash implementation",
+    "full-content reading",
+    "real package candidate",
+    "PIT validator",
+    "active replay",
+    "replay implementation",
+    "labels",
+    "training",
+    "model",
+    "stock_profile",
+    "paper validation",
+    "buy-review",
+    "trading",
+]
 SENTINEL = "SENTINEL_CLI_ROW_VALUE_DO_NOT_PRINT"
 
 
@@ -198,8 +219,11 @@ def test_index_health_status_cli_commands_use_tmp_path_artifact_metadata_only(tm
     assert "csv_read_level: CSV_READ_NONE" in status_output
     assert "real_csv_consumed: False" in status_output
     assert f"recommended_next_task: {EXPECTED_NEXT_TASK}" in status_output
-    assert "row-count" not in status_output.lower()
-    assert "file-hash" not in status_output.lower()
+    next_task_line = next(line for line in status_output.splitlines() if line.startswith("recommended_next_task: "))
+    for completed in COMPLETED_PHASE_NEXT_ACTIONS:
+        assert completed not in next_task_line
+    for unsafe in UNSAFE_NEXT_ACTION_PHRASES:
+        assert unsafe not in next_task_line
     assert "package candidate" in status_output
     _assert_no_forbidden_output(status_output)
 

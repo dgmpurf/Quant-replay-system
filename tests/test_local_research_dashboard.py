@@ -113,8 +113,30 @@ STALE_METADATA_REFERENCE_FOLLOWING_NEXT_ACTION_PHRASES = [
 ]
 EXPECTED_CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
-    "Research-Status and Checkpoint Planning Report-Only v0.1"
+    "Post-v1.75 Next Boundary Design Planning Report-Only v0.1"
 )
+STALE_CSV_STRUCTURAL_HEADER_ONLY_NEXT_ACTION_PHRASES = [
+    "Artifact Views Report-Only v0.1",
+    "CLI Report-Only v0.1",
+    "Research-Status Planning Report-Only v0.1",
+    "Research-Status and Checkpoint Planning Report-Only v0.1",
+]
+UNSAFE_CSV_STRUCTURAL_HEADER_ONLY_NEXT_ACTION_PHRASES = [
+    "row-count implementation",
+    "file-hash implementation",
+    "full-content reading",
+    "real package candidate",
+    "PIT validator",
+    "active replay",
+    "replay implementation",
+    "labels",
+    "training",
+    "model",
+    "stock_profile",
+    "paper validation",
+    "buy-review",
+    "trading",
+]
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
@@ -15743,10 +15765,12 @@ def test_research_status_includes_csv_structural_header_only_fields(tmp_path: Pa
     assert result.csv_structural_header_only_data_raw_written is False
     assert result.csv_structural_header_only_data_processed_written is False
     assert result.csv_structural_header_only_data_cache_written is False
-    assert result.csv_structural_header_only_recommended_next_task == EXPECTED_CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK
-    assert "row count" not in result.csv_structural_header_only_recommended_next_task.lower()
-    assert "file hash" not in result.csv_structural_header_only_recommended_next_task.lower()
-    assert "active replay" not in result.csv_structural_header_only_recommended_next_task.lower()
+    next_task = result.csv_structural_header_only_recommended_next_task
+    assert next_task == EXPECTED_CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK
+    for stale in STALE_CSV_STRUCTURAL_HEADER_ONLY_NEXT_ACTION_PHRASES:
+        assert stale not in next_task
+    for unsafe in UNSAFE_CSV_STRUCTURAL_HEADER_ONLY_NEXT_ACTION_PHRASES:
+        assert unsafe not in next_task
     assert row["status"] == "CSV_STRUCTURAL_HEADER_ONLY_REPORT_ONLY"
     assert row["workflow_area"] == (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY"
@@ -15767,6 +15791,7 @@ def test_research_status_includes_csv_structural_header_only_fields(tmp_path: Pa
     assert summary.loc[0, "csv_structural_header_only_local_file_byte_hash_computed"] == "False"
     assert summary.loc[0, "csv_structural_header_only_real_csv_consumed"] == "False"
     assert summary.loc[0, "csv_structural_header_only_trading_allowed"] == "False"
+    assert summary.loc[0, "csv_structural_header_only_recommended_next_task"] == EXPECTED_CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK
     assert metadata["csv_structural_header_only_context_visible"] is True
     assert metadata["csv_structural_header_only_csv_header_read"] is True
     assert metadata["csv_structural_header_only_csv_row_count_computed"] is False
@@ -15775,6 +15800,7 @@ def test_research_status_includes_csv_structural_header_only_fields(tmp_path: Pa
     assert metadata["csv_structural_header_only_local_file_byte_hash_computed"] is False
     assert metadata["csv_structural_header_only_real_csv_consumed"] is False
     assert metadata["csv_structural_header_only_trading_allowed"] is False
+    assert metadata["csv_structural_header_only_recommended_next_task"] == EXPECTED_CSV_STRUCTURAL_HEADER_ONLY_NEXT_TASK
     assert "SENTINEL_DASHBOARD_ROW_VALUE_DO_NOT_READ" not in json.dumps(metadata)
     assert "ACTIVE_REPLAY_INPUT_READY" not in json.dumps(metadata)
 

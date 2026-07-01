@@ -22,8 +22,29 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
 
 EXPECTED_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
-    "Artifact Views Report-Only v0.1"
+    "Post-v1.75 Next Boundary Design Planning Report-Only v0.1"
 )
+COMPLETED_PHASE_NEXT_ACTIONS = [
+    "Artifact Views Report-Only v0.1",
+    "CLI Report-Only v0.1",
+    "Research-Status Planning Report-Only v0.1",
+]
+UNSAFE_NEXT_ACTION_PHRASES = [
+    "row-count implementation",
+    "file-hash implementation",
+    "full-content reading",
+    "real package candidate",
+    "PIT validator",
+    "active replay",
+    "replay implementation",
+    "labels",
+    "training",
+    "model",
+    "stock_profile",
+    "paper validation",
+    "buy-review",
+    "trading",
+]
 FORBIDDEN_WORDING = [
     "PACKAGE_APPROVED",
     "PACKAGE_ADMISSIBLE",
@@ -131,6 +152,10 @@ def test_no_input_writes_safe_artifact_set(tmp_path: Path) -> None:
     assert result["real_csv_consumed"] is False
     assert all(result[flag] is False for flag in REQUIRED_FALSE_FLAGS)
     assert result["recommended_next_task"] == EXPECTED_NEXT_TASK
+    for completed in COMPLETED_PHASE_NEXT_ACTIONS:
+        assert completed not in result["recommended_next_task"]
+    for unsafe in UNSAFE_NEXT_ACTION_PHRASES:
+        assert unsafe not in result["recommended_next_task"]
     for path in result["artifact_paths"].values():
         assert Path(path).is_file()
 
@@ -155,6 +180,11 @@ def test_header_only_reads_header_names_and_count_but_not_rows(tmp_path: Path) -
     assert result["local_file_byte_hash_algorithm"] == ""
     assert result["real_csv_consumed"] is False
     assert all(result[flag] is False for flag in REQUIRED_FALSE_FLAGS)
+    assert result["recommended_next_task"] == EXPECTED_NEXT_TASK
+    for completed in COMPLETED_PHASE_NEXT_ACTIONS:
+        assert completed not in result["recommended_next_task"]
+    for unsafe in UNSAFE_NEXT_ACTION_PHRASES:
+        assert unsafe not in result["recommended_next_task"]
     assert "SENTINEL_SECRET_ROW_VALUE_DO_NOT_RECORD" not in _artifact_text(result)
 
 
@@ -326,6 +356,10 @@ def test_status_vocabulary_and_artifacts_exclude_unsafe_wording(tmp_path: Path) 
         assert forbidden not in artifact_blob
         assert forbidden not in result["runtime_status"]
         assert forbidden not in result["recommended_next_task"]
+    for completed in COMPLETED_PHASE_NEXT_ACTIONS:
+        assert completed not in result["recommended_next_task"]
+    for unsafe in UNSAFE_NEXT_ACTION_PHRASES:
+        assert unsafe not in result["recommended_next_task"]
     assert not Path("docs/project_sources").exists()
 
 

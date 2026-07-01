@@ -34,7 +34,7 @@ WORKFLOW_STAGE = (
 CREATED_AT = "2026-07-01T00:00:00Z"
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
-    "Artifact Views Report-Only v0.1"
+    "Post-v1.75 Next Boundary Design Planning Report-Only v0.1"
 )
 
 FILE_TOUCH_NONE = "FILE_TOUCH_NONE"

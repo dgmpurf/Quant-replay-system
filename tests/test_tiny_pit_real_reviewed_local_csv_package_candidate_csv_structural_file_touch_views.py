@@ -22,8 +22,29 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
 
 EXPECTED_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
-    "CLI Report-Only v0.1"
+    "Post-v1.75 Next Boundary Design Planning Report-Only v0.1"
 )
+COMPLETED_PHASE_NEXT_ACTIONS = [
+    "Artifact Views Report-Only v0.1",
+    "CLI Report-Only v0.1",
+    "Research-Status Planning Report-Only v0.1",
+]
+UNSAFE_NEXT_ACTION_PHRASES = [
+    "row-count implementation",
+    "file-hash implementation",
+    "full-content reading",
+    "real package candidate",
+    "PIT validator",
+    "active replay",
+    "replay implementation",
+    "labels",
+    "training",
+    "model",
+    "stock_profile",
+    "paper validation",
+    "buy-review",
+    "trading",
+]
 FORBIDDEN_WORDING = [
     "PACKAGE_APPROVED",
     "PACKAGE_ADMISSIBLE",
@@ -210,6 +231,10 @@ def test_status_summarizes_latest_context_and_safe_next_task(tmp_path: Path) -> 
     assert result.buy_review_allowed is False
     assert result.trading_allowed is False
     assert result.recommended_next_task == EXPECTED_NEXT_TASK
+    for completed in COMPLETED_PHASE_NEXT_ACTIONS:
+        assert completed not in result.recommended_next_task
+    for unsafe in UNSAFE_NEXT_ACTION_PHRASES:
+        assert unsafe not in result.recommended_next_task
     assert result.artifact_paths["status_csv"].is_file()
     status_blob = json.dumps(result.summary_frame.to_dict("records"))
     for forbidden in FORBIDDEN_WORDING:
