@@ -2,6 +2,14 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only v1.75.0
+
+`NO_CSV_STRUCTURAL_FILE_TOUCH_INPUT` and `CSV_STRUCTURAL_HEADER_ONLY_REPORT_ONLY` mean Tiny PIT CSV Structural Header-Only artifacts exist as report-only / diagnostic-only governance context. Header-only means structural metadata only: a manifest-gated, allowed-root-gated, explicit `--allow-csv-header-only` run may read only the CSV header and record header proof fields.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only`, `tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-status` to create, discover, safety-check, and summarize the header-only report-only artifacts. `research-status` exposes the latest CSV Structural Header-Only context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+The workflow does not count rows, read CSV data values, read full CSV content, compute byte hashes, consume CSV as package or replay input, create real package candidates, validate PIT admissibility, create active replay input, run replay, create labels, train models, create stock_profile or paper validation, create buy-review eligibility, or authorize trading.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following v1.74.0
 
 `NO_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_INPUT`, `REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCES_DECLARED_REPORT_ONLY`, and `REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCES_FOLLOWED_REPORT_ONLY` mean Tiny PIT metadata-reference-following artifacts exist as report-only / diagnostic-only governance context. `references_followed=true` means only whitelisted local JSON metadata references were followed under explicit allowed roots. It does not mean CSV files, data references, raw document bodies, external sources, package directories, or real reviewed package candidates were followed.
