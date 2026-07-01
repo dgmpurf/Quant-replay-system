@@ -672,6 +672,22 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_status import (
     run_csv_structural_file_touch_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only import (
+    CSV_READ_NONE as LOCAL_FILE_BYTE_HASH_CSV_READ_NONE,
+    LOCAL_FILE_BYTE_HASH_ONLY,
+    LOCAL_FILE_BYTE_HASH_SHA256_ONLY,
+    run_local_file_byte_hash_only,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_health import (
+    check_local_file_byte_hash_only_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_index import (
+    DEFAULT_ROOT as LOCAL_FILE_BYTE_HASH_ONLY_DEFAULT_ROOT,
+    build_local_file_byte_hash_only_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status import (
+    run_local_file_byte_hash_only_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -6090,6 +6106,86 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status.set_defaults(
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only",
+        help=(
+            "Write report-only Tiny PIT LOCAL_CSV local file byte-hash-only artifacts "
+            "using optional manifest-authorized SHA-256 byte hashing"
+        ),
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only.add_argument(
+        "--output-root",
+        default=LOCAL_FILE_BYTE_HASH_ONLY_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only.add_argument(
+        "--run-id",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only.add_argument(
+        "--package-manifest-path",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only.add_argument(
+        "--allowed-manifest-root",
+        action="append",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only.add_argument(
+        "--allow-local-file-byte-hash-only",
+        action="store_true",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only-index",
+        help="Build an index for report-only Tiny PIT LOCAL_CSV local file byte-hash-only artifacts",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_index.add_argument(
+        "--root",
+        default=LOCAL_FILE_BYTE_HASH_ONLY_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_index.add_argument(
+        "--output-dir",
+        default=f"{LOCAL_FILE_BYTE_HASH_ONLY_DEFAULT_ROOT}/index",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_index
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only-health",
+        help="Check report-only Tiny PIT LOCAL_CSV local file byte-hash-only artifact health",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_health.add_argument(
+        "--root",
+        default=LOCAL_FILE_BYTE_HASH_ONLY_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_health.add_argument(
+        "--output-dir",
+        default=f"{LOCAL_FILE_BYTE_HASH_ONLY_DEFAULT_ROOT}/health",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_health
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only-status",
+        help="Summarize latest report-only Tiny PIT LOCAL_CSV local file byte-hash-only status",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status.add_argument(
+        "--root",
+        default=LOCAL_FILE_BYTE_HASH_ONLY_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status.add_argument(
+        "--output-dir",
+        default=f"{LOCAL_FILE_BYTE_HASH_ONLY_DEFAULT_ROOT}/status",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status
     )
 
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
@@ -11694,6 +11790,10 @@ CSV_STRUCTURAL_HEADER_ONLY_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only "
     "Post-v1.75 Next Boundary Design Planning Report-Only v0.1"
 )
+LOCAL_FILE_BYTE_HASH_ONLY_CLI_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
+    "Research-Status Planning Report-Only v0.1"
+)
 
 
 def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only(
@@ -11826,6 +11926,154 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_he
     print(
         "Report-only status: no real package candidate, active input, replay, buy-review, "
         "performance validation, trading, or protected data writes were created."
+    )
+    return 1 if result.latest_runtime_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only(
+    args: argparse.Namespace,
+) -> int:
+    if args.package_manifest_path:
+        result = run_local_file_byte_hash_only(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            package_manifest_path=args.package_manifest_path,
+            allowed_manifest_roots=args.allowed_manifest_root,
+            file_touch_level=LOCAL_FILE_BYTE_HASH_ONLY,
+            csv_read_level=LOCAL_FILE_BYTE_HASH_CSV_READ_NONE,
+            local_file_hash_level=LOCAL_FILE_BYTE_HASH_SHA256_ONLY,
+            allow_local_file_byte_hash_only=args.allow_local_file_byte_hash_only,
+        )
+    else:
+        result = run_local_file_byte_hash_only(
+            output_root=args.output_root,
+            run_id=args.run_id,
+        )
+    print(f"run_id: {result['run_id']}")
+    print(f"runtime_status: {result['runtime_status']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"report_only: {result['report_only']}")
+    print(f"diagnostic_only: {result['diagnostic_only']}")
+    print(f"file_touch_level: {result['file_touch_level']}")
+    print(f"csv_read_level: {result['csv_read_level']}")
+    print(f"local_file_hash_level: {result['local_file_hash_level']}")
+    print(f"local_file_byte_hash_computed: {result['local_file_byte_hash_computed']}")
+    print(f"local_file_byte_hash_algorithm: {result['local_file_byte_hash_algorithm']}")
+    print(f"local_file_byte_hash_preview: {result['local_file_byte_hash_preview']}")
+    print(f"local_file_byte_hash_disclosure_level: {result['local_file_byte_hash_disclosure_level']}")
+    print(f"csv_header_read: {result['csv_header_read']}")
+    print(f"csv_row_count_computed: {result['csv_row_count_computed']}")
+    print(f"csv_values_read: {result['csv_values_read']}")
+    print(f"csv_full_content_read: {result['csv_full_content_read']}")
+    print(f"real_csv_consumed: {result['real_csv_consumed']}")
+    print(f"source_hash_validated: {result['source_hash_validated']}")
+    print(f"revision_id_validated: {result['revision_id_validated']}")
+    print(f"available_time_validated: {result['available_time_validated']}")
+    print(f"pit_admissibility_validated: {result['pit_admissibility_validated']}")
+    print(f"source_reliability_scored: {result['source_reliability_scored']}")
+    print(f"reviewer_authority_validated: {result['reviewer_authority_validated']}")
+    print(f"real_package_candidate_created: {result['real_package_candidate_created']}")
+    print(f"active_reviewed_input_candidate_created: {result['active_reviewed_input_candidate_created']}")
+    print(f"real_replay_input_created: {result['real_replay_input_created']}")
+    print(f"active_replay_input: {result['active_replay_input']}")
+    print(f"active_replay_ready: {result['active_replay_ready']}")
+    print(f"active_replay_input_ready_emitted: {result['active_replay_input_ready_emitted']}")
+    print(f"replay_execution_allowed: {result['replay_execution_allowed']}")
+    print(f"trading_allowed: {result['trading_allowed']}")
+    print(f"buy_review_allowed: {result['buy_review_allowed']}")
+    print(f"data_raw_written: {result['data_raw_written']}")
+    print(f"data_processed_written: {result['data_processed_written']}")
+    print(f"data_cache_written: {result['data_cache_written']}")
+    print(f"artifact_path: {result['artifact_paths']['metadata'].parent}")
+    print(f"report_path: {result['artifact_paths']['report']}")
+    print(f"recommended_next_task: {LOCAL_FILE_BYTE_HASH_ONLY_CLI_NEXT_TASK}")
+    print(
+        "Report-only byte-hash check: no CSV parsing, header read, row count, data-value read, "
+        "real package candidate, active input, replay, buy-review, performance validation, trading, "
+        "or protected data writes were created."
+    )
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_local_file_byte_hash_only_index(root=args.root, output_dir=args.output_dir)
+    latest = result.index_frame.sort_values(["run_id"]).iloc[-1].to_dict() if not result.index_frame.empty else {}
+    print(f"Tiny PIT local file byte-hash-only index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"latest_runtime_status: {latest.get('runtime_status', '')}")
+    print(f"latest_health_status: {latest.get('health_status', '')}")
+    print(f"latest_workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"latest_local_file_byte_hash_preview: {latest.get('local_file_byte_hash_preview', '')}")
+    print(
+        "Report-only index: no target CSV was opened, no hash was recomputed, and no real package "
+        "candidate, active input, replay, buy-review, performance validation, trading, or protected data writes were created."
+    )
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_local_file_byte_hash_only_health(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT local file byte-hash-only health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Report-only health: no target CSV was opened, no hash was recomputed, and no real package "
+        "candidate, active input, replay, buy-review, performance validation, trading, or protected data writes were created."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_local_file_byte_hash_only_status(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT local file byte-hash-only status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_file_touch_level: {result.latest_file_touch_level}")
+    print(f"latest_csv_read_level: {result.latest_csv_read_level}")
+    print(f"latest_local_file_hash_level: {result.latest_local_file_hash_level}")
+    print(f"latest_local_file_byte_hash_computed: {result.latest_local_file_byte_hash_computed}")
+    print(f"latest_local_file_byte_hash_algorithm: {result.latest_local_file_byte_hash_algorithm}")
+    print(f"latest_local_file_byte_hash_preview: {result.latest_local_file_byte_hash_preview}")
+    print(f"latest_local_file_byte_hash_disclosure_level: {result.latest_local_file_byte_hash_disclosure_level}")
+    print(f"latest_csv_header_read: {result.latest_csv_header_read}")
+    print(f"latest_csv_row_count_computed: {result.latest_csv_row_count_computed}")
+    print(f"latest_csv_values_read: {result.latest_csv_values_read}")
+    print(f"latest_csv_full_content_read: {result.latest_csv_full_content_read}")
+    print(f"latest_real_csv_consumed: {result.latest_real_csv_consumed}")
+    print(f"latest_source_hash_validated: {result.latest_source_hash_validated}")
+    print(f"latest_revision_id_validated: {result.latest_revision_id_validated}")
+    print(f"latest_available_time_validated: {result.latest_available_time_validated}")
+    print(f"latest_pit_admissibility_validated: {result.latest_pit_admissibility_validated}")
+    print(f"latest_source_reliability_scored: {result.latest_source_reliability_scored}")
+    print(f"latest_reviewer_authority_validated: {result.latest_reviewer_authority_validated}")
+    print(f"latest_active_replay_input: {result.latest_active_replay_input}")
+    print(f"latest_trading_allowed: {result.latest_trading_allowed}")
+    print(f"latest_buy_review_allowed: {result.latest_buy_review_allowed}")
+    print(f"latest_data_raw_written: {result.latest_data_raw_written}")
+    print(f"latest_data_processed_written: {result.latest_data_processed_written}")
+    print(f"latest_data_cache_written: {result.latest_data_cache_written}")
+    print(f"artifact_path: {result.latest_artifact_path}")
+    print(f"report_path: {result.latest_report_path}")
+    print(f"recommended_next_task: {LOCAL_FILE_BYTE_HASH_ONLY_CLI_NEXT_TASK}")
+    print(
+        "Report-only status: no target CSV was opened, no hash was recomputed, and no real package "
+        "candidate, active input, replay, buy-review, performance validation, trading, or protected data writes were created."
     )
     return 1 if result.latest_runtime_status == "FAIL" else 0
 
