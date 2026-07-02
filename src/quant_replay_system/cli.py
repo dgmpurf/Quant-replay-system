@@ -11996,7 +11996,7 @@ EXPECTED_HASH_VERIFICATION_CLI_NEXT_TASK = (
 )
 CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line Count-Only "
-    "Research-Status Planning Report-Only v0.1"
+    "Checkpoint Planning Report-Only v0.1"
 )
 
 

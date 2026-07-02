@@ -23,7 +23,7 @@ FULL_CONTENT_SENTINEL = "FULL_CONTENT_SAMPLE_SHOULD_NOT_APPEAR"
 HASH_SENTINEL = "SOURCE_HASH_EXPECTED_HASH_LOCAL_BYTE_HASH_SHOULD_NOT_APPEAR"
 CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line "
-    "Count-Only Research-Status Planning Report-Only v0.1"
+    "Count-Only Checkpoint Planning Report-Only v0.1"
 )
 UNSAFE_WORDING = [
     "PACKAGE_APPROVED",
@@ -236,8 +236,8 @@ def test_status_summarizes_latest_safe_artifact_and_recommends_cli_phase(tmp_pat
     assert result.latest_csv_physical_data_line_count == 2
     assert result.latest_csv_physical_data_line_count_policy == "PHYSICAL_NON_HEADER_LINE_COUNT"
     assert result.recommended_next_task == CLI_NEXT_TASK
-    assert "Research-Status Planning" in result.recommended_next_task
-    assert "Checkpoint" not in result.recommended_next_task
+    assert "Research-Status Planning" not in result.recommended_next_task
+    assert "Checkpoint Planning" in result.recommended_next_task
     _assert_negative_fields_false(result.summary)
 
 

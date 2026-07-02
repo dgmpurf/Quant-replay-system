@@ -164,6 +164,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expe
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status import (
     run_expected_hash_verification_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only import (
+    REQUIRED_FALSE_FLAGS as CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status import (
+    run_csv_physical_data_line_count_only_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1320,6 +1326,53 @@ SUMMARY_COLUMNS = [
     "expected_hash_verification_csv_full_content_read",
     "expected_hash_verification_real_csv_consumed",
     *[f"expected_hash_verification_{flag}" for flag in EXPECTED_HASH_VERIFICATION_SAFETY_FALSE_FLAGS],
+    "csv_physical_data_line_count_only_context_visible",
+    "latest_csv_physical_data_line_count_only_run_id",
+    "latest_csv_physical_data_line_count_only_runtime_status",
+    "latest_csv_physical_data_line_count_only_health_status",
+    "latest_csv_physical_data_line_count_only_workflow_stage",
+    "latest_csv_physical_data_line_count_only_artifact_path",
+    "latest_csv_physical_data_line_count_only_report_path",
+    "latest_csv_physical_data_line_count_only_file_touch_level",
+    "latest_csv_physical_data_line_count_only_csv_read_level",
+    "latest_csv_physical_data_line_count_only_local_file_hash_level",
+    "latest_csv_physical_data_line_count_only_expected_hash_verification_level",
+    "latest_csv_physical_data_line_count_only_level",
+    "latest_csv_physical_data_line_count_only_computed",
+    "latest_csv_physical_data_line_count_only_count",
+    "latest_csv_physical_data_line_count_only_policy",
+    "latest_csv_physical_data_line_count_only_total_physical_line_count",
+    "latest_csv_physical_data_line_count_only_header_dependency_policy",
+    "latest_csv_physical_data_line_count_only_header_metadata_reused",
+    "latest_csv_physical_data_line_count_only_header_line_skipped_by_policy",
+    "latest_csv_physical_data_line_count_only_zero_data_line_warning",
+    "latest_csv_physical_data_line_count_only_issue_count",
+    "latest_csv_physical_data_line_count_only_warning_count",
+    "latest_csv_physical_data_line_count_only_recommended_next_task",
+    "csv_physical_data_line_count_only_target_csv_opened_for_physical_data_line_count",
+    "csv_physical_data_line_count_only_csv_header_read",
+    "csv_physical_data_line_count_only_csv_header_values_recorded",
+    "csv_physical_data_line_count_only_csv_values_read",
+    "csv_physical_data_line_count_only_csv_value_fields_parsed",
+    "csv_physical_data_line_count_only_csv_row_values_stored",
+    "csv_physical_data_line_count_only_csv_full_content_read",
+    "csv_physical_data_line_count_only_csv_full_content_semantically_read",
+    "csv_physical_data_line_count_only_real_csv_consumed",
+    "csv_physical_data_line_count_only_local_file_byte_hash_computed",
+    "csv_physical_data_line_count_only_local_file_byte_hash_recomputed",
+    "csv_physical_data_line_count_only_expected_hash_verification_performed",
+    "csv_physical_data_line_count_only_expected_hash_verified_against_local_metadata",
+    "csv_physical_data_line_count_only_expected_hash_verified_against_source_hash",
+    "csv_physical_data_line_count_only_source_hash_validated",
+    "csv_physical_data_line_count_only_revision_id_validated",
+    "csv_physical_data_line_count_only_available_time_validated",
+    "csv_physical_data_line_count_only_pit_admissibility_validated",
+    "csv_physical_data_line_count_only_source_reliability_scored",
+    "csv_physical_data_line_count_only_reviewer_authority_validated",
+    *[
+        f"csv_physical_data_line_count_only_{flag}"
+        for flag in CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FALSE_FLAGS
+    ],
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2990,6 +3043,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -3057,6 +3111,9 @@ WORKFLOW_AREAS = {
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY"
     ),
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
@@ -4352,6 +4409,80 @@ class LocalResearchDashboardResult:
     expected_hash_verification_broker_api_called: bool
     expected_hash_verification_order_placed: bool
     expected_hash_verification_message_sent: bool
+    csv_physical_data_line_count_only_context_visible: bool
+    latest_csv_physical_data_line_count_only_run_id: str
+    latest_csv_physical_data_line_count_only_runtime_status: str
+    latest_csv_physical_data_line_count_only_health_status: str
+    latest_csv_physical_data_line_count_only_workflow_stage: str
+    latest_csv_physical_data_line_count_only_artifact_path: str
+    latest_csv_physical_data_line_count_only_report_path: str
+    latest_csv_physical_data_line_count_only_file_touch_level: str
+    latest_csv_physical_data_line_count_only_csv_read_level: str
+    latest_csv_physical_data_line_count_only_local_file_hash_level: str
+    latest_csv_physical_data_line_count_only_expected_hash_verification_level: str
+    latest_csv_physical_data_line_count_only_level: str
+    latest_csv_physical_data_line_count_only_computed: bool
+    latest_csv_physical_data_line_count_only_count: int | str
+    latest_csv_physical_data_line_count_only_policy: str
+    latest_csv_physical_data_line_count_only_total_physical_line_count: int | str
+    latest_csv_physical_data_line_count_only_header_dependency_policy: str
+    latest_csv_physical_data_line_count_only_header_metadata_reused: bool
+    latest_csv_physical_data_line_count_only_header_line_skipped_by_policy: bool
+    latest_csv_physical_data_line_count_only_zero_data_line_warning: bool
+    latest_csv_physical_data_line_count_only_issue_count: int
+    latest_csv_physical_data_line_count_only_warning_count: int
+    latest_csv_physical_data_line_count_only_recommended_next_task: str
+    csv_physical_data_line_count_only_target_csv_opened_for_physical_data_line_count: bool
+    csv_physical_data_line_count_only_csv_header_read: bool
+    csv_physical_data_line_count_only_csv_header_values_recorded: bool
+    csv_physical_data_line_count_only_csv_values_read: bool
+    csv_physical_data_line_count_only_csv_value_fields_parsed: bool
+    csv_physical_data_line_count_only_csv_row_values_stored: bool
+    csv_physical_data_line_count_only_csv_full_content_read: bool
+    csv_physical_data_line_count_only_csv_full_content_semantically_read: bool
+    csv_physical_data_line_count_only_real_csv_consumed: bool
+    csv_physical_data_line_count_only_local_file_byte_hash_computed: bool
+    csv_physical_data_line_count_only_local_file_byte_hash_recomputed: bool
+    csv_physical_data_line_count_only_expected_hash_verification_performed: bool
+    csv_physical_data_line_count_only_expected_hash_verified_against_local_metadata: bool
+    csv_physical_data_line_count_only_expected_hash_verified_against_source_hash: bool
+    csv_physical_data_line_count_only_source_hash_validated: bool
+    csv_physical_data_line_count_only_revision_id_validated: bool
+    csv_physical_data_line_count_only_available_time_validated: bool
+    csv_physical_data_line_count_only_pit_admissibility_validated: bool
+    csv_physical_data_line_count_only_source_reliability_scored: bool
+    csv_physical_data_line_count_only_reviewer_authority_validated: bool
+    csv_physical_data_line_count_only_real_reviewed_csv_package_created: bool
+    csv_physical_data_line_count_only_real_package_candidate_created: bool
+    csv_physical_data_line_count_only_active_reviewed_input_candidate_created: bool
+    csv_physical_data_line_count_only_real_replay_input_created: bool
+    csv_physical_data_line_count_only_active_replay_input: bool
+    csv_physical_data_line_count_only_active_replay_ready: bool
+    csv_physical_data_line_count_only_active_replay_input_ready_emitted: bool
+    csv_physical_data_line_count_only_replay_execution_allowed: bool
+    csv_physical_data_line_count_only_trading_allowed: bool
+    csv_physical_data_line_count_only_buy_review_allowed: bool
+    csv_physical_data_line_count_only_data_raw_written: bool
+    csv_physical_data_line_count_only_data_processed_written: bool
+    csv_physical_data_line_count_only_data_cache_written: bool
+    csv_physical_data_line_count_only_labels_created: bool
+    csv_physical_data_line_count_only_training_dataset_created: bool
+    csv_physical_data_line_count_only_metric_computation_performed: bool
+    csv_physical_data_line_count_only_signal_score_implemented: bool
+    csv_physical_data_line_count_only_model_training_performed: bool
+    csv_physical_data_line_count_only_active_weights_created: bool
+    csv_physical_data_line_count_only_active_thresholds_created: bool
+    csv_physical_data_line_count_only_stock_profile_validation_created: bool
+    csv_physical_data_line_count_only_paper_validation_created: bool
+    csv_physical_data_line_count_only_strategy_performance_validated: bool
+    csv_physical_data_line_count_only_broker_api_called: bool
+    csv_physical_data_line_count_only_order_placed: bool
+    csv_physical_data_line_count_only_message_sent: bool
+    csv_physical_data_line_count_only_external_api_called: bool
+    csv_physical_data_line_count_only_llm_api_called: bool
+    csv_physical_data_line_count_only_current_candidates_created: bool
+    csv_physical_data_line_count_only_snapshots_created: bool
+    csv_physical_data_line_count_only_signal_semantics_mutated: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -5948,6 +6079,7 @@ def run_local_research_dashboard(
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root: str | Path | None = None,
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -6246,6 +6378,13 @@ def run_local_research_dashboard(
         else effective_root
         / "manual_diagnostics"
         / "tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_v0_1"
+    )
+    effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root = (
+        Path(tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root)
+        if tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root is not None
+        else effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -6741,6 +6880,9 @@ def run_local_research_dashboard(
         tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root=(
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root
         ),
+        tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root=(
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -6888,6 +7030,9 @@ def run_local_research_dashboard(
         ),
         "tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root": (
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root
+        ),
+        "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root": (
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root
         ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
@@ -9002,6 +9147,7 @@ def run_local_research_dashboard(
         **_csv_structural_header_only_result_kwargs(summary),
         **_local_file_byte_hash_only_result_kwargs(summary),
         **_expected_hash_verification_result_kwargs(summary),
+        **_csv_physical_data_line_count_only_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -12775,6 +12921,7 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root: str | Path,
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -12887,6 +13034,9 @@ def scan_local_research_workflow_artifacts(
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_path = Path(
+        tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -13046,6 +13196,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -20515,6 +20670,7 @@ def summarize_local_research_status(
         **_csv_structural_header_only_summary_fields(by_component),
         **_local_file_byte_hash_only_summary_fields(by_component),
         **_expected_hash_verification_summary_fields(by_component),
+        **_csv_physical_data_line_count_only_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -28694,6 +28850,7 @@ def build_local_research_dashboard_metadata(
         **_csv_structural_header_only_metadata(result),
         **_local_file_byte_hash_only_metadata(result),
         **_expected_hash_verification_metadata(result),
+        **_csv_physical_data_line_count_only_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -35949,6 +36106,377 @@ def _expected_hash_verification_result_kwargs(summary: dict[str, Any]) -> dict[s
 
 def _expected_hash_verification_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _EXPECTED_HASH_VERIFICATION_RESULT_FIELDS}
+
+
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS"
+)
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY"
+)
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX = "latest_csv_physical_data_line_count_only_"
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX = "csv_physical_data_line_count_only_"
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_FIELDS = [
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}run_id",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}runtime_status",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}health_status",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}workflow_stage",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}artifact_path",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}report_path",
+]
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_TEXT_FIELDS = [
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}file_touch_level",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}csv_read_level",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}local_file_hash_level",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}expected_hash_verification_level",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}level",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}policy",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}header_dependency_policy",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}recommended_next_task",
+]
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_BOOL_FIELDS = [
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}computed",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}header_metadata_reused",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}header_line_skipped_by_policy",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}zero_data_line_warning",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}target_csv_opened_for_physical_data_line_count",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}csv_header_read",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}csv_header_values_recorded",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}csv_values_read",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}csv_value_fields_parsed",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}csv_row_values_stored",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}csv_full_content_read",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}csv_full_content_semantically_read",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}real_csv_consumed",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}local_file_byte_hash_computed",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}local_file_byte_hash_recomputed",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}expected_hash_verification_performed",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}expected_hash_verified_against_local_metadata",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}expected_hash_verified_against_source_hash",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}source_hash_validated",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}revision_id_validated",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}available_time_validated",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}pit_admissibility_validated",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}source_reliability_scored",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}reviewer_authority_validated",
+]
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_INT_FIELDS = [
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}count",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}total_physical_line_count",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}issue_count",
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_PREFIX}warning_count",
+]
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FIELDS = [
+    f"{_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_DETAIL_PREFIX}{flag}"
+    for flag in CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FALSE_FLAGS
+]
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_RESULT_FIELDS = (
+    ["csv_physical_data_line_count_only_context_visible"]
+    + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_FIELDS
+    + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_TEXT_FIELDS
+    + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_BOOL_FIELDS
+    + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_INT_FIELDS
+    + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FIELDS
+)
+_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line Count-Only "
+    "Checkpoint Planning Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_csv_physical_data_line_count_only_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = _csv_physical_data_line_count_only_summary_from_status_result(result)
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair CSV Physical Data-Line Count-Only artifacts before checkpoint planning."
+    )
+    warning_count = _int_or_zero(summary.get("latest_csv_physical_data_line_count_only_warning_count"))
+    issue_count = _int_or_zero(summary.get("latest_csv_physical_data_line_count_only_issue_count"))
+    return [
+        _record(
+            workflow_area=_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_WORKFLOW_AREA,
+            component=_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.artifact_paths.get("metadata_json", ""),
+            issue_count=issue_count,
+            warning_count=warning_count,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_csv_physical_data_line_count_only_notes(summary),
+        )
+    ]
+
+
+def _csv_physical_data_line_count_only_summary_from_status_result(result: Any) -> dict[str, Any]:
+    status_summary = result.summary
+    summary = {
+        "latest_csv_physical_data_line_count_only_run_id": result.latest_run_id,
+        "latest_csv_physical_data_line_count_only_runtime_status": result.latest_runtime_status,
+        "latest_csv_physical_data_line_count_only_health_status": result.latest_health_status,
+        "latest_csv_physical_data_line_count_only_workflow_stage": result.latest_workflow_stage,
+        "latest_csv_physical_data_line_count_only_artifact_path": result.latest_artifact_path,
+        "latest_csv_physical_data_line_count_only_report_path": result.latest_report_path,
+        "latest_csv_physical_data_line_count_only_file_touch_level": status_summary.get("latest_file_touch_level"),
+        "latest_csv_physical_data_line_count_only_csv_read_level": status_summary.get("latest_csv_read_level"),
+        "latest_csv_physical_data_line_count_only_local_file_hash_level": status_summary.get(
+            "latest_local_file_hash_level"
+        ),
+        "latest_csv_physical_data_line_count_only_expected_hash_verification_level": status_summary.get(
+            "latest_expected_hash_verification_level"
+        ),
+        "latest_csv_physical_data_line_count_only_level": status_summary.get(
+            "latest_csv_physical_data_line_count_level"
+        ),
+        "latest_csv_physical_data_line_count_only_computed": status_summary.get(
+            "latest_csv_physical_data_line_count_computed"
+        ),
+        "latest_csv_physical_data_line_count_only_count": status_summary.get(
+            "latest_csv_physical_data_line_count"
+        ),
+        "latest_csv_physical_data_line_count_only_policy": status_summary.get(
+            "latest_csv_physical_data_line_count_policy"
+        ),
+        "latest_csv_physical_data_line_count_only_total_physical_line_count": status_summary.get(
+            "latest_csv_physical_line_count_total"
+        ),
+        "latest_csv_physical_data_line_count_only_header_dependency_policy": (
+            _csv_physical_data_line_count_only_dashboard_header_policy(
+                status_summary.get("latest_csv_header_dependency_policy")
+            )
+        ),
+        "latest_csv_physical_data_line_count_only_header_metadata_reused": status_summary.get(
+            "latest_header_metadata_reused"
+        ),
+        "latest_csv_physical_data_line_count_only_header_line_skipped_by_policy": status_summary.get(
+            "latest_csv_header_line_skipped_by_policy"
+        ),
+        "latest_csv_physical_data_line_count_only_zero_data_line_warning": (
+            result.latest_runtime_status == "CSV_PHYSICAL_DATA_LINE_COUNT_WARN_ZERO_DATA_LINES"
+        ),
+        "latest_csv_physical_data_line_count_only_issue_count": status_summary.get("latest_issue_count"),
+        "latest_csv_physical_data_line_count_only_warning_count": status_summary.get("latest_warning_count"),
+        "csv_physical_data_line_count_only_target_csv_opened_for_physical_data_line_count": (
+            status_summary.get("latest_target_csv_opened_for_physical_data_line_count")
+        ),
+        "csv_physical_data_line_count_only_csv_header_read": status_summary.get("latest_csv_header_read"),
+        "csv_physical_data_line_count_only_csv_header_values_recorded": status_summary.get(
+            "latest_csv_header_values_recorded"
+        ),
+        "csv_physical_data_line_count_only_csv_values_read": status_summary.get("latest_csv_values_read"),
+        "csv_physical_data_line_count_only_csv_value_fields_parsed": status_summary.get(
+            "latest_csv_value_fields_parsed"
+        ),
+        "csv_physical_data_line_count_only_csv_row_values_stored": status_summary.get(
+            "latest_csv_row_values_stored"
+        ),
+        "csv_physical_data_line_count_only_csv_full_content_read": status_summary.get(
+            "latest_csv_full_content_read"
+        ),
+        "csv_physical_data_line_count_only_csv_full_content_semantically_read": status_summary.get(
+            "latest_csv_full_content_semantically_read"
+        ),
+        "csv_physical_data_line_count_only_real_csv_consumed": status_summary.get("latest_real_csv_consumed"),
+        "csv_physical_data_line_count_only_local_file_byte_hash_computed": status_summary.get(
+            "latest_local_file_byte_hash_computed"
+        ),
+        "csv_physical_data_line_count_only_local_file_byte_hash_recomputed": status_summary.get(
+            "latest_local_file_byte_hash_recomputed"
+        ),
+        "csv_physical_data_line_count_only_expected_hash_verification_performed": status_summary.get(
+            "latest_expected_hash_verification_performed"
+        ),
+        "csv_physical_data_line_count_only_expected_hash_verified_against_local_metadata": (
+            status_summary.get("latest_expected_hash_verified_against_local_metadata")
+        ),
+        "csv_physical_data_line_count_only_expected_hash_verified_against_source_hash": status_summary.get(
+            "latest_expected_hash_verified_against_source_hash"
+        ),
+        "csv_physical_data_line_count_only_source_hash_validated": status_summary.get(
+            "latest_source_hash_validated"
+        ),
+        "csv_physical_data_line_count_only_revision_id_validated": status_summary.get(
+            "latest_revision_id_validated"
+        ),
+        "csv_physical_data_line_count_only_available_time_validated": status_summary.get(
+            "latest_available_time_validated"
+        ),
+        "csv_physical_data_line_count_only_pit_admissibility_validated": status_summary.get(
+            "latest_pit_admissibility_validated"
+        ),
+        "csv_physical_data_line_count_only_source_reliability_scored": status_summary.get(
+            "latest_source_reliability_scored"
+        ),
+        "csv_physical_data_line_count_only_reviewer_authority_validated": status_summary.get(
+            "latest_reviewer_authority_validated"
+        ),
+    }
+    for flag in CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FALSE_FLAGS:
+        summary[f"csv_physical_data_line_count_only_{flag}"] = status_summary.get(
+            flag,
+            status_summary.get(f"latest_{flag}"),
+        )
+    return summary
+
+
+def _csv_physical_data_line_count_only_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_string_or_empty(_csv_physical_data_line_count_only_summary_value(summary, field))};"
+        for field in (
+            _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_TEXT_FIELDS
+            + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_BOOL_FIELDS
+            + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_INT_FIELDS
+            + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FIELDS
+        )
+        if field != "latest_csv_physical_data_line_count_only_recommended_next_task"
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "csv_physical_data_line_count_only_semantics=physical_non_header_line_count_only_no_csv_values_hash_or_pit_validation; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('latest_csv_physical_data_line_count_only_health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('latest_csv_physical_data_line_count_only_workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('latest_csv_physical_data_line_count_only_artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get('latest_csv_physical_data_line_count_only_report_path'))}; "
+        f"{field_notes}"
+    )
+
+
+def _csv_physical_data_line_count_only_dashboard_header_policy(value: Any) -> str:
+    if _string_or_empty(value) == "REQUIRE_PRIOR_HEADER_ONLY_METADATA":
+        return "HEADER_METADATA_REUSED_NO_HEADER_VALUE_READ"
+    return _string_or_empty(value)
+
+
+def _csv_physical_data_line_count_only_summary_value(summary: dict[str, Any], dashboard_field: str) -> Any:
+    if dashboard_field == "latest_csv_physical_data_line_count_only_recommended_next_task":
+        return summary.get("next_action")
+    if dashboard_field in summary:
+        return summary.get(dashboard_field)
+    return ""
+
+
+def _csv_physical_data_line_count_only_summary_fields(
+    by_component: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    component = by_component.get(_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "csv_physical_data_line_count_only_context_visible": _parse_note_value(notes, "context_visible"),
+        "latest_csv_physical_data_line_count_only_run_id": _string_or_empty(
+            component.get("latest_artifact_id")
+        ),
+        "latest_csv_physical_data_line_count_only_runtime_status": _component_status(
+            by_component,
+            _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_COMPONENT,
+        ),
+        "latest_csv_physical_data_line_count_only_health_status": _parse_note_value(
+            notes,
+            "health_status",
+        ),
+        "latest_csv_physical_data_line_count_only_workflow_stage": _string_or_empty(
+            component.get("stage")
+        ),
+        "latest_csv_physical_data_line_count_only_artifact_path": _parse_note_value(notes, "artifact_path"),
+        "latest_csv_physical_data_line_count_only_report_path": _parse_note_value(notes, "report_path"),
+        "latest_csv_physical_data_line_count_only_recommended_next_task": _parse_note_value(
+            notes,
+            "next_manual_action",
+        ),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_TEXT_FIELDS
+            if field != "latest_csv_physical_data_line_count_only_recommended_next_task"
+        }
+    )
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in (
+                _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_BOOL_FIELDS
+                + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_INT_FIELDS
+                + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FIELDS
+            )
+        }
+    )
+    return fields
+
+
+def _csv_physical_data_line_count_only_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, "")) for field in _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LATEST_FIELDS
+    }
+    kwargs.update(
+        {field: str(summary.get(field, "")) for field in _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_TEXT_FIELDS}
+    )
+    kwargs["csv_physical_data_line_count_only_context_visible"] = _bool_from_text(
+        summary.get("csv_physical_data_line_count_only_context_visible")
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in (
+                _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_BOOL_FIELDS
+                + _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FIELDS
+            )
+        }
+    )
+    kwargs["latest_csv_physical_data_line_count_only_count"] = _int_or_blank(
+        summary.get("latest_csv_physical_data_line_count_only_count")
+    )
+    kwargs["latest_csv_physical_data_line_count_only_total_physical_line_count"] = _int_or_blank(
+        summary.get("latest_csv_physical_data_line_count_only_total_physical_line_count")
+    )
+    kwargs["latest_csv_physical_data_line_count_only_issue_count"] = _int_or_zero(
+        summary.get("latest_csv_physical_data_line_count_only_issue_count")
+    )
+    kwargs["latest_csv_physical_data_line_count_only_warning_count"] = _int_or_zero(
+        summary.get("latest_csv_physical_data_line_count_only_warning_count")
+    )
+    if not kwargs["latest_csv_physical_data_line_count_only_file_touch_level"]:
+        kwargs["latest_csv_physical_data_line_count_only_file_touch_level"] = "FILE_TOUCH_NONE"
+    if not kwargs["latest_csv_physical_data_line_count_only_csv_read_level"]:
+        kwargs["latest_csv_physical_data_line_count_only_csv_read_level"] = "CSV_READ_NONE"
+    if not kwargs["latest_csv_physical_data_line_count_only_local_file_hash_level"]:
+        kwargs["latest_csv_physical_data_line_count_only_local_file_hash_level"] = "LOCAL_FILE_HASH_NONE"
+    if not kwargs["latest_csv_physical_data_line_count_only_expected_hash_verification_level"]:
+        kwargs["latest_csv_physical_data_line_count_only_expected_hash_verification_level"] = (
+            "EXPECTED_HASH_VERIFICATION_NONE"
+        )
+    if not kwargs["latest_csv_physical_data_line_count_only_level"]:
+        kwargs["latest_csv_physical_data_line_count_only_level"] = "CSV_PHYSICAL_DATA_LINE_COUNT_NONE"
+    return kwargs
+
+
+def _int_or_blank(value: Any) -> int | str:
+    if _string_or_empty(value) == "":
+        return ""
+    return _int_or_zero(value)
+
+
+def _csv_physical_data_line_count_only_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_RESULT_FIELDS}
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:

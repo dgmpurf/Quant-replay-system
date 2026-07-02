@@ -117,6 +117,15 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expe
     REQUIRED_FALSE_FLAGS as EXPECTED_HASH_VERIFICATION_REQUIRED_FALSE_FLAGS,
     run_expected_hash_verification,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only import (
+    CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+    EXPECTED_HASH_VERIFICATION_NONE as CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_EXPECTED_HASH_NONE,
+    LOCAL_FILE_HASH_NONE as CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LOCAL_HASH_NONE,
+    PHYSICAL_NON_HEADER_LINE_COUNT,
+    REQUIRED_FALSE_FLAGS as CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_REQUIRED_FALSE_FLAGS,
+    csv_physical_data_line_count_safety_flags,
+    run_csv_physical_data_line_count_only,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -185,6 +194,27 @@ STALE_EXPECTED_HASH_VERIFICATION_NEXT_ACTION_PHRASES = [
     "Research-Status Planning Report-Only v0.1",
 ]
 UNSAFE_EXPECTED_HASH_VERIFICATION_WORDING = [
+    "PACKAGE_APPROVED",
+    "PACKAGE_ADMISSIBLE",
+    "PIT_ADMISSIBLE_PACKAGE",
+    "READY_FOR_REPLAY",
+    "REPLAY_INPUT_READY",
+    "ACTIVE_REPLAY_INPUT_READY",
+    "APPROVED_FOR_ACTIVE_INPUT",
+    "TRADING_READY",
+    "BUY_REVIEW_READY",
+    "PERFORMANCE_VALIDATED",
+]
+EXPECTED_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line "
+    "Count-Only Checkpoint Planning Report-Only v0.1"
+)
+STALE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_NEXT_ACTION_PHRASES = [
+    "Artifact Views Report-Only v0.1",
+    "CLI Report-Only v0.1",
+    "Research-Status Planning Report-Only v0.1",
+]
+UNSAFE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_WORDING = [
     "PACKAGE_APPROVED",
     "PACKAGE_ADMISSIBLE",
     "PIT_ADMISSIBLE_PACKAGE",
@@ -10075,6 +10105,96 @@ def _expected_hash_verification_inputs(
     return manifest_path, metadata_path
 
 
+def _csv_physical_data_line_count_only_inputs(
+    root: Path,
+    *,
+    data_lines: list[str],
+) -> tuple[Path, Path, Path]:
+    csv_path = root / "reviewed" / "tiny_physical_line_count.csv"
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    content = "symbol,signal_date,review_note\n" + "\n".join(data_lines)
+    if data_lines:
+        content += "\n"
+    csv_path.write_text(content, encoding="utf-8")
+
+    header_metadata_path = root / "header_metadata" / "metadata.json"
+    header_metadata_path.parent.mkdir(parents=True, exist_ok=True)
+    header_metadata_path.write_text(
+        json.dumps(
+            {
+                "report_only": True,
+                "diagnostic_only": True,
+                "csv_header_read": True,
+                "csv_header_values_recorded": False,
+                "csv_header_column_count": 3,
+                "target_csv_path": str(csv_path),
+                "csv_row_count_computed": False,
+                "csv_values_read": False,
+                "csv_full_content_read": False,
+                "real_csv_consumed": False,
+                "local_file_byte_hash_computed": False,
+                "expected_hash_verification_performed": False,
+                "source_hash_validated": False,
+                "revision_id_validated": False,
+                "available_time_validated": False,
+                "pit_admissibility_validated": False,
+                "source_reliability_scored": False,
+                "reviewer_authority_validated": False,
+                **csv_physical_data_line_count_safety_flags(),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    manifest_path = root / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "package_id": "tiny-pit-csv-physical-data-line-count-only-dashboard",
+                "package_schema_version": "v0.1",
+                "created_at": "2026-07-02T00:00:00Z",
+                "prepared_by": "synthetic-reviewer",
+                "report_only": True,
+                "diagnostic_only": True,
+                "requested_file_touch_level": CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+                "requested_csv_read_level": CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+                "requested_csv_physical_data_line_count_level": CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+                "requested_local_file_hash_level": CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_LOCAL_HASH_NONE,
+                "requested_expected_hash_verification_level": (
+                    CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_EXPECTED_HASH_NONE
+                ),
+                "csv_file_references": [
+                    {
+                        "reference_type": "reviewed_local_csv_file_ref",
+                        "reference_name": "tiny-physical-line-count-dashboard",
+                        "path": str(csv_path),
+                        "required": True,
+                        "intended_touch_level": CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+                        "declared_only": False,
+                        "notes": "Synthetic dashboard fixture; values must not be surfaced.",
+                    }
+                ],
+                "header_metadata_reference": str(header_metadata_path),
+                "row_count_policy": PHYSICAL_NON_HEADER_LINE_COUNT,
+                "forbidden_downstream_flags": {
+                    flag: False for flag in CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_REQUIRED_FALSE_FLAGS
+                },
+                "limitations": [
+                    "Physical data-line count-only dashboard fixture; no CSV parsing or value reading.",
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return manifest_path, header_metadata_path, csv_path
+
+
 def _active_replay_input_promotion_ready(root: Path):
     input_root = root / "manual_diagnostics" / "active_replay_input_promotion_test_inputs"
     validator = _active_replay_input_promotion_validator_artifact(input_root / "validator")
@@ -16487,6 +16607,319 @@ def test_research_status_preserves_paper_priority_over_expected_hash_verificatio
     assert result.expected_hash_verification_replay_execution_allowed is False
     assert result.expected_hash_verification_buy_review_allowed is False
     assert result.expected_hash_verification_trading_allowed is False
+
+
+def test_research_status_includes_csv_physical_data_line_count_only_no_input_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_v0_1"
+    )
+    run_csv_physical_data_line_count_only(output_root=output_root, run_id="005_no_input")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.csv_physical_data_line_count_only_context_visible is True
+    assert result.latest_csv_physical_data_line_count_only_run_id == "005_no_input"
+    assert result.latest_csv_physical_data_line_count_only_runtime_status == (
+        "NO_CSV_PHYSICAL_DATA_LINE_COUNT_INPUT"
+    )
+    assert result.latest_csv_physical_data_line_count_only_health_status == "PASS"
+    assert result.latest_csv_physical_data_line_count_only_file_touch_level == "FILE_TOUCH_NONE"
+    assert result.latest_csv_physical_data_line_count_only_csv_read_level == "CSV_READ_NONE"
+    assert result.latest_csv_physical_data_line_count_only_local_file_hash_level == "LOCAL_FILE_HASH_NONE"
+    assert result.latest_csv_physical_data_line_count_only_expected_hash_verification_level == (
+        "EXPECTED_HASH_VERIFICATION_NONE"
+    )
+    assert result.latest_csv_physical_data_line_count_only_level == "CSV_PHYSICAL_DATA_LINE_COUNT_NONE"
+    assert result.latest_csv_physical_data_line_count_only_computed is False
+    assert result.latest_csv_physical_data_line_count_only_count == ""
+    assert result.csv_physical_data_line_count_only_target_csv_opened_for_physical_data_line_count is False
+    assert result.csv_physical_data_line_count_only_csv_header_read is False
+    assert result.csv_physical_data_line_count_only_csv_values_read is False
+    assert result.csv_physical_data_line_count_only_csv_full_content_read is False
+    assert result.csv_physical_data_line_count_only_real_csv_consumed is False
+    assert result.csv_physical_data_line_count_only_local_file_byte_hash_computed is False
+    assert result.csv_physical_data_line_count_only_expected_hash_verification_performed is False
+    assert result.csv_physical_data_line_count_only_source_hash_validated is False
+    assert result.csv_physical_data_line_count_only_revision_id_validated is False
+    assert result.csv_physical_data_line_count_only_available_time_validated is False
+    assert result.csv_physical_data_line_count_only_pit_admissibility_validated is False
+    assert result.csv_physical_data_line_count_only_reviewer_authority_validated is False
+    assert result.csv_physical_data_line_count_only_active_replay_input is False
+    assert result.csv_physical_data_line_count_only_replay_execution_allowed is False
+    assert result.csv_physical_data_line_count_only_buy_review_allowed is False
+    assert result.csv_physical_data_line_count_only_trading_allowed is False
+    assert result.csv_physical_data_line_count_only_data_raw_written is False
+    assert result.csv_physical_data_line_count_only_data_processed_written is False
+    assert result.csv_physical_data_line_count_only_data_cache_written is False
+
+
+def test_research_status_includes_csv_physical_data_line_count_only_count_context_without_reopen(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "csv_physical_data_line_count_only_inputs"
+    manifest_path, header_metadata_path, csv_path = _csv_physical_data_line_count_only_inputs(
+        input_root,
+        data_lines=[
+            "000001,2024-04-02,SENTINEL_PHYSICAL_COUNT_ROW_VALUE_DO_NOT_READ",
+            "000002,2024-04-03,SENTINEL_PHYSICAL_COUNT_FULL_CONTENT_DO_NOT_READ",
+        ],
+    )
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_v0_1"
+    )
+    run_csv_physical_data_line_count_only(
+        output_root=output_root,
+        run_id="005_count",
+        package_manifest_path=manifest_path,
+        header_metadata_path=header_metadata_path,
+        allowed_manifest_roots=[input_root],
+        file_touch_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        csv_read_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        csv_physical_data_line_count_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        allow_csv_physical_data_line_count_only=True,
+    )
+    csv_path.unlink()
+    header_metadata_path.unlink()
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    metadata_text = json.dumps(metadata, sort_keys=True)
+    report_text = result.artifact_paths["local_research_dashboard"].read_text(encoding="utf-8")
+
+    assert result.csv_physical_data_line_count_only_context_visible is True
+    assert result.latest_csv_physical_data_line_count_only_run_id == "005_count"
+    assert result.latest_csv_physical_data_line_count_only_runtime_status == (
+        "CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_REPORT_ONLY"
+    )
+    assert result.latest_csv_physical_data_line_count_only_health_status == "PASS"
+    assert result.latest_csv_physical_data_line_count_only_level == CSV_PHYSICAL_DATA_LINE_COUNT_ONLY
+    assert result.latest_csv_physical_data_line_count_only_computed is True
+    assert result.latest_csv_physical_data_line_count_only_count == 2
+    assert result.latest_csv_physical_data_line_count_only_policy == PHYSICAL_NON_HEADER_LINE_COUNT
+    assert result.latest_csv_physical_data_line_count_only_total_physical_line_count == 3
+    assert result.latest_csv_physical_data_line_count_only_header_dependency_policy == (
+        "HEADER_METADATA_REUSED_NO_HEADER_VALUE_READ"
+    )
+    assert result.latest_csv_physical_data_line_count_only_header_metadata_reused is True
+    assert result.latest_csv_physical_data_line_count_only_header_line_skipped_by_policy is True
+    assert result.latest_csv_physical_data_line_count_only_zero_data_line_warning is False
+    assert result.latest_csv_physical_data_line_count_only_issue_count == 0
+    assert result.latest_csv_physical_data_line_count_only_warning_count == 0
+    assert (
+        result.csv_physical_data_line_count_only_target_csv_opened_for_physical_data_line_count
+        is True
+    )
+    assert result.csv_physical_data_line_count_only_csv_header_read is False
+    assert result.csv_physical_data_line_count_only_csv_header_values_recorded is False
+    assert result.csv_physical_data_line_count_only_csv_values_read is False
+    assert result.csv_physical_data_line_count_only_csv_value_fields_parsed is False
+    assert result.csv_physical_data_line_count_only_csv_row_values_stored is False
+    assert result.csv_physical_data_line_count_only_csv_full_content_read is False
+    assert result.csv_physical_data_line_count_only_csv_full_content_semantically_read is False
+    assert result.csv_physical_data_line_count_only_real_csv_consumed is False
+    assert result.csv_physical_data_line_count_only_local_file_byte_hash_computed is False
+    assert result.csv_physical_data_line_count_only_local_file_byte_hash_recomputed is False
+    assert result.csv_physical_data_line_count_only_expected_hash_verification_performed is False
+    assert result.csv_physical_data_line_count_only_expected_hash_verified_against_local_metadata is False
+    assert result.csv_physical_data_line_count_only_expected_hash_verified_against_source_hash is False
+    assert result.csv_physical_data_line_count_only_source_hash_validated is False
+    assert result.csv_physical_data_line_count_only_revision_id_validated is False
+    assert result.csv_physical_data_line_count_only_available_time_validated is False
+    assert result.csv_physical_data_line_count_only_pit_admissibility_validated is False
+    assert result.csv_physical_data_line_count_only_source_reliability_scored is False
+    assert result.csv_physical_data_line_count_only_reviewer_authority_validated is False
+    assert result.csv_physical_data_line_count_only_real_reviewed_csv_package_created is False
+    assert result.csv_physical_data_line_count_only_real_package_candidate_created is False
+    assert result.csv_physical_data_line_count_only_active_reviewed_input_candidate_created is False
+    assert result.csv_physical_data_line_count_only_real_replay_input_created is False
+    assert result.csv_physical_data_line_count_only_active_replay_input is False
+    assert result.csv_physical_data_line_count_only_active_replay_ready is False
+    assert result.csv_physical_data_line_count_only_active_replay_input_ready_emitted is False
+    assert result.csv_physical_data_line_count_only_replay_execution_allowed is False
+    assert result.csv_physical_data_line_count_only_trading_allowed is False
+    assert result.csv_physical_data_line_count_only_buy_review_allowed is False
+    assert result.csv_physical_data_line_count_only_data_raw_written is False
+    assert result.csv_physical_data_line_count_only_data_processed_written is False
+    assert result.csv_physical_data_line_count_only_data_cache_written is False
+    assert result.latest_csv_physical_data_line_count_only_recommended_next_task == (
+        EXPECTED_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_NEXT_TASK
+    )
+    assert row["status"] == "CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_REPORT_ONLY"
+    assert row["workflow_area"] == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY"
+    )
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "csv_physical_data_line_count_only_context_visible"] == "True"
+    assert summary.loc[0, "latest_csv_physical_data_line_count_only_count"] == "2"
+    assert (
+        summary.loc[
+            0,
+            "csv_physical_data_line_count_only_target_csv_opened_for_physical_data_line_count",
+        ]
+        == "True"
+    )
+    assert summary.loc[0, "csv_physical_data_line_count_only_real_csv_consumed"] == "False"
+    assert metadata["csv_physical_data_line_count_only_context_visible"] is True
+    assert metadata["latest_csv_physical_data_line_count_only_count"] == 2
+    assert metadata["csv_physical_data_line_count_only_real_csv_consumed"] is False
+    for sentinel in [
+        "SENTINEL_PHYSICAL_COUNT_ROW_VALUE_DO_NOT_READ",
+        "SENTINEL_PHYSICAL_COUNT_FULL_CONTENT_DO_NOT_READ",
+    ]:
+        assert sentinel not in metadata_text
+        assert sentinel not in report_text
+    for unsafe in UNSAFE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_WORDING:
+        assert unsafe not in metadata_text
+        assert unsafe not in result.latest_csv_physical_data_line_count_only_recommended_next_task
+        assert unsafe not in row["notes"]
+
+
+def test_research_status_includes_csv_physical_data_line_count_only_zero_line_warn(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "csv_physical_data_line_count_only_zero_inputs"
+    manifest_path, header_metadata_path, _ = _csv_physical_data_line_count_only_inputs(
+        input_root,
+        data_lines=[],
+    )
+    run_csv_physical_data_line_count_only(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_v0_1"
+        ),
+        run_id="005_zero",
+        package_manifest_path=manifest_path,
+        header_metadata_path=header_metadata_path,
+        allowed_manifest_roots=[input_root],
+        file_touch_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        csv_read_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        csv_physical_data_line_count_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        allow_csv_physical_data_line_count_only=True,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS"
+    ].iloc[0]
+
+    assert result.csv_physical_data_line_count_only_context_visible is True
+    assert result.latest_csv_physical_data_line_count_only_runtime_status == (
+        "CSV_PHYSICAL_DATA_LINE_COUNT_WARN_ZERO_DATA_LINES"
+    )
+    assert result.latest_csv_physical_data_line_count_only_health_status == "WARN"
+    assert result.latest_csv_physical_data_line_count_only_count == 0
+    assert result.latest_csv_physical_data_line_count_only_zero_data_line_warning is True
+    assert result.latest_csv_physical_data_line_count_only_warning_count == 1
+    assert row["blocking_error_count"] == 0
+    assert row["warning_count"] >= 1
+    assert result.csv_physical_data_line_count_only_real_package_candidate_created is False
+    assert result.csv_physical_data_line_count_only_active_replay_input is False
+    assert result.csv_physical_data_line_count_only_buy_review_allowed is False
+    assert result.csv_physical_data_line_count_only_trading_allowed is False
+
+
+def test_research_status_preserves_paper_priority_over_csv_physical_data_line_count_only(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "csv_physical_data_line_count_only_priority_inputs"
+    manifest_path, header_metadata_path, _ = _csv_physical_data_line_count_only_inputs(
+        input_root,
+        data_lines=["000001,2024-04-02,SENTINEL_PRIORITY_ROW_VALUE_DO_NOT_READ"],
+    )
+    run_csv_physical_data_line_count_only(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_v0_1"
+        ),
+        run_id="005_count",
+        package_manifest_path=manifest_path,
+        header_metadata_path=header_metadata_path,
+        allowed_manifest_roots=[input_root],
+        file_touch_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        csv_read_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        csv_physical_data_line_count_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        allow_csv_physical_data_line_count_only=True,
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.csv_physical_data_line_count_only_context_visible is True
+    assert result.latest_csv_physical_data_line_count_only_health_status == "PASS"
+    assert result.csv_physical_data_line_count_only_real_csv_consumed is False
+    assert result.csv_physical_data_line_count_only_active_replay_input_ready_emitted is False
+    assert result.csv_physical_data_line_count_only_replay_execution_allowed is False
+    assert result.csv_physical_data_line_count_only_buy_review_allowed is False
+    assert result.csv_physical_data_line_count_only_trading_allowed is False
+
+
+def test_research_status_surfaces_csv_physical_data_line_count_only_health_fail(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "csv_physical_data_line_count_only_fail_inputs"
+    manifest_path, header_metadata_path, _ = _csv_physical_data_line_count_only_inputs(
+        input_root,
+        data_lines=["000001,2024-04-02,SENTINEL_FAIL_ROW_VALUE_DO_NOT_READ"],
+    )
+    artifact = run_csv_physical_data_line_count_only(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_v0_1"
+        ),
+        run_id="005_unsafe",
+        package_manifest_path=manifest_path,
+        header_metadata_path=header_metadata_path,
+        allowed_manifest_roots=[input_root],
+        file_touch_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        csv_read_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        csv_physical_data_line_count_level=CSV_PHYSICAL_DATA_LINE_COUNT_ONLY,
+        allow_csv_physical_data_line_count_only=True,
+    )
+    metadata_path = Path(artifact["artifact_paths"]["metadata"])
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["csv_physical_data_line_count_policy"] = "CSV_RECORD_COUNT_ONLY"
+    metadata_path.write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS"
+    ].iloc[0]
+
+    assert result.csv_physical_data_line_count_only_context_visible is True
+    assert result.latest_csv_physical_data_line_count_only_health_status == "FAIL"
+    assert row["blocking_error_count"] == 1
+    assert result.csv_physical_data_line_count_only_real_csv_consumed is False
+    assert result.csv_physical_data_line_count_only_active_replay_input is False
+    assert result.csv_physical_data_line_count_only_buy_review_allowed is False
+    assert result.csv_physical_data_line_count_only_trading_allowed is False
 
 
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(

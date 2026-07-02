@@ -17,7 +17,7 @@ HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
 RESEARCH_STATUS_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line "
-    "Count-Only Research-Status Planning Report-Only v0.1"
+    "Count-Only Checkpoint Planning Report-Only v0.1"
 )
 HEADER_SENTINEL = "HEADER_SENTINEL_SHOULD_NOT_PRINT"
 ROW_SENTINEL = "ROW_SENTINEL_SHOULD_NOT_PRINT"
