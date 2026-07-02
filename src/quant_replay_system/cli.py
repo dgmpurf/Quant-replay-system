@@ -688,6 +688,20 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_loca
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status import (
     run_local_file_byte_hash_only_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification import (
+    EXPECTED_HASH_SHA256_AGAINST_LOCAL_METADATA_ONLY,
+    run_expected_hash_verification,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_health import (
+    check_expected_hash_verification_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_index import (
+    DEFAULT_ROOT as EXPECTED_HASH_VERIFICATION_DEFAULT_ROOT,
+    build_expected_hash_verification_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status import (
+    run_expected_hash_verification_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -6186,6 +6200,87 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status.set_defaults(
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-expected-hash-verification",
+        help="Write report-only Tiny PIT LOCAL_CSV expected-hash verification artifacts from metadata only",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification.add_argument(
+        "--output-root",
+        default=EXPECTED_HASH_VERIFICATION_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification.add_argument(
+        "--run-id",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification.add_argument(
+        "--expected-hash-manifest-path",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification.add_argument(
+        "--local-file-byte-hash-metadata-path",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification.add_argument(
+        "--allowed-manifest-root",
+        action="append",
+        default=None,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification.add_argument(
+        "--allow-expected-hash-verification",
+        action="store_true",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-expected-hash-verification-index",
+        help="Build an index for report-only Tiny PIT LOCAL_CSV expected-hash verification artifacts",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_index.add_argument(
+        "--root",
+        default=EXPECTED_HASH_VERIFICATION_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_index.add_argument(
+        "--output-dir",
+        default=f"{EXPECTED_HASH_VERIFICATION_DEFAULT_ROOT}/index",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_index
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-expected-hash-verification-health",
+        help="Check report-only Tiny PIT LOCAL_CSV expected-hash verification artifact health",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_health.add_argument(
+        "--root",
+        default=EXPECTED_HASH_VERIFICATION_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_health.add_argument(
+        "--output-dir",
+        default=f"{EXPECTED_HASH_VERIFICATION_DEFAULT_ROOT}/health",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_health
+    )
+
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-expected-hash-verification-status",
+        help="Summarize latest report-only Tiny PIT LOCAL_CSV expected-hash verification status",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status.add_argument(
+        "--root",
+        default=EXPECTED_HASH_VERIFICATION_DEFAULT_ROOT,
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status.add_argument(
+        "--output-dir",
+        default=f"{EXPECTED_HASH_VERIFICATION_DEFAULT_ROOT}/status",
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status
     )
 
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
@@ -11794,6 +11889,10 @@ LOCAL_FILE_BYTE_HASH_ONLY_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
     "Checkpoint Planning Report-Only v0.1"
 )
+EXPECTED_HASH_VERIFICATION_CLI_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification "
+    "Research-Status Planning Report-Only v0.1"
+)
 
 
 def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only(
@@ -12074,6 +12173,172 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_h
     print(
         "Report-only status: no target CSV was opened, no hash was recomputed, and no real package "
         "candidate, active input, replay, buy-review, performance validation, trading, or protected data writes were created."
+    )
+    return 1 if result.latest_runtime_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification(
+    args: argparse.Namespace,
+) -> int:
+    if args.expected_hash_manifest_path:
+        result = run_expected_hash_verification(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            expected_hash_manifest_path=args.expected_hash_manifest_path,
+            local_file_byte_hash_metadata_path=args.local_file_byte_hash_metadata_path,
+            allowed_manifest_roots=args.allowed_manifest_root,
+            verification_level=EXPECTED_HASH_SHA256_AGAINST_LOCAL_METADATA_ONLY,
+            allow_expected_hash_verification=args.allow_expected_hash_verification,
+        )
+    else:
+        result = run_expected_hash_verification(
+            output_root=args.output_root,
+            run_id=args.run_id,
+        )
+    print(f"run_id: {result['run_id']}")
+    print(f"runtime_status: {result['runtime_status']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"report_only: {result['report_only']}")
+    print(f"diagnostic_only: {result['diagnostic_only']}")
+    print(f"file_touch_level: {result['file_touch_level']}")
+    print(f"csv_read_level: {result['csv_read_level']}")
+    print(f"local_file_hash_level: {result['local_file_hash_level']}")
+    print(f"expected_hash_verification_level: {result['expected_hash_verification_level']}")
+    print(f"expected_hash_verification_performed: {result['expected_hash_verification_performed']}")
+    print(f"expected_hash_algorithm: {result['expected_hash_algorithm']}")
+    print(f"expected_hash_present: {result['expected_hash_present']}")
+    print(f"expected_hash_preview: {result['expected_hash_preview']}")
+    print(f"actual_local_file_byte_hash_algorithm: {result['actual_local_file_byte_hash_algorithm']}")
+    print(f"actual_local_file_byte_hash_preview: {result['actual_local_file_byte_hash_preview']}")
+    print(f"expected_hash_matched: {result['expected_hash_matched']}")
+    print(f"expected_hash_mismatch: {result['expected_hash_mismatch']}")
+    print(f"expected_hash_verified_against_local_metadata: {result['expected_hash_verified_against_local_metadata']}")
+    print(f"expected_hash_verified_against_source_hash: {result['expected_hash_verified_against_source_hash']}")
+    print(f"source_hash_validated: {result['source_hash_validated']}")
+    print(f"revision_id_validated: {result['revision_id_validated']}")
+    print(f"available_time_validated: {result['available_time_validated']}")
+    print(f"pit_admissibility_validated: {result['pit_admissibility_validated']}")
+    print(f"source_reliability_scored: {result['source_reliability_scored']}")
+    print(f"reviewer_authority_validated: {result['reviewer_authority_validated']}")
+    print(f"local_file_byte_hash_recomputed: {result['local_file_byte_hash_recomputed']}")
+    print(f"target_file_opened_for_expected_hash_verification: {result['target_file_opened_for_expected_hash_verification']}")
+    print(f"csv_header_read: {result['csv_header_read']}")
+    print(f"csv_row_count_computed: {result['csv_row_count_computed']}")
+    print(f"csv_values_read: {result['csv_values_read']}")
+    print(f"csv_full_content_read: {result['csv_full_content_read']}")
+    print(f"real_csv_consumed: {result['real_csv_consumed']}")
+    print(f"active_replay_input: {result['active_replay_input']}")
+    print(f"trading_allowed: {result['trading_allowed']}")
+    print(f"buy_review_allowed: {result['buy_review_allowed']}")
+    print(f"data_raw_written: {result['data_raw_written']}")
+    print(f"data_processed_written: {result['data_processed_written']}")
+    print(f"data_cache_written: {result['data_cache_written']}")
+    print(f"issue_count: {result['issue_count']}")
+    print(f"warning_count: {result['warning_count']}")
+    print(f"actionable_mismatch: {result['actionable_mismatch']}")
+    print(f"artifact_path: {result['artifact_paths']['metadata'].parent}")
+    print(f"report_path: {result['artifact_paths']['report']}")
+    print(f"recommended_next_task: {EXPECTED_HASH_VERIFICATION_CLI_NEXT_TASK}")
+    print(
+        "Report-only expected-hash check: no target CSV was opened, no hash was recomputed, "
+        "and no real package candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_expected_hash_verification_index(root=args.root, output_dir=args.output_dir)
+    latest = result.index_frame.sort_values(["run_id"]).iloc[-1].to_dict() if not result.index_frame.empty else {}
+    print(f"Tiny PIT expected-hash verification index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"latest_runtime_status: {latest.get('runtime_status', '')}")
+    print(f"latest_health_status: {latest.get('health_status', '')}")
+    print(f"latest_workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"latest_expected_hash_preview: {latest.get('expected_hash_preview', '')}")
+    print(f"latest_actual_local_file_byte_hash_preview: {latest.get('actual_local_file_byte_hash_preview', '')}")
+    print(f"latest_expected_hash_matched: {latest.get('expected_hash_matched', '')}")
+    print(f"latest_expected_hash_mismatch: {latest.get('expected_hash_mismatch', '')}")
+    print(
+        "Report-only index: no target CSV was opened, no source byte-hash metadata was reread for "
+        "comparison, no hash was recomputed, and no real package candidate, active input, buy-review, "
+        "trading, or protected data writes were created."
+    )
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_expected_hash_verification_health(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT expected-hash verification health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Report-only health: no target CSV was opened, no source byte-hash metadata was reread for "
+        "comparison, no hash was recomputed, and no real package candidate, active input, buy-review, "
+        "trading, or protected data writes were created."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_expected_hash_verification_status(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT expected-hash verification status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_file_touch_level: {result.latest_file_touch_level}")
+    print(f"latest_csv_read_level: {result.latest_csv_read_level}")
+    print(f"latest_local_file_hash_level: {result.latest_local_file_hash_level}")
+    print(f"latest_expected_hash_verification_level: {result.latest_expected_hash_verification_level}")
+    print(f"latest_expected_hash_verification_performed: {result.latest_expected_hash_verification_performed}")
+    print(f"latest_expected_hash_algorithm: {result.latest_expected_hash_algorithm}")
+    print(f"latest_expected_hash_preview: {result.latest_expected_hash_preview}")
+    print(f"latest_actual_local_file_byte_hash_preview: {result.latest_actual_local_file_byte_hash_preview}")
+    print(f"latest_expected_hash_matched: {result.latest_expected_hash_matched}")
+    print(f"latest_expected_hash_mismatch: {result.latest_expected_hash_mismatch}")
+    print(f"latest_actionable_mismatch: {result.latest_actionable_mismatch}")
+    print(f"latest_expected_hash_verified_against_local_metadata: {result.latest_expected_hash_verified_against_local_metadata}")
+    print(f"latest_expected_hash_verified_against_source_hash: {result.latest_expected_hash_verified_against_source_hash}")
+    print(f"latest_source_hash_validated: {result.latest_source_hash_validated}")
+    print(f"latest_revision_id_validated: {result.latest_revision_id_validated}")
+    print(f"latest_available_time_validated: {result.latest_available_time_validated}")
+    print(f"latest_pit_admissibility_validated: {result.latest_pit_admissibility_validated}")
+    print(f"latest_source_reliability_scored: {result.latest_source_reliability_scored}")
+    print(f"latest_reviewer_authority_validated: {result.latest_reviewer_authority_validated}")
+    print(f"latest_local_file_byte_hash_recomputed: {result.latest_local_file_byte_hash_recomputed}")
+    print(f"latest_target_file_opened_for_expected_hash_verification: {result.latest_target_file_opened_for_expected_hash_verification}")
+    print(f"latest_csv_header_read: {result.latest_csv_header_read}")
+    print(f"latest_csv_row_count_computed: {result.latest_csv_row_count_computed}")
+    print(f"latest_csv_values_read: {result.latest_csv_values_read}")
+    print(f"latest_csv_full_content_read: {result.latest_csv_full_content_read}")
+    print(f"latest_real_csv_consumed: {result.latest_real_csv_consumed}")
+    print(f"latest_active_replay_input: {result.latest_active_replay_input}")
+    print(f"latest_trading_allowed: {result.latest_trading_allowed}")
+    print(f"latest_buy_review_allowed: {result.latest_buy_review_allowed}")
+    print(f"latest_data_raw_written: {result.latest_data_raw_written}")
+    print(f"latest_data_processed_written: {result.latest_data_processed_written}")
+    print(f"latest_data_cache_written: {result.latest_data_cache_written}")
+    print(f"artifact_path: {result.latest_artifact_path}")
+    print(f"report_path: {result.latest_report_path}")
+    print(f"recommended_next_task: {EXPECTED_HASH_VERIFICATION_CLI_NEXT_TASK}")
+    print(
+        "Report-only status: no target CSV was opened, no source byte-hash metadata was reread for "
+        "comparison, no hash was recomputed, and no real package candidate, active input, buy-review, "
+        "trading, or protected data writes were created."
     )
     return 1 if result.latest_runtime_status == "FAIL" else 0
 
