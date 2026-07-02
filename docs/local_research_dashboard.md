@@ -105,6 +105,20 @@ outputs/reports/paper_trading/workflow_status/
 
 It reads existing local `metadata.json` or `handoff_metadata.json` files only. It does not rerun any workflow step.
 
+## Tiny PIT Local File Byte-Hash-Only Status
+
+`research-status` includes `tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only-status` as report-only local file identity / integrity context when those artifacts exist.
+
+The dashboard scans:
+
+```text
+outputs/reports/manual_diagnostics/tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_v0_1/status/
+```
+
+The unified summary records the latest run id, runtime status, health status, workflow stage, artifact path, report path, `file_touch_level`, `csv_read_level`, `local_file_hash_level`, hash preview, hash algorithm, disclosure level, whether the full hash is recorded in local metadata, file size fields, negative proof fields, and safety flags. This context is lower priority than later paper workflow context and must preserve `PAPER_WORKFLOW_READY` as the final workflow stage when paper workflow evidence exists.
+
+Local File Byte-Hash-Only is context only. Research-status does not expose the full SHA-256. Byte-hash-only does not mean a CSV header was read, row count was computed, CSV data values were read, full CSV content was semantically read, or `real_csv_consumed` became true. It also does not mean source_hash validation, revision_id validation, available_time validation, PIT admissibility, source reliability scoring, reviewer authority validation, package candidate creation, active replay input, buy-review, or trading.
+
 ## Tiny PIT CSV Structural Header-Only Status
 
 `research-status` includes `tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-status` as report-only structural header context when those artifacts exist.

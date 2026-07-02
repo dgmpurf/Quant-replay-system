@@ -2,6 +2,14 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only v1.76.0
+
+`NO_LOCAL_FILE_BYTE_HASH_INPUT` and `LOCAL_FILE_BYTE_HASH_ONLY_REPORT_ONLY` mean Tiny PIT Local File Byte-Hash-Only artifacts exist as report-only / diagnostic-only governance context. Byte-hash-only means local file identity / integrity metadata only: the core hash mode requires a manifest, an allowed root, and explicit `--allow-local-file-byte-hash-only`; SHA-256 is fixed for v0.1.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only`, `tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only-status` to create, discover, safety-check, and summarize the byte-hash-only report-only artifacts. `research-status` exposes the latest Local File Byte-Hash-Only context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+Full SHA-256 is local core `metadata.json` only; report, index, status, CLI, and research-status expose preview only. The workflow does not read CSV headers, count rows, read CSV data values, semantically read full CSV content, consume CSV as package or replay input, validate source_hash, validate revision_id, validate available_time, validate PIT admissibility, score source reliability, validate reviewer authority, create real package candidates, create active replay input, run replay, create labels, train models, create stock_profile or paper validation, create buy-review eligibility, or authorize trading.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Structural Header-Only v1.75.0
 
 `NO_CSV_STRUCTURAL_FILE_TOUCH_INPUT` and `CSV_STRUCTURAL_HEADER_ONLY_REPORT_ONLY` mean Tiny PIT CSV Structural Header-Only artifacts exist as report-only / diagnostic-only governance context. Header-only means structural metadata only: a manifest-gated, allowed-root-gated, explicit `--allow-csv-header-only` run may read only the CSV header and record header proof fields.
