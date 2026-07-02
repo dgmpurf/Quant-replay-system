@@ -29,7 +29,7 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_loca
 
 EXPECTED_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
-    "CLI Report-Only v0.1"
+    "Checkpoint Planning Report-Only v0.1"
 )
 FORBIDDEN_WORDING = [
     "PACKAGE_APPROVED",

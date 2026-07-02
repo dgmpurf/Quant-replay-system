@@ -152,6 +152,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_status import (
     run_csv_structural_file_touch_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only import (
+    REQUIRED_FALSE_FLAGS as LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status import (
+    run_local_file_byte_hash_only_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1237,6 +1243,39 @@ SUMMARY_COLUMNS = [
     "csv_structural_header_only_real_csv_consumed",
     *[f"csv_structural_header_only_{flag}" for flag in CSV_STRUCTURAL_HEADER_ONLY_SAFETY_FALSE_FLAGS],
     "csv_structural_header_only_recommended_next_task",
+    "local_file_byte_hash_only_context_visible",
+    "latest_local_file_byte_hash_only_run_id",
+    "latest_local_file_byte_hash_only_runtime_status",
+    "latest_local_file_byte_hash_only_health_status",
+    "latest_local_file_byte_hash_only_workflow_stage",
+    "latest_local_file_byte_hash_only_artifact_path",
+    "latest_local_file_byte_hash_only_report_path",
+    "latest_local_file_byte_hash_only_file_touch_level",
+    "latest_local_file_byte_hash_only_csv_read_level",
+    "latest_local_file_byte_hash_only_local_file_hash_level",
+    "latest_local_file_byte_hash_only_hash_computed",
+    "latest_local_file_byte_hash_only_hash_algorithm",
+    "latest_local_file_byte_hash_only_hash_preview",
+    "latest_local_file_byte_hash_only_hash_disclosure_level",
+    "latest_local_file_byte_hash_only_full_hash_recorded_in_metadata",
+    "latest_local_file_byte_hash_only_verified_against_manifest",
+    "latest_local_file_byte_hash_only_expected_hash_present",
+    "latest_local_file_byte_hash_only_file_size_bytes",
+    "latest_local_file_byte_hash_only_size_limit_bytes",
+    "latest_local_file_byte_hash_only_recommended_next_task",
+    "local_file_byte_hash_only_csv_file_opened_structurally",
+    "local_file_byte_hash_only_csv_header_read",
+    "local_file_byte_hash_only_csv_row_count_computed",
+    "local_file_byte_hash_only_csv_values_read",
+    "local_file_byte_hash_only_csv_full_content_read",
+    "local_file_byte_hash_only_real_csv_consumed",
+    "local_file_byte_hash_only_source_hash_validated",
+    "local_file_byte_hash_only_revision_id_validated",
+    "local_file_byte_hash_only_available_time_validated",
+    "local_file_byte_hash_only_pit_admissibility_validated",
+    "local_file_byte_hash_only_source_reliability_scored",
+    "local_file_byte_hash_only_reviewer_authority_validated",
+    *[f"local_file_byte_hash_only_{flag}" for flag in LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FALSE_FLAGS],
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2905,6 +2944,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_MANIFEST_ONLY_PREFLIGHT_PROTOTYPE_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -2966,6 +3006,9 @@ WORKFLOW_AREAS = {
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY"
     ),
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
@@ -4148,6 +4191,60 @@ class LocalResearchDashboardResult:
     csv_structural_header_only_data_processed_written: bool
     csv_structural_header_only_data_cache_written: bool
     csv_structural_header_only_recommended_next_task: str
+    local_file_byte_hash_only_context_visible: bool
+    latest_local_file_byte_hash_only_run_id: str
+    latest_local_file_byte_hash_only_runtime_status: str
+    latest_local_file_byte_hash_only_health_status: str
+    latest_local_file_byte_hash_only_workflow_stage: str
+    latest_local_file_byte_hash_only_artifact_path: str
+    latest_local_file_byte_hash_only_report_path: str
+    latest_local_file_byte_hash_only_file_touch_level: str
+    latest_local_file_byte_hash_only_csv_read_level: str
+    latest_local_file_byte_hash_only_local_file_hash_level: str
+    latest_local_file_byte_hash_only_hash_computed: bool
+    latest_local_file_byte_hash_only_hash_algorithm: str
+    latest_local_file_byte_hash_only_hash_preview: str
+    latest_local_file_byte_hash_only_hash_disclosure_level: str
+    latest_local_file_byte_hash_only_full_hash_recorded_in_metadata: bool
+    latest_local_file_byte_hash_only_verified_against_manifest: bool
+    latest_local_file_byte_hash_only_expected_hash_present: bool
+    latest_local_file_byte_hash_only_file_size_bytes: str
+    latest_local_file_byte_hash_only_size_limit_bytes: str
+    latest_local_file_byte_hash_only_recommended_next_task: str
+    local_file_byte_hash_only_csv_file_opened_structurally: bool
+    local_file_byte_hash_only_csv_header_read: bool
+    local_file_byte_hash_only_csv_row_count_computed: bool
+    local_file_byte_hash_only_csv_values_read: bool
+    local_file_byte_hash_only_csv_full_content_read: bool
+    local_file_byte_hash_only_real_csv_consumed: bool
+    local_file_byte_hash_only_source_hash_validated: bool
+    local_file_byte_hash_only_revision_id_validated: bool
+    local_file_byte_hash_only_available_time_validated: bool
+    local_file_byte_hash_only_pit_admissibility_validated: bool
+    local_file_byte_hash_only_source_reliability_scored: bool
+    local_file_byte_hash_only_reviewer_authority_validated: bool
+    local_file_byte_hash_only_real_reviewed_csv_package_created: bool
+    local_file_byte_hash_only_real_package_candidate_created: bool
+    local_file_byte_hash_only_active_reviewed_input_candidate_created: bool
+    local_file_byte_hash_only_real_replay_input_created: bool
+    local_file_byte_hash_only_active_replay_input: bool
+    local_file_byte_hash_only_active_replay_ready: bool
+    local_file_byte_hash_only_active_replay_input_ready_emitted: bool
+    local_file_byte_hash_only_replay_execution_allowed: bool
+    local_file_byte_hash_only_trading_allowed: bool
+    local_file_byte_hash_only_buy_review_allowed: bool
+    local_file_byte_hash_only_data_raw_written: bool
+    local_file_byte_hash_only_data_processed_written: bool
+    local_file_byte_hash_only_data_cache_written: bool
+    local_file_byte_hash_only_labels_created: bool
+    local_file_byte_hash_only_training_dataset_created: bool
+    local_file_byte_hash_only_model_training_performed: bool
+    local_file_byte_hash_only_stock_profile_validation_created: bool
+    local_file_byte_hash_only_paper_validation_created: bool
+    local_file_byte_hash_only_strategy_performance_validated: bool
+    local_file_byte_hash_only_broker_api_called: bool
+    local_file_byte_hash_only_order_placed: bool
+    local_file_byte_hash_only_message_sent: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -5742,6 +5839,7 @@ def run_local_research_dashboard(
     tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root: str | Path | None = None,
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -6026,6 +6124,13 @@ def run_local_research_dashboard(
         else effective_root
         / "manual_diagnostics"
         / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_file_touch_v0_1"
+    )
+    effective_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root = (
+        Path(tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root)
+        if tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root is not None
+        else effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -6515,6 +6620,9 @@ def run_local_research_dashboard(
         tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root=(
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root
         ),
+        tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root=(
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -6656,6 +6764,9 @@ def run_local_research_dashboard(
         ),
         "tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root": (
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root
+        ),
+        "tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root": (
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root
         ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
@@ -8768,6 +8879,7 @@ def run_local_research_dashboard(
         ),
         **_metadata_reference_following_result_kwargs(summary),
         **_csv_structural_header_only_result_kwargs(summary),
+        **_local_file_byte_hash_only_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -12539,6 +12651,7 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_real_reviewed_local_csv_package_candidate_manifest_only_preflight_prototype_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root: str | Path,
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -12645,6 +12758,9 @@ def scan_local_research_workflow_artifacts(
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_path = Path(
+        tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -12794,6 +12910,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -20260,6 +20381,7 @@ def summarize_local_research_status(
         ),
         **_metadata_reference_following_summary_fields(by_component),
         **_csv_structural_header_only_summary_fields(by_component),
+        **_local_file_byte_hash_only_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -28437,6 +28559,7 @@ def build_local_research_dashboard_metadata(
         ),
         **_metadata_reference_following_metadata(result),
         **_csv_structural_header_only_metadata(result),
+        **_local_file_byte_hash_only_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -35150,6 +35273,262 @@ def _csv_structural_header_only_result_kwargs(summary: dict[str, Any]) -> dict[s
 
 def _csv_structural_header_only_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _CSV_STRUCTURAL_HEADER_ONLY_RESULT_FIELDS}
+
+
+_LOCAL_FILE_BYTE_HASH_ONLY_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS"
+)
+_LOCAL_FILE_BYTE_HASH_ONLY_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY"
+)
+_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX = "latest_local_file_byte_hash_only_"
+_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX = "local_file_byte_hash_only_"
+_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_FIELDS = [
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}run_id",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}runtime_status",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}health_status",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}workflow_stage",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}artifact_path",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}report_path",
+]
+_LOCAL_FILE_BYTE_HASH_ONLY_TEXT_FIELDS = [
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}file_touch_level",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}csv_read_level",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}local_file_hash_level",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}hash_algorithm",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}hash_preview",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}hash_disclosure_level",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}file_size_bytes",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}size_limit_bytes",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}recommended_next_task",
+]
+_LOCAL_FILE_BYTE_HASH_ONLY_BOOL_FIELDS = [
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}hash_computed",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}full_hash_recorded_in_metadata",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}verified_against_manifest",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_LATEST_PREFIX}expected_hash_present",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}csv_file_opened_structurally",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}csv_header_read",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}csv_row_count_computed",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}csv_values_read",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}csv_full_content_read",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}real_csv_consumed",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}source_hash_validated",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}revision_id_validated",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}available_time_validated",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}pit_admissibility_validated",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}source_reliability_scored",
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}reviewer_authority_validated",
+]
+_LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FIELDS = [
+    f"{_LOCAL_FILE_BYTE_HASH_ONLY_DETAIL_PREFIX}{flag}" for flag in LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FALSE_FLAGS
+]
+_LOCAL_FILE_BYTE_HASH_ONLY_RESULT_FIELDS = (
+    ["local_file_byte_hash_only_context_visible"]
+    + _LOCAL_FILE_BYTE_HASH_ONLY_LATEST_FIELDS
+    + _LOCAL_FILE_BYTE_HASH_ONLY_TEXT_FIELDS
+    + _LOCAL_FILE_BYTE_HASH_ONLY_BOOL_FIELDS
+    + _LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FIELDS
+)
+_LOCAL_FILE_BYTE_HASH_ONLY_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
+    "Checkpoint Planning Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_local_file_byte_hash_only_status(root=fixture_root, output_dir=fixture_root / "status")
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = _local_file_byte_hash_only_summary_from_status_result(result, fixture_root)
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _LOCAL_FILE_BYTE_HASH_ONLY_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair Local File Byte-Hash-Only artifacts before checkpoint planning."
+    )
+    return [
+        _record(
+            workflow_area=_LOCAL_FILE_BYTE_HASH_ONLY_WORKFLOW_AREA,
+            component=_LOCAL_FILE_BYTE_HASH_ONLY_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.artifact_paths.get("metadata_json", ""),
+            warning_count=1 if result.latest_runtime_status == "WARN" else 0,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_local_file_byte_hash_only_notes(summary),
+        )
+    ]
+
+
+def _local_file_byte_hash_only_summary_from_status_result(result: Any, fixture_root: Path) -> dict[str, Any]:
+    summary = {
+        "latest_local_file_byte_hash_only_run_id": result.latest_run_id,
+        "latest_local_file_byte_hash_only_runtime_status": result.latest_runtime_status,
+        "latest_local_file_byte_hash_only_health_status": result.latest_health_status,
+        "latest_local_file_byte_hash_only_workflow_stage": result.latest_workflow_stage,
+        "latest_local_file_byte_hash_only_artifact_path": result.latest_artifact_path,
+        "latest_local_file_byte_hash_only_report_path": result.latest_report_path,
+        "latest_local_file_byte_hash_only_file_touch_level": result.latest_file_touch_level,
+        "latest_local_file_byte_hash_only_csv_read_level": result.latest_csv_read_level,
+        "latest_local_file_byte_hash_only_local_file_hash_level": result.latest_local_file_hash_level,
+        "latest_local_file_byte_hash_only_hash_computed": result.latest_local_file_byte_hash_computed,
+        "latest_local_file_byte_hash_only_hash_algorithm": result.latest_local_file_byte_hash_algorithm,
+        "latest_local_file_byte_hash_only_hash_preview": result.latest_local_file_byte_hash_preview,
+        "latest_local_file_byte_hash_only_hash_disclosure_level": (
+            result.latest_local_file_byte_hash_disclosure_level
+        ),
+        "latest_local_file_byte_hash_only_full_hash_recorded_in_metadata": (
+            result.latest_local_file_byte_hash_full_recorded_in_metadata
+        ),
+        "latest_local_file_byte_hash_only_verified_against_manifest": (
+            result.latest_local_file_byte_hash_verified_against_manifest
+        ),
+        "latest_local_file_byte_hash_only_expected_hash_present": (
+            result.latest_local_file_byte_hash_expected_present
+        ),
+        "local_file_byte_hash_only_csv_header_read": result.latest_csv_header_read,
+        "local_file_byte_hash_only_csv_row_count_computed": result.latest_csv_row_count_computed,
+        "local_file_byte_hash_only_csv_values_read": result.latest_csv_values_read,
+        "local_file_byte_hash_only_csv_full_content_read": result.latest_csv_full_content_read,
+        "local_file_byte_hash_only_real_csv_consumed": result.latest_real_csv_consumed,
+        "local_file_byte_hash_only_source_hash_validated": result.latest_source_hash_validated,
+        "local_file_byte_hash_only_revision_id_validated": result.latest_revision_id_validated,
+        "local_file_byte_hash_only_available_time_validated": result.latest_available_time_validated,
+        "local_file_byte_hash_only_pit_admissibility_validated": result.latest_pit_admissibility_validated,
+        "local_file_byte_hash_only_source_reliability_scored": result.latest_source_reliability_scored,
+        "local_file_byte_hash_only_reviewer_authority_validated": result.latest_reviewer_authority_validated,
+        "local_file_byte_hash_only_active_replay_input": result.latest_active_replay_input,
+        "local_file_byte_hash_only_trading_allowed": result.latest_trading_allowed,
+        "local_file_byte_hash_only_buy_review_allowed": result.latest_buy_review_allowed,
+        "local_file_byte_hash_only_data_raw_written": result.latest_data_raw_written,
+        "local_file_byte_hash_only_data_processed_written": result.latest_data_processed_written,
+        "local_file_byte_hash_only_data_cache_written": result.latest_data_cache_written,
+    }
+    index_row = _local_file_byte_hash_only_latest_index_row(fixture_root, result.latest_run_id)
+    for source_field, dashboard_field in {
+        "local_file_size_bytes": "latest_local_file_byte_hash_only_file_size_bytes",
+        "local_file_size_limit_bytes": "latest_local_file_byte_hash_only_size_limit_bytes",
+        "csv_file_opened_structurally": "local_file_byte_hash_only_csv_file_opened_structurally",
+    }.items():
+        summary[dashboard_field] = index_row.get(source_field, "")
+    for flag in LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FALSE_FLAGS:
+        summary[f"local_file_byte_hash_only_{flag}"] = _bool_from_text(index_row.get(flag))
+    return summary
+
+
+def _local_file_byte_hash_only_latest_index_row(fixture_root: Path, latest_run_id: str) -> dict[str, Any]:
+    index_csv = fixture_root / "index" / "local_file_byte_hash_only_index.csv"
+    try:
+        frame = pd.read_csv(index_csv, dtype=str).fillna("")
+    except (OSError, pd.errors.EmptyDataError, pd.errors.ParserError):
+        return {}
+    if frame.empty:
+        return {}
+    matches = frame.loc[frame.get("run_id", pd.Series(dtype=str)).astype(str) == latest_run_id]
+    row = matches.iloc[-1] if not matches.empty else frame.iloc[-1]
+    return row.to_dict()
+
+
+def _local_file_byte_hash_only_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_string_or_empty(_local_file_byte_hash_only_summary_value(summary, field))};"
+        for field in (
+            _LOCAL_FILE_BYTE_HASH_ONLY_TEXT_FIELDS
+            + _LOCAL_FILE_BYTE_HASH_ONLY_BOOL_FIELDS
+            + _LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FIELDS
+        )
+        if field != "latest_local_file_byte_hash_only_recommended_next_task"
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "byte_hash_only_semantics=file_identity_metadata_only_no_csv_header_rows_values_or_pit_validation; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('latest_local_file_byte_hash_only_health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('latest_local_file_byte_hash_only_workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('latest_local_file_byte_hash_only_artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get('latest_local_file_byte_hash_only_report_path'))}; "
+        f"{field_notes}"
+    )
+
+
+def _local_file_byte_hash_only_summary_value(summary: dict[str, Any], dashboard_field: str) -> Any:
+    if dashboard_field == "latest_local_file_byte_hash_only_recommended_next_task":
+        return summary.get("next_action")
+    if dashboard_field in summary:
+        return summary.get(dashboard_field)
+    return ""
+
+
+def _local_file_byte_hash_only_summary_fields(by_component: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    component = by_component.get(_LOCAL_FILE_BYTE_HASH_ONLY_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "local_file_byte_hash_only_context_visible": _parse_note_value(notes, "context_visible"),
+        "latest_local_file_byte_hash_only_run_id": _string_or_empty(component.get("latest_artifact_id")),
+        "latest_local_file_byte_hash_only_runtime_status": _component_status(
+            by_component,
+            _LOCAL_FILE_BYTE_HASH_ONLY_COMPONENT,
+        ),
+        "latest_local_file_byte_hash_only_health_status": _parse_note_value(notes, "health_status"),
+        "latest_local_file_byte_hash_only_workflow_stage": _string_or_empty(component.get("stage")),
+        "latest_local_file_byte_hash_only_artifact_path": _parse_note_value(notes, "artifact_path"),
+        "latest_local_file_byte_hash_only_report_path": _parse_note_value(notes, "report_path"),
+        "latest_local_file_byte_hash_only_recommended_next_task": _parse_note_value(notes, "next_manual_action"),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in _LOCAL_FILE_BYTE_HASH_ONLY_TEXT_FIELDS
+            if field != "latest_local_file_byte_hash_only_recommended_next_task"
+        }
+    )
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in _LOCAL_FILE_BYTE_HASH_ONLY_BOOL_FIELDS + _LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FIELDS
+        }
+    )
+    return fields
+
+
+def _local_file_byte_hash_only_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, "")) for field in _LOCAL_FILE_BYTE_HASH_ONLY_LATEST_FIELDS
+    }
+    kwargs.update({field: str(summary.get(field, "")) for field in _LOCAL_FILE_BYTE_HASH_ONLY_TEXT_FIELDS})
+    kwargs["local_file_byte_hash_only_context_visible"] = _bool_from_text(
+        summary.get("local_file_byte_hash_only_context_visible")
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in _LOCAL_FILE_BYTE_HASH_ONLY_BOOL_FIELDS + _LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FIELDS
+        }
+    )
+    if not kwargs["latest_local_file_byte_hash_only_file_touch_level"]:
+        kwargs["latest_local_file_byte_hash_only_file_touch_level"] = "FILE_TOUCH_NONE"
+    if not kwargs["latest_local_file_byte_hash_only_csv_read_level"]:
+        kwargs["latest_local_file_byte_hash_only_csv_read_level"] = "CSV_READ_NONE"
+    if not kwargs["latest_local_file_byte_hash_only_local_file_hash_level"]:
+        kwargs["latest_local_file_byte_hash_only_local_file_hash_level"] = "LOCAL_FILE_HASH_NONE"
+    return kwargs
+
+
+def _local_file_byte_hash_only_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _LOCAL_FILE_BYTE_HASH_ONLY_RESULT_FIELDS}
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:

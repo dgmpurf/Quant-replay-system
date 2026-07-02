@@ -11792,7 +11792,7 @@ CSV_STRUCTURAL_HEADER_ONLY_CLI_NEXT_TASK = (
 )
 LOCAL_FILE_BYTE_HASH_ONLY_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
-    "Research-Status Planning Report-Only v0.1"
+    "Checkpoint Planning Report-Only v0.1"
 )
 
 

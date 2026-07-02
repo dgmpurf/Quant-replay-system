@@ -21,6 +21,10 @@ HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
 EXPECTED_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
+    "Checkpoint Planning Report-Only v0.1"
+)
+STALE_RESEARCH_STATUS_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
     "Research-Status Planning Report-Only v0.1"
 )
 SENTINEL = "SENTINEL_BYTE_HASH_CLI_ROW_VALUE_DO_NOT_PRINT"
@@ -275,6 +279,7 @@ def test_index_health_status_cli_use_preview_only_and_survive_deleted_target_csv
     assert "latest_trading_allowed: False" in status_output
     assert "latest_buy_review_allowed: False" in status_output
     assert EXPECTED_NEXT_TASK in status_output
+    assert STALE_RESEARCH_STATUS_NEXT_TASK not in status_output
     assert full_hash not in status_output
     for output in [index_output, health_output, status_output]:
         _assert_no_forbidden_output(output)

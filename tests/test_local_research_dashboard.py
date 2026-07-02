@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 import sys
 from dataclasses import replace
@@ -100,6 +101,14 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
     REQUIRED_FALSE_FLAGS as CSV_STRUCTURAL_HEADER_ONLY_REQUIRED_FALSE_FLAGS,
     run_csv_structural_file_touch,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only import (
+    CSV_READ_NONE as LOCAL_FILE_BYTE_HASH_ONLY_CSV_READ_NONE,
+    HASH_PREVIEW_HEX_CHARS as LOCAL_FILE_BYTE_HASH_ONLY_PREVIEW_CHARS,
+    LOCAL_FILE_BYTE_HASH_ONLY,
+    LOCAL_FILE_BYTE_HASH_SHA256_ONLY,
+    REQUIRED_FALSE_FLAGS as LOCAL_FILE_BYTE_HASH_ONLY_REQUIRED_FALSE_FLAGS,
+    run_local_file_byte_hash_only,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -136,6 +145,27 @@ UNSAFE_CSV_STRUCTURAL_HEADER_ONLY_NEXT_ACTION_PHRASES = [
     "paper validation",
     "buy-review",
     "trading",
+]
+EXPECTED_LOCAL_FILE_BYTE_HASH_ONLY_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
+    "Checkpoint Planning Report-Only v0.1"
+)
+STALE_LOCAL_FILE_BYTE_HASH_ONLY_NEXT_ACTION_PHRASES = [
+    "Artifact Views Report-Only v0.1",
+    "CLI Report-Only v0.1",
+    "Research-Status Planning Report-Only v0.1",
+]
+UNSAFE_LOCAL_FILE_BYTE_HASH_ONLY_WORDING = [
+    "PACKAGE_APPROVED",
+    "PACKAGE_ADMISSIBLE",
+    "PIT_ADMISSIBLE_PACKAGE",
+    "READY_FOR_REPLAY",
+    "REPLAY_INPUT_READY",
+    "ACTIVE_REPLAY_INPUT_READY",
+    "APPROVED_FOR_ACTIVE_INPUT",
+    "TRADING_READY",
+    "BUY_REVIEW_READY",
+    "PERFORMANCE_VALIDATED",
 ]
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
@@ -9910,6 +9940,51 @@ def _csv_structural_header_only_manifest(root: Path) -> Path:
     return manifest_path
 
 
+def _local_file_byte_hash_only_manifest(root: Path) -> tuple[Path, Path, bytes]:
+    csv_path = root / "reviewed" / "tiny_hash_only.csv"
+    csv_bytes = (
+        b"symbol,signal_date,review_note\n"
+        b"000001,2024-04-02,SENTINEL_HASH_ONLY_DASHBOARD_ROW_VALUE_DO_NOT_READ\n"
+    )
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    csv_path.write_bytes(csv_bytes)
+    manifest_path = root / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "package_id": "tiny-pit-local-file-byte-hash-only-dashboard",
+                "package_schema_version": "v0.1",
+                "created_at": "2026-07-01T00:00:00Z",
+                "prepared_by": "synthetic-reviewer",
+                "report_only": True,
+                "diagnostic_only": True,
+                "requested_file_touch_level": LOCAL_FILE_BYTE_HASH_ONLY,
+                "requested_csv_read_level": LOCAL_FILE_BYTE_HASH_ONLY_CSV_READ_NONE,
+                "requested_local_file_hash_level": LOCAL_FILE_BYTE_HASH_SHA256_ONLY,
+                "local_file_references": [
+                    {
+                        "reference_type": "reviewed_local_csv_file_ref",
+                        "reference_name": "tiny-hash-only-dashboard",
+                        "path": str(csv_path),
+                        "required": True,
+                        "intended_touch_level": LOCAL_FILE_BYTE_HASH_ONLY,
+                        "declared_only": False,
+                    }
+                ],
+                "forbidden_downstream_flags": {
+                    flag: False for flag in LOCAL_FILE_BYTE_HASH_ONLY_REQUIRED_FALSE_FLAGS
+                },
+                "limitations": ["Byte-hash-only dashboard fixture; no CSV parsing or PIT validation."],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return manifest_path, csv_path, csv_bytes
+
+
 def _active_replay_input_promotion_ready(root: Path):
     input_root = root / "manual_diagnostics" / "active_replay_input_promotion_test_inputs"
     validator = _active_replay_input_promotion_validator_artifact(input_root / "validator")
@@ -15846,6 +15921,198 @@ def test_research_status_preserves_paper_priority_over_csv_structural_header_onl
     assert result.csv_structural_header_only_replay_execution_allowed is False
     assert result.csv_structural_header_only_buy_review_allowed is False
     assert result.csv_structural_header_only_trading_allowed is False
+
+
+def test_research_status_includes_local_file_byte_hash_only_no_input_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_v0_1"
+    )
+    run_local_file_byte_hash_only(output_root=output_root, run_id="003_no_input")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.local_file_byte_hash_only_context_visible is True
+    assert result.latest_local_file_byte_hash_only_run_id == "003_no_input"
+    assert result.latest_local_file_byte_hash_only_runtime_status == "NO_LOCAL_FILE_BYTE_HASH_INPUT"
+    assert result.latest_local_file_byte_hash_only_health_status == "PASS"
+    assert result.latest_local_file_byte_hash_only_file_touch_level == "FILE_TOUCH_NONE"
+    assert result.latest_local_file_byte_hash_only_csv_read_level == "CSV_READ_NONE"
+    assert result.latest_local_file_byte_hash_only_local_file_hash_level == "LOCAL_FILE_HASH_NONE"
+    assert result.latest_local_file_byte_hash_only_hash_computed is False
+    assert result.local_file_byte_hash_only_csv_file_opened_structurally is False
+    assert result.local_file_byte_hash_only_csv_header_read is False
+    assert result.local_file_byte_hash_only_csv_row_count_computed is False
+    assert result.local_file_byte_hash_only_csv_values_read is False
+    assert result.local_file_byte_hash_only_csv_full_content_read is False
+    assert result.local_file_byte_hash_only_real_csv_consumed is False
+    assert result.local_file_byte_hash_only_source_hash_validated is False
+    assert result.local_file_byte_hash_only_revision_id_validated is False
+    assert result.local_file_byte_hash_only_available_time_validated is False
+    assert result.local_file_byte_hash_only_pit_admissibility_validated is False
+    assert result.local_file_byte_hash_only_reviewer_authority_validated is False
+    assert result.local_file_byte_hash_only_active_replay_input is False
+    assert result.local_file_byte_hash_only_active_replay_input_ready_emitted is False
+    assert result.local_file_byte_hash_only_replay_execution_allowed is False
+    assert result.local_file_byte_hash_only_buy_review_allowed is False
+    assert result.local_file_byte_hash_only_trading_allowed is False
+    assert result.local_file_byte_hash_only_data_raw_written is False
+    assert result.local_file_byte_hash_only_data_processed_written is False
+    assert result.local_file_byte_hash_only_data_cache_written is False
+
+
+def test_research_status_includes_local_file_byte_hash_only_preview_only_fields(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    manifest_root = tmp_path / "local_file_byte_hash_only_inputs"
+    manifest_path, csv_path, csv_bytes = _local_file_byte_hash_only_manifest(manifest_root)
+    full_hash = hashlib.sha256(csv_bytes).hexdigest()
+    preview = full_hash[:LOCAL_FILE_BYTE_HASH_ONLY_PREVIEW_CHARS]
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_v0_1"
+    )
+    run_local_file_byte_hash_only(
+        output_root=output_root,
+        run_id="003_hash",
+        package_manifest_path=manifest_path,
+        allowed_manifest_roots=[manifest_root],
+        file_touch_level=LOCAL_FILE_BYTE_HASH_ONLY,
+        csv_read_level=LOCAL_FILE_BYTE_HASH_ONLY_CSV_READ_NONE,
+        local_file_hash_level=LOCAL_FILE_BYTE_HASH_SHA256_ONLY,
+        allow_local_file_byte_hash_only=True,
+    )
+    csv_path.unlink()
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    metadata_text = json.dumps(metadata, sort_keys=True)
+    report_text = result.artifact_paths["local_research_dashboard"].read_text(encoding="utf-8")
+
+    assert result.local_file_byte_hash_only_context_visible is True
+    assert result.latest_local_file_byte_hash_only_run_id == "003_hash"
+    assert result.latest_local_file_byte_hash_only_runtime_status == "LOCAL_FILE_BYTE_HASH_ONLY_REPORT_ONLY"
+    assert result.latest_local_file_byte_hash_only_health_status == "PASS"
+    assert result.latest_local_file_byte_hash_only_workflow_stage == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_CORE_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_local_file_byte_hash_only_file_touch_level == LOCAL_FILE_BYTE_HASH_ONLY
+    assert result.latest_local_file_byte_hash_only_csv_read_level == "CSV_READ_NONE"
+    assert result.latest_local_file_byte_hash_only_local_file_hash_level == LOCAL_FILE_BYTE_HASH_SHA256_ONLY
+    assert result.latest_local_file_byte_hash_only_hash_computed is True
+    assert result.latest_local_file_byte_hash_only_hash_algorithm == "SHA-256"
+    assert result.latest_local_file_byte_hash_only_hash_preview == preview
+    assert result.latest_local_file_byte_hash_only_hash_disclosure_level == "FULL_METADATA_PREVIEW_STATUS"
+    assert result.latest_local_file_byte_hash_only_full_hash_recorded_in_metadata is True
+    assert result.latest_local_file_byte_hash_only_verified_against_manifest is False
+    assert result.latest_local_file_byte_hash_only_expected_hash_present is False
+    assert result.latest_local_file_byte_hash_only_file_size_bytes == str(len(csv_bytes))
+    assert result.local_file_byte_hash_only_csv_file_opened_structurally is False
+    assert result.local_file_byte_hash_only_csv_header_read is False
+    assert result.local_file_byte_hash_only_csv_row_count_computed is False
+    assert result.local_file_byte_hash_only_csv_values_read is False
+    assert result.local_file_byte_hash_only_csv_full_content_read is False
+    assert result.local_file_byte_hash_only_real_csv_consumed is False
+    assert result.local_file_byte_hash_only_source_hash_validated is False
+    assert result.local_file_byte_hash_only_revision_id_validated is False
+    assert result.local_file_byte_hash_only_available_time_validated is False
+    assert result.local_file_byte_hash_only_pit_admissibility_validated is False
+    assert result.local_file_byte_hash_only_source_reliability_scored is False
+    assert result.local_file_byte_hash_only_reviewer_authority_validated is False
+    assert result.local_file_byte_hash_only_real_reviewed_csv_package_created is False
+    assert result.local_file_byte_hash_only_real_package_candidate_created is False
+    assert result.local_file_byte_hash_only_active_reviewed_input_candidate_created is False
+    assert result.local_file_byte_hash_only_real_replay_input_created is False
+    assert result.local_file_byte_hash_only_active_replay_input is False
+    assert result.local_file_byte_hash_only_active_replay_ready is False
+    assert result.local_file_byte_hash_only_active_replay_input_ready_emitted is False
+    assert result.local_file_byte_hash_only_replay_execution_allowed is False
+    assert result.local_file_byte_hash_only_trading_allowed is False
+    assert result.local_file_byte_hash_only_buy_review_allowed is False
+    assert result.local_file_byte_hash_only_data_raw_written is False
+    assert result.local_file_byte_hash_only_data_processed_written is False
+    assert result.local_file_byte_hash_only_data_cache_written is False
+    assert result.latest_local_file_byte_hash_only_recommended_next_task == (
+        EXPECTED_LOCAL_FILE_BYTE_HASH_ONLY_NEXT_TASK
+    )
+    assert row["status"] == "LOCAL_FILE_BYTE_HASH_ONLY_REPORT_ONLY"
+    assert row["workflow_area"] == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY"
+    )
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "local_file_byte_hash_only_context_visible"] == "True"
+    assert summary.loc[0, "latest_local_file_byte_hash_only_hash_preview"] == preview
+    assert summary.loc[0, "local_file_byte_hash_only_csv_header_read"] == "False"
+    assert summary.loc[0, "local_file_byte_hash_only_real_csv_consumed"] == "False"
+    assert metadata["local_file_byte_hash_only_context_visible"] is True
+    assert metadata["latest_local_file_byte_hash_only_hash_preview"] == preview
+    assert metadata["local_file_byte_hash_only_real_csv_consumed"] is False
+    assert full_hash not in metadata_text
+    assert full_hash not in report_text
+    assert "SENTINEL_HASH_ONLY_DASHBOARD_ROW_VALUE_DO_NOT_READ" not in metadata_text
+    assert "SENTINEL_HASH_ONLY_DASHBOARD_ROW_VALUE_DO_NOT_READ" not in report_text
+    for stale in STALE_LOCAL_FILE_BYTE_HASH_ONLY_NEXT_ACTION_PHRASES:
+        assert stale not in result.latest_local_file_byte_hash_only_recommended_next_task
+    for unsafe in UNSAFE_LOCAL_FILE_BYTE_HASH_ONLY_WORDING:
+        assert unsafe not in metadata_text
+        assert unsafe not in result.latest_local_file_byte_hash_only_recommended_next_task
+        assert unsafe not in row["notes"]
+
+
+def test_research_status_preserves_paper_priority_over_local_file_byte_hash_only(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    manifest_root = tmp_path / "local_file_byte_hash_only_inputs"
+    manifest_path, _, _ = _local_file_byte_hash_only_manifest(manifest_root)
+    run_local_file_byte_hash_only(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_v0_1"
+        ),
+        run_id="003_hash",
+        package_manifest_path=manifest_path,
+        allowed_manifest_roots=[manifest_root],
+        file_touch_level=LOCAL_FILE_BYTE_HASH_ONLY,
+        csv_read_level=LOCAL_FILE_BYTE_HASH_ONLY_CSV_READ_NONE,
+        local_file_hash_level=LOCAL_FILE_BYTE_HASH_SHA256_ONLY,
+        allow_local_file_byte_hash_only=True,
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.local_file_byte_hash_only_context_visible is True
+    assert result.latest_local_file_byte_hash_only_hash_computed is True
+    assert result.local_file_byte_hash_only_csv_header_read is False
+    assert result.local_file_byte_hash_only_csv_row_count_computed is False
+    assert result.local_file_byte_hash_only_csv_values_read is False
+    assert result.local_file_byte_hash_only_csv_full_content_read is False
+    assert result.local_file_byte_hash_only_real_csv_consumed is False
+    assert result.local_file_byte_hash_only_active_replay_input is False
+    assert result.local_file_byte_hash_only_active_replay_input_ready_emitted is False
+    assert result.local_file_byte_hash_only_replay_execution_allowed is False
+    assert result.local_file_byte_hash_only_buy_review_allowed is False
+    assert result.local_file_byte_hash_only_trading_allowed is False
 
 
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(

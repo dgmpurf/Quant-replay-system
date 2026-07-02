@@ -28,7 +28,7 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_loca
 NO_ARTIFACT_STAGE = "NO_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY"
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only "
-    "CLI Report-Only v0.1"
+    "Checkpoint Planning Report-Only v0.1"
 )
 
 
