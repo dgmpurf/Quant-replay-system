@@ -119,6 +119,20 @@ The unified summary records the latest run id, runtime status, health status, wo
 
 Local File Byte-Hash-Only is context only. Research-status does not expose the full SHA-256. Byte-hash-only does not mean a CSV header was read, row count was computed, CSV data values were read, full CSV content was semantically read, or `real_csv_consumed` became true. It also does not mean source_hash validation, revision_id validation, available_time validation, PIT admissibility, source reliability scoring, reviewer authority validation, package candidate creation, active replay input, buy-review, or trading.
 
+## Tiny PIT Expected-Hash Verification Status
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification context when status artifacts exist under:
+
+```text
+outputs/reports/manual_diagnostics/tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_v0_1/status/
+```
+
+It exposes the latest run id, runtime status, health status, workflow stage, artifact/report paths, `file_touch_level`, `csv_read_level`, `local_file_hash_level`, `expected_hash_verification_level`, verification-performed flag, algorithm, expected-hash-present flag, expected hash preview, actual local hash preview, matched/mismatch/actionable-mismatch flags, issue and warning counts, negative proof fields, and safety flags.
+
+Expected-Hash Verification is context only. It is a metadata-only comparison between a manifest-declared expected SHA-256 and an existing Local File Byte-Hash-Only metadata value. Research-status does not expose the full expected hash or full actual local hash; it exposes preview-only fields and preserves later `PAPER_WORKFLOW_READY` priority.
+
+Mismatch is `WARN` / actionable context only. It is not package approval, not real validator rejection, not source failure, not PIT failure, not reviewer-authority failure, not replay readiness, not buy-review, and not trading. Expected-hash verification does not mean the target CSV was opened, a hash was recomputed, a CSV header was read, row count was computed, CSV values were read, full content was semantically read, `real_csv_consumed` became true, source_hash was validated, revision_id was validated, available_time was validated, PIT admissibility was validated, source reliability was scored, reviewer authority was validated, a package candidate was created, active replay input was created, buy-review was enabled, or trading was authorized.
+
 ## Tiny PIT CSV Structural Header-Only Status
 
 `research-status` includes `tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-status` as report-only structural header context when those artifacts exist.

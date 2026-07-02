@@ -2,6 +2,16 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification v1.77.0
+
+`NO_EXPECTED_HASH_VERIFICATION_INPUT`, `EXPECTED_HASH_VERIFICATION_MATCHED_REPORT_ONLY`, and `EXPECTED_HASH_VERIFICATION_MISMATCHED_REPORT_ONLY` mean Tiny PIT Expected-Hash Verification artifacts exist as report-only / diagnostic-only metadata comparison context. Expected-hash verification compares a manifest-declared expected SHA-256 with an existing Local File Byte-Hash-Only metadata value only. Verification mode requires an expected-hash manifest, a local byte-hash metadata path, an allowed root, and explicit `--allow-expected-hash-verification`.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-expected-hash-verification`, `tiny-pit-real-reviewed-local-csv-package-candidate-expected-hash-verification-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-expected-hash-verification-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-expected-hash-verification-status` to create, discover, safety-check, and summarize the expected-hash report-only artifacts. `research-status` exposes the latest Expected-Hash Verification context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+Matched artifacts are `PASS`. Mismatched artifacts are `WARN` with `actionable_mismatch=true`; mismatch is not a crash, not package approval, not package rejection from a real package validator, not a source_hash failure, not a PIT failure, and not reviewer authority failure. Full expected hashes and full actual local hashes are not exposed outside the allowed local metadata policy; report, index, status, CLI, and research-status expose preview-only fields.
+
+The workflow does not open target CSV files, recompute hashes, read CSV headers, count rows, read CSV data values, semantically read full CSV content, consume CSV as package or replay input, validate source_hash, validate revision_id, validate available_time, validate PIT admissibility, score source reliability, validate reviewer authority, create real package candidates, create active replay input, run replay, create labels, train models, create stock_profile or paper validation, create buy-review eligibility, or authorize trading.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Local File Byte-Hash-Only v1.76.0
 
 `NO_LOCAL_FILE_BYTE_HASH_INPUT` and `LOCAL_FILE_BYTE_HASH_ONLY_REPORT_ONLY` mean Tiny PIT Local File Byte-Hash-Only artifacts exist as report-only / diagnostic-only governance context. Byte-hash-only means local file identity / integrity metadata only: the core hash mode requires a manifest, an allowed root, and explicit `--allow-local-file-byte-hash-only`; SHA-256 is fixed for v0.1.
