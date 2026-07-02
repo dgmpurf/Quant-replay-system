@@ -20,11 +20,11 @@ MATCHING_FULL_HASH = "c" * 64
 PREVIEW_CHARS = 16
 EXPECTED_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification "
-    "Research-Status Planning Report-Only v0.1"
+    "Checkpoint Planning Report-Only v0.1"
 )
 STALE_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification "
-    "CLI Report-Only v0.1"
+    "Research-Status Planning Report-Only v0.1"
 )
 FORBIDDEN_HELP = [
     "--csv-path",

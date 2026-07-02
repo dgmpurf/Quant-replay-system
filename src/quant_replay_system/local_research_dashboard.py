@@ -158,6 +158,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_loca
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status import (
     run_local_file_byte_hash_only_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification import (
+    REQUIRED_FALSE_FLAGS as EXPECTED_HASH_VERIFICATION_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status import (
+    run_expected_hash_verification_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1276,6 +1282,44 @@ SUMMARY_COLUMNS = [
     "local_file_byte_hash_only_source_reliability_scored",
     "local_file_byte_hash_only_reviewer_authority_validated",
     *[f"local_file_byte_hash_only_{flag}" for flag in LOCAL_FILE_BYTE_HASH_ONLY_SAFETY_FALSE_FLAGS],
+    "expected_hash_verification_context_visible",
+    "latest_expected_hash_verification_run_id",
+    "latest_expected_hash_verification_runtime_status",
+    "latest_expected_hash_verification_health_status",
+    "latest_expected_hash_verification_workflow_stage",
+    "latest_expected_hash_verification_artifact_path",
+    "latest_expected_hash_verification_report_path",
+    "latest_expected_hash_verification_file_touch_level",
+    "latest_expected_hash_verification_csv_read_level",
+    "latest_expected_hash_verification_local_file_hash_level",
+    "latest_expected_hash_verification_level",
+    "latest_expected_hash_verification_performed",
+    "latest_expected_hash_verification_algorithm",
+    "latest_expected_hash_verification_expected_hash_present",
+    "latest_expected_hash_verification_expected_hash_preview",
+    "latest_expected_hash_verification_actual_hash_preview",
+    "latest_expected_hash_verification_matched",
+    "latest_expected_hash_verification_mismatch",
+    "latest_expected_hash_verification_actionable_mismatch",
+    "latest_expected_hash_verification_issue_count",
+    "latest_expected_hash_verification_warning_count",
+    "latest_expected_hash_verification_recommended_next_task",
+    "expected_hash_verification_expected_hash_verified_against_source_hash",
+    "expected_hash_verification_source_hash_validated",
+    "expected_hash_verification_revision_id_validated",
+    "expected_hash_verification_available_time_validated",
+    "expected_hash_verification_pit_admissibility_validated",
+    "expected_hash_verification_source_reliability_scored",
+    "expected_hash_verification_reviewer_authority_validated",
+    "expected_hash_verification_local_file_byte_hash_recomputed",
+    "expected_hash_verification_target_file_opened_for_expected_hash_verification",
+    "expected_hash_verification_csv_file_opened_structurally",
+    "expected_hash_verification_csv_header_read",
+    "expected_hash_verification_csv_row_count_computed",
+    "expected_hash_verification_csv_values_read",
+    "expected_hash_verification_csv_full_content_read",
+    "expected_hash_verification_real_csv_consumed",
+    *[f"expected_hash_verification_{flag}" for flag in EXPECTED_HASH_VERIFICATION_SAFETY_FALSE_FLAGS],
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
     "latest_source_registry_schema_fixture_id",
@@ -2945,6 +2989,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_METADATA_REFERENCE_FOLLOWING_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_STRUCTURAL_HEADER_ONLY_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -3009,6 +3054,9 @@ WORKFLOW_AREAS = {
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION"
     ),
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
@@ -4245,6 +4293,65 @@ class LocalResearchDashboardResult:
     local_file_byte_hash_only_broker_api_called: bool
     local_file_byte_hash_only_order_placed: bool
     local_file_byte_hash_only_message_sent: bool
+    expected_hash_verification_context_visible: bool
+    latest_expected_hash_verification_run_id: str
+    latest_expected_hash_verification_runtime_status: str
+    latest_expected_hash_verification_health_status: str
+    latest_expected_hash_verification_workflow_stage: str
+    latest_expected_hash_verification_artifact_path: str
+    latest_expected_hash_verification_report_path: str
+    latest_expected_hash_verification_file_touch_level: str
+    latest_expected_hash_verification_csv_read_level: str
+    latest_expected_hash_verification_local_file_hash_level: str
+    latest_expected_hash_verification_level: str
+    latest_expected_hash_verification_performed: bool
+    latest_expected_hash_verification_algorithm: str
+    latest_expected_hash_verification_expected_hash_present: bool
+    latest_expected_hash_verification_expected_hash_preview: str
+    latest_expected_hash_verification_actual_hash_preview: str
+    latest_expected_hash_verification_matched: bool
+    latest_expected_hash_verification_mismatch: bool
+    latest_expected_hash_verification_actionable_mismatch: bool
+    latest_expected_hash_verification_issue_count: int
+    latest_expected_hash_verification_warning_count: int
+    latest_expected_hash_verification_recommended_next_task: str
+    expected_hash_verification_expected_hash_verified_against_source_hash: bool
+    expected_hash_verification_source_hash_validated: bool
+    expected_hash_verification_revision_id_validated: bool
+    expected_hash_verification_available_time_validated: bool
+    expected_hash_verification_pit_admissibility_validated: bool
+    expected_hash_verification_source_reliability_scored: bool
+    expected_hash_verification_reviewer_authority_validated: bool
+    expected_hash_verification_local_file_byte_hash_recomputed: bool
+    expected_hash_verification_target_file_opened_for_expected_hash_verification: bool
+    expected_hash_verification_csv_file_opened_structurally: bool
+    expected_hash_verification_csv_header_read: bool
+    expected_hash_verification_csv_row_count_computed: bool
+    expected_hash_verification_csv_values_read: bool
+    expected_hash_verification_csv_full_content_read: bool
+    expected_hash_verification_real_csv_consumed: bool
+    expected_hash_verification_real_reviewed_csv_package_created: bool
+    expected_hash_verification_real_package_candidate_created: bool
+    expected_hash_verification_active_reviewed_input_candidate_created: bool
+    expected_hash_verification_real_replay_input_created: bool
+    expected_hash_verification_active_replay_input: bool
+    expected_hash_verification_active_replay_ready: bool
+    expected_hash_verification_active_replay_input_ready_emitted: bool
+    expected_hash_verification_replay_execution_allowed: bool
+    expected_hash_verification_trading_allowed: bool
+    expected_hash_verification_buy_review_allowed: bool
+    expected_hash_verification_data_raw_written: bool
+    expected_hash_verification_data_processed_written: bool
+    expected_hash_verification_data_cache_written: bool
+    expected_hash_verification_labels_created: bool
+    expected_hash_verification_training_dataset_created: bool
+    expected_hash_verification_model_training_performed: bool
+    expected_hash_verification_stock_profile_validation_created: bool
+    expected_hash_verification_paper_validation_created: bool
+    expected_hash_verification_strategy_performance_validated: bool
+    expected_hash_verification_broker_api_called: bool
+    expected_hash_verification_order_placed: bool
+    expected_hash_verification_message_sent: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -5840,6 +5947,7 @@ def run_local_research_dashboard(
     tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root: str | Path | None = None,
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -6131,6 +6239,13 @@ def run_local_research_dashboard(
         else effective_root
         / "manual_diagnostics"
         / "tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_v0_1"
+    )
+    effective_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root = (
+        Path(tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root)
+        if tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root is not None
+        else effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_v0_1"
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -6623,6 +6738,9 @@ def run_local_research_dashboard(
         tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root=(
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root
         ),
+        tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root=(
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -6767,6 +6885,9 @@ def run_local_research_dashboard(
         ),
         "tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root": (
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root
+        ),
+        "tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root": (
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root
         ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
@@ -8880,6 +9001,7 @@ def run_local_research_dashboard(
         **_metadata_reference_following_result_kwargs(summary),
         **_csv_structural_header_only_result_kwargs(summary),
         **_local_file_byte_hash_only_result_kwargs(summary),
+        **_expected_hash_verification_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -12652,6 +12774,7 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_real_reviewed_local_csv_package_candidate_metadata_reference_following_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root: str | Path,
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -12761,6 +12884,9 @@ def scan_local_research_workflow_artifacts(
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_path = Path(
+        tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -12915,6 +13041,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -16638,13 +16769,14 @@ def infer_local_research_workflow_stage(dashboard_frame: pd.DataFrame) -> str:
             and statuses["ADVISORY_CONVERSATION_STATUS"] == "FAIL"
         ):
             return "ADVISORY_CONVERSATION_FAILED"
+        if _paper_workflow_ready_status(dashboard_frame) and _attention_only_from_expected_hash_verification(
+            dashboard_frame
+        ):
+            return "PAPER_WORKFLOW_READY"
         return "LOCAL_RESEARCH_NEEDS_ATTENTION"
     if statuses["PAPER_WORKFLOW_STATUS"] == "PASS":
         return "LOCAL_RESEARCH_WORKFLOW_COMPLETE"
-    if statuses["PAPER_WORKFLOW_STATUS"] in {"READY", "REVIEWED_READY"} or _component_has_only_non_actionable_warnings(
-        dashboard_frame,
-        "PAPER_WORKFLOW_STATUS",
-    ):
+    if _paper_workflow_ready_status(dashboard_frame):
         return "PAPER_WORKFLOW_READY"
     if (
         statuses["GLOBAL_APPROVED_FOR_PAPER_APPROVAL_REVIEW_STATUS"]
@@ -20382,6 +20514,7 @@ def summarize_local_research_status(
         **_metadata_reference_following_summary_fields(by_component),
         **_csv_structural_header_only_summary_fields(by_component),
         **_local_file_byte_hash_only_summary_fields(by_component),
+        **_expected_hash_verification_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -28560,6 +28693,7 @@ def build_local_research_dashboard_metadata(
         **_metadata_reference_following_metadata(result),
         **_csv_structural_header_only_metadata(result),
         **_local_file_byte_hash_only_metadata(result),
+        **_expected_hash_verification_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -35529,6 +35663,292 @@ def _local_file_byte_hash_only_result_kwargs(summary: dict[str, Any]) -> dict[st
 
 def _local_file_byte_hash_only_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _LOCAL_FILE_BYTE_HASH_ONLY_RESULT_FIELDS}
+
+
+_EXPECTED_HASH_VERIFICATION_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS"
+)
+_EXPECTED_HASH_VERIFICATION_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION"
+)
+_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX = "latest_expected_hash_verification_"
+_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX = "expected_hash_verification_"
+_EXPECTED_HASH_VERIFICATION_LATEST_FIELDS = [
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}run_id",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}runtime_status",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}health_status",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}workflow_stage",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}artifact_path",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}report_path",
+]
+_EXPECTED_HASH_VERIFICATION_TEXT_FIELDS = [
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}file_touch_level",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}csv_read_level",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}local_file_hash_level",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}level",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}algorithm",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}expected_hash_preview",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}actual_hash_preview",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}recommended_next_task",
+]
+_EXPECTED_HASH_VERIFICATION_BOOL_FIELDS = [
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}performed",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}expected_hash_present",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}matched",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}mismatch",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}actionable_mismatch",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}expected_hash_verified_against_source_hash",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}source_hash_validated",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}revision_id_validated",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}available_time_validated",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}pit_admissibility_validated",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}source_reliability_scored",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}reviewer_authority_validated",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}local_file_byte_hash_recomputed",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}target_file_opened_for_expected_hash_verification",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}csv_file_opened_structurally",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}csv_header_read",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}csv_row_count_computed",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}csv_values_read",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}csv_full_content_read",
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}real_csv_consumed",
+]
+_EXPECTED_HASH_VERIFICATION_INT_FIELDS = [
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}issue_count",
+    f"{_EXPECTED_HASH_VERIFICATION_LATEST_PREFIX}warning_count",
+]
+_EXPECTED_HASH_VERIFICATION_SAFETY_FIELDS = [
+    f"{_EXPECTED_HASH_VERIFICATION_DETAIL_PREFIX}{flag}"
+    for flag in EXPECTED_HASH_VERIFICATION_SAFETY_FALSE_FLAGS
+]
+_EXPECTED_HASH_VERIFICATION_RESULT_FIELDS = (
+    ["expected_hash_verification_context_visible"]
+    + _EXPECTED_HASH_VERIFICATION_LATEST_FIELDS
+    + _EXPECTED_HASH_VERIFICATION_TEXT_FIELDS
+    + _EXPECTED_HASH_VERIFICATION_BOOL_FIELDS
+    + _EXPECTED_HASH_VERIFICATION_INT_FIELDS
+    + _EXPECTED_HASH_VERIFICATION_SAFETY_FIELDS
+)
+_EXPECTED_HASH_VERIFICATION_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification "
+    "Checkpoint Planning Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_expected_hash_verification_status(root=fixture_root, output_dir=fixture_root / "status")
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = _expected_hash_verification_summary_from_status_result(result, fixture_root)
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _EXPECTED_HASH_VERIFICATION_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair Expected-Hash Verification artifacts before checkpoint planning."
+    )
+    warning_count = _int_or_zero(summary.get("latest_expected_hash_verification_warning_count"))
+    issue_count = _int_or_zero(summary.get("latest_expected_hash_verification_issue_count"))
+    return [
+        _record(
+            workflow_area=_EXPECTED_HASH_VERIFICATION_WORKFLOW_AREA,
+            component=_EXPECTED_HASH_VERIFICATION_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.artifact_paths.get("metadata_json", ""),
+            issue_count=issue_count,
+            warning_count=warning_count,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_expected_hash_verification_notes(summary),
+        )
+    ]
+
+
+def _expected_hash_verification_summary_from_status_result(result: Any, fixture_root: Path) -> dict[str, Any]:
+    summary = {
+        "latest_expected_hash_verification_run_id": result.latest_run_id,
+        "latest_expected_hash_verification_runtime_status": result.latest_runtime_status,
+        "latest_expected_hash_verification_health_status": result.latest_health_status,
+        "latest_expected_hash_verification_workflow_stage": result.latest_workflow_stage,
+        "latest_expected_hash_verification_artifact_path": result.latest_artifact_path,
+        "latest_expected_hash_verification_report_path": result.latest_report_path,
+        "latest_expected_hash_verification_file_touch_level": result.latest_file_touch_level,
+        "latest_expected_hash_verification_csv_read_level": result.latest_csv_read_level,
+        "latest_expected_hash_verification_local_file_hash_level": result.latest_local_file_hash_level,
+        "latest_expected_hash_verification_level": result.latest_expected_hash_verification_level,
+        "latest_expected_hash_verification_performed": result.latest_expected_hash_verification_performed,
+        "latest_expected_hash_verification_algorithm": result.latest_expected_hash_algorithm,
+        "latest_expected_hash_verification_expected_hash_present": result.latest_expected_hash_present,
+        "latest_expected_hash_verification_expected_hash_preview": result.latest_expected_hash_preview,
+        "latest_expected_hash_verification_actual_hash_preview": (
+            result.latest_actual_local_file_byte_hash_preview
+        ),
+        "latest_expected_hash_verification_matched": result.latest_expected_hash_matched,
+        "latest_expected_hash_verification_mismatch": result.latest_expected_hash_mismatch,
+        "latest_expected_hash_verification_actionable_mismatch": result.latest_actionable_mismatch,
+        "expected_hash_verification_expected_hash_verified_against_source_hash": (
+            result.latest_expected_hash_verified_against_source_hash
+        ),
+        "expected_hash_verification_source_hash_validated": result.latest_source_hash_validated,
+        "expected_hash_verification_revision_id_validated": result.latest_revision_id_validated,
+        "expected_hash_verification_available_time_validated": result.latest_available_time_validated,
+        "expected_hash_verification_pit_admissibility_validated": result.latest_pit_admissibility_validated,
+        "expected_hash_verification_source_reliability_scored": result.latest_source_reliability_scored,
+        "expected_hash_verification_reviewer_authority_validated": result.latest_reviewer_authority_validated,
+        "expected_hash_verification_local_file_byte_hash_recomputed": (
+            result.latest_local_file_byte_hash_recomputed
+        ),
+        "expected_hash_verification_target_file_opened_for_expected_hash_verification": (
+            result.latest_target_file_opened_for_expected_hash_verification
+        ),
+        "expected_hash_verification_csv_header_read": result.latest_csv_header_read,
+        "expected_hash_verification_csv_row_count_computed": result.latest_csv_row_count_computed,
+        "expected_hash_verification_csv_values_read": result.latest_csv_values_read,
+        "expected_hash_verification_csv_full_content_read": result.latest_csv_full_content_read,
+        "expected_hash_verification_real_csv_consumed": result.latest_real_csv_consumed,
+        "expected_hash_verification_active_replay_input": result.latest_active_replay_input,
+        "expected_hash_verification_trading_allowed": result.latest_trading_allowed,
+        "expected_hash_verification_buy_review_allowed": result.latest_buy_review_allowed,
+        "expected_hash_verification_data_raw_written": result.latest_data_raw_written,
+        "expected_hash_verification_data_processed_written": result.latest_data_processed_written,
+        "expected_hash_verification_data_cache_written": result.latest_data_cache_written,
+    }
+    index_row = _expected_hash_verification_latest_index_row(fixture_root, result.latest_run_id)
+    for source_field, dashboard_field in {
+        "issue_count": "latest_expected_hash_verification_issue_count",
+        "warning_count": "latest_expected_hash_verification_warning_count",
+        "csv_file_opened_structurally": "expected_hash_verification_csv_file_opened_structurally",
+    }.items():
+        summary[dashboard_field] = index_row.get(source_field, "0" if source_field.endswith("count") else "")
+    for flag in EXPECTED_HASH_VERIFICATION_SAFETY_FALSE_FLAGS:
+        summary[f"expected_hash_verification_{flag}"] = _bool_from_text(index_row.get(flag))
+    return summary
+
+
+def _expected_hash_verification_latest_index_row(fixture_root: Path, latest_run_id: str) -> dict[str, Any]:
+    index_csv = fixture_root / "index" / "expected_hash_verification_index.csv"
+    try:
+        frame = pd.read_csv(index_csv, dtype=str).fillna("")
+    except (OSError, pd.errors.EmptyDataError, pd.errors.ParserError):
+        return {}
+    if frame.empty:
+        return {}
+    matches = frame.loc[frame.get("run_id", pd.Series(dtype=str)).astype(str) == latest_run_id]
+    row = matches.iloc[-1] if not matches.empty else frame.iloc[-1]
+    return row.to_dict()
+
+
+def _expected_hash_verification_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_string_or_empty(_expected_hash_verification_summary_value(summary, field))};"
+        for field in (
+            _EXPECTED_HASH_VERIFICATION_TEXT_FIELDS
+            + _EXPECTED_HASH_VERIFICATION_BOOL_FIELDS
+            + _EXPECTED_HASH_VERIFICATION_INT_FIELDS
+            + _EXPECTED_HASH_VERIFICATION_SAFETY_FIELDS
+        )
+        if field != "latest_expected_hash_verification_recommended_next_task"
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "expected_hash_verification_semantics=metadata_comparison_preview_only_no_csv_or_pit_validation; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('latest_expected_hash_verification_health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('latest_expected_hash_verification_workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('latest_expected_hash_verification_artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get('latest_expected_hash_verification_report_path'))}; "
+        f"{field_notes}"
+    )
+
+
+def _expected_hash_verification_summary_value(summary: dict[str, Any], dashboard_field: str) -> Any:
+    if dashboard_field == "latest_expected_hash_verification_recommended_next_task":
+        return summary.get("next_action")
+    if dashboard_field in summary:
+        return summary.get(dashboard_field)
+    return ""
+
+
+def _expected_hash_verification_summary_fields(by_component: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    component = by_component.get(_EXPECTED_HASH_VERIFICATION_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "expected_hash_verification_context_visible": _parse_note_value(notes, "context_visible"),
+        "latest_expected_hash_verification_run_id": _string_or_empty(component.get("latest_artifact_id")),
+        "latest_expected_hash_verification_runtime_status": _component_status(
+            by_component,
+            _EXPECTED_HASH_VERIFICATION_COMPONENT,
+        ),
+        "latest_expected_hash_verification_health_status": _parse_note_value(notes, "health_status"),
+        "latest_expected_hash_verification_workflow_stage": _string_or_empty(component.get("stage")),
+        "latest_expected_hash_verification_artifact_path": _parse_note_value(notes, "artifact_path"),
+        "latest_expected_hash_verification_report_path": _parse_note_value(notes, "report_path"),
+        "latest_expected_hash_verification_recommended_next_task": _parse_note_value(notes, "next_manual_action"),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in _EXPECTED_HASH_VERIFICATION_TEXT_FIELDS
+            if field != "latest_expected_hash_verification_recommended_next_task"
+        }
+    )
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in (
+                _EXPECTED_HASH_VERIFICATION_BOOL_FIELDS
+                + _EXPECTED_HASH_VERIFICATION_INT_FIELDS
+                + _EXPECTED_HASH_VERIFICATION_SAFETY_FIELDS
+            )
+        }
+    )
+    return fields
+
+
+def _expected_hash_verification_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, "")) for field in _EXPECTED_HASH_VERIFICATION_LATEST_FIELDS
+    }
+    kwargs.update({field: str(summary.get(field, "")) for field in _EXPECTED_HASH_VERIFICATION_TEXT_FIELDS})
+    kwargs["expected_hash_verification_context_visible"] = _bool_from_text(
+        summary.get("expected_hash_verification_context_visible")
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in _EXPECTED_HASH_VERIFICATION_BOOL_FIELDS + _EXPECTED_HASH_VERIFICATION_SAFETY_FIELDS
+        }
+    )
+    kwargs.update(
+        {
+            field: _int_or_zero(summary.get(field))
+            for field in _EXPECTED_HASH_VERIFICATION_INT_FIELDS
+        }
+    )
+    if not kwargs["latest_expected_hash_verification_file_touch_level"]:
+        kwargs["latest_expected_hash_verification_file_touch_level"] = "FILE_TOUCH_NONE"
+    if not kwargs["latest_expected_hash_verification_csv_read_level"]:
+        kwargs["latest_expected_hash_verification_csv_read_level"] = "CSV_READ_NONE"
+    if not kwargs["latest_expected_hash_verification_local_file_hash_level"]:
+        kwargs["latest_expected_hash_verification_local_file_hash_level"] = "LOCAL_FILE_HASH_NONE"
+    if not kwargs["latest_expected_hash_verification_level"]:
+        kwargs["latest_expected_hash_verification_level"] = "EXPECTED_HASH_VERIFICATION_NONE"
+    return kwargs
+
+
+def _expected_hash_verification_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _EXPECTED_HASH_VERIFICATION_RESULT_FIELDS}
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:
@@ -43060,6 +43480,41 @@ def _has_attention_status(dashboard_frame: pd.DataFrame) -> bool:
         return True
     error_count = int(pd.to_numeric(active["error_count"], errors="coerce").fillna(0).sum())
     return error_count > 0
+
+
+def _paper_workflow_ready_status(dashboard_frame: pd.DataFrame) -> bool:
+    statuses = _status_by_component(dashboard_frame)
+    return statuses["PAPER_WORKFLOW_STATUS"] in {"READY", "REVIEWED_READY"} or (
+        _component_has_only_non_actionable_warnings(dashboard_frame, "PAPER_WORKFLOW_STATUS")
+    )
+
+
+def _attention_only_from_expected_hash_verification(dashboard_frame: pd.DataFrame) -> bool:
+    frame = _finalize_dashboard_frame(dashboard_frame)
+    if frame.empty:
+        return False
+    attention_rows = frame.loc[
+        (frame["status"].astype(str).str.upper().isin({"FAIL", "WARN"}))
+        | (pd.to_numeric(frame.get("actionable_warning_count", 0), errors="coerce").fillna(0) > 0)
+        | (pd.to_numeric(frame.get("blocking_error_count", 0), errors="coerce").fillna(0) > 0)
+        | (pd.to_numeric(frame.get("error_count", 0), errors="coerce").fillna(0) > 0)
+    ]
+    if attention_rows.empty:
+        return False
+    ignored_components = {
+        _EXPECTED_HASH_VERIFICATION_COMPONENT,
+    }
+    for row in attention_rows.to_dict("records"):
+        component = _string_or_empty(row.get("component"))
+        if component in ignored_components:
+            continue
+        if component == "PAPER_WORKFLOW_STATUS" and _component_has_only_non_actionable_warnings(
+            dashboard_frame,
+            "PAPER_WORKFLOW_STATUS",
+        ):
+            continue
+        return False
+    return True
 
 
 def _component_has_only_non_actionable_warnings(dashboard_frame: pd.DataFrame, component: str) -> bool:

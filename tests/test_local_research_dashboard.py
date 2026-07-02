@@ -109,6 +109,14 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_loca
     REQUIRED_FALSE_FLAGS as LOCAL_FILE_BYTE_HASH_ONLY_REQUIRED_FALSE_FLAGS,
     run_local_file_byte_hash_only,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification import (
+    CSV_READ_NONE as EXPECTED_HASH_VERIFICATION_CSV_READ_NONE,
+    EXPECTED_HASH_SHA256_AGAINST_LOCAL_METADATA_ONLY,
+    HASH_PREVIEW_HEX_CHARS as EXPECTED_HASH_VERIFICATION_PREVIEW_CHARS,
+    LOCAL_FILE_HASH_SHA256_METADATA_REFERENCE_ONLY,
+    REQUIRED_FALSE_FLAGS as EXPECTED_HASH_VERIFICATION_REQUIRED_FALSE_FLAGS,
+    run_expected_hash_verification,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -156,6 +164,27 @@ STALE_LOCAL_FILE_BYTE_HASH_ONLY_NEXT_ACTION_PHRASES = [
     "Research-Status Planning Report-Only v0.1",
 ]
 UNSAFE_LOCAL_FILE_BYTE_HASH_ONLY_WORDING = [
+    "PACKAGE_APPROVED",
+    "PACKAGE_ADMISSIBLE",
+    "PIT_ADMISSIBLE_PACKAGE",
+    "READY_FOR_REPLAY",
+    "REPLAY_INPUT_READY",
+    "ACTIVE_REPLAY_INPUT_READY",
+    "APPROVED_FOR_ACTIVE_INPUT",
+    "TRADING_READY",
+    "BUY_REVIEW_READY",
+    "PERFORMANCE_VALIDATED",
+]
+EXPECTED_HASH_VERIFICATION_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification "
+    "Checkpoint Planning Report-Only v0.1"
+)
+STALE_EXPECTED_HASH_VERIFICATION_NEXT_ACTION_PHRASES = [
+    "Artifact Views Report-Only v0.1",
+    "CLI Report-Only v0.1",
+    "Research-Status Planning Report-Only v0.1",
+]
+UNSAFE_EXPECTED_HASH_VERIFICATION_WORDING = [
     "PACKAGE_APPROVED",
     "PACKAGE_ADMISSIBLE",
     "PIT_ADMISSIBLE_PACKAGE",
@@ -9985,6 +10014,67 @@ def _local_file_byte_hash_only_manifest(root: Path) -> tuple[Path, Path, bytes]:
     return manifest_path, csv_path, csv_bytes
 
 
+def _expected_hash_verification_inputs(
+    root: Path,
+    *,
+    expected_hash: str,
+    actual_hash: str,
+) -> tuple[Path, Path]:
+    metadata_path = root / "byte_hash_metadata" / "metadata.json"
+    metadata_path.parent.mkdir(parents=True, exist_ok=True)
+    metadata_payload = {
+        "local_file_byte_hash_computed": True,
+        "local_file_byte_hash_algorithm": "SHA-256",
+        "local_file_byte_hash_value": actual_hash,
+        "csv_read_level": EXPECTED_HASH_VERIFICATION_CSV_READ_NONE,
+        "csv_file_opened_structurally": False,
+        "csv_header_read": False,
+        "csv_row_count_computed": False,
+        "csv_values_read": False,
+        "csv_full_content_read": False,
+        "real_csv_consumed": False,
+        "source_hash_validated": False,
+        "revision_id_validated": False,
+        "available_time_validated": False,
+        "pit_admissibility_validated": False,
+        "source_reliability_scored": False,
+        "reviewer_authority_validated": False,
+        **{flag: False for flag in EXPECTED_HASH_VERIFICATION_REQUIRED_FALSE_FLAGS},
+    }
+    metadata_path.write_text(
+        json.dumps(metadata_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    manifest_path = root / "expected_hash_manifest.json"
+    manifest_payload = {
+        "verification_id": "expected-hash-dashboard-fixture",
+        "package_id": "tiny-pit-expected-hash-dashboard",
+        "package_schema_version": "v0.1",
+        "created_at": "2026-07-02T00:00:00Z",
+        "prepared_by": "synthetic-reviewer",
+        "report_only": True,
+        "diagnostic_only": True,
+        "requested_expected_hash_verification_level": EXPECTED_HASH_SHA256_AGAINST_LOCAL_METADATA_ONLY,
+        "requested_csv_read_level": EXPECTED_HASH_VERIFICATION_CSV_READ_NONE,
+        "requested_local_file_hash_level": LOCAL_FILE_HASH_SHA256_METADATA_REFERENCE_ONLY,
+        "source_local_file_byte_hash_artifact_metadata_path": str(metadata_path),
+        "expected_hash_algorithm": "SHA-256",
+        "expected_hash_value": expected_hash,
+        "expected_hash_disclosure_level": "PREVIEW_ONLY_STATUS",
+        "forbidden_downstream_flags": {
+            flag: False for flag in EXPECTED_HASH_VERIFICATION_REQUIRED_FALSE_FLAGS
+        },
+        "limitations": [
+            "Expected-hash dashboard fixture compares manifest metadata to local byte-hash metadata only.",
+        ],
+    }
+    manifest_path.write_text(
+        json.dumps(manifest_payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return manifest_path, metadata_path
+
+
 def _active_replay_input_promotion_ready(root: Path):
     input_root = root / "manual_diagnostics" / "active_replay_input_promotion_test_inputs"
     validator = _active_replay_input_promotion_validator_artifact(input_root / "validator")
@@ -16113,6 +16203,290 @@ def test_research_status_preserves_paper_priority_over_local_file_byte_hash_only
     assert result.local_file_byte_hash_only_replay_execution_allowed is False
     assert result.local_file_byte_hash_only_buy_review_allowed is False
     assert result.local_file_byte_hash_only_trading_allowed is False
+
+
+def test_research_status_includes_expected_hash_verification_no_input_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_v0_1"
+    )
+    run_expected_hash_verification(output_root=output_root, run_id="004_no_input")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.expected_hash_verification_context_visible is True
+    assert result.latest_expected_hash_verification_run_id == "004_no_input"
+    assert result.latest_expected_hash_verification_runtime_status == "NO_EXPECTED_HASH_VERIFICATION_INPUT"
+    assert result.latest_expected_hash_verification_health_status == "PASS"
+    assert result.latest_expected_hash_verification_file_touch_level == "FILE_TOUCH_NONE"
+    assert result.latest_expected_hash_verification_csv_read_level == "CSV_READ_NONE"
+    assert result.latest_expected_hash_verification_local_file_hash_level == "LOCAL_FILE_HASH_NONE"
+    assert result.latest_expected_hash_verification_level == "EXPECTED_HASH_VERIFICATION_NONE"
+    assert result.latest_expected_hash_verification_performed is False
+    assert result.latest_expected_hash_verification_matched is False
+    assert result.latest_expected_hash_verification_mismatch is False
+    assert result.latest_expected_hash_verification_actionable_mismatch is False
+    assert result.expected_hash_verification_target_file_opened_for_expected_hash_verification is False
+    assert result.expected_hash_verification_local_file_byte_hash_recomputed is False
+    assert result.expected_hash_verification_csv_file_opened_structurally is False
+    assert result.expected_hash_verification_csv_header_read is False
+    assert result.expected_hash_verification_csv_row_count_computed is False
+    assert result.expected_hash_verification_csv_values_read is False
+    assert result.expected_hash_verification_csv_full_content_read is False
+    assert result.expected_hash_verification_real_csv_consumed is False
+    assert result.expected_hash_verification_source_hash_validated is False
+    assert result.expected_hash_verification_revision_id_validated is False
+    assert result.expected_hash_verification_available_time_validated is False
+    assert result.expected_hash_verification_pit_admissibility_validated is False
+    assert result.expected_hash_verification_reviewer_authority_validated is False
+    assert result.expected_hash_verification_active_replay_input_ready_emitted is False
+    assert result.expected_hash_verification_replay_execution_allowed is False
+    assert result.expected_hash_verification_buy_review_allowed is False
+    assert result.expected_hash_verification_trading_allowed is False
+    assert result.expected_hash_verification_data_raw_written is False
+    assert result.expected_hash_verification_data_processed_written is False
+    assert result.expected_hash_verification_data_cache_written is False
+    assert result.latest_expected_hash_verification_recommended_next_task == (
+        EXPECTED_HASH_VERIFICATION_NEXT_TASK
+    )
+
+
+def test_research_status_includes_expected_hash_verification_matched_preview_only_fields(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "expected_hash_inputs"
+    full_hash = "c" * 64
+    preview = full_hash[:EXPECTED_HASH_VERIFICATION_PREVIEW_CHARS]
+    manifest_path, metadata_path = _expected_hash_verification_inputs(
+        input_root,
+        expected_hash=full_hash,
+        actual_hash=full_hash,
+    )
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_v0_1"
+    )
+    run_expected_hash_verification(
+        output_root=output_root,
+        run_id="004_matched",
+        expected_hash_manifest_path=manifest_path,
+        local_file_byte_hash_metadata_path=metadata_path,
+        allowed_manifest_roots=[input_root],
+        verification_level=EXPECTED_HASH_SHA256_AGAINST_LOCAL_METADATA_ONLY,
+        allow_expected_hash_verification=True,
+    )
+    manifest_path.unlink()
+    metadata_path.unlink()
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    metadata_text = json.dumps(metadata, sort_keys=True)
+    report_text = result.artifact_paths["local_research_dashboard"].read_text(encoding="utf-8")
+    summary_text = result.artifact_paths["local_research_summary"].read_text(encoding="utf-8")
+
+    assert result.expected_hash_verification_context_visible is True
+    assert result.latest_expected_hash_verification_run_id == "004_matched"
+    assert result.latest_expected_hash_verification_runtime_status == (
+        "EXPECTED_HASH_VERIFICATION_MATCHED_REPORT_ONLY"
+    )
+    assert result.latest_expected_hash_verification_health_status == "PASS"
+    assert result.latest_expected_hash_verification_workflow_stage == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_"
+        "EXPECTED_HASH_VERIFICATION_CORE_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_expected_hash_verification_file_touch_level == "FILE_TOUCH_NONE"
+    assert result.latest_expected_hash_verification_csv_read_level == "CSV_READ_NONE"
+    assert result.latest_expected_hash_verification_local_file_hash_level == (
+        LOCAL_FILE_HASH_SHA256_METADATA_REFERENCE_ONLY
+    )
+    assert result.latest_expected_hash_verification_level == EXPECTED_HASH_SHA256_AGAINST_LOCAL_METADATA_ONLY
+    assert result.latest_expected_hash_verification_performed is True
+    assert result.latest_expected_hash_verification_algorithm == "SHA-256"
+    assert result.latest_expected_hash_verification_expected_hash_present is True
+    assert result.latest_expected_hash_verification_expected_hash_preview == preview
+    assert result.latest_expected_hash_verification_actual_hash_preview == preview
+    assert result.latest_expected_hash_verification_matched is True
+    assert result.latest_expected_hash_verification_mismatch is False
+    assert result.latest_expected_hash_verification_actionable_mismatch is False
+    assert result.latest_expected_hash_verification_issue_count == 0
+    assert result.latest_expected_hash_verification_warning_count == 0
+    assert result.expected_hash_verification_expected_hash_verified_against_source_hash is False
+    assert result.expected_hash_verification_source_hash_validated is False
+    assert result.expected_hash_verification_revision_id_validated is False
+    assert result.expected_hash_verification_available_time_validated is False
+    assert result.expected_hash_verification_pit_admissibility_validated is False
+    assert result.expected_hash_verification_source_reliability_scored is False
+    assert result.expected_hash_verification_reviewer_authority_validated is False
+    assert result.expected_hash_verification_local_file_byte_hash_recomputed is False
+    assert result.expected_hash_verification_target_file_opened_for_expected_hash_verification is False
+    assert result.expected_hash_verification_csv_file_opened_structurally is False
+    assert result.expected_hash_verification_csv_header_read is False
+    assert result.expected_hash_verification_csv_row_count_computed is False
+    assert result.expected_hash_verification_csv_values_read is False
+    assert result.expected_hash_verification_csv_full_content_read is False
+    assert result.expected_hash_verification_real_csv_consumed is False
+    assert result.expected_hash_verification_real_reviewed_csv_package_created is False
+    assert result.expected_hash_verification_real_package_candidate_created is False
+    assert result.expected_hash_verification_active_reviewed_input_candidate_created is False
+    assert result.expected_hash_verification_real_replay_input_created is False
+    assert result.expected_hash_verification_active_replay_input is False
+    assert result.expected_hash_verification_active_replay_ready is False
+    assert result.expected_hash_verification_active_replay_input_ready_emitted is False
+    assert result.expected_hash_verification_replay_execution_allowed is False
+    assert result.expected_hash_verification_trading_allowed is False
+    assert result.expected_hash_verification_buy_review_allowed is False
+    assert result.expected_hash_verification_data_raw_written is False
+    assert result.expected_hash_verification_data_processed_written is False
+    assert result.expected_hash_verification_data_cache_written is False
+    assert result.latest_expected_hash_verification_recommended_next_task == (
+        EXPECTED_HASH_VERIFICATION_NEXT_TASK
+    )
+    assert row["status"] == "EXPECTED_HASH_VERIFICATION_MATCHED_REPORT_ONLY"
+    assert row["workflow_area"] == (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION"
+    )
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "expected_hash_verification_context_visible"] == "True"
+    assert summary.loc[0, "latest_expected_hash_verification_expected_hash_preview"] == preview
+    assert summary.loc[0, "latest_expected_hash_verification_actual_hash_preview"] == preview
+    assert summary.loc[0, "expected_hash_verification_csv_header_read"] == "False"
+    assert summary.loc[0, "expected_hash_verification_real_csv_consumed"] == "False"
+    assert metadata["expected_hash_verification_context_visible"] is True
+    assert metadata["latest_expected_hash_verification_expected_hash_preview"] == preview
+    assert metadata["expected_hash_verification_real_csv_consumed"] is False
+    assert full_hash not in metadata_text
+    assert full_hash not in report_text
+    assert full_hash not in summary_text
+    for stale in STALE_EXPECTED_HASH_VERIFICATION_NEXT_ACTION_PHRASES:
+        assert stale not in result.latest_expected_hash_verification_recommended_next_task
+    for unsafe in UNSAFE_EXPECTED_HASH_VERIFICATION_WORDING:
+        assert unsafe not in metadata_text
+        assert unsafe not in result.latest_expected_hash_verification_recommended_next_task
+        assert unsafe not in row["notes"]
+
+
+def test_research_status_includes_expected_hash_verification_mismatch_warn_actionable_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "expected_hash_inputs"
+    expected_hash = "a" * 64
+    actual_hash = "b" * 64
+    manifest_path, metadata_path = _expected_hash_verification_inputs(
+        input_root,
+        expected_hash=expected_hash,
+        actual_hash=actual_hash,
+    )
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_v0_1"
+    )
+    run_expected_hash_verification(
+        output_root=output_root,
+        run_id="004_mismatch",
+        expected_hash_manifest_path=manifest_path,
+        local_file_byte_hash_metadata_path=metadata_path,
+        allowed_manifest_roots=[input_root],
+        verification_level=EXPECTED_HASH_SHA256_AGAINST_LOCAL_METADATA_ONLY,
+        allow_expected_hash_verification=True,
+    )
+    manifest_path.unlink()
+    metadata_path.unlink()
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS"
+    ].iloc[0]
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    metadata_text = json.dumps(metadata, sort_keys=True)
+
+    assert result.expected_hash_verification_context_visible is True
+    assert result.latest_expected_hash_verification_runtime_status == (
+        "EXPECTED_HASH_VERIFICATION_MISMATCHED_REPORT_ONLY"
+    )
+    assert result.latest_expected_hash_verification_health_status == "WARN"
+    assert result.latest_expected_hash_verification_expected_hash_preview == (
+        expected_hash[:EXPECTED_HASH_VERIFICATION_PREVIEW_CHARS]
+    )
+    assert result.latest_expected_hash_verification_actual_hash_preview == (
+        actual_hash[:EXPECTED_HASH_VERIFICATION_PREVIEW_CHARS]
+    )
+    assert result.latest_expected_hash_verification_matched is False
+    assert result.latest_expected_hash_verification_mismatch is True
+    assert result.latest_expected_hash_verification_actionable_mismatch is True
+    assert result.latest_expected_hash_verification_issue_count == 1
+    assert result.latest_expected_hash_verification_warning_count == 1
+    assert row["status"] == "EXPECTED_HASH_VERIFICATION_MISMATCHED_REPORT_ONLY"
+    assert row["warning_count"] == 1
+    assert row["blocking_error_count"] == 0
+    assert result.expected_hash_verification_pit_admissibility_validated is False
+    assert result.expected_hash_verification_source_hash_validated is False
+    assert result.expected_hash_verification_reviewer_authority_validated is False
+    assert result.expected_hash_verification_replay_execution_allowed is False
+    assert result.expected_hash_verification_buy_review_allowed is False
+    assert result.expected_hash_verification_trading_allowed is False
+    assert expected_hash not in metadata_text
+    assert actual_hash not in metadata_text
+    for unsafe in UNSAFE_EXPECTED_HASH_VERIFICATION_WORDING:
+        assert unsafe not in metadata_text
+        assert unsafe not in row["notes"]
+
+
+def test_research_status_preserves_paper_priority_over_expected_hash_verification(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "expected_hash_inputs"
+    manifest_path, metadata_path = _expected_hash_verification_inputs(
+        input_root,
+        expected_hash="a" * 64,
+        actual_hash="b" * 64,
+    )
+    run_expected_hash_verification(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_v0_1"
+        ),
+        run_id="004_mismatch",
+        expected_hash_manifest_path=manifest_path,
+        local_file_byte_hash_metadata_path=metadata_path,
+        allowed_manifest_roots=[input_root],
+        verification_level=EXPECTED_HASH_SHA256_AGAINST_LOCAL_METADATA_ONLY,
+        allow_expected_hash_verification=True,
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.expected_hash_verification_context_visible is True
+    assert result.latest_expected_hash_verification_health_status == "WARN"
+    assert result.latest_expected_hash_verification_actionable_mismatch is True
+    assert result.expected_hash_verification_active_replay_input is False
+    assert result.expected_hash_verification_active_replay_input_ready_emitted is False
+    assert result.expected_hash_verification_replay_execution_allowed is False
+    assert result.expected_hash_verification_buy_review_allowed is False
+    assert result.expected_hash_verification_trading_allowed is False
 
 
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(

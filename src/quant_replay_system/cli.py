@@ -11891,7 +11891,7 @@ LOCAL_FILE_BYTE_HASH_ONLY_CLI_NEXT_TASK = (
 )
 EXPECTED_HASH_VERIFICATION_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification "
-    "Research-Status Planning Report-Only v0.1"
+    "Checkpoint Planning Report-Only v0.1"
 )
 
 

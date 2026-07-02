@@ -21,6 +21,10 @@ MATCHING_FULL_HASH = "c" * 64
 PREVIEW_CHARS = 16
 STATUS_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification "
+    "Checkpoint Planning Report-Only v0.1"
+)
+STALE_STATUS_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification "
     "Research-Status Planning Report-Only v0.1"
 )
 UNSAFE_WORDING = [
@@ -277,6 +281,7 @@ def test_status_summarizes_latest_no_input_matched_and_mismatch_artifacts(tmp_pa
     assert result.latest_actionable_mismatch is True
     assert result.latest_runtime_status != "FAIL"
     assert result.recommended_next_task == STATUS_NEXT_TASK
+    assert STALE_STATUS_NEXT_TASK not in result.recommended_next_task
 
 
 def test_status_output_is_preview_only_and_negative_proof_fields_are_false(tmp_path: Path) -> None:
