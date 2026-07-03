@@ -133,6 +133,22 @@ Expected-Hash Verification is context only. It is a metadata-only comparison bet
 
 Mismatch is `WARN` / actionable context only. It is not package approval, not real validator rejection, not source failure, not PIT failure, not reviewer-authority failure, not replay readiness, not buy-review, and not trading. Expected-hash verification does not mean the target CSV was opened, a hash was recomputed, a CSV header was read, row count was computed, CSV values were read, full content was semantically read, `real_csv_consumed` became true, source_hash was validated, revision_id was validated, available_time was validated, PIT admissibility was validated, source reliability was scored, reviewer authority was validated, a package candidate was created, active replay input was created, buy-review was enabled, or trading was authorized.
 
+## Tiny PIT CSV Physical Data-Line Count-Only Status
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line Count-Only context when status artifacts exist under:
+
+```text
+outputs/reports/manual_diagnostics/tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_v0_1/status/
+```
+
+It exposes the latest run id, runtime status, health status, workflow stage, artifact/report paths, `file_touch_level`, `csv_read_level`, `local_file_hash_level`, `expected_hash_verification_level`, `csv_physical_data_line_count_level`, computed flag, physical data-line count, total physical line count, count policy, header dependency policy, header metadata reuse, header line skipped flag, zero-data-line warning, issue and warning counts, negative proof fields, and safety flags.
+
+CSV Physical Data-Line Count-Only is context only. It counts newline-delimited physical data lines, excludes the first physical line as the header by explicit policy, and is not semantic CSV record count. Quoted multiline CSV records are counted by physical lines, not logical CSV records. The context preserves later `PAPER_WORKFLOW_READY` priority.
+
+`target_csv_opened_for_physical_data_line_count=true` may appear for safe count-mode artifacts, but it means only a guarded streaming physical-line scan. It does not mean `real_csv_consumed`, CSV field parsing, CSV value reading, full-content semantic reading, PIT validation, source reliability scoring, reviewer authority validation, package candidate creation, active replay input, buy-review, or trading.
+
+Zero physical data lines are `WARN` / context only, not package failure from a real package validator. The count is not package readiness. Research-status must not expose header values, row values, snippets, parsed fields, full-content samples, source hash values, expected hash values, local byte hash values, or target CSV text.
+
 ## Tiny PIT CSV Structural Header-Only Status
 
 `research-status` includes `tiny-pit-real-reviewed-local-csv-package-candidate-csv-structural-header-only-status` as report-only structural header context when those artifacts exist.

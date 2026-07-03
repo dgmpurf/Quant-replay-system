@@ -2,6 +2,18 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line Count-Only v1.78.0
+
+`NO_CSV_PHYSICAL_DATA_LINE_COUNT_INPUT`, `CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_REPORT_ONLY`, and `CSV_PHYSICAL_DATA_LINE_COUNT_WARN_ZERO_DATA_LINES` mean Tiny PIT CSV Physical Data-Line Count-Only artifacts exist as report-only / diagnostic-only physical non-header line count context. Count mode requires a package manifest, prior CSV Structural Header-Only metadata, an allowed root, and explicit `--allow-csv-physical-data-line-count-only`.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-csv-physical-data-line-count-only`, `tiny-pit-real-reviewed-local-csv-package-candidate-csv-physical-data-line-count-only-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-csv-physical-data-line-count-only-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-csv-physical-data-line-count-only-status` to create, discover, safety-check, and summarize the physical data-line count-only report artifacts. `research-status` exposes the latest context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+Physical data-line count means newline-delimited physical data lines only: the first physical line is excluded as the header by explicit policy. It is not semantic CSV record count, and quoted multiline CSV records are not handled as one semantic record. Safe no-input artifacts are `NO_CSV_PHYSICAL_DATA_LINE_COUNT_INPUT` / `PASS`; safe count artifacts are `CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_REPORT_ONLY` / `PASS`; zero data-line artifacts are `CSV_PHYSICAL_DATA_LINE_COUNT_WARN_ZERO_DATA_LINES` / `WARN`.
+
+`target_csv_opened_for_physical_data_line_count=true` may appear only for safe count-mode artifacts and means streaming physical-line scan under manifest/root/allow guards. It does not mean values read, fields parsed, full-content semantic read, `real_csv_consumed`, PIT validation, package readiness, replay readiness, buy-review, or trading.
+
+The workflow does not parse CSV fields, expose header values, row values, row snippets, parsed fields, or full-content samples; compute or recompute hashes; verify expected_hash; validate source_hash, revision_id, available_time, PIT admissibility, source reliability, or reviewer authority; create package candidates, active replay input, replay, labels, training, model, stock_profile, paper validation, buy-review, or trading.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Expected-Hash Verification v1.77.0
 
 `NO_EXPECTED_HASH_VERIFICATION_INPUT`, `EXPECTED_HASH_VERIFICATION_MATCHED_REPORT_ONLY`, and `EXPECTED_HASH_VERIFICATION_MISMATCHED_REPORT_ONLY` mean Tiny PIT Expected-Hash Verification artifacts exist as report-only / diagnostic-only metadata comparison context. Expected-hash verification compares a manifest-declared expected SHA-256 with an existing Local File Byte-Hash-Only metadata value only. Verification mode requires an expected-hash manifest, a local byte-hash metadata path, an allowed root, and explicit `--allow-expected-hash-verification`.
