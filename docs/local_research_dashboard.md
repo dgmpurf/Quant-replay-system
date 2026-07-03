@@ -105,6 +105,20 @@ outputs/reports/paper_trading/workflow_status/
 
 It reads existing local `metadata.json` or `handoff_metadata.json` files only. It does not rerun any workflow step.
 
+## Tiny PIT Source Hash / Revision ID / Available-Time Status
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision Available-Time context when status artifacts exist under:
+
+```text
+outputs/reports/manual_diagnostics/tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_v0_1/status/
+```
+
+It exposes the latest run id, runtime status, health status, workflow stage, artifact/report paths, `source_hash_validation_level`, `revision_id_validation_level`, `available_time_validation_level`, `pit_admissibility_level`, source hash metadata fields, source hash format and supported-algorithm flags, source hash algorithm, source hash preview, revision id metadata fields, revision id type fields, revision id value-recorded flag, revision consistency flag, available-time metadata fields, parseability and timezone fields, available-time decision-time comparison flag, issue and warning counts, negative proof fields, and safety flags.
+
+Source Hash / Revision ID / Available-Time is context only. `source_hash_metadata_present` is not source hash validation. `revision_id_metadata_present` is not package readiness. `available_time_parseable` is not PIT admissibility or replay readiness. A timezone warning is review context only. This context is lower priority than later paper workflow context and must preserve `PAPER_WORKFLOW_READY` as the final workflow stage when paper workflow evidence exists.
+
+Research-status must not expose a full source hash, source content, source artifact bytes, target CSV content, row values, full file text, private paths, source reliability scores, reviewer approval, package admissibility, replay readiness, buy-review readiness, or trading readiness.
+
 ## Tiny PIT Local File Byte-Hash-Only Status
 
 `research-status` includes `tiny-pit-real-reviewed-local-csv-package-candidate-local-file-byte-hash-only-status` as report-only local file identity / integrity context when those artifacts exist.

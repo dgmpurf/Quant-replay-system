@@ -2,6 +2,16 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision Available-Time v1.79.0
+
+`NO_SOURCE_REVISION_TIME_INPUT`, `SOURCE_REVISION_TIME_METADATA_PRESENT_REPORT_ONLY`, and `SOURCE_REVISION_TIME_WARN_TIMEZONE_ASSUMPTION_REQUIRED` mean Tiny PIT Source Hash / Revision ID / Available-Time artifacts exist as report-only / diagnostic-only source lineage metadata context. This workflow confirms metadata presence, shape, parseability, and disclosure only for `source_hash`, `revision_id`, and `available_time`.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-source-hash-revision-available-time`, `tiny-pit-real-reviewed-local-csv-package-candidate-source-hash-revision-available-time-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-source-hash-revision-available-time-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-source-hash-revision-available-time-status` to create, discover, safety-check, and summarize the report-only metadata artifacts. `research-status` exposes the latest context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+Source hash disclosure is preview-only on report, index, status, CLI, and research-status surfaces. A timezone assumption is `WARN` / review context only, not PIT failure.
+
+The workflow does not validate `source_hash`, validate `revision_id`, validate or adjudicate `available_time`, compare `available_time <= replay_decision_time`, validate PIT admissibility, open source artifact bytes, read source content, open target CSV files, recompute source or local file hashes, reverify `expected_hash`, score source reliability, validate reviewer authority, create real package candidates, create active replay input, run replay, create labels, train models, create stock_profile or paper validation, create buy-review eligibility, or authorize trading.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line Count-Only v1.78.0
 
 `NO_CSV_PHYSICAL_DATA_LINE_COUNT_INPUT`, `CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_REPORT_ONLY`, and `CSV_PHYSICAL_DATA_LINE_COUNT_WARN_ZERO_DATA_LINES` mean Tiny PIT CSV Physical Data-Line Count-Only artifacts exist as report-only / diagnostic-only physical non-header line count context. Count mode requires a package manifest, prior CSV Structural Header-Only metadata, an allowed root, and explicit `--allow-csv-physical-data-line-count-only`.
