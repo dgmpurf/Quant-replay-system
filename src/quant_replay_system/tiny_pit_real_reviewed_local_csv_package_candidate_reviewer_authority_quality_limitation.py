@@ -57,7 +57,7 @@ WORKFLOW_STAGE = (
 CREATED_AT = "2026-07-03T00:00:00Z"
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
-    "Limitation Artifact Views Report-Only v0.1"
+    "Limitation Checkpoint Planning Report-Only v0.1"
 )
 
 REVIEWER_AUTHORITY_NONE = "REVIEWER_AUTHORITY_NONE"

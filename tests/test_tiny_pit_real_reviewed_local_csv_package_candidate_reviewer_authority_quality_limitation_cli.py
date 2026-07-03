@@ -24,11 +24,15 @@ TARGET_CSV_SENTINEL = "TARGET_CSV_SENTINEL_SHOULD_NOT_PRINT"
 FULL_HASH_SENTINEL = "a" * 64
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
-    "Limitation Research-Status Planning Report-Only v0.1"
+    "Limitation Checkpoint Planning Report-Only v0.1"
 )
 STALE_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
     "Limitation CLI Report-Only v0.1"
+)
+STALE_RESEARCH_STATUS_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
+    "Limitation Research-Status Planning Report-Only v0.1"
 )
 UNSAFE_WORDING = [
     "REVIEWER_APPROVED_PACKAGE",
@@ -113,6 +117,7 @@ def test_core_cli_no_input_exits_zero_and_writes_safe_artifacts(tmp_path: Path, 
     assert "permission_class_present: False" in output
     assert f"recommended_next_task: {NEXT_TASK}" in output
     assert STALE_CLI_NEXT_TASK not in output
+    assert STALE_RESEARCH_STATUS_NEXT_TASK not in output
     _assert_negative_proofs(output)
     _assert_no_disclosure(output)
     _assert_no_unsafe_wording(output)
@@ -145,6 +150,7 @@ def test_core_cli_metadata_present_prints_safe_context_only(tmp_path: Path, caps
     assert "legality_flag: public_confirmed" in output
     assert f"recommended_next_task: {NEXT_TASK}" in output
     assert STALE_CLI_NEXT_TASK not in output
+    assert STALE_RESEARCH_STATUS_NEXT_TASK not in output
     _assert_negative_proofs(output)
     _assert_no_disclosure(output)
     _assert_no_unsafe_wording(output)
@@ -303,6 +309,7 @@ def test_index_health_status_cli_after_reviewer_metadata_deleted(tmp_path: Path,
     assert "latest_permission_class: public" in status_output
     assert f"recommended_next_task: {NEXT_TASK}" in status_output
     assert STALE_CLI_NEXT_TASK not in status_output
+    assert STALE_RESEARCH_STATUS_NEXT_TASK not in status_output
     for output_text in [index_output, health_output, status_output]:
         _assert_no_disclosure(output_text)
         _assert_no_unsafe_wording(output_text)

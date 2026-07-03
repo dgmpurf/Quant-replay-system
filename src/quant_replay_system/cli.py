@@ -12195,7 +12195,7 @@ SOURCE_HASH_REVISION_AVAILABLE_TIME_CLI_NEXT_TASK = (
 )
 REVIEWER_AUTHORITY_QUALITY_LIMITATION_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
-    "Limitation Research-Status Planning Report-Only v0.1"
+    "Limitation Checkpoint Planning Report-Only v0.1"
 )
 
 
@@ -25507,6 +25507,67 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"market_update_handoff_status: {result.market_update_handoff_status}")
     print(f"market_update_handoff_stage: {result.market_update_handoff_stage}")
     print(f"market_update_handoff_current_candidate_run_id: {result.market_update_handoff_current_candidate_run_id}")
+    print(f"reviewer_quality_limitation_context_visible: {result.reviewer_quality_limitation_context_visible}")
+    print(f"latest_reviewer_quality_limitation_run_id: {result.latest_reviewer_quality_limitation_run_id}")
+    print(
+        "latest_reviewer_quality_limitation_runtime_status: "
+        f"{result.latest_reviewer_quality_limitation_runtime_status}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_health_status: "
+        f"{result.latest_reviewer_quality_limitation_health_status}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_workflow_stage: "
+        f"{result.latest_reviewer_quality_limitation_workflow_stage}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_reviewer_id_preview: "
+        f"{result.latest_reviewer_quality_limitation_reviewer_id_preview}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_reviewer_authority_level: "
+        f"{result.latest_reviewer_quality_limitation_reviewer_authority_level}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_quality_status_level: "
+        f"{result.latest_reviewer_quality_limitation_quality_status_level}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_limitation_review_level: "
+        f"{result.latest_reviewer_quality_limitation_limitation_review_level}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_permission_review_level: "
+        f"{result.latest_reviewer_quality_limitation_permission_review_level}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_package_promotion_level: "
+        f"{result.latest_reviewer_quality_limitation_package_promotion_level}"
+    )
+    print(
+        "latest_reviewer_quality_limitation_recommended_next_task: "
+        f"{result.latest_reviewer_quality_limitation_recommended_next_task}"
+    )
+    print(
+        "reviewer_quality_limitation_reviewer_authority_validated: "
+        f"{result.reviewer_quality_limitation_reviewer_authority_validated}"
+    )
+    print(
+        "reviewer_quality_limitation_quality_status_validated: "
+        f"{result.reviewer_quality_limitation_quality_status_validated}"
+    )
+    print(
+        "reviewer_quality_limitation_permission_class_validated: "
+        f"{result.reviewer_quality_limitation_permission_class_validated}"
+    )
+    print(
+        "reviewer_quality_limitation_real_package_candidate_created: "
+        f"{result.reviewer_quality_limitation_real_package_candidate_created}"
+    )
+    print(f"reviewer_quality_limitation_active_replay_input: {result.reviewer_quality_limitation_active_replay_input}")
+    print(f"reviewer_quality_limitation_buy_review_allowed: {result.reviewer_quality_limitation_buy_review_allowed}")
+    print(f"reviewer_quality_limitation_trading_allowed: {result.reviewer_quality_limitation_trading_allowed}")
     print(f"next_manual_action: {result.next_manual_action}")
     print(f"Report path: {result.artifact_paths['local_research_dashboard']}")
     for warning in result.warnings:

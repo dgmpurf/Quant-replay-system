@@ -176,6 +176,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_sour
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status import (
     run_source_hash_revision_available_time_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation import (
+    REQUIRED_FALSE_FLAGS as REVIEWER_QUALITY_LIMITATION_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_status import (
+    run_reviewer_authority_quality_limitation_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1453,6 +1459,59 @@ SUMMARY_COLUMNS = [
             "source_revision_time_data_processed_written",
             "source_revision_time_data_cache_written",
         }
+    ],
+    "reviewer_quality_limitation_context_visible",
+    "latest_reviewer_quality_limitation_run_id",
+    "latest_reviewer_quality_limitation_runtime_status",
+    "latest_reviewer_quality_limitation_health_status",
+    "latest_reviewer_quality_limitation_workflow_stage",
+    "latest_reviewer_quality_limitation_artifact_path",
+    "latest_reviewer_quality_limitation_report_path",
+    "latest_reviewer_quality_limitation_reviewer_authority_level",
+    "latest_reviewer_quality_limitation_quality_status_level",
+    "latest_reviewer_quality_limitation_limitation_review_level",
+    "latest_reviewer_quality_limitation_permission_review_level",
+    "latest_reviewer_quality_limitation_package_promotion_level",
+    "latest_reviewer_quality_limitation_reviewer_metadata_present",
+    "latest_reviewer_quality_limitation_reviewer_id_recorded",
+    "latest_reviewer_quality_limitation_reviewer_id_preview",
+    "latest_reviewer_quality_limitation_reviewer_role",
+    "latest_reviewer_quality_limitation_reviewer_role_supported",
+    "latest_reviewer_quality_limitation_reviewer_type",
+    "latest_reviewer_quality_limitation_reviewer_attestation_present",
+    "latest_reviewer_quality_limitation_reviewer_authority_scope_declared",
+    "latest_reviewer_quality_limitation_quality_status_present",
+    "latest_reviewer_quality_limitation_quality_status_declared",
+    "latest_reviewer_quality_limitation_quality_issue_count",
+    "latest_reviewer_quality_limitation_quality_warning_count",
+    "latest_reviewer_quality_limitation_quality_blocker_count",
+    "latest_reviewer_quality_limitation_limitations_present",
+    "latest_reviewer_quality_limitation_limitation_count",
+    "latest_reviewer_quality_limitation_limitation_severity_max",
+    "latest_reviewer_quality_limitation_limitation_categories",
+    "latest_reviewer_quality_limitation_unresolved_limitation_count",
+    "latest_reviewer_quality_limitation_blocking_limitation_count",
+    "latest_reviewer_quality_limitation_permission_class_present",
+    "latest_reviewer_quality_limitation_permission_class",
+    "latest_reviewer_quality_limitation_legality_flag",
+    "latest_reviewer_quality_limitation_restricted_use_blocked",
+    "latest_reviewer_quality_limitation_private_source_blocked",
+    "latest_reviewer_quality_limitation_issue_count",
+    "latest_reviewer_quality_limitation_warning_count",
+    "latest_reviewer_quality_limitation_recommended_next_task",
+    "reviewer_quality_limitation_reviewer_authority_validated",
+    "reviewer_quality_limitation_quality_status_validated",
+    "reviewer_quality_limitation_permission_class_validated",
+    "reviewer_quality_limitation_limitations_overridden_by_reviewer",
+    "reviewer_quality_limitation_limitations_overridden_by_quality",
+    "reviewer_quality_limitation_source_reliability_scored",
+    "reviewer_quality_limitation_source_hash_validated",
+    "reviewer_quality_limitation_revision_id_validated",
+    "reviewer_quality_limitation_available_time_validated",
+    "reviewer_quality_limitation_pit_admissibility_validated",
+    *[
+        f"reviewer_quality_limitation_{flag}"
+        for flag in REVIEWER_QUALITY_LIMITATION_SAFETY_FALSE_FLAGS
     ],
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
@@ -3126,6 +3185,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -3199,6 +3259,9 @@ WORKFLOW_AREAS = {
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION"
     ),
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
@@ -4641,6 +4704,69 @@ class LocalResearchDashboardResult:
     source_revision_time_current_candidates_created: bool
     source_revision_time_snapshots_created: bool
     source_revision_time_signal_semantics_mutated: bool
+    reviewer_quality_limitation_context_visible: bool
+    latest_reviewer_quality_limitation_run_id: str
+    latest_reviewer_quality_limitation_runtime_status: str
+    latest_reviewer_quality_limitation_health_status: str
+    latest_reviewer_quality_limitation_workflow_stage: str
+    latest_reviewer_quality_limitation_artifact_path: str
+    latest_reviewer_quality_limitation_report_path: str
+    latest_reviewer_quality_limitation_reviewer_authority_level: str
+    latest_reviewer_quality_limitation_quality_status_level: str
+    latest_reviewer_quality_limitation_limitation_review_level: str
+    latest_reviewer_quality_limitation_permission_review_level: str
+    latest_reviewer_quality_limitation_package_promotion_level: str
+    latest_reviewer_quality_limitation_reviewer_metadata_present: bool
+    latest_reviewer_quality_limitation_reviewer_id_recorded: bool
+    latest_reviewer_quality_limitation_reviewer_id_preview: str
+    latest_reviewer_quality_limitation_reviewer_role: str
+    latest_reviewer_quality_limitation_reviewer_role_supported: bool
+    latest_reviewer_quality_limitation_reviewer_type: str
+    latest_reviewer_quality_limitation_reviewer_attestation_present: bool
+    latest_reviewer_quality_limitation_reviewer_authority_scope_declared: bool
+    latest_reviewer_quality_limitation_quality_status_present: bool
+    latest_reviewer_quality_limitation_quality_status_declared: bool
+    latest_reviewer_quality_limitation_quality_issue_count: int
+    latest_reviewer_quality_limitation_quality_warning_count: int
+    latest_reviewer_quality_limitation_quality_blocker_count: int
+    latest_reviewer_quality_limitation_limitations_present: bool
+    latest_reviewer_quality_limitation_limitation_count: int
+    latest_reviewer_quality_limitation_limitation_severity_max: str
+    latest_reviewer_quality_limitation_limitation_categories: str
+    latest_reviewer_quality_limitation_unresolved_limitation_count: int
+    latest_reviewer_quality_limitation_blocking_limitation_count: int
+    latest_reviewer_quality_limitation_permission_class_present: bool
+    latest_reviewer_quality_limitation_permission_class: str
+    latest_reviewer_quality_limitation_legality_flag: str
+    latest_reviewer_quality_limitation_restricted_use_blocked: bool
+    latest_reviewer_quality_limitation_private_source_blocked: bool
+    latest_reviewer_quality_limitation_issue_count: int
+    latest_reviewer_quality_limitation_warning_count: int
+    latest_reviewer_quality_limitation_recommended_next_task: str
+    reviewer_quality_limitation_reviewer_authority_validated: bool
+    reviewer_quality_limitation_quality_status_validated: bool
+    reviewer_quality_limitation_permission_class_validated: bool
+    reviewer_quality_limitation_limitations_overridden_by_reviewer: bool
+    reviewer_quality_limitation_limitations_overridden_by_quality: bool
+    reviewer_quality_limitation_source_reliability_scored: bool
+    reviewer_quality_limitation_source_hash_validated: bool
+    reviewer_quality_limitation_revision_id_validated: bool
+    reviewer_quality_limitation_available_time_validated: bool
+    reviewer_quality_limitation_pit_admissibility_validated: bool
+    reviewer_quality_limitation_real_csv_consumed: bool
+    reviewer_quality_limitation_real_reviewed_csv_package_created: bool
+    reviewer_quality_limitation_real_package_candidate_created: bool
+    reviewer_quality_limitation_active_reviewed_input_candidate_created: bool
+    reviewer_quality_limitation_real_replay_input_created: bool
+    reviewer_quality_limitation_active_replay_input: bool
+    reviewer_quality_limitation_active_replay_ready: bool
+    reviewer_quality_limitation_active_replay_input_ready_emitted: bool
+    reviewer_quality_limitation_replay_execution_allowed: bool
+    reviewer_quality_limitation_trading_allowed: bool
+    reviewer_quality_limitation_buy_review_allowed: bool
+    reviewer_quality_limitation_data_raw_written: bool
+    reviewer_quality_limitation_data_processed_written: bool
+    reviewer_quality_limitation_data_cache_written: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -9329,6 +9455,7 @@ def run_local_research_dashboard(
         **_expected_hash_verification_result_kwargs(summary),
         **_csv_physical_data_line_count_only_result_kwargs(summary),
         **_source_revision_time_result_kwargs(summary),
+        **_reviewer_quality_limitation_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -13391,6 +13518,13 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_quality_limitation_status(
+            root_path
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_v0_1"
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -20862,6 +20996,7 @@ def summarize_local_research_status(
         **_expected_hash_verification_summary_fields(by_component),
         **_csv_physical_data_line_count_only_summary_fields(by_component),
         **_source_revision_time_summary_fields(by_component),
+        **_reviewer_quality_limitation_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -29043,6 +29178,7 @@ def build_local_research_dashboard_metadata(
         **_expected_hash_verification_metadata(result),
         **_csv_physical_data_line_count_only_metadata(result),
         **_source_revision_time_metadata(result),
+        **_reviewer_quality_limitation_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -36984,6 +37120,395 @@ def _source_revision_time_result_kwargs(summary: dict[str, Any]) -> dict[str, An
 
 def _source_revision_time_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _SOURCE_REVISION_TIME_RESULT_FIELDS}
+
+
+_REVIEWER_QUALITY_LIMITATION_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS"
+)
+_REVIEWER_QUALITY_LIMITATION_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION"
+)
+_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX = "latest_reviewer_quality_limitation_"
+_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX = "reviewer_quality_limitation_"
+_REVIEWER_QUALITY_LIMITATION_LATEST_FIELDS = [
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}run_id",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}runtime_status",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}health_status",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}workflow_stage",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}artifact_path",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}report_path",
+]
+_REVIEWER_QUALITY_LIMITATION_TEXT_FIELDS = [
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_authority_level",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}quality_status_level",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}limitation_review_level",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}permission_review_level",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}package_promotion_level",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_id_preview",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_role",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_type",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}limitation_severity_max",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}limitation_categories",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}permission_class",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}legality_flag",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}recommended_next_task",
+]
+_REVIEWER_QUALITY_LIMITATION_BOOL_FIELDS = [
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_metadata_present",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_id_recorded",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_role_supported",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_attestation_present",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}reviewer_authority_scope_declared",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}quality_status_present",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}quality_status_declared",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}limitations_present",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}permission_class_present",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}restricted_use_blocked",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}private_source_blocked",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}reviewer_authority_validated",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}quality_status_validated",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}permission_class_validated",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}limitations_overridden_by_reviewer",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}limitations_overridden_by_quality",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}source_reliability_scored",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}source_hash_validated",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}revision_id_validated",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}available_time_validated",
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}pit_admissibility_validated",
+]
+_REVIEWER_QUALITY_LIMITATION_SAFETY_FIELDS = [
+    f"{_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX}{flag}"
+    for flag in REVIEWER_QUALITY_LIMITATION_SAFETY_FALSE_FLAGS
+]
+_REVIEWER_QUALITY_LIMITATION_INT_FIELDS = [
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}quality_issue_count",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}quality_warning_count",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}quality_blocker_count",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}limitation_count",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}unresolved_limitation_count",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}blocking_limitation_count",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}issue_count",
+    f"{_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX}warning_count",
+]
+_REVIEWER_QUALITY_LIMITATION_RESULT_FIELDS = (
+    ["reviewer_quality_limitation_context_visible"]
+    + _REVIEWER_QUALITY_LIMITATION_LATEST_FIELDS
+    + _REVIEWER_QUALITY_LIMITATION_TEXT_FIELDS
+    + _REVIEWER_QUALITY_LIMITATION_BOOL_FIELDS
+    + _REVIEWER_QUALITY_LIMITATION_INT_FIELDS
+    + _REVIEWER_QUALITY_LIMITATION_SAFETY_FIELDS
+)
+_REVIEWER_QUALITY_LIMITATION_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
+    "Limitation Checkpoint Planning Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_quality_limitation_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_reviewer_authority_quality_limitation_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = _reviewer_quality_limitation_summary_from_status_result(result)
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _REVIEWER_QUALITY_LIMITATION_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair Reviewer Authority / Quality / Limitation artifacts before checkpoint planning."
+    )
+    warning_count = _int_or_zero(
+        summary.get("latest_reviewer_quality_limitation_warning_count")
+    )
+    issue_count = _int_or_zero(summary.get("latest_reviewer_quality_limitation_issue_count"))
+    blocked_context = "BLOCKED" in result.latest_runtime_status
+    return [
+        _record(
+            workflow_area=_REVIEWER_QUALITY_LIMITATION_WORKFLOW_AREA,
+            component=_REVIEWER_QUALITY_LIMITATION_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.artifact_paths.get("metadata_json", ""),
+            issue_count=issue_count,
+            warning_count=warning_count,
+            error_count=1 if result.latest_health_status == "FAIL" or blocked_context else 0,
+            notes=_reviewer_quality_limitation_notes(summary),
+        )
+    ]
+
+
+def _reviewer_quality_limitation_summary_from_status_result(result: Any) -> dict[str, Any]:
+    status_summary = result.summary
+    summary = {
+        "latest_reviewer_quality_limitation_run_id": result.latest_run_id,
+        "latest_reviewer_quality_limitation_runtime_status": result.latest_runtime_status,
+        "latest_reviewer_quality_limitation_health_status": result.latest_health_status,
+        "latest_reviewer_quality_limitation_workflow_stage": result.latest_workflow_stage,
+        "latest_reviewer_quality_limitation_artifact_path": result.latest_artifact_path,
+        "latest_reviewer_quality_limitation_report_path": result.latest_report_path,
+        "latest_reviewer_quality_limitation_reviewer_authority_level": status_summary.get(
+            "latest_reviewer_authority_level"
+        ),
+        "latest_reviewer_quality_limitation_quality_status_level": status_summary.get(
+            "latest_quality_status_level"
+        ),
+        "latest_reviewer_quality_limitation_limitation_review_level": status_summary.get(
+            "latest_limitation_review_level"
+        ),
+        "latest_reviewer_quality_limitation_permission_review_level": status_summary.get(
+            "latest_permission_review_level"
+        ),
+        "latest_reviewer_quality_limitation_package_promotion_level": status_summary.get(
+            "latest_package_promotion_level"
+        ),
+        "latest_reviewer_quality_limitation_reviewer_metadata_present": status_summary.get(
+            "latest_reviewer_metadata_present"
+        ),
+        "latest_reviewer_quality_limitation_reviewer_id_recorded": status_summary.get(
+            "latest_reviewer_id_recorded"
+        ),
+        "latest_reviewer_quality_limitation_reviewer_id_preview": _reviewer_quality_limitation_preview(
+            status_summary.get("latest_reviewer_id_preview")
+        ),
+        "latest_reviewer_quality_limitation_reviewer_role": status_summary.get(
+            "latest_reviewer_role"
+        ),
+        "latest_reviewer_quality_limitation_reviewer_role_supported": status_summary.get(
+            "latest_reviewer_role_supported"
+        ),
+        "latest_reviewer_quality_limitation_reviewer_type": status_summary.get(
+            "latest_reviewer_type"
+        ),
+        "latest_reviewer_quality_limitation_reviewer_attestation_present": status_summary.get(
+            "latest_reviewer_attestation_present"
+        ),
+        "latest_reviewer_quality_limitation_reviewer_authority_scope_declared": status_summary.get(
+            "latest_reviewer_authority_scope_declared"
+        ),
+        "latest_reviewer_quality_limitation_quality_status_present": status_summary.get(
+            "latest_quality_status_present"
+        ),
+        "latest_reviewer_quality_limitation_quality_status_declared": status_summary.get(
+            "latest_quality_status_declared"
+        ),
+        "latest_reviewer_quality_limitation_quality_issue_count": status_summary.get(
+            "latest_quality_issue_count"
+        ),
+        "latest_reviewer_quality_limitation_quality_warning_count": status_summary.get(
+            "latest_quality_warning_count"
+        ),
+        "latest_reviewer_quality_limitation_quality_blocker_count": status_summary.get(
+            "latest_quality_blocker_count"
+        ),
+        "latest_reviewer_quality_limitation_limitations_present": status_summary.get(
+            "latest_limitations_present"
+        ),
+        "latest_reviewer_quality_limitation_limitation_count": status_summary.get(
+            "latest_limitation_count"
+        ),
+        "latest_reviewer_quality_limitation_limitation_severity_max": status_summary.get(
+            "latest_limitation_severity_max"
+        ),
+        "latest_reviewer_quality_limitation_limitation_categories": (
+            _reviewer_quality_limitation_categories(
+                status_summary.get("latest_limitation_categories")
+            )
+        ),
+        "latest_reviewer_quality_limitation_unresolved_limitation_count": status_summary.get(
+            "latest_unresolved_limitation_count"
+        ),
+        "latest_reviewer_quality_limitation_blocking_limitation_count": status_summary.get(
+            "latest_blocking_limitation_count"
+        ),
+        "latest_reviewer_quality_limitation_permission_class_present": status_summary.get(
+            "latest_permission_class_present"
+        ),
+        "latest_reviewer_quality_limitation_permission_class": status_summary.get(
+            "latest_permission_class"
+        ),
+        "latest_reviewer_quality_limitation_legality_flag": status_summary.get(
+            "latest_legality_flag"
+        ),
+        "latest_reviewer_quality_limitation_restricted_use_blocked": status_summary.get(
+            "latest_restricted_use_blocked"
+        ),
+        "latest_reviewer_quality_limitation_private_source_blocked": status_summary.get(
+            "latest_private_source_blocked"
+        ),
+        "latest_reviewer_quality_limitation_issue_count": status_summary.get("latest_issue_count"),
+        "latest_reviewer_quality_limitation_warning_count": status_summary.get(
+            "latest_warning_count"
+        ),
+    }
+    for field in _REVIEWER_QUALITY_LIMITATION_BOOL_FIELDS + _REVIEWER_QUALITY_LIMITATION_SAFETY_FIELDS:
+        source_field = field.replace(_REVIEWER_QUALITY_LIMITATION_DETAIL_PREFIX, "")
+        if field.startswith(_REVIEWER_QUALITY_LIMITATION_LATEST_PREFIX):
+            continue
+        summary[field] = status_summary.get(source_field, status_summary.get(f"latest_{source_field}"))
+    return summary
+
+
+def _reviewer_quality_limitation_preview(value: Any) -> str:
+    return _string_or_empty(value)[:12]
+
+
+def _reviewer_quality_limitation_categories(value: Any) -> str:
+    if isinstance(value, list):
+        return ",".join(_string_or_empty(item) for item in value)
+    text = _string_or_empty(value)
+    return text.replace("[", "").replace("]", "").replace("'", "").replace('"', "").replace(" ", "")
+
+
+def _reviewer_quality_limitation_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_string_or_empty(_reviewer_quality_limitation_summary_value(summary, field))};"
+        for field in (
+            _REVIEWER_QUALITY_LIMITATION_TEXT_FIELDS
+            + _REVIEWER_QUALITY_LIMITATION_BOOL_FIELDS
+            + _REVIEWER_QUALITY_LIMITATION_INT_FIELDS
+            + _REVIEWER_QUALITY_LIMITATION_SAFETY_FIELDS
+        )
+        if field != "latest_reviewer_quality_limitation_recommended_next_task"
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "reviewer_quality_limitation_semantics=metadata_presence_shape_vocabulary_and_disclosure_only_no_authority_quality_permission_pit_or_package_validation; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"runtime_status={_string_or_empty(summary.get('latest_reviewer_quality_limitation_runtime_status'))}; "
+        f"health_status={_string_or_empty(summary.get('latest_reviewer_quality_limitation_health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('latest_reviewer_quality_limitation_workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('latest_reviewer_quality_limitation_artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get('latest_reviewer_quality_limitation_report_path'))}; "
+        f"{field_notes}"
+    )
+
+
+def _reviewer_quality_limitation_summary_value(summary: dict[str, Any], dashboard_field: str) -> Any:
+    if dashboard_field == "latest_reviewer_quality_limitation_recommended_next_task":
+        return summary.get("next_action")
+    return summary.get(dashboard_field, "")
+
+
+def _reviewer_quality_limitation_summary_fields(
+    by_component: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    component = by_component.get(_REVIEWER_QUALITY_LIMITATION_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "reviewer_quality_limitation_context_visible": _parse_note_value(
+            notes,
+            "context_visible",
+        ),
+        "latest_reviewer_quality_limitation_run_id": _string_or_empty(
+            component.get("latest_artifact_id")
+        ),
+        "latest_reviewer_quality_limitation_runtime_status": (
+            _parse_note_value(notes, "runtime_status")
+            or _component_status(by_component, _REVIEWER_QUALITY_LIMITATION_COMPONENT)
+        ),
+        "latest_reviewer_quality_limitation_health_status": _parse_note_value(
+            notes,
+            "health_status",
+        ),
+        "latest_reviewer_quality_limitation_workflow_stage": _string_or_empty(
+            component.get("stage")
+        ),
+        "latest_reviewer_quality_limitation_artifact_path": _parse_note_value(
+            notes,
+            "artifact_path",
+        ),
+        "latest_reviewer_quality_limitation_report_path": _parse_note_value(
+            notes,
+            "report_path",
+        ),
+        "latest_reviewer_quality_limitation_recommended_next_task": _parse_note_value(
+            notes,
+            "next_manual_action",
+        ),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in _REVIEWER_QUALITY_LIMITATION_TEXT_FIELDS
+            if field != "latest_reviewer_quality_limitation_recommended_next_task"
+        }
+    )
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in (
+                _REVIEWER_QUALITY_LIMITATION_BOOL_FIELDS
+                + _REVIEWER_QUALITY_LIMITATION_INT_FIELDS
+                + _REVIEWER_QUALITY_LIMITATION_SAFETY_FIELDS
+            )
+        }
+    )
+    return fields
+
+
+def _reviewer_quality_limitation_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, ""))
+        for field in _REVIEWER_QUALITY_LIMITATION_LATEST_FIELDS
+    }
+    kwargs.update(
+        {
+            field: str(summary.get(field, ""))
+            for field in _REVIEWER_QUALITY_LIMITATION_TEXT_FIELDS
+        }
+    )
+    kwargs["reviewer_quality_limitation_context_visible"] = _bool_from_text(
+        summary.get("reviewer_quality_limitation_context_visible")
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in (
+                _REVIEWER_QUALITY_LIMITATION_BOOL_FIELDS
+                + _REVIEWER_QUALITY_LIMITATION_SAFETY_FIELDS
+            )
+        }
+    )
+    kwargs.update(
+        {
+            field: _int_or_zero(summary.get(field))
+            for field in _REVIEWER_QUALITY_LIMITATION_INT_FIELDS
+        }
+    )
+    if not kwargs["latest_reviewer_quality_limitation_reviewer_authority_level"]:
+        kwargs["latest_reviewer_quality_limitation_reviewer_authority_level"] = (
+            "REVIEWER_AUTHORITY_NONE"
+        )
+    if not kwargs["latest_reviewer_quality_limitation_quality_status_level"]:
+        kwargs["latest_reviewer_quality_limitation_quality_status_level"] = "QUALITY_STATUS_NONE"
+    if not kwargs["latest_reviewer_quality_limitation_permission_review_level"]:
+        kwargs["latest_reviewer_quality_limitation_permission_review_level"] = (
+            "PERMISSION_REVIEW_NONE"
+        )
+    if not kwargs["latest_reviewer_quality_limitation_package_promotion_level"]:
+        kwargs["latest_reviewer_quality_limitation_package_promotion_level"] = (
+            "PACKAGE_PROMOTION_NONE"
+        )
+    return kwargs
+
+
+def _reviewer_quality_limitation_metadata(
+    result: LocalResearchDashboardResult,
+) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _REVIEWER_QUALITY_LIMITATION_RESULT_FIELDS}
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:

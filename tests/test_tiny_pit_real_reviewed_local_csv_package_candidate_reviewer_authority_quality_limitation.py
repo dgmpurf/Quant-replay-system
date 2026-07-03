@@ -11,7 +11,7 @@ from quant_replay_system import (
 
 EXPECTED_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
-    "Limitation Artifact Views Report-Only v0.1"
+    "Limitation Checkpoint Planning Report-Only v0.1"
 )
 WORKFLOW_STAGE = (
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_"

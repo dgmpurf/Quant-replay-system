@@ -135,6 +135,15 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_sour
     SOURCE_REVISION_TIME_METADATA_PRESENT_ONLY,
     run_source_hash_revision_available_time,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation import (
+    LIMITATION_METADATA_PRESENT_ONLY,
+    PACKAGE_PROMOTION_NONE,
+    PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+    QUALITY_METADATA_PRESENT_ONLY,
+    REQUIRED_FALSE_FLAGS as REVIEWER_QUALITY_LIMITATION_REQUIRED_FALSE_FLAGS,
+    REVIEWER_METADATA_PRESENT_ONLY,
+    run_reviewer_authority_quality_limitation,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -243,6 +252,26 @@ STALE_SOURCE_REVISION_TIME_NEXT_ACTION_PHRASES = [
     "Research-Status Planning Report-Only v0.1",
 ]
 UNSAFE_SOURCE_REVISION_TIME_WORDING = [
+    "PACKAGE_APPROVED",
+    "PACKAGE_ADMISSIBLE",
+    "PIT_ADMISSIBLE_PACKAGE",
+    "READY_FOR_REPLAY",
+    "REPLAY_INPUT_READY",
+    "ACTIVE_REPLAY_INPUT_READY",
+    "APPROVED_FOR_ACTIVE_INPUT",
+    "TRADING_READY",
+    "BUY_REVIEW_READY",
+    "PERFORMANCE_VALIDATED",
+]
+EXPECTED_REVIEWER_QUALITY_LIMITATION_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
+    "Limitation Checkpoint Planning Report-Only v0.1"
+)
+STALE_REVIEWER_QUALITY_LIMITATION_NEXT_ACTION_PHRASES = [
+    "Research-Status Planning Report-Only v0.1",
+]
+UNSAFE_REVIEWER_QUALITY_LIMITATION_WORDING = [
+    "REVIEWER_APPROVED_PACKAGE",
     "PACKAGE_APPROVED",
     "PACKAGE_ADMISSIBLE",
     "PIT_ADMISSIBLE_PACKAGE",
@@ -10201,6 +10230,101 @@ def _source_revision_time_inputs(
     return manifest_path, metadata_path
 
 
+def _reviewer_quality_limitation_output_root(root: Path) -> Path:
+    return (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_v0_1"
+    )
+
+
+def _reviewer_quality_limitation_inputs(
+    root: Path,
+    *,
+    reviewer_id_preview: str = "private-revi",
+    quality_warning_count: int = 0,
+    quality_blocker_count: int = 0,
+    limitation_severity_max: str = "INFO",
+    limitation_categories: list[str] | None = None,
+    unresolved_limitation_count: int = 0,
+    blocking_limitation_count: int = 0,
+    permission_class: str = "public",
+    legality_flag: str = "public_confirmed",
+) -> tuple[Path, Path]:
+    root.mkdir(parents=True, exist_ok=True)
+    categories = limitation_categories or ["schema_assumption"]
+    metadata_path = root / "reviewer_quality_metadata.json"
+    metadata_payload = {
+        "reviewer_id_recorded": True,
+        "reviewer_id_preview": reviewer_id_preview,
+        "reviewer_role": "reviewer",
+        "reviewer_type": "human_declared_only",
+        "reviewer_attestation_present": True,
+        "reviewer_authority_scope_declared": True,
+        "reviewer_authority_validated": False,
+        "manual_review_status": "declared_context_only",
+        "quality_status": "QUALITY_METADATA_PRESENT_ONLY",
+        "quality_status_validated": False,
+        "quality_issue_count": quality_warning_count + quality_blocker_count,
+        "quality_warning_count": quality_warning_count,
+        "quality_blocker_count": quality_blocker_count,
+        "limitations_present": True,
+        "limitation_count": len(categories),
+        "limitation_severity_max": limitation_severity_max,
+        "limitation_categories": categories,
+        "unresolved_limitation_count": unresolved_limitation_count,
+        "blocking_limitation_count": blocking_limitation_count,
+        "limitation_policy": "visible-non-override",
+        "limitations_overridden_by_reviewer": False,
+        "limitations_overridden_by_quality": False,
+        "assumptions_present": True,
+        "assumption_count": 1,
+        "permission_class": permission_class,
+        "legality_flag": legality_flag,
+        "permission_class_validated": False,
+        "report_only": True,
+        "diagnostic_only": True,
+        "forbidden_downstream_flags": {
+            flag: False for flag in REVIEWER_QUALITY_LIMITATION_REQUIRED_FALSE_FLAGS
+        },
+        "limitations": ["Synthetic reviewer/quality/limitation context."],
+    }
+    _write_json(metadata_path, metadata_payload)
+
+    manifest_path = root / "reviewer_quality_manifest.json"
+    manifest_payload = {
+        "package_id": "tiny-pit-reviewer-quality-dashboard",
+        "package_schema_version": "reviewer_quality_limitation_v0_1",
+        "created_at": "2026-07-03T00:00:00Z",
+        "prepared_by": "synthetic-test",
+        "report_only": True,
+        "diagnostic_only": True,
+        "requested_reviewer_authority_level": REVIEWER_METADATA_PRESENT_ONLY,
+        "requested_quality_status_level": QUALITY_METADATA_PRESENT_ONLY,
+        "requested_limitation_review_level": LIMITATION_METADATA_PRESENT_ONLY,
+        "requested_permission_review_level": PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+        "requested_package_promotion_level": PACKAGE_PROMOTION_NONE,
+        "reviewer_quality_metadata_reference": {
+            "path": str(metadata_path),
+            "required": True,
+            "reference_type": "reviewer_quality_limitation_metadata_ref",
+            "intended_touch_level": "REVIEWER_QUALITY_LIMITATION_METADATA_PRESENT_ONLY",
+            "declared_only": False,
+        },
+        "reviewer_policy": "metadata-present-only",
+        "quality_policy": "declared-only",
+        "limitation_policy": "visible-non-override",
+        "permission_policy": "declared-permission-class-only",
+        "disclosure_policy": "preview-only",
+        "forbidden_downstream_flags": {
+            flag: False for flag in REVIEWER_QUALITY_LIMITATION_REQUIRED_FALSE_FLAGS
+        },
+        "limitations": ["Synthetic reviewer quality limitation manifest context."],
+    }
+    _write_json(manifest_path, manifest_payload)
+    return manifest_path, metadata_path
+
+
 def _csv_physical_data_line_count_only_inputs(
     root: Path,
     *,
@@ -17324,6 +17448,324 @@ def test_research_status_surfaces_source_revision_time_health_fail_safely(
     assert result.source_revision_time_active_replay_input is False
     assert result.source_revision_time_buy_review_allowed is False
     assert result.source_revision_time_trading_allowed is False
+
+
+def test_research_status_surfaces_reviewer_quality_limitation_no_input_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    output_root = _reviewer_quality_limitation_output_root(root)
+    run_reviewer_authority_quality_limitation(output_root=output_root, run_id="007_no_input")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+
+    assert result.reviewer_quality_limitation_context_visible is True
+    assert result.latest_reviewer_quality_limitation_run_id == "007_no_input"
+    assert result.latest_reviewer_quality_limitation_runtime_status == "NO_REVIEWER_QUALITY_LIMITATION_INPUT"
+    assert result.latest_reviewer_quality_limitation_health_status == "PASS"
+    assert result.latest_reviewer_quality_limitation_reviewer_metadata_present is False
+    assert result.latest_reviewer_quality_limitation_quality_status_present is False
+    assert result.latest_reviewer_quality_limitation_limitations_present is False
+    assert result.reviewer_quality_limitation_reviewer_authority_validated is False
+    assert result.reviewer_quality_limitation_quality_status_validated is False
+    assert result.reviewer_quality_limitation_permission_class_validated is False
+    assert result.reviewer_quality_limitation_source_hash_validated is False
+    assert result.reviewer_quality_limitation_revision_id_validated is False
+    assert result.reviewer_quality_limitation_available_time_validated is False
+    assert result.reviewer_quality_limitation_pit_admissibility_validated is False
+    assert result.reviewer_quality_limitation_active_replay_input is False
+    assert result.reviewer_quality_limitation_buy_review_allowed is False
+    assert result.reviewer_quality_limitation_trading_allowed is False
+    assert result.latest_reviewer_quality_limitation_recommended_next_task == (
+        EXPECTED_REVIEWER_QUALITY_LIMITATION_NEXT_TASK
+    )
+    assert row["status"] == "NO_REVIEWER_QUALITY_LIMITATION_INPUT"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "reviewer_quality_limitation_context_visible"] == "True"
+    assert summary.loc[0, "reviewer_quality_limitation_active_replay_input"] == "False"
+
+
+def test_research_status_surfaces_reviewer_quality_limitation_metadata_without_reopening_inputs(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "reviewer_quality_inputs"
+    full_reviewer_id = "private-reviewer-identity-000001"
+    manifest_path, metadata_path = _reviewer_quality_limitation_inputs(
+        input_root,
+        reviewer_id_preview=full_reviewer_id[:12],
+    )
+    run_reviewer_authority_quality_limitation(
+        output_root=_reviewer_quality_limitation_output_root(root),
+        run_id="007_metadata",
+        reviewer_quality_manifest_path=manifest_path,
+        reviewer_quality_metadata_path=metadata_path,
+        allowed_manifest_roots=[input_root],
+        reviewer_authority_level=REVIEWER_METADATA_PRESENT_ONLY,
+        quality_status_level=QUALITY_METADATA_PRESENT_ONLY,
+        limitation_review_level=LIMITATION_METADATA_PRESENT_ONLY,
+        permission_review_level=PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+        package_promotion_level=PACKAGE_PROMOTION_NONE,
+        allow_reviewer_quality_limitation_metadata=True,
+    )
+    manifest_path.unlink()
+    metadata_path.unlink()
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    metadata_text = json.dumps(metadata, sort_keys=True)
+    report_text = result.artifact_paths["local_research_dashboard"].read_text(encoding="utf-8")
+
+    assert result.reviewer_quality_limitation_context_visible is True
+    assert result.latest_reviewer_quality_limitation_run_id == "007_metadata"
+    assert result.latest_reviewer_quality_limitation_runtime_status == (
+        "REVIEWER_QUALITY_LIMITATION_METADATA_PRESENT_REPORT_ONLY"
+    )
+    assert result.latest_reviewer_quality_limitation_health_status == "PASS"
+    assert result.latest_reviewer_quality_limitation_reviewer_authority_level == (
+        REVIEWER_METADATA_PRESENT_ONLY
+    )
+    assert result.latest_reviewer_quality_limitation_quality_status_level == (
+        QUALITY_METADATA_PRESENT_ONLY
+    )
+    assert result.latest_reviewer_quality_limitation_limitation_review_level == (
+        LIMITATION_METADATA_PRESENT_ONLY
+    )
+    assert result.latest_reviewer_quality_limitation_permission_review_level == (
+        PERMISSION_CLASS_METADATA_PRESENT_ONLY
+    )
+    assert result.latest_reviewer_quality_limitation_package_promotion_level == PACKAGE_PROMOTION_NONE
+    assert result.latest_reviewer_quality_limitation_reviewer_metadata_present is True
+    assert result.latest_reviewer_quality_limitation_reviewer_id_recorded is True
+    assert result.latest_reviewer_quality_limitation_reviewer_id_preview == full_reviewer_id[:12]
+    assert result.latest_reviewer_quality_limitation_reviewer_role == "reviewer"
+    assert result.latest_reviewer_quality_limitation_reviewer_role_supported is True
+    assert result.latest_reviewer_quality_limitation_reviewer_type == "human_declared_only"
+    assert result.latest_reviewer_quality_limitation_reviewer_attestation_present is True
+    assert result.latest_reviewer_quality_limitation_reviewer_authority_scope_declared is True
+    assert result.latest_reviewer_quality_limitation_quality_status_present is True
+    assert result.latest_reviewer_quality_limitation_quality_status_declared is True
+    assert result.latest_reviewer_quality_limitation_quality_issue_count == 0
+    assert result.latest_reviewer_quality_limitation_quality_warning_count == 0
+    assert result.latest_reviewer_quality_limitation_quality_blocker_count == 0
+    assert result.latest_reviewer_quality_limitation_limitations_present is True
+    assert result.latest_reviewer_quality_limitation_limitation_count == 1
+    assert result.latest_reviewer_quality_limitation_limitation_severity_max == "INFO"
+    assert result.latest_reviewer_quality_limitation_limitation_categories == "schema_assumption"
+    assert result.latest_reviewer_quality_limitation_unresolved_limitation_count == 0
+    assert result.latest_reviewer_quality_limitation_blocking_limitation_count == 0
+    assert result.latest_reviewer_quality_limitation_permission_class_present is True
+    assert result.latest_reviewer_quality_limitation_permission_class == "public"
+    assert result.latest_reviewer_quality_limitation_legality_flag == "public_confirmed"
+    assert result.latest_reviewer_quality_limitation_issue_count == 0
+    assert result.latest_reviewer_quality_limitation_warning_count == 0
+    assert result.reviewer_quality_limitation_reviewer_authority_validated is False
+    assert result.reviewer_quality_limitation_quality_status_validated is False
+    assert result.reviewer_quality_limitation_permission_class_validated is False
+    assert result.reviewer_quality_limitation_limitations_overridden_by_reviewer is False
+    assert result.reviewer_quality_limitation_limitations_overridden_by_quality is False
+    assert result.reviewer_quality_limitation_source_reliability_scored is False
+    assert result.reviewer_quality_limitation_source_hash_validated is False
+    assert result.reviewer_quality_limitation_revision_id_validated is False
+    assert result.reviewer_quality_limitation_available_time_validated is False
+    assert result.reviewer_quality_limitation_pit_admissibility_validated is False
+    assert result.reviewer_quality_limitation_real_package_candidate_created is False
+    assert result.reviewer_quality_limitation_active_replay_input is False
+    assert result.reviewer_quality_limitation_buy_review_allowed is False
+    assert result.reviewer_quality_limitation_trading_allowed is False
+    assert row["status"] == "REVIEWER_QUALITY_LIMITATION_METADATA_PRESENT_REPORT_ONLY"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_reviewer_quality_limitation_reviewer_id_preview"] == (
+        full_reviewer_id[:12]
+    )
+    assert summary.loc[0, "reviewer_quality_limitation_reviewer_authority_validated"] == "False"
+    assert metadata["reviewer_quality_limitation_context_visible"] is True
+    assert metadata["latest_reviewer_quality_limitation_reviewer_id_preview"] == full_reviewer_id[:12]
+    assert metadata["reviewer_quality_limitation_active_replay_input"] is False
+    assert full_reviewer_id not in metadata_text
+    assert full_reviewer_id not in report_text
+    assert str(input_root) not in metadata_text
+    assert str(input_root) not in report_text
+    for stale in STALE_REVIEWER_QUALITY_LIMITATION_NEXT_ACTION_PHRASES:
+        assert stale not in result.latest_reviewer_quality_limitation_recommended_next_task
+    for unsafe in UNSAFE_REVIEWER_QUALITY_LIMITATION_WORDING:
+        assert unsafe not in metadata_text
+        assert unsafe not in result.latest_reviewer_quality_limitation_recommended_next_task
+        assert unsafe not in row["notes"]
+
+
+def test_research_status_surfaces_reviewer_quality_limitation_warn_and_fail_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    warn_manifest, warn_metadata = _reviewer_quality_limitation_inputs(
+        tmp_path / "reviewer_quality_warn_inputs",
+        quality_warning_count=1,
+        limitation_severity_max="WARN",
+        limitation_categories=["manual_review_needed"],
+        unresolved_limitation_count=1,
+    )
+    run_reviewer_authority_quality_limitation(
+        output_root=_reviewer_quality_limitation_output_root(root),
+        run_id="007_warn",
+        reviewer_quality_manifest_path=warn_manifest,
+        reviewer_quality_metadata_path=warn_metadata,
+        allowed_manifest_roots=[warn_manifest.parent],
+        reviewer_authority_level=REVIEWER_METADATA_PRESENT_ONLY,
+        quality_status_level=QUALITY_METADATA_PRESENT_ONLY,
+        limitation_review_level=LIMITATION_METADATA_PRESENT_ONLY,
+        permission_review_level=PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+        package_promotion_level=PACKAGE_PROMOTION_NONE,
+        allow_reviewer_quality_limitation_metadata=True,
+    )
+
+    warn_result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard_warn")
+    warn_row = warn_result.dashboard_frame[
+        warn_result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS"
+    ].iloc[0]
+
+    assert warn_result.latest_reviewer_quality_limitation_runtime_status == (
+        "REVIEWER_QUALITY_LIMITATION_WARN_LIMITATIONS_PRESENT"
+    )
+    assert warn_result.latest_reviewer_quality_limitation_health_status == "WARN"
+    assert warn_result.latest_reviewer_quality_limitation_limitation_severity_max == "WARN"
+    assert warn_result.latest_reviewer_quality_limitation_warning_count == 1
+    assert warn_row["warning_count"] >= 1
+    assert warn_row["blocking_error_count"] == 0
+    assert warn_result.reviewer_quality_limitation_real_package_candidate_created is False
+    assert warn_result.reviewer_quality_limitation_active_replay_input is False
+    assert warn_result.reviewer_quality_limitation_buy_review_allowed is False
+    assert warn_result.reviewer_quality_limitation_trading_allowed is False
+
+    fail_manifest, fail_metadata = _reviewer_quality_limitation_inputs(
+        tmp_path / "reviewer_quality_fail_inputs",
+        permission_class="private",
+        legality_flag="private_source",
+        limitation_severity_max="BLOCKER",
+        limitation_categories=["private_or_sensitive_source"],
+        quality_blocker_count=1,
+        blocking_limitation_count=1,
+    )
+    run_reviewer_authority_quality_limitation(
+        output_root=_reviewer_quality_limitation_output_root(root),
+        run_id="008_fail",
+        reviewer_quality_manifest_path=fail_manifest,
+        reviewer_quality_metadata_path=fail_metadata,
+        allowed_manifest_roots=[fail_manifest.parent],
+        reviewer_authority_level=REVIEWER_METADATA_PRESENT_ONLY,
+        quality_status_level=QUALITY_METADATA_PRESENT_ONLY,
+        limitation_review_level=LIMITATION_METADATA_PRESENT_ONLY,
+        permission_review_level=PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+        package_promotion_level=PACKAGE_PROMOTION_NONE,
+        allow_reviewer_quality_limitation_metadata=True,
+    )
+
+    fail_result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard_fail")
+    fail_row = fail_result.dashboard_frame[
+        fail_result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS"
+    ].iloc[0]
+
+    assert fail_result.latest_reviewer_quality_limitation_runtime_status == "FAIL"
+    assert fail_result.latest_reviewer_quality_limitation_health_status == "FAIL"
+    assert fail_result.latest_reviewer_quality_limitation_issue_count == 1
+    assert fail_result.latest_reviewer_quality_limitation_permission_class == ""
+    assert fail_result.latest_reviewer_quality_limitation_private_source_blocked is False
+    assert fail_result.latest_reviewer_quality_limitation_blocking_limitation_count == 0
+    assert fail_row["blocking_error_count"] == 1
+    assert fail_result.reviewer_quality_limitation_permission_class_validated is False
+    assert fail_result.reviewer_quality_limitation_active_replay_input is False
+    assert fail_result.reviewer_quality_limitation_buy_review_allowed is False
+    assert fail_result.reviewer_quality_limitation_trading_allowed is False
+
+
+def test_research_status_preserves_paper_priority_over_reviewer_quality_limitation_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    manifest_path, metadata_path = _reviewer_quality_limitation_inputs(
+        tmp_path / "reviewer_quality_priority_inputs"
+    )
+    run_reviewer_authority_quality_limitation(
+        output_root=_reviewer_quality_limitation_output_root(root),
+        run_id="007_priority",
+        reviewer_quality_manifest_path=manifest_path,
+        reviewer_quality_metadata_path=metadata_path,
+        allowed_manifest_roots=[manifest_path.parent],
+        reviewer_authority_level=REVIEWER_METADATA_PRESENT_ONLY,
+        quality_status_level=QUALITY_METADATA_PRESENT_ONLY,
+        limitation_review_level=LIMITATION_METADATA_PRESENT_ONLY,
+        permission_review_level=PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+        package_promotion_level=PACKAGE_PROMOTION_NONE,
+        allow_reviewer_quality_limitation_metadata=True,
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.reviewer_quality_limitation_context_visible is True
+    assert result.latest_reviewer_quality_limitation_health_status == "PASS"
+    assert result.reviewer_quality_limitation_reviewer_authority_validated is False
+    assert result.reviewer_quality_limitation_quality_status_validated is False
+    assert result.reviewer_quality_limitation_real_package_candidate_created is False
+    assert result.reviewer_quality_limitation_active_replay_input_ready_emitted is False
+    assert result.reviewer_quality_limitation_replay_execution_allowed is False
+    assert result.reviewer_quality_limitation_buy_review_allowed is False
+    assert result.reviewer_quality_limitation_trading_allowed is False
+
+
+def test_cli_research_status_prints_reviewer_quality_limitation_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    manifest_path, metadata_path = _reviewer_quality_limitation_inputs(
+        tmp_path / "reviewer_quality_cli_inputs"
+    )
+    run_reviewer_authority_quality_limitation(
+        output_root=_reviewer_quality_limitation_output_root(root),
+        run_id="007_cli",
+        reviewer_quality_manifest_path=manifest_path,
+        reviewer_quality_metadata_path=metadata_path,
+        allowed_manifest_roots=[manifest_path.parent],
+        reviewer_authority_level=REVIEWER_METADATA_PRESENT_ONLY,
+        quality_status_level=QUALITY_METADATA_PRESENT_ONLY,
+        limitation_review_level=LIMITATION_METADATA_PRESENT_ONLY,
+        permission_review_level=PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+        package_promotion_level=PACKAGE_PROMOTION_NONE,
+        allow_reviewer_quality_limitation_metadata=True,
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "reviewer_quality_limitation_context_visible: True" in output.out
+    assert "latest_reviewer_quality_limitation_run_id: 007_cli" in output.out
+    assert "latest_reviewer_quality_limitation_reviewer_id_preview: private-revi" in output.out
+    assert "reviewer_quality_limitation_reviewer_authority_validated: False" in output.out
+    assert "reviewer_quality_limitation_active_replay_input: False" in output.out
+    assert f"latest_reviewer_quality_limitation_recommended_next_task: {EXPECTED_REVIEWER_QUALITY_LIMITATION_NEXT_TASK}" in output.out
+    assert "Research-Status Planning Report-Only v0.1" not in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
 
 
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(
