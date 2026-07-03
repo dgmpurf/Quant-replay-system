@@ -734,6 +734,24 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_sour
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status import (
     run_source_hash_revision_available_time_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation import (
+    LIMITATION_METADATA_PRESENT_ONLY,
+    PACKAGE_PROMOTION_NONE,
+    PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+    QUALITY_METADATA_PRESENT_ONLY,
+    REVIEWER_METADATA_PRESENT_ONLY,
+    run_reviewer_authority_quality_limitation,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_health import (
+    check_reviewer_authority_quality_limitation_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_index import (
+    DEFAULT_ROOT as REVIEWER_AUTHORITY_QUALITY_LIMITATION_DEFAULT_ROOT,
+    build_reviewer_authority_quality_limitation_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_status import (
+    run_reviewer_authority_quality_limitation_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -6479,6 +6497,84 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status
     )
 
+    reviewer_authority_quality_limitation = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation",
+        help="Write report-only reviewer authority, quality, limitation, and permission metadata artifacts",
+    )
+    reviewer_authority_quality_limitation.add_argument(
+        "--output-root",
+        default=REVIEWER_AUTHORITY_QUALITY_LIMITATION_DEFAULT_ROOT,
+    )
+    reviewer_authority_quality_limitation.add_argument("--run-id", default=None)
+    reviewer_authority_quality_limitation.add_argument(
+        "--reviewer-quality-manifest-path",
+        default=None,
+    )
+    reviewer_authority_quality_limitation.add_argument(
+        "--reviewer-quality-metadata-path",
+        default=None,
+    )
+    reviewer_authority_quality_limitation.add_argument(
+        "--allowed-manifest-root",
+        action="append",
+        default=None,
+    )
+    reviewer_authority_quality_limitation.add_argument(
+        "--allow-reviewer-quality-limitation-metadata",
+        action="store_true",
+    )
+    reviewer_authority_quality_limitation.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation
+    )
+
+    reviewer_authority_quality_limitation_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation-index",
+        help="Build an index for report-only reviewer authority, quality, limitation, and permission metadata artifacts",
+    )
+    reviewer_authority_quality_limitation_index.add_argument(
+        "--root",
+        default=REVIEWER_AUTHORITY_QUALITY_LIMITATION_DEFAULT_ROOT,
+    )
+    reviewer_authority_quality_limitation_index.add_argument(
+        "--output-dir",
+        default=f"{REVIEWER_AUTHORITY_QUALITY_LIMITATION_DEFAULT_ROOT}/index",
+    )
+    reviewer_authority_quality_limitation_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_index
+    )
+
+    reviewer_authority_quality_limitation_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation-health",
+        help="Check report-only reviewer authority, quality, limitation, and permission metadata artifact health",
+    )
+    reviewer_authority_quality_limitation_health.add_argument(
+        "--root",
+        default=REVIEWER_AUTHORITY_QUALITY_LIMITATION_DEFAULT_ROOT,
+    )
+    reviewer_authority_quality_limitation_health.add_argument(
+        "--output-dir",
+        default=f"{REVIEWER_AUTHORITY_QUALITY_LIMITATION_DEFAULT_ROOT}/health",
+    )
+    reviewer_authority_quality_limitation_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_health
+    )
+
+    reviewer_authority_quality_limitation_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation-status",
+        help="Summarize latest report-only reviewer authority, quality, limitation, and permission metadata status",
+    )
+    reviewer_authority_quality_limitation_status.add_argument(
+        "--root",
+        default=REVIEWER_AUTHORITY_QUALITY_LIMITATION_DEFAULT_ROOT,
+    )
+    reviewer_authority_quality_limitation_status.add_argument(
+        "--output-dir",
+        default=f"{REVIEWER_AUTHORITY_QUALITY_LIMITATION_DEFAULT_ROOT}/status",
+    )
+    reviewer_authority_quality_limitation_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_status
+    )
+
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
         "reviewed-local-csv-replay-prototype-input-contract-fixture-index",
         help="Build an index for report-only reviewed LOCAL_CSV replay prototype input contract fixture artifacts",
@@ -12097,6 +12193,10 @@ SOURCE_HASH_REVISION_AVAILABLE_TIME_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
     "Available-Time Checkpoint Planning Report-Only v0.1"
 )
+REVIEWER_AUTHORITY_QUALITY_LIMITATION_CLI_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
+    "Limitation Research-Status Planning Report-Only v0.1"
+)
 
 
 def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only(
@@ -12915,6 +13015,210 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revis
         "Report-only status: source metadata references are not reopened, source artifacts are not opened, "
         "hashes are not recomputed, available-time is not compared to decision time, and no package "
         "candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 1 if result.latest_runtime_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation(
+    args: argparse.Namespace,
+) -> int:
+    if args.reviewer_quality_manifest_path:
+        result = run_reviewer_authority_quality_limitation(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            reviewer_quality_manifest_path=args.reviewer_quality_manifest_path,
+            reviewer_quality_metadata_path=args.reviewer_quality_metadata_path,
+            allowed_manifest_roots=args.allowed_manifest_root,
+            reviewer_authority_level=REVIEWER_METADATA_PRESENT_ONLY,
+            quality_status_level=QUALITY_METADATA_PRESENT_ONLY,
+            limitation_review_level=LIMITATION_METADATA_PRESENT_ONLY,
+            permission_review_level=PERMISSION_CLASS_METADATA_PRESENT_ONLY,
+            package_promotion_level=PACKAGE_PROMOTION_NONE,
+            allow_reviewer_quality_limitation_metadata=args.allow_reviewer_quality_limitation_metadata,
+        )
+    else:
+        result = run_reviewer_authority_quality_limitation(
+            output_root=args.output_root,
+            run_id=args.run_id,
+        )
+    print(f"run_id: {result['run_id']}")
+    print(f"runtime_status: {result['runtime_status']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"report_only: {result['report_only']}")
+    print(f"diagnostic_only: {result['diagnostic_only']}")
+    print(f"reviewer_authority_level: {result['reviewer_authority_level']}")
+    print(f"quality_status_level: {result['quality_status_level']}")
+    print(f"limitation_review_level: {result['limitation_review_level']}")
+    print(f"permission_review_level: {result['permission_review_level']}")
+    print(f"package_promotion_level: {result['package_promotion_level']}")
+    print(f"reviewer_metadata_present: {result['reviewer_metadata_present']}")
+    print(f"reviewer_id_recorded: {result['reviewer_id_recorded']}")
+    print(f"reviewer_id_preview: {result['reviewer_id_preview']}")
+    print(f"reviewer_role: {result['reviewer_role']}")
+    print(f"reviewer_role_supported: {result['reviewer_role_supported']}")
+    print(f"reviewer_type: {result['reviewer_type']}")
+    print(f"reviewer_attestation_present: {result['reviewer_attestation_present']}")
+    print(f"reviewer_authority_scope_declared: {result['reviewer_authority_scope_declared']}")
+    print(f"reviewer_authority_validated: {result['reviewer_authority_validated']}")
+    print(f"quality_status_present: {result['quality_status_present']}")
+    print(f"quality_status_declared: {result['quality_status_declared']}")
+    print(f"quality_status_validated: {result['quality_status_validated']}")
+    print(f"quality_issue_count: {result['quality_issue_count']}")
+    print(f"quality_warning_count: {result['quality_warning_count']}")
+    print(f"quality_blocker_count: {result['quality_blocker_count']}")
+    print(f"limitations_present: {result['limitations_present']}")
+    print(f"limitation_count: {result['limitation_count']}")
+    print(f"limitation_severity_max: {result['limitation_severity_max']}")
+    print(f"limitation_categories: {result['limitation_categories']}")
+    print(f"unresolved_limitation_count: {result['unresolved_limitation_count']}")
+    print(f"blocking_limitation_count: {result['blocking_limitation_count']}")
+    print(f"limitations_overridden_by_reviewer: {result['limitations_overridden_by_reviewer']}")
+    print(f"limitations_overridden_by_quality: {result['limitations_overridden_by_quality']}")
+    print(f"permission_class_present: {result['permission_class_present']}")
+    print(f"permission_class: {result['permission_class']}")
+    print(f"legality_flag: {result['legality_flag']}")
+    print(f"permission_class_validated: {result['permission_class_validated']}")
+    print(f"restricted_use_blocked: {result['restricted_use_blocked']}")
+    print(f"private_source_blocked: {result['private_source_blocked']}")
+    print(f"source_reliability_scored: {result['source_reliability_scored']}")
+    print(f"source_hash_validated: {result['source_hash_validated']}")
+    print(f"revision_id_validated: {result['revision_id_validated']}")
+    print(f"available_time_validated: {result['available_time_validated']}")
+    print(f"pit_admissibility_validated: {result['pit_admissibility_validated']}")
+    print(f"real_csv_consumed: {result['real_csv_consumed']}")
+    print(f"real_reviewed_csv_package_created: {result['real_reviewed_csv_package_created']}")
+    print(f"real_package_candidate_created: {result['real_package_candidate_created']}")
+    print(f"active_reviewed_input_candidate_created: {result['active_reviewed_input_candidate_created']}")
+    print(f"real_replay_input_created: {result['real_replay_input_created']}")
+    print(f"active_replay_input: {result['active_replay_input']}")
+    print(f"active_replay_ready: {result['active_replay_ready']}")
+    print(f"active_replay_input_ready_emitted: {result['active_replay_input_ready_emitted']}")
+    print(f"replay_execution_allowed: {result['replay_execution_allowed']}")
+    print(f"trading_allowed: {result['trading_allowed']}")
+    print(f"buy_review_allowed: {result['buy_review_allowed']}")
+    print(f"data_raw_written: {result['data_raw_written']}")
+    print(f"data_processed_written: {result['data_processed_written']}")
+    print(f"data_cache_written: {result['data_cache_written']}")
+    print(f"issue_count: {result['issue_count']}")
+    print(f"warning_count: {result['warning_count']}")
+    print(f"artifact_path: {Path(result['artifact_paths']['metadata']).parent}")
+    print(f"report_path: {result['artifact_paths']['report']}")
+    print(f"recommended_next_task: {REVIEWER_AUTHORITY_QUALITY_LIMITATION_CLI_NEXT_TASK}")
+    print(
+        "Report-only reviewer quality context: no full reviewer identity, source content, "
+        "target CSV, reviewer authority validation, quality promotion, source reliability scoring, "
+        "package candidate, active input, buy review, trading, or protected data writes were created."
+    )
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_reviewer_authority_quality_limitation_index(root=args.root, output_dir=args.output_dir)
+    latest = sorted(result.rows, key=lambda row: str(row.get("run_id") or ""))[-1] if result.rows else {}
+    print(f"Tiny PIT reviewer authority quality limitation index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"latest_runtime_status: {latest.get('runtime_status', '')}")
+    print(f"latest_health_status: {latest.get('health_status', '')}")
+    print(f"latest_workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"latest_reviewer_id_preview: {latest.get('reviewer_id_preview', '')}")
+    print(f"latest_reviewer_role: {latest.get('reviewer_role', '')}")
+    print(f"latest_reviewer_type: {latest.get('reviewer_type', '')}")
+    print(f"latest_quality_status_declared: {latest.get('quality_status_declared', '')}")
+    print(f"latest_limitation_severity_max: {latest.get('limitation_severity_max', '')}")
+    print(f"latest_permission_class: {latest.get('permission_class', '')}")
+    print(
+        "Report-only index: reviewer metadata references are not reopened, CSV/source content is not read, "
+        "reviewer authority and quality are not validated, and no package candidate, active input, "
+        "buy review, trading, or protected data writes were created."
+    )
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_reviewer_authority_quality_limitation_health(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT reviewer authority quality limitation health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Report-only health: reviewer metadata references are not reopened, CSV/source content is not read, "
+        "reviewer authority and quality are not validated, and no package candidate, active input, "
+        "buy review, trading, or protected data writes were created."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_reviewer_authority_quality_limitation_status(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT reviewer authority quality limitation status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_artifact_path: {result.latest_artifact_path}")
+    print(f"latest_report_path: {result.latest_report_path}")
+    print(f"latest_reviewer_authority_level: {result.summary['latest_reviewer_authority_level']}")
+    print(f"latest_quality_status_level: {result.summary['latest_quality_status_level']}")
+    print(f"latest_limitation_review_level: {result.summary['latest_limitation_review_level']}")
+    print(f"latest_permission_review_level: {result.summary['latest_permission_review_level']}")
+    print(f"latest_package_promotion_level: {result.summary['latest_package_promotion_level']}")
+    print(f"latest_reviewer_metadata_present: {result.summary['latest_reviewer_metadata_present']}")
+    print(f"latest_reviewer_id_recorded: {result.summary['latest_reviewer_id_recorded']}")
+    print(f"latest_reviewer_id_preview: {result.latest_reviewer_id_preview}")
+    print(f"latest_reviewer_role: {result.latest_reviewer_role}")
+    print(f"latest_reviewer_role_supported: {result.summary['latest_reviewer_role_supported']}")
+    print(f"latest_reviewer_type: {result.latest_reviewer_type}")
+    print(f"latest_reviewer_attestation_present: {result.summary['latest_reviewer_attestation_present']}")
+    print(f"latest_reviewer_authority_scope_declared: {result.summary['latest_reviewer_authority_scope_declared']}")
+    print(f"latest_reviewer_authority_validated: {result.summary['latest_reviewer_authority_validated']}")
+    print(f"latest_quality_status_present: {result.summary['latest_quality_status_present']}")
+    print(f"latest_quality_status_declared: {result.latest_quality_status_declared}")
+    print(f"latest_quality_status_validated: {result.summary['latest_quality_status_validated']}")
+    print(f"latest_quality_issue_count: {result.summary['latest_quality_issue_count']}")
+    print(f"latest_quality_warning_count: {result.summary['latest_quality_warning_count']}")
+    print(f"latest_quality_blocker_count: {result.summary['latest_quality_blocker_count']}")
+    print(f"latest_limitations_present: {result.summary['latest_limitations_present']}")
+    print(f"latest_limitation_count: {result.summary['latest_limitation_count']}")
+    print(f"latest_limitation_severity_max: {result.latest_limitation_severity_max}")
+    print(f"latest_limitation_categories: {result.summary['latest_limitation_categories']}")
+    print(f"latest_unresolved_limitation_count: {result.summary['latest_unresolved_limitation_count']}")
+    print(f"latest_blocking_limitation_count: {result.summary['latest_blocking_limitation_count']}")
+    print(f"latest_limitations_overridden_by_reviewer: {result.summary['latest_limitations_overridden_by_reviewer']}")
+    print(f"latest_limitations_overridden_by_quality: {result.summary['latest_limitations_overridden_by_quality']}")
+    print(f"latest_permission_class_present: {result.summary['latest_permission_class_present']}")
+    print(f"latest_permission_class: {result.latest_permission_class}")
+    print(f"latest_legality_flag: {result.summary['latest_legality_flag']}")
+    print(f"latest_permission_class_validated: {result.summary['latest_permission_class_validated']}")
+    print(f"latest_source_hash_validated: {result.summary['latest_source_hash_validated']}")
+    print(f"latest_revision_id_validated: {result.summary['latest_revision_id_validated']}")
+    print(f"latest_available_time_validated: {result.summary['latest_available_time_validated']}")
+    print(f"latest_pit_admissibility_validated: {result.summary['latest_pit_admissibility_validated']}")
+    print(f"latest_source_reliability_scored: {result.summary['latest_source_reliability_scored']}")
+    print(f"latest_real_package_candidate_created: {result.summary['latest_real_package_candidate_created']}")
+    print(f"latest_active_replay_input: {result.summary['latest_active_replay_input']}")
+    print(f"latest_trading_allowed: {result.summary['latest_trading_allowed']}")
+    print(f"latest_buy_review_allowed: {result.summary['latest_buy_review_allowed']}")
+    print(f"latest_data_raw_written: {result.summary['latest_data_raw_written']}")
+    print(f"latest_data_processed_written: {result.summary['latest_data_processed_written']}")
+    print(f"latest_data_cache_written: {result.summary['latest_data_cache_written']}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    print(
+        "Report-only status: reviewer metadata references are not reopened, CSV/source content is not read, "
+        "reviewer authority and quality are not validated, and no package candidate, active input, "
+        "buy review, trading, or protected data writes were created."
     )
     return 1 if result.latest_runtime_status == "FAIL" else 0
 

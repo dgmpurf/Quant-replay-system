@@ -28,7 +28,7 @@ TARGET_CSV_SENTINEL = "TARGET_CSV_SENTINEL_SHOULD_NOT_APPEAR"
 FULL_HASH_SENTINEL = "a" * 64
 CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
-    "Limitation CLI Report-Only v0.1"
+    "Limitation Research-Status Planning Report-Only v0.1"
 )
 UNSAFE_WORDING = [
     "REVIEWER_APPROVED_PACKAGE",
@@ -325,8 +325,8 @@ def test_status_summarizes_latest_safe_artifact_and_recommends_cli_phase(tmp_pat
     assert result.latest_limitation_severity_max == "INFO"
     assert result.latest_permission_class == "public"
     assert result.recommended_next_task == CLI_NEXT_TASK
-    assert "CLI Report-Only v0.1" in result.recommended_next_task
-    assert "Research-Status" not in result.recommended_next_task
+    assert "Research-Status Planning Report-Only v0.1" in result.recommended_next_task
+    assert "CLI Report-Only v0.1" not in result.recommended_next_task
     assert "Checkpoint" not in result.recommended_next_task
     _assert_negative_fields_false(result.summary)
 

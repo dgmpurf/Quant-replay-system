@@ -27,7 +27,7 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_revi
 
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
-    "Limitation CLI Report-Only v0.1"
+    "Limitation Research-Status Planning Report-Only v0.1"
 )
 NO_ARTIFACT_STAGE = (
     "NO_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_"
