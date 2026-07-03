@@ -31,7 +31,7 @@ NO_ARTIFACT_STAGE = (
 )
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
-    "Available-Time CLI Report-Only v0.1"
+    "Available-Time Research-Status Planning Report-Only v0.1"
 )
 STATUS_NEGATIVE_PROOF_FIELDS = [
     "source_hash_recomputed",
@@ -367,4 +367,3 @@ def _to_bool(value: Any) -> bool:
     if isinstance(value, str):
         return value.strip().lower() == "true"
     return bool(value)
-

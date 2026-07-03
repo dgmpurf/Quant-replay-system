@@ -717,6 +717,23 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status import (
     run_csv_physical_data_line_count_only_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time import (
+    AVAILABLE_TIME_METADATA_PRESENT_ONLY,
+    PIT_ADMISSIBILITY_NONE,
+    REVISION_ID_METADATA_PRESENT_ONLY,
+    SOURCE_HASH_METADATA_PRESENT_ONLY,
+    run_source_hash_revision_available_time,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_health import (
+    check_source_hash_revision_available_time_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_index import (
+    DEFAULT_ROOT as SOURCE_HASH_REVISION_AVAILABLE_TIME_DEFAULT_ROOT,
+    build_source_hash_revision_available_time_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status import (
+    run_source_hash_revision_available_time_status,
+)
 from quant_replay_system.reviewed_local_csv_replay_prototype_input_contract_fixture_health import (
     check_reviewed_local_csv_replay_prototype_input_contract_fixture_health,
 )
@@ -6384,6 +6401,84 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status
     )
 
+    source_hash_revision_available_time = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-source-hash-revision-available-time",
+        help="Write report-only source hash, revision id, and available-time metadata artifacts",
+    )
+    source_hash_revision_available_time.add_argument(
+        "--output-root",
+        default=SOURCE_HASH_REVISION_AVAILABLE_TIME_DEFAULT_ROOT,
+    )
+    source_hash_revision_available_time.add_argument("--run-id", default=None)
+    source_hash_revision_available_time.add_argument(
+        "--source-lineage-manifest-path",
+        default=None,
+    )
+    source_hash_revision_available_time.add_argument(
+        "--source-lineage-metadata-path",
+        default=None,
+    )
+    source_hash_revision_available_time.add_argument(
+        "--allowed-manifest-root",
+        action="append",
+        default=None,
+    )
+    source_hash_revision_available_time.add_argument(
+        "--allow-source-revision-time-metadata",
+        action="store_true",
+    )
+    source_hash_revision_available_time.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time
+    )
+
+    source_hash_revision_available_time_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-source-hash-revision-available-time-index",
+        help="Build an index for report-only source hash, revision id, and available-time metadata artifacts",
+    )
+    source_hash_revision_available_time_index.add_argument(
+        "--root",
+        default=SOURCE_HASH_REVISION_AVAILABLE_TIME_DEFAULT_ROOT,
+    )
+    source_hash_revision_available_time_index.add_argument(
+        "--output-dir",
+        default=f"{SOURCE_HASH_REVISION_AVAILABLE_TIME_DEFAULT_ROOT}/index",
+    )
+    source_hash_revision_available_time_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_index
+    )
+
+    source_hash_revision_available_time_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-source-hash-revision-available-time-health",
+        help="Check report-only source hash, revision id, and available-time metadata artifact health",
+    )
+    source_hash_revision_available_time_health.add_argument(
+        "--root",
+        default=SOURCE_HASH_REVISION_AVAILABLE_TIME_DEFAULT_ROOT,
+    )
+    source_hash_revision_available_time_health.add_argument(
+        "--output-dir",
+        default=f"{SOURCE_HASH_REVISION_AVAILABLE_TIME_DEFAULT_ROOT}/health",
+    )
+    source_hash_revision_available_time_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_health
+    )
+
+    source_hash_revision_available_time_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-source-hash-revision-available-time-status",
+        help="Summarize latest report-only source hash, revision id, and available-time metadata status",
+    )
+    source_hash_revision_available_time_status.add_argument(
+        "--root",
+        default=SOURCE_HASH_REVISION_AVAILABLE_TIME_DEFAULT_ROOT,
+    )
+    source_hash_revision_available_time_status.add_argument(
+        "--output-dir",
+        default=f"{SOURCE_HASH_REVISION_AVAILABLE_TIME_DEFAULT_ROOT}/status",
+    )
+    source_hash_revision_available_time_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status
+    )
+
     reviewed_local_csv_replay_prototype_input_contract_fixture_index = subparsers.add_parser(
         "reviewed-local-csv-replay-prototype-input-contract-fixture-index",
         help="Build an index for report-only reviewed LOCAL_CSV replay prototype input contract fixture artifacts",
@@ -11998,6 +12093,10 @@ CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line Count-Only "
     "Checkpoint Planning Report-Only v0.1"
 )
+SOURCE_HASH_REVISION_AVAILABLE_TIME_CLI_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time Research-Status Planning Report-Only v0.1"
+)
 
 
 def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_structural_header_only(
@@ -12627,6 +12726,195 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data
     print(
         "Report-only status: source CSV and header metadata are not reopened, physical lines are not "
         "recounted, and no package candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 1 if result.latest_runtime_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time(
+    args: argparse.Namespace,
+) -> int:
+    if args.source_lineage_manifest_path:
+        result = run_source_hash_revision_available_time(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            source_lineage_manifest_path=args.source_lineage_manifest_path,
+            source_lineage_metadata_path=args.source_lineage_metadata_path,
+            allowed_manifest_roots=args.allowed_manifest_root,
+            source_hash_validation_level=SOURCE_HASH_METADATA_PRESENT_ONLY,
+            revision_id_validation_level=REVISION_ID_METADATA_PRESENT_ONLY,
+            available_time_validation_level=AVAILABLE_TIME_METADATA_PRESENT_ONLY,
+            pit_admissibility_level=PIT_ADMISSIBILITY_NONE,
+            allow_source_revision_time_metadata=args.allow_source_revision_time_metadata,
+        )
+    else:
+        result = run_source_hash_revision_available_time(
+            output_root=args.output_root,
+            run_id=args.run_id,
+        )
+    print(f"run_id: {result['run_id']}")
+    print(f"runtime_status: {result['runtime_status']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"report_only: {result['report_only']}")
+    print(f"diagnostic_only: {result['diagnostic_only']}")
+    print(f"source_hash_validation_level: {result['source_hash_validation_level']}")
+    print(f"revision_id_validation_level: {result['revision_id_validation_level']}")
+    print(f"available_time_validation_level: {result['available_time_validation_level']}")
+    print(f"pit_admissibility_level: {result['pit_admissibility_level']}")
+    print(f"source_hash_metadata_present: {result['source_hash_metadata_present']}")
+    print(f"source_hash_format_checked: {result['source_hash_format_checked']}")
+    print(f"source_hash_algorithm_supported: {result['source_hash_algorithm_supported']}")
+    print(f"source_hash_algorithm: {result['source_hash_algorithm']}")
+    print(f"source_hash_preview: {result['source_hash_preview']}")
+    print(f"source_hash_recomputed: {result['source_hash_recomputed']}")
+    print(f"source_artifact_opened: {result['source_artifact_opened']}")
+    print(f"source_content_read: {result['source_content_read']}")
+    print(f"revision_id_metadata_present: {result['revision_id_metadata_present']}")
+    print(f"revision_id_type: {result['revision_id_type']}")
+    print(f"revision_id_type_supported: {result['revision_id_type_supported']}")
+    print(f"revision_id_value_recorded: {result['revision_id_value_recorded']}")
+    print(f"revision_consistency_checked: {result['revision_consistency_checked']}")
+    print(f"available_time_metadata_present: {result['available_time_metadata_present']}")
+    print(f"available_time_parseable: {result['available_time_parseable']}")
+    print(f"available_time_timezone_present: {result['available_time_timezone_present']}")
+    print(f"available_time_timezone_policy: {result['available_time_timezone_policy']}")
+    print(f"available_time_compared_to_decision_time: {result['available_time_compared_to_decision_time']}")
+    print(f"target_csv_opened: {result['target_csv_opened']}")
+    print(f"real_csv_consumed: {result['real_csv_consumed']}")
+    print(f"local_file_hash_recomputed: {result['local_file_hash_recomputed']}")
+    print(f"expected_hash_reverified: {result['expected_hash_reverified']}")
+    print(f"source_hash_validated: {result['source_hash_validated']}")
+    print(f"revision_id_validated: {result['revision_id_validated']}")
+    print(f"available_time_validated: {result['available_time_validated']}")
+    print(f"pit_admissibility_validated: {result['pit_admissibility_validated']}")
+    print(f"source_reliability_scored: {result['source_reliability_scored']}")
+    print(f"reviewer_authority_validated: {result['reviewer_authority_validated']}")
+    print(f"real_reviewed_csv_package_created: {result['real_reviewed_csv_package_created']}")
+    print(f"real_package_candidate_created: {result['real_package_candidate_created']}")
+    print(f"active_reviewed_input_candidate_created: {result['active_reviewed_input_candidate_created']}")
+    print(f"real_replay_input_created: {result['real_replay_input_created']}")
+    print(f"active_replay_input: {result['active_replay_input']}")
+    print(f"active_replay_ready: {result['active_replay_ready']}")
+    print(f"active_replay_input_ready_emitted: {result['active_replay_input_ready_emitted']}")
+    print(f"replay_execution_allowed: {result['replay_execution_allowed']}")
+    print(f"trading_allowed: {result['trading_allowed']}")
+    print(f"buy_review_allowed: {result['buy_review_allowed']}")
+    print(f"data_raw_written: {result['data_raw_written']}")
+    print(f"data_processed_written: {result['data_processed_written']}")
+    print(f"data_cache_written: {result['data_cache_written']}")
+    print(f"issue_count: {result['issue_count']}")
+    print(f"warning_count: {result['warning_count']}")
+    print(f"artifact_path: {Path(result['artifact_paths']['metadata']).parent}")
+    print(f"report_path: {result['artifact_paths']['report']}")
+    print(f"recommended_next_task: {SOURCE_HASH_REVISION_AVAILABLE_TIME_CLI_NEXT_TASK}")
+    print(
+        "Report-only source revision-time metadata: no source artifact bytes, source content, "
+        "target CSV, hash recomputation, expected-hash reverification, available-time PIT gate, "
+        "package candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_source_hash_revision_available_time_index(root=args.root, output_dir=args.output_dir)
+    latest = sorted(result.rows, key=lambda row: str(row.get("run_id") or ""))[-1] if result.rows else {}
+    print(f"Tiny PIT source hash revision available-time index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"latest_runtime_status: {latest.get('runtime_status', '')}")
+    print(f"latest_health_status: {latest.get('health_status', '')}")
+    print(f"latest_workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"latest_source_hash_preview: {latest.get('source_hash_preview', '')}")
+    print(f"latest_revision_id_type: {latest.get('revision_id_type', '')}")
+    print(f"latest_available_time_parseable: {latest.get('available_time_parseable', '')}")
+    print(f"latest_available_time_timezone_present: {latest.get('available_time_timezone_present', '')}")
+    print(f"latest_available_time_compared_to_decision_time: {latest.get('available_time_compared_to_decision_time', '')}")
+    print(
+        "Report-only index: source metadata references are not reopened, source artifacts are not opened, "
+        "hashes are not recomputed, available-time is not compared to decision time, and no package "
+        "candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_source_hash_revision_available_time_health(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT source hash revision available-time health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Report-only health: source metadata references are not reopened, source artifacts are not opened, "
+        "hashes are not recomputed, available-time is not compared to decision time, and no package "
+        "candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_source_hash_revision_available_time_status(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT source hash revision available-time status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_artifact_path: {result.latest_artifact_path}")
+    print(f"latest_report_path: {result.latest_report_path}")
+    print(f"latest_source_hash_validation_level: {result.summary['latest_source_hash_validation_level']}")
+    print(f"latest_revision_id_validation_level: {result.summary['latest_revision_id_validation_level']}")
+    print(f"latest_available_time_validation_level: {result.summary['latest_available_time_validation_level']}")
+    print(f"latest_pit_admissibility_level: {result.summary['latest_pit_admissibility_level']}")
+    print(f"latest_source_hash_metadata_present: {result.summary['latest_source_hash_metadata_present']}")
+    print(f"latest_source_hash_format_checked: {result.summary['latest_source_hash_format_checked']}")
+    print(f"latest_source_hash_algorithm_supported: {result.summary['latest_source_hash_algorithm_supported']}")
+    print(f"latest_source_hash_algorithm: {result.summary['latest_source_hash_algorithm']}")
+    print(f"latest_source_hash_preview: {result.latest_source_hash_preview}")
+    print(f"latest_revision_id_metadata_present: {result.summary['latest_revision_id_metadata_present']}")
+    print(f"latest_revision_id_type: {result.latest_revision_id_type}")
+    print(f"latest_revision_id_type_supported: {result.summary['latest_revision_id_type_supported']}")
+    print(f"latest_revision_id_value_recorded: {result.summary['latest_revision_id_value_recorded']}")
+    print(f"latest_revision_consistency_checked: {result.summary['latest_revision_consistency_checked']}")
+    print(f"latest_available_time_metadata_present: {result.summary['latest_available_time_metadata_present']}")
+    print(f"latest_available_time_parseable: {result.latest_available_time_parseable}")
+    print(f"latest_available_time_timezone_present: {result.latest_available_time_timezone_present}")
+    print(f"latest_available_time_timezone_policy: {result.summary['latest_available_time_timezone_policy']}")
+    print(f"latest_available_time_compared_to_decision_time: {result.latest_available_time_compared_to_decision_time}")
+    print(f"latest_source_hash_recomputed: {result.summary['latest_source_hash_recomputed']}")
+    print(f"latest_source_artifact_opened: {result.summary['latest_source_artifact_opened']}")
+    print(f"latest_source_content_read: {result.summary['latest_source_content_read']}")
+    print(f"latest_target_csv_opened: {result.summary['latest_target_csv_opened']}")
+    print(f"latest_real_csv_consumed: {result.summary['latest_real_csv_consumed']}")
+    print(f"latest_local_file_hash_recomputed: {result.summary['latest_local_file_hash_recomputed']}")
+    print(f"latest_expected_hash_reverified: {result.summary['latest_expected_hash_reverified']}")
+    print(f"latest_source_hash_validated: {result.summary['latest_source_hash_validated']}")
+    print(f"latest_revision_id_validated: {result.summary['latest_revision_id_validated']}")
+    print(f"latest_available_time_validated: {result.summary['latest_available_time_validated']}")
+    print(f"latest_pit_admissibility_validated: {result.summary['latest_pit_admissibility_validated']}")
+    print(f"latest_source_reliability_scored: {result.summary['latest_source_reliability_scored']}")
+    print(f"latest_reviewer_authority_validated: {result.summary['latest_reviewer_authority_validated']}")
+    print(f"latest_active_replay_input: {result.summary['latest_active_replay_input']}")
+    print(f"latest_replay_execution_allowed: {result.summary['latest_replay_execution_allowed']}")
+    print(f"latest_trading_allowed: {result.summary['latest_trading_allowed']}")
+    print(f"latest_buy_review_allowed: {result.summary['latest_buy_review_allowed']}")
+    print(f"latest_data_raw_written: {result.summary['latest_data_raw_written']}")
+    print(f"latest_data_processed_written: {result.summary['latest_data_processed_written']}")
+    print(f"latest_data_cache_written: {result.summary['latest_data_cache_written']}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    print(
+        "Report-only status: source metadata references are not reopened, source artifacts are not opened, "
+        "hashes are not recomputed, available-time is not compared to decision time, and no package "
+        "candidate, active input, buy-review, trading, or protected data writes were created."
     )
     return 1 if result.latest_runtime_status == "FAIL" else 0
 
