@@ -11,6 +11,18 @@ from quant_replay_system import (
 
 FULL_SOURCE_HASH = "a" * 64
 SOURCE_HASH_PREVIEW = "a" * 16
+EXPECTED_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time Checkpoint Planning Report-Only v0.1"
+)
+STALE_NEXT_TASKS = {
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time Artifact Views Report-Only v0.1",
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time CLI Report-Only v0.1",
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time Research-Status Planning Report-Only v0.1",
+}
 FORBIDDEN_WORDING = {
     "PACKAGE_APPROVED",
     "PACKAGE_ADMISSIBLE",
@@ -102,6 +114,9 @@ def test_no_input_safe_artifact_set_without_reading_source_metadata(tmp_path: Pa
     assert result["available_time_compared_to_decision_time"] is False
     assert result["issue_count"] == 0
     assert result["warning_count"] == 0
+    assert result["recommended_next_task"] == EXPECTED_NEXT_TASK
+    for stale_next_task in STALE_NEXT_TASKS:
+        assert result["recommended_next_task"] != stale_next_task
     _assert_negative_fields_false(result)
     _assert_artifacts_exist(result, "no_input")
 
@@ -457,6 +472,22 @@ def test_unsafe_wording_does_not_appear_positively_in_outputs(tmp_path: Path) ->
 
     for phrase in FORBIDDEN_WORDING:
         assert phrase not in output_text
+
+
+def test_metadata_present_result_recommends_checkpoint_planning(tmp_path: Path) -> None:
+    manifest_path, metadata_path = _write_valid_inputs(tmp_path)
+
+    result = _run_metadata(
+        tmp_path,
+        run_id="checkpoint_next_task",
+        manifest_path=manifest_path,
+        metadata_path=metadata_path,
+    )
+
+    assert result["runtime_status"] == "SOURCE_REVISION_TIME_METADATA_PRESENT_REPORT_ONLY"
+    assert result["recommended_next_task"] == EXPECTED_NEXT_TASK
+    for stale_next_task in STALE_NEXT_TASKS:
+        assert result["recommended_next_task"] != stale_next_task
 
 
 def _run_metadata(

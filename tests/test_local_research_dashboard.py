@@ -126,6 +126,15 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
     csv_physical_data_line_count_safety_flags,
     run_csv_physical_data_line_count_only,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time import (
+    AVAILABLE_TIME_METADATA_PRESENT_ONLY,
+    PIT_ADMISSIBILITY_NONE,
+    REQUIRED_FALSE_FLAGS as SOURCE_REVISION_TIME_REQUIRED_FALSE_FLAGS,
+    REVISION_ID_METADATA_PRESENT_ONLY,
+    SOURCE_HASH_METADATA_PRESENT_ONLY,
+    SOURCE_REVISION_TIME_METADATA_PRESENT_ONLY,
+    run_source_hash_revision_available_time,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -215,6 +224,25 @@ STALE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_NEXT_ACTION_PHRASES = [
     "Research-Status Planning Report-Only v0.1",
 ]
 UNSAFE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_WORDING = [
+    "PACKAGE_APPROVED",
+    "PACKAGE_ADMISSIBLE",
+    "PIT_ADMISSIBLE_PACKAGE",
+    "READY_FOR_REPLAY",
+    "REPLAY_INPUT_READY",
+    "ACTIVE_REPLAY_INPUT_READY",
+    "APPROVED_FOR_ACTIVE_INPUT",
+    "TRADING_READY",
+    "BUY_REVIEW_READY",
+    "PERFORMANCE_VALIDATED",
+]
+EXPECTED_SOURCE_REVISION_TIME_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time Checkpoint Planning Report-Only v0.1"
+)
+STALE_SOURCE_REVISION_TIME_NEXT_ACTION_PHRASES = [
+    "Research-Status Planning Report-Only v0.1",
+]
+UNSAFE_SOURCE_REVISION_TIME_WORDING = [
     "PACKAGE_APPROVED",
     "PACKAGE_ADMISSIBLE",
     "PIT_ADMISSIBLE_PACKAGE",
@@ -10105,6 +10133,74 @@ def _expected_hash_verification_inputs(
     return manifest_path, metadata_path
 
 
+def _source_revision_time_inputs(
+    root: Path,
+    *,
+    source_hash: str = "a" * 64,
+    available_time: str = "2024-04-02T09:15:00+08:00",
+    available_time_timezone: str = "Asia/Shanghai",
+) -> tuple[Path, Path]:
+    metadata_path = root / "source_lineage_metadata" / "metadata.json"
+    metadata_payload = {
+        "source_id": "official-source-revision-dashboard-fixture",
+        "source_name": "Official Source Revision Dashboard Fixture",
+        "source_type": "official_local_metadata",
+        "permission_class": "reviewed_local_reference",
+        "source_hash_algorithm": "SHA-256",
+        "source_hash_value": source_hash,
+        "source_hash_disclosure_level": "PREVIEW_ONLY_STATUS",
+        "revision_id": "provider-revision-20240402",
+        "revision_id_type": "provider_revision_id",
+        "available_time": available_time,
+        "available_time_timezone": available_time_timezone,
+        "available_time_policy": "metadata_present_only_no_decision_time_comparison",
+        "quality_status": "REVIEW_CONTEXT_ONLY",
+        "manual_review_status": "REVIEWED_METADATA_CONTEXT_ONLY",
+        "report_only": True,
+        "diagnostic_only": True,
+        "forbidden_downstream_flags": {
+            flag: False for flag in SOURCE_REVISION_TIME_REQUIRED_FALSE_FLAGS
+        },
+        "limitations": [
+            "Source hash/revision/available-time dashboard fixture records metadata presence only.",
+        ],
+    }
+    _write_json(metadata_path, metadata_payload)
+
+    manifest_path = root / "source_revision_time_manifest.json"
+    manifest_payload = {
+        "package_id": "tiny-pit-source-revision-time-dashboard",
+        "package_schema_version": "source_revision_time_v0_1",
+        "created_at": "2026-07-03T00:00:00Z",
+        "prepared_by": "synthetic-reviewer",
+        "report_only": True,
+        "diagnostic_only": True,
+        "requested_source_hash_validation_level": SOURCE_HASH_METADATA_PRESENT_ONLY,
+        "requested_revision_id_validation_level": REVISION_ID_METADATA_PRESENT_ONLY,
+        "requested_available_time_validation_level": AVAILABLE_TIME_METADATA_PRESENT_ONLY,
+        "requested_pit_admissibility_level": PIT_ADMISSIBILITY_NONE,
+        "source_lineage_metadata_reference": {
+            "path": str(metadata_path),
+            "required": True,
+            "reference_type": "source_lineage_metadata_ref",
+            "intended_touch_level": SOURCE_REVISION_TIME_METADATA_PRESENT_ONLY,
+            "declared_only": False,
+        },
+        "source_hash_policy": "metadata_presence_and_preview_only",
+        "revision_id_policy": "metadata_presence_only",
+        "available_time_policy": "parseability_and_timezone_metadata_only",
+        "timezone_policy": "timezone_required_for_pass_context",
+        "forbidden_downstream_flags": {
+            flag: False for flag in SOURCE_REVISION_TIME_REQUIRED_FALSE_FLAGS
+        },
+        "limitations": [
+            "Dashboard fixture does not validate PIT admissibility or source reliability.",
+        ],
+    }
+    _write_json(manifest_path, manifest_payload)
+    return manifest_path, metadata_path
+
+
 def _csv_physical_data_line_count_only_inputs(
     root: Path,
     *,
@@ -16920,6 +17016,314 @@ def test_research_status_surfaces_csv_physical_data_line_count_only_health_fail(
     assert result.csv_physical_data_line_count_only_active_replay_input is False
     assert result.csv_physical_data_line_count_only_buy_review_allowed is False
     assert result.csv_physical_data_line_count_only_trading_allowed is False
+
+
+def test_research_status_includes_source_revision_time_no_input_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_v0_1"
+    )
+    run_source_hash_revision_available_time(output_root=output_root, run_id="006_no_input")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.source_revision_time_context_visible is True
+    assert result.latest_source_revision_time_run_id == "006_no_input"
+    assert result.latest_source_revision_time_runtime_status == "NO_SOURCE_REVISION_TIME_INPUT"
+    assert result.latest_source_revision_time_health_status == "PASS"
+    assert result.latest_source_revision_time_source_hash_validation_level == "SOURCE_HASH_VALIDATION_NONE"
+    assert result.latest_source_revision_time_revision_id_validation_level == "REVISION_ID_VALIDATION_NONE"
+    assert result.latest_source_revision_time_available_time_validation_level == "AVAILABLE_TIME_VALIDATION_NONE"
+    assert result.latest_source_revision_time_pit_admissibility_level == "PIT_ADMISSIBILITY_NONE"
+    assert result.latest_source_revision_time_source_hash_metadata_present is False
+    assert result.latest_source_revision_time_revision_id_metadata_present is False
+    assert result.latest_source_revision_time_available_time_metadata_present is False
+    assert result.source_revision_time_source_artifact_opened is False
+    assert result.source_revision_time_source_content_read is False
+    assert result.source_revision_time_target_csv_opened is False
+    assert result.source_revision_time_source_hash_recomputed is False
+    assert result.source_revision_time_expected_hash_reverified is False
+    assert result.source_revision_time_available_time_validated is False
+    assert result.source_revision_time_pit_admissibility_validated is False
+    assert result.source_revision_time_active_replay_input is False
+    assert result.source_revision_time_replay_execution_allowed is False
+    assert result.source_revision_time_buy_review_allowed is False
+    assert result.source_revision_time_trading_allowed is False
+    assert result.latest_source_revision_time_recommended_next_task == EXPECTED_SOURCE_REVISION_TIME_NEXT_TASK
+
+
+def test_research_status_includes_source_revision_time_metadata_present_preview_only(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "source_revision_time_inputs"
+    full_source_hash = "abcdef0123456789" * 4
+    manifest_path, metadata_path = _source_revision_time_inputs(
+        input_root,
+        source_hash=full_source_hash,
+    )
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_v0_1"
+    )
+    run_source_hash_revision_available_time(
+        output_root=output_root,
+        run_id="006_metadata",
+        source_lineage_manifest_path=manifest_path,
+        source_lineage_metadata_path=metadata_path,
+        allowed_manifest_roots=[input_root],
+        source_hash_validation_level=SOURCE_HASH_METADATA_PRESENT_ONLY,
+        revision_id_validation_level=REVISION_ID_METADATA_PRESENT_ONLY,
+        available_time_validation_level=AVAILABLE_TIME_METADATA_PRESENT_ONLY,
+        pit_admissibility_level=PIT_ADMISSIBILITY_NONE,
+        allow_source_revision_time_metadata=True,
+    )
+    manifest_path.unlink()
+    metadata_path.unlink()
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    metadata_text = json.dumps(metadata, sort_keys=True)
+    report_text = result.artifact_paths["local_research_dashboard"].read_text(encoding="utf-8")
+    preview = full_source_hash[:16]
+
+    assert result.source_revision_time_context_visible is True
+    assert result.latest_source_revision_time_run_id == "006_metadata"
+    assert result.latest_source_revision_time_runtime_status == (
+        "SOURCE_REVISION_TIME_METADATA_PRESENT_REPORT_ONLY"
+    )
+    assert result.latest_source_revision_time_health_status == "PASS"
+    assert result.latest_source_revision_time_source_hash_validation_level == (
+        SOURCE_HASH_METADATA_PRESENT_ONLY
+    )
+    assert result.latest_source_revision_time_revision_id_validation_level == (
+        REVISION_ID_METADATA_PRESENT_ONLY
+    )
+    assert result.latest_source_revision_time_available_time_validation_level == (
+        AVAILABLE_TIME_METADATA_PRESENT_ONLY
+    )
+    assert result.latest_source_revision_time_pit_admissibility_level == PIT_ADMISSIBILITY_NONE
+    assert result.latest_source_revision_time_source_hash_metadata_present is True
+    assert result.latest_source_revision_time_source_hash_format_checked is True
+    assert result.latest_source_revision_time_source_hash_algorithm_supported is True
+    assert result.latest_source_revision_time_source_hash_algorithm == "SHA-256"
+    assert result.latest_source_revision_time_source_hash_preview == preview
+    assert result.latest_source_revision_time_revision_id_metadata_present is True
+    assert result.latest_source_revision_time_revision_id_type == "provider_revision_id"
+    assert result.latest_source_revision_time_revision_id_type_supported is True
+    assert result.latest_source_revision_time_revision_id_value_recorded is True
+    assert result.latest_source_revision_time_revision_consistency_checked is False
+    assert result.latest_source_revision_time_available_time_metadata_present is True
+    assert result.latest_source_revision_time_available_time_parseable is True
+    assert result.latest_source_revision_time_available_time_timezone_present is True
+    assert result.latest_source_revision_time_available_time_timezone_policy == "Asia/Shanghai"
+    assert result.latest_source_revision_time_available_time_compared_to_decision_time is False
+    assert result.latest_source_revision_time_issue_count == 0
+    assert result.latest_source_revision_time_warning_count == 0
+    assert result.source_revision_time_source_hash_recomputed is False
+    assert result.source_revision_time_source_artifact_opened is False
+    assert result.source_revision_time_source_content_read is False
+    assert result.source_revision_time_local_file_hash_recomputed is False
+    assert result.source_revision_time_expected_hash_reverified is False
+    assert result.source_revision_time_target_csv_opened is False
+    assert result.source_revision_time_real_csv_consumed is False
+    assert result.source_revision_time_source_hash_validated is False
+    assert result.source_revision_time_revision_id_validated is False
+    assert result.source_revision_time_available_time_validated is False
+    assert result.source_revision_time_pit_admissibility_validated is False
+    assert result.source_revision_time_source_reliability_scored is False
+    assert result.source_revision_time_reviewer_authority_validated is False
+    assert result.source_revision_time_real_reviewed_csv_package_created is False
+    assert result.source_revision_time_real_package_candidate_created is False
+    assert result.source_revision_time_active_reviewed_input_candidate_created is False
+    assert result.source_revision_time_real_replay_input_created is False
+    assert result.source_revision_time_active_replay_input is False
+    assert result.source_revision_time_active_replay_ready is False
+    assert result.source_revision_time_active_replay_input_ready_emitted is False
+    assert result.source_revision_time_replay_execution_allowed is False
+    assert result.source_revision_time_trading_allowed is False
+    assert result.source_revision_time_buy_review_allowed is False
+    assert result.source_revision_time_data_raw_written is False
+    assert result.source_revision_time_data_processed_written is False
+    assert result.source_revision_time_data_cache_written is False
+    assert result.latest_source_revision_time_recommended_next_task == EXPECTED_SOURCE_REVISION_TIME_NEXT_TASK
+    assert row["status"] == "SOURCE_REVISION_TIME_METADATA_PRESENT_REPORT_ONLY"
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "source_revision_time_context_visible"] == "True"
+    assert summary.loc[0, "latest_source_revision_time_source_hash_preview"] == preview
+    assert summary.loc[0, "source_revision_time_source_hash_validated"] == "False"
+    assert summary.loc[0, "source_revision_time_target_csv_opened"] == "False"
+    assert metadata["source_revision_time_context_visible"] is True
+    assert metadata["latest_source_revision_time_source_hash_preview"] == preview
+    assert metadata["source_revision_time_target_csv_opened"] is False
+    assert full_source_hash not in metadata_text
+    assert full_source_hash not in report_text
+    assert str(input_root) not in metadata_text
+    assert str(input_root) not in report_text
+    for stale in STALE_SOURCE_REVISION_TIME_NEXT_ACTION_PHRASES:
+        assert stale not in result.latest_source_revision_time_recommended_next_task
+    for unsafe in UNSAFE_SOURCE_REVISION_TIME_WORDING:
+        assert unsafe not in metadata_text
+        assert unsafe not in result.latest_source_revision_time_recommended_next_task
+        assert unsafe not in row["notes"]
+
+
+def test_research_status_surfaces_source_revision_time_timezone_warn_without_pit_failure(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "source_revision_time_timezone_inputs"
+    manifest_path, metadata_path = _source_revision_time_inputs(
+        input_root,
+        available_time="2024-04-02T09:15:00",
+        available_time_timezone="",
+    )
+    run_source_hash_revision_available_time(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_v0_1"
+        ),
+        run_id="006_timezone_warn",
+        source_lineage_manifest_path=manifest_path,
+        source_lineage_metadata_path=metadata_path,
+        allowed_manifest_roots=[input_root],
+        source_hash_validation_level=SOURCE_HASH_METADATA_PRESENT_ONLY,
+        revision_id_validation_level=REVISION_ID_METADATA_PRESENT_ONLY,
+        available_time_validation_level=AVAILABLE_TIME_METADATA_PRESENT_ONLY,
+        pit_admissibility_level=PIT_ADMISSIBILITY_NONE,
+        allow_source_revision_time_metadata=True,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS"
+    ].iloc[0]
+
+    assert result.source_revision_time_context_visible is True
+    assert result.latest_source_revision_time_runtime_status == (
+        "SOURCE_REVISION_TIME_WARN_TIMEZONE_ASSUMPTION_REQUIRED"
+    )
+    assert result.latest_source_revision_time_health_status == "WARN"
+    assert result.latest_source_revision_time_available_time_parseable is True
+    assert result.latest_source_revision_time_available_time_timezone_present is False
+    assert result.latest_source_revision_time_available_time_compared_to_decision_time is False
+    assert result.latest_source_revision_time_warning_count == 1
+    assert row["warning_count"] >= 1
+    assert row["blocking_error_count"] == 0
+    assert result.source_revision_time_available_time_validated is False
+    assert result.source_revision_time_pit_admissibility_validated is False
+    assert result.source_revision_time_real_package_candidate_created is False
+    assert result.source_revision_time_active_replay_input is False
+    assert result.source_revision_time_buy_review_allowed is False
+    assert result.source_revision_time_trading_allowed is False
+
+
+def test_research_status_preserves_paper_priority_over_source_revision_time_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "source_revision_time_priority_inputs"
+    manifest_path, metadata_path = _source_revision_time_inputs(input_root)
+    run_source_hash_revision_available_time(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_v0_1"
+        ),
+        run_id="006_priority",
+        source_lineage_manifest_path=manifest_path,
+        source_lineage_metadata_path=metadata_path,
+        allowed_manifest_roots=[input_root],
+        source_hash_validation_level=SOURCE_HASH_METADATA_PRESENT_ONLY,
+        revision_id_validation_level=REVISION_ID_METADATA_PRESENT_ONLY,
+        available_time_validation_level=AVAILABLE_TIME_METADATA_PRESENT_ONLY,
+        pit_admissibility_level=PIT_ADMISSIBILITY_NONE,
+        allow_source_revision_time_metadata=True,
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.source_revision_time_context_visible is True
+    assert result.latest_source_revision_time_health_status == "PASS"
+    assert result.source_revision_time_real_csv_consumed is False
+    assert result.source_revision_time_active_replay_input_ready_emitted is False
+    assert result.source_revision_time_replay_execution_allowed is False
+    assert result.source_revision_time_buy_review_allowed is False
+    assert result.source_revision_time_trading_allowed is False
+
+
+def test_research_status_surfaces_source_revision_time_health_fail_safely(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    input_root = tmp_path / "source_revision_time_fail_inputs"
+    full_source_hash = "fedcba9876543210" * 4
+    manifest_path, metadata_path = _source_revision_time_inputs(
+        input_root,
+        source_hash=full_source_hash,
+    )
+    artifact = run_source_hash_revision_available_time(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_v0_1"
+        ),
+        run_id="006_unsafe",
+        source_lineage_manifest_path=manifest_path,
+        source_lineage_metadata_path=metadata_path,
+        allowed_manifest_roots=[input_root],
+        source_hash_validation_level=SOURCE_HASH_METADATA_PRESENT_ONLY,
+        revision_id_validation_level=REVISION_ID_METADATA_PRESENT_ONLY,
+        available_time_validation_level=AVAILABLE_TIME_METADATA_PRESENT_ONLY,
+        pit_admissibility_level=PIT_ADMISSIBILITY_NONE,
+        allow_source_revision_time_metadata=True,
+    )
+    metadata_artifact_path = Path(artifact["artifact_paths"]["metadata"])
+    artifact_metadata = json.loads(metadata_artifact_path.read_text(encoding="utf-8"))
+    artifact_metadata["source_hash_preview"] = full_source_hash
+    metadata_artifact_path.write_text(
+        json.dumps(artifact_metadata, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS"
+    ].iloc[0]
+    metadata_text = result.artifact_paths["metadata"].read_text(encoding="utf-8")
+
+    assert result.source_revision_time_context_visible is True
+    assert result.latest_source_revision_time_health_status == "FAIL"
+    assert row["blocking_error_count"] == 1
+    assert full_source_hash not in metadata_text
+    assert result.source_revision_time_source_artifact_opened is False
+    assert result.source_revision_time_source_content_read is False
+    assert result.source_revision_time_target_csv_opened is False
+    assert result.source_revision_time_real_csv_consumed is False
+    assert result.source_revision_time_active_replay_input is False
+    assert result.source_revision_time_buy_review_allowed is False
+    assert result.source_revision_time_trading_allowed is False
 
 
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(

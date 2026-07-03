@@ -52,7 +52,7 @@ WORKFLOW_STAGE = (
 CREATED_AT = "2026-07-03T00:00:00Z"
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
-    "Available-Time Artifact Views Report-Only v0.1"
+    "Available-Time Checkpoint Planning Report-Only v0.1"
 )
 
 SOURCE_HASH_VALIDATION_NONE = "SOURCE_HASH_VALIDATION_NONE"

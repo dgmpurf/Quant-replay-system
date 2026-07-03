@@ -28,7 +28,7 @@ ROW_VALUE_SENTINEL = "ROW_VALUE_SENTINEL_SHOULD_NOT_APPEAR"
 PRIVATE_PATH_SENTINEL = "C:/Users/msjpurf/private/source.csv"
 CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
-    "Available-Time Research-Status Planning Report-Only v0.1"
+    "Available-Time Checkpoint Planning Report-Only v0.1"
 )
 UNSAFE_WORDING = [
     "PACKAGE_APPROVED",
@@ -299,9 +299,9 @@ def test_status_summarizes_latest_safe_artifact_and_recommends_cli_phase(tmp_pat
     assert result.latest_available_time_timezone_present is True
     assert result.latest_available_time_compared_to_decision_time is False
     assert result.recommended_next_task == CLI_NEXT_TASK
-    assert "Research-Status Planning" in result.recommended_next_task
+    assert "Checkpoint Planning" in result.recommended_next_task
+    assert "Research-Status Planning" not in result.recommended_next_task
     assert "CLI Report-Only v0.1" not in result.recommended_next_task
-    assert "Checkpoint" not in result.recommended_next_task
     _assert_negative_fields_false(result.summary)
 
 

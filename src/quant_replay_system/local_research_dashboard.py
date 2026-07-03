@@ -170,6 +170,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status import (
     run_csv_physical_data_line_count_only_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time import (
+    REQUIRED_FALSE_FLAGS as SOURCE_REVISION_TIME_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status import (
+    run_source_hash_revision_available_time_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1372,6 +1378,81 @@ SUMMARY_COLUMNS = [
     *[
         f"csv_physical_data_line_count_only_{flag}"
         for flag in CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_SAFETY_FALSE_FLAGS
+    ],
+    "source_revision_time_context_visible",
+    "latest_source_revision_time_run_id",
+    "latest_source_revision_time_runtime_status",
+    "latest_source_revision_time_health_status",
+    "latest_source_revision_time_workflow_stage",
+    "latest_source_revision_time_artifact_path",
+    "latest_source_revision_time_report_path",
+    "latest_source_revision_time_source_hash_validation_level",
+    "latest_source_revision_time_revision_id_validation_level",
+    "latest_source_revision_time_available_time_validation_level",
+    "latest_source_revision_time_pit_admissibility_level",
+    "latest_source_revision_time_source_hash_metadata_present",
+    "latest_source_revision_time_source_hash_format_checked",
+    "latest_source_revision_time_source_hash_algorithm_supported",
+    "latest_source_revision_time_source_hash_algorithm",
+    "latest_source_revision_time_source_hash_preview",
+    "latest_source_revision_time_revision_id_metadata_present",
+    "latest_source_revision_time_revision_id_type",
+    "latest_source_revision_time_revision_id_type_supported",
+    "latest_source_revision_time_revision_id_value_recorded",
+    "latest_source_revision_time_revision_consistency_checked",
+    "latest_source_revision_time_available_time_metadata_present",
+    "latest_source_revision_time_available_time_parseable",
+    "latest_source_revision_time_available_time_timezone_present",
+    "latest_source_revision_time_available_time_timezone_policy",
+    "latest_source_revision_time_available_time_compared_to_decision_time",
+    "latest_source_revision_time_issue_count",
+    "latest_source_revision_time_warning_count",
+    "latest_source_revision_time_recommended_next_task",
+    "source_revision_time_source_hash_recomputed",
+    "source_revision_time_source_artifact_opened",
+    "source_revision_time_source_content_read",
+    "source_revision_time_local_file_hash_recomputed",
+    "source_revision_time_expected_hash_reverified",
+    "source_revision_time_target_csv_opened",
+    "source_revision_time_real_csv_consumed",
+    "source_revision_time_source_hash_validated",
+    "source_revision_time_revision_id_validated",
+    "source_revision_time_available_time_validated",
+    "source_revision_time_pit_admissibility_validated",
+    "source_revision_time_source_reliability_scored",
+    "source_revision_time_reviewer_authority_validated",
+    "source_revision_time_real_reviewed_csv_package_created",
+    "source_revision_time_real_package_candidate_created",
+    "source_revision_time_active_reviewed_input_candidate_created",
+    "source_revision_time_real_replay_input_created",
+    "source_revision_time_active_replay_input",
+    "source_revision_time_active_replay_ready",
+    "source_revision_time_active_replay_input_ready_emitted",
+    "source_revision_time_replay_execution_allowed",
+    "source_revision_time_trading_allowed",
+    "source_revision_time_buy_review_allowed",
+    "source_revision_time_data_raw_written",
+    "source_revision_time_data_processed_written",
+    "source_revision_time_data_cache_written",
+    *[
+        f"source_revision_time_{flag}"
+        for flag in SOURCE_REVISION_TIME_SAFETY_FALSE_FLAGS
+        if f"source_revision_time_{flag}"
+        not in {
+            "source_revision_time_real_reviewed_csv_package_created",
+            "source_revision_time_real_package_candidate_created",
+            "source_revision_time_active_reviewed_input_candidate_created",
+            "source_revision_time_real_replay_input_created",
+            "source_revision_time_active_replay_input",
+            "source_revision_time_active_replay_ready",
+            "source_revision_time_active_replay_input_ready_emitted",
+            "source_revision_time_replay_execution_allowed",
+            "source_revision_time_trading_allowed",
+            "source_revision_time_buy_review_allowed",
+            "source_revision_time_data_raw_written",
+            "source_revision_time_data_processed_written",
+            "source_revision_time_data_cache_written",
+        }
     ],
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
@@ -3044,6 +3125,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -3114,6 +3196,9 @@ WORKFLOW_AREAS = {
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME"
     ),
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
@@ -4483,6 +4568,79 @@ class LocalResearchDashboardResult:
     csv_physical_data_line_count_only_current_candidates_created: bool
     csv_physical_data_line_count_only_snapshots_created: bool
     csv_physical_data_line_count_only_signal_semantics_mutated: bool
+    source_revision_time_context_visible: bool
+    latest_source_revision_time_run_id: str
+    latest_source_revision_time_runtime_status: str
+    latest_source_revision_time_health_status: str
+    latest_source_revision_time_workflow_stage: str
+    latest_source_revision_time_artifact_path: str
+    latest_source_revision_time_report_path: str
+    latest_source_revision_time_source_hash_validation_level: str
+    latest_source_revision_time_revision_id_validation_level: str
+    latest_source_revision_time_available_time_validation_level: str
+    latest_source_revision_time_pit_admissibility_level: str
+    latest_source_revision_time_source_hash_metadata_present: bool
+    latest_source_revision_time_source_hash_format_checked: bool
+    latest_source_revision_time_source_hash_algorithm_supported: bool
+    latest_source_revision_time_source_hash_algorithm: str
+    latest_source_revision_time_source_hash_preview: str
+    latest_source_revision_time_revision_id_metadata_present: bool
+    latest_source_revision_time_revision_id_type: str
+    latest_source_revision_time_revision_id_type_supported: bool
+    latest_source_revision_time_revision_id_value_recorded: bool
+    latest_source_revision_time_revision_consistency_checked: bool
+    latest_source_revision_time_available_time_metadata_present: bool
+    latest_source_revision_time_available_time_parseable: bool
+    latest_source_revision_time_available_time_timezone_present: bool
+    latest_source_revision_time_available_time_timezone_policy: str
+    latest_source_revision_time_available_time_compared_to_decision_time: bool
+    latest_source_revision_time_issue_count: int
+    latest_source_revision_time_warning_count: int
+    latest_source_revision_time_recommended_next_task: str
+    source_revision_time_source_hash_recomputed: bool
+    source_revision_time_source_artifact_opened: bool
+    source_revision_time_source_content_read: bool
+    source_revision_time_local_file_hash_recomputed: bool
+    source_revision_time_expected_hash_reverified: bool
+    source_revision_time_target_csv_opened: bool
+    source_revision_time_real_csv_consumed: bool
+    source_revision_time_source_hash_validated: bool
+    source_revision_time_revision_id_validated: bool
+    source_revision_time_available_time_validated: bool
+    source_revision_time_pit_admissibility_validated: bool
+    source_revision_time_source_reliability_scored: bool
+    source_revision_time_reviewer_authority_validated: bool
+    source_revision_time_real_reviewed_csv_package_created: bool
+    source_revision_time_real_package_candidate_created: bool
+    source_revision_time_active_reviewed_input_candidate_created: bool
+    source_revision_time_real_replay_input_created: bool
+    source_revision_time_active_replay_input: bool
+    source_revision_time_active_replay_ready: bool
+    source_revision_time_active_replay_input_ready_emitted: bool
+    source_revision_time_replay_execution_allowed: bool
+    source_revision_time_trading_allowed: bool
+    source_revision_time_buy_review_allowed: bool
+    source_revision_time_data_raw_written: bool
+    source_revision_time_data_processed_written: bool
+    source_revision_time_data_cache_written: bool
+    source_revision_time_labels_created: bool
+    source_revision_time_training_dataset_created: bool
+    source_revision_time_metric_computation_performed: bool
+    source_revision_time_signal_score_implemented: bool
+    source_revision_time_model_training_performed: bool
+    source_revision_time_active_weights_created: bool
+    source_revision_time_active_thresholds_created: bool
+    source_revision_time_stock_profile_validation_created: bool
+    source_revision_time_paper_validation_created: bool
+    source_revision_time_strategy_performance_validated: bool
+    source_revision_time_broker_api_called: bool
+    source_revision_time_order_placed: bool
+    source_revision_time_message_sent: bool
+    source_revision_time_external_api_called: bool
+    source_revision_time_llm_api_called: bool
+    source_revision_time_current_candidates_created: bool
+    source_revision_time_snapshots_created: bool
+    source_revision_time_signal_semantics_mutated: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -6080,6 +6238,7 @@ def run_local_research_dashboard(
     tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root: str | Path | None = None,
+    tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -6385,6 +6544,21 @@ def run_local_research_dashboard(
         else effective_root
         / "manual_diagnostics"
         / "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_v0_1"
+    )
+    default_source_hash_revision_available_time_root = (
+        effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_v0_1"
+    )
+    if (
+        not default_source_hash_revision_available_time_root.exists()
+        and (effective_root / "status").exists()
+    ):
+        default_source_hash_revision_available_time_root = effective_root
+    effective_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root = (
+        Path(tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root)
+        if tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root is not None
+        else default_source_hash_revision_available_time_root
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -6883,6 +7057,9 @@ def run_local_research_dashboard(
         tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root=(
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root
         ),
+        tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root=(
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root
+        ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
         input_gate_validator_fixture_root=effective_input_gate_validator_fixture_root,
@@ -7033,6 +7210,9 @@ def run_local_research_dashboard(
         ),
         "tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root": (
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root
+        ),
+        "tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root": (
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root
         ),
         "source_registry_schema_fixture_root": effective_source_registry_schema_fixture_root,
         "raw_document_store_schema_fixture_root": effective_raw_document_store_schema_fixture_root,
@@ -9148,6 +9328,7 @@ def run_local_research_dashboard(
         **_local_file_byte_hash_only_result_kwargs(summary),
         **_expected_hash_verification_result_kwargs(summary),
         **_csv_physical_data_line_count_only_result_kwargs(summary),
+        **_source_revision_time_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -12922,6 +13103,7 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_real_reviewed_local_csv_package_candidate_local_file_byte_hash_only_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root: str | Path,
+    tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -13037,6 +13219,9 @@ def scan_local_research_workflow_artifacts(
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_path = Path(
+        tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -13201,6 +13386,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -20671,6 +20861,7 @@ def summarize_local_research_status(
         **_local_file_byte_hash_only_summary_fields(by_component),
         **_expected_hash_verification_summary_fields(by_component),
         **_csv_physical_data_line_count_only_summary_fields(by_component),
+        **_source_revision_time_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -28851,6 +29042,7 @@ def build_local_research_dashboard_metadata(
         **_local_file_byte_hash_only_metadata(result),
         **_expected_hash_verification_metadata(result),
         **_csv_physical_data_line_count_only_metadata(result),
+        **_source_revision_time_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -36477,6 +36669,321 @@ def _int_or_blank(value: Any) -> int | str:
 
 def _csv_physical_data_line_count_only_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_RESULT_FIELDS}
+
+
+_SOURCE_REVISION_TIME_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS"
+)
+_SOURCE_REVISION_TIME_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME"
+)
+_SOURCE_REVISION_TIME_LATEST_PREFIX = "latest_source_revision_time_"
+_SOURCE_REVISION_TIME_DETAIL_PREFIX = "source_revision_time_"
+_SOURCE_REVISION_TIME_LATEST_FIELDS = [
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}run_id",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}runtime_status",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}health_status",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}workflow_stage",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}artifact_path",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}report_path",
+]
+_SOURCE_REVISION_TIME_TEXT_FIELDS = [
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}source_hash_validation_level",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}revision_id_validation_level",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}available_time_validation_level",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}pit_admissibility_level",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}source_hash_algorithm",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}source_hash_preview",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}revision_id_type",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}available_time_timezone_policy",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}recommended_next_task",
+]
+_SOURCE_REVISION_TIME_BOOL_FIELDS = [
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}source_hash_metadata_present",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}source_hash_format_checked",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}source_hash_algorithm_supported",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}revision_id_metadata_present",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}revision_id_type_supported",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}revision_id_value_recorded",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}revision_consistency_checked",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}available_time_metadata_present",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}available_time_parseable",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}available_time_timezone_present",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}available_time_compared_to_decision_time",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}source_hash_recomputed",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}source_artifact_opened",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}source_content_read",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}local_file_hash_recomputed",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}expected_hash_reverified",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}target_csv_opened",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}real_csv_consumed",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}source_hash_validated",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}revision_id_validated",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}available_time_validated",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}pit_admissibility_validated",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}source_reliability_scored",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}reviewer_authority_validated",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}real_reviewed_csv_package_created",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}real_package_candidate_created",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}active_reviewed_input_candidate_created",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}real_replay_input_created",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}active_replay_input",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}active_replay_ready",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}active_replay_input_ready_emitted",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}replay_execution_allowed",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}trading_allowed",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}buy_review_allowed",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}data_raw_written",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}data_processed_written",
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}data_cache_written",
+]
+_SOURCE_REVISION_TIME_SAFETY_FIELDS = [
+    f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}{flag}"
+    for flag in SOURCE_REVISION_TIME_SAFETY_FALSE_FLAGS
+    if f"{_SOURCE_REVISION_TIME_DETAIL_PREFIX}{flag}" not in set(_SOURCE_REVISION_TIME_BOOL_FIELDS)
+]
+_SOURCE_REVISION_TIME_INT_FIELDS = [
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}issue_count",
+    f"{_SOURCE_REVISION_TIME_LATEST_PREFIX}warning_count",
+]
+_SOURCE_REVISION_TIME_RESULT_FIELDS = (
+    ["source_revision_time_context_visible"]
+    + _SOURCE_REVISION_TIME_LATEST_FIELDS
+    + _SOURCE_REVISION_TIME_TEXT_FIELDS
+    + _SOURCE_REVISION_TIME_BOOL_FIELDS
+    + _SOURCE_REVISION_TIME_INT_FIELDS
+    + _SOURCE_REVISION_TIME_SAFETY_FIELDS
+)
+_SOURCE_REVISION_TIME_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time Checkpoint Planning Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_source_hash_revision_available_time_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = _source_revision_time_summary_from_status_result(result)
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _SOURCE_REVISION_TIME_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair Source Hash / Revision ID / Available-Time artifacts before checkpoint planning."
+    )
+    warning_count = _int_or_zero(summary.get("latest_source_revision_time_warning_count"))
+    issue_count = _int_or_zero(summary.get("latest_source_revision_time_issue_count"))
+    return [
+        _record(
+            workflow_area=_SOURCE_REVISION_TIME_WORKFLOW_AREA,
+            component=_SOURCE_REVISION_TIME_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.artifact_paths.get("metadata_json", ""),
+            issue_count=issue_count,
+            warning_count=warning_count,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_source_revision_time_notes(summary),
+        )
+    ]
+
+
+def _source_revision_time_summary_from_status_result(result: Any) -> dict[str, Any]:
+    status_summary = result.summary
+    summary = {
+        "latest_source_revision_time_run_id": result.latest_run_id,
+        "latest_source_revision_time_runtime_status": result.latest_runtime_status,
+        "latest_source_revision_time_health_status": result.latest_health_status,
+        "latest_source_revision_time_workflow_stage": result.latest_workflow_stage,
+        "latest_source_revision_time_artifact_path": result.latest_artifact_path,
+        "latest_source_revision_time_report_path": result.latest_report_path,
+        "latest_source_revision_time_source_hash_validation_level": status_summary.get(
+            "latest_source_hash_validation_level"
+        ),
+        "latest_source_revision_time_revision_id_validation_level": status_summary.get(
+            "latest_revision_id_validation_level"
+        ),
+        "latest_source_revision_time_available_time_validation_level": status_summary.get(
+            "latest_available_time_validation_level"
+        ),
+        "latest_source_revision_time_pit_admissibility_level": status_summary.get(
+            "latest_pit_admissibility_level"
+        ),
+        "latest_source_revision_time_source_hash_metadata_present": status_summary.get(
+            "latest_source_hash_metadata_present"
+        ),
+        "latest_source_revision_time_source_hash_format_checked": status_summary.get(
+            "latest_source_hash_format_checked"
+        ),
+        "latest_source_revision_time_source_hash_algorithm_supported": status_summary.get(
+            "latest_source_hash_algorithm_supported"
+        ),
+        "latest_source_revision_time_source_hash_algorithm": status_summary.get(
+            "latest_source_hash_algorithm"
+        ),
+        "latest_source_revision_time_source_hash_preview": _source_revision_time_preview(
+            status_summary.get("latest_source_hash_preview")
+        ),
+        "latest_source_revision_time_revision_id_metadata_present": status_summary.get(
+            "latest_revision_id_metadata_present"
+        ),
+        "latest_source_revision_time_revision_id_type": status_summary.get("latest_revision_id_type"),
+        "latest_source_revision_time_revision_id_type_supported": status_summary.get(
+            "latest_revision_id_type_supported"
+        ),
+        "latest_source_revision_time_revision_id_value_recorded": status_summary.get(
+            "latest_revision_id_value_recorded"
+        ),
+        "latest_source_revision_time_revision_consistency_checked": status_summary.get(
+            "latest_revision_consistency_checked"
+        ),
+        "latest_source_revision_time_available_time_metadata_present": status_summary.get(
+            "latest_available_time_metadata_present"
+        ),
+        "latest_source_revision_time_available_time_parseable": status_summary.get(
+            "latest_available_time_parseable"
+        ),
+        "latest_source_revision_time_available_time_timezone_present": status_summary.get(
+            "latest_available_time_timezone_present"
+        ),
+        "latest_source_revision_time_available_time_timezone_policy": status_summary.get(
+            "latest_available_time_timezone_policy"
+        ),
+        "latest_source_revision_time_available_time_compared_to_decision_time": status_summary.get(
+            "latest_available_time_compared_to_decision_time"
+        ),
+        "latest_source_revision_time_issue_count": status_summary.get("latest_issue_count"),
+        "latest_source_revision_time_warning_count": status_summary.get("latest_warning_count"),
+    }
+    for field in _SOURCE_REVISION_TIME_BOOL_FIELDS + _SOURCE_REVISION_TIME_SAFETY_FIELDS:
+        source_field = field.replace(_SOURCE_REVISION_TIME_DETAIL_PREFIX, "")
+        if field.startswith(_SOURCE_REVISION_TIME_LATEST_PREFIX):
+            continue
+        summary[field] = status_summary.get(source_field, status_summary.get(f"latest_{source_field}"))
+    return summary
+
+
+def _source_revision_time_preview(value: Any) -> str:
+    return _string_or_empty(value)[:16]
+
+
+def _source_revision_time_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_string_or_empty(_source_revision_time_summary_value(summary, field))};"
+        for field in (
+            _SOURCE_REVISION_TIME_TEXT_FIELDS
+            + _SOURCE_REVISION_TIME_BOOL_FIELDS
+            + _SOURCE_REVISION_TIME_INT_FIELDS
+            + _SOURCE_REVISION_TIME_SAFETY_FIELDS
+        )
+        if field != "latest_source_revision_time_recommended_next_task"
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "source_revision_time_semantics=metadata_presence_parseability_and_preview_only_no_source_content_hash_recompute_or_pit_validation; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('latest_source_revision_time_health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('latest_source_revision_time_workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('latest_source_revision_time_artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get('latest_source_revision_time_report_path'))}; "
+        f"{field_notes}"
+    )
+
+
+def _source_revision_time_summary_value(summary: dict[str, Any], dashboard_field: str) -> Any:
+    if dashboard_field == "latest_source_revision_time_recommended_next_task":
+        return summary.get("next_action")
+    if dashboard_field in summary:
+        return summary.get(dashboard_field)
+    return ""
+
+
+def _source_revision_time_summary_fields(by_component: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    component = by_component.get(_SOURCE_REVISION_TIME_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "source_revision_time_context_visible": _parse_note_value(notes, "context_visible"),
+        "latest_source_revision_time_run_id": _string_or_empty(component.get("latest_artifact_id")),
+        "latest_source_revision_time_runtime_status": _component_status(
+            by_component,
+            _SOURCE_REVISION_TIME_COMPONENT,
+        ),
+        "latest_source_revision_time_health_status": _parse_note_value(notes, "health_status"),
+        "latest_source_revision_time_workflow_stage": _string_or_empty(component.get("stage")),
+        "latest_source_revision_time_artifact_path": _parse_note_value(notes, "artifact_path"),
+        "latest_source_revision_time_report_path": _parse_note_value(notes, "report_path"),
+        "latest_source_revision_time_recommended_next_task": _parse_note_value(
+            notes,
+            "next_manual_action",
+        ),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in _SOURCE_REVISION_TIME_TEXT_FIELDS
+            if field != "latest_source_revision_time_recommended_next_task"
+        }
+    )
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in (
+                _SOURCE_REVISION_TIME_BOOL_FIELDS
+                + _SOURCE_REVISION_TIME_INT_FIELDS
+                + _SOURCE_REVISION_TIME_SAFETY_FIELDS
+            )
+        }
+    )
+    return fields
+
+
+def _source_revision_time_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, "")) for field in _SOURCE_REVISION_TIME_LATEST_FIELDS
+    }
+    kwargs.update({field: str(summary.get(field, "")) for field in _SOURCE_REVISION_TIME_TEXT_FIELDS})
+    kwargs["source_revision_time_context_visible"] = _bool_from_text(
+        summary.get("source_revision_time_context_visible")
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in _SOURCE_REVISION_TIME_BOOL_FIELDS + _SOURCE_REVISION_TIME_SAFETY_FIELDS
+        }
+    )
+    kwargs.update(
+        {field: _int_or_zero(summary.get(field)) for field in _SOURCE_REVISION_TIME_INT_FIELDS}
+    )
+    if not kwargs["latest_source_revision_time_source_hash_validation_level"]:
+        kwargs["latest_source_revision_time_source_hash_validation_level"] = "SOURCE_HASH_VALIDATION_NONE"
+    if not kwargs["latest_source_revision_time_revision_id_validation_level"]:
+        kwargs["latest_source_revision_time_revision_id_validation_level"] = "REVISION_ID_VALIDATION_NONE"
+    if not kwargs["latest_source_revision_time_available_time_validation_level"]:
+        kwargs["latest_source_revision_time_available_time_validation_level"] = (
+            "AVAILABLE_TIME_VALIDATION_NONE"
+        )
+    if not kwargs["latest_source_revision_time_pit_admissibility_level"]:
+        kwargs["latest_source_revision_time_pit_admissibility_level"] = "PIT_ADMISSIBILITY_NONE"
+    return kwargs
+
+
+def _source_revision_time_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _SOURCE_REVISION_TIME_RESULT_FIELDS}
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:

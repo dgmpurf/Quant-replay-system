@@ -23,11 +23,19 @@ TARGET_CSV_SENTINEL = "TARGET_CSV_SENTINEL_SHOULD_NOT_PRINT"
 PRIVATE_PATH_SENTINEL = "C:/Users/msjpurf/private/source.csv"
 CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
-    "Available-Time Research-Status Planning Report-Only v0.1"
+    "Available-Time Checkpoint Planning Report-Only v0.1"
 )
 STALE_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
     "Available-Time CLI Report-Only v0.1"
+)
+STALE_ARTIFACT_VIEWS_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time Artifact Views Report-Only v0.1"
+)
+STALE_RESEARCH_STATUS_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
+    "Available-Time Research-Status Planning Report-Only v0.1"
 )
 UNSAFE_WORDING = [
     "PACKAGE_APPROVED",
@@ -93,6 +101,10 @@ def test_core_cli_no_input_exits_zero_and_writes_safe_artifacts(tmp_path: Path, 
     assert "source_hash_metadata_present: False" in output
     assert "revision_id_metadata_present: False" in output
     assert "available_time_metadata_present: False" in output
+    assert f"recommended_next_task: {CLI_NEXT_TASK}" in output
+    assert STALE_ARTIFACT_VIEWS_NEXT_TASK not in output
+    assert STALE_NEXT_TASK not in output
+    assert STALE_RESEARCH_STATUS_NEXT_TASK not in output
     _assert_negative_proofs(output)
     assert (root / "cli_no_input" / "metadata.json").is_file()
     _assert_no_disclosure(output)
@@ -124,6 +136,10 @@ def test_core_cli_metadata_present_prints_preview_and_metadata_only(tmp_path: Pa
     assert "available_time_timezone_present: True" in output
     assert "available_time_timezone_policy: Asia/Shanghai" in output
     assert "available_time_compared_to_decision_time: False" in output
+    assert f"recommended_next_task: {CLI_NEXT_TASK}" in output
+    assert STALE_ARTIFACT_VIEWS_NEXT_TASK not in output
+    assert STALE_NEXT_TASK not in output
+    assert STALE_RESEARCH_STATUS_NEXT_TASK not in output
     _assert_negative_proofs(output)
     _assert_no_disclosure(output)
     _assert_no_unsafe_wording(output)
@@ -269,6 +285,7 @@ def test_index_health_status_cli_after_source_metadata_deleted(tmp_path: Path, c
     assert "latest_available_time_compared_to_decision_time: False" in status_output
     assert f"recommended_next_task: {CLI_NEXT_TASK}" in status_output
     assert STALE_NEXT_TASK not in status_output
+    assert STALE_RESEARCH_STATUS_NEXT_TASK not in status_output
     for output_text in [index_output, health_output, status_output]:
         _assert_no_disclosure(output_text)
         _assert_no_unsafe_wording(output_text)
@@ -522,4 +539,3 @@ def _assert_no_disclosure(output: str) -> None:
 def _assert_no_unsafe_wording(output: str) -> None:
     for phrase in UNSAFE_WORDING:
         assert phrase not in output
-

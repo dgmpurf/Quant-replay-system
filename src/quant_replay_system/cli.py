@@ -12095,7 +12095,7 @@ CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_CLI_NEXT_TASK = (
 )
 SOURCE_HASH_REVISION_AVAILABLE_TIME_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
-    "Available-Time Research-Status Planning Report-Only v0.1"
+    "Available-Time Checkpoint Planning Report-Only v0.1"
 )
 
 
