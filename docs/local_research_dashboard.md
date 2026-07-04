@@ -105,6 +105,20 @@ outputs/reports/paper_trading/workflow_status/
 
 It reads existing local `metadata.json` or `handoff_metadata.json` files only. It does not rerun any workflow step.
 
+## Tiny PIT Source Artifact Byte-Hash Status
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash context when status artifacts exist under:
+
+```text
+outputs/reports/manual_diagnostics/tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_v0_1/status/
+```
+
+It exposes the latest run id, runtime status, health status, workflow stage, artifact/report/metadata paths, source id, source artifact id, source artifact name preview, hash algorithm, computed and declared source hash previews, byte-identity match/mismatch booleans, byte-read and recompute levels, no-read/no-validation capability levels, issue/warning counts, report-only flags, diagnostic-only flags, downstream safety flags, and the recommended next task.
+
+Source Artifact Byte-Hash context is context only. It is opaque byte identity / integrity metadata for a source artifact, not source semantics, source permission, source reliability, package acceptance, PIT admissibility, replay readiness, buy-review readiness, performance validation, or trading readiness. This context is lower priority than later paper workflow context and must preserve `PAPER_WORKFLOW_READY` as the final workflow stage when paper workflow evidence exists.
+
+Research-status may surface hash previews and disclosure booleans only. It must not expose a full computed hash, full declared hash, private absolute source artifact path, source bytes, source content, target CSV path, target CSV header, target CSV rows, target CSV values, full CSV text, source reliability approval, reviewer approval, package approval, replay readiness, buy-review readiness, or trading readiness.
+
 ## Tiny PIT Preflight Status
 
 `research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight context when status artifacts exist under:

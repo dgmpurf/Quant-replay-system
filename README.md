@@ -2,6 +2,16 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash v1.82.0
+
+`NO_SOURCE_ARTIFACT_BYTE_HASH_INPUT`, `SOURCE_ARTIFACT_BYTE_HASH_REPORT_ONLY`, `SOURCE_ARTIFACT_BYTE_HASH_MATCHED_REPORT_ONLY`, `SOURCE_ARTIFACT_BYTE_HASH_MISMATCHED_REPORT_ONLY`, WARN states, and FAIL/blocker states mean Source Artifact Byte-Hash artifacts exist as report-only / diagnostic-only opaque source artifact byte identity and integrity metadata only.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-source-artifact-byte-hash`, `tiny-pit-real-reviewed-local-csv-package-candidate-source-artifact-byte-hash-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-source-artifact-byte-hash-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-source-artifact-byte-hash-status` to create, discover, safety-check, and summarize these report-only artifacts. `research-status` exposes the latest Source Artifact Byte-Hash context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+Full computed hashes are local `metadata.json` only when the explicit local-metadata policy is used. Report, index, health, status, CLI, research-status, dashboard, checkpoint docs, and Project Source surfaces expose preview-only hash fields and disclosure booleans only. `source_artifact_path_preview` is basename-style preview context, not a private absolute path.
+
+The workflow may stream one explicit non-CSV source artifact as opaque bytes under manifest, allowed-root, and explicit-allow guards for SHA-256 byte identity context. It does not semantically read source content, open or read target CSVs, validate `source_hash`, reverify `expected_hash`, validate `revision_id`, validate `available_time`, compare `available_time <= replay_decision_time`, validate PIT admissibility, score source reliability, validate reviewer authority, create a real reviewed CSV package, create a real package candidate, create active replay input, run replay, create labels, train models, create stock_profile or paper validation, create buy-review eligibility, authorize trading, call broker/API/order/message systems, or write `data/raw`, `data/processed`, or `data/cache`.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight v1.81.0
 
 `NO_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_INPUT`, `REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_METADATA_CONTEXT_REPORT_ONLY`, WARN states, and FAIL/blocker states mean Tiny PIT Preflight artifacts exist as report-only / diagnostic-only metadata-reference aggregation, evidence-reference-matrix context, missing-evidence classification, blocker reporting, and negative-proof recording only.
