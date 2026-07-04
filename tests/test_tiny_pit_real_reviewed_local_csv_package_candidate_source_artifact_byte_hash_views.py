@@ -29,7 +29,7 @@ CSV_ROW_SENTINEL = "CSV_ROW_SENTINEL_SHOULD_NOT_APPEAR"
 PRIVATE_PATH = "C:/Users/msjpurf/private/source-artifact.bin"
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash "
-    "CLI Report-Only v0.1"
+    "Research-Status Planning Report-Only v0.1"
 )
 UNSAFE_WORDING = [
     "SOURCE_RELIABILITY_VALIDATED",

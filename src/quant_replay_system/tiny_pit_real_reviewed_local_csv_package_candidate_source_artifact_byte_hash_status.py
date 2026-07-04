@@ -28,7 +28,7 @@ NO_ARTIFACT_STAGE = (
 )
 NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash "
-    "CLI Report-Only v0.1"
+    "Research-Status Planning Report-Only v0.1"
 )
 STATUS_COLUMNS = [
     "latest_run_id",

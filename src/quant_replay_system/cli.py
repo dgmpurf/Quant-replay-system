@@ -717,6 +717,21 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status import (
     run_csv_physical_data_line_count_only_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash import (
+    SOURCE_ARTIFACT_BYTE_READ_STREAMING_HASH_ONLY,
+    SOURCE_HASH_RECOMPUTE_SHA256_ONLY,
+    run_source_artifact_byte_hash,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_health import (
+    check_source_artifact_byte_hash_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_index import (
+    DEFAULT_ROOT as SOURCE_ARTIFACT_BYTE_HASH_DEFAULT_ROOT,
+    build_source_artifact_byte_hash_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_status import (
+    run_source_artifact_byte_hash_status,
+)
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time import (
     AVAILABLE_TIME_METADATA_PRESENT_ONLY,
     PIT_ADMISSIBILITY_NONE,
@@ -6431,6 +6446,93 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status.set_defaults(
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_status
+    )
+
+    source_artifact_byte_hash = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-source-artifact-byte-hash",
+        help="Write report-only source artifact byte-hash preview artifacts",
+    )
+    source_artifact_byte_hash.add_argument(
+        "--output-root",
+        default=SOURCE_ARTIFACT_BYTE_HASH_DEFAULT_ROOT,
+    )
+    source_artifact_byte_hash.add_argument("--run-id", default=None)
+    source_artifact_byte_hash.add_argument("--source-artifact-hash-manifest-path", default=None)
+    source_artifact_byte_hash.add_argument("--source-lineage-metadata-path", default=None)
+    source_artifact_byte_hash.add_argument("--source-artifact-path", default=None)
+    source_artifact_byte_hash.add_argument(
+        "--allowed-manifest-root",
+        action="append",
+        default=None,
+    )
+    source_artifact_byte_hash.add_argument(
+        "--allowed-source-artifact-root",
+        action="append",
+        default=None,
+    )
+    source_artifact_byte_hash.add_argument(
+        "--allow-source-artifact-byte-hash",
+        action="store_true",
+    )
+    source_artifact_byte_hash.add_argument(
+        "--max-source-artifact-size-bytes",
+        type=int,
+        default=104_857_600,
+    )
+    source_artifact_byte_hash.add_argument(
+        "--compare-to-declared-source-hash",
+        action="store_true",
+    )
+    source_artifact_byte_hash.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash
+    )
+
+    source_artifact_byte_hash_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-source-artifact-byte-hash-index",
+        help="Build an index for report-only source artifact byte-hash artifacts",
+    )
+    source_artifact_byte_hash_index.add_argument(
+        "--root",
+        default=SOURCE_ARTIFACT_BYTE_HASH_DEFAULT_ROOT,
+    )
+    source_artifact_byte_hash_index.add_argument(
+        "--output-dir",
+        default=f"{SOURCE_ARTIFACT_BYTE_HASH_DEFAULT_ROOT}/index",
+    )
+    source_artifact_byte_hash_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_index
+    )
+
+    source_artifact_byte_hash_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-source-artifact-byte-hash-health",
+        help="Check report-only source artifact byte-hash artifact health",
+    )
+    source_artifact_byte_hash_health.add_argument(
+        "--root",
+        default=SOURCE_ARTIFACT_BYTE_HASH_DEFAULT_ROOT,
+    )
+    source_artifact_byte_hash_health.add_argument(
+        "--output-dir",
+        default=f"{SOURCE_ARTIFACT_BYTE_HASH_DEFAULT_ROOT}/health",
+    )
+    source_artifact_byte_hash_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_health
+    )
+
+    source_artifact_byte_hash_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-source-artifact-byte-hash-status",
+        help="Summarize latest report-only source artifact byte-hash status",
+    )
+    source_artifact_byte_hash_status.add_argument(
+        "--root",
+        default=SOURCE_ARTIFACT_BYTE_HASH_DEFAULT_ROOT,
+    )
+    source_artifact_byte_hash_status.add_argument(
+        "--output-dir",
+        default=f"{SOURCE_ARTIFACT_BYTE_HASH_DEFAULT_ROOT}/status",
+    )
+    source_artifact_byte_hash_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_status
     )
 
     source_hash_revision_available_time = subparsers.add_parser(
@@ -12283,6 +12385,10 @@ CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate CSV Physical Data-Line Count-Only "
     "Checkpoint Planning Report-Only v0.1"
 )
+SOURCE_ARTIFACT_BYTE_HASH_CLI_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash "
+    "Research-Status Planning Report-Only v0.1"
+)
 SOURCE_HASH_REVISION_AVAILABLE_TIME_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
     "Available-Time Checkpoint Planning Report-Only v0.1"
@@ -12924,6 +13030,189 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data
     print(
         "Report-only status: source CSV and header metadata are not reopened, physical lines are not "
         "recounted, and no package candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 1 if result.latest_runtime_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash(
+    args: argparse.Namespace,
+) -> int:
+    if args.source_artifact_hash_manifest_path:
+        result = run_source_artifact_byte_hash(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            source_artifact_hash_manifest_path=args.source_artifact_hash_manifest_path,
+            source_lineage_metadata_path=args.source_lineage_metadata_path,
+            source_artifact_path=args.source_artifact_path,
+            allowed_manifest_roots=args.allowed_manifest_root,
+            allowed_source_artifact_roots=args.allowed_source_artifact_root,
+            allow_source_artifact_byte_hash=args.allow_source_artifact_byte_hash,
+            max_source_artifact_size_bytes=args.max_source_artifact_size_bytes,
+            source_artifact_byte_read_level=SOURCE_ARTIFACT_BYTE_READ_STREAMING_HASH_ONLY,
+            source_hash_recompute_level=SOURCE_HASH_RECOMPUTE_SHA256_ONLY,
+            compare_to_declared_source_hash=args.compare_to_declared_source_hash,
+        )
+    else:
+        result = run_source_artifact_byte_hash(
+            output_root=args.output_root,
+            run_id=args.run_id,
+        )
+    for field in [
+        "run_id",
+        "runtime_status",
+        "health_status",
+        "workflow_stage",
+        "report_only",
+        "diagnostic_only",
+        "source_artifact_byte_read_level",
+        "source_hash_recompute_level",
+        "source_content_read_level",
+        "csv_read_level",
+        "local_file_hash_level",
+        "expected_hash_verification_level",
+        "source_hash_validation_level",
+        "revision_id_validation_level",
+        "available_time_validation_level",
+        "pit_admissibility_level",
+        "source_reliability_level",
+        "reviewer_authority_level",
+        "package_creation_level",
+        "active_input_level",
+        "replay_readiness_level",
+        "source_id",
+        "source_artifact_id",
+        "source_artifact_name_preview",
+        "source_artifact_path_preview",
+        "source_hash_algorithm",
+        "source_artifact_file_size_bytes",
+        "computed_source_hash_preview",
+        "declared_source_hash_preview",
+        "source_artifact_opened_for_hash",
+        "source_artifact_bytes_streamed_for_hash",
+        "source_hash_recomputed",
+        "source_artifact_byte_identity_matched",
+        "source_artifact_byte_identity_mismatch",
+        "source_artifact_byte_identity_actionable_mismatch",
+        "source_content_read",
+        "source_content_semantically_read",
+        "target_csv_opened",
+        "csv_header_read",
+        "csv_values_read",
+        "csv_full_content_read",
+        "source_hash_validated",
+        "source_reliability_scored",
+        "reviewer_authority_validated",
+        "real_package_candidate_created",
+        "active_replay_input",
+        "buy_review_allowed",
+        "trading_allowed",
+        "data_raw_written",
+        "data_processed_written",
+        "data_cache_written",
+        "issue_count",
+        "warning_count",
+    ]:
+        print(f"{field}: {result[field]}")
+    print(f"artifact_path: {Path(result['artifact_paths']['metadata']).parent}")
+    print(f"report_path: {result['artifact_paths']['report']}")
+    print(f"recommended_next_task: {SOURCE_ARTIFACT_BYTE_HASH_CLI_NEXT_TASK}")
+    print(
+        "Report-only source artifact byte-hash: only preview hash identity context is surfaced; "
+        "source content, target CSV, PIT timing, source reliability, reviewer authority, package "
+        "candidate, active input, buy-review, trading, and protected data writes are not created."
+    )
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_source_artifact_byte_hash_index(root=args.root, output_dir=args.output_dir)
+    latest = sorted(result.rows, key=lambda row: str(row.get("run_id") or ""))[-1] if result.rows else {}
+    print(f"Tiny PIT source artifact byte-hash index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"latest_runtime_status: {latest.get('runtime_status', '')}")
+    print(f"latest_health_status: {latest.get('health_status', '')}")
+    print(f"latest_workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"latest_computed_source_hash_preview: {latest.get('computed_source_hash_preview', '')}")
+    print(f"latest_declared_source_hash_preview: {latest.get('declared_source_hash_preview', '')}")
+    print(f"latest_source_artifact_byte_identity_matched: {latest.get('source_artifact_byte_identity_matched', '')}")
+    print(f"latest_source_artifact_byte_identity_mismatch: {latest.get('source_artifact_byte_identity_mismatch', '')}")
+    print(
+        "Report-only index: generated byte-hash artifacts are summarized without reopening source "
+        "artifacts or target CSVs, and no package candidate, active input, buy-review, trading, or "
+        "protected data writes were created."
+    )
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_source_artifact_byte_hash_health(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT source artifact byte-hash health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Report-only health: generated byte-hash artifacts are checked without reopening source "
+        "artifacts or target CSVs, and no package candidate, active input, buy-review, trading, or "
+        "protected data writes were created."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_source_artifact_byte_hash_status(root=args.root, output_dir=args.output_dir)
+    print(f"Tiny PIT source artifact byte-hash status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_artifact_path: {result.latest_artifact_path}")
+    print(f"latest_report_path: {result.latest_report_path}")
+    for field in [
+        "latest_source_id",
+        "latest_source_artifact_id",
+        "latest_source_artifact_name_preview",
+        "latest_source_artifact_path_preview",
+        "latest_source_hash_algorithm",
+        "latest_source_artifact_file_size_bytes",
+        "latest_computed_source_hash_preview",
+        "latest_declared_source_hash_preview",
+        "latest_source_artifact_byte_identity_matched",
+        "latest_source_artifact_byte_identity_mismatch",
+        "latest_source_artifact_byte_identity_actionable_mismatch",
+        "latest_source_artifact_byte_read_level",
+        "latest_source_hash_recompute_level",
+        "latest_source_content_read_level",
+        "latest_csv_read_level",
+        "latest_source_content_read",
+        "latest_target_csv_opened",
+        "latest_source_hash_validated",
+        "latest_source_reliability_scored",
+        "latest_reviewer_authority_validated",
+        "latest_active_replay_input",
+        "latest_buy_review_allowed",
+        "latest_trading_allowed",
+        "latest_data_raw_written",
+        "latest_data_processed_written",
+        "latest_data_cache_written",
+    ]:
+        print(f"{field}: {result.summary[field]}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    print(
+        "Report-only status: generated byte-hash artifacts are summarized without reopening source "
+        "artifacts or target CSVs, and no package candidate, active input, buy-review, trading, or "
+        "protected data writes were created."
     )
     return 1 if result.latest_runtime_status == "FAIL" else 0
 
