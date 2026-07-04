@@ -195,7 +195,10 @@ def _metadata_issues(run_id: str, metadata: dict[str, Any], path: Path) -> list[
         issues.append(_issue(run_id, "ERROR", "CORE_ARTIFACT_HEALTH_FAIL", "Core artifact health is FAIL.", path))
     if _to_int(metadata.get("missing_required_reference_count")):
         issues.append(_issue(run_id, "ERROR", "MISSING_REQUIRED_EVIDENCE", "Required evidence is missing.", path))
-    if _to_int(metadata.get("missing_optional_reference_count")):
+    if (
+        runtime_status != STATUS_WARN_MISSING_OPTIONAL_EVIDENCE
+        and _to_int(metadata.get("missing_optional_reference_count"))
+    ):
         issues.append(_issue(run_id, "WARNING", "MISSING_OPTIONAL_EVIDENCE", "Optional evidence is missing.", path))
     return issues
 

@@ -19,7 +19,10 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
 )
 
 
-NEXT_TASK = "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight CLI Report-Only v0.1"
+NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Research-Status "
+    "Planning Report-Only v0.1"
+)
 FULL_HASH_SENTINEL = "0123456789abcdef" * 4
 REVIEWER_SENTINEL = "private-reviewer-identity-should-not-appear"
 PRIVATE_PATH_SENTINEL = "C:/Users/msjpurf/private/source.csv"

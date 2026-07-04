@@ -734,6 +734,20 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_sour
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status import (
     run_source_hash_revision_available_time_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight import (
+    NEGATIVE_FALSE_FIELDS as REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_NEGATIVE_FALSE_FIELDS,
+    run_real_reviewed_local_csv_package_candidate_preflight,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_health import (
+    check_real_reviewed_local_csv_package_candidate_preflight_health,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_index import (
+    DEFAULT_ROOT as REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DEFAULT_ROOT,
+    build_real_reviewed_local_csv_package_candidate_preflight_index,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_status import (
+    run_real_reviewed_local_csv_package_candidate_preflight_status,
+)
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation import (
     LIMITATION_METADATA_PRESENT_ONLY,
     PACKAGE_PROMOTION_NONE,
@@ -6497,6 +6511,86 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status
     )
 
+    real_reviewed_local_csv_preflight = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-preflight",
+        help="Write report-only Tiny PIT reviewed LOCAL_CSV preflight metadata-reference artifacts",
+    )
+    real_reviewed_local_csv_preflight.add_argument(
+        "--output-root",
+        default=REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DEFAULT_ROOT,
+    )
+    real_reviewed_local_csv_preflight.add_argument("--run-id", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--preflight-manifest-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--preflight-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument(
+        "--allowed-manifest-root",
+        action="append",
+        default=None,
+    )
+    real_reviewed_local_csv_preflight.add_argument(
+        "--allow-real-reviewed-local-csv-package-candidate-preflight",
+        action="store_true",
+    )
+    real_reviewed_local_csv_preflight.add_argument("--csv-structural-header-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--local-file-byte-hash-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--expected-hash-verification-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--csv-physical-data-line-count-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--source-revision-time-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--reviewer-quality-limitation-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--metadata-reference-following-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.add_argument("--manifest-only-preflight-metadata-path", default=None)
+    real_reviewed_local_csv_preflight.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight
+    )
+
+    real_reviewed_local_csv_preflight_index = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-preflight-index",
+        help="Build an index for report-only Tiny PIT reviewed LOCAL_CSV preflight artifacts",
+    )
+    real_reviewed_local_csv_preflight_index.add_argument(
+        "--root",
+        default=REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DEFAULT_ROOT,
+    )
+    real_reviewed_local_csv_preflight_index.add_argument(
+        "--output-dir",
+        default=f"{REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DEFAULT_ROOT}/index",
+    )
+    real_reviewed_local_csv_preflight_index.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_index
+    )
+
+    real_reviewed_local_csv_preflight_health = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-preflight-health",
+        help="Check report-only Tiny PIT reviewed LOCAL_CSV preflight artifact health",
+    )
+    real_reviewed_local_csv_preflight_health.add_argument(
+        "--root",
+        default=REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DEFAULT_ROOT,
+    )
+    real_reviewed_local_csv_preflight_health.add_argument(
+        "--output-dir",
+        default=f"{REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DEFAULT_ROOT}/health",
+    )
+    real_reviewed_local_csv_preflight_health.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_health
+    )
+
+    real_reviewed_local_csv_preflight_status = subparsers.add_parser(
+        "tiny-pit-real-reviewed-local-csv-package-candidate-preflight-status",
+        help="Summarize latest report-only Tiny PIT reviewed LOCAL_CSV preflight status",
+    )
+    real_reviewed_local_csv_preflight_status.add_argument(
+        "--root",
+        default=REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DEFAULT_ROOT,
+    )
+    real_reviewed_local_csv_preflight_status.add_argument(
+        "--output-dir",
+        default=f"{REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DEFAULT_ROOT}/status",
+    )
+    real_reviewed_local_csv_preflight_status.set_defaults(
+        handler=_handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_status
+    )
+
     reviewer_authority_quality_limitation = subparsers.add_parser(
         "tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation",
         help="Write report-only reviewer authority, quality, limitation, and permission metadata artifacts",
@@ -12193,6 +12287,10 @@ SOURCE_HASH_REVISION_AVAILABLE_TIME_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision "
     "Available-Time Checkpoint Planning Report-Only v0.1"
 )
+REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CLI_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Research-Status "
+    "Planning Report-Only v0.1"
+)
 REVIEWER_AUTHORITY_QUALITY_LIMITATION_CLI_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority Quality "
     "Limitation Checkpoint Planning Report-Only v0.1"
@@ -13015,6 +13113,187 @@ def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revis
         "Report-only status: source metadata references are not reopened, source artifacts are not opened, "
         "hashes are not recomputed, available-time is not compared to decision time, and no package "
         "candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 1 if result.latest_runtime_status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight(
+    args: argparse.Namespace,
+) -> int:
+    if args.preflight_manifest_path:
+        result = run_real_reviewed_local_csv_package_candidate_preflight(
+            output_root=args.output_root,
+            run_id=args.run_id,
+            preflight_manifest_path=args.preflight_manifest_path,
+            preflight_metadata_path=args.preflight_metadata_path,
+            allowed_manifest_roots=args.allowed_manifest_root,
+            csv_structural_header_metadata_path=args.csv_structural_header_metadata_path,
+            local_file_byte_hash_metadata_path=args.local_file_byte_hash_metadata_path,
+            expected_hash_verification_metadata_path=args.expected_hash_verification_metadata_path,
+            csv_physical_data_line_count_metadata_path=args.csv_physical_data_line_count_metadata_path,
+            source_revision_time_metadata_path=args.source_revision_time_metadata_path,
+            reviewer_quality_limitation_metadata_path=args.reviewer_quality_limitation_metadata_path,
+            metadata_reference_following_metadata_path=args.metadata_reference_following_metadata_path,
+            manifest_only_preflight_metadata_path=args.manifest_only_preflight_metadata_path,
+            allow_real_reviewed_local_csv_package_candidate_preflight=(
+                args.allow_real_reviewed_local_csv_package_candidate_preflight
+            ),
+        )
+    else:
+        result = run_real_reviewed_local_csv_package_candidate_preflight(
+            output_root=args.output_root,
+            run_id=args.run_id,
+        )
+    print(f"run_id: {result['run_id']}")
+    print(f"runtime_status: {result['runtime_status']}")
+    print(f"health_status: {result['health_status']}")
+    print(f"workflow_stage: {result['workflow_stage']}")
+    print(f"preflight_id: {result['preflight_id']}")
+    print(f"declared_package_id: {result['declared_package_id']} (metadata only)")
+    print(f"report_only: {result['report_only']}")
+    print(f"diagnostic_only: {result['diagnostic_only']}")
+    for field in [
+        "preflight_level",
+        "package_creation_level",
+        "csv_read_level",
+        "source_hash_validation_level",
+        "revision_id_validation_level",
+        "available_time_validation_level",
+        "pit_admissibility_level",
+        "reviewer_authority_level",
+        "quality_status_level",
+        "limitation_review_level",
+        "permission_review_level",
+        "source_reliability_level",
+        "active_input_level",
+        "replay_readiness_level",
+    ]:
+        print(f"{field}: {result[field]}")
+    for field in [
+        "evidence_reference_count",
+        "required_reference_count",
+        "required_reference_present_count",
+        "missing_required_reference_count",
+        "optional_reference_count",
+        "missing_optional_reference_count",
+        "unvalidated_capability_count",
+        "promotion_blocker_count",
+        "warning_count",
+        "issue_count",
+    ]:
+        print(f"{field}: {result[field]}")
+    for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_NEGATIVE_FALSE_FIELDS:
+        print(f"{field}: {result[field]}")
+    print(f"artifact_path: {Path(result['artifact_paths']['metadata']).parent}")
+    print(f"report_path: {result['artifact_paths']['report']}")
+    print(f"recommended_next_task: {REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CLI_NEXT_TASK}")
+    print(
+        "Report-only preflight: prior metadata references are aggregated as generated metadata "
+        "context only; no source artifact bytes, source content, target CSV, CSV parsing, hash "
+        "recomputation, expected-hash reverification, available-time PIT comparison, reviewer "
+        "authority validation, package candidate, active input, replay, buy-review, trading, or "
+        "protected data writes were created."
+    )
+    return 1 if result["health_status"] == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_real_reviewed_local_csv_package_candidate_preflight_index(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    latest = sorted(result.rows, key=lambda row: str(row.get("run_id") or ""))[-1] if result.rows else {}
+    print(f"Tiny PIT preflight index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"latest_runtime_status: {latest.get('runtime_status', '')}")
+    print(f"latest_health_status: {latest.get('health_status', '')}")
+    print(f"latest_workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"latest_preflight_id: {latest.get('preflight_id', '')}")
+    print(f"latest_declared_package_id: {latest.get('declared_package_id', '')} (metadata only)")
+    print(f"latest_required_reference_present_count: {latest.get('required_reference_present_count', '')}")
+    print(f"latest_missing_required_reference_count: {latest.get('missing_required_reference_count', '')}")
+    print(f"latest_missing_optional_reference_count: {latest.get('missing_optional_reference_count', '')}")
+    print(
+        "Report-only index: generated preflight artifacts are read, prior metadata references are "
+        "not reopened, source artifacts and target CSVs are not opened, hashes are not recomputed, "
+        "and no package candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_real_reviewed_local_csv_package_candidate_preflight_health(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Tiny PIT preflight health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(
+        "Report-only health: generated preflight artifacts are checked without reopening prior "
+        "metadata references, source artifacts, source content, or target CSVs; no hash "
+        "recomputation, expected-hash reverification, available-time PIT comparison, package "
+        "candidate, active input, buy-review, trading, or protected data writes were created."
+    )
+    return 1 if result.status == "FAIL" else 0
+
+
+def _handle_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_real_reviewed_local_csv_package_candidate_preflight_status(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Tiny PIT preflight status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"latest_runtime_status: {result.latest_runtime_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"latest_artifact_path: {result.latest_artifact_path}")
+    print(f"latest_report_path: {result.latest_report_path}")
+    print(f"latest_preflight_id: {result.latest_preflight_id}")
+    print(f"latest_declared_package_id: {result.latest_declared_package_id} (metadata only)")
+    for field in [
+        "latest_preflight_level",
+        "latest_package_creation_level",
+        "latest_csv_read_level",
+        "latest_source_hash_validation_level",
+        "latest_revision_id_validation_level",
+        "latest_available_time_validation_level",
+        "latest_pit_admissibility_level",
+        "latest_reviewer_authority_level",
+        "latest_quality_status_level",
+        "latest_limitation_review_level",
+        "latest_permission_review_level",
+        "latest_source_reliability_level",
+        "latest_active_input_level",
+        "latest_replay_readiness_level",
+        "latest_required_reference_present_count",
+        "latest_missing_required_reference_count",
+        "latest_missing_optional_reference_count",
+        "latest_warning_count",
+        "latest_issue_count",
+    ]:
+        print(f"{field}: {result.summary[field]}")
+    for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_NEGATIVE_FALSE_FIELDS:
+        print(f"latest_{field}: {result.summary[f'latest_{field}']}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    print(
+        "Report-only status: generated preflight artifacts are summarized without reopening prior "
+        "metadata references, source artifacts, source content, or target CSVs; no package "
+        "candidate, active input, replay, buy-review, trading, or protected data writes were created."
     )
     return 1 if result.latest_runtime_status == "FAIL" else 0
 
