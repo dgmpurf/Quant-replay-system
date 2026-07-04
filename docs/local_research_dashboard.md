@@ -105,6 +105,20 @@ outputs/reports/paper_trading/workflow_status/
 
 It reads existing local `metadata.json` or `handoff_metadata.json` files only. It does not rerun any workflow step.
 
+## Tiny PIT Preflight Status
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight context when status artifacts exist under:
+
+```text
+outputs/reports/manual_diagnostics/tiny_pit_real_reviewed_local_csv_package_candidate_preflight_v0_1/status/
+```
+
+It exposes fields with the `real_reviewed_local_csv_package_candidate_preflight_` prefix, including the latest run id, runtime status, health status, workflow stage, artifact/report paths, preflight id, declared package id metadata, capability levels, evidence reference counts, missing required/optional evidence counts, required and optional reference presence booleans, unvalidated capability counts, issue/warning/blocker counts, negative proof fields, downstream safety flags, and recommended next task.
+
+Preflight context is context only. It may supersede older Tiny PIT preflight, source, and reviewer contexts only as contextual metadata and must not override later paper workflow priority. The dashboard preserves later `PAPER_WORKFLOW_READY` priority when paper workflow evidence exists.
+
+The Preflight context must not imply package approval, package admissibility, PIT admissibility, active input, replay readiness, buy-review readiness, performance validation, or trading readiness. Research-status must not expose full hashes, full reviewer identity, source content, source artifact bytes, target CSV content, header values, row values, full file text, private paths, package readiness, replay readiness, buy-review readiness, or trading readiness.
+
 ## Tiny PIT Reviewer Authority / Quality / Limitation Status
 
 `research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority / Quality / Limitation context when status artifacts exist under:

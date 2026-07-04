@@ -2,6 +2,16 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight v1.81.0
+
+`NO_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_INPUT`, `REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_METADATA_CONTEXT_REPORT_ONLY`, WARN states, and FAIL/blocker states mean Tiny PIT Preflight artifacts exist as report-only / diagnostic-only metadata-reference aggregation, evidence-reference-matrix context, missing-evidence classification, blocker reporting, and negative-proof recording only.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-preflight`, `tiny-pit-real-reviewed-local-csv-package-candidate-preflight-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-preflight-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-preflight-status` to create, discover, safety-check, and summarize these report-only artifacts. `research-status` exposes the latest Preflight context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+`declared_package_id` is metadata only. `package_creation_level=PACKAGE_CREATION_NONE`, `csv_read_level=CSV_READ_NONE`, and `real_package_candidate_created=false` are required boundaries. WARN missing optional evidence is review context only. FAIL/blocker states are local actionable context only, not real validator package rejection.
+
+The workflow does not create a real reviewed CSV package, create a real package candidate, validate package admissibility, validate PIT admissibility, validate `source_hash`, `revision_id`, `available_time`, reviewer authority, quality, permission, or source reliability, open CSVs or source artifacts, recompute hashes, reverify `expected_hash`, create active input, create replay input, run replay, create labels, train models, create stock_profile or paper validation, create buy-review eligibility, or authorize trading.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority / Quality / Limitation v1.80.0
 
 `NO_REVIEWER_QUALITY_LIMITATION_INPUT`, `REVIEWER_QUALITY_LIMITATION_METADATA_PRESENT_REPORT_ONLY`, `REVIEWER_QUALITY_LIMITATION_WARN_LIMITATIONS_PRESENT`, `REVIEWER_QUALITY_LIMITATION_BLOCKED_BY_BLOCKING_LIMITATION`, `REVIEWER_QUALITY_LIMITATION_BLOCKED_BY_FORBIDDEN_PERMISSION`, and `REVIEWER_QUALITY_LIMITATION_BLOCKED_BY_FORBIDDEN_DOWNSTREAM` mean Tiny PIT Reviewer Authority / Quality / Limitation artifacts exist as report-only / diagnostic-only reviewer metadata, quality status, limitation severity, permission blocker, and disclosure context.
