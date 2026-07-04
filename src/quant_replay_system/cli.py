@@ -26156,6 +26156,74 @@ def _handle_research_status(args: argparse.Namespace) -> int:
     print(f"market_update_handoff_status: {result.market_update_handoff_status}")
     print(f"market_update_handoff_stage: {result.market_update_handoff_stage}")
     print(f"market_update_handoff_current_candidate_run_id: {result.market_update_handoff_current_candidate_run_id}")
+    print(f"source_artifact_byte_hash_context_visible: {result.source_artifact_byte_hash_context_visible}")
+    print(f"latest_source_artifact_byte_hash_run_id: {result.latest_source_artifact_byte_hash_run_id}")
+    print(
+        "latest_source_artifact_byte_hash_runtime_status: "
+        f"{result.latest_source_artifact_byte_hash_runtime_status}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_health_status: "
+        f"{result.latest_source_artifact_byte_hash_health_status}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_workflow_stage: "
+        f"{result.latest_source_artifact_byte_hash_workflow_stage}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_computed_source_hash_preview: "
+        f"{result.latest_source_artifact_byte_hash_computed_source_hash_preview}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_declared_source_hash_preview: "
+        f"{result.latest_source_artifact_byte_hash_declared_source_hash_preview}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_source_artifact_byte_identity_matched: "
+        f"{result.latest_source_artifact_byte_hash_source_artifact_byte_identity_matched}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_source_artifact_byte_identity_mismatch: "
+        f"{result.latest_source_artifact_byte_hash_source_artifact_byte_identity_mismatch}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_source_hash_validation_level: "
+        f"{result.latest_source_artifact_byte_hash_source_hash_validation_level}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_revision_id_validation_level: "
+        f"{result.latest_source_artifact_byte_hash_revision_id_validation_level}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_available_time_validation_level: "
+        f"{result.latest_source_artifact_byte_hash_available_time_validation_level}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_pit_admissibility_level: "
+        f"{result.latest_source_artifact_byte_hash_pit_admissibility_level}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_source_hash_validated: "
+        f"{result.latest_source_artifact_byte_hash_source_hash_validated}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_pit_admissibility_validated: "
+        f"{result.latest_source_artifact_byte_hash_pit_admissibility_validated}"
+    )
+    print(
+        "latest_source_artifact_byte_hash_real_package_candidate_created: "
+        f"{result.latest_source_artifact_byte_hash_real_package_candidate_created}"
+    )
+    print(f"latest_source_artifact_byte_hash_active_replay_input: {result.latest_source_artifact_byte_hash_active_replay_input}")
+    print(
+        "latest_source_artifact_byte_hash_buy_review_allowed: "
+        f"{result.latest_source_artifact_byte_hash_buy_review_allowed}"
+    )
+    print(f"latest_source_artifact_byte_hash_trading_allowed: {result.latest_source_artifact_byte_hash_trading_allowed}")
+    print(
+        "latest_source_artifact_byte_hash_recommended_next_task: "
+        f"{result.latest_source_artifact_byte_hash_recommended_next_task}"
+    )
     print(f"reviewer_quality_limitation_context_visible: {result.reviewer_quality_limitation_context_visible}")
     print(f"latest_reviewer_quality_limitation_run_id: {result.latest_reviewer_quality_limitation_run_id}")
     print(

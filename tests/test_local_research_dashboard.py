@@ -170,6 +170,30 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
     STATUS_WARN_MISSING_OPTIONAL_EVIDENCE as PREFLIGHT_STATUS_WARN_MISSING_OPTIONAL,
     run_real_reviewed_local_csv_package_candidate_preflight,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash import (
+    AVAILABLE_TIME_VALIDATION_NONE as SOURCE_ARTIFACT_BYTE_HASH_AVAILABLE_TIME_NONE,
+    CSV_READ_NONE as SOURCE_ARTIFACT_BYTE_HASH_CSV_READ_NONE,
+    DISCLOSURE_PREVIEW_ONLY_PUBLIC_SURFACES,
+    EXPECTED_HASH_VERIFICATION_NONE as SOURCE_ARTIFACT_BYTE_HASH_EXPECTED_HASH_NONE,
+    FULL_HASH_RECORDING_LOCAL_METADATA_ONLY,
+    HASH_PREVIEW_LENGTH as SOURCE_ARTIFACT_BYTE_HASH_PREVIEW_CHARS,
+    LOCAL_FILE_HASH_NONE as SOURCE_ARTIFACT_BYTE_HASH_LOCAL_FILE_HASH_NONE,
+    ACTIVE_INPUT_NONE as SOURCE_ARTIFACT_BYTE_HASH_ACTIVE_INPUT_NONE,
+    PACKAGE_CREATION_NONE as SOURCE_ARTIFACT_BYTE_HASH_PACKAGE_CREATION_NONE,
+    PIT_ADMISSIBILITY_NONE as SOURCE_ARTIFACT_BYTE_HASH_PIT_NONE,
+    REQUIRED_FALSE_FLAGS as SOURCE_ARTIFACT_BYTE_HASH_REQUIRED_FALSE_FLAGS,
+    REPLAY_READINESS_NONE as SOURCE_ARTIFACT_BYTE_HASH_REPLAY_READINESS_NONE,
+    REVISION_ID_VALIDATION_NONE as SOURCE_ARTIFACT_BYTE_HASH_REVISION_ID_NONE,
+    REVIEWER_AUTHORITY_NONE as SOURCE_ARTIFACT_BYTE_HASH_REVIEWER_AUTHORITY_NONE,
+    SOURCE_ARTIFACT_BYTE_READ_NONE,
+    SOURCE_ARTIFACT_BYTE_READ_STREAMING_HASH_ONLY,
+    SOURCE_CONTENT_READ_NONE as SOURCE_ARTIFACT_BYTE_HASH_CONTENT_READ_NONE,
+    SOURCE_HASH_RECOMPUTE_NONE,
+    SOURCE_HASH_RECOMPUTE_SHA256_ONLY,
+    SOURCE_HASH_VALIDATION_NONE as SOURCE_ARTIFACT_BYTE_HASH_VALIDATION_NONE,
+    SOURCE_RELIABILITY_NONE as SOURCE_ARTIFACT_BYTE_HASH_RELIABILITY_NONE,
+    run_source_artifact_byte_hash,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -331,6 +355,10 @@ UNSAFE_PREFLIGHT_WORDING = [
     "BUY_REVIEW_READY",
     "PERFORMANCE_VALIDATED",
 ]
+EXPECTED_SOURCE_ARTIFACT_BYTE_HASH_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash "
+    "Research-Status Planning Report-Only v0.1"
+)
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
@@ -18255,6 +18283,197 @@ def test_cli_research_status_prints_preflight_fields(tmp_path: Path, capsys) -> 
     assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
 
 
+def test_research_status_includes_source_artifact_byte_hash_no_input_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    output_root = (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_v0_1"
+    )
+    run_source_artifact_byte_hash(output_root=output_root, run_id="009_no_input")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.source_artifact_byte_hash_context_visible is True
+    assert result.latest_source_artifact_byte_hash_run_id == "009_no_input"
+    assert result.latest_source_artifact_byte_hash_runtime_status == "NO_SOURCE_ARTIFACT_BYTE_HASH_INPUT"
+    assert result.latest_source_artifact_byte_hash_health_status == "PASS"
+    assert result.latest_source_artifact_byte_hash_source_artifact_byte_read_level == SOURCE_ARTIFACT_BYTE_READ_NONE
+    assert result.latest_source_artifact_byte_hash_source_hash_recompute_level == SOURCE_HASH_RECOMPUTE_NONE
+    assert result.latest_source_artifact_byte_hash_source_content_read_level == SOURCE_ARTIFACT_BYTE_HASH_CONTENT_READ_NONE
+    assert result.latest_source_artifact_byte_hash_csv_read_level == SOURCE_ARTIFACT_BYTE_HASH_CSV_READ_NONE
+    assert result.latest_source_artifact_byte_hash_source_hash_validated is False
+    assert result.latest_source_artifact_byte_hash_revision_id_validated is False
+    assert result.latest_source_artifact_byte_hash_available_time_validated is False
+    assert result.latest_source_artifact_byte_hash_pit_admissibility_validated is False
+    assert result.latest_source_artifact_byte_hash_source_reliability_scored is False
+    assert result.latest_source_artifact_byte_hash_reviewer_authority_validated is False
+    assert result.latest_source_artifact_byte_hash_real_package_candidate_created is False
+    assert result.latest_source_artifact_byte_hash_active_replay_input is False
+    assert result.latest_source_artifact_byte_hash_replay_execution_allowed is False
+    assert result.latest_source_artifact_byte_hash_buy_review_allowed is False
+    assert result.latest_source_artifact_byte_hash_trading_allowed is False
+    assert result.latest_source_artifact_byte_hash_data_raw_written is False
+    assert result.latest_source_artifact_byte_hash_data_processed_written is False
+    assert result.latest_source_artifact_byte_hash_data_cache_written is False
+    assert result.latest_source_artifact_byte_hash_recommended_next_task == (
+        EXPECTED_SOURCE_ARTIFACT_BYTE_HASH_NEXT_TASK
+    )
+    assert summary.loc[0, "source_artifact_byte_hash_context_visible"] == "True"
+    assert metadata["source_artifact_byte_hash_context_visible"] is True
+
+
+def test_research_status_includes_source_artifact_byte_hash_preview_only_fields(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = _source_artifact_byte_hash_fixture(tmp_path)
+    expected_hash = fixture["full_hash"]
+    preview = expected_hash[:SOURCE_ARTIFACT_BYTE_HASH_PREVIEW_CHARS]
+    _run_source_artifact_byte_hash_context(
+        root,
+        fixture,
+        run_id="009_matched",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata_text = result.artifact_paths["metadata"].read_text(encoding="utf-8")
+    metadata = json.loads(metadata_text)
+    dashboard_text = result.artifact_paths["local_research_dashboard"].read_text(encoding="utf-8")
+    summary_text = result.artifact_paths["local_research_summary"].read_text(encoding="utf-8")
+
+    assert result.source_artifact_byte_hash_context_visible is True
+    assert result.latest_source_artifact_byte_hash_run_id == "009_matched"
+    assert result.latest_source_artifact_byte_hash_runtime_status == (
+        "SOURCE_ARTIFACT_BYTE_HASH_MATCHED_REPORT_ONLY"
+    )
+    assert result.latest_source_artifact_byte_hash_health_status == "PASS"
+    assert result.latest_source_artifact_byte_hash_source_hash_algorithm == "SHA-256"
+    assert result.latest_source_artifact_byte_hash_computed_source_hash_preview == preview
+    assert result.latest_source_artifact_byte_hash_declared_source_hash_preview == preview
+    assert result.latest_source_artifact_byte_hash_computed_source_hash_full_recorded_in_metadata is True
+    assert result.latest_source_artifact_byte_hash_source_artifact_byte_identity_matched is True
+    assert result.latest_source_artifact_byte_hash_source_artifact_byte_identity_mismatch is False
+    assert result.latest_source_artifact_byte_hash_source_artifact_byte_identity_actionable_mismatch is False
+    assert result.latest_source_artifact_byte_hash_source_artifact_byte_read_level == (
+        SOURCE_ARTIFACT_BYTE_READ_STREAMING_HASH_ONLY
+    )
+    assert result.latest_source_artifact_byte_hash_source_hash_recompute_level == SOURCE_HASH_RECOMPUTE_SHA256_ONLY
+    assert result.latest_source_artifact_byte_hash_source_content_read_level == SOURCE_ARTIFACT_BYTE_HASH_CONTENT_READ_NONE
+    assert result.latest_source_artifact_byte_hash_csv_read_level == SOURCE_ARTIFACT_BYTE_HASH_CSV_READ_NONE
+    assert result.latest_source_artifact_byte_hash_source_artifact_opened_for_hash is True
+    assert result.latest_source_artifact_byte_hash_source_artifact_bytes_streamed_for_hash is True
+    assert result.latest_source_artifact_byte_hash_source_content_read is False
+    assert result.latest_source_artifact_byte_hash_target_csv_opened is False
+    assert result.latest_source_artifact_byte_hash_csv_header_read is False
+    assert result.latest_source_artifact_byte_hash_csv_values_read is False
+    assert result.latest_source_artifact_byte_hash_csv_full_content_read is False
+    assert result.latest_source_artifact_byte_hash_source_hash_validated is False
+    assert result.latest_source_artifact_byte_hash_revision_id_validated is False
+    assert result.latest_source_artifact_byte_hash_available_time_validated is False
+    assert result.latest_source_artifact_byte_hash_pit_admissibility_validated is False
+    assert result.latest_source_artifact_byte_hash_source_reliability_scored is False
+    assert result.latest_source_artifact_byte_hash_reviewer_authority_validated is False
+    assert result.latest_source_artifact_byte_hash_real_package_candidate_created is False
+    assert result.latest_source_artifact_byte_hash_active_replay_input is False
+    assert result.latest_source_artifact_byte_hash_replay_execution_allowed is False
+    assert result.latest_source_artifact_byte_hash_buy_review_allowed is False
+    assert result.latest_source_artifact_byte_hash_trading_allowed is False
+    assert summary.loc[0, "latest_source_artifact_byte_hash_computed_source_hash_preview"] == preview
+    assert metadata["latest_source_artifact_byte_hash_computed_source_hash_preview"] == preview
+    for public_text in [metadata_text, dashboard_text, summary_text]:
+        assert expected_hash not in public_text
+        assert str(fixture["source_artifact"]) not in public_text
+        assert "synthetic source artifact bytes" not in public_text
+        assert "symbol,available_time" not in public_text
+
+
+def test_research_status_source_artifact_byte_hash_mismatch_is_context_only(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = _source_artifact_byte_hash_fixture(tmp_path, declared_hash="b" * 64)
+    _run_source_artifact_byte_hash_context(root, fixture, run_id="009_mismatch")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.source_artifact_byte_hash_context_visible is True
+    assert result.latest_source_artifact_byte_hash_runtime_status == (
+        "SOURCE_ARTIFACT_BYTE_HASH_MISMATCHED_REPORT_ONLY"
+    )
+    assert result.latest_source_artifact_byte_hash_health_status == "WARN"
+    assert result.latest_source_artifact_byte_hash_source_artifact_byte_identity_matched is False
+    assert result.latest_source_artifact_byte_hash_source_artifact_byte_identity_mismatch is True
+    assert result.latest_source_artifact_byte_hash_source_artifact_byte_identity_actionable_mismatch is True
+    assert result.latest_source_artifact_byte_hash_source_hash_validated is False
+    assert result.latest_source_artifact_byte_hash_pit_admissibility_validated is False
+    assert result.latest_source_artifact_byte_hash_real_package_candidate_created is False
+    assert result.latest_source_artifact_byte_hash_active_replay_input is False
+    assert result.latest_source_artifact_byte_hash_buy_review_allowed is False
+    assert result.latest_source_artifact_byte_hash_trading_allowed is False
+
+
+def test_research_status_preserves_paper_priority_over_source_artifact_byte_hash(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = _source_artifact_byte_hash_fixture(tmp_path)
+    _run_source_artifact_byte_hash_context(root, fixture, run_id="009_priority")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.source_artifact_byte_hash_context_visible is True
+    assert result.latest_source_artifact_byte_hash_source_hash_validated is False
+    assert result.latest_source_artifact_byte_hash_real_package_candidate_created is False
+    assert result.latest_source_artifact_byte_hash_active_replay_input is False
+    assert result.latest_source_artifact_byte_hash_replay_execution_allowed is False
+    assert result.latest_source_artifact_byte_hash_buy_review_allowed is False
+    assert result.latest_source_artifact_byte_hash_trading_allowed is False
+
+
+def test_cli_research_status_prints_source_artifact_byte_hash_preview_only(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = _source_artifact_byte_hash_fixture(tmp_path)
+    expected_hash = fixture["full_hash"]
+    preview = expected_hash[:SOURCE_ARTIFACT_BYTE_HASH_PREVIEW_CHARS]
+    _run_source_artifact_byte_hash_context(root, fixture, run_id="009_cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr().out
+
+    assert code == 0
+    assert "source_artifact_byte_hash_context_visible: True" in output
+    assert "latest_source_artifact_byte_hash_run_id: 009_cli" in output
+    assert f"latest_source_artifact_byte_hash_computed_source_hash_preview: {preview}" in output
+    assert "latest_source_artifact_byte_hash_source_hash_validated: False" in output
+    assert "latest_source_artifact_byte_hash_pit_admissibility_validated: False" in output
+    assert "latest_source_artifact_byte_hash_real_package_candidate_created: False" in output
+    assert "latest_source_artifact_byte_hash_active_replay_input: False" in output
+    assert "latest_source_artifact_byte_hash_buy_review_allowed: False" in output
+    assert "latest_source_artifact_byte_hash_trading_allowed: False" in output
+    assert f"latest_source_artifact_byte_hash_recommended_next_task: {EXPECTED_SOURCE_ARTIFACT_BYTE_HASH_NEXT_TASK}" in output
+    assert expected_hash not in output
+    assert str(fixture["source_artifact"]) not in output
+    assert "synthetic source artifact bytes" not in output
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output
+
+
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(
     tmp_path: Path,
 ) -> None:
@@ -18959,3 +19178,104 @@ def test_cli_research_status_prints_tiny_pit_real_reviewed_local_csv_manifest_on
     ) in output.out
     assert "workflow_stage: PAPER_WORKFLOW_READY" in output.out
     assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+
+
+def _source_artifact_byte_hash_fixture(
+    tmp_path: Path,
+    *,
+    declared_hash: str | None = None,
+) -> dict[str, Path | str]:
+    source_root = tmp_path / "source_artifact_byte_hash_source"
+    manifest_root = tmp_path / "source_artifact_byte_hash_manifest"
+    source_root.mkdir(parents=True, exist_ok=True)
+    manifest_root.mkdir(parents=True, exist_ok=True)
+    source_artifact = source_root / "synthetic-source-artifact.bin"
+    source_bytes = b"synthetic source artifact bytes\n"
+    source_artifact.write_bytes(source_bytes)
+    full_hash = hashlib.sha256(source_bytes).hexdigest()
+    declared = declared_hash if declared_hash is not None else full_hash
+    metadata_path = manifest_root / "source_lineage_metadata.json"
+    manifest_path = manifest_root / "source_artifact_hash_manifest.json"
+    metadata = {
+        "source_id": "SYNTH_SOURCE",
+        "source_hash_algorithm": "SHA-256",
+        "source_hash_value": declared,
+        "revision_id": "rev-001",
+        "available_time": "2024-01-01T00:00:00Z",
+        "report_only": True,
+        "diagnostic_only": True,
+        "source_hash_validated": False,
+        "pit_admissibility_validated": False,
+        "reviewer_authority_validated": False,
+        "forbidden_downstream_flags": {
+            field: False for field in SOURCE_ARTIFACT_BYTE_HASH_REQUIRED_FALSE_FLAGS
+        },
+    }
+    manifest = {
+        "source_artifact_hash_request_id": "source_artifact_hash_request_001",
+        "source_id": "SYNTH_SOURCE",
+        "source_artifact_id": "synthetic_source_artifact",
+        "source_artifact_declared_name": "Synthetic source artifact",
+        "source_artifact_path_ref": str(source_artifact),
+        "report_only": True,
+        "diagnostic_only": True,
+        "requested_source_artifact_byte_read_level": SOURCE_ARTIFACT_BYTE_READ_STREAMING_HASH_ONLY,
+        "requested_source_hash_recompute_level": SOURCE_HASH_RECOMPUTE_SHA256_ONLY,
+        "requested_source_content_read_level": SOURCE_ARTIFACT_BYTE_HASH_CONTENT_READ_NONE,
+        "requested_csv_read_level": SOURCE_ARTIFACT_BYTE_HASH_CSV_READ_NONE,
+        "requested_local_file_hash_level": SOURCE_ARTIFACT_BYTE_HASH_LOCAL_FILE_HASH_NONE,
+        "requested_expected_hash_verification_level": SOURCE_ARTIFACT_BYTE_HASH_EXPECTED_HASH_NONE,
+        "requested_source_hash_validation_level": SOURCE_ARTIFACT_BYTE_HASH_VALIDATION_NONE,
+        "requested_revision_id_validation_level": SOURCE_ARTIFACT_BYTE_HASH_REVISION_ID_NONE,
+        "requested_available_time_validation_level": SOURCE_ARTIFACT_BYTE_HASH_AVAILABLE_TIME_NONE,
+        "requested_pit_admissibility_level": SOURCE_ARTIFACT_BYTE_HASH_PIT_NONE,
+        "requested_source_reliability_level": SOURCE_ARTIFACT_BYTE_HASH_RELIABILITY_NONE,
+        "requested_reviewer_authority_level": SOURCE_ARTIFACT_BYTE_HASH_REVIEWER_AUTHORITY_NONE,
+        "requested_package_creation_level": SOURCE_ARTIFACT_BYTE_HASH_PACKAGE_CREATION_NONE,
+        "requested_active_input_level": SOURCE_ARTIFACT_BYTE_HASH_ACTIVE_INPUT_NONE,
+        "requested_replay_readiness_level": SOURCE_ARTIFACT_BYTE_HASH_REPLAY_READINESS_NONE,
+        "source_hash_algorithm": "SHA-256",
+        "declared_source_hash": declared,
+        "source_lineage_metadata_ref": str(metadata_path),
+        "revision_id_metadata_ref": "metadata-only-revision-ref",
+        "available_time_metadata_ref": "metadata-only-available-time-ref",
+        "compare_to_declared_source_hash": True,
+        "full_hash_recording_policy": FULL_HASH_RECORDING_LOCAL_METADATA_ONLY,
+        "disclosure_policy": DISCLOSURE_PREVIEW_ONLY_PUBLIC_SURFACES,
+        "forbidden_downstream_flags": {
+            field: False for field in SOURCE_ARTIFACT_BYTE_HASH_REQUIRED_FALSE_FLAGS
+        },
+        "limitations": ["Synthetic byte artifact for report-only source artifact hash tests."],
+    }
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    return {
+        "manifest_path": manifest_path,
+        "metadata_path": metadata_path,
+        "source_artifact": source_artifact,
+        "full_hash": full_hash,
+    }
+
+
+def _run_source_artifact_byte_hash_context(
+    root: Path,
+    fixture: dict[str, Path | str],
+    *,
+    run_id: str,
+) -> dict:
+    return run_source_artifact_byte_hash(
+        output_root=(
+            root
+            / "manual_diagnostics"
+            / "tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_v0_1"
+        ),
+        run_id=run_id,
+        source_artifact_hash_manifest_path=fixture["manifest_path"],
+        source_lineage_metadata_path=fixture["metadata_path"],
+        source_artifact_path=fixture["source_artifact"],
+        allowed_manifest_roots=[Path(fixture["manifest_path"]).parent],
+        allowed_source_artifact_roots=[Path(fixture["source_artifact"]).parent],
+        allow_source_artifact_byte_hash=True,
+        source_artifact_byte_read_level=SOURCE_ARTIFACT_BYTE_READ_STREAMING_HASH_ONLY,
+        source_hash_recompute_level=SOURCE_HASH_RECOMPUTE_SHA256_ONLY,
+    )

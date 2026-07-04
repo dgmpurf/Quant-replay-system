@@ -176,6 +176,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_sour
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status import (
     run_source_hash_revision_available_time_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash import (
+    REQUIRED_FALSE_FLAGS as SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_status import (
+    run_source_artifact_byte_hash_status,
+)
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation import (
     REQUIRED_FALSE_FLAGS as REVIEWER_QUALITY_LIMITATION_SAFETY_FALSE_FLAGS,
 )
@@ -1472,6 +1478,59 @@ SUMMARY_COLUMNS = [
             "source_revision_time_data_cache_written",
         }
     ],
+    "source_artifact_byte_hash_context_visible",
+    "latest_source_artifact_byte_hash_run_id",
+    "latest_source_artifact_byte_hash_runtime_status",
+    "latest_source_artifact_byte_hash_health_status",
+    "latest_source_artifact_byte_hash_workflow_stage",
+    "latest_source_artifact_byte_hash_artifact_path",
+    "latest_source_artifact_byte_hash_report_path",
+    "latest_source_artifact_byte_hash_metadata_path",
+    "latest_source_artifact_byte_hash_source_id",
+    "latest_source_artifact_byte_hash_source_artifact_id",
+    "latest_source_artifact_byte_hash_source_artifact_name_preview",
+    "latest_source_artifact_byte_hash_source_hash_algorithm",
+    "latest_source_artifact_byte_hash_computed_source_hash_preview",
+    "latest_source_artifact_byte_hash_declared_source_hash_preview",
+    "latest_source_artifact_byte_hash_computed_source_hash_full_recorded_in_metadata",
+    "latest_source_artifact_byte_hash_source_artifact_byte_identity_matched",
+    "latest_source_artifact_byte_hash_source_artifact_byte_identity_mismatch",
+    "latest_source_artifact_byte_hash_source_artifact_byte_identity_actionable_mismatch",
+    "latest_source_artifact_byte_hash_source_artifact_byte_read_level",
+    "latest_source_artifact_byte_hash_source_hash_recompute_level",
+    "latest_source_artifact_byte_hash_source_content_read_level",
+    "latest_source_artifact_byte_hash_csv_read_level",
+    "latest_source_artifact_byte_hash_local_file_hash_level",
+    "latest_source_artifact_byte_hash_expected_hash_verification_level",
+    "latest_source_artifact_byte_hash_source_hash_validation_level",
+    "latest_source_artifact_byte_hash_revision_id_validation_level",
+    "latest_source_artifact_byte_hash_available_time_validation_level",
+    "latest_source_artifact_byte_hash_pit_admissibility_level",
+    "latest_source_artifact_byte_hash_source_reliability_level",
+    "latest_source_artifact_byte_hash_reviewer_authority_level",
+    "latest_source_artifact_byte_hash_package_creation_level",
+    "latest_source_artifact_byte_hash_active_input_level",
+    "latest_source_artifact_byte_hash_replay_readiness_level",
+    "latest_source_artifact_byte_hash_source_artifact_opened_for_hash",
+    "latest_source_artifact_byte_hash_source_artifact_bytes_streamed_for_hash",
+    "latest_source_artifact_byte_hash_source_content_read",
+    "latest_source_artifact_byte_hash_source_content_semantically_read",
+    "latest_source_artifact_byte_hash_target_csv_opened",
+    "latest_source_artifact_byte_hash_csv_header_read",
+    "latest_source_artifact_byte_hash_csv_values_read",
+    "latest_source_artifact_byte_hash_csv_full_content_read",
+    "latest_source_artifact_byte_hash_source_hash_validated",
+    "latest_source_artifact_byte_hash_revision_id_validated",
+    "latest_source_artifact_byte_hash_available_time_validated",
+    "latest_source_artifact_byte_hash_pit_admissibility_validated",
+    "latest_source_artifact_byte_hash_source_reliability_scored",
+    "latest_source_artifact_byte_hash_reviewer_authority_validated",
+    "latest_source_artifact_byte_hash_issue_count",
+    "latest_source_artifact_byte_hash_warning_count",
+    *[f"latest_source_artifact_byte_hash_{flag}" for flag in SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FALSE_FLAGS],
+    "latest_source_artifact_byte_hash_report_only",
+    "latest_source_artifact_byte_hash_diagnostic_only",
+    "latest_source_artifact_byte_hash_recommended_next_task",
     "reviewer_quality_limitation_context_visible",
     "latest_reviewer_quality_limitation_run_id",
     "latest_reviewer_quality_limitation_runtime_status",
@@ -3231,6 +3290,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_ARTIFACT_BYTE_HASH_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
@@ -3306,6 +3366,9 @@ WORKFLOW_AREAS = {
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_ARTIFACT_BYTE_HASH_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_ARTIFACT_BYTE_HASH"
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION"
@@ -4754,6 +4817,89 @@ class LocalResearchDashboardResult:
     source_revision_time_current_candidates_created: bool
     source_revision_time_snapshots_created: bool
     source_revision_time_signal_semantics_mutated: bool
+    source_artifact_byte_hash_context_visible: bool
+    latest_source_artifact_byte_hash_run_id: str
+    latest_source_artifact_byte_hash_runtime_status: str
+    latest_source_artifact_byte_hash_health_status: str
+    latest_source_artifact_byte_hash_workflow_stage: str
+    latest_source_artifact_byte_hash_artifact_path: str
+    latest_source_artifact_byte_hash_report_path: str
+    latest_source_artifact_byte_hash_metadata_path: str
+    latest_source_artifact_byte_hash_source_id: str
+    latest_source_artifact_byte_hash_source_artifact_id: str
+    latest_source_artifact_byte_hash_source_artifact_name_preview: str
+    latest_source_artifact_byte_hash_source_hash_algorithm: str
+    latest_source_artifact_byte_hash_computed_source_hash_preview: str
+    latest_source_artifact_byte_hash_declared_source_hash_preview: str
+    latest_source_artifact_byte_hash_computed_source_hash_full_recorded_in_metadata: bool
+    latest_source_artifact_byte_hash_source_artifact_byte_identity_matched: bool
+    latest_source_artifact_byte_hash_source_artifact_byte_identity_mismatch: bool
+    latest_source_artifact_byte_hash_source_artifact_byte_identity_actionable_mismatch: bool
+    latest_source_artifact_byte_hash_source_artifact_byte_read_level: str
+    latest_source_artifact_byte_hash_source_hash_recompute_level: str
+    latest_source_artifact_byte_hash_source_content_read_level: str
+    latest_source_artifact_byte_hash_csv_read_level: str
+    latest_source_artifact_byte_hash_local_file_hash_level: str
+    latest_source_artifact_byte_hash_expected_hash_verification_level: str
+    latest_source_artifact_byte_hash_source_hash_validation_level: str
+    latest_source_artifact_byte_hash_revision_id_validation_level: str
+    latest_source_artifact_byte_hash_available_time_validation_level: str
+    latest_source_artifact_byte_hash_pit_admissibility_level: str
+    latest_source_artifact_byte_hash_source_reliability_level: str
+    latest_source_artifact_byte_hash_reviewer_authority_level: str
+    latest_source_artifact_byte_hash_package_creation_level: str
+    latest_source_artifact_byte_hash_active_input_level: str
+    latest_source_artifact_byte_hash_replay_readiness_level: str
+    latest_source_artifact_byte_hash_source_artifact_opened_for_hash: bool
+    latest_source_artifact_byte_hash_source_artifact_bytes_streamed_for_hash: bool
+    latest_source_artifact_byte_hash_source_content_read: bool
+    latest_source_artifact_byte_hash_source_content_semantically_read: bool
+    latest_source_artifact_byte_hash_target_csv_opened: bool
+    latest_source_artifact_byte_hash_csv_header_read: bool
+    latest_source_artifact_byte_hash_csv_values_read: bool
+    latest_source_artifact_byte_hash_csv_full_content_read: bool
+    latest_source_artifact_byte_hash_source_hash_validated: bool
+    latest_source_artifact_byte_hash_revision_id_validated: bool
+    latest_source_artifact_byte_hash_available_time_validated: bool
+    latest_source_artifact_byte_hash_pit_admissibility_validated: bool
+    latest_source_artifact_byte_hash_source_reliability_scored: bool
+    latest_source_artifact_byte_hash_reviewer_authority_validated: bool
+    latest_source_artifact_byte_hash_issue_count: int
+    latest_source_artifact_byte_hash_warning_count: int
+    latest_source_artifact_byte_hash_real_reviewed_csv_package_created: bool
+    latest_source_artifact_byte_hash_real_package_candidate_created: bool
+    latest_source_artifact_byte_hash_active_reviewed_input_candidate_created: bool
+    latest_source_artifact_byte_hash_real_replay_input_created: bool
+    latest_source_artifact_byte_hash_active_replay_input: bool
+    latest_source_artifact_byte_hash_active_replay_ready: bool
+    latest_source_artifact_byte_hash_active_replay_input_ready_emitted: bool
+    latest_source_artifact_byte_hash_replay_execution_allowed: bool
+    latest_source_artifact_byte_hash_labels_created: bool
+    latest_source_artifact_byte_hash_training_dataset_created: bool
+    latest_source_artifact_byte_hash_metric_computation_performed: bool
+    latest_source_artifact_byte_hash_signal_score_implemented: bool
+    latest_source_artifact_byte_hash_model_training_performed: bool
+    latest_source_artifact_byte_hash_active_weights_created: bool
+    latest_source_artifact_byte_hash_active_thresholds_created: bool
+    latest_source_artifact_byte_hash_stock_profile_validation_created: bool
+    latest_source_artifact_byte_hash_paper_validation_created: bool
+    latest_source_artifact_byte_hash_buy_review_allowed: bool
+    latest_source_artifact_byte_hash_strategy_performance_validated: bool
+    latest_source_artifact_byte_hash_current_candidates_created: bool
+    latest_source_artifact_byte_hash_snapshots_created: bool
+    latest_source_artifact_byte_hash_signal_semantics_mutated: bool
+    latest_source_artifact_byte_hash_broker_api_called: bool
+    latest_source_artifact_byte_hash_order_placed: bool
+    latest_source_artifact_byte_hash_message_sent: bool
+    latest_source_artifact_byte_hash_external_api_called: bool
+    latest_source_artifact_byte_hash_llm_api_called: bool
+    latest_source_artifact_byte_hash_trading_allowed: bool
+    latest_source_artifact_byte_hash_data_raw_written: bool
+    latest_source_artifact_byte_hash_data_processed_written: bool
+    latest_source_artifact_byte_hash_data_cache_written: bool
+    latest_source_artifact_byte_hash_report_only: bool
+    latest_source_artifact_byte_hash_diagnostic_only: bool
+    latest_source_artifact_byte_hash_recommended_next_task: str
     reviewer_quality_limitation_context_visible: bool
     latest_reviewer_quality_limitation_run_id: str
     latest_reviewer_quality_limitation_runtime_status: str
@@ -9602,6 +9748,7 @@ def run_local_research_dashboard(
         **_expected_hash_verification_result_kwargs(summary),
         **_csv_physical_data_line_count_only_result_kwargs(summary),
         **_source_revision_time_result_kwargs(summary),
+        **_source_artifact_byte_hash_result_kwargs(summary),
         **_reviewer_quality_limitation_result_kwargs(summary),
         **_real_reviewed_local_csv_preflight_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
@@ -13499,6 +13646,11 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root
     )
+    tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_path = (
+        root_path
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_v0_1"
+    )
     tiny_pit_real_reviewed_local_csv_package_candidate_preflight_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root
     )
@@ -13670,6 +13822,11 @@ def scan_local_research_workflow_artifacts(
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_status(
             tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_path
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_path
         )
     )
     records.extend(
@@ -21153,6 +21310,7 @@ def summarize_local_research_status(
         **_expected_hash_verification_summary_fields(by_component),
         **_csv_physical_data_line_count_only_summary_fields(by_component),
         **_source_revision_time_summary_fields(by_component),
+        **_source_artifact_byte_hash_summary_fields(by_component),
         **_reviewer_quality_limitation_summary_fields(by_component),
         **_real_reviewed_local_csv_preflight_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
@@ -29336,6 +29494,7 @@ def build_local_research_dashboard_metadata(
         **_expected_hash_verification_metadata(result),
         **_csv_physical_data_line_count_only_metadata(result),
         **_source_revision_time_metadata(result),
+        **_source_artifact_byte_hash_metadata(result),
         **_reviewer_quality_limitation_metadata(result),
         **_real_reviewed_local_csv_preflight_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
@@ -37279,6 +37438,397 @@ def _source_revision_time_result_kwargs(summary: dict[str, Any]) -> dict[str, An
 
 def _source_revision_time_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _SOURCE_REVISION_TIME_RESULT_FIELDS}
+
+
+_SOURCE_ARTIFACT_BYTE_HASH_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_ARTIFACT_BYTE_HASH_STATUS"
+)
+_SOURCE_ARTIFACT_BYTE_HASH_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_ARTIFACT_BYTE_HASH"
+)
+_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX = "latest_source_artifact_byte_hash_"
+_SOURCE_ARTIFACT_BYTE_HASH_LATEST_FIELDS = [
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}run_id",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}runtime_status",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}health_status",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}workflow_stage",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}artifact_path",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}report_path",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}metadata_path",
+]
+_SOURCE_ARTIFACT_BYTE_HASH_TEXT_FIELDS = [
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_id",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_artifact_id",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_artifact_name_preview",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_hash_algorithm",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}computed_source_hash_preview",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}declared_source_hash_preview",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_artifact_byte_read_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_hash_recompute_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_content_read_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}csv_read_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}local_file_hash_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}expected_hash_verification_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_hash_validation_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}revision_id_validation_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}available_time_validation_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}pit_admissibility_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_reliability_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}reviewer_authority_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}package_creation_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}active_input_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}replay_readiness_level",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}recommended_next_task",
+]
+_SOURCE_ARTIFACT_BYTE_HASH_BOOL_FIELDS = [
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}computed_source_hash_full_recorded_in_metadata",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_artifact_byte_identity_matched",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_artifact_byte_identity_mismatch",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_artifact_byte_identity_actionable_mismatch",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_artifact_opened_for_hash",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_artifact_bytes_streamed_for_hash",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_content_read",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_content_semantically_read",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}target_csv_opened",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}csv_header_read",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}csv_values_read",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}csv_full_content_read",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_hash_validated",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}revision_id_validated",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}available_time_validated",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}pit_admissibility_validated",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}source_reliability_scored",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}reviewer_authority_validated",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}report_only",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}diagnostic_only",
+]
+_SOURCE_ARTIFACT_BYTE_HASH_INT_FIELDS = [
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}issue_count",
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}warning_count",
+]
+_SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FIELDS = [
+    f"{_SOURCE_ARTIFACT_BYTE_HASH_LATEST_PREFIX}{flag}"
+    for flag in SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FALSE_FLAGS
+]
+_SOURCE_ARTIFACT_BYTE_HASH_RESULT_FIELDS = (
+    ["source_artifact_byte_hash_context_visible"]
+    + _SOURCE_ARTIFACT_BYTE_HASH_LATEST_FIELDS
+    + _SOURCE_ARTIFACT_BYTE_HASH_TEXT_FIELDS
+    + _SOURCE_ARTIFACT_BYTE_HASH_BOOL_FIELDS
+    + _SOURCE_ARTIFACT_BYTE_HASH_INT_FIELDS
+    + _SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FIELDS
+)
+_SOURCE_ARTIFACT_BYTE_HASH_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash "
+    "Research-Status Planning Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_source_artifact_byte_hash_status(root=fixture_root, output_dir=fixture_root / "status")
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = _source_artifact_byte_hash_summary_from_status_result(result, fixture_root)
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _SOURCE_ARTIFACT_BYTE_HASH_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair Source Artifact Byte-Hash artifacts before research-status planning."
+    )
+    issue_count = _int_or_zero(summary.get("latest_source_artifact_byte_hash_issue_count"))
+    warning_count = _int_or_zero(summary.get("latest_source_artifact_byte_hash_warning_count"))
+    return [
+        _record(
+            workflow_area=_SOURCE_ARTIFACT_BYTE_HASH_WORKFLOW_AREA,
+            component=_SOURCE_ARTIFACT_BYTE_HASH_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=_string_or_empty(result.summary.get("latest_metadata_path")),
+            issue_count=issue_count,
+            warning_count=warning_count,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_source_artifact_byte_hash_notes(summary),
+        )
+    ]
+
+
+def _source_artifact_byte_hash_summary_from_status_result(
+    result: Any,
+    fixture_root: Path,
+) -> dict[str, Any]:
+    status_summary = result.summary
+    index_row = _source_artifact_byte_hash_latest_index_row(fixture_root, result.latest_run_id)
+    summary = {
+        "latest_source_artifact_byte_hash_run_id": result.latest_run_id,
+        "latest_source_artifact_byte_hash_runtime_status": result.latest_runtime_status,
+        "latest_source_artifact_byte_hash_health_status": result.latest_health_status,
+        "latest_source_artifact_byte_hash_workflow_stage": result.latest_workflow_stage,
+        "latest_source_artifact_byte_hash_artifact_path": result.latest_artifact_path,
+        "latest_source_artifact_byte_hash_report_path": result.latest_report_path,
+        "latest_source_artifact_byte_hash_metadata_path": status_summary.get("latest_metadata_path"),
+        "latest_source_artifact_byte_hash_source_id": status_summary.get("latest_source_id"),
+        "latest_source_artifact_byte_hash_source_artifact_id": status_summary.get(
+            "latest_source_artifact_id"
+        ),
+        "latest_source_artifact_byte_hash_source_artifact_name_preview": status_summary.get(
+            "latest_source_artifact_name_preview"
+        ),
+        "latest_source_artifact_byte_hash_source_hash_algorithm": status_summary.get(
+            "latest_source_hash_algorithm"
+        ),
+        "latest_source_artifact_byte_hash_computed_source_hash_preview": _source_artifact_byte_hash_preview(
+            status_summary.get("latest_computed_source_hash_preview")
+        ),
+        "latest_source_artifact_byte_hash_declared_source_hash_preview": _source_artifact_byte_hash_preview(
+            status_summary.get("latest_declared_source_hash_preview")
+        ),
+        "latest_source_artifact_byte_hash_computed_source_hash_full_recorded_in_metadata": _bool_from_text(
+            index_row.get("computed_source_hash_full_recorded_in_metadata")
+        ),
+        "latest_source_artifact_byte_hash_source_artifact_byte_identity_matched": status_summary.get(
+            "latest_source_artifact_byte_identity_matched"
+        ),
+        "latest_source_artifact_byte_hash_source_artifact_byte_identity_mismatch": status_summary.get(
+            "latest_source_artifact_byte_identity_mismatch"
+        ),
+        "latest_source_artifact_byte_hash_source_artifact_byte_identity_actionable_mismatch": status_summary.get(
+            "latest_source_artifact_byte_identity_actionable_mismatch"
+        ),
+        "latest_source_artifact_byte_hash_source_artifact_byte_read_level": status_summary.get(
+            "latest_source_artifact_byte_read_level"
+        ),
+        "latest_source_artifact_byte_hash_source_hash_recompute_level": status_summary.get(
+            "latest_source_hash_recompute_level"
+        ),
+        "latest_source_artifact_byte_hash_source_content_read_level": status_summary.get(
+            "latest_source_content_read_level"
+        ),
+        "latest_source_artifact_byte_hash_csv_read_level": status_summary.get("latest_csv_read_level"),
+        "latest_source_artifact_byte_hash_local_file_hash_level": status_summary.get(
+            "latest_local_file_hash_level"
+        ),
+        "latest_source_artifact_byte_hash_expected_hash_verification_level": status_summary.get(
+            "latest_expected_hash_verification_level"
+        ),
+        "latest_source_artifact_byte_hash_source_hash_validation_level": status_summary.get(
+            "latest_source_hash_validation_level"
+        ),
+        "latest_source_artifact_byte_hash_revision_id_validation_level": status_summary.get(
+            "latest_revision_id_validation_level"
+        ),
+        "latest_source_artifact_byte_hash_available_time_validation_level": status_summary.get(
+            "latest_available_time_validation_level"
+        ),
+        "latest_source_artifact_byte_hash_pit_admissibility_level": status_summary.get(
+            "latest_pit_admissibility_level"
+        ),
+        "latest_source_artifact_byte_hash_source_reliability_level": status_summary.get(
+            "latest_source_reliability_level"
+        ),
+        "latest_source_artifact_byte_hash_reviewer_authority_level": status_summary.get(
+            "latest_reviewer_authority_level"
+        ),
+        "latest_source_artifact_byte_hash_package_creation_level": status_summary.get(
+            "latest_package_creation_level"
+        ),
+        "latest_source_artifact_byte_hash_active_input_level": status_summary.get(
+            "latest_active_input_level"
+        ),
+        "latest_source_artifact_byte_hash_replay_readiness_level": status_summary.get(
+            "latest_replay_readiness_level"
+        ),
+        "latest_source_artifact_byte_hash_source_artifact_opened_for_hash": status_summary.get(
+            "latest_source_artifact_opened_for_hash"
+        ),
+        "latest_source_artifact_byte_hash_source_artifact_bytes_streamed_for_hash": status_summary.get(
+            "latest_source_artifact_bytes_streamed_for_hash"
+        ),
+        "latest_source_artifact_byte_hash_source_content_read": status_summary.get(
+            "latest_source_content_read"
+        ),
+        "latest_source_artifact_byte_hash_source_content_semantically_read": status_summary.get(
+            "latest_source_content_semantically_read"
+        ),
+        "latest_source_artifact_byte_hash_target_csv_opened": status_summary.get("latest_target_csv_opened"),
+        "latest_source_artifact_byte_hash_csv_header_read": status_summary.get("latest_csv_header_read"),
+        "latest_source_artifact_byte_hash_csv_values_read": status_summary.get("latest_csv_values_read"),
+        "latest_source_artifact_byte_hash_csv_full_content_read": status_summary.get(
+            "latest_csv_full_content_read"
+        ),
+        "latest_source_artifact_byte_hash_source_hash_validated": status_summary.get(
+            "latest_source_hash_validated"
+        ),
+        "latest_source_artifact_byte_hash_source_reliability_scored": status_summary.get(
+            "latest_source_reliability_scored"
+        ),
+        "latest_source_artifact_byte_hash_reviewer_authority_validated": status_summary.get(
+            "latest_reviewer_authority_validated"
+        ),
+        "latest_source_artifact_byte_hash_issue_count": status_summary.get("latest_issue_count"),
+        "latest_source_artifact_byte_hash_warning_count": status_summary.get("latest_warning_count"),
+        "latest_source_artifact_byte_hash_report_only": status_summary.get("report_only"),
+        "latest_source_artifact_byte_hash_diagnostic_only": status_summary.get("diagnostic_only"),
+    }
+    for field in SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FALSE_FLAGS:
+        summary[f"latest_source_artifact_byte_hash_{field}"] = status_summary.get(f"latest_{field}")
+    summary["latest_source_artifact_byte_hash_revision_id_validated"] = False
+    summary["latest_source_artifact_byte_hash_available_time_validated"] = False
+    summary["latest_source_artifact_byte_hash_pit_admissibility_validated"] = False
+    return summary
+
+
+def _source_artifact_byte_hash_latest_index_row(fixture_root: Path, latest_run_id: str) -> dict[str, Any]:
+    index_csv = fixture_root / "index" / "source_artifact_byte_hash_index.csv"
+    try:
+        frame = pd.read_csv(index_csv, dtype=str).fillna("")
+    except (OSError, pd.errors.EmptyDataError, pd.errors.ParserError):
+        return {}
+    if frame.empty:
+        return {}
+    matches = frame.loc[frame.get("run_id", pd.Series(dtype=str)).astype(str) == latest_run_id]
+    row = matches.iloc[-1] if not matches.empty else frame.iloc[-1]
+    return row.to_dict()
+
+
+def _source_artifact_byte_hash_preview(value: Any) -> str:
+    return _string_or_empty(value)[:16]
+
+
+def _source_artifact_byte_hash_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_string_or_empty(_source_artifact_byte_hash_summary_value(summary, field))};"
+        for field in (
+            _SOURCE_ARTIFACT_BYTE_HASH_TEXT_FIELDS
+            + _SOURCE_ARTIFACT_BYTE_HASH_BOOL_FIELDS
+            + _SOURCE_ARTIFACT_BYTE_HASH_INT_FIELDS
+            + _SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FIELDS
+        )
+        if field != "latest_source_artifact_byte_hash_recommended_next_task"
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "source_artifact_byte_hash_semantics=preview_only_byte_identity_context_no_full_hash_path_source_csv_pit_or_package_validation; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"health_status={_string_or_empty(summary.get('latest_source_artifact_byte_hash_health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('latest_source_artifact_byte_hash_workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('latest_source_artifact_byte_hash_artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get('latest_source_artifact_byte_hash_report_path'))}; "
+        f"metadata_path={_note_safe_text(summary.get('latest_source_artifact_byte_hash_metadata_path'))}; "
+        f"{field_notes}"
+    )
+
+
+def _source_artifact_byte_hash_summary_value(summary: dict[str, Any], dashboard_field: str) -> Any:
+    if dashboard_field == "latest_source_artifact_byte_hash_recommended_next_task":
+        return summary.get("next_action")
+    return summary.get(dashboard_field, "")
+
+
+def _source_artifact_byte_hash_summary_fields(
+    by_component: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    component = by_component.get(_SOURCE_ARTIFACT_BYTE_HASH_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "source_artifact_byte_hash_context_visible": _parse_note_value(notes, "context_visible"),
+        "latest_source_artifact_byte_hash_run_id": _string_or_empty(component.get("latest_artifact_id")),
+        "latest_source_artifact_byte_hash_runtime_status": _component_status(
+            by_component,
+            _SOURCE_ARTIFACT_BYTE_HASH_COMPONENT,
+        ),
+        "latest_source_artifact_byte_hash_health_status": _parse_note_value(notes, "health_status"),
+        "latest_source_artifact_byte_hash_workflow_stage": _string_or_empty(component.get("stage")),
+        "latest_source_artifact_byte_hash_artifact_path": _parse_note_value(notes, "artifact_path"),
+        "latest_source_artifact_byte_hash_report_path": _parse_note_value(notes, "report_path"),
+        "latest_source_artifact_byte_hash_metadata_path": _parse_note_value(notes, "metadata_path"),
+        "latest_source_artifact_byte_hash_recommended_next_task": _parse_note_value(
+            notes,
+            "next_manual_action",
+        ),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in _SOURCE_ARTIFACT_BYTE_HASH_TEXT_FIELDS
+            if field != "latest_source_artifact_byte_hash_recommended_next_task"
+        }
+    )
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in (
+                _SOURCE_ARTIFACT_BYTE_HASH_BOOL_FIELDS
+                + _SOURCE_ARTIFACT_BYTE_HASH_INT_FIELDS
+                + _SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FIELDS
+            )
+        }
+    )
+    return fields
+
+
+def _source_artifact_byte_hash_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, "")) for field in _SOURCE_ARTIFACT_BYTE_HASH_LATEST_FIELDS
+    }
+    kwargs.update(
+        {field: str(summary.get(field, "")) for field in _SOURCE_ARTIFACT_BYTE_HASH_TEXT_FIELDS}
+    )
+    kwargs["source_artifact_byte_hash_context_visible"] = _bool_from_text(
+        summary.get("source_artifact_byte_hash_context_visible")
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in _SOURCE_ARTIFACT_BYTE_HASH_BOOL_FIELDS
+            + _SOURCE_ARTIFACT_BYTE_HASH_SAFETY_FIELDS
+        }
+    )
+    kwargs.update(
+        {field: _int_or_zero(summary.get(field)) for field in _SOURCE_ARTIFACT_BYTE_HASH_INT_FIELDS}
+    )
+    if not kwargs["latest_source_artifact_byte_hash_source_artifact_byte_read_level"]:
+        kwargs["latest_source_artifact_byte_hash_source_artifact_byte_read_level"] = (
+            "SOURCE_ARTIFACT_BYTE_READ_NONE"
+        )
+    if not kwargs["latest_source_artifact_byte_hash_source_hash_recompute_level"]:
+        kwargs["latest_source_artifact_byte_hash_source_hash_recompute_level"] = (
+            "SOURCE_HASH_RECOMPUTE_NONE"
+        )
+    if not kwargs["latest_source_artifact_byte_hash_source_content_read_level"]:
+        kwargs["latest_source_artifact_byte_hash_source_content_read_level"] = "SOURCE_CONTENT_READ_NONE"
+    if not kwargs["latest_source_artifact_byte_hash_csv_read_level"]:
+        kwargs["latest_source_artifact_byte_hash_csv_read_level"] = "CSV_READ_NONE"
+    if not kwargs["latest_source_artifact_byte_hash_source_hash_validation_level"]:
+        kwargs["latest_source_artifact_byte_hash_source_hash_validation_level"] = (
+            "SOURCE_HASH_VALIDATION_NONE"
+        )
+    if not kwargs["latest_source_artifact_byte_hash_revision_id_validation_level"]:
+        kwargs["latest_source_artifact_byte_hash_revision_id_validation_level"] = (
+            "REVISION_ID_VALIDATION_NONE"
+        )
+    if not kwargs["latest_source_artifact_byte_hash_available_time_validation_level"]:
+        kwargs["latest_source_artifact_byte_hash_available_time_validation_level"] = (
+            "AVAILABLE_TIME_VALIDATION_NONE"
+        )
+    if not kwargs["latest_source_artifact_byte_hash_pit_admissibility_level"]:
+        kwargs["latest_source_artifact_byte_hash_pit_admissibility_level"] = "PIT_ADMISSIBILITY_NONE"
+    return kwargs
+
+
+def _source_artifact_byte_hash_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _SOURCE_ARTIFACT_BYTE_HASH_RESULT_FIELDS}
 
 
 _REVIEWER_QUALITY_LIMITATION_COMPONENT = (
