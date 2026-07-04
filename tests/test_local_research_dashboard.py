@@ -144,6 +144,32 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_revi
     REVIEWER_METADATA_PRESENT_ONLY,
     run_reviewer_authority_quality_limitation,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight import (
+    ACTIVE_INPUT_NONE as PREFLIGHT_ACTIVE_INPUT_NONE,
+    AVAILABLE_TIME_VALIDATION_NONE as PREFLIGHT_AVAILABLE_TIME_VALIDATION_NONE,
+    CSV_READ_NONE as PREFLIGHT_CSV_READ_NONE,
+    LIMITATION_REVIEW_NONE as PREFLIGHT_LIMITATION_REVIEW_NONE,
+    NEGATIVE_FALSE_FIELDS as PREFLIGHT_NEGATIVE_FALSE_FIELDS,
+    OPTIONAL_REFERENCE_NAMES as PREFLIGHT_OPTIONAL_REFERENCE_NAMES,
+    PACKAGE_CREATION_NONE as PREFLIGHT_PACKAGE_CREATION_NONE,
+    PERMISSION_REVIEW_NONE as PREFLIGHT_PERMISSION_REVIEW_NONE,
+    PIT_ADMISSIBILITY_NONE as PREFLIGHT_PIT_ADMISSIBILITY_NONE,
+    PREFLIGHT_METADATA_REFERENCES_ONLY,
+    QUALITY_STATUS_NONE as PREFLIGHT_QUALITY_STATUS_NONE,
+    REQUIRED_REFERENCE_NAMES as PREFLIGHT_REQUIRED_REFERENCE_NAMES,
+    REPLAY_READINESS_NONE as PREFLIGHT_REPLAY_READINESS_NONE,
+    REVIEWER_AUTHORITY_NONE as PREFLIGHT_REVIEWER_AUTHORITY_NONE,
+    REVISION_ID_VALIDATION_NONE as PREFLIGHT_REVISION_ID_VALIDATION_NONE,
+    SOURCE_HASH_VALIDATION_NONE as PREFLIGHT_SOURCE_HASH_VALIDATION_NONE,
+    SOURCE_RELIABILITY_NONE as PREFLIGHT_SOURCE_RELIABILITY_NONE,
+    STATUS_BLOCKED_BY_FORBIDDEN_DOWNSTREAM as PREFLIGHT_STATUS_BLOCKED_FORBIDDEN_DOWNSTREAM,
+    STATUS_BLOCKED_BY_MISSING_REQUIRED_METADATA as PREFLIGHT_STATUS_BLOCKED_MISSING_REQUIRED,
+    STATUS_BLOCKED_BY_UNSUPPORTED_VALIDATION_CLAIM as PREFLIGHT_STATUS_BLOCKED_UNSUPPORTED_VALIDATION,
+    STATUS_METADATA_CONTEXT_REPORT_ONLY as PREFLIGHT_STATUS_METADATA_CONTEXT,
+    STATUS_NO_INPUT as PREFLIGHT_STATUS_NO_INPUT,
+    STATUS_WARN_MISSING_OPTIONAL_EVIDENCE as PREFLIGHT_STATUS_WARN_MISSING_OPTIONAL,
+    run_real_reviewed_local_csv_package_candidate_preflight,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -272,6 +298,28 @@ STALE_REVIEWER_QUALITY_LIMITATION_NEXT_ACTION_PHRASES = [
 ]
 UNSAFE_REVIEWER_QUALITY_LIMITATION_WORDING = [
     "REVIEWER_APPROVED_PACKAGE",
+    "PACKAGE_APPROVED",
+    "PACKAGE_ADMISSIBLE",
+    "PIT_ADMISSIBLE_PACKAGE",
+    "READY_FOR_REPLAY",
+    "REPLAY_INPUT_READY",
+    "ACTIVE_REPLAY_INPUT_READY",
+    "APPROVED_FOR_ACTIVE_INPUT",
+    "TRADING_READY",
+    "BUY_REVIEW_READY",
+    "PERFORMANCE_VALIDATED",
+]
+EXPECTED_PREFLIGHT_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Checkpoint Planning "
+    "Report-Only v0.1"
+)
+STALE_PREFLIGHT_NEXT_ACTION_PHRASES = [
+    "Research-Status Planning Report-Only v0.1",
+    "Artifact Views Report-Only v0.1",
+    "CLI Report-Only v0.1",
+]
+UNSAFE_PREFLIGHT_WORDING = [
+    "REAL_PACKAGE_CANDIDATE_CREATED",
     "PACKAGE_APPROVED",
     "PACKAGE_ADMISSIBLE",
     "PIT_ADMISSIBLE_PACKAGE",
@@ -10325,6 +10373,152 @@ def _reviewer_quality_limitation_inputs(
     return manifest_path, metadata_path
 
 
+def _preflight_output_root(root: Path) -> Path:
+    return (
+        root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_v0_1"
+    )
+
+
+def _preflight_inputs(
+    root: Path,
+    *,
+    missing_optional: str | None = None,
+    missing_required: str | None = None,
+    metadata_overrides: dict[str, dict[str, object]] | None = None,
+) -> tuple[Path, dict[str, Path], Path, str, str]:
+    root.mkdir(parents=True, exist_ok=True)
+    metadata_root = root / "metadata"
+    metadata_root.mkdir(parents=True, exist_ok=True)
+    full_source_hash = "abc123def4567890" * 4
+    full_reviewer_id = "private-reviewer-id-preflight-dashboard-000001"
+    overrides = metadata_overrides or {}
+    refs: dict[str, Path] = {}
+    evidence_references: list[dict[str, object]] = []
+    for reference_name in [*PREFLIGHT_REQUIRED_REFERENCE_NAMES, *PREFLIGHT_OPTIONAL_REFERENCE_NAMES]:
+        required = reference_name in PREFLIGHT_REQUIRED_REFERENCE_NAMES
+        path = metadata_root / f"{reference_name}.json"
+        if reference_name != missing_required and reference_name != missing_optional:
+            _write_json(
+                path,
+                _preflight_reference_metadata(
+                    reference_name,
+                    source_hash_preview=full_source_hash,
+                    reviewer_id_preview=full_reviewer_id[:12],
+                    **overrides.get(reference_name, {}),
+                ),
+            )
+            refs[f"{reference_name}_path"] = path
+        evidence_references.append(
+            {
+                "reference_name": reference_name,
+                "reference_type": f"{reference_name}_ref",
+                "path": str(path),
+                "required": required,
+                "expected_workflow_area": reference_name.upper(),
+                "expected_report_only": True,
+                "expected_diagnostic_only": True,
+                "expected_metadata_only": True,
+                "expected_negative_flags": PREFLIGHT_NEGATIVE_FALSE_FIELDS,
+                "allow_statuses": ["PASS", "WARN", "METADATA_PRESENT_REPORT_ONLY"],
+                "warn_statuses": ["WARN", "EXPECTED_HASH_VERIFICATION_WARN_HASH_MISMATCH"],
+                "block_statuses": ["FAIL"],
+                "disclosure_level": "metadata_only_no_private_path_or_full_hash",
+            }
+        )
+    manifest_path = root / "preflight_manifest.json"
+    _write_json(
+        manifest_path,
+        {
+            "preflight_id": "preflight-dashboard-0001",
+            "declared_package_id": "declared-package-dashboard-0001",
+            "package_schema_version": "preflight_v0_1",
+            "created_at": "2026-07-04T00:00:00Z",
+            "prepared_by": "synthetic-reviewer",
+            "report_only": True,
+            "diagnostic_only": True,
+            "requested_preflight_level": PREFLIGHT_METADATA_REFERENCES_ONLY,
+            "requested_package_creation_level": PREFLIGHT_PACKAGE_CREATION_NONE,
+            "requested_csv_read_level": PREFLIGHT_CSV_READ_NONE,
+            "requested_source_hash_validation_level": PREFLIGHT_SOURCE_HASH_VALIDATION_NONE,
+            "requested_revision_id_validation_level": PREFLIGHT_REVISION_ID_VALIDATION_NONE,
+            "requested_available_time_validation_level": PREFLIGHT_AVAILABLE_TIME_VALIDATION_NONE,
+            "requested_pit_admissibility_level": PREFLIGHT_PIT_ADMISSIBILITY_NONE,
+            "requested_reviewer_authority_level": PREFLIGHT_REVIEWER_AUTHORITY_NONE,
+            "requested_quality_status_level": PREFLIGHT_QUALITY_STATUS_NONE,
+            "requested_limitation_review_level": PREFLIGHT_LIMITATION_REVIEW_NONE,
+            "requested_permission_review_level": PREFLIGHT_PERMISSION_REVIEW_NONE,
+            "requested_source_reliability_level": PREFLIGHT_SOURCE_RELIABILITY_NONE,
+            "requested_active_input_level": PREFLIGHT_ACTIVE_INPUT_NONE,
+            "requested_replay_readiness_level": PREFLIGHT_REPLAY_READINESS_NONE,
+            "evidence_references": evidence_references,
+            "required_evidence_policy": "strict_metadata_complete",
+            "warning_policy": "warnings_do_not_create_package_candidate",
+            "blocker_policy": "blockers_remain_report_only",
+            "disclosure_policy": "metadata_counts_and_booleans_only",
+            "forbidden_downstream_flags": {field: False for field in PREFLIGHT_NEGATIVE_FALSE_FIELDS},
+            "limitations": ["preflight dashboard fixture is metadata-reference context only"],
+        },
+    )
+    return manifest_path, refs, metadata_root, full_source_hash, full_reviewer_id
+
+
+def _preflight_reference_metadata(
+    reference_name: str,
+    *,
+    source_hash_preview: str,
+    reviewer_id_preview: str,
+    **overrides: object,
+) -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "runtime_status": "METADATA_PRESENT_REPORT_ONLY",
+        "health_status": "PASS",
+        "workflow_stage": f"{reference_name.upper()}_REPORT_ONLY",
+        "report_only": True,
+        "diagnostic_only": True,
+        "metadata_only": True,
+        "source_hash_preview": source_hash_preview,
+        "reviewer_id_preview": reviewer_id_preview,
+        "issue_count": 0,
+        "warning_count": 0,
+        "blocker_count": 0,
+        "limitations": ["synthetic preflight dashboard metadata reference"],
+        "forbidden_downstream_flags": {field: False for field in PREFLIGHT_NEGATIVE_FALSE_FIELDS},
+    }
+    metadata.update({field: False for field in PREFLIGHT_NEGATIVE_FALSE_FIELDS})
+    metadata.update(overrides)
+    return metadata
+
+
+def _run_preflight_metadata_context(
+    tmp_path: Path,
+    root: Path,
+    *,
+    run_id: str,
+    missing_optional: str | None = None,
+    missing_required: str | None = None,
+    metadata_overrides: dict[str, dict[str, object]] | None = None,
+) -> tuple[dict[str, object], Path, str, str]:
+    manifest_path, refs, metadata_root, full_source_hash, full_reviewer_id = _preflight_inputs(
+        tmp_path / f"{run_id}_inputs",
+        missing_optional=missing_optional,
+        missing_required=missing_required,
+        metadata_overrides=metadata_overrides,
+    )
+    result = run_real_reviewed_local_csv_package_candidate_preflight(
+        output_root=_preflight_output_root(root),
+        run_id=run_id,
+        preflight_manifest_path=manifest_path,
+        allowed_manifest_roots=[manifest_path.parent],
+        allow_real_reviewed_local_csv_package_candidate_preflight=True,
+        **refs,
+    )
+    for path in [manifest_path, *refs.values()]:
+        path.unlink(missing_ok=True)
+    return result, metadata_root, full_source_hash, full_reviewer_id
+
+
 def _csv_physical_data_line_count_only_inputs(
     root: Path,
     *,
@@ -17764,6 +17958,299 @@ def test_cli_research_status_prints_reviewer_quality_limitation_fields(
     assert "reviewer_quality_limitation_reviewer_authority_validated: False" in output.out
     assert "reviewer_quality_limitation_active_replay_input: False" in output.out
     assert f"latest_reviewer_quality_limitation_recommended_next_task: {EXPECTED_REVIEWER_QUALITY_LIMITATION_NEXT_TASK}" in output.out
+    assert "Research-Status Planning Report-Only v0.1" not in output.out
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
+
+
+def test_research_status_surfaces_preflight_no_input_context(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    run_real_reviewed_local_csv_package_candidate_preflight(
+        output_root=_preflight_output_root(root),
+        run_id="008_no_input",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+
+    assert result.real_reviewed_local_csv_package_candidate_preflight_context_visible is True
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_run_id == "008_no_input"
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_runtime_status == (
+        PREFLIGHT_STATUS_NO_INPUT
+    )
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_health_status == "PASS"
+    assert result.real_reviewed_local_csv_package_candidate_preflight_preflight_level == "PREFLIGHT_NONE"
+    assert result.real_reviewed_local_csv_package_candidate_preflight_package_creation_level == (
+        PREFLIGHT_PACKAGE_CREATION_NONE
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_csv_read_level == (
+        PREFLIGHT_CSV_READ_NONE
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_report_only is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_diagnostic_only is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_target_csv_opened is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_source_artifact_opened is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_source_content_read is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_source_hash_recomputed is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_expected_hash_reverified is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_available_time_compared_to_decision_time is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_real_package_candidate_created is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_active_replay_input is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_buy_review_allowed is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_trading_allowed is False
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_recommended_next_task == (
+        EXPECTED_PREFLIGHT_NEXT_TASK
+    )
+    assert row["status"] == PREFLIGHT_STATUS_NO_INPUT
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "real_reviewed_local_csv_package_candidate_preflight_context_visible"] == "True"
+    assert summary.loc[0, "real_reviewed_local_csv_package_candidate_preflight_trading_allowed"] == "False"
+
+
+def test_research_status_surfaces_preflight_metadata_context_without_rereading_references(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    artifact, metadata_root, full_source_hash, full_reviewer_id = _run_preflight_metadata_context(
+        tmp_path,
+        root,
+        run_id="008_metadata",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame[
+        result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    metadata_text = json.dumps(metadata, sort_keys=True)
+    report_text = result.artifact_paths["local_research_dashboard"].read_text(encoding="utf-8")
+
+    assert result.real_reviewed_local_csv_package_candidate_preflight_context_visible is True
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_run_id == "008_metadata"
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_runtime_status == (
+        PREFLIGHT_STATUS_METADATA_CONTEXT
+    )
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_health_status == "PASS"
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_preflight_id == (
+        "preflight-dashboard-0001"
+    )
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_declared_package_id == (
+        "declared-package-dashboard-0001"
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_preflight_level == (
+        PREFLIGHT_METADATA_REFERENCES_ONLY
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_package_creation_level == (
+        PREFLIGHT_PACKAGE_CREATION_NONE
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_csv_read_level == (
+        PREFLIGHT_CSV_READ_NONE
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_source_hash_validation_level == (
+        PREFLIGHT_SOURCE_HASH_VALIDATION_NONE
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_available_time_validation_level == (
+        PREFLIGHT_AVAILABLE_TIME_VALIDATION_NONE
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_reviewer_authority_level == (
+        PREFLIGHT_REVIEWER_AUTHORITY_NONE
+    )
+    assert result.real_reviewed_local_csv_package_candidate_preflight_evidence_reference_count == 8
+    assert result.real_reviewed_local_csv_package_candidate_preflight_required_reference_count == 6
+    assert result.real_reviewed_local_csv_package_candidate_preflight_required_reference_present_count == 6
+    assert result.real_reviewed_local_csv_package_candidate_preflight_missing_required_reference_count == 0
+    assert result.real_reviewed_local_csv_package_candidate_preflight_optional_reference_count == 2
+    assert result.real_reviewed_local_csv_package_candidate_preflight_missing_optional_reference_count == 0
+    assert result.real_reviewed_local_csv_package_candidate_preflight_csv_structural_header_metadata_present is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_source_revision_time_metadata_present is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_reviewer_quality_limitation_metadata_present is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_manifest_only_preflight_metadata_present is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_source_hash_recompute_not_performed is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_available_time_pit_gate_not_performed is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_reviewer_authority_validation_not_performed is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_package_creation_not_performed is True
+    assert result.real_reviewed_local_csv_package_candidate_preflight_real_package_candidate_created is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_active_reviewed_input_candidate_created is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_active_replay_input is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_replay_execution_allowed is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_buy_review_allowed is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_trading_allowed is False
+    assert row["status"] == PREFLIGHT_STATUS_METADATA_CONTEXT
+    assert row["blocking_error_count"] == 0
+    assert summary.loc[0, "latest_real_reviewed_local_csv_package_candidate_preflight_preflight_id"] == (
+        "preflight-dashboard-0001"
+    )
+    assert metadata["real_reviewed_local_csv_package_candidate_preflight_target_csv_opened"] is False
+    assert full_source_hash not in metadata_text
+    assert full_source_hash not in report_text
+    assert full_reviewer_id not in metadata_text
+    assert full_reviewer_id not in report_text
+    assert str(metadata_root) not in metadata_text
+    assert str(metadata_root) not in report_text
+    assert (
+        metadata["latest_real_reviewed_local_csv_package_candidate_preflight_metadata_path"]
+        == str(artifact["artifact_paths"]["metadata"])
+    )
+    for stale in STALE_PREFLIGHT_NEXT_ACTION_PHRASES:
+        assert stale not in result.latest_real_reviewed_local_csv_package_candidate_preflight_recommended_next_task
+    for unsafe in UNSAFE_PREFLIGHT_WORDING:
+        assert unsafe not in row["stage"]
+        assert unsafe not in result.latest_real_reviewed_local_csv_package_candidate_preflight_recommended_next_task
+
+
+def test_research_status_surfaces_preflight_warn_and_fail_contexts(tmp_path: Path) -> None:
+    root = _reports_root(tmp_path)
+    _run_preflight_metadata_context(
+        tmp_path,
+        root,
+        run_id="008_warn_optional",
+        missing_optional="metadata_reference_following_metadata",
+    )
+    warn_result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard_warn")
+    warn_row = warn_result.dashboard_frame[
+        warn_result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS"
+    ].iloc[0]
+
+    assert warn_result.latest_real_reviewed_local_csv_package_candidate_preflight_runtime_status == (
+        PREFLIGHT_STATUS_WARN_MISSING_OPTIONAL
+    )
+    assert warn_result.latest_real_reviewed_local_csv_package_candidate_preflight_health_status == "WARN"
+    assert warn_result.real_reviewed_local_csv_package_candidate_preflight_missing_optional_reference_count == 1
+    assert warn_result.real_reviewed_local_csv_package_candidate_preflight_missing_required_reference_count == 0
+    assert warn_row["warning_count"] >= 1
+    assert warn_row["blocking_error_count"] == 0
+    assert warn_result.real_reviewed_local_csv_package_candidate_preflight_real_package_candidate_created is False
+    assert warn_result.real_reviewed_local_csv_package_candidate_preflight_buy_review_allowed is False
+    assert warn_result.real_reviewed_local_csv_package_candidate_preflight_trading_allowed is False
+
+    _run_preflight_metadata_context(
+        tmp_path,
+        root,
+        run_id="009_fail_required",
+        missing_required="source_revision_time_metadata",
+    )
+    fail_result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard_fail")
+    fail_row = fail_result.dashboard_frame[
+        fail_result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS"
+    ].iloc[0]
+
+    assert fail_result.latest_real_reviewed_local_csv_package_candidate_preflight_runtime_status == (
+        PREFLIGHT_STATUS_BLOCKED_MISSING_REQUIRED
+    )
+    assert fail_result.latest_real_reviewed_local_csv_package_candidate_preflight_health_status == "FAIL"
+    assert fail_result.real_reviewed_local_csv_package_candidate_preflight_missing_required_reference_count == 1
+    assert fail_result.real_reviewed_local_csv_package_candidate_preflight_issue_count >= 1
+    assert fail_row["blocking_error_count"] == 1
+    assert fail_result.real_reviewed_local_csv_package_candidate_preflight_active_replay_input is False
+    assert fail_result.real_reviewed_local_csv_package_candidate_preflight_buy_review_allowed is False
+    assert fail_result.real_reviewed_local_csv_package_candidate_preflight_trading_allowed is False
+
+
+def test_research_status_surfaces_preflight_unsafe_and_forbidden_without_leakage(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_preflight_metadata_context(
+        tmp_path,
+        root,
+        run_id="008_unsafe_validation",
+        metadata_overrides={"source_revision_time_metadata": {"source_hash_validated": True}},
+    )
+    unsafe_result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard_unsafe")
+    unsafe_row = unsafe_result.dashboard_frame[
+        unsafe_result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS"
+    ].iloc[0]
+
+    assert unsafe_result.latest_real_reviewed_local_csv_package_candidate_preflight_runtime_status == (
+        PREFLIGHT_STATUS_BLOCKED_UNSUPPORTED_VALIDATION
+    )
+    assert unsafe_result.latest_real_reviewed_local_csv_package_candidate_preflight_health_status == "FAIL"
+    assert unsafe_row["blocking_error_count"] == 1
+    assert unsafe_result.real_reviewed_local_csv_package_candidate_preflight_source_hash_validated is False
+    assert unsafe_result.real_reviewed_local_csv_package_candidate_preflight_active_replay_input is False
+
+    _run_preflight_metadata_context(
+        tmp_path,
+        root,
+        run_id="009_forbidden_downstream",
+        metadata_overrides={
+            "reviewer_quality_limitation_metadata": {
+                "forbidden_downstream_flags": {"buy_review_allowed": True}
+            }
+        },
+    )
+    forbidden_result = run_local_research_dashboard(
+        root=root,
+        output_dir=tmp_path / "dashboard_forbidden",
+    )
+    forbidden_row = forbidden_result.dashboard_frame[
+        forbidden_result.dashboard_frame["component"]
+        == "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS"
+    ].iloc[0]
+    metadata_text = forbidden_result.artifact_paths["metadata"].read_text(encoding="utf-8")
+
+    assert forbidden_result.latest_real_reviewed_local_csv_package_candidate_preflight_runtime_status == (
+        PREFLIGHT_STATUS_BLOCKED_FORBIDDEN_DOWNSTREAM
+    )
+    assert forbidden_result.latest_real_reviewed_local_csv_package_candidate_preflight_health_status == "FAIL"
+    assert forbidden_row["blocking_error_count"] == 1
+    assert forbidden_result.real_reviewed_local_csv_package_candidate_preflight_buy_review_allowed is False
+    assert forbidden_result.real_reviewed_local_csv_package_candidate_preflight_trading_allowed is False
+    assert "ACTIVE_REPLAY_INPUT_READY" not in metadata_text
+    assert "PACKAGE_ADMISSIBLE" not in metadata_text
+
+
+def test_research_status_preserves_paper_priority_over_preflight_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_preflight_metadata_context(tmp_path, root, run_id="008_priority")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.real_reviewed_local_csv_package_candidate_preflight_context_visible is True
+    assert result.latest_real_reviewed_local_csv_package_candidate_preflight_health_status == "PASS"
+    assert result.real_reviewed_local_csv_package_candidate_preflight_real_package_candidate_created is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_active_replay_input is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_replay_execution_allowed is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_buy_review_allowed is False
+    assert result.real_reviewed_local_csv_package_candidate_preflight_trading_allowed is False
+
+
+def test_cli_research_status_prints_preflight_fields(tmp_path: Path, capsys) -> None:
+    root = _reports_root(tmp_path)
+    _run_preflight_metadata_context(tmp_path, root, run_id="008_cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "real_reviewed_local_csv_package_candidate_preflight_context_visible: True" in output.out
+    assert "latest_real_reviewed_local_csv_package_candidate_preflight_run_id: 008_cli" in output.out
+    assert "real_reviewed_local_csv_package_candidate_preflight_package_creation_level: PACKAGE_CREATION_NONE" in output.out
+    assert "real_reviewed_local_csv_package_candidate_preflight_csv_read_level: CSV_READ_NONE" in output.out
+    assert "real_reviewed_local_csv_package_candidate_preflight_real_package_candidate_created: False" in output.out
+    assert "real_reviewed_local_csv_package_candidate_preflight_buy_review_allowed: False" in output.out
+    assert (
+        f"latest_real_reviewed_local_csv_package_candidate_preflight_recommended_next_task: {EXPECTED_PREFLIGHT_NEXT_TASK}"
+        in output.out
+    )
     assert "Research-Status Planning Report-Only v0.1" not in output.out
     assert "ACTIVE_REPLAY_INPUT_READY" not in output.out
 

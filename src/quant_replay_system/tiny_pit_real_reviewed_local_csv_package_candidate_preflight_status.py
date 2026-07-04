@@ -18,14 +18,15 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
     CAPABILITY_LEVEL_FIELDS,
     COUNT_FIELDS,
     DEFAULT_ROOT,
+    REFERENCE_PRESENT_FIELDS,
     build_real_reviewed_local_csv_package_candidate_preflight_index,
 )
 
 
 NO_ARTIFACT_STAGE = "NO_TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT"
 NEXT_TASK = (
-    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Research-Status "
-    "Planning Report-Only v0.1"
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Checkpoint Planning "
+    "Report-Only v0.1"
 )
 STATUS_COLUMNS = [
     "latest_run_id",
@@ -40,6 +41,7 @@ STATUS_COLUMNS = [
     "latest_declared_package_id",
     *[f"latest_{field}" for field in CAPABILITY_LEVEL_FIELDS],
     *[f"latest_{field}" for field in COUNT_FIELDS],
+    *[f"latest_{field}" for field in REFERENCE_PRESENT_FIELDS],
     *[f"latest_{field}" for field in NEGATIVE_FALSE_FIELDS],
     "report_only",
     "diagnostic_only",
@@ -90,7 +92,8 @@ def run_real_reviewed_local_csv_package_candidate_preflight_status(
         summary = _no_artifact_summary(health.status)
     else:
         latest = sorted(index.rows, key=lambda row: str(row.get("run_id") or ""))[-1]
-        summary = _summary_from_latest(latest, health.status)
+        latest_health_status = _text(latest.get("health_status")) or health.status
+        summary = _summary_from_latest(latest, latest_health_status)
     paths = _paths(output_dir)
     result = RealReviewedLocalCsvPreflightStatusResult(
         latest_run_id=str(summary["latest_run_id"]),
@@ -147,6 +150,9 @@ def _summary_from_latest(latest: dict[str, Any], health_status: str) -> dict[str
         summary[f"latest_{field}"] = _text(latest.get(field))
     for field in COUNT_FIELDS:
         summary[f"latest_{field}"] = _to_int(latest.get(field))
+    for field in REFERENCE_PRESENT_FIELDS:
+        summary[f"latest_{field}"] = _to_bool(latest.get(field))
+        summary[field] = _to_bool(latest.get(field))
     for field in NEGATIVE_FALSE_FIELDS:
         summary[f"latest_{field}"] = _to_bool(latest.get(field))
         summary[field] = _to_bool(latest.get(field))
@@ -173,6 +179,9 @@ def _no_artifact_summary(health_status: str) -> dict[str, Any]:
         summary[f"latest_{field}"] = ""
     for field in COUNT_FIELDS:
         summary[f"latest_{field}"] = 0
+    for field in REFERENCE_PRESENT_FIELDS:
+        summary[f"latest_{field}"] = False
+        summary[field] = False
     for field in NEGATIVE_FALSE_FIELDS:
         summary[f"latest_{field}"] = False
         summary[field] = False

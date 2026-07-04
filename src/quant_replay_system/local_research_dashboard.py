@@ -182,6 +182,18 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_revi
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_status import (
     run_reviewer_authority_quality_limitation_status,
 )
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight import (
+    NEGATIVE_FALSE_FIELDS as REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_SAFETY_FALSE_FLAGS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_index import (
+    CAPABILITY_DEFAULTS as REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CAPABILITY_DEFAULTS,
+    CAPABILITY_LEVEL_FIELDS as REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CAPABILITY_FIELDS,
+    COUNT_FIELDS as REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_FIELDS,
+    REFERENCE_PRESENT_FIELDS as REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_REFERENCE_FIELDS,
+)
+from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_status import (
+    run_real_reviewed_local_csv_package_candidate_preflight_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1512,6 +1524,40 @@ SUMMARY_COLUMNS = [
     *[
         f"reviewer_quality_limitation_{flag}"
         for flag in REVIEWER_QUALITY_LIMITATION_SAFETY_FALSE_FLAGS
+    ],
+    "real_reviewed_local_csv_package_candidate_preflight_context_visible",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_run_id",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_runtime_status",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_health_status",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_workflow_stage",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_artifact_path",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_report_path",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_metadata_path",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_preflight_id",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_declared_package_id",
+    "latest_real_reviewed_local_csv_package_candidate_preflight_recommended_next_task",
+    "real_reviewed_local_csv_package_candidate_preflight_report_only",
+    "real_reviewed_local_csv_package_candidate_preflight_diagnostic_only",
+    *[
+        f"real_reviewed_local_csv_package_candidate_preflight_{field}"
+        for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CAPABILITY_FIELDS
+    ],
+    *[
+        f"real_reviewed_local_csv_package_candidate_preflight_{field}"
+        for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_FIELDS
+    ],
+    "real_reviewed_local_csv_package_candidate_preflight_blocker_count",
+    *[
+        f"real_reviewed_local_csv_package_candidate_preflight_{field}"
+        for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_REFERENCE_FIELDS
+    ],
+    "real_reviewed_local_csv_package_candidate_preflight_source_hash_recompute_not_performed",
+    "real_reviewed_local_csv_package_candidate_preflight_available_time_pit_gate_not_performed",
+    "real_reviewed_local_csv_package_candidate_preflight_reviewer_authority_validation_not_performed",
+    "real_reviewed_local_csv_package_candidate_preflight_package_creation_not_performed",
+    *[
+        f"real_reviewed_local_csv_package_candidate_preflight_{flag}"
+        for flag in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_SAFETY_FALSE_FLAGS
     ],
     "source_registry_schema_fixture_workflow_implemented",
     "source_registry_schema_fixture_views_implemented",
@@ -3186,6 +3232,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_CSV_PHYSICAL_DATA_LINE_COUNT_ONLY_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_HASH_REVISION_AVAILABLE_TIME_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS",
+                    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -3262,6 +3309,9 @@ WORKFLOW_AREAS = {
     ),
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION"
+    ),
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS": (
+        "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT"
     ),
     "INPUT_GATE_VALIDATOR_FIXTURE_STATUS": "INPUT_GATE_VALIDATOR_FIXTURE",
     "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR_STATUS": "HISTORICAL_REPLAY_INPUT_GATE_VALIDATOR",
@@ -4767,6 +4817,84 @@ class LocalResearchDashboardResult:
     reviewer_quality_limitation_data_raw_written: bool
     reviewer_quality_limitation_data_processed_written: bool
     reviewer_quality_limitation_data_cache_written: bool
+    real_reviewed_local_csv_package_candidate_preflight_context_visible: bool
+    latest_real_reviewed_local_csv_package_candidate_preflight_run_id: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_runtime_status: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_health_status: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_workflow_stage: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_artifact_path: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_report_path: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_metadata_path: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_preflight_id: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_declared_package_id: str
+    latest_real_reviewed_local_csv_package_candidate_preflight_recommended_next_task: str
+    real_reviewed_local_csv_package_candidate_preflight_report_only: bool
+    real_reviewed_local_csv_package_candidate_preflight_diagnostic_only: bool
+    real_reviewed_local_csv_package_candidate_preflight_preflight_level: str
+    real_reviewed_local_csv_package_candidate_preflight_package_creation_level: str
+    real_reviewed_local_csv_package_candidate_preflight_csv_read_level: str
+    real_reviewed_local_csv_package_candidate_preflight_source_hash_validation_level: str
+    real_reviewed_local_csv_package_candidate_preflight_revision_id_validation_level: str
+    real_reviewed_local_csv_package_candidate_preflight_available_time_validation_level: str
+    real_reviewed_local_csv_package_candidate_preflight_pit_admissibility_level: str
+    real_reviewed_local_csv_package_candidate_preflight_reviewer_authority_level: str
+    real_reviewed_local_csv_package_candidate_preflight_quality_status_level: str
+    real_reviewed_local_csv_package_candidate_preflight_limitation_review_level: str
+    real_reviewed_local_csv_package_candidate_preflight_permission_review_level: str
+    real_reviewed_local_csv_package_candidate_preflight_source_reliability_level: str
+    real_reviewed_local_csv_package_candidate_preflight_active_input_level: str
+    real_reviewed_local_csv_package_candidate_preflight_replay_readiness_level: str
+    real_reviewed_local_csv_package_candidate_preflight_evidence_reference_count: int
+    real_reviewed_local_csv_package_candidate_preflight_required_reference_count: int
+    real_reviewed_local_csv_package_candidate_preflight_required_reference_present_count: int
+    real_reviewed_local_csv_package_candidate_preflight_missing_required_reference_count: int
+    real_reviewed_local_csv_package_candidate_preflight_optional_reference_count: int
+    real_reviewed_local_csv_package_candidate_preflight_missing_optional_reference_count: int
+    real_reviewed_local_csv_package_candidate_preflight_unvalidated_capability_count: int
+    real_reviewed_local_csv_package_candidate_preflight_promotion_blocker_count: int
+    real_reviewed_local_csv_package_candidate_preflight_warning_count: int
+    real_reviewed_local_csv_package_candidate_preflight_issue_count: int
+    real_reviewed_local_csv_package_candidate_preflight_blocker_count: int
+    real_reviewed_local_csv_package_candidate_preflight_csv_structural_header_metadata_present: bool
+    real_reviewed_local_csv_package_candidate_preflight_local_file_byte_hash_metadata_present: bool
+    real_reviewed_local_csv_package_candidate_preflight_expected_hash_verification_metadata_present: bool
+    real_reviewed_local_csv_package_candidate_preflight_csv_physical_data_line_count_metadata_present: bool
+    real_reviewed_local_csv_package_candidate_preflight_source_revision_time_metadata_present: bool
+    real_reviewed_local_csv_package_candidate_preflight_reviewer_quality_limitation_metadata_present: bool
+    real_reviewed_local_csv_package_candidate_preflight_metadata_reference_following_metadata_present: bool
+    real_reviewed_local_csv_package_candidate_preflight_manifest_only_preflight_metadata_present: bool
+    real_reviewed_local_csv_package_candidate_preflight_source_hash_recompute_not_performed: bool
+    real_reviewed_local_csv_package_candidate_preflight_available_time_pit_gate_not_performed: bool
+    real_reviewed_local_csv_package_candidate_preflight_reviewer_authority_validation_not_performed: bool
+    real_reviewed_local_csv_package_candidate_preflight_package_creation_not_performed: bool
+    real_reviewed_local_csv_package_candidate_preflight_target_csv_opened: bool
+    real_reviewed_local_csv_package_candidate_preflight_source_artifact_opened: bool
+    real_reviewed_local_csv_package_candidate_preflight_source_content_read: bool
+    real_reviewed_local_csv_package_candidate_preflight_csv_header_read_by_preflight: bool
+    real_reviewed_local_csv_package_candidate_preflight_csv_physical_data_line_count_computed_by_preflight: bool
+    real_reviewed_local_csv_package_candidate_preflight_source_hash_recomputed: bool
+    real_reviewed_local_csv_package_candidate_preflight_local_file_hash_recomputed: bool
+    real_reviewed_local_csv_package_candidate_preflight_expected_hash_reverified: bool
+    real_reviewed_local_csv_package_candidate_preflight_available_time_compared_to_decision_time: bool
+    real_reviewed_local_csv_package_candidate_preflight_source_hash_validated: bool
+    real_reviewed_local_csv_package_candidate_preflight_revision_id_validated: bool
+    real_reviewed_local_csv_package_candidate_preflight_available_time_validated: bool
+    real_reviewed_local_csv_package_candidate_preflight_pit_admissibility_validated: bool
+    real_reviewed_local_csv_package_candidate_preflight_reviewer_authority_validated: bool
+    real_reviewed_local_csv_package_candidate_preflight_quality_status_validated: bool
+    real_reviewed_local_csv_package_candidate_preflight_permission_class_validated: bool
+    real_reviewed_local_csv_package_candidate_preflight_source_reliability_scored: bool
+    real_reviewed_local_csv_package_candidate_preflight_real_reviewed_csv_package_created: bool
+    real_reviewed_local_csv_package_candidate_preflight_real_package_candidate_created: bool
+    real_reviewed_local_csv_package_candidate_preflight_active_reviewed_input_candidate_created: bool
+    real_reviewed_local_csv_package_candidate_preflight_real_replay_input_created: bool
+    real_reviewed_local_csv_package_candidate_preflight_active_replay_input: bool
+    real_reviewed_local_csv_package_candidate_preflight_replay_execution_allowed: bool
+    real_reviewed_local_csv_package_candidate_preflight_buy_review_allowed: bool
+    real_reviewed_local_csv_package_candidate_preflight_trading_allowed: bool
+    real_reviewed_local_csv_package_candidate_preflight_data_raw_written: bool
+    real_reviewed_local_csv_package_candidate_preflight_data_processed_written: bool
+    real_reviewed_local_csv_package_candidate_preflight_data_cache_written: bool
     source_registry_schema_fixture_workflow_implemented: bool
     source_registry_schema_fixture_views_implemented: bool
     latest_source_registry_schema_fixture_id: str
@@ -6365,6 +6493,7 @@ def run_local_research_dashboard(
     tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root: str | Path | None = None,
     tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root: str | Path | None = None,
+    tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root: str | Path | None = None,
     source_registry_schema_fixture_root: str | Path | None = None,
     raw_document_store_schema_fixture_root: str | Path | None = None,
     input_gate_validator_fixture_root: str | Path | None = None,
@@ -6685,6 +6814,21 @@ def run_local_research_dashboard(
         Path(tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root)
         if tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root is not None
         else default_source_hash_revision_available_time_root
+    )
+    default_real_reviewed_local_csv_preflight_root = (
+        effective_root
+        / "manual_diagnostics"
+        / "tiny_pit_real_reviewed_local_csv_package_candidate_preflight_v0_1"
+    )
+    if (
+        not default_real_reviewed_local_csv_preflight_root.exists()
+        and (effective_root / "status").exists()
+    ):
+        default_real_reviewed_local_csv_preflight_root = effective_root
+    effective_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root = (
+        Path(tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root)
+        if tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root is not None
+        else default_real_reviewed_local_csv_preflight_root
     )
     effective_source_registry_schema_fixture_root = (
         Path(source_registry_schema_fixture_root)
@@ -7185,6 +7329,9 @@ def run_local_research_dashboard(
         ),
         tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root=(
             effective_tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root
+        ),
+        tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root=(
+            effective_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root
         ),
         source_registry_schema_fixture_root=effective_source_registry_schema_fixture_root,
         raw_document_store_schema_fixture_root=effective_raw_document_store_schema_fixture_root,
@@ -9456,6 +9603,7 @@ def run_local_research_dashboard(
         **_csv_physical_data_line_count_only_result_kwargs(summary),
         **_source_revision_time_result_kwargs(summary),
         **_reviewer_quality_limitation_result_kwargs(summary),
+        **_real_reviewed_local_csv_preflight_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
             summary.get("source_registry_schema_fixture_workflow_implemented")
         ),
@@ -13231,6 +13379,7 @@ def scan_local_research_workflow_artifacts(
     tiny_pit_real_reviewed_local_csv_package_candidate_expected_hash_verification_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_csv_physical_data_line_count_only_root: str | Path,
     tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root: str | Path,
+    tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root: str | Path,
     source_registry_schema_fixture_root: str | Path,
     raw_document_store_schema_fixture_root: str | Path,
     input_gate_validator_fixture_root: str | Path,
@@ -13349,6 +13498,9 @@ def scan_local_research_workflow_artifacts(
     )
     tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_path = Path(
         tiny_pit_real_reviewed_local_csv_package_candidate_source_hash_revision_available_time_root
+    )
+    tiny_pit_real_reviewed_local_csv_package_candidate_preflight_path = Path(
+        tiny_pit_real_reviewed_local_csv_package_candidate_preflight_root
     )
     source_registry_schema_fixture_path = Path(source_registry_schema_fixture_root)
     raw_document_store_schema_fixture_path = Path(raw_document_store_schema_fixture_root)
@@ -13525,6 +13677,11 @@ def scan_local_research_workflow_artifacts(
             root_path
             / "manual_diagnostics"
             / "tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_v0_1"
+        )
+    )
+    records.extend(
+        _scan_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_status(
+            tiny_pit_real_reviewed_local_csv_package_candidate_preflight_path
         )
     )
     records.extend(_scan_source_registry_schema_fixture_status(source_registry_schema_fixture_path))
@@ -20997,6 +21154,7 @@ def summarize_local_research_status(
         **_csv_physical_data_line_count_only_summary_fields(by_component),
         **_source_revision_time_summary_fields(by_component),
         **_reviewer_quality_limitation_summary_fields(by_component),
+        **_real_reviewed_local_csv_preflight_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
             by_component.get("SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS", {}).get("notes"),
             "implemented",
@@ -29179,6 +29337,7 @@ def build_local_research_dashboard_metadata(
         **_csv_physical_data_line_count_only_metadata(result),
         **_source_revision_time_metadata(result),
         **_reviewer_quality_limitation_metadata(result),
+        **_real_reviewed_local_csv_preflight_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
             result.source_registry_schema_fixture_workflow_implemented
         ),
@@ -37509,6 +37668,348 @@ def _reviewer_quality_limitation_metadata(
     result: LocalResearchDashboardResult,
 ) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _REVIEWER_QUALITY_LIMITATION_RESULT_FIELDS}
+
+
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COMPONENT = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS"
+)
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_WORKFLOW_AREA = (
+    "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT"
+)
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX = (
+    "latest_real_reviewed_local_csv_package_candidate_preflight_"
+)
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX = (
+    "real_reviewed_local_csv_package_candidate_preflight_"
+)
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_FIELDS = [
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}run_id",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}runtime_status",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}health_status",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}workflow_stage",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}artifact_path",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}report_path",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}metadata_path",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}preflight_id",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}declared_package_id",
+]
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_TEXT_FIELDS = [
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}recommended_next_task",
+    *[
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{field}"
+        for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CAPABILITY_FIELDS
+    ],
+]
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_RESULT_FIELDS = [
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{field}"
+    for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_FIELDS
+] + [f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}blocker_count"]
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_BOOL_FIELDS = [
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}report_only",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}diagnostic_only",
+    *[
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{field}"
+        for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_REFERENCE_FIELDS
+    ],
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}source_hash_recompute_not_performed",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}available_time_pit_gate_not_performed",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}reviewer_authority_validation_not_performed",
+    f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}package_creation_not_performed",
+    *[
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{flag}"
+        for flag in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_SAFETY_FALSE_FLAGS
+    ],
+]
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_RESULT_FIELDS = (
+    [f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}context_visible"]
+    + _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_FIELDS
+    + _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_TEXT_FIELDS
+    + _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_BOOL_FIELDS
+    + _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_RESULT_FIELDS
+)
+_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_NEXT_TASK = (
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Checkpoint Planning "
+    "Report-Only v0.1"
+)
+
+
+def _scan_tiny_pit_real_reviewed_local_csv_package_candidate_preflight_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_real_reviewed_local_csv_package_candidate_preflight_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = _real_reviewed_local_csv_preflight_summary_from_status_result(result)
+    summary["context_visible"] = True
+    summary["next_action"] = (
+        _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_NEXT_TASK
+        if result.latest_health_status in {"PASS", "WARN"}
+        else "Repair Tiny PIT reviewed LOCAL_CSV preflight metadata references before checkpoint planning."
+    )
+    issue_count = _int_or_zero(
+        summary.get("real_reviewed_local_csv_package_candidate_preflight_issue_count")
+    )
+    warning_count = _int_or_zero(
+        summary.get("real_reviewed_local_csv_package_candidate_preflight_warning_count")
+    )
+    return [
+        _record(
+            workflow_area=_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_WORKFLOW_AREA,
+            component=_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COMPONENT,
+            status=result.latest_runtime_status,
+            stage=_real_reviewed_local_csv_preflight_stage(
+                result.latest_runtime_status,
+                result.latest_health_status,
+            ),
+            latest_artifact_id=result.latest_run_id,
+            report_path=result.latest_report_path,
+            metadata_path=result.latest_metadata_path,
+            issue_count=issue_count,
+            warning_count=warning_count,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            notes=_real_reviewed_local_csv_preflight_notes(summary),
+        )
+    ]
+
+
+def _real_reviewed_local_csv_preflight_summary_from_status_result(result: Any) -> dict[str, Any]:
+    status_summary = result.summary
+    summary: dict[str, Any] = {
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}run_id": result.latest_run_id,
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}runtime_status": result.latest_runtime_status,
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}health_status": result.latest_health_status,
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}workflow_stage": (
+            _real_reviewed_local_csv_preflight_stage(
+                result.latest_runtime_status,
+                result.latest_health_status,
+            )
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}artifact_path": (
+            result.latest_artifact_path
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}report_path": result.latest_report_path,
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}metadata_path": (
+            result.latest_metadata_path
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}preflight_id": (
+            result.latest_preflight_id
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}declared_package_id": (
+            result.latest_declared_package_id
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}recommended_next_task": (
+            _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_NEXT_TASK
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}report_only": status_summary.get(
+            "report_only"
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}diagnostic_only": status_summary.get(
+            "diagnostic_only"
+        ),
+    }
+    for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CAPABILITY_FIELDS:
+        summary[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{field}"] = (
+            status_summary.get(f"latest_{field}") or REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CAPABILITY_DEFAULTS.get(field, "")
+        )
+    for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_FIELDS:
+        summary[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{field}"] = (
+            status_summary.get(f"latest_{field}")
+        )
+    summary[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}blocker_count"] = status_summary.get(
+        "latest_promotion_blocker_count"
+    )
+    for field in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_REFERENCE_FIELDS:
+        summary[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{field}"] = (
+            status_summary.get(f"latest_{field}") or status_summary.get(field)
+        )
+    for flag in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_SAFETY_FALSE_FLAGS:
+        summary[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{flag}"] = (
+            status_summary.get(f"latest_{flag}", status_summary.get(flag))
+        )
+    summary[
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}source_hash_recompute_not_performed"
+    ] = not _bool_from_text(
+        summary.get(f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}source_hash_recomputed")
+    )
+    summary[
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}available_time_pit_gate_not_performed"
+    ] = not _bool_from_text(
+        summary.get(
+            f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}available_time_compared_to_decision_time"
+        )
+    )
+    summary[
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}reviewer_authority_validation_not_performed"
+    ] = not _bool_from_text(
+        summary.get(f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}reviewer_authority_validated")
+    )
+    summary[
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}package_creation_not_performed"
+    ] = not _bool_from_text(
+        summary.get(f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}real_package_candidate_created")
+    )
+    return summary
+
+
+def _real_reviewed_local_csv_preflight_stage(runtime_status: str, health_status: str) -> str:
+    if health_status == "FAIL" or "BLOCKED" in runtime_status or runtime_status == "FAIL":
+        if "HEALTH_FAILED" in runtime_status:
+            return "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_FAILED"
+        return "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_BLOCKED"
+    if health_status == "WARN" or "_WARN_" in runtime_status:
+        return "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_WARNINGS_NEED_REVIEW"
+    if "NO_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_INPUT" in runtime_status:
+        return "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_NO_INPUT"
+    return "REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_CONTEXT_READY"
+
+
+def _real_reviewed_local_csv_preflight_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_string_or_empty(_real_reviewed_local_csv_preflight_summary_value(summary, field))};"
+        for field in (
+            _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_TEXT_FIELDS
+            + _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_BOOL_FIELDS
+            + _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_RESULT_FIELDS
+        )
+        if field != f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}recommended_next_task"
+    )
+    return (
+        "context_visible=True; "
+        "implemented=True; "
+        "views_implemented=True; "
+        "preflight_semantics=metadata_reference_counts_presence_and_negative_proofs_only_no_source_csv_hash_time_reviewer_package_or_replay_validation; "
+        f"next_manual_action={_note_safe_text(summary.get('next_action'))}; "
+        f"runtime_status={_string_or_empty(summary.get(f'{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}runtime_status'))}; "
+        f"health_status={_string_or_empty(summary.get(f'{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get(f'{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get(f'{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get(f'{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}report_path'))}; "
+        f"metadata_path={_note_safe_text(summary.get(f'{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}metadata_path'))}; "
+        f"preflight_id={_note_safe_text(summary.get(f'{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}preflight_id'))}; "
+        f"declared_package_id={_note_safe_text(summary.get(f'{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}declared_package_id'))}; "
+        f"{field_notes}"
+    )
+
+
+def _real_reviewed_local_csv_preflight_summary_value(
+    summary: dict[str, Any],
+    dashboard_field: str,
+) -> Any:
+    if dashboard_field == f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}recommended_next_task":
+        return summary.get("next_action")
+    return summary.get(dashboard_field, "")
+
+
+def _real_reviewed_local_csv_preflight_summary_fields(
+    by_component: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    component = by_component.get(_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}context_visible": _parse_note_value(
+            notes,
+            "context_visible",
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}run_id": _string_or_empty(
+            component.get("latest_artifact_id")
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}runtime_status": (
+            _parse_note_value(notes, "runtime_status")
+            or _component_status(by_component, _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COMPONENT)
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}health_status": _parse_note_value(
+            notes,
+            "health_status",
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}workflow_stage": _string_or_empty(
+            component.get("stage")
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}artifact_path": _parse_note_value(
+            notes,
+            "artifact_path",
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}report_path": _parse_note_value(
+            notes,
+            "report_path",
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}metadata_path": _string_or_empty(
+            component.get("metadata_path")
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}preflight_id": _parse_note_value(
+            notes,
+            "preflight_id",
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}declared_package_id": _parse_note_value(
+            notes,
+            "declared_package_id",
+        ),
+        f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}recommended_next_task": _parse_note_value(
+            notes,
+            "next_manual_action",
+        ),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in (
+                _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_TEXT_FIELDS
+                + _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_BOOL_FIELDS
+                + _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_RESULT_FIELDS
+            )
+            if field != f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_PREFIX}recommended_next_task"
+        }
+    )
+    return fields
+
+
+def _real_reviewed_local_csv_preflight_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, "")) for field in _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_LATEST_FIELDS
+    }
+    kwargs.update(
+        {field: str(summary.get(field, "")) for field in _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_TEXT_FIELDS}
+    )
+    kwargs[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}context_visible"] = _bool_from_text(
+        summary.get(f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}context_visible")
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_BOOL_FIELDS
+        }
+    )
+    kwargs.update(
+        {
+            field: _int_or_zero(summary.get(field))
+            for field in _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_COUNT_RESULT_FIELDS
+        }
+    )
+    for field, default in REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_CAPABILITY_DEFAULTS.items():
+        dashboard_field = f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}{field}"
+        if not kwargs.get(dashboard_field):
+            kwargs[dashboard_field] = default
+    if not kwargs.get(f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}preflight_level"):
+        kwargs[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}preflight_level"] = "PREFLIGHT_NONE"
+    if not kwargs.get(f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}package_creation_level"):
+        kwargs[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}package_creation_level"] = (
+            "PACKAGE_CREATION_NONE"
+        )
+    if not kwargs.get(f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}csv_read_level"):
+        kwargs[f"{_REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_DETAIL_PREFIX}csv_read_level"] = "CSV_READ_NONE"
+    return kwargs
+
+
+def _real_reviewed_local_csv_preflight_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {field: getattr(result, field) for field in _REAL_REVIEWED_LOCAL_CSV_PREFLIGHT_RESULT_FIELDS}
 
 
 def _scan_replay_evidence_bundle_schema_fixture_status(root: Path) -> list[dict[str, Any]]:

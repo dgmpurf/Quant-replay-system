@@ -18,7 +18,7 @@ INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
 RESEARCH_STATUS_NEXT_TASK = (
-    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Research-Status "
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Checkpoint "
     "Planning Report-Only v0.1"
 )
 STALE_CLI_NEXT_TASK = (

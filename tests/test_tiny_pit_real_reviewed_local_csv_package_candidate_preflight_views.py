@@ -20,7 +20,7 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
 
 
 NEXT_TASK = (
-    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Research-Status "
+    "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Preflight Checkpoint "
     "Planning Report-Only v0.1"
 )
 FULL_HASH_SENTINEL = "0123456789abcdef" * 4
