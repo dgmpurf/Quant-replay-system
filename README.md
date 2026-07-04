@@ -2,6 +2,16 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority / Quality / Limitation v1.80.0
+
+`NO_REVIEWER_QUALITY_LIMITATION_INPUT`, `REVIEWER_QUALITY_LIMITATION_METADATA_PRESENT_REPORT_ONLY`, `REVIEWER_QUALITY_LIMITATION_WARN_LIMITATIONS_PRESENT`, `REVIEWER_QUALITY_LIMITATION_BLOCKED_BY_BLOCKING_LIMITATION`, `REVIEWER_QUALITY_LIMITATION_BLOCKED_BY_FORBIDDEN_PERMISSION`, and `REVIEWER_QUALITY_LIMITATION_BLOCKED_BY_FORBIDDEN_DOWNSTREAM` mean Tiny PIT Reviewer Authority / Quality / Limitation artifacts exist as report-only / diagnostic-only reviewer metadata, quality status, limitation severity, permission blocker, and disclosure context.
+
+Use `tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation`, `tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation-index`, `tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation-health`, and `tiny-pit-real-reviewed-local-csv-package-candidate-reviewer-authority-quality-limitation-status` to create, discover, safety-check, and summarize these report-only artifacts. `research-status` exposes the latest Reviewer Authority / Quality / Limitation context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+The workflow confirms metadata presence, shape, vocabulary, and disclosure only. `reviewer_metadata_present` and `reviewer_authority_scope_declared` are not reviewer authority validation; `quality_status_present` is not package approval; `limitations_present` is not limitation resolution; and `permission_class_present` is not replay or trading permission. WARN limitations are review context only, not package failure. BLOCKER limitations or forbidden permissions are local FAIL/actionable context only, not real validator package rejection.
+
+The workflow does not validate reviewer authority, validate quality-to-package promotion, override limitations, score source reliability, validate PIT admissibility, open source artifact bytes, read source content, open target CSV files, recompute hashes, reverify `expected_hash`, compare `available_time <= replay_decision_time`, create real package candidates, create active replay input, run replay, create labels, train models, create stock_profile or paper validation, create buy-review eligibility, or authorize trading. Report/index/status/CLI/research-status surfaces expose `reviewer_id_preview` only; full reviewer identity and sensitive limitation text are not public surfaces.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision Available-Time v1.79.0
 
 `NO_SOURCE_REVISION_TIME_INPUT`, `SOURCE_REVISION_TIME_METADATA_PRESENT_REPORT_ONLY`, and `SOURCE_REVISION_TIME_WARN_TIMEZONE_ASSUMPTION_REQUIRED` mean Tiny PIT Source Hash / Revision ID / Available-Time artifacts exist as report-only / diagnostic-only source lineage metadata context. This workflow confirms metadata presence, shape, parseability, and disclosure only for `source_hash`, `revision_id`, and `available_time`.

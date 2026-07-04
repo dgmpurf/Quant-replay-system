@@ -105,6 +105,20 @@ outputs/reports/paper_trading/workflow_status/
 
 It reads existing local `metadata.json` or `handoff_metadata.json` files only. It does not rerun any workflow step.
 
+## Tiny PIT Reviewer Authority / Quality / Limitation Status
+
+`research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Reviewer Authority / Quality / Limitation context when status artifacts exist under:
+
+```text
+outputs/reports/manual_diagnostics/tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_authority_quality_limitation_v0_1/status/
+```
+
+It exposes the latest run id, runtime status, health status, workflow stage, artifact/report paths, `reviewer_authority_level`, `quality_status_level`, `limitation_review_level`, `permission_review_level`, `package_promotion_level`, `reviewer_metadata_present`, `reviewer_id_recorded`, `reviewer_id_preview`, `reviewer_role`, `reviewer_role_supported`, `reviewer_type`, `reviewer_attestation_present`, `reviewer_authority_scope_declared`, `quality_status_present`, `quality_status_declared`, `quality_issue_count`, `quality_warning_count`, `quality_blocker_count`, `limitations_present`, `limitation_count`, `limitation_severity_max`, `limitation_categories`, `unresolved_limitation_count`, `blocking_limitation_count`, `permission_class_present`, `permission_class`, `legality_flag`, `restricted_use_blocked`, `private_source_blocked`, issue and warning counts, recommended next task, negative proof fields, and safety flags.
+
+Reviewer Authority / Quality / Limitation is context only. Reviewer metadata is not reviewer authority validation. Quality status is not package approval. Limitation disclosure is not limitation resolution. Permission metadata is not replay or trading permission. WARN limitation is review context only. BLOCKER limitation and forbidden permission are actionable local context only. This context is lower priority than later paper workflow context and must preserve `PAPER_WORKFLOW_READY` as the final workflow stage when paper workflow evidence exists.
+
+Research-status must not expose full reviewer identity, source content, source artifact bytes, target CSV content, row values, full file text, private paths, source reliability scores, reviewer authority approval, package admissibility, replay readiness, buy-review readiness, or trading readiness.
+
 ## Tiny PIT Source Hash / Revision ID / Available-Time Status
 
 `research-status` includes Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Hash Revision Available-Time context when status artifacts exist under:
