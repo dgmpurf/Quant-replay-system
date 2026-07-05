@@ -8157,6 +8157,49 @@ def build_parser() -> argparse.ArgumentParser:
     )
     daily_advisory_review.set_defaults(handler=_handle_personal_mvp_daily_advisory_review)
 
+    daily_advisory_review_index = subparsers.add_parser(
+        "personal-mvp-daily-advisory-review-index",
+        help="Build a report-only index for Personal MVP daily advisory review artifacts",
+    )
+    daily_advisory_review_index.add_argument(
+        "--root",
+        default="outputs/reports/personal_mvp_daily_advisory_review",
+        help="Daily advisory review artifact root directory",
+    )
+    daily_advisory_review_index.add_argument("--output-dir", help="Optional index output directory")
+    daily_advisory_review_index.set_defaults(handler=_handle_personal_mvp_daily_advisory_review_index)
+
+    daily_advisory_review_health = subparsers.add_parser(
+        "personal-mvp-daily-advisory-review-health",
+        help="Check report-only Personal MVP daily advisory review artifact health",
+    )
+    daily_advisory_review_health.add_argument(
+        "--root",
+        default="outputs/reports/personal_mvp_daily_advisory_review",
+        help="Daily advisory review artifact root directory",
+    )
+    daily_advisory_review_health.add_argument("--output-dir", help="Optional health output directory")
+    daily_advisory_review_health.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
+    daily_advisory_review_health.add_argument(
+        "--allow-warn",
+        action="store_true",
+        help="Exit zero when status is WARN in strict mode",
+    )
+    daily_advisory_review_health.set_defaults(handler=_handle_personal_mvp_daily_advisory_review_health)
+
+    daily_advisory_review_status = subparsers.add_parser(
+        "personal-mvp-daily-advisory-review-status",
+        help="Build a compact status view for Personal MVP daily advisory review artifacts",
+    )
+    daily_advisory_review_status.add_argument(
+        "--root",
+        default="outputs/reports/personal_mvp_daily_advisory_review",
+        help="Daily advisory review artifact root directory",
+    )
+    daily_advisory_review_status.add_argument("--output-dir", help="Optional status output directory")
+    daily_advisory_review_status.add_argument("--strict", action="store_true", help="Exit non-zero when status is WARN")
+    daily_advisory_review_status.set_defaults(handler=_handle_personal_mvp_daily_advisory_review_status)
+
     single_symbol_advisory = subparsers.add_parser(
         "single-symbol-advisory",
         help="Build a local advisory review for one symbol from existing artifacts",
@@ -20330,6 +20373,70 @@ def _handle_personal_mvp_daily_advisory_review(args: argparse.Namespace) -> int:
     print("No messages were sent.")
     print("No trading was authorized.")
     print("No protected data paths were written.")
+    return 0
+
+
+def _handle_personal_mvp_daily_advisory_review_index(args: argparse.Namespace) -> int:
+    from quant_replay_system.personal_mvp_daily_advisory_review_index import (
+        build_personal_mvp_daily_advisory_review_index,
+    )
+
+    result = build_personal_mvp_daily_advisory_review_index(root=args.root, output_dir=args.output_dir)
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"index_csv: {result.artifact_paths['index_csv']}")
+    print(f"index_report: {result.artifact_paths['index_md']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No broker API, order placement, message delivery, trading, replay, labels, training, model, stock_profile, or protected data writes were performed.")
+    return 0
+
+
+def _handle_personal_mvp_daily_advisory_review_health(args: argparse.Namespace) -> int:
+    from quant_replay_system.personal_mvp_daily_advisory_review_health import (
+        check_personal_mvp_daily_advisory_review_health,
+    )
+
+    result = check_personal_mvp_daily_advisory_review_health(root=args.root, output_dir=args.output_dir)
+    print(f"status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"health_csv: {result.artifact_paths['health_csv']}")
+    print(f"health_report: {result.artifact_paths['health_md']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No broker API, order placement, message delivery, trading, replay, labels, training, model, stock_profile, or protected data writes were performed.")
+    if result.status == "FAIL":
+        return 1
+    if result.status == "WARN" and args.strict and not args.allow_warn:
+        return 1
+    return 0
+
+
+def _handle_personal_mvp_daily_advisory_review_status(args: argparse.Namespace) -> int:
+    from quant_replay_system.personal_mvp_daily_advisory_review_status import (
+        run_personal_mvp_daily_advisory_review_status,
+    )
+
+    result = run_personal_mvp_daily_advisory_review_status(root=args.root, output_dir=args.output_dir)
+    print(f"latest_daily_review_run_id: {result.latest_daily_review_run_id}")
+    print(f"latest_status: {result.latest_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"latest_workflow_stage: {result.latest_workflow_stage}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"status_csv: {result.artifact_paths['status_csv']}")
+    print(f"status_report: {result.artifact_paths['status_md']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No broker API, order placement, message delivery, trading, replay, labels, training, model, stock_profile, or protected data writes were performed.")
+    if result.latest_health_status == "FAIL":
+        return 1
+    if result.latest_health_status == "WARN" and args.strict:
+        return 1
     return 0
 
 
