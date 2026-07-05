@@ -118,6 +118,19 @@ from quant_replay_system.point_in_time_universe_evidence_update_ingestion_index 
 from quant_replay_system.point_in_time_universe_evidence_update_ingestion_status import (
     run_pit_universe_evidence_update_ingestion_status,
 )
+from quant_replay_system.historical_replay_pit_evidence_closure_worklist import (
+    run_historical_replay_pit_evidence_closure_worklist,
+)
+from quant_replay_system.historical_replay_pit_evidence_closure_worklist_health import (
+    check_historical_replay_pit_evidence_closure_worklist_health,
+)
+from quant_replay_system.historical_replay_pit_evidence_closure_worklist_index import (
+    DEFAULT_ROOT as HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_DEFAULT_ROOT,
+    build_historical_replay_pit_evidence_closure_worklist_index,
+)
+from quant_replay_system.historical_replay_pit_evidence_closure_worklist_status import (
+    run_historical_replay_pit_evidence_closure_worklist_status,
+)
 from quant_replay_system.pit_evidence_checklist_validator import build_pit_evidence_checklist_validator
 from quant_replay_system.pit_evidence_checklist_validator_health import check_pit_evidence_checklist_validator_health
 from quant_replay_system.pit_evidence_checklist_validator_index import build_pit_evidence_checklist_validator_index
@@ -2605,6 +2618,75 @@ def build_parser() -> argparse.ArgumentParser:
     )
     one_row_checklist_pass_candidate_preview_status.set_defaults(
         handler=_handle_one_row_checklist_pass_candidate_preview_status
+    )
+
+    pit_evidence_closure_worklist = subparsers.add_parser(
+        "historical-replay-pit-evidence-closure-worklist",
+        help="Build a report-only PIT evidence closure worklist for the selected historical replay sample",
+    )
+    pit_evidence_closure_worklist.add_argument(
+        "--root",
+        default="outputs/reports",
+        help="Root folder containing existing local report artifacts used as context",
+    )
+    pit_evidence_closure_worklist.add_argument(
+        "--output-dir",
+        default=str(HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_DEFAULT_ROOT),
+        help="Directory where report-only worklist artifacts will be written",
+    )
+    pit_evidence_closure_worklist.add_argument("--run-id", default=None)
+    pit_evidence_closure_worklist.add_argument("--signal-date", default="2024-04-02")
+    pit_evidence_closure_worklist.add_argument("--universe-name", default="etf_core")
+    pit_evidence_closure_worklist.set_defaults(
+        handler=_handle_historical_replay_pit_evidence_closure_worklist
+    )
+
+    pit_evidence_closure_worklist_index = subparsers.add_parser(
+        "historical-replay-pit-evidence-closure-worklist-index",
+        help="Build a report-only index for historical replay PIT evidence closure worklist artifacts",
+    )
+    pit_evidence_closure_worklist_index.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_DEFAULT_ROOT),
+    )
+    pit_evidence_closure_worklist_index.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_DEFAULT_ROOT}/index",
+    )
+    pit_evidence_closure_worklist_index.set_defaults(
+        handler=_handle_historical_replay_pit_evidence_closure_worklist_index
+    )
+
+    pit_evidence_closure_worklist_health = subparsers.add_parser(
+        "historical-replay-pit-evidence-closure-worklist-health",
+        help="Check report-only historical replay PIT evidence closure worklist artifact health",
+    )
+    pit_evidence_closure_worklist_health.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_DEFAULT_ROOT),
+    )
+    pit_evidence_closure_worklist_health.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_DEFAULT_ROOT}/health",
+    )
+    pit_evidence_closure_worklist_health.set_defaults(
+        handler=_handle_historical_replay_pit_evidence_closure_worklist_health
+    )
+
+    pit_evidence_closure_worklist_status = subparsers.add_parser(
+        "historical-replay-pit-evidence-closure-worklist-status",
+        help="Summarize latest report-only historical replay PIT evidence closure worklist status",
+    )
+    pit_evidence_closure_worklist_status.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_DEFAULT_ROOT),
+    )
+    pit_evidence_closure_worklist_status.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_DEFAULT_ROOT}/status",
+    )
+    pit_evidence_closure_worklist_status.set_defaults(
+        handler=_handle_historical_replay_pit_evidence_closure_worklist_status
     )
 
     historical_replay_input_gate_validator = subparsers.add_parser(
@@ -18795,6 +18877,116 @@ def _handle_active_replay_input_promotion_status(args: argparse.Namespace) -> in
         "broker integration, orders, or cache mutation was invoked."
     )
     return 1 if result.health_status == "FAIL" else 0
+
+
+HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_CLI_NEXT_TASK = (
+    "Historical Replay PIT Evidence Closure Worklist Research-Status Integration Planning Report-Only v0.1"
+)
+
+
+def _historical_replay_pit_evidence_closure_worklist_safety_statement() -> str:
+    return (
+        "No PIT admissibility approval, no active replay input, no replay execution, no decision freeze, "
+        "no forward labels, no training/model/stock_profile/paper expansion, no buy-review, no trading, "
+        "no broker API, no orders, no messages, and no protected data writes were invoked."
+    )
+
+
+def _handle_historical_replay_pit_evidence_closure_worklist(args: argparse.Namespace) -> int:
+    result = run_historical_replay_pit_evidence_closure_worklist(
+        root=args.root,
+        output_dir=args.output_dir,
+        run_id=args.run_id,
+        signal_date=args.signal_date,
+        universe_name=args.universe_name,
+    )
+    metadata = result.metadata
+    print(f"worklist_run_id: {result.worklist_run_id}")
+    print(f"signal_date: {metadata.get('signal_date', args.signal_date)}")
+    print(f"universe_name: {metadata.get('universe_name', args.universe_name)}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"row_count: {result.row_count}")
+    print(f"blocked_count: {metadata.get('blocked_count', 0)}")
+    print(f"missing_evidence_count: {metadata.get('missing_evidence_count', 0)}")
+    print(f"needs_manual_review_count: {metadata.get('needs_manual_review_count', 0)}")
+    print(f"no_hit_review_needed_count: {metadata.get('no_hit_review_needed_count', 0)}")
+    print(f"closure_ready_not_pit_approved_count: {metadata.get('closure_ready_not_pit_approved_count', 0)}")
+    print(f"profile_conflict_count: {metadata.get('profile_conflict_count', 0)}")
+    print(f"survivorship_warning_count: {metadata.get('survivorship_warning_count', 0)}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"recommended_next_task: {HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_CLI_NEXT_TASK}")
+    print(_historical_replay_pit_evidence_closure_worklist_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_pit_evidence_closure_worklist_index(args: argparse.Namespace) -> int:
+    result = build_historical_replay_pit_evidence_closure_worklist_index(root=args.root, output_dir=args.output_dir)
+    latest = result.rows[0] if result.rows else {}
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('worklist_run_id', '')}")
+    print(f"signal_date: {latest.get('signal_date', '')}")
+    print(f"universe_name: {latest.get('universe_name', '')}")
+    print(f"status: {latest.get('status', '')}")
+    print(f"health_status: {latest.get('health_status', '')}")
+    print(f"row_count: {latest.get('row_count', 0)}")
+    print(f"blocked_count: {latest.get('blocked_count', 0)}")
+    print(f"missing_evidence_count: {latest.get('missing_evidence_count', 0)}")
+    print(f"needs_manual_review_count: {latest.get('needs_manual_review_count', 0)}")
+    print(f"no_hit_review_needed_count: {latest.get('no_hit_review_needed_count', 0)}")
+    print(f"closure_ready_not_pit_approved_count: {latest.get('closure_ready_not_pit_approved_count', 0)}")
+    print(f"profile_conflict_count: {latest.get('profile_conflict_count', 0)}")
+    print(f"survivorship_warning_count: {latest.get('survivorship_warning_count', 0)}")
+    print(f"report_path: {latest.get('report_path', '')}")
+    print(_historical_replay_pit_evidence_closure_worklist_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_pit_evidence_closure_worklist_health(args: argparse.Namespace) -> int:
+    result = check_historical_replay_pit_evidence_closure_worklist_health(root=args.root, output_dir=args.output_dir)
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"Health report path: {result.artifact_paths['health_md']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_historical_replay_pit_evidence_closure_worklist_safety_statement())
+    return 1 if result.status.endswith("FAIL_UNSAFE") else 0
+
+
+def _handle_historical_replay_pit_evidence_closure_worklist_status(args: argparse.Namespace) -> int:
+    result = run_historical_replay_pit_evidence_closure_worklist_status(root=args.root, output_dir=args.output_dir)
+    summary = result.summary
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"Status report path: {result.artifact_paths['status_md']}")
+    print(f"latest_run_id: {result.latest_worklist_run_id}")
+    print(f"signal_date: {summary.get('latest_signal_date', '')}")
+    print(f"universe_name: {summary.get('latest_universe_name', '')}")
+    print(f"status: {result.latest_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"row_count: {summary.get('latest_row_count', 0)}")
+    print(f"blocked_count: {summary.get('latest_blocked_count', 0)}")
+    print(f"missing_evidence_count: {summary.get('latest_missing_evidence_count', 0)}")
+    print(f"needs_manual_review_count: {summary.get('latest_needs_manual_review_count', 0)}")
+    print(f"no_hit_review_needed_count: {summary.get('latest_no_hit_review_needed_count', 0)}")
+    print(f"closure_ready_not_pit_approved_count: {summary.get('latest_closure_ready_not_pit_approved_count', 0)}")
+    print(f"profile_conflict_count: {summary.get('latest_profile_conflict_count', 0)}")
+    print(f"survivorship_warning_count: {summary.get('latest_survivorship_warning_count', 0)}")
+    print(f"report_path: {summary.get('latest_report_path', '')}")
+    print(f"recommended_next_task: {HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_CLI_NEXT_TASK}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_historical_replay_pit_evidence_closure_worklist_safety_statement())
+    return 0
 
 
 def _handle_historical_replay_input_gate_validator_fixture(args: argparse.Namespace) -> int:
