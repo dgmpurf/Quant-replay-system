@@ -8133,6 +8133,30 @@ def build_parser() -> argparse.ArgumentParser:
     signal_advisory_status.add_argument("--config", help="Optional config YAML path")
     signal_advisory_status.set_defaults(handler=_handle_signal_advisory_status)
 
+    daily_advisory_review = subparsers.add_parser(
+        "personal-mvp-daily-advisory-review",
+        help="Build a local report-only daily advisory review surface from existing artifacts",
+    )
+    daily_advisory_review.add_argument("--root", default="outputs/reports", help="Local report root to inspect")
+    daily_advisory_review.add_argument("--review-date", help="Optional review date YYYY-MM-DD")
+    daily_advisory_review.add_argument("--output-dir", help="Optional daily advisory review output directory")
+    daily_advisory_review.add_argument("--max-symbols", type=int, help="Optional maximum visible symbol rows")
+    daily_advisory_review.add_argument("--stale-after-days", type=int, default=7, help="Artifact freshness threshold")
+    daily_advisory_review.add_argument(
+        "--include-paper-context",
+        dest="include_paper_context",
+        action="store_true",
+        default=True,
+        help="Include optional local paper workflow context when present",
+    )
+    daily_advisory_review.add_argument(
+        "--no-include-paper-context",
+        dest="include_paper_context",
+        action="store_false",
+        help="Do not include optional paper workflow context",
+    )
+    daily_advisory_review.set_defaults(handler=_handle_personal_mvp_daily_advisory_review)
+
     single_symbol_advisory = subparsers.add_parser(
         "single-symbol-advisory",
         help="Build a local advisory review for one symbol from existing artifacts",
@@ -20274,6 +20298,38 @@ def _handle_signal_advisory_status(args: argparse.Namespace) -> int:
         return 1
     if result.status == "WARN" and args.strict:
         return 1
+    return 0
+
+
+def _handle_personal_mvp_daily_advisory_review(args: argparse.Namespace) -> int:
+    from quant_replay_system.personal_mvp_daily_advisory_review import (
+        run_personal_mvp_daily_advisory_review,
+    )
+
+    result = run_personal_mvp_daily_advisory_review(
+        root=args.root,
+        output_dir=args.output_dir,
+        review_date=args.review_date,
+        max_symbols=args.max_symbols,
+        include_paper_context=bool(args.include_paper_context),
+        stale_after_days=args.stale_after_days,
+    )
+    print(f"daily_review_run_id: {result.daily_review_run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"row_count: {result.row_count}")
+    print(f"warning_count: {result.warning_count}")
+    print(f"artifact_dir: {result.artifact_paths['artifact_dir']}")
+    print(f"report_path: {result.artifact_paths['daily_advisory_review_report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print("No broker API was invoked.")
+    print("No orders were placed.")
+    print("No messages were sent.")
+    print("No trading was authorized.")
+    print("No protected data paths were written.")
     return 0
 
 
