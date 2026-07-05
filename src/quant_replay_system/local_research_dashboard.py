@@ -200,6 +200,12 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_preflight_status import (
     run_real_reviewed_local_csv_package_candidate_preflight_status,
 )
+from quant_replay_system.personal_mvp_daily_advisory_review import (
+    REQUIRED_FALSE_SAFETY_FIELDS as PERSONAL_MVP_DAILY_ADVISORY_REVIEW_FALSE_FIELDS,
+)
+from quant_replay_system.personal_mvp_daily_advisory_review_status import (
+    run_personal_mvp_daily_advisory_review_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1531,6 +1537,35 @@ SUMMARY_COLUMNS = [
     "latest_source_artifact_byte_hash_report_only",
     "latest_source_artifact_byte_hash_diagnostic_only",
     "latest_source_artifact_byte_hash_recommended_next_task",
+    "personal_mvp_daily_advisory_review_context_visible",
+    "latest_personal_mvp_daily_advisory_review_run_id",
+    "latest_personal_mvp_daily_advisory_review_status",
+    "latest_personal_mvp_daily_advisory_review_health_status",
+    "latest_personal_mvp_daily_advisory_review_workflow_stage",
+    "latest_personal_mvp_daily_advisory_review_artifact_path",
+    "latest_personal_mvp_daily_advisory_review_report_path",
+    "latest_personal_mvp_daily_advisory_review_metadata_path",
+    "latest_personal_mvp_daily_advisory_review_row_count",
+    "latest_personal_mvp_daily_advisory_review_watch_count",
+    "latest_personal_mvp_daily_advisory_review_review_buy_candidate_count",
+    "latest_personal_mvp_daily_advisory_review_review_sell_candidate_count",
+    "latest_personal_mvp_daily_advisory_review_hold_review_count",
+    "latest_personal_mvp_daily_advisory_review_no_action_count",
+    "latest_personal_mvp_daily_advisory_review_blocked_count",
+    "latest_personal_mvp_daily_advisory_review_demo_count",
+    "latest_personal_mvp_daily_advisory_review_not_found_count",
+    "latest_personal_mvp_daily_advisory_review_stale_artifact_count",
+    "latest_personal_mvp_daily_advisory_review_missing_artifact_count",
+    "latest_personal_mvp_daily_advisory_review_manual_confirmation_required",
+    "latest_personal_mvp_daily_advisory_review_recommended_next_manual_action",
+    "latest_personal_mvp_daily_advisory_review_recommended_next_task",
+    "latest_personal_mvp_daily_advisory_review_report_only",
+    "latest_personal_mvp_daily_advisory_review_diagnostic_only",
+    "latest_personal_mvp_daily_advisory_review_local_only",
+    *[
+        f"latest_personal_mvp_daily_advisory_review_{field}"
+        for field in PERSONAL_MVP_DAILY_ADVISORY_REVIEW_FALSE_FIELDS
+    ],
     "reviewer_quality_limitation_context_visible",
     "latest_reviewer_quality_limitation_run_id",
     "latest_reviewer_quality_limitation_runtime_status",
@@ -3293,6 +3328,7 @@ OPTIONAL_COMPONENTS = {
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_SOURCE_ARTIFACT_BYTE_HASH_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_REVIEWER_AUTHORITY_QUALITY_LIMITATION_STATUS",
                     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_PREFLIGHT_STATUS",
+                    "PERSONAL_MVP_DAILY_ADVISORY_REVIEW_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -3358,6 +3394,7 @@ WORKFLOW_AREAS = {
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_LOCAL_FILE_BYTE_HASH_ONLY"
     ),
+    "PERSONAL_MVP_DAILY_ADVISORY_REVIEW_STATUS": "PERSONAL_MVP_DAILY_ADVISORY_REVIEW",
     "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION_STATUS": (
         "TINY_PIT_REAL_REVIEWED_LOCAL_CSV_PACKAGE_CANDIDATE_EXPECTED_HASH_VERIFICATION"
     ),
@@ -4900,6 +4937,56 @@ class LocalResearchDashboardResult:
     latest_source_artifact_byte_hash_report_only: bool
     latest_source_artifact_byte_hash_diagnostic_only: bool
     latest_source_artifact_byte_hash_recommended_next_task: str
+    personal_mvp_daily_advisory_review_context_visible: bool
+    latest_personal_mvp_daily_advisory_review_run_id: str
+    latest_personal_mvp_daily_advisory_review_status: str
+    latest_personal_mvp_daily_advisory_review_health_status: str
+    latest_personal_mvp_daily_advisory_review_workflow_stage: str
+    latest_personal_mvp_daily_advisory_review_artifact_path: str
+    latest_personal_mvp_daily_advisory_review_report_path: str
+    latest_personal_mvp_daily_advisory_review_metadata_path: str
+    latest_personal_mvp_daily_advisory_review_row_count: int
+    latest_personal_mvp_daily_advisory_review_watch_count: int
+    latest_personal_mvp_daily_advisory_review_review_buy_candidate_count: int
+    latest_personal_mvp_daily_advisory_review_review_sell_candidate_count: int
+    latest_personal_mvp_daily_advisory_review_hold_review_count: int
+    latest_personal_mvp_daily_advisory_review_no_action_count: int
+    latest_personal_mvp_daily_advisory_review_blocked_count: int
+    latest_personal_mvp_daily_advisory_review_demo_count: int
+    latest_personal_mvp_daily_advisory_review_not_found_count: int
+    latest_personal_mvp_daily_advisory_review_stale_artifact_count: int
+    latest_personal_mvp_daily_advisory_review_missing_artifact_count: int
+    latest_personal_mvp_daily_advisory_review_manual_confirmation_required: bool
+    latest_personal_mvp_daily_advisory_review_recommended_next_manual_action: str
+    latest_personal_mvp_daily_advisory_review_recommended_next_task: str
+    latest_personal_mvp_daily_advisory_review_report_only: bool
+    latest_personal_mvp_daily_advisory_review_diagnostic_only: bool
+    latest_personal_mvp_daily_advisory_review_local_only: bool
+    latest_personal_mvp_daily_advisory_review_real_buy_review_approved: bool
+    latest_personal_mvp_daily_advisory_review_buy_review_allowed: bool
+    latest_personal_mvp_daily_advisory_review_trading_allowed: bool
+    latest_personal_mvp_daily_advisory_review_broker_api_called: bool
+    latest_personal_mvp_daily_advisory_review_broker_api_approved: bool
+    latest_personal_mvp_daily_advisory_review_order_placed: bool
+    latest_personal_mvp_daily_advisory_review_order_placement_approved: bool
+    latest_personal_mvp_daily_advisory_review_message_sent: bool
+    latest_personal_mvp_daily_advisory_review_message_delivery_approved: bool
+    latest_personal_mvp_daily_advisory_review_external_api_called: bool
+    latest_personal_mvp_daily_advisory_review_llm_api_called: bool
+    latest_personal_mvp_daily_advisory_review_active_replay_input_created: bool
+    latest_personal_mvp_daily_advisory_review_active_replay_input_approved: bool
+    latest_personal_mvp_daily_advisory_review_real_replay_execution_approved: bool
+    latest_personal_mvp_daily_advisory_review_current_candidates_run: bool
+    latest_personal_mvp_daily_advisory_review_snapshot_built: bool
+    latest_personal_mvp_daily_advisory_review_signal_semantics_mutated: bool
+    latest_personal_mvp_daily_advisory_review_labels_created: bool
+    latest_personal_mvp_daily_advisory_review_training_dataset_created: bool
+    latest_personal_mvp_daily_advisory_review_model_training_performed: bool
+    latest_personal_mvp_daily_advisory_review_stock_profile_created: bool
+    latest_personal_mvp_daily_advisory_review_strategy_performance_validated: bool
+    latest_personal_mvp_daily_advisory_review_data_raw_written: bool
+    latest_personal_mvp_daily_advisory_review_data_processed_written: bool
+    latest_personal_mvp_daily_advisory_review_data_cache_written: bool
     reviewer_quality_limitation_context_visible: bool
     latest_reviewer_quality_limitation_run_id: str
     latest_reviewer_quality_limitation_runtime_status: str
@@ -9749,6 +9836,7 @@ def run_local_research_dashboard(
         **_csv_physical_data_line_count_only_result_kwargs(summary),
         **_source_revision_time_result_kwargs(summary),
         **_source_artifact_byte_hash_result_kwargs(summary),
+        **_personal_mvp_daily_advisory_review_result_kwargs(summary),
         **_reviewer_quality_limitation_result_kwargs(summary),
         **_real_reviewed_local_csv_preflight_result_kwargs(summary),
         source_registry_schema_fixture_workflow_implemented=_bool_from_text(
@@ -13829,6 +13917,7 @@ def scan_local_research_workflow_artifacts(
             tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash_path
         )
     )
+    records.extend(_scan_personal_mvp_daily_advisory_review_status(root_path / "personal_mvp_daily_advisory_review"))
     records.extend(
         _scan_tiny_pit_real_reviewed_local_csv_package_candidate_reviewer_quality_limitation_status(
             root_path
@@ -21311,6 +21400,7 @@ def summarize_local_research_status(
         **_csv_physical_data_line_count_only_summary_fields(by_component),
         **_source_revision_time_summary_fields(by_component),
         **_source_artifact_byte_hash_summary_fields(by_component),
+        **_personal_mvp_daily_advisory_review_summary_fields(by_component),
         **_reviewer_quality_limitation_summary_fields(by_component),
         **_real_reviewed_local_csv_preflight_summary_fields(by_component),
         "source_registry_schema_fixture_workflow_implemented": _parse_note_value(
@@ -29495,6 +29585,7 @@ def build_local_research_dashboard_metadata(
         **_csv_physical_data_line_count_only_metadata(result),
         **_source_revision_time_metadata(result),
         **_source_artifact_byte_hash_metadata(result),
+        **_personal_mvp_daily_advisory_review_metadata(result),
         **_reviewer_quality_limitation_metadata(result),
         **_real_reviewed_local_csv_preflight_metadata(result),
         "source_registry_schema_fixture_workflow_implemented": (
@@ -37829,6 +37920,249 @@ def _source_artifact_byte_hash_result_kwargs(summary: dict[str, Any]) -> dict[st
 
 def _source_artifact_byte_hash_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
     return {field: getattr(result, field) for field in _SOURCE_ARTIFACT_BYTE_HASH_RESULT_FIELDS}
+
+
+_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_COMPONENT = "PERSONAL_MVP_DAILY_ADVISORY_REVIEW_STATUS"
+_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_WORKFLOW_AREA = "PERSONAL_MVP_DAILY_ADVISORY_REVIEW"
+_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX = "latest_personal_mvp_daily_advisory_review_"
+_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_LATEST_FIELDS = [
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}run_id",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}status",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}health_status",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}workflow_stage",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}artifact_path",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}report_path",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}metadata_path",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}recommended_next_manual_action",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}recommended_next_task",
+]
+_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_INT_FIELDS = [
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}row_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}watch_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}review_buy_candidate_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}review_sell_candidate_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}hold_review_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}no_action_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}blocked_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}demo_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}not_found_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}stale_artifact_count",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}missing_artifact_count",
+]
+_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_BOOL_FIELDS = [
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}manual_confirmation_required",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}report_only",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}diagnostic_only",
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}local_only",
+]
+_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_SAFETY_FIELDS = [
+    f"{_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_PREFIX}{field}"
+    for field in PERSONAL_MVP_DAILY_ADVISORY_REVIEW_FALSE_FIELDS
+]
+_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_RESULT_FIELDS = (
+    ["personal_mvp_daily_advisory_review_context_visible"]
+    + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_LATEST_FIELDS
+    + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_INT_FIELDS
+    + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_BOOL_FIELDS
+    + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_SAFETY_FIELDS
+)
+
+
+def _scan_personal_mvp_daily_advisory_review_status(root: Path) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_personal_mvp_daily_advisory_review_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_status:
+        return []
+    summary = _personal_mvp_daily_advisory_review_summary_from_status_result(result)
+    summary["context_visible"] = True
+    warning_count = _int_or_zero(summary.get("latest_personal_mvp_daily_advisory_review_missing_artifact_count"))
+    return [
+        _record(
+            workflow_area=_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_WORKFLOW_AREA,
+            component=_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_COMPONENT,
+            status=result.latest_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_daily_review_run_id,
+            report_path=_string_or_empty(result.summary.get("latest_report_path")),
+            metadata_path=_string_or_empty(result.summary.get("latest_metadata_path")),
+            warning_count=warning_count,
+            error_count=1 if result.latest_health_status == "FAIL" else 0,
+            next_action=summary["latest_personal_mvp_daily_advisory_review_recommended_next_task"],
+            notes=_personal_mvp_daily_advisory_review_notes(summary),
+        )
+    ]
+
+
+def _personal_mvp_daily_advisory_review_summary_from_status_result(result: Any) -> dict[str, Any]:
+    status_summary = result.summary
+    summary = {
+        "latest_personal_mvp_daily_advisory_review_run_id": result.latest_daily_review_run_id,
+        "latest_personal_mvp_daily_advisory_review_status": result.latest_status,
+        "latest_personal_mvp_daily_advisory_review_health_status": result.latest_health_status,
+        "latest_personal_mvp_daily_advisory_review_workflow_stage": result.latest_workflow_stage,
+        "latest_personal_mvp_daily_advisory_review_artifact_path": status_summary.get("latest_artifact_path"),
+        "latest_personal_mvp_daily_advisory_review_report_path": status_summary.get("latest_report_path"),
+        "latest_personal_mvp_daily_advisory_review_metadata_path": status_summary.get("latest_metadata_path"),
+        "latest_personal_mvp_daily_advisory_review_row_count": status_summary.get("latest_row_count"),
+        "latest_personal_mvp_daily_advisory_review_watch_count": status_summary.get("latest_watch_count"),
+        "latest_personal_mvp_daily_advisory_review_review_buy_candidate_count": status_summary.get(
+            "latest_review_buy_candidate_count"
+        ),
+        "latest_personal_mvp_daily_advisory_review_review_sell_candidate_count": status_summary.get(
+            "latest_review_sell_candidate_count"
+        ),
+        "latest_personal_mvp_daily_advisory_review_hold_review_count": status_summary.get(
+            "latest_hold_review_count"
+        ),
+        "latest_personal_mvp_daily_advisory_review_no_action_count": status_summary.get(
+            "latest_no_action_count"
+        ),
+        "latest_personal_mvp_daily_advisory_review_blocked_count": status_summary.get("latest_blocked_count"),
+        "latest_personal_mvp_daily_advisory_review_demo_count": status_summary.get("latest_demo_count"),
+        "latest_personal_mvp_daily_advisory_review_not_found_count": status_summary.get(
+            "latest_not_found_count"
+        ),
+        "latest_personal_mvp_daily_advisory_review_stale_artifact_count": status_summary.get(
+            "latest_stale_artifact_count"
+        ),
+        "latest_personal_mvp_daily_advisory_review_missing_artifact_count": status_summary.get(
+            "latest_missing_artifact_count"
+        ),
+        "latest_personal_mvp_daily_advisory_review_manual_confirmation_required": status_summary.get(
+            "manual_confirmation_required"
+        ),
+        "latest_personal_mvp_daily_advisory_review_recommended_next_manual_action": (
+            _personal_mvp_daily_advisory_review_next_manual_action(result.latest_status)
+        ),
+        "latest_personal_mvp_daily_advisory_review_recommended_next_task": result.recommended_next_task,
+        "latest_personal_mvp_daily_advisory_review_report_only": status_summary.get("report_only"),
+        "latest_personal_mvp_daily_advisory_review_diagnostic_only": status_summary.get("diagnostic_only"),
+        "latest_personal_mvp_daily_advisory_review_local_only": status_summary.get("local_only"),
+    }
+    for field in PERSONAL_MVP_DAILY_ADVISORY_REVIEW_FALSE_FIELDS:
+        summary[f"latest_personal_mvp_daily_advisory_review_{field}"] = status_summary.get(f"latest_{field}")
+    return summary
+
+
+def _personal_mvp_daily_advisory_review_next_manual_action(status: Any) -> str:
+    status_text = _string_or_empty(status)
+    if status_text == "DAILY_ADVISORY_REVIEW_READY_FOR_MANUAL_REVIEW":
+        return "Review the local daily advisory surface manually; no buy-review, orders, messages, broker calls, or trading are authorized."
+    if status_text == "DAILY_ADVISORY_REVIEW_NO_LOCAL_CONTEXT":
+        return "Create or select local report-only advisory context before using the daily review surface."
+    return "Review Personal MVP daily advisory review status and health as report-only local context."
+
+
+def _personal_mvp_daily_advisory_review_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_note_safe_text(summary.get(field))};"
+        for field in (
+            _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_LATEST_FIELDS
+            + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_INT_FIELDS
+            + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_BOOL_FIELDS
+            + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_SAFETY_FIELDS
+        )
+    )
+    return (
+        "context_visible=True; "
+        "personal_mvp_daily_advisory_review_semantics=report_only_local_manual_review_context_no_buy_review_order_message_broker_or_trading; "
+        f"health_status={_string_or_empty(summary.get('latest_personal_mvp_daily_advisory_review_health_status'))}; "
+        f"workflow_stage={_string_or_empty(summary.get('latest_personal_mvp_daily_advisory_review_workflow_stage'))}; "
+        f"artifact_path={_note_safe_text(summary.get('latest_personal_mvp_daily_advisory_review_artifact_path'))}; "
+        f"report_path={_note_safe_text(summary.get('latest_personal_mvp_daily_advisory_review_report_path'))}; "
+        f"metadata_path={_note_safe_text(summary.get('latest_personal_mvp_daily_advisory_review_metadata_path'))}; "
+        f"{field_notes}"
+    )
+
+
+def _personal_mvp_daily_advisory_review_summary_fields(
+    by_component: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    component = by_component.get(_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "personal_mvp_daily_advisory_review_context_visible": _parse_note_value(notes, "context_visible"),
+        "latest_personal_mvp_daily_advisory_review_run_id": _string_or_empty(
+            component.get("latest_artifact_id")
+        ),
+        "latest_personal_mvp_daily_advisory_review_status": _component_status(
+            by_component,
+            _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_COMPONENT,
+        ),
+        "latest_personal_mvp_daily_advisory_review_health_status": _parse_note_value(
+            notes,
+            "health_status",
+        ),
+        "latest_personal_mvp_daily_advisory_review_workflow_stage": _string_or_empty(
+            component.get("stage")
+        ),
+        "latest_personal_mvp_daily_advisory_review_artifact_path": _parse_note_value(
+            notes,
+            "artifact_path",
+        ),
+        "latest_personal_mvp_daily_advisory_review_report_path": _parse_note_value(
+            notes,
+            "report_path",
+        ),
+        "latest_personal_mvp_daily_advisory_review_metadata_path": _parse_note_value(
+            notes,
+            "metadata_path",
+        ),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in (
+                _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_LATEST_FIELDS
+                + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_INT_FIELDS
+                + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_BOOL_FIELDS
+                + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_SAFETY_FIELDS
+            )
+            if field not in fields
+        }
+    )
+    return fields
+
+
+def _personal_mvp_daily_advisory_review_result_kwargs(summary: dict[str, Any]) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, ""))
+        for field in _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_LATEST_FIELDS
+    }
+    kwargs["personal_mvp_daily_advisory_review_context_visible"] = _bool_from_text(
+        summary.get("personal_mvp_daily_advisory_review_context_visible")
+    )
+    kwargs.update(
+        {
+            field: _int_or_zero(summary.get(field))
+            for field in _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_INT_FIELDS
+        }
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in (
+                _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_BOOL_FIELDS
+                + _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_SAFETY_FIELDS
+            )
+        }
+    )
+    return kwargs
+
+
+def _personal_mvp_daily_advisory_review_metadata(result: LocalResearchDashboardResult) -> dict[str, Any]:
+    return {
+        field: getattr(result, field)
+        for field in _PERSONAL_MVP_DAILY_ADVISORY_REVIEW_RESULT_FIELDS
+    }
 
 
 _REVIEWER_QUALITY_LIMITATION_COMPONENT = (

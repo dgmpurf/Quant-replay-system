@@ -170,6 +170,19 @@ from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_pref
     STATUS_WARN_MISSING_OPTIONAL_EVIDENCE as PREFLIGHT_STATUS_WARN_MISSING_OPTIONAL,
     run_real_reviewed_local_csv_package_candidate_preflight,
 )
+from quant_replay_system.personal_mvp_daily_advisory_review import (
+    REQUIRED_FALSE_SAFETY_FIELDS as PERSONAL_MVP_DAILY_ADVISORY_REVIEW_FALSE_FIELDS,
+    run_personal_mvp_daily_advisory_review,
+)
+from quant_replay_system.personal_mvp_daily_advisory_review_health import (
+    check_personal_mvp_daily_advisory_review_health,
+)
+from quant_replay_system.personal_mvp_daily_advisory_review_index import (
+    build_personal_mvp_daily_advisory_review_index,
+)
+from quant_replay_system.personal_mvp_daily_advisory_review_status import (
+    run_personal_mvp_daily_advisory_review_status,
+)
 from quant_replay_system.tiny_pit_real_reviewed_local_csv_package_candidate_source_artifact_byte_hash import (
     AVAILABLE_TIME_VALIDATION_NONE as SOURCE_ARTIFACT_BYTE_HASH_AVAILABLE_TIME_NONE,
     CSV_READ_NONE as SOURCE_ARTIFACT_BYTE_HASH_CSV_READ_NONE,
@@ -358,6 +371,9 @@ UNSAFE_PREFLIGHT_WORDING = [
 EXPECTED_SOURCE_ARTIFACT_BYTE_HASH_NEXT_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash "
     "Research-Status Planning Report-Only v0.1"
+)
+EXPECTED_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_NEXT_TASK = (
+    "Personal MVP Daily Advisory Review Surface Research-Status Integration Planning Report-Only v0.1"
 )
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
@@ -10026,6 +10042,75 @@ def _reports_root(tmp_path: Path) -> Path:
     return root
 
 
+def _run_personal_mvp_daily_advisory_review_context(root: Path):
+    source_root = root / "_daily_review_source"
+    _personal_mvp_daily_advisory_review_signal_artifact(source_root)
+    result = run_personal_mvp_daily_advisory_review(
+        root=source_root,
+        output_dir=root / "personal_mvp_daily_advisory_review",
+        review_date="2024-05-20",
+        run_id="daily-review-001",
+    )
+    build_personal_mvp_daily_advisory_review_index(root=root / "personal_mvp_daily_advisory_review")
+    check_personal_mvp_daily_advisory_review_health(root=root / "personal_mvp_daily_advisory_review")
+    run_personal_mvp_daily_advisory_review_status(root=root / "personal_mvp_daily_advisory_review")
+    return result
+
+
+def _personal_mvp_daily_advisory_review_signal_artifact(root: Path) -> None:
+    artifact = root / "signals" / "daily-review-source"
+    artifact.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(
+        [
+            {
+                "signal_id": "daily-signal-000001",
+                "signal_run_id": "daily-review-source",
+                "signal_date": "2024-05-20",
+                "decision_date": "2024-05-20",
+                "symbol": "000001",
+                "name": "Name 000001",
+                "instrument_type": "stock",
+                "universe_name": "stock_core",
+                "advisory_action": "WATCH",
+                "final_score": 60.0,
+                "confidence_level": "medium",
+                "reason_summary": "watch context",
+                "risk_notes": "risk context",
+                "data_source_notes": "local report-only fixture",
+                "demo_mode": False,
+                "not_strategy_recommendation": False,
+                "requires_manual_confirmation": True,
+                "auto_order_allowed": False,
+                "no_live_trading": True,
+                "no_broker_api": True,
+                "no_message_sent": True,
+            }
+        ]
+    ).to_csv(artifact / "signals.csv", index=False)
+    (artifact / "signal_advisory_report.md").write_text("# Signal report\n", encoding="utf-8")
+    (artifact / "metadata.json").write_text(
+        json.dumps(
+            {
+                "signal_run_id": "daily-review-source",
+                "status": "SIGNAL_ADVISORY_READY_FOR_REVIEW",
+                "workflow_stage": "SIGNAL_ADVISORY_READY_FOR_REVIEW",
+                "signal_count": 1,
+                "report_only": True,
+                "diagnostic_only": True,
+                "local_only": True,
+                "buy_review_allowed": False,
+                "trading_allowed": False,
+                "broker_api_called": False,
+                "order_placed": False,
+                "message_sent": False,
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+
+
 def _metadata_reference_following_manifest(root: Path) -> Path:
     metadata_path = root / "metadata_refs" / "source_registry_snapshot.json"
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
@@ -18472,6 +18557,116 @@ def test_cli_research_status_prints_source_artifact_byte_hash_preview_only(
     assert str(fixture["source_artifact"]) not in output
     assert "synthetic source artifact bytes" not in output
     assert "ACTIVE_REPLAY_INPUT_READY" not in output
+
+
+def test_research_status_includes_personal_mvp_daily_advisory_review_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    daily = _run_personal_mvp_daily_advisory_review_context(root)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.personal_mvp_daily_advisory_review_context_visible is True
+    assert result.latest_personal_mvp_daily_advisory_review_run_id == daily.daily_review_run_id
+    assert result.latest_personal_mvp_daily_advisory_review_status == (
+        "DAILY_ADVISORY_REVIEW_READY_FOR_MANUAL_REVIEW"
+    )
+    assert result.latest_personal_mvp_daily_advisory_review_health_status == "PASS"
+    assert result.latest_personal_mvp_daily_advisory_review_workflow_stage == (
+        "DAILY_ADVISORY_REVIEW_READY_FOR_MANUAL_REVIEW"
+    )
+    assert result.latest_personal_mvp_daily_advisory_review_report_path.endswith(
+        "daily_advisory_review_report.md"
+    )
+    assert result.latest_personal_mvp_daily_advisory_review_metadata_path.endswith("metadata.json")
+    assert result.latest_personal_mvp_daily_advisory_review_row_count == 1
+    assert result.latest_personal_mvp_daily_advisory_review_watch_count == 1
+    assert result.latest_personal_mvp_daily_advisory_review_review_buy_candidate_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_review_sell_candidate_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_hold_review_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_no_action_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_blocked_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_demo_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_not_found_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_stale_artifact_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_missing_artifact_count == 0
+    assert result.latest_personal_mvp_daily_advisory_review_manual_confirmation_required is True
+    assert result.latest_personal_mvp_daily_advisory_review_recommended_next_task == (
+        EXPECTED_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_NEXT_TASK
+    )
+    assert result.latest_personal_mvp_daily_advisory_review_report_only is True
+    assert result.latest_personal_mvp_daily_advisory_review_diagnostic_only is True
+    assert result.latest_personal_mvp_daily_advisory_review_local_only is True
+    for field in PERSONAL_MVP_DAILY_ADVISORY_REVIEW_FALSE_FIELDS:
+        assert getattr(result, f"latest_personal_mvp_daily_advisory_review_{field}") is False
+        assert metadata[f"latest_personal_mvp_daily_advisory_review_{field}"] is False
+    assert summary.loc[0, "personal_mvp_daily_advisory_review_context_visible"] == "True"
+    assert summary.loc[0, "latest_personal_mvp_daily_advisory_review_watch_count"] == "1"
+    assert metadata["latest_personal_mvp_daily_advisory_review_watch_count"] == 1
+
+
+def test_research_status_preserves_paper_priority_over_personal_mvp_daily_advisory_review(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_personal_mvp_daily_advisory_review_context(root)
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.personal_mvp_daily_advisory_review_context_visible is True
+    assert result.latest_personal_mvp_daily_advisory_review_buy_review_allowed is False
+    assert result.latest_personal_mvp_daily_advisory_review_trading_allowed is False
+    assert result.latest_personal_mvp_daily_advisory_review_current_candidates_run is False
+    assert result.latest_personal_mvp_daily_advisory_review_snapshot_built is False
+    assert result.latest_personal_mvp_daily_advisory_review_signal_semantics_mutated is False
+
+
+def test_cli_research_status_prints_personal_mvp_daily_advisory_review_context(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    daily = _run_personal_mvp_daily_advisory_review_context(root)
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr().out.lower()
+
+    assert code == 0
+    assert "personal_mvp_daily_advisory_review_context_visible: true" in output
+    assert f"latest_personal_mvp_daily_advisory_review_run_id: {daily.daily_review_run_id}" in output
+    assert "latest_personal_mvp_daily_advisory_review_status: daily_advisory_review_ready_for_manual_review" in output
+    assert "latest_personal_mvp_daily_advisory_review_buy_review_allowed: false" in output
+    assert "latest_personal_mvp_daily_advisory_review_trading_allowed: false" in output
+    assert "latest_personal_mvp_daily_advisory_review_broker_api_called: false" in output
+    assert "latest_personal_mvp_daily_advisory_review_order_placed: false" in output
+    assert "latest_personal_mvp_daily_advisory_review_message_sent: false" in output
+    assert "buy now" not in output
+    assert "sell now" not in output
+    assert "place order" not in output
+    assert "submit order" not in output
+    assert "trading_allowed: true" not in output
+    assert "buy_review_allowed: true" not in output
+
+
+def test_personal_mvp_daily_advisory_review_research_status_does_not_create_docs_project_sources(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_personal_mvp_daily_advisory_review_context(root)
+    run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert not (tmp_path / "docs" / "project_sources").exists()
 
 
 def test_research_status_includes_tiny_pit_real_reviewed_package_candidate_contract_fixture_context(

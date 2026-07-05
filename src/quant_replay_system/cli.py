@@ -26387,6 +26387,138 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "latest_source_artifact_byte_hash_recommended_next_task: "
         f"{result.latest_source_artifact_byte_hash_recommended_next_task}"
     )
+    print(
+        "personal_mvp_daily_advisory_review_context_visible: "
+        f"{result.personal_mvp_daily_advisory_review_context_visible}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_run_id: "
+        f"{result.latest_personal_mvp_daily_advisory_review_run_id}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_status: "
+        f"{result.latest_personal_mvp_daily_advisory_review_status}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_health_status: "
+        f"{result.latest_personal_mvp_daily_advisory_review_health_status}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_workflow_stage: "
+        f"{result.latest_personal_mvp_daily_advisory_review_workflow_stage}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_report_path: "
+        f"{result.latest_personal_mvp_daily_advisory_review_report_path}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_row_count: "
+        f"{result.latest_personal_mvp_daily_advisory_review_row_count}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_watch_count: "
+        f"{result.latest_personal_mvp_daily_advisory_review_watch_count}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_review_buy_candidate_count: "
+        f"{result.latest_personal_mvp_daily_advisory_review_review_buy_candidate_count}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_review_sell_candidate_count: "
+        f"{result.latest_personal_mvp_daily_advisory_review_review_sell_candidate_count}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_manual_confirmation_required: "
+        f"{result.latest_personal_mvp_daily_advisory_review_manual_confirmation_required}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_report_only: "
+        f"{result.latest_personal_mvp_daily_advisory_review_report_only}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_diagnostic_only: "
+        f"{result.latest_personal_mvp_daily_advisory_review_diagnostic_only}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_local_only: "
+        f"{result.latest_personal_mvp_daily_advisory_review_local_only}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_buy_review_allowed: "
+        f"{result.latest_personal_mvp_daily_advisory_review_buy_review_allowed}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_trading_allowed: "
+        f"{result.latest_personal_mvp_daily_advisory_review_trading_allowed}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_broker_api_called: "
+        f"{result.latest_personal_mvp_daily_advisory_review_broker_api_called}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_order_placed: "
+        f"{result.latest_personal_mvp_daily_advisory_review_order_placed}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_message_sent: "
+        f"{result.latest_personal_mvp_daily_advisory_review_message_sent}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_current_candidates_run: "
+        f"{result.latest_personal_mvp_daily_advisory_review_current_candidates_run}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_snapshot_built: "
+        f"{result.latest_personal_mvp_daily_advisory_review_snapshot_built}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_signal_semantics_mutated: "
+        f"{result.latest_personal_mvp_daily_advisory_review_signal_semantics_mutated}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_active_replay_input_created: "
+        f"{result.latest_personal_mvp_daily_advisory_review_active_replay_input_created}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_real_replay_execution_approved: "
+        f"{result.latest_personal_mvp_daily_advisory_review_real_replay_execution_approved}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_labels_created: "
+        f"{result.latest_personal_mvp_daily_advisory_review_labels_created}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_training_dataset_created: "
+        f"{result.latest_personal_mvp_daily_advisory_review_training_dataset_created}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_model_training_performed: "
+        f"{result.latest_personal_mvp_daily_advisory_review_model_training_performed}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_stock_profile_created: "
+        f"{result.latest_personal_mvp_daily_advisory_review_stock_profile_created}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_strategy_performance_validated: "
+        f"{result.latest_personal_mvp_daily_advisory_review_strategy_performance_validated}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_data_raw_written: "
+        f"{result.latest_personal_mvp_daily_advisory_review_data_raw_written}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_data_processed_written: "
+        f"{result.latest_personal_mvp_daily_advisory_review_data_processed_written}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_data_cache_written: "
+        f"{result.latest_personal_mvp_daily_advisory_review_data_cache_written}"
+    )
+    print(
+        "latest_personal_mvp_daily_advisory_review_recommended_next_task: "
+        f"{result.latest_personal_mvp_daily_advisory_review_recommended_next_task}"
+    )
     print(f"reviewer_quality_limitation_context_visible: {result.reviewer_quality_limitation_context_visible}")
     print(f"latest_reviewer_quality_limitation_run_id: {result.latest_reviewer_quality_limitation_run_id}")
     print(
