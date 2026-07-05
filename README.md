@@ -2,6 +2,16 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Historical Replay PIT Evidence Closure Worklist v1.84.0
+
+`PIT_EVIDENCE_CLOSURE_WORKLIST_CREATED_REPORT_ONLY`, `PIT_EVIDENCE_CLOSURE_WORKLIST_WARN_NO_CONTEXT`, WARN states, and unsafe-root/input blocker states mean Historical Replay PIT Evidence Closure Worklist artifacts exist as report-only / diagnostic-only / local-only selected-sample evidence organization context.
+
+Use `historical-replay-pit-evidence-closure-worklist`, `historical-replay-pit-evidence-closure-worklist-index`, `historical-replay-pit-evidence-closure-worklist-health`, and `historical-replay-pit-evidence-closure-worklist-status` to create, discover, safety-check, and summarize the selected-sample worklist for `2024-04-02 / etf_core`. `research-status` exposes the latest worklist context as lower-priority research context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+A worklist row is not PIT approval. `closure_ready_not_pit_approved` is not PIT admissible. Reviewer no-hit acceptance is not source reliability scoring. `source_hash_preview` is not source_hash validation, and `local_file_hash_preview` is not PIT evidence by itself. Forward returns remain future information. The 8-layer factor taxonomy remains the primary structure; fixed 12 factors are not final.
+
+The workflow does not close PIT evidence, approve PIT admissibility, create active replay input, run replay, freeze replay decisions, create forward labels, compute metrics, train models, create stock_profile or paper expansion, create real buy-review eligibility, set `buy_review_allowed=true`, authorize trading, call broker/API/order/message systems, run current-candidates, build snapshots, mutate `signal_semantics`, or write `data/raw`, `data/processed`, or `data/cache`.
+
 ## Personal MVP Daily Advisory Review v1.83.0
 
 `DAILY_ADVISORY_REVIEW_READY_FOR_MANUAL_REVIEW`, `DAILY_ADVISORY_REVIEW_NO_LOCAL_CONTEXT`, stale/blocker/demo statuses, and `DAILY_ADVISORY_REVIEW_FAILED_SAFETY_CHECK` mean Personal MVP Daily Advisory Review artifacts exist as report-only / diagnostic-only / local-only human review context.
