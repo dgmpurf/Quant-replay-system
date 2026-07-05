@@ -2,6 +2,14 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Personal MVP Daily Advisory Review v1.83.0
+
+`DAILY_ADVISORY_REVIEW_READY_FOR_MANUAL_REVIEW`, `DAILY_ADVISORY_REVIEW_NO_LOCAL_CONTEXT`, stale/blocker/demo statuses, and `DAILY_ADVISORY_REVIEW_FAILED_SAFETY_CHECK` mean Personal MVP Daily Advisory Review artifacts exist as report-only / diagnostic-only / local-only human review context.
+
+Use `personal-mvp-daily-advisory-review`, `personal-mvp-daily-advisory-review-index`, `personal-mvp-daily-advisory-review-health`, and `personal-mvp-daily-advisory-review-status` to create, discover, safety-check, and summarize daily advisory review packets. `research-status` exposes the latest daily review context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+The workflow may aggregate existing local advisory artifacts into a compact daily readout, single-symbol drilldown index, and manual review checklist. It does not create real buy-review eligibility, set `buy_review_allowed=true`, authorize trading, call broker/API/order/message systems, create active replay input, run replay, create labels, train models, create stock_profile or paper expansion, validate strategy performance, run current-candidates, build snapshots, mutate `signal_semantics`, or write `data/raw`, `data/processed`, or `data/cache`.
+
 ## Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Source Artifact Byte-Hash v1.82.0
 
 `NO_SOURCE_ARTIFACT_BYTE_HASH_INPUT`, `SOURCE_ARTIFACT_BYTE_HASH_REPORT_ONLY`, `SOURCE_ARTIFACT_BYTE_HASH_MATCHED_REPORT_ONLY`, `SOURCE_ARTIFACT_BYTE_HASH_MISMATCHED_REPORT_ONLY`, WARN states, and FAIL/blocker states mean Source Artifact Byte-Hash artifacts exist as report-only / diagnostic-only opaque source artifact byte identity and integrity metadata only.

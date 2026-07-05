@@ -1270,6 +1270,14 @@ It exposes the latest run id, runtime status, health status, workflow stage, art
 
 The dashboard preserves later `PAPER_WORKFLOW_READY` priority. Tiny PIT metadata-reference-following artifacts remain context only; they do not validate real PIT timing, source evidence, reviewer authority, source reliability, or reviewed CSV contents. They do not create active reviewed input, real replay input, active replay input, `ACTIVE_REPLAY_INPUT_READY`, replay execution, replay evidence bundles, replay decisions, decision freezes, forward labels, future-label joins, training datasets, metric computation, signal_score inputs, model training, active weights, active thresholds, stock_profile validation, paper validation, buy-review eligibility, buy_review_allowed, strategy performance validation, current-candidates, snapshots, signal_semantics mutation, broker/API/order/message/trading behavior, or data/raw, data/processed, or data/cache writes.
 
+## Personal MVP Daily Advisory Review Context
+
+`research-status` includes Personal MVP Daily Advisory Review context when `personal-mvp-daily-advisory-review-status` artifacts exist. It exposes the latest daily review run id, status/stage, health, report path, row count, watch/manual-review/demo/blocked/not-found/stale counts, report-only flags, manual-confirmation flag, recommended next task, and safety fields.
+
+`DAILY_ADVISORY_REVIEW_READY_FOR_MANUAL_REVIEW` is a local human review context stage only. It is not global `APPROVED_FOR_PAPER`, not real buy-review eligibility, not `buy_review_allowed`, not strategy-performance validation, not active replay input, not replay execution, and not trading.
+
+The dashboard preserves existing paper workflow priority. Personal MVP daily advisory review artifacts remain report-only local diagnostics and do not authorize current-candidates, snapshots, signal_semantics mutation, replay, labels, training, model, stock_profile, paper expansion, broker/API/order/message/trading, or data/raw, data/processed, or data/cache writes.
+
 ## Artifact Outputs
 
 Default output folder:
