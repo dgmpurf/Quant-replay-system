@@ -211,6 +211,10 @@ from quant_replay_system.historical_replay_pit_evidence_closure_worklist import 
     SAFETY_FALSE_FIELDS as PIT_EVIDENCE_CLOSURE_WORKLIST_SAFETY_FALSE_FIELDS,
     run_historical_replay_pit_evidence_closure_worklist,
 )
+from quant_replay_system.historical_replay_official_status_evidence_packet_closure_worklist import (
+    SAFETY_FALSE_FIELDS as OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_SAFETY_FALSE_FIELDS,
+    run_historical_replay_official_status_evidence_packet_closure_worklist,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -381,6 +385,9 @@ EXPECTED_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_NEXT_TASK = (
 )
 EXPECTED_PIT_EVIDENCE_CLOSURE_WORKLIST_NEXT_TASK = (
     "Historical Replay Official Status Evidence Packet Closure Planning for 2024-04-02 etf_core Report-Only v0.1"
+)
+EXPECTED_OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_NEXT_TASK = (
+    "Historical Replay Official Status Evidence Packet Closure Worklist CLI Report-Only v0.1"
 )
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
@@ -18679,6 +18686,177 @@ def test_cli_research_status_prints_historical_replay_pit_evidence_closure_workl
     assert "TRADING_READY" not in output
 
 
+def test_research_status_official_status_evidence_packet_closure_worklist_absent_by_default(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.historical_replay_official_status_evidence_packet_closure_worklist_context_visible is False
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_run_id == ""
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_row_count == 0
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_official_status_evidence_closed is False
+    assert result.workflow_stage == "NO_DATA"
+
+
+def test_research_status_includes_historical_replay_official_status_evidence_packet_closure_worklist_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    worklist = _run_official_status_evidence_packet_closure_worklist_context(root, run_id="011_worklist")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.historical_replay_official_status_evidence_packet_closure_worklist_context_visible is True
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_run_id == (
+        worklist.packet_worklist_run_id
+    )
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_signal_date == "2024-04-02"
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_universe_name == "etf_core"
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_status == (
+        "OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_health_status == (
+        "OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_HEALTH_WARN_REVIEW_REQUIRED"
+    )
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_workflow_stage == (
+        "HISTORICAL_REPLAY_OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_row_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_stock_row_count == 7
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_etf_row_count == 2
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_blocked_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_missing_official_evidence_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_needs_manual_review_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_no_hit_review_needed_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_no_hit_accepted_context_count == 0
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_packet_row_ready_not_pit_approved_count == 0
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_profile_conflict_count == 7
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_survivorship_warning_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_listed_status_missing_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_delisted_status_missing_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_st_status_missing_count == 7
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_st_not_applicable_policy_missing_count == 2
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_suspension_or_trading_status_missing_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_universe_membership_missing_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_source_id_missing_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_permission_class_missing_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_revision_id_missing_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_available_time_missing_count == 9
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_recommended_next_task == (
+        EXPECTED_OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_NEXT_TASK
+    )
+    for field in OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_SAFETY_FALSE_FIELDS:
+        assert getattr(
+            result,
+            f"latest_historical_replay_official_status_evidence_packet_closure_worklist_{field}",
+        ) is False
+        assert metadata[f"latest_historical_replay_official_status_evidence_packet_closure_worklist_{field}"] is False
+    assert summary.loc[0, "historical_replay_official_status_evidence_packet_closure_worklist_context_visible"] == "True"
+    assert (
+        summary.loc[
+            0,
+            "latest_historical_replay_official_status_evidence_packet_closure_worklist_row_count",
+        ]
+        == "9"
+    )
+    assert metadata["historical_replay_official_status_evidence_packet_closure_worklist_context_visible"] is True
+
+
+def test_research_status_preserves_paper_priority_over_historical_replay_official_status_evidence_packet_closure_worklist(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_official_status_evidence_packet_closure_worklist_context(root, run_id="011_priority")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.historical_replay_official_status_evidence_packet_closure_worklist_context_visible is True
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_official_status_evidence_closed is False
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_pit_evidence_closed is False
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_pit_admissibility_approved is False
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_active_replay_input is False
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_replay_execution_allowed is False
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_buy_review_allowed is False
+    assert result.latest_historical_replay_official_status_evidence_packet_closure_worklist_trading_allowed is False
+
+
+def test_cli_research_status_prints_historical_replay_official_status_evidence_packet_closure_worklist_context(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_official_status_evidence_packet_closure_worklist_context(root, run_id="011_cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr().out
+
+    assert code == 0
+    assert "historical_replay_official_status_evidence_packet_closure_worklist_context_visible: True" in output
+    assert "latest_historical_replay_official_status_evidence_packet_closure_worklist_run_id: 011_cli" in output
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_signal_date: 2024-04-02"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_universe_name: etf_core"
+        in output
+    )
+    assert "latest_historical_replay_official_status_evidence_packet_closure_worklist_row_count: 9" in output
+    assert "latest_historical_replay_official_status_evidence_packet_closure_worklist_stock_row_count: 7" in output
+    assert "latest_historical_replay_official_status_evidence_packet_closure_worklist_etf_row_count: 2" in output
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_missing_official_evidence_count: 9"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_packet_row_ready_not_pit_approved_count: 0"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_official_status_evidence_closed: False"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_pit_admissibility_approved: False"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_active_replay_input: False"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_replay_execution_allowed: False"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_status_evidence_packet_closure_worklist_buy_review_allowed: False"
+        in output
+    )
+    assert "latest_historical_replay_official_status_evidence_packet_closure_worklist_trading_allowed: False" in output
+    assert (
+        f"latest_historical_replay_official_status_evidence_packet_closure_worklist_recommended_next_task: "
+        f"{EXPECTED_OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_NEXT_TASK}"
+        in output
+    )
+    assert "PIT_ADMISSIBLE" not in output
+    assert "READY_FOR_REPLAY" not in output
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output
+    assert "BUY_REVIEW_READY" not in output
+    assert "TRADING_READY" not in output
+
+
 def test_research_status_includes_personal_mvp_daily_advisory_review_context(
     tmp_path: Path,
 ) -> None:
@@ -19603,6 +19781,20 @@ def _run_pit_evidence_closure_worklist_context(root: Path, *, run_id: str):
             root
             / "manual_diagnostics"
             / "historical_replay_pit_evidence_closure_worklist_v0_1"
+        ),
+        run_id=run_id,
+        signal_date="2024-04-02",
+        universe_name="etf_core",
+    )
+
+
+def _run_official_status_evidence_packet_closure_worklist_context(root: Path, *, run_id: str):
+    return run_historical_replay_official_status_evidence_packet_closure_worklist(
+        root=root,
+        output_dir=(
+            root
+            / "manual_diagnostics"
+            / "historical_replay_official_status_evidence_packet_closure_worklist_v0_1"
         ),
         run_id=run_id,
         signal_date="2024-04-02",
