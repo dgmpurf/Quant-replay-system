@@ -144,4 +144,3 @@ Positive scope flags are `report_only=true`, `diagnostic_only=true`, `local_only
 - Mixed stock/ETF profile context under the legacy `etf_core` label remains manual review context.
 - No-hit context remains evidence context and is not source reliability scoring.
 - Source and local hash previews are not validation.
-
