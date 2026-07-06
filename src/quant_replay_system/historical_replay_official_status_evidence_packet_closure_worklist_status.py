@@ -20,7 +20,10 @@ from quant_replay_system.historical_replay_official_status_evidence_packet_closu
 
 STATUS_CREATED = "OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_STATUS_CREATED_REPORT_ONLY"
 STATUS_NO_ARTIFACTS = "OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_STATUS_NO_ARTIFACTS"
-NEXT_TASK = "Historical Replay Official Status Evidence Packet Closure Worklist CLI Report-Only v0.1"
+NEXT_TASK = (
+    "Historical Replay Official Source Hierarchy and Evidence Collection Planning for "
+    "2024-04-02 etf_core Report-Only v0.1"
+)
 
 STATUS_COLUMNS = [
     "latest_packet_worklist_run_id",

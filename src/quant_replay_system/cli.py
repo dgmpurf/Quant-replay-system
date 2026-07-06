@@ -19075,8 +19075,8 @@ def _handle_historical_replay_pit_evidence_closure_worklist_status(args: argpars
 
 
 HISTORICAL_REPLAY_OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_CLI_NEXT_TASK = (
-    "Historical Replay Official Status Evidence Packet Closure Worklist Research-Status Integration "
-    "Planning Report-Only v0.1"
+    "Historical Replay Official Source Hierarchy and Evidence Collection Planning for "
+    "2024-04-02 etf_core Report-Only v0.1"
 )
 
 

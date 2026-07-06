@@ -11,9 +11,14 @@ INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
 NEXT_TASK = (
-    "Historical Replay Official Status Evidence Packet Closure Worklist Research-Status Integration "
-    "Planning Report-Only v0.1"
+    "Historical Replay Official Source Hierarchy and Evidence Collection Planning for "
+    "2024-04-02 etf_core Report-Only v0.1"
 )
+STALE_NEXT_TASK_PHRASES = [
+    "Historical Replay Official Status Evidence Packet Closure Worklist Artifact Views / Status Planning Report-Only v0.1",
+    "Historical Replay Official Status Evidence Packet Closure Worklist CLI Report-Only v0.1",
+    "Historical Replay Official Status Evidence Packet Closure Worklist Research-Status Integration Planning Report-Only v0.1",
+]
 
 
 def test_cli_command_registration_for_all_four_commands() -> None:
@@ -83,6 +88,8 @@ def test_core_cli_writes_expected_files_and_prints_counts_and_safety(tmp_path: P
     assert "profile_conflict_count: 7" in output
     assert "survivorship_warning_count: 9" in output
     assert f"recommended_next_task: {NEXT_TASK}" in output
+    for stale_phrase in STALE_NEXT_TASK_PHRASES:
+        assert stale_phrase not in output
     _assert_safety_statements(output)
     _assert_no_positive_readiness(output)
     for filename in [
@@ -126,6 +133,8 @@ def test_index_health_status_cli_wrap_existing_artifacts(tmp_path: Path, capsys)
     assert "stock_row_count: 7" in status_output
     assert "etf_row_count: 2" in status_output
     assert f"recommended_next_task: {NEXT_TASK}" in status_output
+    for stale_phrase in STALE_NEXT_TASK_PHRASES:
+        assert stale_phrase not in status_output
     for output in [index_output, health_output, status_output]:
         _assert_safety_statements(output)
         _assert_no_positive_readiness(output)

@@ -29,8 +29,8 @@ DEFAULT_OUTPUT_ROOT = Path(
     "historical_replay_official_status_evidence_packet_closure_worklist_v0_1"
 )
 RECOMMENDED_NEXT_TASK = (
-    "Historical Replay Official Status Evidence Packet Closure Worklist Artifact Views / "
-    "Status Planning Report-Only v0.1"
+    "Historical Replay Official Source Hierarchy and Evidence Collection Planning for "
+    "2024-04-02 etf_core Report-Only v0.1"
 )
 
 OUTPUT_FILES = {

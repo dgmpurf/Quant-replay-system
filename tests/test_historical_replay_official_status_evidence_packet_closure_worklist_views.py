@@ -24,6 +24,10 @@ from quant_replay_system.historical_replay_official_status_evidence_packet_closu
 
 
 EXPECTED_SYMBOLS = ["000001", "000002", "159915", "300750", "510300", "600000", "600519", "601318", "688981"]
+EXPECTED_NEXT_TASK = (
+    "Historical Replay Official Source Hierarchy and Evidence Collection Planning for "
+    "2024-04-02 etf_core Report-Only v0.1"
+)
 
 
 def test_index_discovers_safe_official_status_worklist_artifact(tmp_path: Path) -> None:
@@ -262,9 +266,9 @@ def test_status_recommends_cli_report_only_next_task(tmp_path: Path) -> None:
 
     result = run_historical_replay_official_status_evidence_packet_closure_worklist_status(root=tmp_path / "out")
 
-    assert result.recommended_next_task == (
-        "Historical Replay Official Status Evidence Packet Closure Worklist CLI Report-Only v0.1"
-    )
+    assert NEXT_TASK == EXPECTED_NEXT_TASK
+    assert result.recommended_next_task == EXPECTED_NEXT_TASK
+    assert result.summary["recommended_next_task"] == EXPECTED_NEXT_TASK
 
 
 def test_no_docs_project_sources_or_protected_data_paths_created(tmp_path: Path) -> None:

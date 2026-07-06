@@ -26,6 +26,10 @@ EXPECTED_ROWS = {
     "601318": ("STOCK", "stock_core", "true"),
     "688981": ("STOCK", "stock_core", "true"),
 }
+EXPECTED_NEXT_TASK = (
+    "Historical Replay Official Source Hierarchy and Evidence Collection Planning for "
+    "2024-04-02 etf_core Report-Only v0.1"
+)
 
 
 def test_default_run_creates_expected_report_only_artifacts(tmp_path: Path) -> None:
@@ -79,6 +83,7 @@ def test_metadata_records_selected_sample_and_required_counts(tmp_path: Path) ->
     assert metadata["permission_class_missing_count"] == 9
     assert metadata["revision_id_missing_count"] == 9
     assert metadata["available_time_missing_count"] == 9
+    assert RECOMMENDED_NEXT_TASK == EXPECTED_NEXT_TASK
     assert metadata["recommended_next_task"] == RECOMMENDED_NEXT_TASK
 
 
@@ -210,6 +215,7 @@ def test_report_states_packet_row_is_not_pit_or_replay_trading_readiness(tmp_pat
     assert "packet row is not PIT approval" in report
     assert "not replay readiness" in report
     assert "not trading permission" in report
+    assert EXPECTED_NEXT_TASK in report
     assert RECOMMENDED_NEXT_TASK in report
 
 
