@@ -222,7 +222,12 @@ def test_status_recommends_next_task(tmp_path: Path) -> None:
 
     result = run_historical_replay_pit_evidence_closure_worklist_status(root=tmp_path / "out")
 
-    assert result.recommended_next_task == "Historical Replay PIT Evidence Closure Worklist CLI Report-Only v0.1"
+    assert (
+        result.recommended_next_task
+        == "Historical Replay Official Status Evidence Packet Closure Planning for 2024-04-02 etf_core Report-Only v0.1"
+    )
+    assert "Artifact Views / Status Planning" not in result.recommended_next_task
+    assert "Research-Status Integration Planning" not in result.recommended_next_task
 
 
 def test_no_docs_project_sources_is_created(tmp_path: Path) -> None:

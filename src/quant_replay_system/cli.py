@@ -18880,7 +18880,7 @@ def _handle_active_replay_input_promotion_status(args: argparse.Namespace) -> in
 
 
 HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_CLI_NEXT_TASK = (
-    "Historical Replay PIT Evidence Closure Worklist Research-Status Integration Planning Report-Only v0.1"
+    "Historical Replay Official Status Evidence Packet Closure Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 
 

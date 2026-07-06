@@ -27,7 +27,9 @@ WORKFLOW_STAGE = "HISTORICAL_REPLAY_PIT_EVIDENCE_CLOSURE_WORKLIST_CREATED_REPORT
 DEFAULT_OUTPUT_ROOT = Path(
     "outputs/reports/manual_diagnostics/historical_replay_pit_evidence_closure_worklist_v0_1"
 )
-RECOMMENDED_NEXT_TASK = "Historical Replay PIT Evidence Closure Worklist Artifact Views / Status Planning Report-Only v0.1"
+RECOMMENDED_NEXT_TASK = (
+    "Historical Replay Official Status Evidence Packet Closure Planning for 2024-04-02 etf_core Report-Only v0.1"
+)
 
 OUTPUT_FILES = {
     "metadata": "metadata.json",
@@ -467,6 +469,7 @@ def _write_report(path: Path, metadata: dict[str, Any], rows: list[dict[str, Any
         f"Health: {metadata['health_status']}",
         f"Rows: {metadata['row_count']}",
         f"Blocked rows: {metadata['blocked_count']}",
+        f"Recommended next task: {metadata['recommended_next_task']}",
     ]
     if not rows:
         lines.append("No local context was found for the selected sample; no readiness is implied.")

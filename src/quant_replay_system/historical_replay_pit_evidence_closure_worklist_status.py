@@ -20,7 +20,7 @@ from quant_replay_system.historical_replay_pit_evidence_closure_worklist_index i
 
 STATUS_CREATED = "PIT_EVIDENCE_CLOSURE_WORKLIST_STATUS_CREATED_REPORT_ONLY"
 STATUS_NO_ARTIFACTS = "PIT_EVIDENCE_CLOSURE_WORKLIST_STATUS_NO_ARTIFACTS"
-NEXT_TASK = "Historical Replay PIT Evidence Closure Worklist CLI Report-Only v0.1"
+NEXT_TASK = "Historical Replay Official Status Evidence Packet Closure Planning for 2024-04-02 etf_core Report-Only v0.1"
 
 STATUS_COLUMNS = [
     "latest_worklist_run_id",

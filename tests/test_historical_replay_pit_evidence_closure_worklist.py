@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from quant_replay_system.historical_replay_pit_evidence_closure_worklist import (
+    RECOMMENDED_NEXT_TASK,
     REQUIRED_ROW_FIELDS,
     SAFETY_FALSE_FIELDS,
     STATUS_CREATED,
@@ -263,6 +264,20 @@ def test_generated_report_contains_worklist_row_is_not_pit_approval(tmp_path: Pa
     report = result.artifact_paths["report"].read_text(encoding="utf-8")
 
     assert "worklist row is not PIT approval" in report
+
+
+def test_recommended_next_task_points_to_official_status_evidence_planning(tmp_path: Path) -> None:
+    root = tmp_path / "reports"
+    _write_overlay(root)
+
+    result = run_historical_replay_pit_evidence_closure_worklist(root=root, output_dir=tmp_path / "out")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    report = result.artifact_paths["report"].read_text(encoding="utf-8")
+
+    assert metadata["recommended_next_task"] == RECOMMENDED_NEXT_TASK
+    assert RECOMMENDED_NEXT_TASK in report
+    assert "Artifact Views / Status Planning" not in metadata["recommended_next_task"]
+    assert "Research-Status Integration Planning" not in metadata["recommended_next_task"]
 
 
 def test_generated_report_contains_no_replay_or_trading_readiness_wording(tmp_path: Path) -> None:

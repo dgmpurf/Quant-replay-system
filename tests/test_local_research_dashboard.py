@@ -380,7 +380,7 @@ EXPECTED_PERSONAL_MVP_DAILY_ADVISORY_REVIEW_NEXT_TASK = (
     "Personal MVP Daily Advisory Review Surface Research-Status Integration Planning Report-Only v0.1"
 )
 EXPECTED_PIT_EVIDENCE_CLOSURE_WORKLIST_NEXT_TASK = (
-    "Historical Replay PIT Evidence Closure Worklist CLI Report-Only v0.1"
+    "Historical Replay Official Status Evidence Packet Closure Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture

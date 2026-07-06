@@ -10,7 +10,11 @@ COMMAND = "historical-replay-pit-evidence-closure-worklist"
 INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
-NEXT_TASK = "Historical Replay PIT Evidence Closure Worklist Research-Status Integration Planning Report-Only v0.1"
+NEXT_TASK = "Historical Replay Official Status Evidence Packet Closure Planning for 2024-04-02 etf_core Report-Only v0.1"
+STALE_NEXT_TASKS = [
+    "Historical Replay PIT Evidence Closure Worklist Artifact Views / Status Planning Report-Only v0.1",
+    "Historical Replay PIT Evidence Closure Worklist Research-Status Integration Planning Report-Only v0.1",
+]
 
 
 def test_cli_command_registration_for_all_four_commands() -> None:
@@ -73,6 +77,9 @@ def test_core_cli_no_context_writes_expected_files_and_prints_safety_statements(
     assert "status: PIT_EVIDENCE_CLOSURE_WORKLIST_WARN_NO_CONTEXT" in output
     assert "health_status: WARN" in output
     assert "row_count: 0" in output
+    assert f"recommended_next_task: {NEXT_TASK}" in output
+    for stale in STALE_NEXT_TASKS:
+        assert stale not in output
     for expected in [
         "blocked_count: 0",
         "missing_evidence_count: 0",
@@ -156,6 +163,8 @@ def test_index_health_status_cli_wrap_existing_views(tmp_path: Path, capsys) -> 
     assert "latest_health_status: PIT_EVIDENCE_CLOSURE_WORKLIST_HEALTH_WARN_REVIEW_REQUIRED" in status_output
     assert "row_count: 0" in status_output
     assert f"recommended_next_task: {NEXT_TASK}" in status_output
+    for stale in STALE_NEXT_TASKS:
+        assert stale not in status_output
     for output in [index_output, health_output, status_output]:
         _assert_no_positive_readiness(output)
         assert "no protected data writes" in output
