@@ -82,6 +82,7 @@ outputs/reports/manual_diagnostics/active_replay_input_create_v0_1/status/
 outputs/reports/manual_diagnostics/real_replay_execute_v0_1/status/
 outputs/reports/manual_diagnostics/forward_return_label_v0_1/status/
 outputs/reports/manual_diagnostics/historical_replay_pit_evidence_closure_worklist_v0_1/status/
+outputs/reports/manual_diagnostics/historical_replay_official_status_evidence_packet_closure_worklist_v0_1/status/
 outputs/reports/universe_profile_policy_audit/status/
 outputs/reports/universe_profile_split_worklist_plan/status/
 outputs/reports/reviewed_replacement_worklist_plan/status/
@@ -119,6 +120,20 @@ It exposes the latest worklist run id, selected signal date, universe, runtime s
 Historical Replay PIT Evidence Closure Worklist context is context only. A worklist row is not PIT approval. `closure_ready_not_pit_approved` is not PIT admissible. Reviewer no-hit acceptance is not source reliability scoring. `source_hash_preview` is not source_hash validation, and `local_file_hash_preview` is not PIT evidence by itself. Forward returns remain future information.
 
 This context is lower priority than later paper workflow context and must preserve `PAPER_WORKFLOW_READY` as the final workflow stage when paper workflow evidence exists. It does not close PIT evidence, approve PIT admissibility, create active replay input, run replay, freeze decisions, create labels, compute metrics, train models, create stock_profile or paper expansion, enable buy-review, authorize trading, run current-candidates, build snapshots, mutate signal semantics, call broker/order/message/API systems, or write `data/raw`, `data/processed`, or `data/cache`.
+
+## Historical Replay Official Status Evidence Packet Closure Worklist Status
+
+`research-status` includes Historical Replay Official Status Evidence Packet Closure Worklist context when status artifacts exist under:
+
+```text
+outputs/reports/manual_diagnostics/historical_replay_official_status_evidence_packet_closure_worklist_v0_1/status/
+```
+
+It exposes the latest worklist run id, selected signal date, universe, runtime status, health status, workflow stage, report path, row count, stock/ETF row counts, blocked count, missing official evidence count, manual-review count, no-hit review count, accepted no-hit context count, packet-row-ready-not-PIT-approved count, profile-conflict count, survivorship-warning count, listed/delisted/ST/suspension/universe/source/permission/revision/available-time missing counts, downstream safety flags, and the recommended next task.
+
+Historical Replay Official Status Evidence Packet Closure Worklist context is context only. A packet row is not PIT approval. `packet_row_ready_not_pit_approved` is not PIT admissible. `no_hit_accepted_context` is not source reliability scoring. `source_hash_preview` is not source_hash validation, and `local_file_hash_preview` is not PIT evidence by itself. Same-day quotation presence is not automatically listed/not-delisted/no-ST/not-suspended/universe-membership proof. ETF ST not-applicable policy is required for ETF rows if no ST evidence applies. STOCK rows under legacy `etf_core` remain profile-conflict review context until separately resolved. Universe membership cannot be inferred from the legacy `etf_core` label alone. Forward returns remain future information.
+
+This context is lower priority than later paper workflow context and must preserve `PAPER_WORKFLOW_READY` as the final workflow stage when paper workflow evidence exists. It does not close official evidence, close PIT evidence, approve PIT admissibility, create active replay input, run replay, freeze decisions, create labels, compute metrics, train models, create stock_profile or paper expansion, enable buy-review, authorize trading, run current-candidates, build snapshots, mutate signal semantics, call broker/order/message/API systems, or write `data/raw`, `data/processed`, or `data/cache`.
 
 ## Tiny PIT Source Artifact Byte-Hash Status
 

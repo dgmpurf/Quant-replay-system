@@ -2,6 +2,16 @@
 
 A point-in-time historical replay quant research system for China A-share ETFs and stocks.
 
+## Historical Replay Official Status Evidence Packet Closure Worklist v1.85.0
+
+`OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_CREATED_REPORT_ONLY`, review-needed states, and unsafe-root/input blocker states mean Historical Replay Official Status Evidence Packet Closure Worklist artifacts exist as report-only / diagnostic-only / local-only selected-sample official-status evidence gap context.
+
+Use `historical-replay-official-status-evidence-packet-closure-worklist`, `historical-replay-official-status-evidence-packet-closure-worklist-index`, `historical-replay-official-status-evidence-packet-closure-worklist-health`, and `historical-replay-official-status-evidence-packet-closure-worklist-status` to create, discover, safety-check, and summarize the selected-sample worklist for `2024-04-02 / etf_core`. `research-status` exposes the latest worklist context as lower-priority research context while preserving later `PAPER_WORKFLOW_READY` priority.
+
+A packet row is not PIT approval. `packet_row_ready_not_pit_approved` is not PIT admissible. `no_hit_accepted_context` is not source reliability scoring. `source_hash_preview` is not source_hash validation, and `local_file_hash_preview` is not PIT evidence by itself. Same-day quotation presence is not automatically listed/not-delisted/no-ST/not-suspended/universe-membership proof. ETF ST not-applicable policy is required for ETF rows if no ST evidence applies. STOCK rows under legacy `etf_core` remain profile-conflict review context until separately resolved. Universe membership cannot be inferred from the legacy `etf_core` label alone. Forward returns remain future information. The 8-layer factor taxonomy remains the primary structure; fixed 12 factors are not final.
+
+The workflow does not close official evidence, close PIT evidence, approve PIT admissibility, create active replay input, run replay, freeze replay decisions, create forward labels, compute metrics, train models, create stock_profile or paper expansion, create real buy-review eligibility, set `buy_review_allowed=true`, authorize trading, call broker/API/order/message systems, run current-candidates, build snapshots, mutate `signal_semantics`, or write `data/raw`, `data/processed`, or `data/cache`.
+
 ## Historical Replay PIT Evidence Closure Worklist v1.84.0
 
 `PIT_EVIDENCE_CLOSURE_WORKLIST_CREATED_REPORT_ONLY`, `PIT_EVIDENCE_CLOSURE_WORKLIST_WARN_NO_CONTEXT`, WARN states, and unsafe-root/input blocker states mean Historical Replay PIT Evidence Closure Worklist artifacts exist as report-only / diagnostic-only / local-only selected-sample evidence organization context.
