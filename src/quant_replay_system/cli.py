@@ -144,6 +144,19 @@ from quant_replay_system.historical_replay_official_status_evidence_packet_closu
 from quant_replay_system.historical_replay_official_status_evidence_packet_closure_worklist_status import (
     run_historical_replay_official_status_evidence_packet_closure_worklist_status,
 )
+from quant_replay_system.historical_replay_official_source_hierarchy_and_evidence_collection_worklist import (
+    run_historical_replay_official_source_hierarchy_and_evidence_collection_worklist,
+)
+from quant_replay_system.historical_replay_official_source_hierarchy_and_evidence_collection_worklist_health import (
+    check_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_health,
+)
+from quant_replay_system.historical_replay_official_source_hierarchy_and_evidence_collection_worklist_index import (
+    DEFAULT_ROOT as HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_DEFAULT_ROOT,
+    build_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_index,
+)
+from quant_replay_system.historical_replay_official_source_hierarchy_and_evidence_collection_worklist_status import (
+    run_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_status,
+)
 from quant_replay_system.pit_evidence_checklist_validator import build_pit_evidence_checklist_validator
 from quant_replay_system.pit_evidence_checklist_validator_health import check_pit_evidence_checklist_validator_health
 from quant_replay_system.pit_evidence_checklist_validator_index import build_pit_evidence_checklist_validator_index
@@ -2772,6 +2785,78 @@ def build_parser() -> argparse.ArgumentParser:
     )
     official_status_evidence_packet_closure_worklist_status.set_defaults(
         handler=_handle_historical_replay_official_status_evidence_packet_closure_worklist_status
+    )
+
+    official_source_hierarchy_worklist = subparsers.add_parser(
+        "historical-replay-official-source-hierarchy-and-evidence-collection-worklist",
+        help=(
+            "Build a report-only official source hierarchy and evidence collection worklist "
+            "for the selected historical replay sample"
+        ),
+    )
+    official_source_hierarchy_worklist.add_argument(
+        "--root",
+        default="outputs/reports",
+        help="Root folder containing existing local report artifacts used as context",
+    )
+    official_source_hierarchy_worklist.add_argument(
+        "--output-dir",
+        default=str(HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_DEFAULT_ROOT),
+        help="Directory where report-only official source hierarchy worklist artifacts will be written",
+    )
+    official_source_hierarchy_worklist.add_argument("--run-id", default=None)
+    official_source_hierarchy_worklist.add_argument("--historical-decision-date", default="2024-04-02")
+    official_source_hierarchy_worklist.add_argument("--universe-name", default="etf_core")
+    official_source_hierarchy_worklist.set_defaults(
+        handler=_handle_historical_replay_official_source_hierarchy_and_evidence_collection_worklist
+    )
+
+    official_source_hierarchy_worklist_index = subparsers.add_parser(
+        "historical-replay-official-source-hierarchy-and-evidence-collection-worklist-index",
+        help="Build a report-only index for official source hierarchy and evidence collection worklist artifacts",
+    )
+    official_source_hierarchy_worklist_index.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_DEFAULT_ROOT),
+    )
+    official_source_hierarchy_worklist_index.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_DEFAULT_ROOT}/index",
+    )
+    official_source_hierarchy_worklist_index.set_defaults(
+        handler=_handle_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_index
+    )
+
+    official_source_hierarchy_worklist_health = subparsers.add_parser(
+        "historical-replay-official-source-hierarchy-and-evidence-collection-worklist-health",
+        help="Check report-only official source hierarchy and evidence collection worklist artifact health",
+    )
+    official_source_hierarchy_worklist_health.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_DEFAULT_ROOT),
+    )
+    official_source_hierarchy_worklist_health.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_DEFAULT_ROOT}/health",
+    )
+    official_source_hierarchy_worklist_health.set_defaults(
+        handler=_handle_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_health
+    )
+
+    official_source_hierarchy_worklist_status = subparsers.add_parser(
+        "historical-replay-official-source-hierarchy-and-evidence-collection-worklist-status",
+        help="Summarize latest report-only official source hierarchy and evidence collection worklist status",
+    )
+    official_source_hierarchy_worklist_status.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_DEFAULT_ROOT),
+    )
+    official_source_hierarchy_worklist_status.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_DEFAULT_ROOT}/status",
+    )
+    official_source_hierarchy_worklist_status.set_defaults(
+        handler=_handle_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_status
     )
 
     historical_replay_input_gate_validator = subparsers.add_parser(
@@ -19231,6 +19316,155 @@ def _handle_historical_replay_official_status_evidence_packet_closure_worklist_s
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print(_historical_replay_official_status_evidence_packet_closure_worklist_safety_statement())
+    return 0
+
+
+HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_CLI_NEXT_TASK = (
+    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
+    "Research-Status Integration Planning Report-Only v0.1"
+)
+
+
+def _historical_replay_official_source_hierarchy_worklist_safety_statement() -> str:
+    return (
+        "no official source hierarchy approval, no official evidence collection approval, "
+        "no official status evidence closure, no PIT evidence closure, no PIT admissibility approval, "
+        "no active replay input, no replay execution, no decision freeze, no forward labels, "
+        "no metric computation, no training/model/stock_profile/paper expansion, no buy-review, "
+        "no trading, no broker API, no orders, no messages, no external or LLM API, "
+        "no current-candidates, no snapshots, no signal semantics mutation, and no protected data writes were invoked."
+    )
+
+
+def _handle_historical_replay_official_source_hierarchy_and_evidence_collection_worklist(
+    args: argparse.Namespace,
+) -> int:
+    result = run_historical_replay_official_source_hierarchy_and_evidence_collection_worklist(
+        root=args.root,
+        output_dir=args.output_dir,
+        run_id=args.run_id,
+        historical_decision_date=args.historical_decision_date,
+        universe_name=args.universe_name,
+    )
+    metadata = result.metadata
+    print(f"worklist_run_id: {result.run_id}")
+    print(f"historical_decision_date: {metadata.get('historical_decision_date', args.historical_decision_date)}")
+    print(f"universe_name: {metadata.get('universe_name', args.universe_name)}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"row_count: {metadata.get('row_count', 0)}")
+    print(f"stock_row_count: {metadata.get('stock_row_count', 0)}")
+    print(f"etf_row_count: {metadata.get('etf_row_count', 0)}")
+    print(f"source_class_count: {metadata.get('source_class_count', 0)}")
+    print(f"evidence_family_count: {metadata.get('evidence_family_count', 0)}")
+    print(f"evidence_collection_worklist_row_count: {metadata.get('evidence_collection_worklist_row_count', 0)}")
+    print(f"no_hit_handoff_row_count: {metadata.get('no_hit_handoff_row_count', 0)}")
+    print(f"blocked_count: {metadata.get('blocked_count', 0)}")
+    print(f"profile_conflict_count: {metadata.get('profile_conflict_count', 0)}")
+    print(f"survivorship_warning_count: {metadata.get('survivorship_warning_count', 0)}")
+    print(f"missing_source_id_count: {metadata.get('missing_source_id_count', 0)}")
+    print(f"missing_raw_reference_count: {metadata.get('missing_raw_reference_count', 0)}")
+    print(f"missing_permission_class_count: {metadata.get('missing_permission_class_count', 0)}")
+    print(f"missing_revision_id_count: {metadata.get('missing_revision_id_count', 0)}")
+    print(f"missing_available_time_count: {metadata.get('missing_available_time_count', 0)}")
+    print(f"missing_limitation_note_count: {metadata.get('missing_limitation_note_count', 0)}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"recommended_next_task: {HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_CLI_NEXT_TASK}")
+    print(_historical_replay_official_source_hierarchy_worklist_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_index(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    latest = result.rows[0] if result.rows else {}
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"historical_decision_date: {latest.get('historical_decision_date', '')}")
+    print(f"universe_name: {latest.get('universe_name', '')}")
+    print(f"status: {latest.get('runtime_status', '')}")
+    print(f"health_status: {latest.get('health_status', '')}")
+    print(f"workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"row_count: {latest.get('row_count', 0)}")
+    print(f"stock_row_count: {latest.get('stock_row_count', 0)}")
+    print(f"etf_row_count: {latest.get('etf_row_count', 0)}")
+    print(f"source_class_count: {latest.get('source_class_count', 0)}")
+    print(f"evidence_family_count: {latest.get('evidence_family_count', 0)}")
+    print(f"evidence_collection_worklist_row_count: {latest.get('evidence_collection_worklist_row_count', 0)}")
+    print(f"no_hit_handoff_row_count: {latest.get('no_hit_handoff_row_count', 0)}")
+    print(f"blocked_count: {latest.get('blocked_count', 0)}")
+    print(f"profile_conflict_count: {latest.get('profile_conflict_count', 0)}")
+    print(f"survivorship_warning_count: {latest.get('survivorship_warning_count', 0)}")
+    print(f"report_path: {latest.get('report_path', '')}")
+    print(_historical_replay_official_source_hierarchy_worklist_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_health(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"Health report path: {result.artifact_paths['health_md']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_historical_replay_official_source_hierarchy_worklist_safety_statement())
+    return 1 if result.status.endswith("FAIL_UNSAFE") else 0
+
+
+def _handle_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_status(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    summary = result.summary
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"Status report path: {result.artifact_paths['status_md']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"historical_decision_date: {summary.get('latest_historical_decision_date', '')}")
+    print(f"universe_name: {summary.get('latest_universe_name', '')}")
+    print(f"status: {result.latest_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"workflow_stage: {result.latest_workflow_stage}")
+    print(f"row_count: {summary.get('latest_row_count', 0)}")
+    print(f"stock_row_count: {summary.get('latest_stock_row_count', 0)}")
+    print(f"etf_row_count: {summary.get('latest_etf_row_count', 0)}")
+    print(f"source_class_count: {summary.get('latest_source_class_count', 0)}")
+    print(f"evidence_family_count: {summary.get('latest_evidence_family_count', 0)}")
+    print(
+        "evidence_collection_worklist_row_count: "
+        f"{summary.get('latest_evidence_collection_worklist_row_count', 0)}"
+    )
+    print(f"no_hit_handoff_row_count: {summary.get('latest_no_hit_handoff_row_count', 0)}")
+    print(f"blocked_count: {summary.get('latest_blocked_count', 0)}")
+    print(f"profile_conflict_count: {summary.get('latest_profile_conflict_count', 0)}")
+    print(f"survivorship_warning_count: {summary.get('latest_survivorship_warning_count', 0)}")
+    print(f"safety_true_count: {summary.get('latest_safety_true_count', 0)}")
+    print(f"report_path: {summary.get('latest_report_path', '')}")
+    print(f"recommended_next_task: {HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_CLI_NEXT_TASK}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_historical_replay_official_source_hierarchy_worklist_safety_statement())
     return 0
 
 
