@@ -215,6 +215,10 @@ from quant_replay_system.historical_replay_official_status_evidence_packet_closu
     SAFETY_FALSE_FIELDS as OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_SAFETY_FALSE_FIELDS,
     run_historical_replay_official_status_evidence_packet_closure_worklist,
 )
+from quant_replay_system.historical_replay_official_source_hierarchy_and_evidence_collection_worklist import (
+    SAFETY_FALSE_FIELDS as OFFICIAL_SOURCE_HIERARCHY_WORKLIST_SAFETY_FALSE_FIELDS,
+    run_historical_replay_official_source_hierarchy_and_evidence_collection_worklist,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -389,6 +393,10 @@ EXPECTED_PIT_EVIDENCE_CLOSURE_WORKLIST_NEXT_TASK = (
 EXPECTED_OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_NEXT_TASK = (
     "Historical Replay Official Source Hierarchy and Evidence Collection Planning for "
     "2024-04-02 etf_core Report-Only v0.1"
+)
+EXPECTED_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_NEXT_TASK = (
+    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
+    "Checkpoint Planning Report-Only v0.1"
 )
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
@@ -18858,6 +18866,203 @@ def test_cli_research_status_prints_historical_replay_official_status_evidence_p
     assert "TRADING_READY" not in output
 
 
+def test_research_status_official_source_hierarchy_worklist_absent_by_default(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.historical_replay_official_source_hierarchy_and_evidence_collection_worklist_context_visible is False
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_run_id == ""
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_row_count == 0
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_safety_true_count == 0
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_buy_review_allowed is False
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_trading_allowed is False
+    assert result.workflow_stage == "NO_DATA"
+
+
+def test_research_status_includes_historical_replay_official_source_hierarchy_worklist_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    worklist = _run_official_source_hierarchy_worklist_context(root, run_id="012_source_hierarchy")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.historical_replay_official_source_hierarchy_and_evidence_collection_worklist_context_visible is True
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_run_id == (
+        worklist.run_id
+    )
+    assert (
+        result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_historical_decision_date
+        == "2024-04-02"
+    )
+    assert (
+        result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_universe_name
+        == "etf_core"
+    )
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_status == (
+        "SOURCE_HIERARCHY_WORKLIST_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_health_status == (
+        "OFFICIAL_SOURCE_HIERARCHY_WORKLIST_HEALTH_WARN_REVIEW_REQUIRED"
+    )
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_workflow_stage == (
+        "HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_AND_EVIDENCE_COLLECTION_WORKLIST_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_report_path.endswith(
+        "official_source_hierarchy_and_evidence_collection_worklist_report.md"
+    )
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_row_count == 9
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_stock_row_count == 7
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_etf_row_count == 2
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_source_class_count == 7
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_evidence_family_count == 9
+    assert (
+        result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_evidence_collection_worklist_row_count
+        == 72
+    )
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_no_hit_handoff_row_count == 9
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_blocked_count == 72
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_profile_conflict_count == 7
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_survivorship_warning_count == 9
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_safety_true_count == 0
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_recommended_next_task == (
+        EXPECTED_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_NEXT_TASK
+    )
+    for field in OFFICIAL_SOURCE_HIERARCHY_WORKLIST_SAFETY_FALSE_FIELDS:
+        assert getattr(
+            result,
+            f"latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_{field}",
+        ) is False
+        assert (
+            metadata[
+                f"latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_{field}"
+            ]
+            is False
+        )
+    assert (
+        summary.loc[
+            0,
+            "historical_replay_official_source_hierarchy_and_evidence_collection_worklist_context_visible",
+        ]
+        == "True"
+    )
+    assert (
+        summary.loc[
+            0,
+            "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_evidence_collection_worklist_row_count",
+        ]
+        == "72"
+    )
+    assert (
+        metadata[
+            "historical_replay_official_source_hierarchy_and_evidence_collection_worklist_context_visible"
+        ]
+        is True
+    )
+
+
+def test_research_status_preserves_paper_priority_over_historical_replay_official_source_hierarchy_worklist(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_official_source_hierarchy_worklist_context(root, run_id="012_priority")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.historical_replay_official_source_hierarchy_and_evidence_collection_worklist_context_visible is True
+    assert (
+        result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_official_source_hierarchy_approved
+        is False
+    )
+    assert (
+        result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_official_evidence_collection_approved
+        is False
+    )
+    assert (
+        result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_pit_admissibility_approved
+        is False
+    )
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_active_replay_input is False
+    assert (
+        result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_replay_execution_allowed
+        is False
+    )
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_buy_review_allowed is False
+    assert result.latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_trading_allowed is False
+
+
+def test_cli_research_status_prints_historical_replay_official_source_hierarchy_worklist_context(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_official_source_hierarchy_worklist_context(root, run_id="012_cli")
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr().out
+
+    assert code == 0
+    assert (
+        "historical_replay_official_source_hierarchy_and_evidence_collection_worklist_context_visible: True"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_run_id: 012_cli"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_historical_decision_date: 2024-04-02"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_universe_name: etf_core"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_row_count: 9"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_evidence_collection_worklist_row_count: 72"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_safety_true_count: 0"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_buy_review_allowed: False"
+        in output
+    )
+    assert (
+        "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_trading_allowed: False"
+        in output
+    )
+    assert (
+        f"latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_recommended_next_task: "
+        f"{EXPECTED_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_NEXT_TASK}"
+        in output
+    )
+    assert "PIT_ADMISSIBLE" not in output
+    assert "READY_FOR_REPLAY" not in output
+    assert "ACTIVE_REPLAY_INPUT_READY" not in output
+    assert "BUY_REVIEW_READY" not in output
+    assert "TRADING_READY" not in output
+
+
 def test_research_status_includes_personal_mvp_daily_advisory_review_context(
     tmp_path: Path,
 ) -> None:
@@ -19799,5 +20004,19 @@ def _run_official_status_evidence_packet_closure_worklist_context(root: Path, *,
         ),
         run_id=run_id,
         signal_date="2024-04-02",
+        universe_name="etf_core",
+    )
+
+
+def _run_official_source_hierarchy_worklist_context(root: Path, *, run_id: str):
+    return run_historical_replay_official_source_hierarchy_and_evidence_collection_worklist(
+        root=root,
+        output_dir=(
+            root
+            / "manual_diagnostics"
+            / "historical_replay_official_source_hierarchy_and_evidence_collection_worklist_v0_1"
+        ),
+        run_id=run_id,
+        historical_decision_date="2024-04-02",
         universe_name="etf_core",
     )
