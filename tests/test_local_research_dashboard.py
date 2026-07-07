@@ -219,6 +219,10 @@ from quant_replay_system.historical_replay_official_source_hierarchy_and_evidenc
     SAFETY_FALSE_FIELDS as OFFICIAL_SOURCE_HIERARCHY_WORKLIST_SAFETY_FALSE_FIELDS,
     run_historical_replay_official_source_hierarchy_and_evidence_collection_worklist,
 )
+from quant_replay_system.historical_replay_official_manual_evidence_collection_template_fixture import (
+    SAFETY_FALSE_FIELDS as OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_SAFETY_FALSE_FIELDS,
+    run_historical_replay_official_manual_evidence_collection_template_fixture,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -396,6 +400,9 @@ EXPECTED_OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_NEXT_TASK = (
 )
 EXPECTED_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_NEXT_TASK = (
     "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
+)
+EXPECTED_OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_NEXT_TASK = (
+    "Historical Replay Official Manual Evidence Collection Template Generated Artifact Review Report-Only v0.1"
 )
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
@@ -19062,6 +19069,100 @@ def test_cli_research_status_prints_historical_replay_official_source_hierarchy_
     assert "TRADING_READY" not in output
 
 
+def test_research_status_official_manual_evidence_template_fixture_absent_by_default(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.historical_replay_official_manual_evidence_collection_template_fixture_context_visible is False
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_run_id == ""
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_evidence_collection_template_row_count == 0
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_source_lineage_template_row_count == 0
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_safety_true_count == 0
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_buy_review_allowed is False
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_trading_allowed is False
+
+
+def test_research_status_includes_historical_replay_official_manual_evidence_template_fixture_context(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture = _run_official_manual_evidence_template_fixture_context(root, run_id="013_template")
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.historical_replay_official_manual_evidence_collection_template_fixture_context_visible is True
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_run_id == fixture.run_id
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_status == (
+        "OFFICIAL_MANUAL_EVIDENCE_COLLECTION_TEMPLATE_FIXTURE_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_health_status == (
+        "OFFICIAL_MANUAL_EVIDENCE_COLLECTION_TEMPLATE_FIXTURE_HEALTH_PASS_REPORT_ONLY"
+    )
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_workflow_stage == (
+        "HISTORICAL_REPLAY_OFFICIAL_MANUAL_EVIDENCE_COLLECTION_TEMPLATE_FIXTURE_CREATED_REPORT_ONLY"
+    )
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_report_path.endswith(
+        "official_manual_evidence_collection_template_report.md"
+    )
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_evidence_collection_template_row_count == 72
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_source_lineage_template_row_count == 72
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_no_hit_template_row_count == 9
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_survivorship_template_row_count == 9
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_safety_true_count == 0
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_recommended_next_task == (
+        EXPECTED_OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_NEXT_TASK
+    )
+    for field in OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_SAFETY_FALSE_FIELDS:
+        assert getattr(
+            result,
+            f"latest_historical_replay_official_manual_evidence_collection_template_fixture_{field}",
+        ) is False
+        assert (
+            metadata[
+                f"latest_historical_replay_official_manual_evidence_collection_template_fixture_{field}"
+            ]
+            is False
+        )
+    assert (
+        summary.loc[
+            0,
+            "historical_replay_official_manual_evidence_collection_template_fixture_context_visible",
+        ]
+        == "True"
+    )
+
+
+def test_research_status_preserves_paper_priority_over_historical_replay_official_manual_evidence_template_fixture(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    _run_official_manual_evidence_template_fixture_context(root, run_id="013_priority")
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+        next_manual_action="Paper workflow remains later priority.",
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.historical_replay_official_manual_evidence_collection_template_fixture_context_visible is True
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_official_evidence_collection_started is False
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_official_evidence_accepted is False
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_pit_admissibility_approved is False
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_active_replay_input is False
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_replay_execution_allowed is False
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_buy_review_allowed is False
+    assert result.latest_historical_replay_official_manual_evidence_collection_template_fixture_trading_allowed is False
+
+
 def test_research_status_includes_personal_mvp_daily_advisory_review_context(
     tmp_path: Path,
 ) -> None:
@@ -20014,6 +20115,20 @@ def _run_official_source_hierarchy_worklist_context(root: Path, *, run_id: str):
             root
             / "manual_diagnostics"
             / "historical_replay_official_source_hierarchy_and_evidence_collection_worklist_v0_1"
+        ),
+        run_id=run_id,
+        historical_decision_date="2024-04-02",
+        universe_name="etf_core",
+    )
+
+
+def _run_official_manual_evidence_template_fixture_context(root: Path, *, run_id: str):
+    return run_historical_replay_official_manual_evidence_collection_template_fixture(
+        root=root,
+        output_dir=(
+            root
+            / "manual_diagnostics"
+            / "historical_replay_official_manual_evidence_collection_template_fixture_v0_1"
         ),
         run_id=run_id,
         historical_decision_date="2024-04-02",
