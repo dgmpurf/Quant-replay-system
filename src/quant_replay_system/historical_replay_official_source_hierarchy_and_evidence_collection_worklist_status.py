@@ -23,8 +23,7 @@ from quant_replay_system.historical_replay_official_source_hierarchy_and_evidenc
 STATUS_CREATED = "OFFICIAL_SOURCE_HIERARCHY_WORKLIST_STATUS_CREATED_REPORT_ONLY"
 STATUS_NO_ARTIFACTS = "OFFICIAL_SOURCE_HIERARCHY_WORKLIST_STATUS_NO_ARTIFACTS"
 NEXT_TASK = (
-    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
-    "CLI Report-Only v0.1"
+    "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 
 STATUS_COLUMNS = [

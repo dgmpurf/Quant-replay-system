@@ -32,8 +32,7 @@ DEFAULT_OUTPUT_ROOT = Path(
     "historical_replay_official_source_hierarchy_and_evidence_collection_worklist_v0_1"
 )
 RECOMMENDED_NEXT_TASK = (
-    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
-    "Artifact Views / Status Report-Only v0.1"
+    "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 
 OUTPUT_FILES = {

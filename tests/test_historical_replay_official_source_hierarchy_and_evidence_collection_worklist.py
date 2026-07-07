@@ -48,8 +48,7 @@ EXPECTED_FAMILIES = {
     "survivorship_rationale",
 }
 EXPECTED_NEXT_TASK = (
-    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
-    "Artifact Views / Status Report-Only v0.1"
+    "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 
 

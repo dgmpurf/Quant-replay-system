@@ -19320,8 +19320,7 @@ def _handle_historical_replay_official_status_evidence_packet_closure_worklist_s
 
 
 HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_CLI_NEXT_TASK = (
-    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
-    "Research-Status Integration Planning Report-Only v0.1"
+    "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 
 

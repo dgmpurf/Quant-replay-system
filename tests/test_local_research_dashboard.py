@@ -395,8 +395,7 @@ EXPECTED_OFFICIAL_STATUS_EVIDENCE_PACKET_CLOSURE_WORKLIST_NEXT_TASK = (
     "2024-04-02 etf_core Report-Only v0.1"
 )
 EXPECTED_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_NEXT_TASK = (
-    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
-    "Checkpoint Planning Report-Only v0.1"
+    "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture

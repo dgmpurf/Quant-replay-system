@@ -11,14 +11,17 @@ INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
 NEXT_TASK = (
-    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
-    "Research-Status Integration Planning Report-Only v0.1"
+    "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 STALE_NEXT_TASK_PHRASES = [
     "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
     "Artifact Views / Status Report-Only v0.1",
     "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
     "CLI Report-Only v0.1",
+    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
+    "Research-Status Integration Planning Report-Only v0.1",
+    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
+    "Checkpoint Planning Report-Only v0.1",
 ]
 
 

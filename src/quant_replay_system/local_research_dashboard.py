@@ -38797,8 +38797,7 @@ _OFFICIAL_SOURCE_HIERARCHY_WORKLIST_PREFIX = (
     "latest_historical_replay_official_source_hierarchy_and_evidence_collection_worklist_"
 )
 _OFFICIAL_SOURCE_HIERARCHY_WORKLIST_NEXT_TASK = (
-    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
-    "Checkpoint Planning Report-Only v0.1"
+    "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 _OFFICIAL_SOURCE_HIERARCHY_WORKLIST_LATEST_FIELDS = [
     f"{_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_PREFIX}run_id",

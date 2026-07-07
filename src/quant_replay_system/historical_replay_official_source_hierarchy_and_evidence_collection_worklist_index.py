@@ -19,8 +19,7 @@ DEFAULT_ROOT = DEFAULT_OUTPUT_ROOT
 VIEW_DIR_NAMES = {"index", "health", "status"}
 STATUS_INDEX_CREATED = "OFFICIAL_SOURCE_HIERARCHY_WORKLIST_INDEX_CREATED_REPORT_ONLY"
 NEXT_TASK = (
-    "Historical Replay Official Source Hierarchy and Evidence Collection Worklist "
-    "CLI Report-Only v0.1"
+    "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 
 INDEX_COLUMNS = [
