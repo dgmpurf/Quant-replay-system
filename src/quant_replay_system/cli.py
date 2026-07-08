@@ -19408,7 +19408,7 @@ HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_CLI_NEXT_TASK = (
     "Historical Replay Official Manual Evidence Collection Template Design Report-Only v0.1"
 )
 HISTORICAL_REPLAY_OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_CLI_NEXT_TASK = (
-    "Historical Replay Official Manual Evidence Collection Template Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 
 

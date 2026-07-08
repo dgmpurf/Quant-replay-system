@@ -29,7 +29,7 @@ DEFAULT_OUTPUT_ROOT = Path(
     "historical_replay_official_manual_evidence_collection_template_fixture_v0_1"
 )
 RECOMMENDED_NEXT_TASK = (
-    "Historical Replay Official Manual Evidence Collection Template Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 
 OUTPUT_FILES = {

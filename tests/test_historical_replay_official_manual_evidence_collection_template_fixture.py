@@ -28,7 +28,7 @@ EXPECTED_ROWS = {
     "688981": ("STOCK", "stock_core", "true"),
 }
 EXPECTED_NEXT_TASK = (
-    "Historical Replay Official Manual Evidence Collection Template Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 
 

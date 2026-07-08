@@ -23,7 +23,7 @@ from quant_replay_system.historical_replay_official_manual_evidence_collection_t
 STATUS_CREATED = "OFFICIAL_MANUAL_EVIDENCE_COLLECTION_TEMPLATE_FIXTURE_STATUS_CREATED_REPORT_ONLY"
 STATUS_NO_ARTIFACTS = "OFFICIAL_MANUAL_EVIDENCE_COLLECTION_TEMPLATE_FIXTURE_STATUS_NO_ARTIFACTS"
 NEXT_TASK = (
-    "Historical Replay Official Manual Evidence Collection Template Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 STATUS_COLUMNS = [
     "latest_run_id",

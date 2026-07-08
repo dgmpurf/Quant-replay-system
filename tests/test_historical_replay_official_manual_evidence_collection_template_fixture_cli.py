@@ -11,7 +11,7 @@ INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
 NEXT_TASK = (
-    "Historical Replay Official Manual Evidence Collection Template Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 
 
