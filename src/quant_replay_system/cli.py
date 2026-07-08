@@ -170,6 +170,19 @@ from quant_replay_system.historical_replay_official_manual_evidence_collection_t
 from quant_replay_system.historical_replay_official_manual_evidence_collection_template_fixture_status import (
     run_historical_replay_official_manual_evidence_collection_template_fixture_status,
 )
+from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture import (
+    run_historical_replay_reviewer_no_hit_acceptance_fixture,
+)
+from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture_health import (
+    check_historical_replay_reviewer_no_hit_acceptance_fixture_health,
+)
+from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture_index import (
+    DEFAULT_ROOT as HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_DEFAULT_ROOT,
+    build_historical_replay_reviewer_no_hit_acceptance_fixture_index,
+)
+from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture_status import (
+    run_historical_replay_reviewer_no_hit_acceptance_fixture_status,
+)
 from quant_replay_system.pit_evidence_checklist_validator import build_pit_evidence_checklist_validator
 from quant_replay_system.pit_evidence_checklist_validator_health import check_pit_evidence_checklist_validator_health
 from quant_replay_system.pit_evidence_checklist_validator_index import build_pit_evidence_checklist_validator_index
@@ -2942,6 +2955,78 @@ def build_parser() -> argparse.ArgumentParser:
     )
     official_manual_evidence_template_fixture_status.set_defaults(
         handler=_handle_historical_replay_official_manual_evidence_collection_template_fixture_status
+    )
+
+    reviewer_no_hit_acceptance_fixture = subparsers.add_parser(
+        "historical-replay-reviewer-no-hit-acceptance-fixture",
+        help=(
+            "Build report-only synthetic reviewer no-hit acceptance contract fixture artifacts "
+            "for the selected historical replay sample"
+        ),
+    )
+    reviewer_no_hit_acceptance_fixture.add_argument(
+        "--root",
+        default="outputs/reports",
+        help="Root folder containing existing local report artifacts used as context",
+    )
+    reviewer_no_hit_acceptance_fixture.add_argument(
+        "--output-dir",
+        default=str(HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_DEFAULT_ROOT),
+        help="Directory where report-only reviewer no-hit acceptance fixture artifacts will be written",
+    )
+    reviewer_no_hit_acceptance_fixture.add_argument("--run-id", default=None)
+    reviewer_no_hit_acceptance_fixture.add_argument("--historical-decision-date", default="2024-04-02")
+    reviewer_no_hit_acceptance_fixture.add_argument("--universe-name", default="etf_core")
+    reviewer_no_hit_acceptance_fixture.set_defaults(
+        handler=_handle_historical_replay_reviewer_no_hit_acceptance_fixture
+    )
+
+    reviewer_no_hit_acceptance_fixture_index = subparsers.add_parser(
+        "historical-replay-reviewer-no-hit-acceptance-fixture-index",
+        help="Build a report-only index for reviewer no-hit acceptance fixture artifacts",
+    )
+    reviewer_no_hit_acceptance_fixture_index.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_DEFAULT_ROOT),
+    )
+    reviewer_no_hit_acceptance_fixture_index.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_DEFAULT_ROOT}/index",
+    )
+    reviewer_no_hit_acceptance_fixture_index.set_defaults(
+        handler=_handle_historical_replay_reviewer_no_hit_acceptance_fixture_index
+    )
+
+    reviewer_no_hit_acceptance_fixture_health = subparsers.add_parser(
+        "historical-replay-reviewer-no-hit-acceptance-fixture-health",
+        help="Check report-only reviewer no-hit acceptance fixture artifact health",
+    )
+    reviewer_no_hit_acceptance_fixture_health.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_DEFAULT_ROOT),
+    )
+    reviewer_no_hit_acceptance_fixture_health.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_DEFAULT_ROOT}/health",
+    )
+    reviewer_no_hit_acceptance_fixture_health.set_defaults(
+        handler=_handle_historical_replay_reviewer_no_hit_acceptance_fixture_health
+    )
+
+    reviewer_no_hit_acceptance_fixture_status = subparsers.add_parser(
+        "historical-replay-reviewer-no-hit-acceptance-fixture-status",
+        help="Summarize latest report-only reviewer no-hit acceptance fixture status",
+    )
+    reviewer_no_hit_acceptance_fixture_status.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_DEFAULT_ROOT),
+    )
+    reviewer_no_hit_acceptance_fixture_status.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_DEFAULT_ROOT}/status",
+    )
+    reviewer_no_hit_acceptance_fixture_status.set_defaults(
+        handler=_handle_historical_replay_reviewer_no_hit_acceptance_fixture_status
     )
 
     historical_replay_input_gate_validator = subparsers.add_parser(
@@ -19410,6 +19495,9 @@ HISTORICAL_REPLAY_OFFICIAL_SOURCE_HIERARCHY_WORKLIST_CLI_NEXT_TASK = (
 HISTORICAL_REPLAY_OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_CLI_NEXT_TASK = (
     "Historical Replay Reviewer No-Hit Acceptance Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
+HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_CLI_NEXT_TASK = (
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Generated Artifact Review Report-Only v0.1"
+)
 
 
 def _historical_replay_official_source_hierarchy_worklist_safety_statement() -> str:
@@ -19684,6 +19772,135 @@ def _handle_historical_replay_official_manual_evidence_collection_template_fixtu
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print(_historical_replay_official_manual_evidence_template_fixture_safety_statement())
+    return 0
+
+
+def _historical_replay_reviewer_no_hit_acceptance_fixture_safety_statement() -> str:
+    return (
+        "no official evidence collection, no official evidence acceptance, no no-hit evidence acceptance, "
+        "no PIT evidence closure, no PIT admissibility approval, no active replay input, "
+        "no replay execution, no decision freeze, no forward labels, no metric computation, "
+        "no training/model/stock_profile/paper expansion, no buy-review, no trading, "
+        "no broker API, no orders, no messages, no external or LLM API, no current-candidates, "
+        "no snapshots, no signal semantics mutation, and no protected data writes were invoked."
+    )
+
+
+def _handle_historical_replay_reviewer_no_hit_acceptance_fixture(
+    args: argparse.Namespace,
+) -> int:
+    result = run_historical_replay_reviewer_no_hit_acceptance_fixture(
+        root=args.root,
+        output_dir=args.output_dir,
+        run_id=args.run_id,
+        historical_decision_date=args.historical_decision_date,
+        universe_name=args.universe_name,
+    )
+    metadata = result.metadata
+    print(f"no_hit_acceptance_fixture_run_id: {result.run_id}")
+    print(f"historical_decision_date: {metadata.get('historical_decision_date', args.historical_decision_date)}")
+    print(f"universe_name: {metadata.get('universe_name', args.universe_name)}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"row_count: {metadata.get('row_count', 0)}")
+    print(f"stock_row_count: {metadata.get('stock_row_count', 0)}")
+    print(f"etf_row_count: {metadata.get('etf_row_count', 0)}")
+    print(f"no_hit_row_count: {metadata.get('no_hit_row_count', 0)}")
+    print(f"not_accepted_count: {metadata.get('not_accepted_count', 0)}")
+    print(f"accepted_context_count: {metadata.get('accepted_context_count', 0)}")
+    print(f"row_with_blocker_count: {metadata.get('row_with_blocker_count', 0)}")
+    print(f"profile_conflict_count: {metadata.get('profile_conflict_count', 0)}")
+    print(f"survivorship_warning_count: {metadata.get('survivorship_warning_count', 0)}")
+    print(f"safety_true_count: {metadata.get('safety_true_count', 0)}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"recommended_next_task: {HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_CLI_NEXT_TASK}")
+    print(_historical_replay_reviewer_no_hit_acceptance_fixture_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_reviewer_no_hit_acceptance_fixture_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_historical_replay_reviewer_no_hit_acceptance_fixture_index(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    latest = result.rows[0] if result.rows else {}
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"historical_decision_date: {latest.get('historical_decision_date', '')}")
+    print(f"universe_name: {latest.get('universe_name', '')}")
+    print(f"status: {latest.get('runtime_status', '')}")
+    print(f"health_status: {latest.get('health_status', '')}")
+    print(f"workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"row_count: {latest.get('row_count', 0)}")
+    print(f"stock_row_count: {latest.get('stock_row_count', 0)}")
+    print(f"etf_row_count: {latest.get('etf_row_count', 0)}")
+    print(f"no_hit_row_count: {latest.get('no_hit_row_count', 0)}")
+    print(f"not_accepted_count: {latest.get('not_accepted_count', 0)}")
+    print(f"accepted_context_count: {latest.get('accepted_context_count', 0)}")
+    print(f"row_with_blocker_count: {latest.get('row_with_blocker_count', 0)}")
+    print(f"safety_true_count: {latest.get('safety_true_count', 0)}")
+    print(f"report_path: {latest.get('report_path', '')}")
+    print(_historical_replay_reviewer_no_hit_acceptance_fixture_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_reviewer_no_hit_acceptance_fixture_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_historical_replay_reviewer_no_hit_acceptance_fixture_health(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"Health report path: {result.artifact_paths['health_md']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_historical_replay_reviewer_no_hit_acceptance_fixture_safety_statement())
+    return 1 if result.status.endswith("FAIL_UNSAFE") else 0
+
+
+def _handle_historical_replay_reviewer_no_hit_acceptance_fixture_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_historical_replay_reviewer_no_hit_acceptance_fixture_status(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    summary = result.summary
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"Status report path: {result.artifact_paths['status_md']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"historical_decision_date: {summary.get('latest_historical_decision_date', '')}")
+    print(f"universe_name: {summary.get('latest_universe_name', '')}")
+    print(f"status: {result.latest_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"workflow_stage: {result.latest_workflow_stage}")
+    print(f"row_count: {summary.get('latest_row_count', 0)}")
+    print(f"stock_row_count: {summary.get('latest_stock_row_count', 0)}")
+    print(f"etf_row_count: {summary.get('latest_etf_row_count', 0)}")
+    print(f"no_hit_row_count: {summary.get('latest_no_hit_row_count', 0)}")
+    print(f"not_accepted_count: {summary.get('latest_not_accepted_count', 0)}")
+    print(f"accepted_context_count: {summary.get('latest_accepted_context_count', 0)}")
+    print(f"row_with_blocker_count: {summary.get('latest_row_with_blocker_count', 0)}")
+    print(f"safety_true_count: {summary.get('latest_safety_true_count', 0)}")
+    print(f"report_path: {summary.get('latest_report_path', '')}")
+    print(f"recommended_next_task: {HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_CLI_NEXT_TASK}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_historical_replay_reviewer_no_hit_acceptance_fixture_safety_statement())
     return 0
 
 
@@ -27482,6 +27699,58 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "latest_historical_replay_official_manual_evidence_collection_template_fixture_data_processed_written",
         "latest_historical_replay_official_manual_evidence_collection_template_fixture_data_cache_written",
         "latest_historical_replay_official_manual_evidence_collection_template_fixture_recommended_next_task",
+    ]:
+        print(f"{field}: {getattr(result, field)}")
+    for field in [
+        "historical_replay_reviewer_no_hit_acceptance_fixture_context_visible",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_run_id",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_historical_decision_date",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_universe_name",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_status",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_health_status",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_workflow_stage",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_report_path",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_row_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_stock_row_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_etf_row_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_no_hit_row_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_not_accepted_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_accepted_context_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_row_with_blocker_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_profile_conflict_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_survivorship_warning_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_safety_true_count",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_official_source_hierarchy_approved",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_official_evidence_collection_started",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_official_evidence_collection_approved",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_official_evidence_accepted",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_official_evidence_closed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_official_status_evidence_closed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_pit_evidence_closed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_pit_admissibility_approved",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_active_replay_input",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_replay_execution_allowed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_replay_decision_freeze_allowed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_forward_labels_created",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_training_dataset_created",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_metric_computation_performed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_model_training_performed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_stock_profile_validation_created",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_paper_expansion_allowed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_buy_review_allowed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_trading_allowed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_broker_api_called",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_order_placed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_message_sent",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_external_api_called",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_llm_api_called",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_current_candidates_executed",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_snapshot_built",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_signal_semantics_mutated",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_data_raw_written",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_data_processed_written",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_data_cache_written",
+        "latest_historical_replay_reviewer_no_hit_acceptance_fixture_recommended_next_task",
     ]:
         print(f"{field}: {getattr(result, field)}")
     print(
