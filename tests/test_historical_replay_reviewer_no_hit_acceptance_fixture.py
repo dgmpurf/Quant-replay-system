@@ -29,10 +29,10 @@ EXPECTED_ROWS = {
     "688981": ("STOCK", "stock_core", "true"),
 }
 EXPECTED_NEXT_TASK = (
-    "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Planning for legacy etf_core Report-Only v0.1"
 )
 OLD_NEXT_TASK = (
-    "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
 )
 EXPECTED_BLOCKERS = {
     "blocker_missing_no_hit_query_window",

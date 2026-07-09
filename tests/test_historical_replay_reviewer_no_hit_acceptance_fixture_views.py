@@ -23,10 +23,10 @@ from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture_st
 
 
 EXPECTED_NEXT_TASK = (
-    "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Planning for legacy etf_core Report-Only v0.1"
 )
 OLD_NEXT_TASK = (
-    "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
 )
 
 

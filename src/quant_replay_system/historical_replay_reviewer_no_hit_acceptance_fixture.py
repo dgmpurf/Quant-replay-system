@@ -24,7 +24,7 @@ DEFAULT_OUTPUT_ROOT = Path(
     "outputs/reports/manual_diagnostics/historical_replay_reviewer_no_hit_acceptance_fixture_v0_1"
 )
 RECOMMENDED_NEXT_TASK = (
-    "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Planning for legacy etf_core Report-Only v0.1"
 )
 
 OUTPUT_FILES = {
