@@ -29,6 +29,9 @@ EXPECTED_ROWS = {
     "688981": ("STOCK", "stock_core", "true"),
 }
 EXPECTED_NEXT_TASK = (
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
+)
+OLD_NEXT_TASK = (
     "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
 )
 EXPECTED_BLOCKERS = {
@@ -81,6 +84,7 @@ def test_metadata_records_selected_no_hit_counts_and_safety(tmp_path: Path) -> N
     assert metadata["no_hit_contract_fixture_only"] is True
     assert metadata["no_hit_context_accepted"] is False
     assert metadata["recommended_next_task"] == EXPECTED_NEXT_TASK
+    assert metadata["recommended_next_task"] != OLD_NEXT_TASK
     assert RECOMMENDED_NEXT_TASK == EXPECTED_NEXT_TASK
     for field in SAFETY_FALSE_FIELDS:
         assert metadata[field] is False

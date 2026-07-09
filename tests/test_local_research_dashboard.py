@@ -409,6 +409,9 @@ EXPECTED_OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_NEXT_TASK = (
     "Historical Replay Reviewer No-Hit Acceptance Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 EXPECTED_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK = (
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
+)
+OLD_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK = (
     "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
 )
 
@@ -19219,6 +19222,10 @@ def test_research_status_includes_historical_replay_reviewer_no_hit_acceptance_f
     assert result.latest_historical_replay_reviewer_no_hit_acceptance_fixture_safety_true_count == 0
     assert result.latest_historical_replay_reviewer_no_hit_acceptance_fixture_recommended_next_task == (
         EXPECTED_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK
+    )
+    assert (
+        result.latest_historical_replay_reviewer_no_hit_acceptance_fixture_recommended_next_task
+        != OLD_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK
     )
     for field in REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_SAFETY_FALSE_FIELDS:
         assert getattr(

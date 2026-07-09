@@ -10,7 +10,10 @@ COMMAND = "historical-replay-reviewer-no-hit-acceptance-fixture"
 INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
-NEXT_TASK = "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
+NEXT_TASK = "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
+OLD_NEXT_TASK = (
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
+)
 
 
 def test_cli_command_registration_for_all_four_commands() -> None:
@@ -82,6 +85,7 @@ def test_core_cli_writes_no_hit_acceptance_artifacts_and_prints_counts(tmp_path:
     assert "row_with_blocker_count: 9" in output
     assert "safety_true_count: 0" in output
     assert f"recommended_next_task: {NEXT_TASK}" in output
+    assert f"recommended_next_task: {OLD_NEXT_TASK}" not in output
     _assert_safety_statement(output)
     _assert_no_positive_readiness(output)
     for filename in [
@@ -120,6 +124,7 @@ def test_index_health_status_cli_wrap_existing_no_hit_artifacts(tmp_path: Path, 
     assert "latest_health_status: REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_HEALTH_PASS_REPORT_ONLY" in status_output
     assert "not_accepted_count: 9" in status_output
     assert f"recommended_next_task: {NEXT_TASK}" in status_output
+    assert f"recommended_next_task: {OLD_NEXT_TASK}" not in status_output
     for output in [index_output, health_output, status_output]:
         _assert_safety_statement(output)
         _assert_no_positive_readiness(output)

@@ -23,6 +23,9 @@ from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture_st
 
 
 EXPECTED_NEXT_TASK = (
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
+)
+OLD_NEXT_TASK = (
     "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
 )
 
@@ -47,6 +50,7 @@ def test_index_discovers_no_hit_acceptance_fixture_and_exports_counts(tmp_path: 
     assert row["survivorship_warning_count"] == 9
     assert row["safety_true_count"] == 0
     assert row["recommended_next_task"] == EXPECTED_NEXT_TASK
+    assert row["recommended_next_task"] != OLD_NEXT_TASK
     assert row["report_path"].endswith(OUTPUT_FILES["report"])
 
 
@@ -116,6 +120,7 @@ def test_status_summarizes_latest_artifact_and_preserves_next_task(tmp_path: Pat
         "HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_CREATED_REPORT_ONLY"
     )
     assert result.recommended_next_task == EXPECTED_NEXT_TASK
+    assert result.recommended_next_task != OLD_NEXT_TASK
     assert NEXT_TASK == EXPECTED_NEXT_TASK
     assert result.summary["latest_no_hit_row_count"] == 9
     assert result.summary["latest_not_accepted_count"] == 9
@@ -132,6 +137,7 @@ def test_status_no_artifacts_is_benign_and_report_only(tmp_path: Path) -> None:
     assert result.latest_run_id == ""
     assert result.latest_status == "REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_STATUS_NO_ARTIFACTS"
     assert result.recommended_next_task == EXPECTED_NEXT_TASK
+    assert result.recommended_next_task != OLD_NEXT_TASK
     assert result.summary["report_only"] is True
     assert result.summary["diagnostic_only"] is True
     assert result.summary["latest_buy_review_allowed"] is False
