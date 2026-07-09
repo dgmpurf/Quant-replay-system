@@ -28,7 +28,9 @@ EXPECTED_ROWS = {
     "601318": ("STOCK", "stock_core", "true"),
     "688981": ("STOCK", "stock_core", "true"),
 }
-EXPECTED_NEXT_TASK = "Historical Replay Reviewer No-Hit Acceptance Fixture Generated Artifact Review Report-Only v0.1"
+EXPECTED_NEXT_TASK = (
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
+)
 EXPECTED_BLOCKERS = {
     "blocker_missing_no_hit_query_window",
     "blocker_missing_no_hit_timezone",

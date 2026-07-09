@@ -22,7 +22,9 @@ from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture_st
 )
 
 
-EXPECTED_NEXT_TASK = "Historical Replay Reviewer No-Hit Acceptance Fixture Generated Artifact Review Report-Only v0.1"
+EXPECTED_NEXT_TASK = (
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
+)
 
 
 def test_index_discovers_no_hit_acceptance_fixture_and_exports_counts(tmp_path: Path) -> None:

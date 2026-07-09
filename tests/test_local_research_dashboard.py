@@ -409,7 +409,7 @@ EXPECTED_OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_NEXT_TASK = (
     "Historical Replay Reviewer No-Hit Acceptance Planning for 2024-04-02 etf_core Report-Only v0.1"
 )
 EXPECTED_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK = (
-    "Historical Replay Reviewer No-Hit Acceptance Fixture Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
 )
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture

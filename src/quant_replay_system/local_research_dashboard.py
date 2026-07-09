@@ -39536,7 +39536,7 @@ _REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_PREFIX = (
     "latest_historical_replay_reviewer_no_hit_acceptance_fixture_"
 )
 _REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK = (
-    "Historical Replay Reviewer No-Hit Acceptance Fixture Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
 )
 _REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_LATEST_FIELDS = [
     f"{_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_PREFIX}run_id",

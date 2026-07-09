@@ -10,7 +10,7 @@ COMMAND = "historical-replay-reviewer-no-hit-acceptance-fixture"
 INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
-NEXT_TASK = "Historical Replay Reviewer No-Hit Acceptance Fixture Generated Artifact Review Report-Only v0.1"
+NEXT_TASK = "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
 
 
 def test_cli_command_registration_for_all_four_commands() -> None:

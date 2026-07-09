@@ -24,7 +24,7 @@ DEFAULT_OUTPUT_ROOT = Path(
     "outputs/reports/manual_diagnostics/historical_replay_reviewer_no_hit_acceptance_fixture_v0_1"
 )
 RECOMMENDED_NEXT_TASK = (
-    "Historical Replay Reviewer No-Hit Acceptance Fixture Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Reviewer No-Hit Acceptance Fixture Checkpoint Documentation Bundle Report-Only v0.1"
 )
 
 OUTPUT_FILES = {
