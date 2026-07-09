@@ -418,6 +418,12 @@ EXPECTED_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK = (
 OLD_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK = (
     "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
 )
+EXPECTED_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK = (
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
+)
+OLD_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK = (
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
+)
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture
 from quant_replay_system.source_registry_schema_fixture import build_source_registry_schema_fixture
@@ -2120,6 +2126,13 @@ def test_dashboard_includes_mixed_stock_etf_universe_profile_policy_context_and_
     assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_universe_membership_approved_count == 0
     assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_survivorship_warning_count == 9
     assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_safety_true_count == 0
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_recommended_next_task == (
+        EXPECTED_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK
+    )
+    assert (
+        result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_recommended_next_task
+        != OLD_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK
+    )
     assert row["stage"] == "HISTORICAL_REPLAY_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_FIXTURE_CREATED_REPORT_ONLY"
     assert (
         summary.loc[0, "latest_historical_replay_mixed_stock_etf_universe_profile_policy_run_id"]
@@ -2159,6 +2172,11 @@ def test_cli_research_status_prints_mixed_stock_etf_universe_profile_policy_fiel
     assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_not_accepted_count: 9" in output.out
     assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_accepted_context_count: 0" in output.out
     assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_survivorship_warning_count: 9" in output.out
+    assert (
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_recommended_next_task: "
+        f"{EXPECTED_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK}"
+    ) in output.out
+    assert OLD_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK not in output.out
     assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_trading_allowed: False" in output.out
 
 

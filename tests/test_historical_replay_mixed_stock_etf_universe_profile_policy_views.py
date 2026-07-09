@@ -23,6 +23,9 @@ from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_poli
 
 
 EXPECTED_NEXT_TASK = (
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
+)
+OLD_NEXT_TASK = (
     "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
 )
 
@@ -49,6 +52,7 @@ def test_index_discovers_mixed_profile_policy_fixture_and_exports_counts(tmp_pat
     assert row["survivorship_warning_count"] == 9
     assert row["safety_true_count"] == 0
     assert row["recommended_next_task"] == EXPECTED_NEXT_TASK
+    assert row["recommended_next_task"] != OLD_NEXT_TASK
     assert row["report_path"].endswith(OUTPUT_FILES["report"])
 
 
@@ -119,6 +123,7 @@ def test_status_summarizes_latest_artifact_and_recommended_next_task(tmp_path: P
     )
     assert result.recommended_next_task == EXPECTED_NEXT_TASK
     assert NEXT_TASK == EXPECTED_NEXT_TASK
+    assert result.recommended_next_task != OLD_NEXT_TASK
     assert result.summary["latest_row_count"] == 9
     assert result.summary["latest_profile_conflict_count"] == 7
     assert result.summary["latest_profile_policy_accepted_count"] == 0

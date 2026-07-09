@@ -30,6 +30,9 @@ EXPECTED_ROWS = {
     "688981": ("STOCK", "stock_core", "true", "unresolved_profile_conflict"),
 }
 EXPECTED_NEXT_TASK = (
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
+)
+OLD_NEXT_TASK = (
     "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
 )
 
@@ -79,6 +82,7 @@ def test_metadata_records_exact_counts_and_non_approval_safety(tmp_path: Path) -
     assert metadata["mixed_stock_etf_profile_policy_fixture_only"] is True
     assert metadata["recommended_next_task"] == EXPECTED_NEXT_TASK
     assert RECOMMENDED_NEXT_TASK == EXPECTED_NEXT_TASK
+    assert metadata["recommended_next_task"] != OLD_NEXT_TASK
     for field in SAFETY_FALSE_FIELDS:
         assert metadata[field] is False
 

@@ -10,7 +10,8 @@ COMMAND = "historical-replay-mixed-stock-etf-universe-profile-policy"
 INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
-NEXT_TASK = "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
+NEXT_TASK = "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
+OLD_NEXT_TASK = "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
 
 
 def test_cli_command_registration_for_all_four_commands() -> None:
@@ -87,6 +88,7 @@ def test_core_cli_writes_artifacts_and_prints_counts(tmp_path: Path, capsys) -> 
     assert "survivorship_warning_count: 9" in output
     assert "safety_true_count: 0" in output
     assert f"recommended_next_task: {NEXT_TASK}" in output
+    assert f"recommended_next_task: {OLD_NEXT_TASK}" not in output
     _assert_safety_statement(output)
     _assert_no_positive_readiness(output)
     for filename in [
@@ -133,6 +135,7 @@ def test_index_health_status_cli_wrap_existing_artifacts(tmp_path: Path, capsys)
     assert "accepted_context_count: 0" in status_output
     assert "survivorship_warning_count: 9" in status_output
     assert f"recommended_next_task: {NEXT_TASK}" in status_output
+    assert f"recommended_next_task: {OLD_NEXT_TASK}" not in status_output
     for output in [index_output, health_output, status_output]:
         _assert_safety_statement(output)
         _assert_no_positive_readiness(output)

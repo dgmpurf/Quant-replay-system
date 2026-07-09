@@ -26,7 +26,7 @@ DEFAULT_OUTPUT_ROOT = Path(
     "historical_replay_mixed_stock_etf_universe_profile_policy_legacy_etf_core_v0_1"
 )
 RECOMMENDED_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
 )
 
 OUTPUT_FILES = {
