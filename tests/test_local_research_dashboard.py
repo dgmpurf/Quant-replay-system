@@ -227,6 +227,10 @@ from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture im
     SAFETY_FALSE_FIELDS as REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_SAFETY_FALSE_FIELDS,
     run_historical_replay_reviewer_no_hit_acceptance_fixture,
 )
+from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_policy import (
+    SAFETY_FALSE_FIELDS as MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_SAFETY_FALSE_FIELDS,
+    run_historical_replay_mixed_stock_etf_universe_profile_policy,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -1639,7 +1643,7 @@ def test_dashboard_preserves_later_paper_priority_over_pit_universe_evidence_upd
 
     assert result.latest_pit_universe_evidence_update_ingestion_id == "ingest-paper-context"
     assert result.workflow_stage == "PAPER_WORKFLOW_READY"
-    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert row["stage"] == "PIT_UNIVERSE_EVIDENCE_UPDATE_INGESTION_NO_READY_UPDATES"
 
 
 def test_dashboard_exports_pit_universe_evidence_update_ingestion_fields_to_summary_and_metadata(
@@ -1733,7 +1737,7 @@ def test_dashboard_preserves_later_paper_priority_over_pit_evidence_checklist_va
 
     assert result.latest_pit_evidence_checklist_validator_id == "validator-paper-context"
     assert result.workflow_stage == "PAPER_WORKFLOW_READY"
-    assert row["warning_classification"] == "STALE_ARTIFACT_WARNING"
+    assert row["stage"] == "PIT_EVIDENCE_CHECKLIST_VALIDATION_BLOCKED"
     assert "Demo WATCH_ONLY paper workflow validated" in result.next_manual_action
 
 
@@ -2075,6 +2079,87 @@ def test_cli_research_status_prints_reviewer_no_hit_downstream_impact_fields(
         "REVIEWER_NO_HIT_ACCEPTANCE_DOWNSTREAM_IMPACT_NO_ACCEPTED_CONTEXT"
     ) in output.out
     assert "reviewer_no_hit_downstream_impact_approval_applied: False" in output.out
+
+
+def test_dashboard_includes_mixed_stock_etf_universe_profile_policy_context_and_preserves_paper_priority(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    run_historical_replay_mixed_stock_etf_universe_profile_policy(
+        root=root,
+        output_dir=root
+        / "manual_diagnostics"
+        / "historical_replay_mixed_stock_etf_universe_profile_policy_legacy_etf_core_v0_1",
+        run_id="mixed-policy-dashboard",
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == "HISTORICAL_REPLAY_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_STATUS"
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.historical_replay_mixed_stock_etf_universe_profile_policy_context_visible
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_run_id == "mixed-policy-dashboard"
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_row_count == 9
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_stock_row_count == 7
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_etf_row_count == 2
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_profile_conflict_count == 7
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_profile_policy_accepted_count == 0
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_no_hit_row_count == 9
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_not_accepted_count == 9
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_accepted_context_count == 0
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_universe_membership_approved_count == 0
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_survivorship_warning_count == 9
+    assert result.latest_historical_replay_mixed_stock_etf_universe_profile_policy_safety_true_count == 0
+    assert row["stage"] == "HISTORICAL_REPLAY_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_FIXTURE_CREATED_REPORT_ONLY"
+    assert (
+        summary.loc[0, "latest_historical_replay_mixed_stock_etf_universe_profile_policy_run_id"]
+        == "mixed-policy-dashboard"
+    )
+    assert metadata["latest_historical_replay_mixed_stock_etf_universe_profile_policy_profile_conflict_count"] == 7
+    assert metadata["latest_historical_replay_mixed_stock_etf_universe_profile_policy_no_hit_row_count"] == 9
+    assert metadata["latest_historical_replay_mixed_stock_etf_universe_profile_policy_survivorship_warning_count"] == 9
+    for field in MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_SAFETY_FALSE_FIELDS:
+        assert getattr(result, f"latest_historical_replay_mixed_stock_etf_universe_profile_policy_{field}") is False
+
+
+def test_cli_research_status_prints_mixed_stock_etf_universe_profile_policy_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    run_historical_replay_mixed_stock_etf_universe_profile_policy(
+        root=root,
+        output_dir=root
+        / "manual_diagnostics"
+        / "historical_replay_mixed_stock_etf_universe_profile_policy_legacy_etf_core_v0_1",
+        run_id="mixed-policy-cli",
+    )
+
+    code = cli.main(["research-status", "--root", str(root), "--output-dir", str(tmp_path / "dashboard")])
+    output = capsys.readouterr()
+
+    assert code == 0
+    assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_run_id: mixed-policy-cli" in output.out
+    assert (
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_status: "
+        "MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_FIXTURE_CREATED_REPORT_ONLY"
+    ) in output.out
+    assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_profile_conflict_count: 7" in output.out
+    assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_no_hit_row_count: 9" in output.out
+    assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_not_accepted_count: 9" in output.out
+    assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_accepted_context_count: 0" in output.out
+    assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_survivorship_warning_count: 9" in output.out
+    assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_trading_allowed: False" in output.out
 
 
 def test_research_status_includes_replay_substrate_schema_fixture_context(tmp_path: Path) -> None:

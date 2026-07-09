@@ -183,6 +183,19 @@ from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture_in
 from quant_replay_system.historical_replay_reviewer_no_hit_acceptance_fixture_status import (
     run_historical_replay_reviewer_no_hit_acceptance_fixture_status,
 )
+from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_policy import (
+    run_historical_replay_mixed_stock_etf_universe_profile_policy,
+)
+from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_policy_health import (
+    check_historical_replay_mixed_stock_etf_universe_profile_policy_health,
+)
+from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_policy_index import (
+    DEFAULT_ROOT as HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_DEFAULT_ROOT,
+    build_historical_replay_mixed_stock_etf_universe_profile_policy_index,
+)
+from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_policy_status import (
+    run_historical_replay_mixed_stock_etf_universe_profile_policy_status,
+)
 from quant_replay_system.pit_evidence_checklist_validator import build_pit_evidence_checklist_validator
 from quant_replay_system.pit_evidence_checklist_validator_health import check_pit_evidence_checklist_validator_health
 from quant_replay_system.pit_evidence_checklist_validator_index import build_pit_evidence_checklist_validator_index
@@ -3027,6 +3040,78 @@ def build_parser() -> argparse.ArgumentParser:
     )
     reviewer_no_hit_acceptance_fixture_status.set_defaults(
         handler=_handle_historical_replay_reviewer_no_hit_acceptance_fixture_status
+    )
+
+    mixed_stock_etf_profile_policy = subparsers.add_parser(
+        "historical-replay-mixed-stock-etf-universe-profile-policy",
+        help=(
+            "Build report-only synthetic mixed STOCK/ETF universe profile policy artifacts "
+            "for the selected historical replay sample"
+        ),
+    )
+    mixed_stock_etf_profile_policy.add_argument(
+        "--root",
+        default="outputs/reports",
+        help="Root folder containing existing local report artifacts used as context",
+    )
+    mixed_stock_etf_profile_policy.add_argument(
+        "--output-dir",
+        default=str(HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_DEFAULT_ROOT),
+        help="Directory where report-only mixed STOCK/ETF profile policy artifacts will be written",
+    )
+    mixed_stock_etf_profile_policy.add_argument("--run-id", default=None)
+    mixed_stock_etf_profile_policy.add_argument("--historical-decision-date", default="2024-04-02")
+    mixed_stock_etf_profile_policy.add_argument("--universe-name", default="etf_core")
+    mixed_stock_etf_profile_policy.set_defaults(
+        handler=_handle_historical_replay_mixed_stock_etf_universe_profile_policy
+    )
+
+    mixed_stock_etf_profile_policy_index = subparsers.add_parser(
+        "historical-replay-mixed-stock-etf-universe-profile-policy-index",
+        help="Build a report-only index for mixed STOCK/ETF profile policy artifacts",
+    )
+    mixed_stock_etf_profile_policy_index.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_DEFAULT_ROOT),
+    )
+    mixed_stock_etf_profile_policy_index.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_DEFAULT_ROOT}/index",
+    )
+    mixed_stock_etf_profile_policy_index.set_defaults(
+        handler=_handle_historical_replay_mixed_stock_etf_universe_profile_policy_index
+    )
+
+    mixed_stock_etf_profile_policy_health = subparsers.add_parser(
+        "historical-replay-mixed-stock-etf-universe-profile-policy-health",
+        help="Check report-only mixed STOCK/ETF profile policy artifact health",
+    )
+    mixed_stock_etf_profile_policy_health.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_DEFAULT_ROOT),
+    )
+    mixed_stock_etf_profile_policy_health.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_DEFAULT_ROOT}/health",
+    )
+    mixed_stock_etf_profile_policy_health.set_defaults(
+        handler=_handle_historical_replay_mixed_stock_etf_universe_profile_policy_health
+    )
+
+    mixed_stock_etf_profile_policy_status = subparsers.add_parser(
+        "historical-replay-mixed-stock-etf-universe-profile-policy-status",
+        help="Summarize latest report-only mixed STOCK/ETF profile policy status",
+    )
+    mixed_stock_etf_profile_policy_status.add_argument(
+        "--root",
+        default=str(HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_DEFAULT_ROOT),
+    )
+    mixed_stock_etf_profile_policy_status.add_argument(
+        "--output-dir",
+        default=f"{HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_DEFAULT_ROOT}/status",
+    )
+    mixed_stock_etf_profile_policy_status.set_defaults(
+        handler=_handle_historical_replay_mixed_stock_etf_universe_profile_policy_status
     )
 
     historical_replay_input_gate_validator = subparsers.add_parser(
@@ -19498,6 +19583,9 @@ HISTORICAL_REPLAY_OFFICIAL_MANUAL_EVIDENCE_TEMPLATE_FIXTURE_CLI_NEXT_TASK = (
 HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_CLI_NEXT_TASK = (
     "Historical Replay Mixed STOCK/ETF Universe Profile Policy Planning for legacy etf_core Report-Only v0.1"
 )
+HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_CLI_NEXT_TASK = (
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
+)
 
 
 def _historical_replay_official_source_hierarchy_worklist_safety_statement() -> str:
@@ -19786,6 +19874,17 @@ def _historical_replay_reviewer_no_hit_acceptance_fixture_safety_statement() -> 
     )
 
 
+def _historical_replay_mixed_stock_etf_profile_policy_safety_statement() -> str:
+    return (
+        "no official evidence collection, no official evidence acceptance, no profile conflict resolution, "
+        "no universe membership approval, no stock_profile validation, no PIT evidence closure, "
+        "no PIT admissibility approval, no active replay input, no replay execution, no decision freeze, "
+        "no forward labels, no metric computation, no training/model/stock_profile/paper expansion, "
+        "no buy-review, no trading, no broker API, no orders, no messages, no external or LLM API, "
+        "no current-candidates, no snapshots, no signal semantics mutation, and no protected data writes were invoked."
+    )
+
+
 def _handle_historical_replay_reviewer_no_hit_acceptance_fixture(
     args: argparse.Namespace,
 ) -> int:
@@ -19901,6 +20000,145 @@ def _handle_historical_replay_reviewer_no_hit_acceptance_fixture_status(
     for warning in result.warnings:
         print(f"WARNING: {warning}")
     print(_historical_replay_reviewer_no_hit_acceptance_fixture_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_mixed_stock_etf_universe_profile_policy(
+    args: argparse.Namespace,
+) -> int:
+    result = run_historical_replay_mixed_stock_etf_universe_profile_policy(
+        root=args.root,
+        output_dir=args.output_dir,
+        run_id=args.run_id,
+        historical_decision_date=args.historical_decision_date,
+        universe_name=args.universe_name,
+    )
+    metadata = result.metadata
+    print(f"mixed_stock_etf_universe_profile_policy_run_id: {result.run_id}")
+    print(f"historical_decision_date: {metadata.get('historical_decision_date', args.historical_decision_date)}")
+    print(f"universe_name: {metadata.get('universe_name', args.universe_name)}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    print(f"row_count: {metadata.get('row_count', 0)}")
+    print(f"stock_row_count: {metadata.get('stock_row_count', 0)}")
+    print(f"etf_row_count: {metadata.get('etf_row_count', 0)}")
+    print(f"profile_conflict_count: {metadata.get('profile_conflict_count', 0)}")
+    print(f"profile_aligned_context_count: {metadata.get('profile_aligned_context_count', 0)}")
+    print(f"unresolved_profile_conflict_count: {metadata.get('unresolved_profile_conflict_count', 0)}")
+    print(f"profile_policy_accepted_count: {metadata.get('profile_policy_accepted_count', 0)}")
+    print(f"no_hit_row_count: {metadata.get('no_hit_row_count', 0)}")
+    print(f"not_accepted_count: {metadata.get('not_accepted_count', 0)}")
+    print(f"accepted_context_count: {metadata.get('accepted_context_count', 0)}")
+    print(f"universe_membership_approved_count: {metadata.get('universe_membership_approved_count', 0)}")
+    print(f"official_status_evidence_accepted_count: {metadata.get('official_status_evidence_accepted_count', 0)}")
+    print(f"row_with_blocker_count: {metadata.get('row_with_blocker_count', 0)}")
+    print(f"survivorship_warning_count: {metadata.get('survivorship_warning_count', 0)}")
+    print(f"safety_true_count: {metadata.get('safety_true_count', 0)}")
+    print(f"report_path: {result.artifact_paths['report']}")
+    print(f"metadata_path: {result.artifact_paths['metadata']}")
+    print(f"recommended_next_task: {HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_CLI_NEXT_TASK}")
+    print(_historical_replay_mixed_stock_etf_profile_policy_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_mixed_stock_etf_universe_profile_policy_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_historical_replay_mixed_stock_etf_universe_profile_policy_index(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    latest = result.rows[0] if result.rows else {}
+    print(f"Index artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Index CSV path: {result.artifact_paths['index_csv']}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"historical_decision_date: {latest.get('historical_decision_date', '')}")
+    print(f"universe_name: {latest.get('universe_name', '')}")
+    print(f"status: {latest.get('runtime_status', '')}")
+    print(f"health_status: {latest.get('health_status', '')}")
+    print(f"workflow_stage: {latest.get('workflow_stage', '')}")
+    print(f"row_count: {latest.get('row_count', 0)}")
+    print(f"stock_row_count: {latest.get('stock_row_count', 0)}")
+    print(f"etf_row_count: {latest.get('etf_row_count', 0)}")
+    print(f"profile_conflict_count: {latest.get('profile_conflict_count', 0)}")
+    print(f"profile_aligned_context_count: {latest.get('profile_aligned_context_count', 0)}")
+    print(f"profile_policy_accepted_count: {latest.get('profile_policy_accepted_count', 0)}")
+    print(f"no_hit_row_count: {latest.get('no_hit_row_count', 0)}")
+    print(f"not_accepted_count: {latest.get('not_accepted_count', 0)}")
+    print(f"accepted_context_count: {latest.get('accepted_context_count', 0)}")
+    print(f"universe_membership_approved_count: {latest.get('universe_membership_approved_count', 0)}")
+    print(f"official_status_evidence_accepted_count: {latest.get('official_status_evidence_accepted_count', 0)}")
+    print(f"row_with_blocker_count: {latest.get('row_with_blocker_count', 0)}")
+    print(f"survivorship_warning_count: {latest.get('survivorship_warning_count', 0)}")
+    print(f"safety_true_count: {latest.get('safety_true_count', 0)}")
+    print(f"report_path: {latest.get('report_path', '')}")
+    print(_historical_replay_mixed_stock_etf_profile_policy_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_mixed_stock_etf_universe_profile_policy_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_historical_replay_mixed_stock_etf_universe_profile_policy_health(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    print(f"Health artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Health CSV path: {result.artifact_paths['health_csv']}")
+    print(f"Health report path: {result.artifact_paths['health_md']}")
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_historical_replay_mixed_stock_etf_profile_policy_safety_statement())
+    return 1 if result.status.endswith("FAIL_UNSAFE") else 0
+
+
+def _handle_historical_replay_mixed_stock_etf_universe_profile_policy_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_historical_replay_mixed_stock_etf_universe_profile_policy_status(
+        root=args.root,
+        output_dir=args.output_dir,
+    )
+    summary = result.summary
+    print(f"Status artifact folder: {result.artifact_paths['artifact_dir']}")
+    print(f"Status CSV path: {result.artifact_paths['status_csv']}")
+    print(f"Status report path: {result.artifact_paths['status_md']}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"historical_decision_date: {summary.get('latest_historical_decision_date', '')}")
+    print(f"universe_name: {summary.get('latest_universe_name', '')}")
+    print(f"status: {result.latest_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"workflow_stage: {result.latest_workflow_stage}")
+    print(f"row_count: {summary.get('latest_row_count', 0)}")
+    print(f"stock_row_count: {summary.get('latest_stock_row_count', 0)}")
+    print(f"etf_row_count: {summary.get('latest_etf_row_count', 0)}")
+    print(f"profile_conflict_count: {summary.get('latest_profile_conflict_count', 0)}")
+    print(f"profile_aligned_context_count: {summary.get('latest_profile_aligned_context_count', 0)}")
+    print(f"unresolved_profile_conflict_count: {summary.get('latest_unresolved_profile_conflict_count', 0)}")
+    print(f"profile_policy_accepted_count: {summary.get('latest_profile_policy_accepted_count', 0)}")
+    print(f"no_hit_row_count: {summary.get('latest_no_hit_row_count', 0)}")
+    print(f"not_accepted_count: {summary.get('latest_not_accepted_count', 0)}")
+    print(f"accepted_context_count: {summary.get('latest_accepted_context_count', 0)}")
+    print(f"universe_membership_approved_count: {summary.get('latest_universe_membership_approved_count', 0)}")
+    print(
+        "official_status_evidence_accepted_count: "
+        f"{summary.get('latest_official_status_evidence_accepted_count', 0)}"
+    )
+    print(f"row_with_blocker_count: {summary.get('latest_row_with_blocker_count', 0)}")
+    print(f"survivorship_warning_count: {summary.get('latest_survivorship_warning_count', 0)}")
+    print(f"safety_true_count: {summary.get('latest_safety_true_count', 0)}")
+    print(f"report_path: {summary.get('latest_report_path', '')}")
+    print(f"recommended_next_task: {HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_CLI_NEXT_TASK}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_historical_replay_mixed_stock_etf_profile_policy_safety_statement())
     return 0
 
 
@@ -27751,6 +27989,66 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "latest_historical_replay_reviewer_no_hit_acceptance_fixture_data_processed_written",
         "latest_historical_replay_reviewer_no_hit_acceptance_fixture_data_cache_written",
         "latest_historical_replay_reviewer_no_hit_acceptance_fixture_recommended_next_task",
+    ]:
+        print(f"{field}: {getattr(result, field)}")
+    for field in [
+        "historical_replay_mixed_stock_etf_universe_profile_policy_context_visible",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_run_id",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_historical_decision_date",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_universe_name",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_status",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_health_status",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_workflow_stage",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_report_path",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_row_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_stock_row_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_etf_row_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_profile_conflict_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_profile_aligned_context_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_unresolved_profile_conflict_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_profile_policy_accepted_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_no_hit_row_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_not_accepted_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_accepted_context_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_universe_membership_approved_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_official_status_evidence_accepted_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_row_with_blocker_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_survivorship_warning_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_safety_true_count",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_profile_conflict_resolved",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_universe_membership_approved",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_stock_profile_validated",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_official_source_hierarchy_approved",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_official_evidence_collection_started",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_official_evidence_collection_approved",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_official_evidence_accepted",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_official_evidence_closed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_official_status_evidence_closed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_pit_evidence_closed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_pit_admissibility_approved",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_active_replay_input",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_replay_execution_allowed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_replay_decision_freeze_allowed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_forward_labels_created",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_training_dataset_created",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_metric_computation_performed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_model_training_performed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_stock_profile_validation_created",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_paper_expansion_allowed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_buy_review_allowed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_trading_allowed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_broker_api_called",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_order_placed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_message_sent",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_external_api_called",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_llm_api_called",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_current_candidates_executed",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_snapshot_built",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_signal_semantics_mutated",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_data_raw_written",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_data_processed_written",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_data_cache_written",
+        "latest_historical_replay_mixed_stock_etf_universe_profile_policy_recommended_next_task",
     ]:
         print(f"{field}: {getattr(result, field)}")
     print(
