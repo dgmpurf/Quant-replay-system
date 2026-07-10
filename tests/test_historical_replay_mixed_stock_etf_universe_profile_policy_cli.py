@@ -10,8 +10,8 @@ COMMAND = "historical-replay-mixed-stock-etf-universe-profile-policy"
 INDEX_COMMAND = f"{COMMAND}-index"
 HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
-NEXT_TASK = "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
-OLD_NEXT_TASK = "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
+NEXT_TASK = "Historical Replay Mixed STOCK/ETF Universe Profile Policy Tag and Source Readiness Planning Report-Only v0.1"
+OLD_NEXT_TASK = "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
 
 
 def test_cli_command_registration_for_all_four_commands() -> None:

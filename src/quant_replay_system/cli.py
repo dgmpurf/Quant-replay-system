@@ -19584,7 +19584,7 @@ HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_CLI_NEXT_TASK = (
     "Historical Replay Mixed STOCK/ETF Universe Profile Policy Planning for legacy etf_core Report-Only v0.1"
 )
 HISTORICAL_REPLAY_MIXED_STOCK_ETF_PROFILE_POLICY_CLI_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Tag and Source Readiness Planning Report-Only v0.1"
 )
 
 

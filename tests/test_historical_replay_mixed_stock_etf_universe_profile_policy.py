@@ -30,10 +30,10 @@ EXPECTED_ROWS = {
     "688981": ("STOCK", "stock_core", "true", "unresolved_profile_conflict"),
 }
 EXPECTED_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Tag and Source Readiness Planning Report-Only v0.1"
 )
 OLD_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Generated Artifact Review Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
 )
 
 
