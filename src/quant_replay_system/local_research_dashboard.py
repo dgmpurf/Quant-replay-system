@@ -242,6 +242,12 @@ from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_poli
 from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_policy_status import (
     run_historical_replay_mixed_stock_etf_universe_profile_policy_status,
 )
+from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_contract_fixture import (
+    SAFETY_FALSE_FIELDS as SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_SAFETY_FALSE_FIELDS,
+)
+from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_contract_fixture_status import (
+    run_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status,
+)
 from quant_replay_system.raw_document_store_schema_fixture_status import (
     run_raw_document_store_schema_fixture_status,
 )
@@ -1729,6 +1735,40 @@ SUMMARY_COLUMNS = [
         for field in MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_SAFETY_FALSE_FIELDS
     ],
     "latest_historical_replay_mixed_stock_etf_universe_profile_policy_recommended_next_task",
+    "historical_replay_source_evidence_sufficiency_policy_contract_fixture_context_visible",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_run_id",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_health_status",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_workflow_stage",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_artifact_path",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_report_path",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_metadata_path",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_row_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_stock_row_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_etf_row_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_family_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_row_evidence_family_contract_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_applicable_contract_row_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_instrument_not_applicable_context_row_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_profile_conflict_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_profile_aligned_context_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_unresolved_profile_conflict_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_selected_row_with_blocker_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_safety_true_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_sufficiency_candidate_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_accepted_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_closed_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_pit_admissible_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_replay_ready_count",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_report_only",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_diagnostic_only",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_local_only",
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_synthetic_only",
+    *[
+        f"latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_{field}"
+        for field in SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_SAFETY_FALSE_FIELDS
+    ],
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_recommended_next_task",
     "personal_mvp_daily_advisory_review_context_visible",
     "latest_personal_mvp_daily_advisory_review_run_id",
     "latest_personal_mvp_daily_advisory_review_status",
@@ -3527,6 +3567,7 @@ OPTIONAL_COMPONENTS = {
                     "HISTORICAL_REPLAY_OFFICIAL_MANUAL_EVIDENCE_COLLECTION_TEMPLATE_FIXTURE_STATUS",
                     "HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_STATUS",
                     "HISTORICAL_REPLAY_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_STATUS",
+                    "HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_STATUS",
                     "SOURCE_REGISTRY_SCHEMA_FIXTURE_STATUS",
     "RAW_DOCUMENT_STORE_SCHEMA_FIXTURE_STATUS",
 }
@@ -3586,6 +3627,9 @@ WORKFLOW_AREAS = {
     ),
     "HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_STATUS": (
         "HISTORICAL_REPLAY_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE"
+    ),
+    "HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_STATUS": (
+        "HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE"
     ),
     "TINY_PIT_REAL_REVIEWED_PACKAGE_CANDIDATE_CONTRACT_FIXTURE_STATUS": (
         "TINY_PIT_REAL_REVIEWED_PACKAGE_CANDIDATE_CONTRACT_FIXTURE"
@@ -5452,6 +5496,78 @@ class LocalResearchDashboardResult:
     latest_historical_replay_mixed_stock_etf_universe_profile_policy_data_processed_written: bool
     latest_historical_replay_mixed_stock_etf_universe_profile_policy_data_cache_written: bool
     latest_historical_replay_mixed_stock_etf_universe_profile_policy_recommended_next_task: str
+    historical_replay_source_evidence_sufficiency_policy_contract_fixture_context_visible: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_run_id: str
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status: str
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_health_status: str
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_workflow_stage: str
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_artifact_path: str
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_report_path: str
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_metadata_path: str
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_recommended_next_task: str
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_row_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_stock_row_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_etf_row_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_family_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_row_evidence_family_contract_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_applicable_contract_row_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_instrument_not_applicable_context_row_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_profile_conflict_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_profile_aligned_context_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_unresolved_profile_conflict_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_selected_row_with_blocker_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_safety_true_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_sufficiency_candidate_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_accepted_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_closed_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_pit_admissible_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_replay_ready_count: int
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_report_only: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_diagnostic_only: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_local_only: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_synthetic_only: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_collected: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_read_from_external_sources: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_template_filled: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_sufficiency_applied_to_selected_rows: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_accepted: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_evidence_closed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_no_hit_accepted_as_evidence: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_profile_conflict_resolved: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_universe_membership_approved: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_stock_profile_validated: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_pit_admissibility_approved: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_active_replay_input_approved: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_active_replay_input: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_replay_execution_allowed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_replay_decision_freeze_allowed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_forward_labels_created: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_future_labels_joined: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_training_dataset_created: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_metric_computation_performed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_model_training_performed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_active_weights_created: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_active_thresholds_created: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_paper_expansion_allowed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_real_buy_review_approved: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_real_buy_review_eligible: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_buy_review_allowed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_broker_api_called: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_broker_api_approved: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_order_placed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_order_placement_approved: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_message_sent: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_message_delivery_approved: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_trading_allowed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_external_api_called: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_llm_api_called: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_current_candidates_executed: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_snapshot_built: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_signal_semantics_mutated: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_data_raw_written: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_data_processed_written: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_data_cache_written: bool
+    latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_docs_project_sources_created: bool
     personal_mvp_daily_advisory_review_context_visible: bool
     latest_personal_mvp_daily_advisory_review_run_id: str
     latest_personal_mvp_daily_advisory_review_status: str
@@ -10357,6 +10473,9 @@ def run_local_research_dashboard(
         **_historical_replay_official_manual_evidence_template_fixture_result_kwargs(summary),
         **_historical_replay_reviewer_no_hit_acceptance_fixture_result_kwargs(summary),
         **_historical_replay_mixed_stock_etf_universe_profile_policy_result_kwargs(summary),
+        **_historical_replay_source_evidence_sufficiency_policy_contract_fixture_result_kwargs(
+            summary
+        ),
         **_personal_mvp_daily_advisory_review_result_kwargs(summary),
         **_reviewer_quality_limitation_result_kwargs(summary),
         **_real_reviewed_local_csv_preflight_result_kwargs(summary),
@@ -14476,6 +14595,13 @@ def scan_local_research_workflow_artifacts(
             root_path
             / "manual_diagnostics"
             / "historical_replay_mixed_stock_etf_universe_profile_policy_legacy_etf_core_v0_1"
+        )
+    )
+    records.extend(
+        _scan_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status(
+            root_path
+            / "manual_diagnostics"
+            / "historical_replay_source_evidence_sufficiency_policy_contract_fixture_v0_1"
         )
     )
     records.extend(_scan_personal_mvp_daily_advisory_review_status(root_path / "personal_mvp_daily_advisory_review"))
@@ -22033,6 +22159,9 @@ def summarize_local_research_status(
         **_historical_replay_official_manual_evidence_template_fixture_summary_fields(by_component),
         **_historical_replay_reviewer_no_hit_acceptance_fixture_summary_fields(by_component),
         **_historical_replay_mixed_stock_etf_universe_profile_policy_summary_fields(by_component),
+        **_historical_replay_source_evidence_sufficiency_policy_contract_fixture_summary_fields(
+            by_component
+        ),
         **_personal_mvp_daily_advisory_review_summary_fields(by_component),
         **_reviewer_quality_limitation_summary_fields(by_component),
         **_real_reviewed_local_csv_preflight_summary_fields(by_component),
@@ -30224,6 +30353,9 @@ def build_local_research_dashboard_metadata(
         **_historical_replay_official_manual_evidence_template_fixture_metadata(result),
         **_historical_replay_reviewer_no_hit_acceptance_fixture_metadata(result),
         **_historical_replay_mixed_stock_etf_universe_profile_policy_metadata(result),
+        **_historical_replay_source_evidence_sufficiency_policy_contract_fixture_metadata(
+            result
+        ),
         **_personal_mvp_daily_advisory_review_metadata(result),
         **_reviewer_quality_limitation_metadata(result),
         **_real_reviewed_local_csv_preflight_metadata(result),
@@ -40156,6 +40288,243 @@ def _historical_replay_mixed_stock_etf_universe_profile_policy_metadata(
     return {
         field: getattr(result, field)
         for field in _MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_RESULT_FIELDS
+    }
+
+
+_SOURCE_EVIDENCE_POLICY_FIXTURE_COMPONENT = (
+    "HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_STATUS"
+)
+_SOURCE_EVIDENCE_POLICY_FIXTURE_WORKFLOW_AREA = (
+    "HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE"
+)
+_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX = (
+    "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_"
+)
+_SOURCE_EVIDENCE_POLICY_FIXTURE_LATEST_FIELDS = [
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}run_id",
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}status",
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}health_status",
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}workflow_stage",
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}artifact_path",
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}report_path",
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}metadata_path",
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}recommended_next_task",
+]
+_SOURCE_EVIDENCE_POLICY_FIXTURE_INT_FIELDS = [
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}{field}"
+    for field in (
+        "row_count",
+        "stock_row_count",
+        "etf_row_count",
+        "evidence_family_count",
+        "row_evidence_family_contract_count",
+        "applicable_contract_row_count",
+        "instrument_not_applicable_context_row_count",
+        "profile_conflict_count",
+        "profile_aligned_context_count",
+        "unresolved_profile_conflict_count",
+        "selected_row_with_blocker_count",
+        "safety_true_count",
+        "sufficiency_candidate_count",
+        "evidence_accepted_count",
+        "evidence_closed_count",
+        "pit_admissible_count",
+        "replay_ready_count",
+    )
+]
+_SOURCE_EVIDENCE_POLICY_FIXTURE_SCOPE_FIELDS = [
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}{field}"
+    for field in ("report_only", "diagnostic_only", "local_only", "synthetic_only")
+]
+_SOURCE_EVIDENCE_POLICY_FIXTURE_SAFETY_FIELDS = [
+    f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}{field}"
+    for field in SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_SAFETY_FALSE_FIELDS
+]
+_SOURCE_EVIDENCE_POLICY_FIXTURE_RESULT_FIELDS = (
+    ["historical_replay_source_evidence_sufficiency_policy_contract_fixture_context_visible"]
+    + _SOURCE_EVIDENCE_POLICY_FIXTURE_LATEST_FIELDS
+    + _SOURCE_EVIDENCE_POLICY_FIXTURE_INT_FIELDS
+    + _SOURCE_EVIDENCE_POLICY_FIXTURE_SCOPE_FIELDS
+    + _SOURCE_EVIDENCE_POLICY_FIXTURE_SAFETY_FIELDS
+)
+
+
+def _scan_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status(
+    root: Path,
+) -> list[dict[str, Any]]:
+    fixture_root = root.parent if root.name == "status" else root
+    if not fixture_root.exists():
+        return []
+    try:
+        result = run_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status(
+            root=fixture_root,
+            output_dir=fixture_root / "status",
+        )
+    except Exception:
+        return []
+    if not result.latest_run_id:
+        return []
+    summary = _source_evidence_policy_fixture_summary_from_status_result(result)
+    safety_true_count = _int_or_zero(
+        summary.get(f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}safety_true_count")
+    )
+    return [
+        _record(
+            workflow_area=_SOURCE_EVIDENCE_POLICY_FIXTURE_WORKFLOW_AREA,
+            component=_SOURCE_EVIDENCE_POLICY_FIXTURE_COMPONENT,
+            status=result.latest_status,
+            stage=result.latest_workflow_stage,
+            latest_artifact_id=result.latest_run_id,
+            report_path=_string_or_empty(
+                summary.get(f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}report_path")
+            ),
+            metadata_path=_string_or_empty(
+                summary.get(f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}metadata_path")
+            ),
+            warning_count=safety_true_count,
+            error_count=1 if "FAIL" in result.latest_health_status else 0,
+            next_action=result.recommended_next_task,
+            notes=_source_evidence_policy_fixture_notes(summary),
+        )
+    ]
+
+
+def _source_evidence_policy_fixture_summary_from_status_result(
+    result: Any,
+) -> dict[str, Any]:
+    status_summary = result.summary
+    summary: dict[str, Any] = {
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}run_id": result.latest_run_id,
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}status": result.latest_status,
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}health_status": result.latest_health_status,
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}workflow_stage": result.latest_workflow_stage,
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}artifact_path": status_summary.get(
+            "latest_artifact_path"
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}report_path": status_summary.get(
+            "latest_report_path"
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}metadata_path": status_summary.get(
+            "latest_metadata_path"
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}recommended_next_task": (
+            result.recommended_next_task
+        ),
+    }
+    for field in _SOURCE_EVIDENCE_POLICY_FIXTURE_INT_FIELDS:
+        short_name = field.removeprefix(_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX)
+        summary[field] = status_summary.get(f"latest_{short_name}")
+    for field in _SOURCE_EVIDENCE_POLICY_FIXTURE_SCOPE_FIELDS:
+        short_name = field.removeprefix(_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX)
+        summary[field] = status_summary.get(short_name)
+    for field in _SOURCE_EVIDENCE_POLICY_FIXTURE_SAFETY_FIELDS:
+        short_name = field.removeprefix(_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX)
+        summary[field] = status_summary.get(f"latest_{short_name}")
+    return summary
+
+
+def _source_evidence_policy_fixture_notes(summary: dict[str, Any]) -> str:
+    field_notes = " ".join(
+        f"{field}={_note_safe_text(summary.get(field))};"
+        for field in (
+            _SOURCE_EVIDENCE_POLICY_FIXTURE_LATEST_FIELDS
+            + _SOURCE_EVIDENCE_POLICY_FIXTURE_INT_FIELDS
+            + _SOURCE_EVIDENCE_POLICY_FIXTURE_SCOPE_FIELDS
+            + _SOURCE_EVIDENCE_POLICY_FIXTURE_SAFETY_FIELDS
+        )
+    )
+    return (
+        "context_visible=True; "
+        "historical_replay_source_evidence_sufficiency_policy_contract_fixture_semantics="
+        "report_only_synthetic_contract_not_evidence_sufficiency_acceptance_closure_"
+        "pit_approval_replay_readiness_buy_review_or_trading; "
+        f"health_status={_note_safe_text(summary.get(f'{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}health_status'))}; "
+        f"workflow_stage={_note_safe_text(summary.get(f'{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}workflow_stage'))}; "
+        f"{field_notes}"
+    )
+
+
+def _historical_replay_source_evidence_sufficiency_policy_contract_fixture_summary_fields(
+    by_component: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    component = by_component.get(_SOURCE_EVIDENCE_POLICY_FIXTURE_COMPONENT, {})
+    notes = component.get("notes")
+    fields: dict[str, Any] = {
+        "historical_replay_source_evidence_sufficiency_policy_contract_fixture_context_visible": (
+            _parse_note_value(notes, "context_visible")
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}run_id": _string_or_empty(
+            component.get("latest_artifact_id")
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}status": _component_status(
+            by_component, _SOURCE_EVIDENCE_POLICY_FIXTURE_COMPONENT
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}health_status": _parse_note_value(
+            notes, "health_status"
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}workflow_stage": _string_or_empty(
+            component.get("stage")
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}report_path": _string_or_empty(
+            component.get("report_path")
+        ),
+        f"{_SOURCE_EVIDENCE_POLICY_FIXTURE_PREFIX}metadata_path": _string_or_empty(
+            component.get("metadata_path")
+        ),
+    }
+    fields.update(
+        {
+            field: _parse_note_value(notes, field)
+            for field in (
+                _SOURCE_EVIDENCE_POLICY_FIXTURE_LATEST_FIELDS
+                + _SOURCE_EVIDENCE_POLICY_FIXTURE_INT_FIELDS
+                + _SOURCE_EVIDENCE_POLICY_FIXTURE_SCOPE_FIELDS
+                + _SOURCE_EVIDENCE_POLICY_FIXTURE_SAFETY_FIELDS
+            )
+            if field not in fields
+        }
+    )
+    return fields
+
+
+def _historical_replay_source_evidence_sufficiency_policy_contract_fixture_result_kwargs(
+    summary: dict[str, Any],
+) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        field: str(summary.get(field, ""))
+        for field in _SOURCE_EVIDENCE_POLICY_FIXTURE_LATEST_FIELDS
+    }
+    kwargs[
+        "historical_replay_source_evidence_sufficiency_policy_contract_fixture_context_visible"
+    ] = _bool_from_text(
+        summary.get(
+            "historical_replay_source_evidence_sufficiency_policy_contract_fixture_context_visible"
+        )
+    )
+    kwargs.update(
+        {
+            field: _int_or_zero(summary.get(field))
+            for field in _SOURCE_EVIDENCE_POLICY_FIXTURE_INT_FIELDS
+        }
+    )
+    kwargs.update(
+        {
+            field: _bool_from_text(summary.get(field))
+            for field in (
+                _SOURCE_EVIDENCE_POLICY_FIXTURE_SCOPE_FIELDS
+                + _SOURCE_EVIDENCE_POLICY_FIXTURE_SAFETY_FIELDS
+            )
+        }
+    )
+    return kwargs
+
+
+def _historical_replay_source_evidence_sufficiency_policy_contract_fixture_metadata(
+    result: LocalResearchDashboardResult,
+) -> dict[str, Any]:
+    return {
+        field: getattr(result, field)
+        for field in _SOURCE_EVIDENCE_POLICY_FIXTURE_RESULT_FIELDS
     }
 
 

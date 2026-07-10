@@ -196,6 +196,22 @@ from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_poli
 from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_policy_status import (
     run_historical_replay_mixed_stock_etf_universe_profile_policy_status,
 )
+from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_contract_fixture import (
+    RECOMMENDED_NEXT_TASK as HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_CLI_NEXT_TASK,
+    SAFETY_FALSE_FIELDS as HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_SAFETY_FALSE_FIELDS,
+    run_historical_replay_source_evidence_sufficiency_policy_contract_fixture,
+)
+from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_contract_fixture_health import (
+    STATUS_HEALTH_FAIL as HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_HEALTH_FAIL,
+    check_historical_replay_source_evidence_sufficiency_policy_contract_fixture_health,
+)
+from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_contract_fixture_index import (
+    DEFAULT_ROOT as HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_DEFAULT_ROOT,
+    build_historical_replay_source_evidence_sufficiency_policy_contract_fixture_index,
+)
+from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_contract_fixture_status import (
+    run_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status,
+)
 from quant_replay_system.pit_evidence_checklist_validator import build_pit_evidence_checklist_validator
 from quant_replay_system.pit_evidence_checklist_validator_health import check_pit_evidence_checklist_validator_health
 from quant_replay_system.pit_evidence_checklist_validator_index import build_pit_evidence_checklist_validator_index
@@ -3112,6 +3128,70 @@ def build_parser() -> argparse.ArgumentParser:
     )
     mixed_stock_etf_profile_policy_status.set_defaults(
         handler=_handle_historical_replay_mixed_stock_etf_universe_profile_policy_status
+    )
+
+    source_evidence_policy_fixture = subparsers.add_parser(
+        "historical-replay-source-evidence-sufficiency-policy-contract-fixture",
+        help=(
+            "Build the synthetic report-only source/evidence sufficiency policy "
+            "contract fixture"
+        ),
+    )
+    source_evidence_policy_fixture.add_argument(
+        "--output-dir",
+        default=str(
+            HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_DEFAULT_ROOT
+        ),
+        help="Safe manual-diagnostics or temporary output root",
+    )
+    source_evidence_policy_fixture.add_argument("--run-id", default=None)
+    source_evidence_policy_fixture.set_defaults(
+        handler=_handle_historical_replay_source_evidence_sufficiency_policy_contract_fixture
+    )
+
+    source_evidence_policy_fixture_index = subparsers.add_parser(
+        "historical-replay-source-evidence-sufficiency-policy-contract-fixture-index",
+        help="Build the report-only source/evidence policy fixture index",
+    )
+    source_evidence_policy_fixture_index.add_argument(
+        "--root",
+        default=str(
+            HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_DEFAULT_ROOT
+        ),
+    )
+    source_evidence_policy_fixture_index.add_argument("--output-dir", default=None)
+    source_evidence_policy_fixture_index.set_defaults(
+        handler=_handle_historical_replay_source_evidence_sufficiency_policy_contract_fixture_index
+    )
+
+    source_evidence_policy_fixture_health = subparsers.add_parser(
+        "historical-replay-source-evidence-sufficiency-policy-contract-fixture-health",
+        help="Check report-only source/evidence policy fixture integrity",
+    )
+    source_evidence_policy_fixture_health.add_argument(
+        "--root",
+        default=str(
+            HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_DEFAULT_ROOT
+        ),
+    )
+    source_evidence_policy_fixture_health.add_argument("--output-dir", default=None)
+    source_evidence_policy_fixture_health.set_defaults(
+        handler=_handle_historical_replay_source_evidence_sufficiency_policy_contract_fixture_health
+    )
+
+    source_evidence_policy_fixture_status = subparsers.add_parser(
+        "historical-replay-source-evidence-sufficiency-policy-contract-fixture-status",
+        help="Summarize latest report-only source/evidence policy fixture status",
+    )
+    source_evidence_policy_fixture_status.add_argument(
+        "--root",
+        default=str(
+            HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_DEFAULT_ROOT
+        ),
+    )
+    source_evidence_policy_fixture_status.add_argument("--output-dir", default=None)
+    source_evidence_policy_fixture_status.set_defaults(
+        handler=_handle_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status
     )
 
     historical_replay_input_gate_validator = subparsers.add_parser(
@@ -20142,6 +20222,151 @@ def _handle_historical_replay_mixed_stock_etf_universe_profile_policy_status(
     return 0
 
 
+def _source_evidence_sufficiency_policy_fixture_safety_statement() -> str:
+    return (
+        "Synthetic report-only policy context only. No evidence was read, collected, "
+        "accepted, or closed; no PIT approval, replay readiness, downstream authority, "
+        "external call, or protected data write was created."
+    )
+
+
+def _handle_historical_replay_source_evidence_sufficiency_policy_contract_fixture(
+    args: argparse.Namespace,
+) -> int:
+    result = run_historical_replay_source_evidence_sufficiency_policy_contract_fixture(
+        root=".", output_dir=args.output_dir, run_id=args.run_id
+    )
+    metadata = result.metadata
+    print(f"run_id: {result.run_id}")
+    print(f"status: {result.status}")
+    print(f"health_status: {result.health_status}")
+    print(f"workflow_stage: {result.workflow_stage}")
+    for field in [
+        "row_count",
+        "stock_row_count",
+        "etf_row_count",
+        "evidence_family_count",
+        "row_evidence_family_contract_count",
+        "applicable_contract_row_count",
+        "instrument_not_applicable_context_row_count",
+        "profile_conflict_count",
+        "profile_aligned_context_count",
+        "unresolved_profile_conflict_count",
+        "selected_row_with_blocker_count",
+        "sufficiency_candidate_count",
+        "evidence_accepted_count",
+        "evidence_closed_count",
+        "pit_admissible_count",
+        "replay_ready_count",
+        "safety_true_count",
+    ]:
+        print(f"{field}: {metadata.get(field, 0)}")
+    print(f"report_file: {result.artifact_paths['report'].name}")
+    print(f"metadata_file: {result.artifact_paths['metadata'].name}")
+    print(
+        "recommended_next_task: "
+        f"{HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_CLI_NEXT_TASK}"
+    )
+    print(_source_evidence_sufficiency_policy_fixture_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_source_evidence_sufficiency_policy_contract_fixture_index(
+    args: argparse.Namespace,
+) -> int:
+    result = build_historical_replay_source_evidence_sufficiency_policy_contract_fixture_index(
+        root=args.root, output_dir=args.output_dir
+    )
+    latest = result.rows[-1] if result.rows else {}
+    print(f"status: {result.status}")
+    print(f"artifact_count: {result.artifact_count}")
+    print(f"latest_run_id: {latest.get('run_id', '')}")
+    print(f"latest_status: {latest.get('runtime_status', '')}")
+    print(f"latest_health_status: {latest.get('health_status', '')}")
+    for field in [
+        "row_count",
+        "stock_row_count",
+        "etf_row_count",
+        "evidence_family_count",
+        "row_evidence_family_contract_count",
+        "applicable_contract_row_count",
+        "instrument_not_applicable_context_row_count",
+        "selected_row_with_blocker_count",
+        "sufficiency_candidate_count",
+        "evidence_accepted_count",
+        "evidence_closed_count",
+        "pit_admissible_count",
+        "replay_ready_count",
+        "safety_true_count",
+    ]:
+        print(f"{field}: {latest.get(field, 0)}")
+    print(f"report_reference: {latest.get('report_path', '')}")
+    print(_source_evidence_sufficiency_policy_fixture_safety_statement())
+    return 0
+
+
+def _handle_historical_replay_source_evidence_sufficiency_policy_contract_fixture_health(
+    args: argparse.Namespace,
+) -> int:
+    result = check_historical_replay_source_evidence_sufficiency_policy_contract_fixture_health(
+        root=args.root, output_dir=args.output_dir
+    )
+    print(f"health_status: {result.status}")
+    print(f"checked_artifact_count: {result.checked_artifact_count}")
+    print(f"issue_count: {result.issue_count}")
+    print(f"error_count: {result.error_count}")
+    print(f"warning_count: {result.warning_count}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_source_evidence_sufficiency_policy_fixture_safety_statement())
+    return (
+        1
+        if result.status
+        == HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_HEALTH_FAIL
+        else 0
+    )
+
+
+def _handle_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status(
+    args: argparse.Namespace,
+) -> int:
+    result = run_historical_replay_source_evidence_sufficiency_policy_contract_fixture_status(
+        root=args.root, output_dir=args.output_dir
+    )
+    summary = result.summary
+    print(f"status_view: {result.status}")
+    print(f"latest_run_id: {result.latest_run_id}")
+    print(f"status: {result.latest_status}")
+    print(f"latest_health_status: {result.latest_health_status}")
+    print(f"workflow_stage: {result.latest_workflow_stage}")
+    for field in [
+        "row_count",
+        "stock_row_count",
+        "etf_row_count",
+        "evidence_family_count",
+        "row_evidence_family_contract_count",
+        "applicable_contract_row_count",
+        "instrument_not_applicable_context_row_count",
+        "profile_conflict_count",
+        "profile_aligned_context_count",
+        "unresolved_profile_conflict_count",
+        "selected_row_with_blocker_count",
+        "sufficiency_candidate_count",
+        "evidence_accepted_count",
+        "evidence_closed_count",
+        "pit_admissible_count",
+        "replay_ready_count",
+        "safety_true_count",
+    ]:
+        print(f"{field}: {summary.get(f'latest_{field}', 0)}")
+    print(f"report_reference: {summary.get('latest_report_path', '')}")
+    print(f"recommended_next_task: {result.recommended_next_task}")
+    for warning in result.warnings:
+        print(f"WARNING: {warning}")
+    print(_source_evidence_sufficiency_policy_fixture_safety_statement())
+    return 0
+
+
 def _handle_historical_replay_input_gate_validator_fixture(args: argparse.Namespace) -> int:
     result = build_historical_replay_input_gate_validator_fixture(output_dir=args.output_dir)
     print(f"fixture_run_id: {result.fixture_run_id}")
@@ -28050,6 +28275,52 @@ def _handle_research_status(args: argparse.Namespace) -> int:
         "latest_historical_replay_mixed_stock_etf_universe_profile_policy_data_cache_written",
         "latest_historical_replay_mixed_stock_etf_universe_profile_policy_recommended_next_task",
     ]:
+        print(f"{field}: {getattr(result, field)}")
+    source_evidence_fixture_prefix = (
+        "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_"
+    )
+    source_evidence_fixture_fields = [
+        "historical_replay_source_evidence_sufficiency_policy_contract_fixture_context_visible",
+        *[
+            f"{source_evidence_fixture_prefix}{field}"
+            for field in (
+                "run_id",
+                "status",
+                "health_status",
+                "workflow_stage",
+                "artifact_path",
+                "report_path",
+                "metadata_path",
+                "row_count",
+                "stock_row_count",
+                "etf_row_count",
+                "evidence_family_count",
+                "row_evidence_family_contract_count",
+                "applicable_contract_row_count",
+                "instrument_not_applicable_context_row_count",
+                "profile_conflict_count",
+                "profile_aligned_context_count",
+                "unresolved_profile_conflict_count",
+                "selected_row_with_blocker_count",
+                "safety_true_count",
+                "sufficiency_candidate_count",
+                "evidence_accepted_count",
+                "evidence_closed_count",
+                "pit_admissible_count",
+                "replay_ready_count",
+                "report_only",
+                "diagnostic_only",
+                "local_only",
+                "synthetic_only",
+                "recommended_next_task",
+            )
+        ],
+        *[
+            f"{source_evidence_fixture_prefix}{field}"
+            for field in HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_SAFETY_FALSE_FIELDS
+        ],
+    ]
+    for field in source_evidence_fixture_fields:
         print(f"{field}: {getattr(result, field)}")
     print(
         "personal_mvp_daily_advisory_review_context_visible: "

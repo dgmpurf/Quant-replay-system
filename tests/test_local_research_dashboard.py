@@ -231,6 +231,10 @@ from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_poli
     SAFETY_FALSE_FIELDS as MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_SAFETY_FALSE_FIELDS,
     run_historical_replay_mixed_stock_etf_universe_profile_policy,
 )
+from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_contract_fixture import (
+    SAFETY_FALSE_FIELDS as SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_SAFETY_FALSE_FIELDS,
+    run_historical_replay_source_evidence_sufficiency_policy_contract_fixture,
+)
 
 EXPECTED_METADATA_REFERENCE_FOLLOWING_NEXT_BOUNDARY_DESIGN_TASK = (
     "Tiny PIT Real Reviewed LOCAL_CSV Package Candidate Metadata-Reference-Following "
@@ -2178,6 +2182,128 @@ def test_cli_research_status_prints_mixed_stock_etf_universe_profile_policy_fiel
     ) in output.out
     assert OLD_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK not in output.out
     assert "latest_historical_replay_mixed_stock_etf_universe_profile_policy_trading_allowed: False" in output.out
+
+
+def test_dashboard_includes_source_evidence_policy_fixture_and_preserves_paper_priority(
+    tmp_path: Path,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture_root = (
+        root
+        / "manual_diagnostics"
+        / "historical_replay_source_evidence_sufficiency_policy_contract_fixture_v0_1"
+    )
+    run_historical_replay_source_evidence_sufficiency_policy_contract_fixture(
+        root=root,
+        output_dir=fixture_root,
+        run_id="source-evidence-policy-dashboard",
+    )
+    _paper_workflow_status(
+        root,
+        status="WARN",
+        workflow_stage="PAPER_WORKFLOW_READY",
+        expected_demo_warning_count=1,
+    )
+
+    result = run_local_research_dashboard(root=root, output_dir=tmp_path / "dashboard")
+    component = (
+        "HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_STATUS"
+    )
+    row = result.dashboard_frame.loc[
+        result.dashboard_frame["component"] == component
+    ].iloc[0]
+    summary = pd.read_csv(result.artifact_paths["local_research_summary"], dtype=str).fillna("")
+    metadata = json.loads(result.artifact_paths["metadata"].read_text(encoding="utf-8"))
+    prefix = "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_"
+
+    assert result.workflow_stage == "PAPER_WORKFLOW_READY"
+    assert result.historical_replay_source_evidence_sufficiency_policy_contract_fixture_context_visible
+    assert getattr(result, f"{prefix}run_id") == "source-evidence-policy-dashboard"
+    assert getattr(result, f"{prefix}row_count") == 9
+    assert getattr(result, f"{prefix}stock_row_count") == 7
+    assert getattr(result, f"{prefix}etf_row_count") == 2
+    assert getattr(result, f"{prefix}evidence_family_count") == 17
+    assert getattr(result, f"{prefix}row_evidence_family_contract_count") == 153
+    assert getattr(result, f"{prefix}applicable_contract_row_count") == 144
+    assert getattr(result, f"{prefix}instrument_not_applicable_context_row_count") == 9
+    assert getattr(result, f"{prefix}profile_conflict_count") == 7
+    assert getattr(result, f"{prefix}profile_aligned_context_count") == 2
+    assert getattr(result, f"{prefix}unresolved_profile_conflict_count") == 7
+    assert getattr(result, f"{prefix}selected_row_with_blocker_count") == 9
+    assert getattr(result, f"{prefix}safety_true_count") == 0
+    assert getattr(result, f"{prefix}sufficiency_candidate_count") == 0
+    assert getattr(result, f"{prefix}evidence_accepted_count") == 0
+    assert getattr(result, f"{prefix}evidence_closed_count") == 0
+    assert getattr(result, f"{prefix}pit_admissible_count") == 0
+    assert getattr(result, f"{prefix}replay_ready_count") == 0
+    assert getattr(result, f"{prefix}report_only") is True
+    assert getattr(result, f"{prefix}diagnostic_only") is True
+    assert getattr(result, f"{prefix}local_only") is True
+    assert getattr(result, f"{prefix}synthetic_only") is True
+    assert row["stage"] == (
+        "HISTORICAL_REPLAY_SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_"
+        "CREATED_REPORT_ONLY"
+    )
+    assert summary.loc[0, f"{prefix}run_id"] == "source-evidence-policy-dashboard"
+    assert metadata[f"{prefix}row_evidence_family_contract_count"] == 153
+    assert metadata[f"{prefix}safety_true_count"] == 0
+    assert str(tmp_path) not in getattr(result, f"{prefix}report_path")
+    for field in SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_SAFETY_FALSE_FIELDS:
+        assert getattr(result, f"{prefix}{field}") is False
+
+
+def test_cli_research_status_prints_source_evidence_policy_fixture_fields(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    root = _reports_root(tmp_path)
+    fixture_root = (
+        root
+        / "manual_diagnostics"
+        / "historical_replay_source_evidence_sufficiency_policy_contract_fixture_v0_1"
+    )
+    run_historical_replay_source_evidence_sufficiency_policy_contract_fixture(
+        root=root,
+        output_dir=fixture_root,
+        run_id="source-evidence-policy-cli",
+    )
+
+    code = cli.main(
+        [
+            "research-status",
+            "--root",
+            str(root),
+            "--output-dir",
+            str(tmp_path / "dashboard"),
+        ]
+    )
+    output = capsys.readouterr().out
+    prefix = "latest_historical_replay_source_evidence_sufficiency_policy_contract_fixture_"
+
+    assert code == 0
+    assert f"{prefix}run_id: source-evidence-policy-cli" in output
+    assert f"{prefix}row_count: 9" in output
+    assert f"{prefix}stock_row_count: 7" in output
+    assert f"{prefix}etf_row_count: 2" in output
+    assert f"{prefix}evidence_family_count: 17" in output
+    assert f"{prefix}row_evidence_family_contract_count: 153" in output
+    assert f"{prefix}applicable_contract_row_count: 144" in output
+    assert f"{prefix}instrument_not_applicable_context_row_count: 9" in output
+    assert f"{prefix}selected_row_with_blocker_count: 9" in output
+    assert f"{prefix}safety_true_count: 0" in output
+    assert f"{prefix}evidence_accepted: False" in output
+    assert f"{prefix}pit_admissibility_approved: False" in output
+    assert f"{prefix}active_replay_input: False" in output
+    assert f"{prefix}buy_review_allowed: False" in output
+    assert f"{prefix}trading_allowed: False" in output
+    assert (
+        f"{prefix}recommended_next_task: Historical Replay Source / Evidence "
+        "Sufficiency Policy Contract Fixture Generated Artifact Review Report-Only v0.1"
+    ) in output
+    assert (
+        "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
+        "Design Report-Only v0.1"
+    ) not in output
 
 
 def test_research_status_includes_replay_substrate_schema_fixture_context(tmp_path: Path) -> None:
