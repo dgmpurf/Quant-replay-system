@@ -39896,7 +39896,7 @@ _MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_PREFIX = (
     "latest_historical_replay_mixed_stock_etf_universe_profile_policy_"
 )
 _MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Tag and Source Readiness Planning Report-Only v0.1"
+    "Historical Replay Source / Evidence Sufficiency Policy Planning Without Evidence Collection Report-Only v0.1"
 )
 _MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_LATEST_FIELDS = [
     f"{_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_PREFIX}run_id",

@@ -419,10 +419,10 @@ OLD_REVIEWER_NO_HIT_ACCEPTANCE_FIXTURE_NEXT_TASK = (
     "Historical Replay Reviewer No-Hit Acceptance Fixture Tag and Source Readiness Planning Report-Only v0.1"
 )
 EXPECTED_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Tag and Source Readiness Planning Report-Only v0.1"
+    "Historical Replay Source / Evidence Sufficiency Policy Planning Without Evidence Collection Report-Only v0.1"
 )
 OLD_MIXED_STOCK_ETF_UNIVERSE_PROFILE_POLICY_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Tag and Source Readiness Planning Report-Only v0.1"
 )
 
 from quant_replay_system.raw_document_store_schema_fixture import build_raw_document_store_schema_fixture

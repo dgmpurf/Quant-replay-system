@@ -23,10 +23,10 @@ from quant_replay_system.historical_replay_mixed_stock_etf_universe_profile_poli
 
 
 EXPECTED_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Tag and Source Readiness Planning Report-Only v0.1"
+    "Historical Replay Source / Evidence Sufficiency Policy Planning Without Evidence Collection Report-Only v0.1"
 )
 OLD_NEXT_TASK = (
-    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Checkpoint Documentation Bundle Report-Only v0.1"
+    "Historical Replay Mixed STOCK/ETF Universe Profile Policy Tag and Source Readiness Planning Report-Only v0.1"
 )
 
 
