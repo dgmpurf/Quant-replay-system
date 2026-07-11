@@ -22,6 +22,16 @@ from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_co
 )
 
 
+NEXT_TASK = (
+    "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
+    "Checkpoint Documentation Bundle Report-Only v0.1"
+)
+OLD_COMPLETED_REVIEW_TASK = (
+    "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
+    "Generated Artifact Review Report-Only v0.1"
+)
+
+
 def _build(root: Path, run_id: str = "fixture-run"):
     return run_historical_replay_source_evidence_sufficiency_policy_contract_fixture(
         root=root,
@@ -50,6 +60,8 @@ def test_index_emits_one_safe_relative_row_for_one_valid_run(tmp_path: Path) -> 
     assert row["applicable_contract_row_count"] == 144
     assert row["instrument_not_applicable_context_row_count"] == 9
     assert row["safety_true_count"] == 0
+    assert row["recommended_next_task"] == NEXT_TASK
+    assert row["recommended_next_task"] != OLD_COMPLETED_REVIEW_TASK
     assert result.artifact_paths["index_csv"].is_file()
 
 
@@ -77,6 +89,8 @@ def test_safe_fixture_health_passes_and_status_preserves_negative_proof(
     assert status.summary["latest_pit_admissible_count"] == 0
     assert status.summary["latest_replay_ready_count"] == 0
     assert status.summary["latest_safety_true_count"] == 0
+    assert status.recommended_next_task == NEXT_TASK
+    assert status.recommended_next_task != OLD_COMPLETED_REVIEW_TASK
 
 
 def test_no_artifact_mode_is_benign_warn_and_zero_count(tmp_path: Path) -> None:

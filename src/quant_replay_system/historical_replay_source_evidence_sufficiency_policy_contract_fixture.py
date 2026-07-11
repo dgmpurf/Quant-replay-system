@@ -31,7 +31,7 @@ DEFAULT_OUTPUT_ROOT = Path(
 )
 RECOMMENDED_NEXT_TASK = (
     "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
-    "Generated Artifact Review Report-Only v0.1"
+    "Checkpoint Documentation Bundle Report-Only v0.1"
 )
 
 OUTPUT_FILES = {
