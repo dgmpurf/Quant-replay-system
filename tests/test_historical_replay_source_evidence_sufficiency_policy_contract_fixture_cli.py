@@ -12,11 +12,11 @@ HEALTH_COMMAND = f"{COMMAND}-health"
 STATUS_COMMAND = f"{COMMAND}-status"
 NEXT_TASK = (
     "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
-    "Checkpoint Documentation Bundle Report-Only v0.1"
+    "Tag And Source Readiness Planning Report-Only v0.1"
 )
-OLD_COMPLETED_REVIEW_TASK = (
+OLD_COMPLETED_ROUTE = (
     "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
-    "Generated Artifact Review Report-Only v0.1"
+    "Checkpoint Documentation Bundle Report-Only v0.1"
 )
 STALE_DESIGN_TASK = (
     "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
@@ -89,7 +89,7 @@ def test_core_cli_creates_deterministic_contract_without_private_path_output(
         f"recommended_next_task: {NEXT_TASK}",
     ]:
         assert expected in output
-    assert OLD_COMPLETED_REVIEW_TASK not in output
+    assert OLD_COMPLETED_ROUTE not in output
     assert STALE_DESIGN_TASK not in output
     assert str(tmp_path) not in output
     assert len(list((root / "cli-fixture").iterdir())) == 10
@@ -115,7 +115,7 @@ def test_index_health_and_status_cli_wrap_safe_fixture(tmp_path: Path, capsys) -
     assert "latest_run_id: cli-fixture" in status_output
     assert "latest_health_status: SOURCE_EVIDENCE_SUFFICIENCY_POLICY_CONTRACT_FIXTURE_HEALTH_PASS_REPORT_ONLY" in status_output
     assert f"recommended_next_task: {NEXT_TASK}" in status_output
-    assert OLD_COMPLETED_REVIEW_TASK not in status_output
+    assert OLD_COMPLETED_ROUTE not in status_output
     for output in [index_output, health_output, status_output]:
         assert str(tmp_path) not in output
         assert "ACTIVE_REPLAY_INPUT_READY" not in output

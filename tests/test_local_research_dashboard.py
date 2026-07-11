@@ -2298,8 +2298,12 @@ def test_cli_research_status_prints_source_evidence_policy_fixture_fields(
     assert f"{prefix}trading_allowed: False" in output
     assert (
         f"{prefix}recommended_next_task: Historical Replay Source / Evidence "
-        "Sufficiency Policy Contract Fixture Checkpoint Documentation Bundle Report-Only v0.1"
+        "Sufficiency Policy Contract Fixture Tag And Source Readiness Planning Report-Only v0.1"
     ) in output
+    assert (
+        "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
+        "Checkpoint Documentation Bundle Report-Only v0.1"
+    ) not in output
     assert (
         "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
         "Generated Artifact Review Report-Only v0.1"

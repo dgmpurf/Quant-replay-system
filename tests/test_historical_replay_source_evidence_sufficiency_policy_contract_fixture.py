@@ -21,11 +21,11 @@ from quant_replay_system.historical_replay_source_evidence_sufficiency_policy_co
 
 NEXT_TASK = (
     "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
-    "Checkpoint Documentation Bundle Report-Only v0.1"
+    "Tag And Source Readiness Planning Report-Only v0.1"
 )
-OLD_COMPLETED_REVIEW_TASK = (
+OLD_COMPLETED_ROUTE = (
     "Historical Replay Source / Evidence Sufficiency Policy Contract Fixture "
-    "Generated Artifact Review Report-Only v0.1"
+    "Checkpoint Documentation Bundle Report-Only v0.1"
 )
 
 
@@ -98,7 +98,7 @@ def test_core_writes_exact_artifact_and_count_contract(tmp_path: Path) -> None:
     assert metadata["local_only"] is True
     assert metadata["synthetic_only"] is True
     assert metadata["recommended_next_task"] == NEXT_TASK
-    assert metadata["recommended_next_task"] != OLD_COMPLETED_REVIEW_TASK
+    assert metadata["recommended_next_task"] != OLD_COMPLETED_ROUTE
     assert all(metadata[field] is False for field in SAFETY_FALSE_FIELDS)
 
 
