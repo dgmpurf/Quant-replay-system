@@ -1,4 +1,4 @@
-"""Package-local synthetic-only CLI."""
+"""Package-local CLI with synthetic materialization and real-candidate dry-run."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from .health import registry_health
 from .index import regenerate_index, verify_index
 from .models import HumanReviewPayload, RegistryError
 from .path_safety import derive_receipt_key, derive_subject_key
+from .real_candidate import AUTHORITY_PRESENT_STOP, dry_run_real_candidate
 from .review_zip import build_deterministic_review_zip, collect_relative_files
 from .transaction import materialize_synthetic
 from .verification import preflight_next_task, verify_entry
@@ -40,7 +41,10 @@ def _registry_authority(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="accepted-lineage-registry", description="Synthetic-only accepted-lineage registry")
+    parser = argparse.ArgumentParser(
+        prog="accepted-lineage-registry",
+        description="Accepted-lineage validation; materialization remains synthetic-only",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     derive = subparsers.add_parser("derive-keys")
@@ -89,6 +93,22 @@ def build_parser() -> argparse.ArgumentParser:
     package.add_argument("--protected-root", type=Path, action="append", default=[])
     package.add_argument("--expected-review-output-root", type=Path)
     package.add_argument("--expected-zip", type=Path)
+
+    candidate = subparsers.add_parser("dry-run-real-candidate")
+    candidate.add_argument("--candidate-root", type=Path, required=True)
+    candidate.add_argument("--approved-admin-root", type=Path, required=True)
+    candidate.add_argument("--repository-root", type=Path, required=True)
+    candidate.add_argument("--expected-candidate-root", type=Path, required=True)
+    candidate.add_argument("--payload", type=Path, required=True)
+    candidate.add_argument("--subject-manifest", type=Path, required=True)
+    candidate.add_argument("--subject-packet", type=Path, required=True)
+    candidate.add_argument("--subject-artifact-root", type=Path, required=True)
+    candidate.add_argument("--review-receipt", type=Path, required=True)
+    candidate.add_argument("--expected-review-decision-id", required=True)
+    candidate.add_argument("--expected-payload-sha256", required=True)
+    candidate.add_argument("--expected-subject-manifest-sha256", required=True)
+    candidate.add_argument("--expected-review-receipt-sha256", required=True)
+    candidate.add_argument("--materialization-authorization-id")
     return parser
 
 
@@ -162,6 +182,29 @@ def run(argv: Sequence[str] | None = None) -> int:
                     relative_files,
                     expected_zip_path=args.expected_zip,
                     **review_authority,
+                ).to_dict()
+            )
+        elif args.command == "dry-run-real-candidate":
+            if args.materialization_authorization_id is not None:
+                raise RegistryError(
+                    AUTHORITY_PRESENT_STOP,
+                    "A materialization authorization ID is forbidden in dry-run mode",
+                )
+            _emit(
+                dry_run_real_candidate(
+                    args.candidate_root,
+                    approved_admin_root=args.approved_admin_root,
+                    repository_root=args.repository_root,
+                    expected_candidate_root=args.expected_candidate_root,
+                    human_review_payload_bytes=args.payload.read_bytes(),
+                    subject_artifact_manifest_bytes=args.subject_manifest.read_bytes(),
+                    subject_packet_path=args.subject_packet,
+                    subject_artifact_root=args.subject_artifact_root,
+                    review_receipt_bytes=args.review_receipt.read_bytes(),
+                    expected_review_decision_id=args.expected_review_decision_id,
+                    expected_payload_sha256=args.expected_payload_sha256,
+                    expected_subject_manifest_sha256=args.expected_subject_manifest_sha256,
+                    expected_review_receipt_sha256=args.expected_review_receipt_sha256,
                 ).to_dict()
             )
         else:
