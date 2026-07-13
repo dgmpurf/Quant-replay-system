@@ -8,7 +8,12 @@ from typing import Sequence
 
 from .index import verify_index
 from .locking import inspect_lock
-from .models import RegistryError, RegistryHealthResult
+from .models import (
+    GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
+    SYNTHETIC_MODE,
+    RegistryError,
+    RegistryHealthResult,
+)
 from .path_safety import platform_path_limitations, validate_registry_root_authority, validate_safe_directory_chain
 from .verification import load_registry_configuration, verify_entry
 
@@ -20,12 +25,14 @@ def registry_health(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
 ) -> RegistryHealthResult:
     authority = {
         "approved_admin_root": approved_admin_root,
         "repository_root": repository_root,
         "protected_roots": protected_roots,
         "expected_registry_root": expected_registry_root,
+        "registry_mode": registry_mode,
     }
     registry_root = validate_registry_root_authority(root, create=False, **authority)
     policy, schema = load_registry_configuration(registry_root, **authority)
@@ -72,7 +79,10 @@ def registry_health(
         warnings.append(exc.classification)
     if orphan_count:
         warnings.append("ORPHAN_TEMPORARY_DIRECTORIES_PRESENT")
-    if policy.get("registry_mode") != "SYNTHETIC_FIXTURE_ONLY_NOT_A_PILOT":
+    if policy.get("registry_mode") not in {
+        SYNTHETIC_MODE,
+        GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
+    }:
         privacy_warnings.append("NON_SYNTHETIC_MODE")
     return RegistryHealthResult(
         registry_mode=str(policy["registry_mode"]),

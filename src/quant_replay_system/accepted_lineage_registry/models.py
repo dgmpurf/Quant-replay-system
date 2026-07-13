@@ -12,6 +12,9 @@ from .canonical import decode_json_object, sha256_bytes
 REGISTRY_SCHEMA_VERSION = "accepted-lineage-registry-v0.1"
 REGISTRY_POLICY_VERSION = "accepted-lineage-registry-policy-v0.1"
 SYNTHETIC_MODE = "SYNTHETIC_FIXTURE_ONLY_NOT_A_PILOT"
+GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE = (
+    "GOVERNED_REAL_CANDIDATE_NON_LIVE_MATERIALIZATION"
+)
 LIVE_MODE_STOP = "LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP"
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -54,6 +57,10 @@ RUNTIME_ONLY_FIELDS = {
     "registry_schema_version",
     "registry_policy_version",
     "materialization_authorization_id",
+    "expected_materialization_authorization_id",
+    "mode",
+    "candidate_registry",
+    "live_registry",
     "materialized_by",
     "materialized_at",
     "operation_identifier",
@@ -282,6 +289,26 @@ class RegistryPolicy:
     single_writer: bool = True
     supersession_enabled: bool = False
     live_registry_allowed: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class GovernedCandidateRegistryPolicy:
+    registry_policy_version: str = REGISTRY_POLICY_VERSION
+    registry_mode: str = GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE
+    single_writer: bool = True
+    supersession_enabled: bool = False
+    live_registry_allowed: bool = False
+    live_registry: bool = False
+    candidate_registry: bool = True
+    Stage1B_A_authority: str = "none_by_mode"
+    business_authority: str = "none"
+    research_authority: str = "none"
+    PIT_authority: str = "none"
+    replay_authority: str = "none"
+    next_task_authorized_by_registry: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

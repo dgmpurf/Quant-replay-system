@@ -11,7 +11,12 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Iterable, Sequence
 
-from .models import LIVE_MODE_STOP, RegistryError
+from .models import (
+    GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
+    LIVE_MODE_STOP,
+    SYNTHETIC_MODE,
+    RegistryError,
+)
 
 
 SUBJECT_KEY_RE = re.compile(r"^SUBJ_[0-9a-f]{32}$")
@@ -301,6 +306,7 @@ def validate_registry_root_authority(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
     create: bool = False,
 ) -> Path:
     admin = _absolute(approved_admin_root)
@@ -314,8 +320,18 @@ def validate_registry_root_authority(
         raise RegistryError("REGISTRY_ROOT_NOT_REPO_EXTERNAL_STOP", "Registry root is inside the repository")
     if not _is_within(root, admin, strict=True):
         raise RegistryError("REGISTRY_ROOT_OUTSIDE_APPROVED_ADMIN_ROOT_STOP", "Registry root is not below approved admin root")
-    if root.name.casefold() == "accepted_lineage_registry_v0_1" or "synthetic" not in root.name.casefold():
-        raise RegistryError(LIVE_MODE_STOP, "Only an explicitly synthetic registry root is authorized")
+    root_name = root.name.casefold()
+    if registry_mode == SYNTHETIC_MODE:
+        if root_name == "accepted_lineage_registry_v0_1" or "synthetic" not in root_name:
+            raise RegistryError(LIVE_MODE_STOP, "Only an explicitly synthetic registry root is authorized")
+    elif registry_mode == GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
+        if expected_registry_root is None or root_name == "accepted_lineage_registry_v0_1" or "candidate" not in root_name:
+            raise RegistryError(
+                "REAL_CANDIDATE_MATERIALIZATION_ROOT_UNSAFE_STOP",
+                "Governed candidate mode requires an exact, explicitly candidate root",
+            )
+    else:
+        raise RegistryError(LIVE_MODE_STOP, "Requested registry mode is not authorized")
     if expected_registry_root is not None and os.path.normcase(os.fspath(root)) != os.path.normcase(os.fspath(_absolute(expected_registry_root))):
         raise RegistryError("REGISTRY_ROOT_OUTSIDE_APPROVED_ADMIN_ROOT_STOP", "Registry root differs from exact approved root")
     _reject_protected_target(
@@ -422,6 +438,21 @@ def assert_synthetic_registry_root(path: str | Path) -> Path:
     return root
 
 
+def assert_registry_root_mode(path: str | Path, *, registry_mode: str) -> Path:
+    if registry_mode == SYNTHETIC_MODE:
+        return assert_synthetic_registry_root(path)
+    root = _absolute(path)
+    if registry_mode != GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
+        raise RegistryError(LIVE_MODE_STOP, "Requested registry mode is not authorized")
+    if root.name.casefold() == "accepted_lineage_registry_v0_1" or "candidate" not in root.name.casefold():
+        raise RegistryError(
+            "REAL_CANDIDATE_MATERIALIZATION_ROOT_UNSAFE_STOP",
+            "Governed candidate root name is not explicit",
+        )
+    assert_no_filesystem_indirection(root)
+    return root
+
+
 def assert_regular_single_link_file(
     path: str | Path,
     *,
@@ -453,8 +484,12 @@ def same_filesystem(left: str | Path, right: str | Path) -> bool:
     return os.stat(nearest_existing(left)).st_dev == os.stat(nearest_existing(right)).st_dev
 
 
-def capture_path_snapshot(root: str | Path) -> PathSafetySnapshot:
-    safe_root = assert_synthetic_registry_root(root)
+def capture_path_snapshot(
+    root: str | Path,
+    *,
+    registry_mode: str = SYNTHETIC_MODE,
+) -> PathSafetySnapshot:
+    safe_root = assert_registry_root_mode(root, registry_mode=registry_mode)
     signatures: list[tuple[int, int, int, int]] = []
     for component in _existing_chain(safe_root):
         file_stat = os.lstat(component)
@@ -466,8 +501,17 @@ def capture_path_snapshot(root: str | Path) -> PathSafetySnapshot:
     )
 
 
-def revalidate_path_snapshot(root: str | Path, snapshot: PathSafetySnapshot) -> None:
-    current = capture_path_snapshot(root)
+def revalidate_path_snapshot(
+    root: str | Path,
+    snapshot: PathSafetySnapshot,
+    *,
+    registry_mode: str = SYNTHETIC_MODE,
+) -> None:
+    current = (
+        capture_path_snapshot(root)
+        if registry_mode == SYNTHETIC_MODE
+        else capture_path_snapshot(root, registry_mode=registry_mode)
+    )
     if current.logical_root_name != snapshot.logical_root_name or current.signatures != snapshot.signatures:
         raise RegistryError("PATH_KEY_DERIVATION_OR_VALIDATION_STOP", "TOCTOU root revalidation failed")
 

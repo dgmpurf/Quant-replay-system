@@ -1,4 +1,4 @@
-"""Synthetic-only, byte-verified, single-writer atomic materialization."""
+"""Byte-verified, single-writer atomic materialization for authorized modes."""
 
 from __future__ import annotations
 
@@ -12,9 +12,11 @@ from .canonical import canonical_json_bytes, fsync_directory, sha256_bytes, sha2
 from .index import mark_index_stale, regenerate_index
 from .locking import RegistryWriteLock
 from .models import (
+    GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
     REGISTRY_POLICY_VERSION,
     REGISTRY_SCHEMA_VERSION,
     SYNTHETIC_MODE,
+    GovernedCandidateRegistryPolicy,
     HumanReviewPayload,
     MaterializationResult,
     RegistryError,
@@ -50,12 +52,14 @@ def _authority_kwargs(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path],
     expected_registry_root: str | Path | None,
+    registry_mode: str,
 ) -> dict[str, Any]:
     return {
         "approved_admin_root": approved_admin_root,
         "repository_root": repository_root,
         "protected_roots": protected_roots,
         "expected_registry_root": expected_registry_root,
+        "registry_mode": registry_mode,
     }
 
 
@@ -72,8 +76,52 @@ def initialize_synthetic_registry(
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=SYNTHETIC_MODE,
     )
-    registry_root = validate_registry_root_authority(root, create=True, **authority)
+    return _initialize_registry(root, policy=RegistryPolicy(), **authority)
+
+
+def _initialize_registry(
+    root: str | Path,
+    *,
+    approved_admin_root: str | Path,
+    repository_root: str | Path,
+    protected_roots: Sequence[str | Path],
+    expected_registry_root: str | Path | None,
+    registry_mode: str,
+    policy: RegistryPolicy | GovernedCandidateRegistryPolicy,
+) -> Path:
+    authority = _authority_kwargs(
+        approved_admin_root=approved_admin_root,
+        repository_root=repository_root,
+        protected_roots=protected_roots,
+        expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
+    )
+    registry_root = validate_registry_root_authority(root, create=False, **authority)
+    if registry_root.exists():
+        if registry_mode == GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
+            try:
+                load_registry_configuration(registry_root, **authority)
+            except RegistryError as exc:
+                raise RegistryError(
+                    "REAL_CANDIDATE_MATERIALIZATION_ROOT_ALREADY_EXISTS_STOP",
+                    "Existing candidate root is not the expected initialized candidate registry",
+                ) from exc
+        else:
+            validate_registry_root_authority(root, create=True, **authority)
+    else:
+        if registry_mode == GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
+            try:
+                registry_root.mkdir()
+            except FileExistsError as exc:
+                raise RegistryError(
+                    "REAL_CANDIDATE_MATERIALIZATION_ROOT_ALREADY_EXISTS_STOP",
+                    "Candidate root appeared before initialization",
+                ) from exc
+            registry_root = validate_registry_root_authority(root, create=False, **authority)
+        else:
+            registry_root = validate_registry_root_authority(root, create=True, **authority)
     if any(registry_root.iterdir()):
         load_registry_configuration(registry_root, **authority)
         for directory in ("entries", "derived", ".staging"):
@@ -86,13 +134,32 @@ def initialize_synthetic_registry(
         return registry_root
     for directory in ("entries", "derived", ".staging"):
         validate_safe_directory_chain(registry_root / directory, containment_root=registry_root, create=True)
-    policy_bytes = canonical_json_bytes(RegistryPolicy().to_dict())
+    policy_bytes = canonical_json_bytes(policy.to_dict())
     schema_bytes = canonical_json_bytes(RegistrySchema().to_dict())
     write_bytes_fsync(registry_root / "registry_policy.json", policy_bytes)
     write_bytes_fsync(registry_root / "registry_schema.json", schema_bytes)
     fsync_directory(registry_root)
     load_registry_configuration(registry_root, **authority)
     return registry_root
+
+
+def initialize_governed_candidate_registry(
+    root: str | Path,
+    *,
+    approved_admin_root: str | Path,
+    repository_root: str | Path,
+    protected_roots: Sequence[str | Path] = (),
+    expected_registry_root: str | Path | None = None,
+) -> Path:
+    return _initialize_registry(
+        root,
+        approved_admin_root=approved_admin_root,
+        repository_root=repository_root,
+        protected_roots=protected_roots,
+        expected_registry_root=expected_registry_root,
+        registry_mode=GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
+        policy=GovernedCandidateRegistryPolicy(),
+    )
 
 
 def _immutable_identity(
@@ -187,7 +254,7 @@ def _revalidate_actual_subject(
     )
 
 
-def materialize_synthetic(
+def _materialize(
     root: str | Path,
     *,
     approved_admin_root: str | Path,
@@ -206,10 +273,24 @@ def materialize_synthetic(
     lock_timeout_seconds: float = 5.0,
     stale_lock_seconds: float = 300.0,
     failure_injection: str | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
+    enforce_synthetic_identifiers: bool = True,
+    success_classification: str = "NEW_ENTRY_MATERIALIZED_SUCCESSFULLY",
+    idempotent_classification: str = "IDEMPOTENT_PASS_EXISTING_IDENTICAL_ENTRY",
+    collision_classification: str | None = None,
+    registry_status: str = "SYNTHETIC_ACCEPTED_REVIEW_MATERIALIZED",
+    seal_status: str = "SYNTHETIC_ENTRY_SEALED",
+    validation_result: dict[str, Any] | None = None,
+    runtime_manifest_extra: dict[str, Any] | None = None,
 ) -> MaterializationResult:
     if not materialization_authorization_id or not materialization_authorization_id.strip():
+        classification = (
+            "REAL_CANDIDATE_MATERIALIZATION_EXACT_APPROVAL_MISSING_STOP"
+            if registry_mode == GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE
+            else "MATERIALIZATION_EXACT_APPROVAL_MISSING_STOP"
+        )
         raise RegistryError(
-            "MATERIALIZATION_EXACT_APPROVAL_MISSING_STOP",
+            classification,
             "Separate exact materialization approval is required",
         )
     authority = _authority_kwargs(
@@ -217,10 +298,12 @@ def materialize_synthetic(
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
     )
     prospective_root = validate_registry_root_authority(root, create=False, **authority)
     payload = HumanReviewPayload.from_bytes(human_review_payload_bytes)
-    payload.assert_synthetic_only()
+    if enforce_synthetic_identifiers:
+        payload.assert_synthetic_only()
     subject_manifest = SubjectArtifactManifest.from_bytes(subject_artifact_manifest_bytes)
     receipt = ReviewReceiptReference.from_bytes(
         review_receipt_bytes,
@@ -241,16 +324,33 @@ def materialize_synthetic(
     assert subject_packet_path is not None
     assert subject_artifact_root is not None
 
-    registry_root = initialize_synthetic_registry(root, **authority)
+    if registry_mode == SYNTHETIC_MODE:
+        registry_root = initialize_synthetic_registry(
+            root,
+            approved_admin_root=approved_admin_root,
+            repository_root=repository_root,
+            protected_roots=protected_roots,
+            expected_registry_root=expected_registry_root,
+        )
+    elif registry_mode == GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
+        registry_root = initialize_governed_candidate_registry(
+            root,
+            approved_admin_root=approved_admin_root,
+            repository_root=repository_root,
+            protected_roots=protected_roots,
+            expected_registry_root=expected_registry_root,
+        )
+    else:
+        raise RegistryError("LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP", "Registry mode is not authorized")
     policy, schema = load_registry_configuration(registry_root, **authority)
-    if policy["registry_mode"] != SYNTHETIC_MODE:
-        raise RegistryError("LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP", "Only synthetic mode is authorized")
+    if policy["registry_mode"] != registry_mode:
+        raise RegistryError("LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP", "Registry policy mode differs from requested mode")
     subject_key = derive_subject_key(payload.subject_phase_id)
     receipt_key = derive_receipt_key(payload.receipt_id)
     operation = operation_id or hashlib.sha256(
         f"{subject_key}|{receipt_key}|{materialization_authorization_id}".encode("utf-8")
     ).hexdigest()[:16]
-    root_snapshot = capture_path_snapshot(registry_root)
+    root_snapshot = capture_path_snapshot(registry_root, registry_mode=registry_mode)
     entries_root = validate_safe_directory_chain(registry_root / "entries", containment_root=registry_root, create=False)
     staging_root = validate_safe_directory_chain(registry_root / ".staging", containment_root=registry_root, create=False)
     derived_root = validate_safe_directory_chain(
@@ -270,6 +370,7 @@ def materialize_synthetic(
         repository_root=Path(repository_root),
         protected_roots=tuple(Path(item) for item in protected_roots),
         expected_registry_root=Path(expected_registry_root) if expected_registry_root is not None else None,
+        registry_mode=registry_mode,
         timeout_seconds=lock_timeout_seconds,
         stale_after_seconds=stale_lock_seconds,
     )
@@ -290,7 +391,7 @@ def materialize_synthetic(
                     authority=authority,
                 )
                 return MaterializationResult(
-                    classification="IDEMPOTENT_PASS_EXISTING_IDENTICAL_ENTRY",
+                    classification=idempotent_classification,
                     subject_key=subject_key,
                     receipt_key=receipt_key,
                     entry_created=False,
@@ -301,6 +402,11 @@ def materialize_synthetic(
                     entry_verification_completed=True,
                     entry_verification_passed=True,
                     materialization_verified=True,
+                )
+            if collision_classification is not None:
+                raise RegistryError(
+                    collision_classification,
+                    "Existing receipt key has conflicting immutable review identity",
                 )
             _raise_identity_conflict(expected_identity, actual_identity)
 
@@ -351,7 +457,7 @@ def materialize_synthetic(
                 "receipt_key": receipt_key,
                 "registry_policy_version": policy["registry_policy_version"],
                 "registry_schema_version": schema["registry_schema_version"],
-                "registry_status": "SYNTHETIC_ACCEPTED_REVIEW_MATERIALIZED",
+                "registry_status": registry_status,
                 "review_receipt_filename": "review_receipt.md",
                 "review_receipt_sha256": receipt.exact_sha256,
                 "subject_artifact_count": len(baseline_subject.artifacts),
@@ -365,8 +471,9 @@ def materialize_synthetic(
                 "subject_key": subject_key,
                 "subject_packet_byte_length": baseline_subject.packet.byte_length,
                 "subject_packet_sha256": baseline_subject.packet.sha256,
-                "validation_result": {"status": "PASS", "synthetic_only": True},
+                "validation_result": validation_result or {"status": "PASS", "synthetic_only": True},
             }
+            runtime_manifest.update(runtime_manifest_extra or {})
             manifest_bytes = canonical_json_bytes(runtime_manifest)
             write_bytes_fsync(stage / "entry_manifest.json", manifest_bytes)
             if failure_injection == "after_manifest":
@@ -379,7 +486,7 @@ def materialize_synthetic(
                 "registry_schema_version": schema["registry_schema_version"],
                 "seal_created_at": timestamp,
                 "seal_created_by": operator_alias,
-                "seal_status": "SYNTHETIC_ENTRY_SEALED",
+                "seal_status": seal_status,
                 "subject_key": subject_key,
             }
             write_bytes_fsync(stage / "entry_seal.json", canonical_json_bytes(seal))
@@ -413,7 +520,7 @@ def materialize_synthetic(
                 registry_root=registry_root,
                 authority=authority,
             )
-            revalidate_path_snapshot(registry_root, root_snapshot)
+            revalidate_path_snapshot(registry_root, root_snapshot, registry_mode=registry_mode)
             revalidate_directory_chain_snapshot(
                 (registry_root, entries_root, staging_root, derived_root, subject_parent, stage),
                 descendant_snapshot,
@@ -512,7 +619,7 @@ def materialize_synthetic(
                     "Derived index regeneration returned a non-PASS result",
                 )
             index_status = str(index_result["status"])
-            classification = "NEW_ENTRY_MATERIALIZED_SUCCESSFULLY"
+            classification = success_classification
         except Exception:
             try:
                 mark_index_stale(registry_root, "DERIVED_INDEX_REGENERATION_FAILED_ENTRY_VERIFIED_INDEX_STALE", **authority)
@@ -538,3 +645,46 @@ def materialize_synthetic(
             materialization_verified=entry_verification_passed and derived_index_passed,
             entry_verification_failure=entry_verification_failure,
         )
+
+
+def materialize_synthetic(
+    root: str | Path,
+    *,
+    approved_admin_root: str | Path,
+    repository_root: str | Path,
+    subject_packet_path: str | Path | None,
+    subject_artifact_root: str | Path | None,
+    human_review_payload_bytes: bytes,
+    subject_artifact_manifest_bytes: bytes,
+    review_receipt_bytes: bytes,
+    materialization_authorization_id: str | None,
+    protected_roots: Sequence[str | Path] = (),
+    expected_registry_root: str | Path | None = None,
+    operator_alias: str = "synthetic-codex",
+    operation_id: str | None = None,
+    materialized_at: datetime | None = None,
+    lock_timeout_seconds: float = 5.0,
+    stale_lock_seconds: float = 300.0,
+    failure_injection: str | None = None,
+) -> MaterializationResult:
+    """Materialize an explicitly synthetic fixture using the shared transaction."""
+
+    return _materialize(
+        root,
+        approved_admin_root=approved_admin_root,
+        repository_root=repository_root,
+        subject_packet_path=subject_packet_path,
+        subject_artifact_root=subject_artifact_root,
+        human_review_payload_bytes=human_review_payload_bytes,
+        subject_artifact_manifest_bytes=subject_artifact_manifest_bytes,
+        review_receipt_bytes=review_receipt_bytes,
+        materialization_authorization_id=materialization_authorization_id,
+        protected_roots=protected_roots,
+        expected_registry_root=expected_registry_root,
+        operator_alias=operator_alias,
+        operation_id=operation_id,
+        materialized_at=materialized_at,
+        lock_timeout_seconds=lock_timeout_seconds,
+        stale_lock_seconds=stale_lock_seconds,
+        failure_injection=failure_injection,
+    )

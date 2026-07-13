@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Callable, Sequence
 
 from .canonical import canonical_json_bytes, sha256_bytes
-from .models import RegistryError
+from .models import SYNTHETIC_MODE, RegistryError
 from .path_safety import (
     FILE_ATTRIBUTE_REPARSE_POINT,
     assert_regular_single_link_file,
@@ -56,6 +56,7 @@ class RegistryWriteLock:
     repository_root: Path
     protected_roots: Sequence[Path] = ()
     expected_registry_root: Path | None = None
+    registry_mode: str = SYNTHETIC_MODE
     timeout_seconds: float = 5.0
     stale_after_seconds: float = 300.0
     clock: Callable[[], datetime] = _utc_now
@@ -67,6 +68,7 @@ class RegistryWriteLock:
             repository_root=self.repository_root,
             protected_roots=self.protected_roots,
             expected_registry_root=self.expected_registry_root,
+            registry_mode=self.registry_mode,
             create=False,
         )
         validate_safe_directory_chain(self.registry_root, containment_root=self.approved_admin_root, create=False)
@@ -215,6 +217,7 @@ def inspect_lock(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
     stale_after_seconds: float = 300.0,
 ) -> str:
     root = validate_registry_root_authority(
@@ -223,6 +226,7 @@ def inspect_lock(
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
         create=False,
     )
     lock_path = root / LOCK_FILENAME

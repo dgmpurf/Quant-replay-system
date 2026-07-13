@@ -9,7 +9,7 @@ from typing import Any, Sequence
 
 from .canonical import canonical_json_bytes, fsync_directory, sha256_bytes, sha256_file, write_bytes_fsync
 from .locking import RegistryWriteLock
-from .models import DerivedIndexRecord, RegistryError
+from .models import SYNTHETIC_MODE, DerivedIndexRecord, RegistryError
 from .path_safety import (
     assert_regular_single_link_file,
     validate_receipt_key,
@@ -47,12 +47,14 @@ def _authority_kwargs(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path],
     expected_registry_root: str | Path | None,
+    registry_mode: str,
 ) -> dict[str, Any]:
     return {
         "approved_admin_root": approved_admin_root,
         "repository_root": repository_root,
         "protected_roots": protected_roots,
         "expected_registry_root": expected_registry_root,
+        "registry_mode": registry_mode,
     }
 
 
@@ -103,6 +105,7 @@ def regenerate_index(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
     failure_injection: str | None = None,
     lock_held: bool = False,
     lock_timeout_seconds: float = 5.0,
@@ -112,6 +115,7 @@ def regenerate_index(
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
     )
     registry_root = validate_registry_root_authority(root, create=False, **authority)
     if not lock_held:
@@ -123,6 +127,7 @@ def regenerate_index(
             repository_root=Path(repository_root),
             protected_roots=tuple(Path(item) for item in protected_roots),
             expected_registry_root=Path(expected_registry_root) if expected_registry_root is not None else None,
+            registry_mode=registry_mode,
             timeout_seconds=lock_timeout_seconds,
         ):
             return regenerate_index(
@@ -242,12 +247,14 @@ def mark_index_stale(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
 ) -> None:
     authority = _authority_kwargs(
         approved_admin_root=approved_admin_root,
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
     )
     registry_root = validate_registry_root_authority(root, create=False, **authority)
     derived = validate_safe_directory_chain(
@@ -277,12 +284,14 @@ def verify_index(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
 ) -> dict[str, Any]:
     authority = _authority_kwargs(
         approved_admin_root=approved_admin_root,
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
     )
     registry_root = validate_registry_root_authority(root, create=False, **authority)
     policy, schema = load_registry_configuration(registry_root, **authority)

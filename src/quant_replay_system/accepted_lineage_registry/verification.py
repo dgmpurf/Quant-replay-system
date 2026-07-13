@@ -7,6 +7,7 @@ from typing import Any, Sequence
 
 from .canonical import decode_json_object, sha256_file
 from .models import (
+    GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
     REGISTRY_POLICY_VERSION,
     REGISTRY_SCHEMA_VERSION,
     SYNTHETIC_MODE,
@@ -44,12 +45,14 @@ def _authority_kwargs(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path],
     expected_registry_root: str | Path | None,
+    registry_mode: str,
 ) -> dict[str, Any]:
     return {
         "approved_admin_root": approved_admin_root,
         "repository_root": repository_root,
         "protected_roots": protected_roots,
         "expected_registry_root": expected_registry_root,
+        "registry_mode": registry_mode,
     }
 
 
@@ -60,12 +63,14 @@ def load_registry_configuration(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     authority = _authority_kwargs(
         approved_admin_root=approved_admin_root,
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
     )
     registry_root = validate_registry_root_authority(root, create=False, **authority)
     validate_safe_directory_chain(registry_root, containment_root=approved_admin_root, create=False)
@@ -79,8 +84,29 @@ def load_registry_configuration(
         raise RegistryError("REGISTRY_SCHEMA_OR_POLICY_MISMATCH_STOP", "Registry policy version mismatch")
     if schema.get("registry_schema_version") != REGISTRY_SCHEMA_VERSION:
         raise RegistryError("REGISTRY_SCHEMA_OR_POLICY_MISMATCH_STOP", "Registry schema version mismatch")
-    if policy.get("registry_mode") != SYNTHETIC_MODE or policy.get("live_registry_allowed") is not False:
-        raise RegistryError("LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP", "Registry is not synthetic-only")
+    if registry_mode == SYNTHETIC_MODE:
+        if policy.get("registry_mode") != SYNTHETIC_MODE or policy.get("live_registry_allowed") is not False:
+            raise RegistryError("LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP", "Registry is not synthetic-only")
+    elif registry_mode == GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
+        required_candidate_policy = {
+            "registry_mode": GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
+            "live_registry_allowed": False,
+            "live_registry": False,
+            "candidate_registry": True,
+            "Stage1B_A_authority": "none_by_mode",
+            "business_authority": "none",
+            "research_authority": "none",
+            "PIT_authority": "none",
+            "replay_authority": "none",
+            "next_task_authorized_by_registry": False,
+        }
+        if any(policy.get(field) != expected for field, expected in required_candidate_policy.items()):
+            raise RegistryError(
+                "LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP",
+                "Registry is not an authorized governed non-live candidate registry",
+            )
+    else:
+        raise RegistryError("LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP", "Registry mode is not authorized")
     if schema.get("entry_files") != list(ENTRY_FILES) or schema.get("entry_file_count") != len(ENTRY_FILES):
         raise RegistryError("REGISTRY_SCHEMA_OR_POLICY_MISMATCH_STOP", "Five-file schema mismatch")
     return policy, schema
@@ -102,6 +128,7 @@ def verify_entry(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
     subject_packet_path: str | Path | None = None,
     subject_artifact_root: str | Path | None = None,
 ) -> dict[str, Any]:
@@ -110,6 +137,7 @@ def verify_entry(
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
     )
     registry_root = validate_registry_root_authority(root, create=False, **authority)
     policy, schema = load_registry_configuration(registry_root, **authority)
@@ -178,11 +206,12 @@ def verify_entry(
     forbidden_manifest_fields = {
         "entry_manifest_sha256",
         "entry_seal_sha256",
-        "review_decision_id",
         "reviewed_at",
         "accepted_classification",
         "accepted_verdict",
     }
+    if registry_mode == SYNTHETIC_MODE:
+        forbidden_manifest_fields.add("review_decision_id")
     if forbidden_manifest_fields.intersection(runtime_manifest):
         raise RegistryError("REGISTRY_SCHEMA_OR_POLICY_MISMATCH_STOP", "Runtime manifest contains forbidden fields")
     if (
@@ -203,6 +232,16 @@ def verify_entry(
         "subject_artifact_count": subject_manifest.data["artifact_count"],
         "actual_subject_bytes_verified": True,
     }
+    if registry_mode == GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
+        expected_manifest_values.update(
+            {
+                "mode": GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
+                "candidate_registry": True,
+                "live_registry": False,
+                "review_decision_id": payload.data["review_decision_id"],
+                "artifact_verification_result": "PASS",
+            }
+        )
     for field, expected in expected_manifest_values.items():
         if runtime_manifest.get(field) != expected:
             raise RegistryError("HUMAN_REVIEW_PAYLOAD_MISMATCH_STOP", f"Runtime manifest mismatch: {field}")
@@ -236,6 +275,9 @@ def verify_entry(
         "entry_seal_sha256": sha256_file(target / "entry_seal.json"),
         "registry_schema_version": schema["registry_schema_version"],
         "registry_policy_version": policy["registry_policy_version"],
+        "registry_mode": policy["registry_mode"],
+        "candidate_registry": policy.get("candidate_registry", False),
+        "live_registry": policy.get("live_registry", False),
         "materialized_at": runtime_manifest.get("materialized_at"),
         "materialized_by": runtime_manifest.get("materialized_by"),
         "materialization_authorization_id": runtime_manifest.get("materialization_authorization_id"),
@@ -256,6 +298,7 @@ def preflight_next_task(
     repository_root: str | Path,
     protected_roots: Sequence[str | Path] = (),
     expected_registry_root: str | Path | None = None,
+    registry_mode: str = SYNTHETIC_MODE,
     current_task_approval_id: str | None,
 ) -> LineagePreflightResult:
     if not current_task_approval_id or not current_task_approval_id.strip():
@@ -271,6 +314,7 @@ def preflight_next_task(
         repository_root=repository_root,
         protected_roots=protected_roots,
         expected_registry_root=expected_registry_root,
+        registry_mode=registry_mode,
     )
     predecessor = {
         key: verified[key]
