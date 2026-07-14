@@ -6,7 +6,19 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
+
+
+class DurableFilesystemBackend(Protocol):
+    def open_file_no_reparse(self, path: str | Path, *, writable: bool = False, delete: bool = False): ...
+
+    def open_directory_no_reparse(self, path: str | Path, *, writable: bool = False, delete: bool = False): ...
+
+    def query_link_count(self, handle) -> int: ...
+
+    def flush_file_handle(self, handle) -> None: ...
+
+    def flush_directory_handle(self, handle) -> bool: ...
 
 
 def canonical_json_bytes(value: Any) -> bytes:
@@ -59,6 +71,37 @@ def write_canonical_json(path: str | Path, value: Any, *, exclusive: bool = True
     exact_bytes = canonical_json_bytes(value)
     write_bytes_fsync(path, exact_bytes, exclusive=exclusive)
     return exact_bytes
+
+
+def write_bytes_durable(
+    path: str | Path,
+    exact_bytes: bytes,
+    *,
+    exclusive: bool = True,
+    backend: DurableFilesystemBackend | None = None,
+) -> None:
+    write_bytes_fsync(path, exact_bytes, exclusive=exclusive)
+    if backend is None:
+        return
+    with backend.open_file_no_reparse(path, writable=True) as handle:
+        backend.query_link_count(handle)
+        backend.flush_file_handle(handle)
+    if sha256_file(path) != sha256_bytes(exact_bytes):
+        raise OSError("Durable file bytes changed after retained-handle flush")
+
+
+def flush_parent_directory_durable(
+    path: str | Path,
+    *,
+    backend: DurableFilesystemBackend | None = None,
+) -> bool:
+    parent = Path(path)
+    if not parent.is_dir():
+        parent = parent.parent
+    if backend is None:
+        return fsync_directory(parent)
+    with backend.open_directory_no_reparse(parent, writable=True) as handle:
+        return backend.flush_directory_handle(handle)
 
 
 def fsync_directory(path: str | Path) -> bool:

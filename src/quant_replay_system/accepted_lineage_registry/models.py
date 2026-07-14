@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass
+from enum import Enum
 from typing import Any, Mapping
 
 from .canonical import decode_json_object, sha256_bytes
@@ -14,6 +15,9 @@ REGISTRY_POLICY_VERSION = "accepted-lineage-registry-policy-v0.1"
 SYNTHETIC_MODE = "SYNTHETIC_FIXTURE_ONLY_NOT_A_PILOT"
 GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE = (
     "GOVERNED_REAL_CANDIDATE_NON_LIVE_MATERIALIZATION"
+)
+GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE = (
+    "GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION"
 )
 LIVE_MODE_STOP = "LIVE_REGISTRY_MODE_NOT_AUTHORIZED_STOP"
 
@@ -61,6 +65,13 @@ RUNTIME_ONLY_FIELDS = {
     "mode",
     "candidate_registry",
     "live_registry",
+    "live_registry_allowed",
+    "registry_instance_id",
+    "live_root_initialization_authorization_id",
+    "live_materialization_authorization_id",
+    "live_entry_review_decision_id",
+    "initialization_seal_sha256",
+    "candidate_provenance_hashes",
     "materialized_by",
     "materialized_at",
     "operation_identifier",
@@ -315,6 +326,39 @@ class GovernedCandidateRegistryPolicy:
 
 
 @dataclass(frozen=True)
+class GovernedLiveRegistryPolicy:
+    registry_policy_version: str = REGISTRY_POLICY_VERSION
+    registry_mode: str = GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE
+    single_writer: bool = True
+    supersession_enabled: bool = False
+    live_registry_allowed: bool = True
+    live_registry: bool = True
+    candidate_registry: bool = False
+    Stage1B_A_authority: str = "none_by_mode"
+    business_authority: str = "none"
+    research_authority: str = "none"
+    evidence_acceptance_authority: str = "none"
+    PIT_authority: str = "none"
+    replay_authority: str = "none"
+    buy_review_authority: str = "none"
+    trading_authority: str = "none"
+    next_task_authorized_by_registry: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+class LiveAuthorizationState(str, Enum):
+    ISSUED_NOT_ACTIVATED = "ISSUED_NOT_ACTIVATED"
+    ACTIVATED_NOT_CONSUMED = "ACTIVATED_NOT_CONSUMED"
+    CONSUMED_PENDING_HUMAN_LIVE_ENTRY_REVIEW = (
+        "CONSUMED_PENDING_HUMAN_LIVE_ENTRY_REVIEW"
+    )
+    CONSUMED_ACCEPTED_LIVE_ENTRY = "CONSUMED_ACCEPTED_LIVE_ENTRY"
+    CONSUMED_REVIEW_REQUIRED = "CONSUMED_REVIEW_REQUIRED"
+
+
+@dataclass(frozen=True)
 class RegistrySchema:
     registry_schema_version: str = REGISTRY_SCHEMA_VERSION
     entry_file_count: int = 5
@@ -363,6 +407,45 @@ class RegistryHealthResult:
     path_safety_warnings: tuple[str, ...]
     platform_limitations: tuple[str, ...]
     privacy_warnings: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        value = asdict(self)
+        for field in ("path_safety_warnings", "platform_limitations", "privacy_warnings"):
+            value[field] = list(value[field])
+        return value
+
+
+@dataclass(frozen=True)
+class LiveRegistryHealthResult:
+    registry_mode: str
+    registry_schema_version: str
+    registry_policy_version: str
+    root_safety: str
+    lock_status: str
+    authoritative_entry_count: int
+    entry_verification_status: str
+    derived_index_status: str
+    stale_index_status: bool
+    orphan_temporary_directories: int
+    path_safety_warnings: tuple[str, ...]
+    platform_limitations: tuple[str, ...]
+    privacy_warnings: tuple[str, ...]
+    registry_instance_id: str
+    root_mode_binding: str
+    windows_backend_status: str
+    windows_capability_fields: dict[str, bool]
+    residual_risk_fields: dict[str, str]
+    candidate_registry: bool = False
+    live_registry: bool = True
+    live_registry_allowed: bool = True
+    next_task_authorized_by_registry: bool = False
+    business_authority: str = "none"
+    research_authority: str = "none"
+    evidence_acceptance_authority: str = "none"
+    PIT_authority: str = "none"
+    replay_authority: str = "none"
+    buy_review_authority: str = "none"
+    trading_authority: str = "none"
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)

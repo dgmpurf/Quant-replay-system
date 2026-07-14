@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import stat
@@ -12,6 +13,7 @@ from pathlib import Path, PurePosixPath
 from typing import Iterable, Sequence
 
 from .models import (
+    GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE,
     GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE,
     LIVE_MODE_STOP,
     SYNTHETIC_MODE,
@@ -67,6 +69,10 @@ def _is_within(path: Path, parent: Path, *, strict: bool = False) -> bool:
     except ValueError:
         return False
     return not strict or bool(relative.parts)
+
+
+def _paths_overlap(left: Path, right: Path) -> bool:
+    return left == right or _is_within(left, right, strict=True) or _is_within(right, left, strict=True)
 
 
 def _attributes(file_stat: os.stat_result) -> int:
@@ -330,13 +336,27 @@ def validate_registry_root_authority(
                 "REAL_CANDIDATE_MATERIALIZATION_ROOT_UNSAFE_STOP",
                 "Governed candidate mode requires an exact, explicitly candidate root",
             )
+    elif registry_mode == GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE:
+        if expected_registry_root is None:
+            raise RegistryError(
+                "LIVE_REGISTRY_EXACT_ROOT_MISMATCH_STOP",
+                "Live mode requires an exact expected registry root",
+            )
+        if os.path.normcase(os.fspath(root)) != os.path.normcase(os.fspath(_absolute(expected_registry_root))):
+            raise RegistryError(
+                "LIVE_REGISTRY_EXACT_ROOT_MISMATCH_STOP",
+                "Live registry root differs from the exact approved root",
+            )
     else:
         raise RegistryError(LIVE_MODE_STOP, "Requested registry mode is not authorized")
     if expected_registry_root is not None and os.path.normcase(os.fspath(root)) != os.path.normcase(os.fspath(_absolute(expected_registry_root))):
         raise RegistryError("REGISTRY_ROOT_OUTSIDE_APPROVED_ADMIN_ROOT_STOP", "Registry root differs from exact approved root")
+    default_protected = _default_protected_roots(admin, repository)
+    if registry_mode == GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE:
+        default_protected = tuple(path for path in default_protected if not _paths_overlap(path, root))
     _reject_protected_target(
         root,
-        (*_default_protected_roots(admin, repository), *protected_roots),
+        (*default_protected, *protected_roots),
         classification="PROTECTED_OR_INPUT_ROOT_TARGET_STOP",
     )
     if create:
@@ -344,6 +364,131 @@ def validate_registry_root_authority(
     else:
         validate_nearest_existing_chain(root, containment_root=admin, classification="PATH_KEY_DERIVATION_OR_VALIDATION_STOP")
     return root
+
+
+def validate_candidate_live_root_separation(
+    candidate_root: str | Path,
+    live_root: str | Path,
+    *,
+    approved_admin_root: str | Path,
+    repository_root: str | Path,
+) -> tuple[Path, Path]:
+    admin = _absolute(approved_admin_root)
+    repository = _absolute(repository_root)
+    candidate = _absolute(candidate_root)
+    live = _absolute(live_root)
+    for root in (candidate, live):
+        if not _is_within(root, admin, strict=True) or root == repository or _is_within(root, repository):
+            raise RegistryError(
+                "LIVE_REGISTRY_EXACT_ROOT_MISMATCH_STOP",
+                "Candidate and live roots must be repo-external strict admin descendants",
+            )
+    if _paths_overlap(candidate, live):
+        raise RegistryError(
+            "LIVE_REGISTRY_CANDIDATE_ROOT_OVERLAP_STOP",
+            "Candidate and live roots overlap",
+        )
+    return candidate, live
+
+
+def _load_explicit_registry_mode(root: Path) -> str:
+    policy_path = root / "registry_policy.json"
+    if not policy_path.is_file():
+        raise RegistryError(
+            "LIVE_REGISTRY_UNEXPECTED_EXISTING_ROOT_STOP",
+            "Existing live root lacks an explicit policy",
+        )
+    try:
+        value = json.loads(policy_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise RegistryError("LIVE_REGISTRY_WRONG_POLICY_STOP", "Live registry policy is unreadable") from exc
+    if not isinstance(value, dict) or not isinstance(value.get("registry_mode"), str):
+        raise RegistryError("LIVE_REGISTRY_WRONG_POLICY_STOP", "Live registry policy mode is missing")
+    return str(value["registry_mode"])
+
+
+def validate_live_registry_root_authority(
+    registry_root: str | Path,
+    *,
+    approved_admin_root: str | Path,
+    repository_root: str | Path,
+    expected_registry_root: str | Path,
+    candidate_root: str | Path,
+    protected_roots: Sequence[str | Path] = (),
+    create: bool = False,
+    expected_existing_state: str = "ABSENT_OR_INITIALIZED_LIVE",
+) -> Path:
+    candidate, live = validate_candidate_live_root_separation(
+        candidate_root,
+        registry_root,
+        approved_admin_root=approved_admin_root,
+        repository_root=repository_root,
+    )
+    expected = _absolute(expected_registry_root)
+    if os.path.normcase(os.fspath(live)) != os.path.normcase(os.fspath(expected)):
+        raise RegistryError(
+            "LIVE_REGISTRY_EXACT_ROOT_MISMATCH_STOP",
+            "Live registry root differs from exact approval",
+        )
+    if _lexists(live):
+        assert_no_filesystem_indirection(
+            live,
+            classification="LIVE_REGISTRY_REPARSE_OR_INDIRECTION_STOP",
+        )
+        observed_mode = _load_explicit_registry_mode(live)
+        if observed_mode == GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
+            raise RegistryError(
+                "LIVE_REGISTRY_CANDIDATE_POLICY_RECLASSIFICATION_STOP",
+                "Candidate policy cannot be reclassified as live",
+            )
+        if observed_mode != GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE:
+            raise RegistryError("LIVE_REGISTRY_WRONG_POLICY_STOP", "Existing root is not explicit live mode")
+        if expected_existing_state == "ABSENT":
+            raise RegistryError(
+                "LIVE_REGISTRY_UNEXPECTED_EXISTING_ROOT_STOP",
+                "Live root already exists where absence was required",
+            )
+    elif expected_existing_state == "INITIALIZED_LIVE":
+        raise RegistryError("LIVE_REGISTRY_UNEXPECTED_EXISTING_ROOT_STOP", "Initialized live root is missing")
+    return validate_registry_root_authority(
+        live,
+        approved_admin_root=approved_admin_root,
+        repository_root=repository_root,
+        protected_roots=(*protected_roots, candidate),
+        expected_registry_root=expected,
+        registry_mode=GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE,
+        create=create,
+    )
+
+
+def capture_live_root_parent_snapshot(
+    registry_root: str | Path,
+    *,
+    approved_admin_root: str | Path,
+) -> DirectoryChainSnapshot:
+    root = _absolute(registry_root)
+    existing = nearest_existing(root)
+    return capture_directory_chain_snapshot(
+        (existing,),
+        containment_root=approved_admin_root,
+        classification="LIVE_REGISTRY_ROOT_IDENTITY_CHANGED_STOP",
+    )
+
+
+def revalidate_live_root_parent_snapshot(
+    registry_root: str | Path,
+    snapshot: DirectoryChainSnapshot,
+    *,
+    approved_admin_root: str | Path,
+) -> None:
+    root = _absolute(registry_root)
+    existing = nearest_existing(root)
+    revalidate_directory_chain_snapshot(
+        (existing,),
+        snapshot,
+        containment_root=approved_admin_root,
+        classification="LIVE_REGISTRY_ROOT_IDENTITY_CHANGED_STOP",
+    )
 
 
 def validate_review_output_root_authority(
@@ -442,6 +587,12 @@ def assert_registry_root_mode(path: str | Path, *, registry_mode: str) -> Path:
     if registry_mode == SYNTHETIC_MODE:
         return assert_synthetic_registry_root(path)
     root = _absolute(path)
+    if registry_mode == GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE:
+        assert_no_filesystem_indirection(
+            root,
+            classification="LIVE_REGISTRY_REPARSE_OR_INDIRECTION_STOP",
+        )
+        return root
     if registry_mode != GOVERNED_REAL_CANDIDATE_MATERIALIZATION_MODE:
         raise RegistryError(LIVE_MODE_STOP, "Requested registry mode is not authorized")
     if root.name.casefold() == "accepted_lineage_registry_v0_1" or "candidate" not in root.name.casefold():

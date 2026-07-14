@@ -13,13 +13,18 @@ from pathlib import Path
 from typing import Callable, Sequence
 
 from .canonical import canonical_json_bytes, sha256_bytes
-from .models import SYNTHETIC_MODE, RegistryError
+from .models import (
+    GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE,
+    SYNTHETIC_MODE,
+    RegistryError,
+)
 from .path_safety import (
     FILE_ATTRIBUTE_REPARSE_POINT,
     assert_regular_single_link_file,
     validate_registry_root_authority,
     validate_safe_directory_chain,
 )
+from .windows_live_backend import WindowsHandleIdentity, WindowsLiveFilesystemBackend
 
 
 LOCK_FILENAME = ".registry-write.lock"
@@ -208,6 +213,63 @@ class RegistryWriteLock:
 
     def __exit__(self, exc_type, exc, traceback) -> None:
         self.release()
+
+
+@dataclass
+class LiveRegistryWriteLock(RegistryWriteLock):
+    backend: WindowsLiveFilesystemBackend | None = None
+
+    def __post_init__(self) -> None:
+        if self.registry_mode != GOVERNED_LIVE_ACCEPTED_LINEAGE_MATERIALIZATION_MODE:
+            raise RegistryError(
+                "LIVE_REGISTRY_WRONG_POLICY_STOP",
+                "Live lock requires explicit live registry mode",
+            )
+        super().__post_init__()
+        self.backend = self.backend or WindowsLiveFilesystemBackend()
+        with self.backend.open_directory_no_reparse(self.registry_root) as handle:
+            self._live_root_identity = self.backend.query_handle_identity(handle)
+        self._live_lock_identity: WindowsHandleIdentity | None = None
+
+    def _verify_live_root_identity(self) -> None:
+        assert self.backend is not None
+        observed = self.backend.verify_committed_directory_identity(
+            self.registry_root,
+            self._live_root_identity,
+        )
+        if observed.number_of_links != 1:
+            raise RegistryError(
+                "LIVE_REGISTRY_ROOT_IDENTITY_CHANGED_STOP",
+                "Live registry root identity or link count changed",
+            )
+
+    def acquire(self) -> str:
+        self._verify_live_root_identity()
+        result = super().acquire()
+        assert self.backend is not None
+        with self.backend.open_file_no_reparse(self.lock_path) as handle:
+            self._live_lock_identity = self.backend.query_handle_identity(handle)
+            self.backend.query_link_count(handle)
+        return result
+
+    def release(self) -> None:
+        if not self._owned:
+            return
+        try:
+            self._verify_live_root_identity()
+            self._validate_release_ownership()
+            if self._live_lock_identity is None:
+                raise RegistryError(
+                    "LIVE_WINDOWS_LOCK_OWNERSHIP_UNVERIFIED_STOP",
+                    "Live lock handle identity was not captured",
+                )
+            assert self.backend is not None
+            self.backend.dispose_lock_by_verified_handle(
+                self.lock_path,
+                self._live_lock_identity,
+            )
+        finally:
+            self._owned = False
 
 
 def inspect_lock(

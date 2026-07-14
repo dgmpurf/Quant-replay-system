@@ -9,15 +9,12 @@ from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from .canonical import canonical_json_bytes, decode_json_object, sha256_bytes
+from .canonical import canonical_json_bytes, sha256_bytes
 from .models import (
     REGISTRY_POLICY_VERSION,
     REGISTRY_SCHEMA_VERSION,
-    RUNTIME_ONLY_FIELDS,
-    SHA256_RE,
     HumanReviewPayload,
     RegistryError,
-    ReviewReceiptReference,
     SubjectArtifactManifest,
 )
 from .path_safety import (
@@ -29,6 +26,11 @@ from .path_safety import (
     validate_safe_directory_chain,
 )
 from .subject_verification import revalidate_subject_inputs, validate_subject_inputs
+from .review_contract import (
+    ReviewContractClassifications,
+    ValidatedReviewedSubject,
+    validate_exact_reviewed_subject,
+)
 
 
 GOVERNED_REAL_CANDIDATE_MODE = "GOVERNED_REAL_CANDIDATE_NON_LIVE_DRY_RUN"
@@ -52,6 +54,18 @@ LIVE_COLLISION_STOP = "REAL_CANDIDATE_DRY_RUN_LIVE_ROOT_COLLISION_STOP"
 AUTHORITY_PRESENT_STOP = "REAL_CANDIDATE_DRY_RUN_MATERIALIZATION_AUTHORITY_PRESENT_STOP"
 RUNTIME_FIELD_STOP = "REAL_CANDIDATE_DRY_RUN_RUNTIME_FIELD_PRESENT_STOP"
 UNEXPECTED_WRITE_STOP = "REAL_CANDIDATE_DRY_RUN_UNEXPECTED_WRITE_STOP"
+
+CANDIDATE_REVIEW_CONTRACT_CLASSIFICATIONS = ReviewContractClassifications(
+    payload_hash=PAYLOAD_HASH_STOP,
+    manifest_hash=MANIFEST_HASH_STOP,
+    receipt_hash=REVIEW_RECEIPT_HASH_STOP,
+    review_decision=REVIEW_DECISION_STOP,
+    review_receipt=REVIEW_RECEIPT_STOP,
+    packet_hash=PACKET_HASH_STOP,
+    artifact_set=ARTIFACT_SET_STOP,
+    authority_present=AUTHORITY_PRESENT_STOP,
+    runtime_field=RUNTIME_FIELD_STOP,
+)
 
 
 @dataclass(frozen=True)
@@ -208,111 +222,26 @@ def _candidate_root(
     return candidate, live_root, _path_chain_snapshot(candidate, admin)
 
 
-def _payload(
-    exact_bytes: bytes,
+def _reviewed_subject(
     *,
-    expected_sha256: str,
+    human_review_payload_bytes: bytes,
+    subject_artifact_manifest_bytes: bytes,
+    review_receipt_bytes: bytes,
     expected_review_decision_id: str,
-) -> HumanReviewPayload:
-    if sha256_bytes(exact_bytes) != expected_sha256:
-        raise RegistryError(PAYLOAD_HASH_STOP, "Reviewer payload differs from the exact approved hash")
-    try:
-        raw = decode_json_object(exact_bytes, label="human_review_payload")
-    except ValueError as exc:
-        raise RegistryError(REVIEW_DECISION_STOP, "Reviewer payload is not valid JSON") from exc
-    runtime_fields = sorted(RUNTIME_ONLY_FIELDS.intersection(raw))
-    if runtime_fields:
-        raise RegistryError(
-            RUNTIME_FIELD_STOP,
-            "Reviewer payload contains runtime-only materialization fields",
-            details={"runtime_fields": runtime_fields},
-        )
-    if raw.get("review_decision_id") != expected_review_decision_id:
-        raise RegistryError(REVIEW_DECISION_STOP, "Reviewer decision ID differs from exact authority")
-    if not isinstance(raw.get("reviewed_at"), str) or not raw["reviewed_at"].strip():
-        raise RegistryError(REVIEW_DECISION_STOP, "Reviewer authority timestamp is missing")
-    try:
-        payload = HumanReviewPayload.from_bytes(exact_bytes)
-    except RegistryError as exc:
-        raise RegistryError(REVIEW_DECISION_STOP, "Reviewer payload contract validation failed") from exc
-    authority = payload.data.get("authority_effects", {})
-    materialization_authority = authority.get("materialization_authority")
-    if materialization_authority not in {"NONE", "NONE_BY_THIS_REISSUE"}:
-        raise RegistryError(
-            AUTHORITY_PRESENT_STOP,
-            "Reviewer decision does not provide materialization authority",
-        )
-    return payload
-
-
-def _manifest(exact_bytes: bytes, *, expected_sha256: str) -> SubjectArtifactManifest:
-    if sha256_bytes(exact_bytes) != expected_sha256:
-        raise RegistryError(MANIFEST_HASH_STOP, "Subject manifest differs from the exact approved hash")
-    try:
-        return SubjectArtifactManifest.from_bytes(exact_bytes)
-    except RegistryError as exc:
-        raise RegistryError(ARTIFACT_SET_STOP, "Subject artifact manifest is invalid") from exc
-
-
-def _receipt(
-    exact_bytes: bytes,
-    *,
-    payload: HumanReviewPayload,
-    expected_review_decision_id: str,
-    expected_sha256: str,
-) -> ReviewReceiptReference:
-    if not isinstance(expected_sha256, str) or not SHA256_RE.fullmatch(expected_sha256):
-        raise RegistryError(
-            REVIEW_RECEIPT_HASH_STOP,
-            "Expected review receipt SHA-256 must be 64 lowercase hexadecimal characters",
-        )
-    exact_sha256 = sha256_bytes(exact_bytes)
-    if exact_sha256 != expected_sha256:
-        raise RegistryError(
-            REVIEW_RECEIPT_HASH_STOP,
-            "Review receipt differs from the exact approved hash",
-        )
-    if not exact_bytes or b"\x00" in exact_bytes:
-        raise RegistryError(REVIEW_RECEIPT_STOP, "Review receipt bytes are empty or invalid")
-    try:
-        text = exact_bytes.decode("utf-8")
-    except UnicodeDecodeError as exc:
-        raise RegistryError(REVIEW_RECEIPT_STOP, "Review receipt must be UTF-8") from exc
-
-    required_fields = {
-        "receipt_id": payload.receipt_id,
-        "subject_phase_id": payload.subject_phase_id,
-        "review_decision_id": expected_review_decision_id,
-        "materialization_authorization_id": "null",
-    }
-    lines = text.splitlines()
-    for field, expected_value in required_fields.items():
-        expected_line = f"{field} = {expected_value}"
-        field_lines = []
-        for line in lines:
-            if "=" not in line:
-                continue
-            left, _ = line.split("=", 1)
-            if left.strip() == field:
-                field_lines.append(line)
-        # Exact fields allow no indentation and exactly one ASCII space around '='.
-        if field_lines != [expected_line]:
-            raise RegistryError(
-                REVIEW_RECEIPT_STOP,
-                f"Review receipt must contain exactly one exact {field} field line",
-            )
-    return ReviewReceiptReference(exact_bytes=exact_bytes, exact_sha256=exact_sha256)
-
-
-def _cross_contracts(payload: HumanReviewPayload, manifest: SubjectArtifactManifest) -> None:
-    if manifest.data["subject_phase_id"] != payload.subject_phase_id:
-        raise RegistryError(ARTIFACT_SET_STOP, "Subject phase differs across reviewer contracts")
-    if manifest.exact_sha256 != payload.data["subject_artifact_manifest_sha256"]:
-        raise RegistryError(MANIFEST_HASH_STOP, "Reviewer payload references a different subject manifest")
-    if manifest.data["subject_packet_identifier"] != payload.data["subject_packet_identifier"]:
-        raise RegistryError(PACKET_HASH_STOP, "Subject packet identifier differs across reviewer contracts")
-    if manifest.data["subject_packet_sha256"] != payload.data["subject_packet_sha256"]:
-        raise RegistryError(PACKET_HASH_STOP, "Subject packet hash differs across reviewer contracts")
+    expected_payload_sha256: str,
+    expected_subject_manifest_sha256: str,
+    expected_review_receipt_sha256: str,
+) -> ValidatedReviewedSubject:
+    return validate_exact_reviewed_subject(
+        human_review_payload_bytes=human_review_payload_bytes,
+        subject_artifact_manifest_bytes=subject_artifact_manifest_bytes,
+        review_receipt_bytes=review_receipt_bytes,
+        expected_review_decision_id=expected_review_decision_id,
+        expected_payload_sha256=expected_payload_sha256,
+        expected_subject_manifest_sha256=expected_subject_manifest_sha256,
+        expected_review_receipt_sha256=expected_review_receipt_sha256,
+        classifications=CANDIDATE_REVIEW_CONTRACT_CLASSIFICATIONS,
+    )
 
 
 def _subject_inputs(
@@ -407,22 +336,18 @@ def dry_run_real_candidate(
             "A materialization authorization ID is forbidden in dry-run mode",
         )
 
-    payload = _payload(
-        human_review_payload_bytes,
-        expected_sha256=expected_payload_sha256,
+    reviewed = _reviewed_subject(
+        human_review_payload_bytes=human_review_payload_bytes,
+        subject_artifact_manifest_bytes=subject_artifact_manifest_bytes,
+        review_receipt_bytes=review_receipt_bytes,
         expected_review_decision_id=expected_review_decision_id,
+        expected_payload_sha256=expected_payload_sha256,
+        expected_subject_manifest_sha256=expected_subject_manifest_sha256,
+        expected_review_receipt_sha256=expected_review_receipt_sha256,
     )
-    manifest = _manifest(
-        subject_artifact_manifest_bytes,
-        expected_sha256=expected_subject_manifest_sha256,
-    )
-    _cross_contracts(payload, manifest)
-    receipt = _receipt(
-        review_receipt_bytes,
-        payload=payload,
-        expected_review_decision_id=expected_review_decision_id,
-        expected_sha256=expected_review_receipt_sha256,
-    )
+    payload = reviewed.payload
+    manifest = reviewed.manifest
+    receipt = reviewed.receipt
     verified_subject, subject_kwargs = _subject_inputs(
         payload=payload,
         manifest=manifest,

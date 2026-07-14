@@ -26,10 +26,7 @@ from .real_candidate import (
     REVIEW_RECEIPT_HASH_STOP,
     REVIEW_RECEIPT_STOP,
     RUNTIME_FIELD_STOP,
-    _cross_contracts,
-    _manifest,
-    _payload,
-    _receipt,
+    _reviewed_subject,
     _subject_inputs,
 )
 from .transaction import _materialize
@@ -260,21 +257,19 @@ def materialize_real_candidate(
         expected_review_receipt_sha256=expected_review_receipt_sha256,
     )
     try:
-        payload = _payload(
-            human_review_payload_bytes,
-            expected_sha256=expected_payload_sha256,
+        reviewed = _reviewed_subject(
+            human_review_payload_bytes=human_review_payload_bytes,
+            subject_artifact_manifest_bytes=subject_artifact_manifest_bytes,
+            review_receipt_bytes=review_receipt_bytes,
             expected_review_decision_id=expected_review_decision_id,
-        )
-        manifest = _manifest(subject_artifact_manifest_bytes, expected_sha256=expected_subject_manifest_sha256)
-        _cross_contracts(payload, manifest)
-        _receipt(
-            review_receipt_bytes,
-            payload=payload,
-            expected_review_decision_id=expected_review_decision_id,
-            expected_sha256=expected_review_receipt_sha256,
+            expected_payload_sha256=expected_payload_sha256,
+            expected_subject_manifest_sha256=expected_subject_manifest_sha256,
+            expected_review_receipt_sha256=expected_review_receipt_sha256,
         )
     except RegistryError as exc:
         raise _map_contract_error(exc) from exc
+    payload = reviewed.payload
+    manifest = reviewed.manifest
 
     authorization_id = _validate_authorization(
         materialization_authorization_id,

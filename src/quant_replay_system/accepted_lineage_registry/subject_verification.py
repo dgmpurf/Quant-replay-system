@@ -6,9 +6,9 @@ import os
 import stat
 from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 
-from .canonical import sha256_file
+from .canonical import sha256_bytes, sha256_file
 from .models import HumanReviewPayload, RegistryError, SubjectArtifactManifest
 from .path_safety import (
     FILE_ATTRIBUTE_REPARSE_POINT,
@@ -55,6 +55,24 @@ class SubjectInputVerification:
 
     def identity(self) -> dict[str, Any]:
         return asdict(self)
+
+
+@dataclass(frozen=True)
+class LivePreflightImmutableInputVerification:
+    """Exact immutable-input evidence for the no-write live preflight."""
+
+    human_review_payload_sha256: str
+    subject_artifact_manifest_sha256: str
+    review_receipt_sha256: str
+    subject_inputs: SubjectInputVerification
+
+    def safe_report(self) -> dict[str, Any]:
+        return {
+            "human_review_payload_sha256": self.human_review_payload_sha256,
+            "review_receipt_sha256": self.review_receipt_sha256,
+            "subject_artifact_manifest_sha256": self.subject_artifact_manifest_sha256,
+            "subject_inputs": self.subject_inputs.safe_report(),
+        }
 
 
 def _attributes(file_stat: os.stat_result) -> int:
@@ -216,6 +234,83 @@ def validate_subject_inputs(
             raise RegistryError("SUBJECT_ARTIFACT_HASH_MISMATCH_STOP", "Subject artifact SHA-256 mismatch")
         snapshots.append(snapshot)
     return SubjectInputVerification(packet=packet, artifacts=tuple(snapshots), exact_set_result="PASS")
+
+
+def validate_live_preflight_immutable_inputs(
+    *,
+    payload: HumanReviewPayload,
+    manifest: SubjectArtifactManifest,
+    review_receipt: bytes,
+    subject_packet_path: str | Path,
+    subject_artifact_root: str | Path,
+    expected_reviewer_input_hashes: Mapping[str, Any],
+    approved_admin_root: str | Path,
+    repository_root: str | Path,
+    registry_root: str | Path,
+    protected_roots: Sequence[str | Path] = (),
+) -> LivePreflightImmutableInputVerification:
+    """Verify all reviewer and six subject inputs without writing any output."""
+
+    classification = "LIVE_ENTRY_IMMUTABLE_INPUT_HASH_MISMATCH_STOP"
+    required_hash_keys = {
+        "human_review_payload_sha256",
+        "review_receipt_sha256",
+        "subject_artifact_manifest_sha256",
+        "subject_artifact_sha256_by_path",
+        "subject_packet_sha256",
+    }
+    if set(expected_reviewer_input_hashes) != required_hash_keys:
+        raise RegistryError(classification, "Reviewer input hash binding is incomplete or contains unexpected fields")
+    if not isinstance(review_receipt, bytes):
+        raise RegistryError(classification, "Review receipt must be supplied as exact bytes")
+
+    payload_sha256 = sha256_bytes(payload.exact_bytes)
+    manifest_sha256 = sha256_bytes(manifest.exact_bytes)
+    receipt_sha256 = sha256_bytes(review_receipt)
+    exact_hashes = {
+        "human_review_payload_sha256": payload_sha256,
+        "review_receipt_sha256": receipt_sha256,
+        "subject_artifact_manifest_sha256": manifest_sha256,
+    }
+    if payload_sha256 != payload.exact_sha256 or manifest_sha256 != manifest.exact_sha256:
+        raise RegistryError(classification, "Parsed reviewer input does not match its exact byte hash")
+    for field, observed in exact_hashes.items():
+        if expected_reviewer_input_hashes.get(field) != observed:
+            raise RegistryError(classification, f"Immutable reviewer input hash mismatch at {field}")
+
+    try:
+        subject_inputs = validate_subject_inputs(
+            payload=payload,
+            manifest=manifest,
+            subject_packet_path=subject_packet_path,
+            subject_artifact_root=subject_artifact_root,
+            approved_admin_root=approved_admin_root,
+            repository_root=repository_root,
+            registry_root=registry_root,
+            protected_roots=protected_roots,
+        )
+    except RegistryError as exc:
+        raise RegistryError(
+            classification,
+            "Immutable subject input verification failed",
+            details={"underlying_classification": exc.classification},
+        ) from exc
+
+    if len(subject_inputs.artifacts) != 6:
+        raise RegistryError(classification, "Exactly six subject artifacts are required")
+    if expected_reviewer_input_hashes.get("subject_packet_sha256") != subject_inputs.packet.sha256:
+        raise RegistryError(classification, "Subject packet hash differs from the immutable reviewer binding")
+    expected_artifacts = expected_reviewer_input_hashes.get("subject_artifact_sha256_by_path")
+    observed_artifacts = {artifact.relative_path: artifact.sha256 for artifact in subject_inputs.artifacts}
+    if not isinstance(expected_artifacts, Mapping) or dict(expected_artifacts) != observed_artifacts:
+        raise RegistryError(classification, "One or more subject artifact hashes differ from the immutable reviewer binding")
+
+    return LivePreflightImmutableInputVerification(
+        human_review_payload_sha256=payload_sha256,
+        subject_artifact_manifest_sha256=manifest_sha256,
+        review_receipt_sha256=receipt_sha256,
+        subject_inputs=subject_inputs,
+    )
 
 
 def revalidate_subject_inputs(
