@@ -27,6 +27,7 @@ from quant_replay_system.accepted_lineage_registry.models import (
     RegistrySchema,
 )
 from quant_replay_system.accepted_lineage_registry.transaction import initialize_synthetic_registry
+from quant_replay_system.accepted_lineage_registry.windows_live_backend import WindowsLiveFilesystemBackend
 
 
 @dataclass(frozen=True)
@@ -139,6 +140,22 @@ def test_successful_temporary_empty_root_initialization(tmp_path: Path) -> None:
     result = _initialize(material)
     assert result["classification"] == SUCCESS_CLASSIFICATION
     assert Path(material["root"]).is_dir()
+
+
+def test_actual_windows_backend_temporary_empty_live_root_initialization(tmp_path: Path) -> None:
+    assert os.name == "nt"
+    material = _material(tmp_path, root_name="actual-backend-empty-live-root")
+    material["backend"] = WindowsLiveFilesystemBackend()
+
+    result = _initialize(material)
+    root = Path(material["root"])
+
+    assert result["classification"] == SUCCESS_CLASSIFICATION
+    assert root.is_dir()
+    assert list((root / "entries").iterdir()) == []
+    assert result["health"]["authoritative_entry_count"] == 0
+    assert result["live_entry_materialized"] is False
+    assert result["materialization_authorized"] is False
 
 
 def test_exact_empty_live_root_structure(tmp_path: Path) -> None:

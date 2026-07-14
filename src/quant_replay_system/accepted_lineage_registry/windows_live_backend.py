@@ -31,6 +31,17 @@ class WindowsHandleIdentity:
 
 
 @dataclass(frozen=True)
+class WindowsStableDirectoryIdentity:
+    """Object identity fields that must survive directory content changes."""
+
+    volume_serial_number: int
+    file_index: int
+    number_of_links: int
+    is_directory: bool
+    is_reparse_point: bool
+
+
+@dataclass(frozen=True)
 class WindowsCapabilityReport:
     backend_status: str
     windows_backend_available: bool
@@ -170,6 +181,20 @@ _FILE_RENAME_INFO_CLASS = 3
 _FILE_RENAME_INFORMATION_CLASS = 10
 _FILE_DISPOSITION_INFO_CLASS = 4
 _FILE_ATTRIBUTE_TAG_INFO_CLASS = 9
+
+
+def project_stable_directory_identity(
+    identity: WindowsHandleIdentity,
+) -> WindowsStableDirectoryIdentity:
+    """Exclude mutable directory metadata while retaining fail-closed identity fields."""
+
+    return WindowsStableDirectoryIdentity(
+        volume_serial_number=identity.volume_serial_number,
+        file_index=identity.file_index,
+        number_of_links=identity.number_of_links,
+        is_directory=identity.is_directory,
+        is_reparse_point=bool(identity.file_attributes & _FILE_ATTRIBUTE_REPARSE_POINT),
+    )
 
 
 def _raise_last_error(classification: str, message: str) -> None:
@@ -332,7 +357,17 @@ class WindowsLiveFilesystemBackend:
     ) -> WindowsHandleIdentity:
         with self.open_directory_no_reparse(path) as handle:
             observed = self.query_handle_identity(handle)
-        if observed != expected or observed.number_of_links != 1:
+        expected_stable = project_stable_directory_identity(expected)
+        observed_stable = project_stable_directory_identity(observed)
+        if (
+            expected_stable.is_directory is not True
+            or observed_stable.is_directory is not True
+            or expected_stable.number_of_links != 1
+            or observed_stable.number_of_links != 1
+            or expected_stable.is_reparse_point
+            or observed_stable.is_reparse_point
+            or observed_stable != expected_stable
+        ):
             raise RegistryError(RENAME_RESULT_UNVERIFIED_STOP, "Committed directory identity differs")
         return observed
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -18,6 +19,8 @@ from quant_replay_system.accepted_lineage_registry.windows_live_backend import (
     WindowsCapabilityReport,
     WindowsHandleIdentity,
     WindowsLiveFilesystemBackend,
+    WindowsStableDirectoryIdentity,
+    project_stable_directory_identity,
 )
 
 
@@ -85,6 +88,56 @@ class _RecordingDurabilityBackend:
         return True
 
 
+class _TrackedWindowsHandle:
+    def __init__(self, inner, backend: "_CommittedWorkflowBackend") -> None:
+        self._inner = inner
+        self._backend = backend
+        self.value = inner.value
+        self.closed = False
+
+    def close(self) -> None:
+        if self.closed:
+            return
+        try:
+            self._inner.close()
+        finally:
+            self.closed = True
+            self._backend.active_child_file_handles -= 1
+
+    def __enter__(self) -> "_TrackedWindowsHandle":
+        return self
+
+    def __exit__(self, exc_type, exc, traceback) -> None:
+        self.close()
+
+
+class _CommittedWorkflowBackend(WindowsLiveFilesystemBackend):
+    def __init__(self) -> None:
+        super().__init__()
+        self.active_child_file_handles = 0
+        self.child_file_handles_at_rename: list[int] = []
+
+    def open_file_no_reparse(
+        self,
+        path: str | Path,
+        *,
+        writable: bool = False,
+        delete: bool = False,
+    ) -> _TrackedWindowsHandle:
+        inner = super().open_file_no_reparse(path, writable=writable, delete=delete)
+        self.active_child_file_handles += 1
+        return _TrackedWindowsHandle(inner, self)
+
+    def rename_directory_by_handle(
+        self,
+        source_path: str | Path,
+        target_parent: str | Path,
+        target_name: str,
+    ) -> WindowsHandleIdentity:
+        self.child_file_handles_at_rename.append(self.active_child_file_handles)
+        return super().rename_directory_by_handle(source_path, target_parent, target_name)
+
+
 def test_capability_report_is_honest_and_does_not_grant_l2(
     backend: WindowsLiveFilesystemBackend,
 ) -> None:
@@ -110,6 +163,79 @@ def test_open_directory_no_reparse_and_query_identity(
         assert identity.is_directory is True
         assert identity.number_of_links == 1
         assert backend.query_link_count(handle) == 1
+
+
+def test_stable_directory_identity_allows_actual_file_size_drift_after_content_creation(
+    backend: WindowsLiveFilesystemBackend,
+    tmp_path: Path,
+) -> None:
+    directory = tmp_path / "empty-live-root"
+    directory.mkdir()
+    with backend.open_directory_no_reparse(directory) as handle:
+        before = backend.query_handle_identity(handle)
+
+    for name in ("entries", "derived", ".staging"):
+        (directory / name).mkdir()
+    for index in range(12):
+        (directory / f"registry-{index:02d}.json").write_bytes(f'{{"index":{index}}}\n'.encode())
+
+    with backend.open_directory_no_reparse(directory) as handle:
+        after = backend.query_handle_identity(handle)
+    expected_stable = project_stable_directory_identity(before)
+    observed_stable = project_stable_directory_identity(after)
+
+    assert isinstance(expected_stable, WindowsStableDirectoryIdentity)
+    assert before.file_size != after.file_size
+    assert observed_stable == expected_stable
+    assert after.volume_serial_number == before.volume_serial_number
+    assert after.file_index == before.file_index
+    assert after.number_of_links == 1
+    assert backend.verify_committed_directory_identity(directory, before) == after
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["volume_serial_number", "file_index", "number_of_links", "is_directory", "reparse_point"],
+)
+def test_stable_directory_identity_rejects_required_field_drift(
+    backend: WindowsLiveFilesystemBackend,
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    directory = tmp_path / "stable-identity"
+    directory.mkdir()
+    with backend.open_directory_no_reparse(directory) as handle:
+        expected = backend.query_handle_identity(handle)
+    if mutation == "volume_serial_number":
+        expected = replace(expected, volume_serial_number=expected.volume_serial_number + 1)
+    elif mutation == "file_index":
+        expected = replace(expected, file_index=expected.file_index + 1)
+    elif mutation == "number_of_links":
+        expected = replace(expected, number_of_links=2)
+    elif mutation == "is_directory":
+        expected = replace(expected, is_directory=False)
+    else:
+        expected = replace(expected, file_attributes=expected.file_attributes | 0x00000400)
+
+    with pytest.raises(RegistryError) as caught:
+        backend.verify_committed_directory_identity(directory, expected)
+    assert caught.value.classification == RENAME_RESULT_UNVERIFIED_STOP
+
+
+def test_directory_type_substitution_remains_fail_closed(
+    backend: WindowsLiveFilesystemBackend,
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "object"
+    path.mkdir()
+    with backend.open_directory_no_reparse(path) as handle:
+        expected = backend.query_handle_identity(handle)
+    path.rmdir()
+    path.write_bytes(b"replacement-file\n")
+
+    with pytest.raises(RegistryError) as caught:
+        backend.verify_committed_directory_identity(path, expected)
+    assert caught.value.classification == REPARSE_OPEN_UNAVAILABLE_STOP
 
 
 def test_file_flush_uses_retained_handle(
@@ -232,6 +358,47 @@ def test_handle_relative_directory_rename_proves_target_identity(
     assert observed == expected
     assert not source.exists()
     assert (tmp_path / "entry" / "entry.json").read_text(encoding="utf-8") == "{}\n"
+
+
+def test_committed_write_handle_lifetime_closes_children_before_handle_relative_rename(
+    tmp_path: Path,
+) -> None:
+    backend = _CommittedWorkflowBackend()
+    source = tmp_path / "stage"
+    source.mkdir()
+    staged_files = {
+        "human_review_payload.json": b"{}\n",
+        "subject_artifact_manifest.json": b"{}\n",
+        "review_receipt.md": b"synthetic review receipt\n",
+        "entry_manifest.json": b"{}\n",
+        "entry_seal.json": b"{}\n",
+    }
+    for name, exact_bytes in staged_files.items():
+        target = source / name
+        canonical_module.write_bytes_durable(target, exact_bytes, backend=backend)
+        assert canonical_module.flush_parent_directory_durable(target, backend=backend) is True
+        assert backend.active_child_file_handles == 0
+
+    with backend.open_directory_no_reparse(source) as source_handle:
+        before = backend.query_handle_identity(source_handle)
+    with backend.open_directory_no_reparse(tmp_path) as parent_handle:
+        parent = backend.query_handle_identity(parent_handle)
+    assert before.volume_serial_number == parent.volume_serial_number
+    with backend.open_directory_no_reparse(source, writable=True) as source_handle:
+        assert backend.flush_directory_handle(source_handle) is True
+
+    observed = backend.rename_directory_by_handle(source, tmp_path, "entry")
+    target = tmp_path / "entry"
+    with backend.open_directory_no_reparse(target) as target_handle:
+        reopened = backend.query_handle_identity(target_handle)
+
+    assert backend.child_file_handles_at_rename == [0]
+    assert backend.active_child_file_handles == 0
+    assert not os.path.lexists(source)
+    assert target.is_dir()
+    assert project_stable_directory_identity(observed) == project_stable_directory_identity(before)
+    assert project_stable_directory_identity(reopened) == project_stable_directory_identity(before)
+    assert {path.name: path.read_bytes() for path in target.iterdir()} == staged_files
 
 
 @pytest.mark.parametrize("target_name", ["", ".", "..", "nested/entry", "nested\\entry"])
